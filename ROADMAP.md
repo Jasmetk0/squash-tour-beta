@@ -9,8 +9,10 @@ four-player Main Draw, materializes semifinal/final slots, preserves its three m
 identities, and closes exactly once through the existing completion, award and
 `OwnedTournamentRankingSource` contracts. Explicit authoritative Admin routes expose
 position, split Next Match and Next Slot without redirecting legacy simulation.
-General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling,
-health and the complete Week 1→2→3 acceptance remain Gate 3 work.
+Independent same-slot groups now commit atomically and resume after failure, while
+transition readiness reuses the authoritative match/effect sporting preflight.
+General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling and
+health remain Gate 3 work.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 

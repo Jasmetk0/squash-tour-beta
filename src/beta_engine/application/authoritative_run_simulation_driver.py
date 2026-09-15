@@ -19,6 +19,7 @@ from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeFourPlayerTournamentResult,
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
+    validate_adopted_four_player_match_package,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
@@ -39,6 +40,10 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+from beta_engine.infrastructure.db.player_sporting_state import (
+    preflight_completed_context_from_authoritative_matches,
 )
 
 
@@ -68,6 +73,7 @@ class AuthoritativeSimulationPosition(FrozenInput):
     current_slot_complete: bool
     supported_tournament_complete: bool
     week_ready_for_transition: bool
+    transition_blockers: tuple[str, ...] = ()
     terminal_sporting_fingerprint: str | None
     position_fingerprint: str
 
@@ -96,6 +102,8 @@ class AuthoritativeRunSimulationDriver:
         request_fp = fingerprint(
             {"mode": mode, "command": command.model_dump(mode="json")}
         )
+        # Establish one durable operation receipt and materialize the frozen slot
+        # before executing groups. Each independent group then owns its transaction.
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             key = (command.run_id, command.branch_id, command.command_id)
@@ -105,70 +113,92 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError(
                         "simulation command ID already has a different request"
                     )
-                return json.loads(receipt.result_json)
-            before = self._position(session, command.run_id, command.branch_id)
-            if before.current_week != command.expected_week:
-                raise ValueError("expected current week is stale")
-            if before.position_fingerprint != command.expected_position_fingerprint:
-                raise ValueError("simulation position is stale")
-            branch = session.get(RunBranchModel, command.branch_id)
-            if (
-                branch is None
-                or branch.run_id != command.run_id
-                or branch.saved_head_revision_id != command.expected_revision_id
-            ):
-                raise ValueError("expected Branch head is stale")
-            package = self._package(before.current_week)
-            self._ensure_current_slot(session, command, package)
-            position = self._position(session, command.run_id, command.branch_id)
-            eligible_groups = self._eligible_groups(session, position, package)
-            if mode == "match":
-                if command.group_id is None:
-                    if len(eligible_groups) != 1:
-                        raise ValueError(
-                            "an explicit current-slot group_id is required"
-                        )
-                    targets = eligible_groups
-                elif command.group_id not in eligible_groups:
-                    raise ValueError(
-                        "target is completed, blocked, or outside the current slot"
-                    )
-                else:
-                    targets = (command.group_id,)
+                if receipt.status == "complete":
+                    return json.loads(receipt.result_json)
+                operation_targets = tuple(
+                    json.loads(receipt.result_json)["target_group_ids"]
+                )
             else:
-                if command.group_id is not None:
-                    raise ValueError("Simulate Next Slot does not accept group_id")
-                targets = eligible_groups
-            if not targets:
-                raise ValueError("current slot has no unresolved eligible match")
-            for index, group_id in enumerate(targets):
-                if fault_at == "before_second_group" and index == 1:
-                    raise RuntimeError("fault before second group")
-                self._execute_group(session, command, package, group_id)
-                if fault_at == "after_first_group" and index == 0:
-                    # This exception rolls back the current transaction. Production callers
-                    # commit each group through separate commands when partial progress matters.
-                    raise RuntimeError("fault after first group")
+                before = self._position(session, command.run_id, command.branch_id)
+                self._validate_expected(session, command, before)
+                package = self._package(before.current_week)
+                self._ensure_current_slot(session, command, package)
+                position = self._position(session, command.run_id, command.branch_id)
+                targets = self._targets(session, command, mode, position, package)
+                operation_targets = targets
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps({"target_group_ids": targets}),
+                    )
+                )
+
+        for index, group_id in enumerate(operation_targets):
+            if fault_at == "before_second_group" and index == 1:
+                raise RuntimeError("fault before second group")
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                package = self._package(command.expected_week)
+                current = self._position(session, command.run_id, command.branch_id)
+                if group_id in current.unresolved_group_ids:
+                    self._execute_group(session, command, package, group_id)
+            if fault_at == "after_first_group" and index == 0:
+                raise RuntimeError("fault after first committed group")
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            package = self._package(command.expected_week)
             self._advance_or_close(session, command, package, fault_at=fault_at)
             after = self._position(session, command.run_id, command.branch_id)
             payload = after.model_dump(mode="json")
-            session.add(
-                AuthoritativeSimulationCommandModel(
-                    run_id=command.run_id,
-                    branch_id=command.branch_id,
-                    command_id=command.command_id,
-                    request_fingerprint=request_fp,
-                    result_json=json.dumps(
-                        payload, sort_keys=True, separators=(",", ":")
-                    ),
-                )
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is None:
+                raise ValueError("pending simulation command receipt disappeared")
+            receipt.status = "complete"
+            receipt.result_json = json.dumps(
+                payload, sort_keys=True, separators=(",", ":")
             )
             if fault_at == "after_source_staging_before_receipt":
                 raise RuntimeError(
                     "fault after ranking source staging before command receipt"
                 )
-            session.flush()
             return payload
+
+    @staticmethod
+    def _validate_expected(session, command, before):
+        if before.current_week != command.expected_week:
+            raise ValueError("expected current week is stale")
+        if before.position_fingerprint != command.expected_position_fingerprint:
+            raise ValueError("simulation position is stale")
+        branch = session.get(RunBranchModel, command.branch_id)
+        if (
+            branch is None
+            or branch.run_id != command.run_id
+            or branch.saved_head_revision_id != command.expected_revision_id
+        ):
+            raise ValueError("expected Branch head is stale")
+
+    def _targets(self, session, command, mode, position, package):
+        eligible_groups = self._eligible_groups(session, position, package)
+        if mode == "match":
+            if command.group_id is None:
+                if len(eligible_groups) != 1:
+                    raise ValueError("an explicit current-slot group_id is required")
+                return eligible_groups
+            if command.group_id not in eligible_groups:
+                raise ValueError(
+                    "target is completed, blocked, or outside the current slot"
+                )
+            return (command.group_id,)
+        if command.group_id is not None:
+            raise ValueError("Simulate Next Slot does not accept group_id")
+        if not eligible_groups:
+            raise ValueError("current slot has no unresolved eligible match")
+        return eligible_groups
 
     def _current_week(self, session, run_id, branch_id):
         world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
@@ -190,25 +220,26 @@ class AuthoritativeRunSimulationDriver:
         ordinal = rows[0]
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
-    def _package(self, week):
+    def _package(self, week, *, required=True):
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
         candidates = [
             p
             for p in self.match_service._load_registry().matches_by_event_id.values()
-            if p.season_week == week.week and len(p.main_draw_matches) == 3
+            if p.season == season and p.season_week == week.week
         ]
+        if not candidates and not required:
+            return None
         if len(candidates) != 1:
             raise ValueError(
-                "current week requires exactly one supported persisted four-player Main Draw"
+                "current RankingWeek requires exactly one persisted tournament authority"
             )
-        package = candidates[0].model_copy(deep=True)
-        # Qualification is deliberately outside this bridge.  It is not execution
-        # state and is never written back to the legacy registry.
-        package.qualification_matches = []
+        package = candidates[0]
+        validate_adopted_four_player_match_package(package)
         return package
 
     def _position(self, session, run_id, branch_id):
         week = self._current_week(session, run_id, branch_id)
-        package = self._package(week)
+        package = self._package(week, required=False)
         slots = session.scalars(
             select(SimulationSlotModel)
             .where(
@@ -228,6 +259,24 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
+        if package is None:
+            body = {"scope": [run_id, branch_id, week.ordinal], "tournament": None}
+            return AuthoritativeSimulationPosition(
+                run_id=run_id,
+                branch_id=branch_id,
+                current_week=week,
+                current_slot_id=None,
+                slot_ordinal=None,
+                unresolved_group_ids=(),
+                eligible_match_ids=(),
+                blocked_match_ids=(),
+                current_slot_complete=True,
+                supported_tournament_complete=False,
+                week_ready_for_transition=False,
+                transition_blockers=("supported_tournament_missing",),
+                terminal_sporting_fingerprint=None,
+                position_fingerprint=fingerprint(body),
+            )
         matches = sorted(
             package.main_draw_matches,
             key=lambda m: (m.round_number, m.bracket_position),
@@ -264,7 +313,33 @@ class AuthoritativeRunSimulationDriver:
             if slots and all(s.status == "complete" for s in slots)
             else None
         )
-        ready = bool(owned and terminal and not unresolved)
+        blockers = []
+        if unresolved:
+            blockers.append("pending_authoritative_groups")
+        if owned is None:
+            blockers.append("tournament_source_missing")
+        if terminal is None:
+            blockers.append("terminal_sporting_checkpoint_missing")
+        lifecycle = get_lifecycle(
+            session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        if lifecycle is None:
+            blockers.append("lifecycle_roster_missing")
+        if not blockers:
+            assert lifecycle is not None and owned is not None
+            try:
+                preflight_completed_context_from_authoritative_matches(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    completed_week=week,
+                    player_ids=tuple(player.player_id for player in lifecycle.players),
+                )
+                if owned.binding.completed_week != week:
+                    raise ValueError("owned tournament source week differs")
+            except ValueError:
+                blockers.append("week_transition_sporting_preflight_failed")
+        ready = not blockers
         body = {
             "scope": [run_id, branch_id, week.ordinal],
             "slots": [
@@ -293,6 +368,7 @@ class AuthoritativeRunSimulationDriver:
             current_slot_complete=not unresolved,
             supported_tournament_complete=owned is not None,
             week_ready_for_transition=ready,
+            transition_blockers=tuple(blockers),
             terminal_sporting_fingerprint=terminal.fingerprint if terminal else None,
             position_fingerprint=fingerprint(body),
         )

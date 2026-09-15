@@ -94,14 +94,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Best next implementation slice
 
-**Complete the repeated sporting-flow acceptance around the new driver.** The narrow
-four-player path now derives a stable Run/Branch position, executes split matches or
-the whole current slot from frozen inputs, automatically materializes the dependent
-Final and closes into `OwnedTournamentRankingSource`. Match-derived
-Form/Sharpness/Fatigue and the narrow tournament-to-ranking bridge are implemented,
-not future gaps. Next connect Save-draft audit semantics and the existing explicit
-Week Transition preview/confirm authority preparation into a single real Week
-1→2→3 HTTP/SQLite acceptance, then broaden scheduling beyond one supported event.
+**Broaden the proven repeated sporting flow without weakening its authority.** The
+narrow four-player path derives a stable Run/Branch position, commits independent
+same-slot groups separately over one frozen snapshot, resumes partial commands, runs
+the same sporting-context preflight consumed by Week Transition, materializes the
+dependent Final and closes exactly once into `OwnedTournamentRankingSource`.
+Match-derived Form/Sharpness/Fatigue and the tournament-to-ranking bridge are
+implemented, not future gaps. The next slice may broaden scheduling beyond the one
+unambiguous supported event per concrete season/week; Qualification and ambiguity
+must continue to fail closed.
 
 ## Current limitations
 

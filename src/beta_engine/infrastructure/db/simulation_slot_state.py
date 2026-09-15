@@ -8,6 +8,7 @@ import json
 from sqlalchemy import delete, select
 
 from beta_engine.infrastructure.db.models import (
+    AuthoritativeSimulationCommandModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
 )
@@ -122,7 +123,7 @@ def _validate_semantics(slots, groups):
         raise ValueError("Simulation event group has no planned slot")
 
 
-def _component(slots, groups):
+def _component(slots, groups, commands=(), *, include_commands=True):
     _validate_semantics(slots, groups)
     body = {
         "slots": [
@@ -157,6 +158,18 @@ def _component(slots, groups):
             for row in groups
         ],
     }
+    if include_commands:
+        body["commands"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "status": row.status,
+                "result_json": row.result_json,
+            }
+            for row in commands
+        ]
     return {
         "fingerprint": hashlib.sha256(
             json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
@@ -186,19 +199,35 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             SimulationEventGroupModel.group_id,
         )
     ).all()
-    if slots or groups:
-        payload["content"][COMPONENT_KEY] = _component(slots, groups)
+    commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel)
+        .where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+        .order_by(AuthoritativeSimulationCommandModel.command_id)
+    ).all()
+    if slots or groups or commands:
+        payload["content"][COMPONENT_KEY] = _component(slots, groups, commands)
 
 
 def _load(payload, *, run_id, branch_id):
     component = payload.get("content", {}).get(COMPONENT_KEY)
     if component is None:
         return None
-    if set(component) != {"fingerprint", "slots", "groups"}:
+    if set(component) not in (
+        {"fingerprint", "slots", "groups"},
+        {"fingerprint", "slots", "groups", "commands"},
+    ):
         raise ValueError("Invalid Saved Revision simulation-slot component")
     calculated = _component(
         [SimulationSlotModel(**value) for value in component["slots"]],
         [SimulationEventGroupModel(**value) for value in component["groups"]],
+        [
+            AuthoritativeSimulationCommandModel(**value)
+            for value in component.get("commands", [])
+        ],
+        include_commands="commands" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
@@ -236,9 +265,27 @@ def restore_saved_simulation_slots(
             SimulationEventGroupModel.group_id,
         )
     ).all()
-    live = _component(live_slots, live_groups) if live_slots or live_groups else None
+    live_commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel)
+        .where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+        .order_by(AuthoritativeSimulationCommandModel.command_id)
+    ).all()
+    live = (
+        _component(live_slots, live_groups, live_commands)
+        if live_slots or live_groups or live_commands
+        else None
+    )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(AuthoritativeSimulationCommandModel).where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(SimulationEventGroupModel).where(
             SimulationEventGroupModel.run_id == run_id,
@@ -255,4 +302,6 @@ def restore_saved_simulation_slots(
         session.add(SimulationSlotModel(**value))
     for value in (target or {}).get("groups", []):
         session.add(SimulationEventGroupModel(**value))
+    for value in (target or {}).get("commands", []):
+        session.add(AuthoritativeSimulationCommandModel(**value))
     session.flush()

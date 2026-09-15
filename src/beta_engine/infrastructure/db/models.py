@@ -249,6 +249,7 @@ class AuthoritativeSimulationCommandModel(Base):
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 

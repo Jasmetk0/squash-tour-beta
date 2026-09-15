@@ -12,7 +12,7 @@ remain valid; their numbering is not a mandate to implement them in that order.
 |---|---|---|
 | 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
 | 1 — source bridge (implemented slice) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite covers preview, rollback, retry, reopen and recovery; broader source types remain guarded |
-| 2 — one true week boundary (implemented first slice; expansion in progress) | One SQLite owner maps target Season Week to FAX Year Week, derives canonical birthday/age-46 retirement and Official roster from owned lifecycle, then atomically publishes/advances/audits | Development/recovery remain open blockers; matching Run prospects fail closed until a Branch-owned source bridge is integrated; next prove repeated flow and public consumers |
+| 2 — one true week boundary (implemented expanded slice) | One SQLite owner resolves an explicit owned completed-tournament manifest, develops canonical sporting state, performs provisional between-week updates, derives lifecycle roster, then atomically publishes/advances/audits | Missing/empty sporting evidence fails closed; match-derived state beyond counts and health remain boundaries; matching Run prospects fail closed |
 | 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
 | 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
 | 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |
@@ -82,14 +82,14 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 
 ## 7. Player state and ranking policy
 
-- Keep the first-version attribute model intentionally lighter and extensible rather than prematurely freezing a final large attribute catalogue.
+- Keep the decided pre-alpha 57-attribute `0..200` catalogue centralized and individually stored; its taxonomy remains revisable after pre-alpha.
 - Implement one current **Form** per player, updated after played matches and regressing toward an individual long-term norm rather than resetting.
 - Keep Form separate from long-term attributes and physical stamina state/capacity.
 - Preserve v42 handling of W/O, DQ, RET and abnormal/no-contest cases.
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
 - **Implemented initial slice:** explicitly adopt the complete production initial pool and an explicit first-season policy into an independent Run/Branch snapshot; derive the initial ranking candidate server-side and preserve both through Save/reopen/restore. See `docs/INITIAL_WORLD_RANKING_INTEGRATION_V1.md`.
-- The supported ordinary transition now bootstraps Week 1 lifecycle from owned initial-world players, advances birthdays/age-46 retirement, and derives roster/tie-break/retired truth server-side. Development/recovery remain open/manual blockers, and prospect intake fails closed rather than acquiring an invented generation rule. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md`.
+- The supported ordinary transition bootstraps Week 1 lifecycle and canonical sporting state from owned initial-world players, runs provisional historical development and between-week state, advances birthdays/retirement, and derives ranking identity server-side. Match-derived state/health remain open and prospect intake still fails closed. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md` and `docs/AUTHORITATIVE_PLAYER_SPORTING_WEEK_STATE_V1.md`.
 
 ## 8. Match Reconstruction v1
 

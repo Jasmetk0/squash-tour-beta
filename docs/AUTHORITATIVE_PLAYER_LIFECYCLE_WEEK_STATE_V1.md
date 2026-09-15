@@ -2,9 +2,10 @@
 
 This is an implemented technical contract, not a new product decision. For the
 supported ordinary same-season Week Transition, roster/lifecycle authority is
-Run/Branch-owned and server-derived. Weekly development, Form regression,
-fatigue recovery and health healing remain **OPEN blockers**. Season Transition
-is unsupported here.
+Run/Branch-owned and server-derived. Canonical weekly development, Form
+regression, Sharpness decay and Fatigue recovery now live in the separate
+sporting-state contract. Match-derived updates and health healing remain
+**OPEN blockers**. Season Transition is unsupported here.
 
 `player_lifecycle_week_state.v1` is an immutable Run/Branch/week snapshot. It
 preserves player and birth identity, current age, status, retirement effective

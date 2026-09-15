@@ -1,12 +1,12 @@
 # Current implementation and next action
 
-Audited 14 September 2026 from `buuk` **f343778491a21b7607af57c9a1c1a260af7ccb6a**
-(PR #725 merged), plus the authoritative player-lifecycle slice in the current
+Audited 14 September 2026 from `buuk` **6ca4f0026a9b89011eb2d2c3aa8b55f66de5489e**
+(PR #726 merged), plus the authoritative player-sporting slice in the current
 implementation PR. This file is an
 evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #725 is the latest verified merge.
+protocol is chapter 36. PR #726 is the latest verified merge.
 
 ## What exists, and where integration stops
 
@@ -14,13 +14,13 @@ protocol is chapter 36. PR #725 is the latest verified merge.
 |---|---|---|
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
-| Packages/players | World package, initial pool, season bootstrap, Run prospect services and `initial_world_states` | Initial age derives from birth identity at FAX YW37; ordinary birthdays use canonical Season-Week→Year-Week mapping; development/recovery remain open and target-week Run prospects fail closed pending a Branch-owned source bridge |
+| Packages/players | World package, owned InitialWorld, lifecycle and `player_sporting_week_states` | Canonical 57×0–200 sporting history, provisional deterministic development/Form/Sharpness/Fatigue boundary and explicit legacy adapter exist; match-derived state, health and prospects remain open |
 | Tournament flow | `season_event_simulation_service.py`, result/award services, `owned_tournament_sources.py`; real producer/API/SQLite test | Supported four-player main draw can be explicitly adopted as immutable Run/Branch evidence; producer files remain legacy/global and Q/WC/LL/abnormal sources remain rejected |
 | Match engine | `domain/matches/match_engine.py`, immutable input/format contracts and recorded replay; Master 35.9–35.20 | Stored match/replay does not prove whole-world mid-match restore, global slot scheduling or finished realism |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
-| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; `season_week_simulation_execution_service.py` still declares `NO_ROLLBACK_WARNING` | Lifecycle target state and server-derived roster now share the ranking/publication transaction; player development/recovery, slots, prospects and legacy tournament production remain outside it |
+| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; owned complete tournament result manifests can resolve completed-match counts | Sporting development then between-week recovery, lifecycle, ranking/publication/event/receipt share the transaction; a missing/empty authoritative sporting context fails closed, while broader match-state updates, slots and prospects remain outside it |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
 | Other pre-alpha scope | Master 31 remains authoritative | Minimum Reconstruction, player development/AI and lifecycle must not be dropped merely because ranking work dominated recent PRs |
@@ -71,11 +71,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   V1↔V2 restore, exact retry and real changed-state rejection are covered. The
   resulting Fast CI backend smoke selection passed **96 tests** locally.
 - Current initial-world integration run: **98 smoke tests passed in 111.53s**. A focused real HTTP/file-backed SQLite suite passed **53 tests in 22.11s**, including production generation, independent adoption, derived preview/confirm, Save/reopen and bidirectional restore.
-- Current Week Transition slice: **7 real HTTP/file-backed SQLite acceptance cases**
-  cover preview rollback, three forced failure boundaries, confirm, exact retry,
+- Current Week Transition slice: **13 real HTTP/file-backed SQLite acceptance cases**
+  cover preview rollback, six forced failure boundaries, confirm, exact retry,
   changed-request conflict, publication/clock/event cardinality, Save/reopen and
   bidirectional restore. The broader targeted ranking/revision set passed **67**
-  tests and the Fast CI backend smoke equivalent passed **99** tests.
+  tests. Review hardening passed **139** targeted lifecycle, sporting-context,
+  ranking,
+  revision, Match Engine and HTTP/SQLite tests; Fast CI backend smoke passed
+  **99** tests.
   Review hardening additionally rejects Week 61 rollover, requires both reviewed
   request and ranking fingerprints at confirm, validates canonical World Events,
   and preserves historical exact retry after a later coherent world head.
@@ -84,14 +87,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Best next implementation slice
 
-**Expand the real Week Transition orchestrator without inventing lifecycle rules.** Ranking preparation now has an
+**Broaden completed-match sporting inputs beyond match counts and connect the configuration scheduler.** Ranking preparation now has an
 explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
 base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
 effective policy and provenance. The ordinary authoritative Admin route derives the
-ranking context server-side and preserves it through Save/restore. The new narrow
-transaction owner uses it to publish Official Ranking, advance its scoped world
-clock and append the transition World Event/receipt. Next replace the declared
-lifecycle boundary with real owned player/development state in Master 6.5 order.
+ranking context server-side and preserves it through Save/restore. The transaction
+owner now persists canonical player sporting history and the ordered provisional
+development/between-week stages. An explicit manifest of owned complete tournament
+sources supplies competitive match counts; missing evidence fails closed. Next add
+match-derived Form/Sharpness/Fatigue changes and scheduled target-policy resolution.
 
 ## Current limitations
 

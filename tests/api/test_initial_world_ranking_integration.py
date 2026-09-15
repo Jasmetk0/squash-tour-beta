@@ -36,6 +36,7 @@ def _make_legacy_revision_without_lifecycle(path, revision_id):
         payload = json.loads(row[7])
         legacy_payload = json.loads(row[7])
         legacy_payload["content"].pop("player_lifecycle")
+        legacy_payload["content"].pop("player_sporting_state", None)
         content_hash = saved_revision_content_hash(
             revision_id=row[0],
             run_id=row[1],
@@ -64,6 +65,39 @@ def _post_headers_result(url, payload, headers):
         return _post_headers(url, payload, headers)
     except error.HTTPError as exc:
         return exc.code, json.loads(exc.read())
+
+
+def _make_legacy_revision_without_sporting(path, revision_id):
+    with sqlite3.connect(path) as connection:
+        row = connection.execute(
+            "SELECT revision_id,run_id,branch_id,sequence,parent_revision_id,kind,"
+            "payload_schema_version,payload_json,change_summary_json FROM branch_saved_revisions "
+            "WHERE revision_id=?",
+            (revision_id,),
+        ).fetchone()
+        original = json.loads(row[7])
+        legacy = json.loads(row[7])
+        legacy["content"].pop("player_sporting_state")
+        content_hash = saved_revision_content_hash(
+            revision_id=row[0],
+            run_id=row[1],
+            branch_id=row[2],
+            sequence=row[3],
+            parent_revision_id=row[4],
+            kind=row[5],
+            payload_schema_version=row[6],
+            payload=legacy,
+            change_summary=json.loads(row[8]),
+        )
+        connection.execute(
+            "UPDATE branch_saved_revisions SET payload_json=?,content_hash=? WHERE revision_id=?",
+            (
+                json.dumps(legacy, sort_keys=True, separators=(",", ":")),
+                content_hash,
+                revision_id,
+            ),
+        )
+        return original, legacy
 
 
 def _ranking_row_count(path):
@@ -299,9 +333,7 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         assert status == 201
         ranked_revision = ranked_saved["saved_revision"]["revision_id"]
         world_revision = world_saved["saved_revision"]["revision_id"]
-        _, immutable_legacy = _make_legacy_revision_without_lifecycle(
-            db, world_revision
-        )
+        _, immutable_legacy = _make_legacy_revision_without_sporting(db, world_revision)
         restore_legacy = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
             f"/saved-revisions/{world_revision}/restore"
@@ -331,6 +363,10 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
                 "SELECT fingerprint,payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
             ).fetchone()
             live = json.loads(live_row[1])
+            sporting_live_row = connection.execute(
+                "SELECT fingerprint,payload_json FROM player_sporting_week_states WHERE week_ordinal=0"
+            ).fetchone()
+            sporting_live = json.loads(sporting_live_row[1])
             stored_legacy = json.loads(
                 connection.execute(
                     "SELECT payload_json FROM branch_saved_revisions WHERE revision_id=?",
@@ -341,6 +377,12 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         assert component["states"] == [live]
         assert component["states"][0] == live and live_row[0]
         assert stored_legacy == immutable_legacy
+        assert "player_lifecycle" in stored_legacy["content"]
+        assert "player_sporting_state" not in stored_legacy["content"]
+        assert compatibility_payload["content"]["player_sporting_state"]["states"] == [
+            sporting_live
+        ]
+        assert sporting_live_row[0]
         restore_ranked = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
             f"/saved-revisions/{ranked_revision}/restore"

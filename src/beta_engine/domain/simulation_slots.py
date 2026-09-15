@@ -53,6 +53,14 @@ class CanonicalPlayerMatchProjection(FrozenInput):
     form_modifier: float
     sharpness_modifier: float
     fatigue_modifier: float
+    profile_source_fingerprint: str
+    profile_provenance: str
+    age: int
+    name: str
+    nationality: str
+    play_style: str
+    archetype: str
+    hidden_career_traits: HiddenCareerTraits
 
     @property
     def fingerprint(self) -> str:
@@ -64,6 +72,14 @@ def project_player(
     *,
     source_sporting_fingerprint: str,
     policy: CanonicalMatchInputProjectionPolicy,
+    profile_source_fingerprint: str,
+    profile_provenance: str,
+    age: int,
+    name: str,
+    nationality: str,
+    play_style: str,
+    archetype: str,
+    hidden_career_traits: HiddenCareerTraits,
 ) -> CanonicalPlayerMatchProjection:
     values = dict(record.attributes)
 
@@ -108,6 +124,14 @@ def project_player(
         form_modifier=round(form_modifier, 6),
         sharpness_modifier=round(sharpness_modifier, 6),
         fatigue_modifier=round(fatigue_modifier, 6),
+        profile_source_fingerprint=profile_source_fingerprint,
+        profile_provenance=profile_provenance,
+        age=age,
+        name=name,
+        nationality=nationality,
+        play_style=play_style,
+        archetype=archetype,
+        hidden_career_traits=hidden_career_traits,
     )
 
 
@@ -115,22 +139,13 @@ def projected_engine_player(projection: CanonicalPlayerMatchProjection) -> Playe
     values = dict(projection.legacy_engine_values)
     return Player(
         player_id=projection.player_id,
-        name=projection.player_id,
-        age=25,
-        nationality="FAX",
+        name=projection.name,
+        age=projection.age,
+        nationality=projection.nationality,
         **values,
-        play_style="Balanced",
-        archetype="All-court",
-        hidden_career_traits=HiddenCareerTraits(
-            potential_ceiling=99,
-            growth_curve="Standard",
-            professionalism=0.5,
-            ambition=0.5,
-            travel_tolerance=0.5,
-            schedule_aggression=0.5,
-            injury_proneness=0.0,
-            resilience=0.5,
-        ),
+        play_style=projection.play_style,
+        archetype=projection.archetype,
+        hidden_career_traits=projection.hidden_career_traits,
     )
 
 
@@ -376,6 +391,7 @@ class SimulationSlotPlan(FrozenInput):
     ordinal: int = Field(ge=1)
     ordered_dependency_ids: tuple[str, ...] = ()
     group_ids: tuple[str, ...]
+    match_events: tuple["SimulationMatchEventPlan", ...]
     slot_start_fingerprint: str
     provenance: str
 
@@ -383,11 +399,33 @@ class SimulationSlotPlan(FrozenInput):
     def canonical_groups(self):
         if tuple(sorted(set(self.group_ids))) != self.group_ids:
             raise ValueError("slot groups require canonical unique identity")
+        if tuple(event.group_id for event in self.match_events) != self.group_ids:
+            raise ValueError("slot match events must exactly cover canonical groups")
         return self
 
     @property
     def fingerprint(self) -> str:
         return fingerprint(self.model_dump(mode="json"))
+
+
+class SimulationMatchEventPlan(FrozenInput):
+    schema_version: Literal["simulation_match_event_plan.v1"] = (
+        "simulation_match_event_plan.v1"
+    )
+    group_id: str
+    event_id: str
+    match_id: str
+    execution_kind: Literal["competitive_match_engine_simulation"] = (
+        "competitive_match_engine_simulation"
+    )
+    direct_player_ids: tuple[str, str] | None = None
+    feeder_group_ids: tuple[str, str] | None = None
+
+    @model_validator(mode="after")
+    def exactly_one_participant_source(self):
+        if (self.direct_player_ids is None) == (self.feeder_group_ids is None):
+            raise ValueError("match plan requires direct players or two feeder groups")
+        return self
 
 
 class PlayerSportingCheckpoint(FrozenInput):

@@ -345,7 +345,7 @@ def transition_in_transaction(session: Session, awards, command):
             player_ids=player_ids,
         )
     except ValueError as exc:
-        if "No authoritative Run/Branch match ledger" not in str(exc):
+        if "No authoritative Run/Branch Simulation Slot exists" not in str(exc):
             raise
         try:
             resolve_completed_context_from_owned_sources(

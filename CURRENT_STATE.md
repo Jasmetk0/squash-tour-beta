@@ -4,6 +4,8 @@ Audited 15 September 2026 from merged PR #727 at `689ff1fa0d4eefec43647d206150a4
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
+PR #728 review hardening preserves owned InitialWorld style/profile truth, carries Form/Sharpness/Fatigue as distinct match inputs, makes any planned slot authoritative even before its first group commit, enforces feeder topology/global ordinals, and semantically revalidates replay and Saved Revision slot chains.
+
 Gate 3 is not complete. Entries, general authoritative draws, tournament award/publication integration, cross-tournament scheduling, AI, health and broader event types remain gaps.
 
 This file is an evidence/index snapshot, not product authority.

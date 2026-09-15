@@ -28,6 +28,9 @@ class MatchParticipantContext(BaseModel):
 
     player: Player
     form_modifier: float = Field(default=0.0, ge=-0.35, le=0.35)
+    # Added independently in v10 authoritative inputs. Legacy snapshots omit it
+    # and therefore retain the historical neutral default.
+    sharpness_modifier: float = Field(default=0.0, ge=-0.35, le=0.35)
     fatigue_modifier: float = Field(default=0.0, ge=-0.35, le=0.35)
     health_modifier: float = Field(default=0.0, ge=-0.35, le=0.35)
     travel_modifier: float = Field(default=0.0, ge=-0.35, le=0.35)

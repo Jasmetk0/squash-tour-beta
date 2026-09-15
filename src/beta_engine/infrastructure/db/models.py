@@ -207,6 +207,12 @@ class CompletedWeekSportingContextModel(Base):
 class SimulationSlotModel(Base):
     """Immutable plan plus evolving completion head for one global slot."""
     __tablename__ = "simulation_slots"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "branch_id", "week_ordinal", "slot_ordinal",
+            name="uq_simulation_slot_global_ordinal",
+        ),
+    )
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)

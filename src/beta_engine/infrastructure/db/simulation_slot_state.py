@@ -15,7 +15,115 @@ from beta_engine.infrastructure.db.models import (
 COMPONENT_KEY = "simulation_slot_match_state"
 
 
+def _validate_semantics(slots, groups):
+    from beta_engine.application.authoritative_slot_matches import (
+        AuthoritativeSlotMatchExecutor,
+    )
+
+    slot_keys = [(row.week_ordinal, row.slot_id) for row in slots]
+    ordinal_keys = [(row.week_ordinal, row.slot_ordinal) for row in slots]
+    if len(slot_keys) != len(set(slot_keys)) or len(ordinal_keys) != len(
+        set(ordinal_keys)
+    ):
+        raise ValueError("Simulation slots require unique IDs and global ordinals")
+    by_week = {}
+    for row in slots:
+        by_week.setdefault(row.week_ordinal, []).append(row)
+    for week_slots in by_week.values():
+        ordered = sorted(week_slots, key=lambda item: item.slot_ordinal)
+        if [item.slot_ordinal for item in ordered] != list(range(1, len(ordered) + 1)):
+            raise ValueError(
+                "Simulation Slot ordinals must be canonical and contiguous"
+            )
+        predecessor = None
+        for row in ordered:
+            plan = AuthoritativeSlotMatchExecutor._load_plan(row)
+            start = AuthoritativeSlotMatchExecutor._load_slot_start(row)
+            terminal = AuthoritativeSlotMatchExecutor._load_checkpoint(row)
+            if (
+                plan.run_id,
+                plan.branch_id,
+                plan.week.ordinal,
+                plan.slot_id,
+                plan.ordinal,
+            ) != (
+                row.run_id,
+                row.branch_id,
+                row.week_ordinal,
+                row.slot_id,
+                row.slot_ordinal,
+            ):
+                raise ValueError("Simulation Slot plan scope is corrupt")
+            if start.predecessor_checkpoint_fingerprint != predecessor:
+                raise ValueError(
+                    "Simulation Slot predecessor checkpoint chain is corrupt"
+                )
+            slot_groups = sorted(
+                (
+                    group
+                    for group in groups
+                    if (group.week_ordinal, group.slot_id)
+                    == (row.week_ordinal, row.slot_id)
+                ),
+                key=lambda item: item.group_id,
+            )
+            group_ids = {group.group_id for group in slot_groups}
+            if not group_ids <= set(plan.group_ids) or (
+                row.status == "complete" and group_ids != set(plan.group_ids)
+            ):
+                raise ValueError(
+                    "Simulation Slot status and planned group universe differ"
+                )
+            effects = []
+            for group in slot_groups:
+                loaded = AuthoritativeSlotMatchExecutor._load_group(group)
+                effects.extend(loaded.effects)
+            players = {player.player_id: player for player in start.players}
+            for effect in sorted(
+                effects, key=lambda item: (item.player_id, item.group_id)
+            ):
+                player = players[effect.player_id]
+                if (
+                    player.current_form,
+                    player.match_sharpness,
+                    player.long_term_fatigue,
+                ) != (
+                    effect.form_before,
+                    effect.sharpness_before,
+                    effect.fatigue_before,
+                ):
+                    raise ValueError(
+                        "Simulation Slot effects do not rebuild from frozen input"
+                    )
+                players[effect.player_id] = player.model_copy(
+                    update={
+                        "current_form": effect.form_after,
+                        "match_sharpness": effect.sharpness_after,
+                        "long_term_fatigue": effect.fatigue_after,
+                    }
+                )
+            rebuilt = start.model_copy(
+                update={
+                    "applied_effect_fingerprints": tuple(
+                        sorted(effect.fingerprint for effect in effects)
+                    ),
+                    "players": tuple(
+                        players[player_id] for player_id in sorted(players)
+                    ),
+                }
+            )
+            if rebuilt != terminal:
+                raise ValueError(
+                    "Simulation Slot terminal checkpoint is not rebuildable"
+                )
+            predecessor = terminal.fingerprint
+    known = set(slot_keys)
+    if any((group.week_ordinal, group.slot_id) not in known for group in groups):
+        raise ValueError("Simulation event group has no planned slot")
+
+
 def _component(slots, groups):
+    _validate_semantics(slots, groups)
     body = {
         "slots": [
             {

@@ -4,23 +4,46 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import json
+import hashlib
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
+    execute_supported_four_player_tournament,
 )
+from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.lifecycle import (
+    PlayerLifecycleIdentity,
+    PlayerLifecycleWeekState,
+)
+from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
+from beta_engine.domain.players.models import HiddenCareerTraits
 from beta_engine.domain.players.sporting import (
     PlayerDevelopmentPolicy,
     PlayerSportingRecord,
     PlayerSportingWeekState,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.domain.simulation_slots import CanonicalMatchInputProjectionPolicy
+from beta_engine.domain.simulation_slots import (
+    CanonicalMatchInputProjectionPolicy,
+    SimulationMatchEventPlan,
+)
 from beta_engine.infrastructure.db.models import Base, SimulationEventGroupModel
+from beta_engine.infrastructure.db.initial_world_state import (
+    get_initial_world,
+    put_initial_world,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    get_lifecycle,
+    put_lifecycle,
+)
 from beta_engine.infrastructure.db.player_sporting_state import (
     put_sporting,
+    get_sporting,
     resolve_completed_context_from_authoritative_matches,
     transition_sporting,
 )
@@ -51,6 +74,98 @@ def session_at(path: Path) -> Session:
     engine = create_engine(f"sqlite:///{path}")
     Base.metadata.create_all(engine)
     session = Session(engine)
+    traits = HiddenCareerTraits(
+        potential_ceiling=99,
+        growth_curve="Standard",
+        professionalism=0.5,
+        ambition=0.5,
+        travel_tolerance=0.5,
+        schedule_aggression=0.5,
+        injury_proneness=0.1,
+        resilience=0.6,
+    )
+    profiles = tuple(
+        SeasonActivePlayer(
+            player_id=pid,
+            name=pid.upper(),
+            nationality="CZE",
+            country_code="CZE",
+            birth_year=1975,
+            birth_year_week=1,
+            age_years_at_season_start=25,
+            age_weeks_at_season_start=25 * 61,
+            current_ability=70,
+            potential_ability=80,
+            potential_tier="A",
+            career_stage="prime",
+            season="2000/2001",
+            active_status="active",
+            play_style=style,
+            archetype=archetype,
+            hidden_career_traits=traits,
+            attributes=GeneratedPlayerAttributes(
+                technique=70,
+                movement=70,
+                physical=70,
+                mental=70,
+                consistency=70,
+                clutch=70,
+                recovery=70,
+            ),
+            source_pool_player_id=pid,
+            source_generation_fingerprint=f"profile:{pid}",
+            source_generation="initial_pool",
+            manual_override=False,
+            locked_from_initial_pool=True,
+            bootstrap_fingerprint="bootstrap",
+            bootstrap_seed=1,
+            bootstrap_id="bootstrap",
+        )
+        for pid, style, archetype in (
+            ("a", "attacking", "Power Attacker"),
+            ("b", "retrieving", "Retriever"),
+            ("c", "tempo-controller", "Control Player"),
+            ("d", "front-court", "Shot Maker"),
+        )
+    )
+    world = InitialWorldState(
+        run_id="run",
+        branch_id="branch",
+        players=profiles,
+        source_kind="production_initial_pool.v1",
+        source_season="2000/2001",
+        source_fingerprint="source",
+        bootstrap_seed=1,
+        bootstrap_fingerprint="bootstrap",
+        adopted_by_command_id="adopt",
+        audit_label="test",
+        audit_reason="test",
+        adoption_request_fingerprint="1" * 64,
+    )
+    put_initial_world(session, world)
+    put_lifecycle(
+        session,
+        PlayerLifecycleWeekState(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            source_initial_world_fingerprint=world.fingerprint,
+            players=tuple(
+                PlayerLifecycleIdentity(
+                    player_id=pid,
+                    birth_year=1975,
+                    birth_year_week=1,
+                    tie_break_token=f"token:{pid}",
+                    tie_break_provenance="test",
+                    tour_entry_week=WEEK,
+                    age=25,
+                    status="active",
+                    origin="test",
+                )
+                for pid in ("a", "b", "c", "d")
+            ),
+        ),
+    )
     put_sporting(
         session,
         PlayerSportingWeekState(
@@ -63,7 +178,7 @@ def session_at(path: Path) -> Session:
             ),
             effective_development_policy=PlayerDevelopmentPolicy(),
             completed_context_fingerprint="bootstrap",
-            source_initial_world_fingerprint="world",
+            source_initial_world_fingerprint=world.fingerprint,
             stage_provenance="test",
         ),
     )
@@ -81,6 +196,20 @@ def run_semifinals(path: Path, order: tuple[str, str]):
         slot_id="slot-1",
         ordinal=1,
         group_ids=("sf-1", "sf-2"),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="sf-1",
+                event_id="event",
+                match_id="sf-1",
+                direct_player_ids=("a", "b"),
+            ),
+            SimulationMatchEventPlan(
+                group_id="sf-2",
+                event_id="event",
+                match_id="sf-2",
+                direct_player_ids=("c", "d"),
+            ),
+        ),
     )
     participants = {"sf-1": ("a", "b", 101), "sf-2": ("c", "d", 202)}
     results = {}
@@ -121,6 +250,34 @@ def test_same_slot_frozen_snapshot_and_iteration_order_independence(tmp_path):
     assert one[4] == two[4]
 
 
+def test_production_four_player_application_path_derives_topology_and_result_refs(
+    tmp_path,
+):
+    session = session_at(tmp_path / "production-four.sqlite")
+    result = execute_supported_four_player_tournament(
+        session,
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        event_id="owned-event",
+        ordered_player_ids=("a", "b", "c", "d"),
+        seed=500,
+    )
+    assert len(result.match_result_fingerprints) == 3
+    assert result.match_result_fingerprints == tuple(
+        item.result_fingerprint
+        for item in (*result.semifinal_groups, result.final_group)
+    )
+    assert result.champion_player_id == result.final_group.result.winner_player_id
+    final_ids = tuple(
+        projection.player_id
+        for projection in result.final_group.authoritative_input.player_projections
+    )
+    assert final_ids == tuple(
+        item.result.winner_player_id for item in result.semifinal_groups
+    )
+
+
 def test_semifinal_effects_feed_later_final_and_replay_is_historical(tmp_path):
     session, executor, first, semifinals, after = run_semifinals(
         tmp_path / "tournament.sqlite", ("sf-1", "sf-2")
@@ -133,6 +290,14 @@ def test_semifinal_effects_feed_later_final_and_replay_is_historical(tmp_path):
         slot_id="slot-2",
         ordinal=2,
         group_ids=("final",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="final",
+                event_id="event",
+                match_id="final",
+                feeder_group_ids=("sf-1", "sf-2"),
+            ),
+        ),
         dependency_ids=("sf-1", "sf-2"),
     )
     assert plan.slot_start_fingerprint != first.slot_start_fingerprint
@@ -172,6 +337,218 @@ def test_semifinal_effects_feed_later_final_and_replay_is_historical(tmp_path):
     assert replay.result == final.result
 
 
+def test_owned_styles_reach_protected_gameplans_and_final_participants_are_enforced(
+    tmp_path,
+):
+    session, executor, _, semifinals, _ = run_semifinals(
+        tmp_path / "profiles.sqlite", ("sf-1", "sf-2")
+    )
+    first = semifinals["sf-1"].authoritative_input
+    assert tuple(p.play_style for p in first.player_projections) == (
+        "attacking",
+        "retrieving",
+    )
+    natural = first.engine_input.effective_match_gameplans.natural_style_profiles
+    assert natural[0].source_play_style == "attacking"
+    assert natural[1].source_play_style == "retrieving"
+    assert natural[0].axes != natural[1].axes
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-2",
+        ordinal=2,
+        group_ids=("final",),
+        dependency_ids=("sf-1", "sf-2"),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="final",
+                event_id="event",
+                match_id="final",
+                feeder_group_ids=("sf-1", "sf-2"),
+            ),
+        ),
+    )
+    winners = tuple(value.result.winner_player_id for value in semifinals.values())
+    outsider = next(pid for pid in ("a", "b", "c", "d") if pid not in winners)
+    with pytest.raises(ValueError, match="participants differ"):
+        executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot-2",
+            group_id="final",
+            event_id="event",
+            match_id="final",
+            player_a_id=outsider,
+            player_b_id=winners[1],
+            seed=9,
+            expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+        )
+
+
+def test_replay_recomputes_result_fingerprint_and_rejects_corruption(tmp_path):
+    session = session_at(tmp_path / "corrupt.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="g",
+                event_id="event",
+                match_id="match",
+                direct_player_ids=("a", "b"),
+            ),
+        ),
+    )
+    executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        group_id="g",
+        event_id="event",
+        match_id="match",
+        player_a_id="a",
+        player_b_id="b",
+        seed=41,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+    row = session.get(
+        SimulationEventGroupModel, ("run", "branch", WEEK.ordinal, "slot", "g")
+    )
+    payload = json.loads(row.payload_json)
+    payload["result"]["sets"][0]["was_close_endgame"] = not payload["result"]["sets"][
+        0
+    ]["was_close_endgame"]
+    row.payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    session.flush()
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        executor.replay(
+            run_id="run", branch_id="branch", week=WEEK, slot_id="slot", group_id="g"
+        )
+
+
+def test_pending_authoritative_slot_owns_week_and_blocks_context(tmp_path):
+    session = session_at(tmp_path / "pending.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="g",
+                event_id="event",
+                match_id="match",
+                direct_player_ids=("a", "b"),
+            ),
+        ),
+    )
+    with pytest.raises(ValueError, match="owns the week but is incomplete"):
+        resolve_completed_context_from_authoritative_matches(
+            session,
+            run_id="run",
+            branch_id="branch",
+            completed_week=WEEK,
+            player_ids=("a", "b", "c", "d"),
+        )
+
+
+def test_two_real_owned_branches_keep_independent_slot_histories(tmp_path):
+    session = session_at(tmp_path / "branches.sqlite")
+    world_a = get_initial_world(session, run_id="run", branch_id="branch")
+    life_a = get_lifecycle(session, run_id="run", branch_id="branch", week=WEEK)
+    sporting_a = get_sporting(session, run_id="run", branch_id="branch", week=WEEK)
+    world_b = world_a.model_copy(update={"branch_id": "branch-b"})
+    put_initial_world(session, world_b)
+    put_lifecycle(
+        session,
+        life_a.model_copy(
+            update={
+                "branch_id": "branch-b",
+                "source_initial_world_fingerprint": world_b.fingerprint,
+            }
+        ),
+    )
+    put_sporting(
+        session,
+        sporting_a.model_copy(
+            update={
+                "branch_id": "branch-b",
+                "source_initial_world_fingerprint": world_b.fingerprint,
+            }
+        ),
+    )
+    session.commit()
+    executor = AuthoritativeSlotMatchExecutor(session)
+    event = SimulationMatchEventPlan(
+        group_id="g", event_id="event", match_id="match", direct_player_ids=("a", "b")
+    )
+    plan_a = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(event,),
+    )
+    executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        group_id="g",
+        event_id="event",
+        match_id="match",
+        player_a_id="a",
+        player_b_id="b",
+        seed=1,
+        expected_slot_start_fingerprint=plan_a.slot_start_fingerprint,
+    )
+    assert (
+        executor.terminal_checkpoint(run_id="run", branch_id="branch-b", week=WEEK)
+        is None
+    )
+    plan_b = executor.create_slot(
+        run_id="run",
+        branch_id="branch-b",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(event,),
+    )
+    result_b = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch-b",
+        week=WEEK,
+        slot_id="slot",
+        group_id="g",
+        event_id="event",
+        match_id="match",
+        player_a_id="a",
+        player_b_id="b",
+        seed=2,
+        expected_slot_start_fingerprint=plan_b.slot_start_fingerprint,
+    )
+    assert (
+        result_b.result_fingerprint
+        != executor.replay(
+            run_id="run", branch_id="branch", week=WEEK, slot_id="slot", group_id="g"
+        ).result_fingerprint
+    )
+
+
 def test_retry_conflict_exactly_once_branch_isolation_and_faults(tmp_path):
     session = session_at(tmp_path / "faults.sqlite")
     executor = AuthoritativeSlotMatchExecutor(session)
@@ -182,6 +559,11 @@ def test_retry_conflict_exactly_once_branch_isolation_and_faults(tmp_path):
         slot_id="slot",
         ordinal=1,
         group_ids=("g",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="g", event_id="e", match_id="m", direct_player_ids=("a", "b")
+            ),
+        ),
     )
     session.commit()
     with pytest.raises(ValueError, match="complete predecessor"):
@@ -192,6 +574,14 @@ def test_retry_conflict_exactly_once_branch_isolation_and_faults(tmp_path):
             slot_id="final-too-early",
             ordinal=2,
             group_ids=("final",),
+            match_events=(
+                SimulationMatchEventPlan(
+                    group_id="final",
+                    event_id="e",
+                    match_id="final",
+                    feeder_group_ids=("g", "other"),
+                ),
+            ),
             dependency_ids=("g",),
         )
     kwargs = dict(
@@ -243,6 +633,11 @@ def test_projection_policy_is_versioned_and_changes_protected_input(tmp_path):
         slot_id="slot",
         ordinal=1,
         group_ids=("g",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="g", event_id="e", match_id="m", direct_player_ids=("a", "b")
+            ),
+        ),
     )
     base = dict(
         run_id="run",
@@ -286,6 +681,14 @@ def test_slot_history_saved_reopened_and_restored_backward_forward(tmp_path):
         slot_id="slot",
         ordinal=1,
         group_ids=("g",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="g",
+                event_id="event",
+                match_id="match",
+                direct_player_ids=("a", "b"),
+            ),
+        ),
     )
     executor.execute_match_group(
         run_id="run",
@@ -333,6 +736,42 @@ def test_slot_history_saved_reopened_and_restored_backward_forward(tmp_path):
     assert replay.exact_retry is False
 
 
+def test_restore_rejects_semantic_corruption_before_mutation(tmp_path):
+    session, executor, _, _, terminal = run_semifinals(
+        tmp_path / "semantic-restore.sqlite", ("sf-1", "sf-2")
+    )
+    current = {"content": {}}
+    capture_saved_simulation_slots(session, current, run_id="run", branch_id="branch")
+    corrupt = json.loads(json.dumps(current))
+    component = corrupt["content"]["simulation_slot_match_state"]
+    group_payload = json.loads(component["groups"][0]["payload_json"])
+    group_payload["result"]["sets"][0]["was_close_endgame"] = not group_payload[
+        "result"
+    ]["sets"][0]["was_close_endgame"]
+    component["groups"][0]["payload_json"] = json.dumps(
+        group_payload, sort_keys=True, separators=(",", ":")
+    )
+    body = {"slots": component["slots"], "groups": component["groups"]}
+    component["fingerprint"] = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    before = terminal.fingerprint
+    with pytest.raises(ValueError, match="fingerprint mismatch"):
+        restore_saved_simulation_slots(
+            session,
+            current_payload=current,
+            target_payload=corrupt,
+            run_id="run",
+            branch_id="branch",
+        )
+    assert (
+        executor.terminal_checkpoint(
+            run_id="run", branch_id="branch", week=WEEK
+        ).fingerprint
+        == before
+    )
+
+
 def test_week_transition_development_reads_terminal_post_match_form(tmp_path):
     session = session_at(tmp_path / "transition.sqlite")
     executor = AuthoritativeSlotMatchExecutor(session)
@@ -343,6 +782,14 @@ def test_week_transition_development_reads_terminal_post_match_form(tmp_path):
         slot_id="slot",
         ordinal=1,
         group_ids=("match",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="match",
+                event_id="event",
+                match_id="match",
+                direct_player_ids=("a", "b"),
+            ),
+        ),
     )
     played = executor.execute_match_group(
         run_id="run",

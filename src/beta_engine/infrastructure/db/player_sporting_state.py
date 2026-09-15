@@ -140,7 +140,26 @@ def resolve_completed_context_from_authoritative_matches(
     from beta_engine.application.authoritative_slot_matches import (
         AuthoritativeSlotMatchExecutor,
     )
-    from beta_engine.infrastructure.db.models import SimulationEventGroupModel
+    from beta_engine.infrastructure.db.models import (
+        SimulationEventGroupModel,
+        SimulationSlotModel,
+    )
+
+    slots = session.scalars(
+        select(SimulationSlotModel).where(
+            SimulationSlotModel.run_id == run_id,
+            SimulationSlotModel.branch_id == branch_id,
+            SimulationSlotModel.week_ordinal == completed_week.ordinal,
+        )
+    ).all()
+    if not slots:
+        raise ValueError(
+            "No authoritative Run/Branch Simulation Slot exists for completed week"
+        )
+    if any(slot.status != "complete" for slot in slots):
+        raise ValueError(
+            "Authoritative Simulation Slot ledger owns the week but is incomplete"
+        )
 
     rows = session.scalars(
         select(SimulationEventGroupModel)
@@ -152,9 +171,7 @@ def resolve_completed_context_from_authoritative_matches(
         .order_by(SimulationEventGroupModel.slot_id, SimulationEventGroupModel.group_id)
     ).all()
     if not rows:
-        raise ValueError(
-            "No authoritative Run/Branch match ledger exists for completed week"
-        )
+        raise ValueError("Completed authoritative slots contain no committed groups")
     executor = AuthoritativeSlotMatchExecutor(session)
     terminal = executor.terminal_checkpoint(
         run_id=run_id, branch_id=branch_id, week=completed_week

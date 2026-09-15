@@ -133,6 +133,63 @@ def resolve_completed_context_from_owned_sources(
     )
 
 
+def resolve_completed_context_from_authoritative_matches(
+    session, *, run_id, branch_id, completed_week, player_ids
+):
+    """Prefer the Run/Branch slot ledger when authoritative matches exist."""
+    from beta_engine.application.authoritative_slot_matches import (
+        AuthoritativeSlotMatchExecutor,
+    )
+    from beta_engine.infrastructure.db.models import SimulationEventGroupModel
+
+    rows = session.scalars(
+        select(SimulationEventGroupModel)
+        .where(
+            SimulationEventGroupModel.run_id == run_id,
+            SimulationEventGroupModel.branch_id == branch_id,
+            SimulationEventGroupModel.week_ordinal == completed_week.ordinal,
+        )
+        .order_by(SimulationEventGroupModel.slot_id, SimulationEventGroupModel.group_id)
+    ).all()
+    if not rows:
+        raise ValueError(
+            "No authoritative Run/Branch match ledger exists for completed week"
+        )
+    executor = AuthoritativeSlotMatchExecutor(session)
+    terminal = executor.terminal_checkpoint(
+        run_id=run_id, branch_id=branch_id, week=completed_week
+    )
+    if terminal is None:
+        raise ValueError("Authoritative completed week has no terminal sporting head")
+    counts = {player_id: 0 for player_id in player_ids}
+    effect_fingerprints = []
+    source_fingerprints = []
+    for row in rows:
+        group = executor._load_group(row)
+        source_fingerprints.append(row.result_fingerprint)
+        for effect in group.effects:
+            effect_fingerprints.append(effect.fingerprint)
+            if effect.player_id in counts:
+                counts[effect.player_id] += 1
+    return put_completed_context(
+        session,
+        CompletedWeekSportingContext(
+            schema_version="completed_week_sporting_context.v2",
+            run_id=run_id,
+            branch_id=branch_id,
+            completed_week=completed_week,
+            competitive_match_counts=tuple(
+                CompetitiveMatchCount(player_id=player_id, count=count)
+                for player_id, count in sorted(counts.items())
+            ),
+            source_fingerprints=tuple(sorted(source_fingerprints)),
+            terminal_sporting_fingerprint=terminal.fingerprint,
+            match_effect_fingerprints=tuple(sorted(effect_fingerprints)),
+            provenance="authoritative Run/Branch Simulation Slot match/effect ledger",
+        ),
+    )
+
+
 def _load(row, run_id, branch_id, week):
     state = PlayerSportingWeekState.model_validate_json(row.payload_json)
     if (state.run_id, state.branch_id, state.week.ordinal, state.fingerprint) != (
@@ -281,6 +338,20 @@ def transition_sporting(
     context = get_completed_context(
         session, run_id=run_id, branch_id=branch_id, completed_week=completed
     )
+    if context.terminal_sporting_fingerprint:
+        from beta_engine.application.authoritative_slot_matches import (
+            AuthoritativeSlotMatchExecutor,
+        )
+
+        terminal = AuthoritativeSlotMatchExecutor(session).terminal_checkpoint(
+            run_id=run_id, branch_id=branch_id, week=completed
+        )
+        if (
+            terminal is None
+            or terminal.fingerprint != context.terminal_sporting_fingerprint
+        ):
+            raise ValueError("Completed sporting context terminal head mismatch")
+        predecessor = predecessor.model_copy(update={"players": terminal.players})
     target_effective_development_policy = (
         target_effective_development_policy or predecessor.effective_development_policy
     )

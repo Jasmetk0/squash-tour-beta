@@ -124,6 +124,11 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     capture_saved_sporting,
     restore_saved_sporting,
 )
+from beta_engine.infrastructure.db.simulation_slot_state import (
+    COMPONENT_KEY as SIMULATION_SLOT_COMPONENT_KEY,
+    capture_saved_simulation_slots,
+    restore_saved_simulation_slots,
+)
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
@@ -3238,6 +3243,22 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player sporting state: {exc}"
                         ) from exc
+                if (
+                    SIMULATION_SLOT_COMPONENT_KEY in current_content
+                    or SIMULATION_SLOT_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_simulation_slots(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore Simulation Slot state: {exc}"
+                        ) from exc
 
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=target_revision.payload,
@@ -3262,6 +3283,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_sporting(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 summary = branch_restore_saved_revision_change_summary(
@@ -3644,6 +3668,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_sporting(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 summary = viewer_branch_saved_revision_change_summary(

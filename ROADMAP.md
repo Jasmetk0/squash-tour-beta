@@ -2,7 +2,11 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Active pre-alpha dependency path (audit after #725)
+## Immediate next integration
+
+The current slice owns narrow global-Slot match execution and intra-week sporting effects. Next connect its completed match/result fingerprints to owned tournament completion and awards through a production Admin/API command, then expand scheduler/draw ownership. Do not rebuild global JSON authority. Entries, AI, cross-tournament scheduling, health and broader events remain later Gate 3 work.
+
+## Active pre-alpha dependency path (audit after #727 plus current slot slice)
 
 This sequence is a technical plan, not a new product-rule registry. Re-evaluate
 it after each merge using `CURRENT_STATE.md`. Existing detailed targets below

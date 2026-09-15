@@ -40,6 +40,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 from beta_engine.infrastructure.db.player_sporting_state import (
     get_completed_context,
     get_sporting,
+    resolve_completed_context_from_authoritative_matches,
     resolve_completed_context_from_owned_sources,
     transition_sporting,
 )
@@ -334,27 +335,37 @@ def transition_in_transaction(session: Session, awards, command):
         raise ValueError(
             "Authoritative predecessor player lifecycle snapshot is missing"
         )
+    player_ids = tuple(player.player_id for player in predecessor_lifecycle.players)
     try:
-        resolve_completed_context_from_owned_sources(
+        resolve_completed_context_from_authoritative_matches(
             session,
             run_id=command.run_id,
             branch_id=command.branch_id,
             completed_week=command.completed_week,
-            player_ids=tuple(
-                player.player_id for player in predecessor_lifecycle.players
-            ),
+            player_ids=player_ids,
         )
     except ValueError as exc:
-        if "Zero-match context requires explicit authoritative evidence" not in str(
-            exc
-        ):
+        if "No authoritative Run/Branch match ledger" not in str(exc):
             raise
-        get_completed_context(
-            session,
-            run_id=command.run_id,
-            branch_id=command.branch_id,
-            completed_week=command.completed_week,
-        )
+        try:
+            resolve_completed_context_from_owned_sources(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                completed_week=command.completed_week,
+                player_ids=player_ids,
+            )
+        except ValueError as legacy_exc:
+            if "Zero-match context requires explicit authoritative evidence" not in str(
+                legacy_exc
+            ):
+                raise
+            get_completed_context(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                completed_week=command.completed_week,
+            )
     sporting = transition_sporting(
         session,
         run_id=command.run_id,

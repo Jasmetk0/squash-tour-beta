@@ -241,6 +241,17 @@ class SimulationEventGroupModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class AuthoritativeSimulationCommandModel(Base):
+    """Idempotency/audit receipt for a Run/Branch simulation-driver mutation."""
+
+    __tablename__ = "authoritative_simulation_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

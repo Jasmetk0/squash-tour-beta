@@ -6,14 +6,19 @@ from types import SimpleNamespace
 import pytest
 import json
 import hashlib
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
     execute_supported_four_player_tournament,
     execute_adopted_four_player_match_package,
+)
+from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeRunSimulationDriver,
+    AuthoritativeSimulationCommand,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
@@ -46,6 +51,7 @@ from beta_engine.infrastructure.db.models import (
     Base,
     PlayerLifecycleWeekStateModel,
     SimulationEventGroupModel,
+    RunBranchModel,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
@@ -400,6 +406,97 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
     corrupt.match_result_refs[0].result_fingerprint = "0" * 64
     with pytest.raises(ValueError, match="result fingerprint mismatch"):
         prepare_tournament_ranking_sources(binding, corrupt, awards)
+
+
+def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(tmp_path / "driver-source")
+    package = service.result_service.match_service._load_registry().matches_by_event_id[
+        event_id
+    ]
+    package.qualification_matches = []
+    week = RankingWeek(season_index=0, week=package.season_week)
+    ids = tuple(
+        player_id
+        for match in sorted(
+            (m for m in package.main_draw_matches if m.round_number == 1),
+            key=lambda m: m.bracket_position,
+        )
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    session = session_at(tmp_path / "driver.sqlite", ids, week)
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision-1",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+    driver = AuthoritativeRunSimulationDriver(
+        factory, service.result_service.match_service, service
+    )
+    opening = driver.position(run_id="run", branch_id="branch")
+    assert len(opening.eligible_match_ids) == 2
+    assert len(opening.blocked_match_ids) == 1
+
+    first = AuthoritativeSimulationCommand(
+        command_id="sf-1",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision-1",
+        group_id=opening.eligible_match_ids[0],
+    )
+    after_first = driver.simulate_next_match(first)
+    assert len(after_first["eligible_match_ids"]) == 1
+    assert after_first["blocked_match_ids"]
+    assert driver.simulate_next_match(first) == after_first
+    with pytest.raises(ValueError, match="stale"):
+        driver.simulate_next_match(
+            first.model_copy(
+                update={
+                    "command_id": "stale",
+                    "group_id": opening.eligible_match_ids[1],
+                }
+            )
+        )
+
+    current = driver.position(run_id="run", branch_id="branch")
+    second = first.model_copy(
+        update={
+            "command_id": "sf-2",
+            "expected_position_fingerprint": current.position_fingerprint,
+            "group_id": current.eligible_match_ids[0],
+        }
+    )
+    driver.simulate_next_match(second)
+    final_position = driver.position(run_id="run", branch_id="branch")
+    final = first.model_copy(
+        update={
+            "command_id": "final",
+            "expected_position_fingerprint": final_position.position_fingerprint,
+            "group_id": None,
+        }
+    )
+    closed = driver.simulate_next_slot(final)
+    assert closed["supported_tournament_complete"] is True
+    assert closed["week_ready_for_transition"] is True
+    with factory() as check:
+        assert (
+            len(
+                OwnedTournamentRankingSourceStore(check).history(
+                    run_id="run", branch_id="branch"
+                )
+            )
+            == 1
+        )
+        assert len(check.scalars(select(SimulationEventGroupModel)).all()) == 3
 
 
 def test_same_adopted_event_is_branch_safe_and_legacy_registry_is_read_only(tmp_path):

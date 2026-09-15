@@ -4,9 +4,15 @@ This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_
 
 ## Implemented narrow tournament integration
 
-The current slice explicitly adopts the existing persisted supported four-player Main Draw, preserves its three match identities, publishes the exact authoritative Slot result fingerprints through the existing tournament completion and award contracts, and persists the existing `OwnedTournamentRankingSource`. General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling, health and broader events remain later Gate 3 work.
+The current narrow driver automatically adopts the existing persisted supported
+four-player Main Draw, materializes semifinal/final slots, preserves its three match
+identities, and closes exactly once through the existing completion, award and
+`OwnedTournamentRankingSource` contracts. Explicit authoritative Admin routes expose
+position, split Next Match and Next Slot without redirecting legacy simulation.
+General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling,
+health and the complete Week 1→2→3 acceptance remain Gate 3 work.
 
-## Active pre-alpha dependency path (audit after #727 plus current slot slice)
+## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 
 This sequence is a technical plan, not a new product-rule registry. Re-evaluate
 it after each merge using `CURRENT_STATE.md`. Existing detailed targets below

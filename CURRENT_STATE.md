@@ -1,6 +1,6 @@
 # Current implementation and next action
 
-Audited 15 September 2026 from merged PR #727 at `689ff1fa0d4eefec43647d206150a46fd80254d9`, plus the authoritative Simulation Slot match-effects slice in this current PR.
+Audited 15 September 2026 from merged PR #728 at `fbcb54d3ccea8f1c0c2b61c56a94a85767f36b84`, plus the narrow authoritative repeated-simulation driver in this branch.
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
@@ -13,7 +13,7 @@ The supported persisted four-player Main Draw now has an explicit compatibility 
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #727 is the latest verified merge.
+protocol is chapter 36. PR #728 is the latest verified merge.
 
 ## What exists, and where integration stops
 
@@ -94,15 +94,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Best next implementation slice
 
-**Broaden completed-match sporting inputs beyond match counts and connect the configuration scheduler.** Ranking preparation now has an
-explicit manually declared, immutable Run/Branch authority snapshot for its completed/target boundary,
-base Saved Revision, canonical roster/tie-break identity, lifecycle eligibility,
-effective policy and provenance. The ordinary authoritative Admin route derives the
-ranking context server-side and preserves it through Save/restore. The transaction
-owner now persists canonical player sporting history and the ordered provisional
-development/between-week stages. An explicit manifest of owned complete tournament
-sources supplies competitive match counts; missing evidence fails closed. Next add
-match-derived Form/Sharpness/Fatigue changes and scheduled target-policy resolution.
+**Broaden the proven repeated sporting flow without weakening its authority.** The
+narrow four-player path derives a stable Run/Branch position, commits independent
+same-slot groups separately over one frozen snapshot, resumes partial commands, runs
+the same sporting-context preflight consumed by Week Transition, materializes the
+dependent Final and closes exactly once into `OwnedTournamentRankingSource`.
+Match-derived Form/Sharpness/Fatigue and the tournament-to-ranking bridge are
+implemented, not future gaps. The next slice may broaden scheduling beyond the one
+unambiguous supported event per concrete season/week; Qualification and ambiguity
+must continue to fail closed.
 
 ## Current limitations
 

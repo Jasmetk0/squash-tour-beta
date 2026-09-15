@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
@@ -116,6 +118,23 @@ def test_v10_protects_sharpness_separately_from_form_and_fatigue() -> None:
         != second.context.player_a.sharpness_modifier
     )
     assert first.snapshot_hash != second.snapshot_hash
+
+
+def test_fixed_historical_v9_payload_keeps_original_identity() -> None:
+    payload = json.loads(
+        (
+            Path(__file__).parents[1]
+            / "fixtures/matches/historical_match_input_v9.json"
+        ).read_text()
+    )
+    assert "sharpness_modifier" not in payload["context"]["player_a"]
+    snapshot = MatchInputSnapshot.model_validate(payload)
+    assert (
+        snapshot.snapshot_hash
+        == "94b83f69eb5519b06e9a046b492a2039f1e6575fb7053033acf946ee923d73c1"
+    )
+    assert snapshot.context.player_a.sharpness_modifier == 0.0
+    assert snapshot.context.player_b.sharpness_modifier == 0.0
 
 
 def test_match_input_snapshot_rejects_protected_input_tampering() -> None:

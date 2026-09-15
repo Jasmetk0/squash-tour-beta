@@ -129,7 +129,7 @@ def install_owned_lifecycle(
                     )
                     for identity in identities
                 ),
-                completed_context_fingerprint="fixture-bootstrap",
+                completed_context_fingerprint="bootstrap:not-a-completed-week",
                 source_initial_world_fingerprint="acceptance-fixture",
                 stage_provenance="isolated acceptance fixture",
             ),
@@ -882,3 +882,44 @@ def test_reopened_week_two_is_a_real_predecessor_for_week_three(tmp_path):
             states[2]["predecessor_fingerprint"]
             == first_result["result"]["player_sporting_fingerprint"]
         )
+
+
+def test_exact_retry_rejects_missing_completed_context_without_mutation(tmp_path):
+    path = tmp_path / "retry-missing-context.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(server, "Retry context link")
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        preview = _request("POST", root + "/preview", command)[1]
+        assert confirm(root, command, preview)[0] == 201
+        with sqlite3.connect(path) as connection:
+            connection.execute("DELETE FROM completed_week_sporting_contexts")
+        before = dump(path)
+        status, rejected = confirm(root, command, preview)
+        assert status == 409
+        assert "context" in str(rejected)
+        assert dump(path) == before
+
+
+def test_save_rejects_orphan_sporting_state_without_creating_revision(tmp_path):
+    path = tmp_path / "save-orphan-sporting.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(server, "Orphan save")
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        preview = _request("POST", root + "/preview", command)[1]
+        assert confirm(root, command, preview)[0] == 201
+        ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        review = _request("GET", ranking_root + "/save/preview")[1]
+        with sqlite3.connect(path) as connection:
+            connection.execute("DELETE FROM completed_week_sporting_contexts")
+        before = dump(path)
+        status, rejected = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 409
+        assert "missing or mismatched predecessor-week context" in str(rejected)
+        assert dump(path) == before

@@ -804,3 +804,55 @@ def test_owned_completed_matches_resolve_match_aware_sharpness_context(
     values = {player.player_id: player.match_sharpness for player in final.players}
     assert values[participant] == 80
     assert values[nonparticipant] == 78
+
+
+def test_completed_sporting_manifest_must_equal_current_week_owned_universe(packages, database):
+    from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+    from beta_engine.infrastructure.db.player_sporting_state import resolve_completed_context_from_owned_sources
+    from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
+
+    command = ranking_command(packages, database, command_id="complete-sporting-universe")
+    RankingWeekCommandRunner(database, packages[0]).execute(command)
+    with database.begin() as session:
+        store = OwnedTournamentRankingSourceStore(session)
+        source = store.get(run_id="run", branch_id="branch", edition_id="edition")
+        assert source is not None
+        current_b = source.model_copy(update={
+            "binding": source.binding.model_copy(update={"edition_id": "current-b"})
+        })
+        old = source.model_copy(update={
+            "binding": source.binding.model_copy(update={
+                "edition_id": "old-ranking-source",
+                "completed_week": RankingWeek(
+                    season_index=0, week=command.context.completed_week.week - 1
+                ),
+            })
+        })
+        future = source.model_copy(update={
+            "binding": source.binding.model_copy(update={
+                "edition_id": "future-source",
+                "completed_week": command.context.target_week,
+                "first_publication_week": RankingWeek(
+                    season_index=0, week=command.context.target_week.week + 1
+                ),
+            })
+        })
+        store.append(current_b)
+        store.append(old)
+        store.append(future)
+        with pytest.raises(ValueError, match="complete owned source universe"):
+            resolve_completed_context_from_owned_sources(
+                session, run_id="run", branch_id="branch",
+                completed_week=command.context.completed_week,
+                player_ids=tuple(player.player_id for player in command.context.players),
+                source_ids=("edition",),
+            )
+        context = resolve_completed_context_from_owned_sources(
+            session, run_id="run", branch_id="branch",
+            completed_week=command.context.completed_week,
+            player_ids=tuple(player.player_id for player in command.context.players),
+            source_ids=("current-b", "edition"),
+        )
+    assert len(context.source_fingerprints) == 2
+    assert old.fingerprint not in context.source_fingerprints
+    assert future.fingerprint not in context.source_fingerprints

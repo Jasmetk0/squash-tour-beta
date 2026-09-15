@@ -38,6 +38,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     transition_lifecycle,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
+    get_completed_context,
     get_sporting,
     resolve_completed_context_from_owned_sources,
     transition_sporting,
@@ -214,6 +215,16 @@ def transition_in_transaction(session: Session, awards, command):
             raise ValueError(
                 "Completed Week Transition player sporting state is corrupt"
             )
+        context = get_completed_context(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            completed_week=command.completed_week,
+        )
+        if sporting.completed_context_fingerprint != context.fingerprint:
+            raise ValueError(
+                "Completed Week Transition sporting context link is corrupt"
+            )
         return result
 
     run = session.get(RunContainerModel, command.run_id)
@@ -323,7 +334,7 @@ def transition_in_transaction(session: Session, awards, command):
         raise ValueError(
             "Authoritative predecessor player lifecycle snapshot is missing"
         )
-    if command.tournaments:
+    try:
         resolve_completed_context_from_owned_sources(
             session,
             run_id=command.run_id,
@@ -332,7 +343,17 @@ def transition_in_transaction(session: Session, awards, command):
             player_ids=tuple(
                 player.player_id for player in predecessor_lifecycle.players
             ),
-            source_ids=tuple(binding.edition_id for binding in command.tournaments),
+        )
+    except ValueError as exc:
+        if "Zero-match context requires explicit authoritative evidence" not in str(
+            exc
+        ):
+            raise
+        get_completed_context(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            completed_week=command.completed_week,
         )
     sporting = transition_sporting(
         session,

@@ -75,7 +75,7 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   cover preview rollback, six forced failure boundaries, confirm, exact retry,
   changed-request conflict, publication/clock/event cardinality, Save/reopen and
   bidirectional restore. The broader targeted ranking/revision set passed **67**
-  tests. Review hardening passed **134** targeted lifecycle, sporting-context,
+  tests. Review hardening passed **139** targeted lifecycle, sporting-context,
   ranking,
   revision, Match Engine and HTTP/SQLite tests; Fast CI backend smoke passed
   **99** tests.

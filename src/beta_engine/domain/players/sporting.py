@@ -191,11 +191,12 @@ def weekly_player_development_update(
         predecessor.week,
     ):
         raise ValueError("Completed sporting context scope or week differs")
-    unknown = {item.player_id for item in context.competitive_match_counts} - {
-        p.player_id for p in predecessor.players
-    }
-    if unknown:
-        raise ValueError("Completed-week context names an unknown sporting player")
+    context_ids = {item.player_id for item in context.competitive_match_counts}
+    player_ids = {player.player_id for player in predecessor.players}
+    if context_ids != player_ids:
+        raise ValueError(
+            "Completed-week context must contain exactly the predecessor sporting roster"
+        )
     developed = []
     for player in sorted(predecessor.players, key=lambda item: item.player_id):
         age = player_ages[player.player_id]

@@ -71,24 +71,33 @@ def get_completed_context(session, *, run_id, branch_id, completed_week):
 
 
 def resolve_completed_context_from_owned_sources(
-    session, *, run_id, branch_id, completed_week, player_ids, source_ids
+    session, *, run_id, branch_id, completed_week, player_ids, source_ids=None
 ):
     """Resolve a closed, explicitly enumerated set of owned completed event sources."""
     from beta_engine.infrastructure.db.owned_tournament_sources import (
         OwnedTournamentRankingSourceStore,
     )
 
-    if not source_ids:
+    store = OwnedTournamentRankingSourceStore(session)
+    history = store.history(run_id=run_id, branch_id=branch_id)
+    if any(source is None for source in history):
+        raise ValueError("Owned sporting source history contains a missing source")
+    owned_sources = tuple(source for source in history if source is not None)
+    universe = tuple(
+        source
+        for source in owned_sources
+        if source.binding.completed_week == completed_week
+    )
+    universe_ids = tuple(sorted(source.binding.edition_id for source in universe))
+    if source_ids is not None and tuple(sorted(set(source_ids))) != universe_ids:
+        raise ValueError(
+            "Completed sporting source manifest differs from the complete owned source universe"
+        )
+    if not universe:
         raise ValueError("Zero-match context requires explicit authoritative evidence")
     counts = {player_id: 0 for player_id in player_ids}
     fingerprints = []
-    store = OwnedTournamentRankingSourceStore(session)
-    for edition_id in sorted(set(source_ids)):
-        source = store.get(run_id=run_id, branch_id=branch_id, edition_id=edition_id)
-        if source is None or source.binding.completed_week != completed_week:
-            raise ValueError(
-                "Completed sporting source is missing or belongs to another week"
-            )
+    for source in universe:
         if source.result.completion_status != "complete" or not source.result.persisted:
             raise ValueError(
                 "Completed sporting source is not authoritative and complete"
@@ -278,6 +287,10 @@ def transition_sporting(
     ages = {player.player_id: player.age for player in lifecycle.players}
     if set(ages) != {player.player_id for player in predecessor.players}:
         raise ValueError("Player sporting and lifecycle predecessor rosters differ")
+    if {item.player_id for item in context.competitive_match_counts} != set(ages):
+        raise ValueError(
+            "Completed sporting context must contain exactly the predecessor roster"
+        )
     developed = weekly_player_development_update(
         predecessor, target=target, player_ages=ages, context=context
     )
@@ -306,6 +319,45 @@ def _component(states, contexts=()):
         ).hexdigest(),
         **body,
     }
+
+
+def _validate_state_context_chain(states, contexts):
+    state_ordinals = tuple(state.week.ordinal for state in states)
+    context_ordinals = tuple(context.completed_week.ordinal for context in contexts)
+    if state_ordinals != tuple(sorted(set(state_ordinals))):
+        raise ValueError("Player sporting state weeks are not unique and canonical")
+    if context_ordinals != tuple(sorted(set(context_ordinals))):
+        raise ValueError(
+            "Completed sporting context weeks are not unique and canonical"
+        )
+    by_week = {context.completed_week.ordinal: context for context in contexts}
+    for index, state in enumerate(states):
+        if index == 0 and state.week.ordinal == 0:
+            if state.completed_context_fingerprint != "bootstrap:not-a-completed-week":
+                raise ValueError(
+                    "Bootstrap sporting state has an invalid context marker"
+                )
+            continue
+        context = by_week.get(state.week.ordinal - 1)
+        if (
+            context is None
+            or context.fingerprint != state.completed_context_fingerprint
+        ):
+            raise ValueError(
+                "Player sporting state has a missing or mismatched predecessor-week context"
+            )
+        if (context.run_id, context.branch_id) != (state.run_id, state.branch_id):
+            raise ValueError("Player sporting state context scope differs")
+    if states:
+        referenced = {state.week.ordinal - 1 for state in states[1:]}
+        allowed_pending = states[-1].week.ordinal
+        if any(
+            ordinal not in referenced and ordinal != allowed_pending
+            for ordinal in context_ordinals
+        ):
+            raise ValueError(
+                "Saved sporting context is not linked to its proper week boundary"
+            )
 
 
 def capture_saved_sporting(session, payload, *, run_id, branch_id):
@@ -349,6 +401,7 @@ def capture_saved_sporting(session, payload, *, run_id, branch_id):
             )
             for row in context_rows
         )
+        _validate_state_context_chain(states, contexts)
         payload["content"][PLAYER_SPORTING_COMPONENT_KEY] = _component(states, contexts)
 
 
@@ -370,6 +423,7 @@ def load_saved_sporting(payload, *, run_id, branch_id):
         CompletedWeekSportingContext.model_validate_json(json.dumps(context))
         for context in component["contexts"]
     )
+    _validate_state_context_chain(states, contexts)
     if _component(states, contexts)["fingerprint"] != component["fingerprint"] or any(
         (state.run_id, state.branch_id) != (run_id, branch_id) for state in states
     ):

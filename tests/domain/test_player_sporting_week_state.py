@@ -218,3 +218,25 @@ def test_authoritative_nested_collections_are_deeply_immutable():
         )
     with pytest.raises(ValidationError):
         snapshot.effective_development_policy.early_bloomer_shift_years = 9
+
+
+@pytest.mark.parametrize("context_player", ["missing-other-player", "unknown-player"])
+def test_completed_context_requires_exact_predecessor_roster(context_player):
+    predecessor = state([record("a"), record("b")])
+    context = CompletedWeekSportingContext(
+        run_id="run",
+        branch_id="branch",
+        completed_week=predecessor.week,
+        competitive_match_counts=(
+            CompetitiveMatchCount(player_id=context_player, count=0),
+        ),
+        source_fingerprints=("source",),
+        provenance="incomplete test context",
+    )
+    with pytest.raises(ValueError, match="exactly the predecessor sporting roster"):
+        weekly_player_development_update(
+            predecessor,
+            target=RankingWeek(season_index=0, week=2),
+            player_ages={"a": 20, "b": 20},
+            context=context,
+        )

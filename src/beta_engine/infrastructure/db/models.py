@@ -204,6 +204,43 @@ class CompletedWeekSportingContextModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class SimulationSlotModel(Base):
+    """Immutable plan plus evolving completion head for one global slot."""
+    __tablename__ = "simulation_slots"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "branch_id", "week_ordinal", "slot_ordinal",
+            name="uq_simulation_slot_global_ordinal",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    plan_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    slot_start_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    slot_start_checkpoint_json: Mapped[str] = mapped_column(Text, nullable=False)
+    terminal_checkpoint_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class SimulationEventGroupModel(Base):
+    """Atomic match/result/effect receipt; exists only after group commit."""
+    __tablename__ = "simulation_event_groups"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    match_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

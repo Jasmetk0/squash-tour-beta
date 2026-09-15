@@ -1201,6 +1201,7 @@ class MatchEngine:
         ) / 99.0
         modifiers = (
             participant.form_modifier * 0.35
+            + participant.sharpness_modifier * 0.20
             + participant.fatigue_modifier * 0.3
             + participant.health_modifier * 0.25
             + participant.travel_modifier * 0.1

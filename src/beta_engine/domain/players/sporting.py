@@ -59,7 +59,9 @@ class CompetitiveMatchCount(FrozenInput):
 
 
 class CompletedWeekSportingContext(FrozenInput):
-    schema_version: Literal["completed_week_sporting_context.v1"] = (
+    schema_version: Literal[
+        "completed_week_sporting_context.v1", "completed_week_sporting_context.v2"
+    ] = (
         "completed_week_sporting_context.v1"
     )
     run_id: str = Field(min_length=1)
@@ -67,6 +69,8 @@ class CompletedWeekSportingContext(FrozenInput):
     completed_week: RankingWeek
     competitive_match_counts: tuple[CompetitiveMatchCount, ...]
     source_fingerprints: tuple[str, ...]
+    terminal_sporting_fingerprint: str | None = None
+    match_effect_fingerprints: tuple[str, ...] = ()
     provenance: str = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -80,6 +84,13 @@ class CompletedWeekSportingContext(FrozenInput):
             raise ValueError(
                 "Completed sporting sources require canonical fingerprints"
             )
+        if tuple(sorted(set(self.match_effect_fingerprints))) != self.match_effect_fingerprints:
+            raise ValueError("Match-effect evidence requires canonical fingerprints")
+        if self.schema_version == "completed_week_sporting_context.v2" and (
+            not self.terminal_sporting_fingerprint
+            or not self.match_effect_fingerprints
+        ):
+            raise ValueError("v2 completed context requires terminal match-effect evidence")
         return self
 
     def match_count(self, player_id: str) -> int:

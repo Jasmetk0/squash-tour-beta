@@ -11,18 +11,12 @@ from sqlalchemy.orm import Session
 
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
+    build_authoritative_tournament_ranking_packages,
     execute_supported_four_player_tournament,
     execute_adopted_four_player_match_package,
-    publish_authoritative_tournament_to_existing_completion,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
-from beta_engine.application.season_event_results_service import (
-    EventResultExtractRequest,
-)
-from beta_engine.application.season_point_awards_service import (
-    PointAwardGenerateRequest,
-)
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
     prepare_tournament_ranking_sources,
@@ -354,27 +348,22 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
         group.authoritative_input.slot_start_fingerprint
         for group in (*result.semifinal_groups, result.final_group)
     )
-    publish_authoritative_tournament_to_existing_completion(
-        service.result_service.match_service,
+    registry_path = service.result_service.match_service.matches_path
+    registry_before = hashlib.sha256(registry_path.read_bytes()).hexdigest()
+    _, completion, awards = build_authoritative_tournament_ranking_packages(
+        service,
         package=package,
         authoritative=result,
+        result_seed=701,
+        award_seed=702,
     )
-    completion = service.result_service.extract_event_result(
-        event_id=event_id,
-        request=EventResultExtractRequest(
-            seed=701, dry_run=False, overwrite_existing=True
-        ),
-    ).result_package
+    assert hashlib.sha256(registry_path.read_bytes()).hexdigest() == registry_before
     assert tuple(
         ref.result_fingerprint for ref in completion.match_result_refs
     ) == tuple(
         group.result_fingerprint
         for group in (*result.semifinal_groups, result.final_group)
     )
-    awards = service.generate_event_point_awards(
-        event_id=event_id,
-        request=PointAwardGenerateRequest(seed=702, dry_run=False),
-    ).award_package
     binding = TournamentRankingBinding(
         run_id="run",
         branch_id="branch",
@@ -411,6 +400,114 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
     corrupt.match_result_refs[0].result_fingerprint = "0" * 64
     with pytest.raises(ValueError, match="result fingerprint mismatch"):
         prepare_tournament_ranking_sources(binding, corrupt, awards)
+
+
+def test_same_adopted_event_is_branch_safe_and_legacy_registry_is_read_only(tmp_path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(tmp_path / "legacy-source-branches")
+    match_service = service.result_service.match_service
+    registry_path = match_service.matches_path
+    registry_before = hashlib.sha256(registry_path.read_bytes()).hexdigest()
+    package = match_service._load_registry().matches_by_event_id[event_id]
+    package.qualification_matches = []
+    semifinal_matches = sorted(
+        (match for match in package.main_draw_matches if match.round_number == 1),
+        key=lambda match: match.bracket_position,
+    )
+    player_ids = tuple(
+        player_id
+        for match in semifinal_matches
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    week = RankingWeek(season_index=0, week=package.season_week)
+    session = session_at(tmp_path / "branches.sqlite", player_ids, week)
+    world_a = get_initial_world(session, run_id="run", branch_id="branch")
+    lifecycle_a = get_lifecycle(session, run_id="run", branch_id="branch", week=week)
+    sporting_a = get_sporting(session, run_id="run", branch_id="branch", week=week)
+    world_b = world_a.model_copy(update={"branch_id": "branch-b"})
+    put_initial_world(session, world_b)
+    put_lifecycle(
+        session,
+        lifecycle_a.model_copy(
+            update={
+                "branch_id": "branch-b",
+                "source_initial_world_fingerprint": world_b.fingerprint,
+            }
+        ),
+    )
+    put_sporting(
+        session,
+        sporting_a.model_copy(
+            update={
+                "branch_id": "branch-b",
+                "source_initial_world_fingerprint": world_b.fingerprint,
+            }
+        ),
+    )
+    session.commit()
+
+    owned_sources = []
+    tournament_results = []
+    for branch_id, seed in (("branch", 810), ("branch-b", 910)):
+        tournament = execute_adopted_four_player_match_package(
+            session,
+            run_id="run",
+            branch_id=branch_id,
+            week=week,
+            package=package,
+            seed=seed,
+        )
+        _, completion, awards = build_authoritative_tournament_ranking_packages(
+            service,
+            package=package,
+            authoritative=tournament,
+            result_seed=seed + 1,
+            award_seed=seed + 2,
+        )
+        binding = TournamentRankingBinding(
+            run_id="run",
+            branch_id=branch_id,
+            edition_id="same-owned-edition",
+            event_id=event_id,
+            completed_week=week,
+            first_publication_week=RankingWeek(season_index=0, week=week.week + 1),
+            validity_weeks=61,
+            ranking_status="ranked",
+            expected_result_fingerprint=completion.metadata.build_fingerprint,
+            expected_award_fingerprint=awards.metadata.build_fingerprint,
+        )
+        prepare_tournament_ranking_sources(binding, completion, awards)
+        owned_sources.append(
+            OwnedTournamentRankingSourceStore(session).append(
+                OwnedTournamentRankingSource(
+                    binding=binding,
+                    result=completion,
+                    awards=awards,
+                    adopted_by_command_id=f"slot-bridge:{branch_id}",
+                )
+            )
+        )
+        tournament_results.append(tournament)
+    session.commit()
+
+    assert registry_before == hashlib.sha256(registry_path.read_bytes()).hexdigest()
+    assert (
+        tournament_results[0].match_result_fingerprints
+        != tournament_results[1].match_result_fingerprints
+    )
+    assert owned_sources[0].fingerprint != owned_sources[1].fingerprint
+    for branch_id, expected, tournament in zip(
+        ("branch", "branch-b"), owned_sources, tournament_results, strict=True
+    ):
+        reloaded = OwnedTournamentRankingSourceStore(session).get(
+            run_id="run", branch_id=branch_id, edition_id="same-owned-edition"
+        )
+        assert reloaded.fingerprint == expected.fingerprint
+        assert (
+            tuple(ref.result_fingerprint for ref in reloaded.result.match_result_refs)
+            == tournament.match_result_fingerprints
+        )
 
 
 def test_semifinal_effects_feed_later_final_and_replay_is_historical(tmp_path):

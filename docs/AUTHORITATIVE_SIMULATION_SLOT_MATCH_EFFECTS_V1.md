@@ -34,6 +34,12 @@ Saved Revision component `simulation_slot_match_state` hash-protects slot/group 
 
 `completed_week_sporting_context.v2` binds match counts, result/effect fingerprints and terminal checkpoint. Weekly Development validates and substitutes terminal players, observing post-match Form before between-week regression. Legacy owned tournament sources remain compatibility-only when no authoritative ledger exists; paths are never summed.
 
+For the supported adopted four-player draw, the legacy `SeasonMatchService`
+registry is read-only. Branch-specific completed matches are projected in memory
+through the existing result and award builders, then persist only within the
+Run/Branch-owned `OwnedTournamentRankingSource`; the registry is never scratch
+storage for authoritative results.
+
 ## Unsupported boundaries
 
 Stamina logs remain per-match truth. Carried physical bars remain unsupported; only long-term Fatigue bridges matches. Health, match World Events, general tournament award publication, Entries, full draw ownership, Qualification/WC/LL, global multi-event scheduling, AI, training, Season Transition, and Viewer UI remain out of scope.

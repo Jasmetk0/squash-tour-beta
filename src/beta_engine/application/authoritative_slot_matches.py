@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import cast
+from pathlib import Path
+from typing import Any, cast
 
 from sqlalchemy import select
 
@@ -18,7 +19,23 @@ from beta_engine.domain.matches import (
     official_match_format_snapshot,
 )
 from beta_engine.domain.matches.models import MatchResult
-from beta_engine.application.season_match_service import SeasonEventMatchPackage
+from beta_engine.application.season_event_results_service import (
+    EventResultExtractRequest,
+    SeasonEventResultPackage,
+    SeasonEventResultPackageResult,
+    SeasonEventResultsRegistry,
+    SeasonEventResultsService,
+)
+from beta_engine.application.season_match_service import (
+    SeasonEventMatchPackage,
+    SeasonEventMatchPackageResult,
+)
+from beta_engine.application.season_point_awards_service import (
+    EventPointAwardPackage,
+    PointAwardGenerateRequest,
+    SeasonPointAwardsRegistry,
+    SeasonPointAwardsService,
+)
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import (
     AuthoritativeMatchInput,
@@ -236,12 +253,11 @@ def execute_adopted_four_player_match_package(
 
 
 def publish_authoritative_tournament_to_existing_completion(
-    match_service,
     *,
     package: SeasonEventMatchPackage,
     authoritative: AuthoritativeFourPlayerTournamentResult,
 ) -> SeasonEventMatchPackage:
-    """Compatibility publication adapter; slot ledger remains result authority."""
+    """Project a completed package in memory; never mutate the legacy registry."""
     if package.event_id != authoritative.event_id:
         raise ValueError(
             "authoritative tournament and persisted package identity differ"
@@ -266,10 +282,136 @@ def publish_authoritative_tournament_to_existing_completion(
         match.result_fingerprint = group.result_fingerprint
         match.match_input_snapshot = group.authoritative_input.engine_input
         match.simulation_seed = group.authoritative_input.engine_input.simulation_seed
-    registry = match_service._load_registry()
-    registry.matches_by_event_id[package.event_id] = projected
-    match_service._save_registry(registry)
     return projected
+
+
+@dataclass(slots=True)
+class _ExplicitMatchPackageReader:
+    """Read-only adapter for the existing result builder."""
+
+    package: SeasonEventMatchPackage
+    draw_service: object
+
+    def get_match_package(self, *, event_id: str) -> SeasonEventMatchPackageResult:
+        if event_id != self.package.event_id:
+            return SeasonEventMatchPackageResult()
+        return SeasonEventMatchPackageResult(
+            match_package=self.package,
+            summary=self.package.summary,
+            metadata=self.package.metadata,
+            validation_warnings=self.package.validation_warnings,
+            validation_errors=self.package.validation_errors,
+            match_package_exists=True,
+        )
+
+
+@dataclass(slots=True)
+class _ExplicitResultPackageReader:
+    """Read-only adapter for the existing award builder."""
+
+    package: SeasonEventResultPackage
+    calendar_service: object
+
+    def get_event_result(self, *, event_id: str) -> SeasonEventResultPackageResult:
+        if event_id != self.package.event_id:
+            return SeasonEventResultPackageResult()
+        return SeasonEventResultPackageResult(
+            result_package=self.package,
+            summary=self.package.summary,
+            metadata=self.package.metadata,
+            validation_warnings=self.package.validation_warnings,
+            validation_errors=self.package.validation_errors,
+            result_package_exists=True,
+        )
+
+
+class _ReadOnlyEventResultsBuilder(SeasonEventResultsService):
+    def _load_registry(self) -> SeasonEventResultsRegistry:
+        return SeasonEventResultsRegistry()
+
+    def _save_registry(self, registry: SeasonEventResultsRegistry) -> None:
+        raise AssertionError("authoritative result projection must remain in memory")
+
+
+class _ReadOnlyPointAwardsBuilder(SeasonPointAwardsService):
+    def _load_registry(self) -> SeasonPointAwardsRegistry:
+        return SeasonPointAwardsRegistry()
+
+    def _save_registry(self, registry: SeasonPointAwardsRegistry) -> None:
+        raise AssertionError("authoritative award projection must remain in memory")
+
+
+def build_authoritative_tournament_ranking_packages(
+    service: SeasonPointAwardsService,
+    *,
+    package: SeasonEventMatchPackage,
+    authoritative: AuthoritativeFourPlayerTournamentResult,
+    result_seed: int,
+    award_seed: int,
+) -> tuple[SeasonEventMatchPackage, SeasonEventResultPackage, EventPointAwardPackage]:
+    """Reuse legacy completion/award builders without using global files as scratch.
+
+    The returned result and award packages are persisted only as children of the
+    Run/Branch-owned ``OwnedTournamentRankingSource``.  The adopted match registry
+    remains a read-only draw source.
+    """
+    projected = publish_authoritative_tournament_to_existing_completion(
+        package=package,
+        authoritative=authoritative,
+    )
+    match_reader = _ExplicitMatchPackageReader(
+        package=projected,
+        draw_service=service.result_service.draw_service,
+    )
+    result_builder = _ReadOnlyEventResultsBuilder(
+        match_service=cast(Any, match_reader),
+        draw_service=service.result_service.draw_service,
+        calendar_service=service.result_service.calendar_service,
+        results_path=Path(".authoritative-result-builder-read-only"),
+    )
+    result = result_builder.extract_event_result(
+        event_id=package.event_id,
+        request=EventResultExtractRequest(seed=result_seed, dry_run=True),
+    ).result_package
+    if result is None:
+        raise ValueError("authoritative tournament result builder returned no package")
+    result = result.model_copy(
+        update={
+            "dry_run": False,
+            "persisted": True,
+            "metadata": result.metadata.model_copy(
+                update={"dry_run": False, "persisted": True}
+            ),
+        }
+    )
+    result_reader = _ExplicitResultPackageReader(
+        package=result,
+        calendar_service=service.calendar_service,
+    )
+    award_builder = _ReadOnlyPointAwardsBuilder(
+        result_service=cast(Any, result_reader),
+        active_players_service=service.active_players_service,
+        calendar_service=service.calendar_service,
+        template_service=service.template_service,
+        awards_path=Path(".authoritative-award-builder-read-only"),
+        points_config_path=service.points_config_path,
+    )
+    awards = award_builder.generate_event_point_awards(
+        event_id=package.event_id,
+        request=PointAwardGenerateRequest(seed=award_seed, dry_run=True),
+    ).award_package
+    if awards is None:
+        raise ValueError("authoritative tournament award builder returned no package")
+    awards = awards.model_copy(
+        update={
+            "dry_run": False,
+            "persisted": True,
+            "metadata": awards.metadata.model_copy(
+                update={"dry_run": False, "persisted": True}
+            ),
+        }
+    )
+    return projected, result, awards
 
 
 class AuthoritativeSlotMatchExecutor:

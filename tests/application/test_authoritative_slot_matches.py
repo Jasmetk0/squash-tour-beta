@@ -32,7 +32,11 @@ from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
     SimulationMatchEventPlan,
 )
-from beta_engine.infrastructure.db.models import Base, SimulationEventGroupModel
+from beta_engine.infrastructure.db.models import (
+    Base,
+    PlayerLifecycleWeekStateModel,
+    SimulationEventGroupModel,
+)
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     put_initial_world,
@@ -460,6 +464,88 @@ def test_pending_authoritative_slot_owns_week_and_blocks_context(tmp_path):
             branch_id="branch",
             completed_week=WEEK,
             player_ids=("a", "b", "c", "d"),
+        )
+
+
+def test_slot_creation_exact_retry_and_changed_request_conflict(tmp_path):
+    session = session_at(tmp_path / "slot-retry.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    event = SimulationMatchEventPlan(
+        group_id="g", event_id="event", match_id="match", direct_player_ids=("a", "b")
+    )
+    first = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(event,),
+    )
+    assert (
+        executor.create_slot(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot",
+            ordinal=1,
+            group_ids=("g",),
+            match_events=(event,),
+        )
+        == first
+    )
+    changed = event.model_copy(update={"match_id": "different"})
+    with pytest.raises(ValueError, match="retry conflicts"):
+        executor.create_slot(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot",
+            ordinal=1,
+            group_ids=("g",),
+            match_events=(changed,),
+        )
+
+
+def test_retired_player_is_rejected_before_match_simulation(tmp_path):
+    session = session_at(tmp_path / "retired.sqlite")
+    lifecycle = get_lifecycle(session, run_id="run", branch_id="branch", week=WEEK)
+    row = session.get(PlayerLifecycleWeekStateModel, ("run", "branch", WEEK.ordinal))
+    retired = lifecycle.players[0].model_copy(
+        update={"status": "retired", "retirement_effective_week": WEEK}
+    )
+    replacement = lifecycle.model_copy(
+        update={"players": (retired, *lifecycle.players[1:])}
+    )
+    row.payload_json = replacement.model_dump_json()
+    row.fingerprint = replacement.fingerprint
+    session.flush()
+    executor = AuthoritativeSlotMatchExecutor(session)
+    event = SimulationMatchEventPlan(
+        group_id="g", event_id="event", match_id="match", direct_player_ids=("a", "b")
+    )
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot",
+        ordinal=1,
+        group_ids=("g",),
+        match_events=(event,),
+    )
+    with pytest.raises(ValueError, match="requires active"):
+        executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot",
+            group_id="g",
+            event_id="event",
+            match_id="match",
+            player_a_id="a",
+            player_b_id="b",
+            seed=9,
+            expected_slot_start_fingerprint=plan.slot_start_fingerprint,
         )
 
 

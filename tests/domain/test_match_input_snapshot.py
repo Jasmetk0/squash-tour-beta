@@ -51,7 +51,7 @@ def _snapshot() -> MatchInputSnapshot:
         context=context,
         effective_match_format=official_match_format_snapshot(),
         simulation_seed=777,
-        match_engine_version="match_engine_v9",
+        match_engine_version="match_engine_v10",
     )
 
 
@@ -62,7 +62,7 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
     assert restored == snapshot
     assert restored.context.player_a.player.player_id == "A"
     assert restored.context.player_b.player.player_id == "B"
-    assert restored.schema_version == "match_input_snapshot.v9"
+    assert restored.schema_version == "match_input_snapshot.v10"
     assert restored.unsupported_future_inputs == ()
     assert restored.effective_match_timing is not None
     assert restored.effective_match_stamina is not None
@@ -89,6 +89,33 @@ def test_match_input_snapshot_round_trips_exact_current_engine_inputs() -> None:
         profile.player_id
         for profile in restored.effective_match_timing.player_restart_profiles
     } == {"A", "B"}
+
+
+def test_v10_protects_sharpness_separately_from_form_and_fatigue() -> None:
+    first = _snapshot()
+    context = first.context.model_copy(
+        update={
+            "player_a": first.context.player_a.model_copy(
+                update={"sharpness_modifier": 0.2}
+            )
+        }
+    )
+    second = MatchInputSnapshot.create(
+        context=context,
+        effective_match_format=first.effective_match_format,
+        simulation_seed=first.simulation_seed,
+        match_engine_version="match_engine_v10",
+    )
+    assert first.context.player_a.form_modifier == second.context.player_a.form_modifier
+    assert (
+        first.context.player_a.fatigue_modifier
+        == second.context.player_a.fatigue_modifier
+    )
+    assert (
+        first.context.player_a.sharpness_modifier
+        != second.context.player_a.sharpness_modifier
+    )
+    assert first.snapshot_hash != second.snapshot_hash
 
 
 def test_match_input_snapshot_rejects_protected_input_tampering() -> None:

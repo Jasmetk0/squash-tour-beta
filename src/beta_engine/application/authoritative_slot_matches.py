@@ -40,7 +40,7 @@ from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
-MATCH_ENGINE_VERSION = "match_engine_v9"
+MATCH_ENGINE_VERSION = "match_engine_v10"
 
 
 @dataclass(frozen=True)
@@ -192,7 +192,16 @@ class AuthoritativeSlotMatchExecutor:
         key = (run_id, branch_id, week.ordinal, slot_id)
         current = self.session.get(SimulationSlotModel, key)
         if current:
-            return self._load_plan(current)
+            stored = self._load_plan(current)
+            if (
+                stored.ordinal != ordinal
+                or stored.group_ids != tuple(sorted(group_ids))
+                or stored.match_events
+                != tuple(sorted(match_events, key=lambda item: item.group_id))
+                or stored.ordered_dependency_ids != dependency_ids
+            ):
+                raise ValueError("Simulation Slot retry conflicts with stored plan")
+            return stored
         prior = self.session.scalar(
             select(SimulationSlotModel).where(
                 SimulationSlotModel.run_id == run_id,
@@ -395,6 +404,10 @@ class AuthoritativeSlotMatchExecutor:
                 raise ValueError(
                     "match participant lacks owned profile or lifecycle truth"
                 ) from exc
+            if life.status != "active":
+                raise ValueError(
+                    "supported competitive match requires active lifecycle players"
+                )
             return project_player(
                 record,
                 source_sporting_fingerprint=plan.slot_start_fingerprint,

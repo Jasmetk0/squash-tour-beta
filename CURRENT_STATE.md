@@ -6,6 +6,8 @@ This branch adds the first Run/Branch/Week/global-slot-owned competitive match e
 
 PR #728 review hardening preserves owned InitialWorld style/profile truth, carries Form/Sharpness/Fatigue as distinct match inputs, makes any planned slot authoritative even before its first group commit, enforces feeder topology/global ordinals, and semantically revalidates replay and Saved Revision slot chains.
 
+The follow-up compatibility correction assigns Sharpness-aware matches to `match_input_snapshot.v10` / `match_engine_v10`; v1-v9 hash payloads continue to omit the later Sharpness field and retain their historical identities.
+
 Gate 3 is not complete. Entries, general authoritative draws, tournament award/publication integration, cross-tournament scheduling, AI, health and broader event types remain gaps.
 
 This file is an evidence/index snapshot, not product authority.

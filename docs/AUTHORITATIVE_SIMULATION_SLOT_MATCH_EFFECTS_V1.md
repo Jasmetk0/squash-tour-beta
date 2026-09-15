@@ -18,6 +18,8 @@ The command fingerprint covers scope, slot-start state, event/player identity, s
 
 `canonical-57-to-legacy-match-engine.provisional.v1` is explicitly a temporary compatibility/calibration adapter. It averages canonical groups, scales `0..200` to seven legacy `1..99` inputs, and stores distinct Form, Sharpness and Fatigue values/modifiers. `MatchParticipantContext` carries all three independently; Match Engine calibration weights them only after that protected boundary. Ranking and OVR are never bonuses. Native 57-attribute Rally Setup can later consume retained truth without migrating history. Name, nationality, current lifecycle age, play style, archetype and hidden traits are projected from the owned InitialWorld/lifecycle snapshots and their fingerprints are retained. Missing profile truth fails closed; career-style evolution is not yet implemented.
 
+Sharpness-aware execution is protected by `match_input_snapshot.v10` and `match_engine_v10`. Historical v1-v9 snapshot hashes deliberately omit the later `sharpness_modifier` field, while their parsed runtime context receives neutral `0.0`; this preserves historical identity and replay. V10 includes the distinct field in its hash.
+
 ## Provisional effect calibration
 
 `match-sporting-effects.provisional.v1` contains every numeric calibration: Form response `18.0`, expectation sensitivity `1.0`, minimum evidence weight `0.15`, full evidence at `100` rallies; Sharpness `8.0` per played hour plus individual workload / `30`; Fatigue `5.0` per hour plus workload / `18`; Form clamp `0..200`; Sharpness/Fatigue clamps `0..100`.

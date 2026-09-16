@@ -30,6 +30,9 @@ from test_authoritative_slot_matches import _driver_command, _driver_fixture
 from test_season_match_service import make_match_service
 
 
+pytestmark = pytest.mark.smoke
+
+
 def test_adopted_tournament_freezes_point_authority(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "frozen-awards")
     semifinals, _ = _driver_command(driver, week, "semifinals")

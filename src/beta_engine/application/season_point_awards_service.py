@@ -57,6 +57,17 @@ POINT_KEY_TO_STAGE: dict[str, str] = {
 }
 
 
+class FrozenPointAwardAuthority(BaseModel):
+    """Resolved immutable points input captured when a tournament is adopted."""
+
+    schema_version: Literal["frozen_point_award_authority.v1"] = (
+        "frozen_point_award_authority.v1"
+    )
+    ranking_status: Literal["ranked", "unranked"]
+    point_distribution: dict[str, int] = Field(default_factory=dict)
+    point_distribution_source: str
+
+
 class PlayerPointAward(BaseModel):
     player_id: str
     player_name: str | None = None
@@ -214,7 +225,13 @@ class SeasonPointAwardsService:
             applied=package.applied or event_id in registry.applied_events,
         )
 
-    def generate_event_point_awards(self, *, event_id: str, request: PointAwardGenerateRequest) -> EventPointAwardPackageResult:
+    def generate_event_point_awards(
+        self,
+        *,
+        event_id: str,
+        request: PointAwardGenerateRequest,
+        frozen_authority: FrozenPointAwardAuthority | None = None,
+    ) -> EventPointAwardPackageResult:
         registry = self._load_registry()
         existing = registry.awards_by_event_id.get(event_id)
         if not request.dry_run and existing is not None and not request.overwrite_existing:
@@ -230,12 +247,21 @@ class SeasonPointAwardsService:
             raise ValueError(f"Persisted event result package has validation errors: {codes}")
 
         event = self._calendar_event(result_package)
-        unranked = event is not None and event.ranking_status.value == "unranked"
+        if frozen_authority is None:
+            unranked = event is not None and event.ranking_status.value == "unranked"
+            distribution, distribution_source = (
+                ({}, "calendar_event.unranked")
+                if unranked
+                else self._resolve_point_distribution(result_package)
+            )
+        else:
+            unranked = frozen_authority.ranking_status == "unranked"
+            distribution = dict(frozen_authority.point_distribution)
+            distribution_source = frozen_authority.point_distribution_source
         active_players = self.active_players_service.get_active_players(season=result_package.season).players
         if not active_players and not unranked:
             raise ValueError(f"No active season players found for season '{result_package.season}'. Persist active players before awarding points.")
         active_by_id = {player.player_id: player for player in active_players}
-        distribution, distribution_source = ({}, "calendar_event.unranked") if unranked else self._resolve_point_distribution(result_package)
         warnings = self._foundation_warnings(event_id)
         if unranked:
             warnings.append(self._issue("warning", "unranked_edition_no_msa_result", "Unranked Edition records tournament history but creates no MSA points or Best N ranking result", event_id=event_id))
@@ -413,13 +439,28 @@ class SeasonPointAwardsService:
             metadata=applied_package.metadata,
         )
 
+    def freeze_point_award_authority(self, package: Any) -> FrozenPointAwardAuthority:
+        """Resolve live point configuration once for a future owned tournament close."""
+        event = self._calendar_event(package)
+        unranked = event is not None and event.ranking_status.value == "unranked"
+        distribution, source = (
+            ({}, "calendar_event.unranked")
+            if unranked
+            else self._resolve_point_distribution(package)
+        )
+        return FrozenPointAwardAuthority(
+            ranking_status="unranked" if unranked else "ranked",
+            point_distribution=dict(distribution),
+            point_distribution_source=source,
+        )
+
     def _load_result_package(self, event_id: str) -> SeasonEventResultPackage:
         result = self.result_service.get_event_result(event_id=event_id)
         if result.result_package is None:
             raise ValueError(f"No persisted event result package exists for event '{event_id}'. Persist event results first.")
         return result.result_package
 
-    def _resolve_point_distribution(self, package: SeasonEventResultPackage) -> tuple[dict[str, int], str]:
+    def _resolve_point_distribution(self, package: Any) -> tuple[dict[str, int], str]:
         event = self._calendar_event(package)
         if event is not None:
             if event.ranking_points_table:
@@ -447,7 +488,7 @@ class SeasonPointAwardsService:
                         return self._normalize_distribution(resolved), f"point_distribution_ref:{template.point_distribution_ref}"
         return dict(FALLBACK_STAGE_POINTS), "fallback.default_stage_points"
 
-    def _calendar_event(self, package: SeasonEventResultPackage) -> Any | None:
+    def _calendar_event(self, package: Any) -> Any | None:
         if self.calendar_service is None:
             return None
         calendar = self.calendar_service.get_calendar(season=package.season).calendar

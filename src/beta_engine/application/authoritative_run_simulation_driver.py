@@ -29,7 +29,10 @@ from beta_engine.application.season_match_service import (
     SeasonEventMatchPackage,
     SeasonMatchService,
 )
-from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.season_point_awards_service import (
+    FrozenPointAwardAuthority,
+    SeasonPointAwardsService,
+)
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.simulation_slots import SimulationMatchEventPlan, fingerprint
@@ -40,6 +43,7 @@ from beta_engine.infrastructure.db.models import (
     BranchWorkingDraftModel,
     PlayerSportingWeekStateModel,
     RunBranchModel,
+    RunContainerModel,
     RankingTransitionAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -116,6 +120,7 @@ class AuthoritativeRunSimulationDriver:
         # before executing groups. Each independent group then owns its transaction.
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
             key = (command.run_id, command.branch_id, command.command_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if receipt:
@@ -163,6 +168,7 @@ class AuthoritativeRunSimulationDriver:
                 raise RuntimeError("fault before second group")
             with self.factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
+                self._require_writable_scope(session, command.run_id, command.branch_id)
                 package = self._pending_package(session, command, request_fp)
                 current = self._position(session, command.run_id, command.branch_id)
                 if group_id in current.unresolved_group_ids:
@@ -172,6 +178,7 @@ class AuthoritativeRunSimulationDriver:
 
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
             package = self._pending_package(session, command, request_fp)
             self._advance_or_close(session, command, package, fault_at=fault_at)
             after = self._position(session, command.run_id, command.branch_id)
@@ -225,6 +232,15 @@ class AuthoritativeRunSimulationDriver:
         ):
             raise ValueError("pending command slot authority is incoherent")
         return package
+
+    @staticmethod
+    def _require_writable_scope(session, run_id, branch_id):
+        run = session.get(RunContainerModel, run_id)
+        branch = session.get(RunBranchModel, branch_id)
+        if run is None or branch is None or branch.run_id != run_id:
+            raise ValueError("authoritative simulation Run/Branch scope does not exist")
+        if run.read_only or branch.read_only or branch.status != "active":
+            raise ValueError("authoritative simulation Run/Branch is not writable")
 
     @staticmethod
     def _validate_expected(session, command, before):
@@ -295,14 +311,36 @@ class AuthoritativeRunSimulationDriver:
         validate_adopted_four_player_match_package(package)
         return package
 
+    @staticmethod
+    def _decode_adopted_authority(payload_json):
+        payload = json.loads(payload_json)
+        if payload.get("schema_version") == "adopted_tournament_authority.v2":
+            return (
+                SeasonEventMatchPackage.model_validate(payload["package"]),
+                FrozenPointAwardAuthority.model_validate(payload["point_award_authority"]),
+            )
+        return SeasonEventMatchPackage.model_validate(payload), None
+
+    @staticmethod
+    def _encode_adopted_authority(package, point_authority):
+        return json.dumps(
+            {
+                "schema_version": "adopted_tournament_authority.v2",
+                "package": package.model_dump(mode="json"),
+                "point_award_authority": point_authority.model_dump(mode="json"),
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+
     def _authority_package(self, session, run_id, branch_id, week, *, adopt):
         row = session.get(
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
         )
         if row is not None:
-            package = SeasonEventMatchPackage.model_validate_json(row.package_json)
+            package, point_authority = self._decode_adopted_authority(row.package_json)
             authority_fp = self._tournament_authority_fingerprint(
-                run_id, branch_id, week, package
+                run_id, branch_id, week, package, point_authority
             )
             if (
                 authority_fp != row.authority_fingerprint
@@ -315,8 +353,9 @@ class AuthoritativeRunSimulationDriver:
         package = self._package(week)
         if package is None:
             raise ValueError("supported tournament authority is missing")
+        point_authority = self.awards_service.freeze_point_award_authority(package)
         authority_fp = self._tournament_authority_fingerprint(
-            run_id, branch_id, week, package
+            run_id, branch_id, week, package, point_authority
         )
         session.add(
             AdoptedTournamentAuthorityModel(
@@ -325,19 +364,31 @@ class AuthoritativeRunSimulationDriver:
                 week_ordinal=week.ordinal,
                 event_id=package.event_id,
                 authority_fingerprint=authority_fp,
-                package_json=package.model_dump_json(),
+                package_json=self._encode_adopted_authority(package, point_authority),
             )
         )
         session.flush()
         return package, authority_fp
 
+    def _point_award_authority(self, session, run_id, branch_id, week):
+        row = session.get(
+            AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
+        )
+        if row is None:
+            raise ValueError("frozen tournament authority is missing")
+        _, point_authority = self._decode_adopted_authority(row.package_json)
+        return point_authority
+
     @staticmethod
-    def _tournament_authority_fingerprint(run_id, branch_id, week, package):
+    def _tournament_authority_fingerprint(
+        run_id, branch_id, week, package, point_authority=None
+    ):
         payload = package.model_dump(mode="json")
         payload["metadata"].pop("persistence_path", None)
-        return fingerprint(
-            {"scope": [run_id, branch_id, week.ordinal], "package": payload}
-        )
+        body = {"scope": [run_id, branch_id, week.ordinal], "package": payload}
+        if point_authority is not None:
+            body["point_award_authority"] = point_authority.model_dump(mode="json")
+        return fingerprint(body)
 
     def _position(self, session, run_id, branch_id):
         week = self._current_week(session, run_id, branch_id)
@@ -485,7 +536,11 @@ class AuthoritativeRunSimulationDriver:
             "tournament_authority": frozen.authority_fingerprint
             if frozen
             else self._tournament_authority_fingerprint(
-                run_id, branch_id, week, package
+                run_id,
+                branch_id,
+                week,
+                package,
+                self.awards_service.freeze_point_award_authority(package),
             ),
             "lifecycle": lifecycle_fp,
             "sporting": sporting.fingerprint if sporting else None,
@@ -715,12 +770,32 @@ class AuthoritativeRunSimulationDriver:
             raise RuntimeError(
                 "fault after tournament final before ranking source persistence"
             )
+        store = OwnedTournamentRankingSourceStore(session)
+        existing = store.get(
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            edition_id=package.event_id,
+        )
+        if existing is not None:
+            self._validate_existing_owned_source(existing, command, package, auth)
+            return
+        point_authority = self._point_award_authority(
+            session,
+            command.run_id,
+            command.branch_id,
+            command.expected_week,
+        )
+        if point_authority is None:
+            raise ValueError(
+                "legacy adopted tournament has no frozen point-award authority"
+            )
         _, result, awards = build_authoritative_tournament_ranking_packages(
             self.awards_service,
             package=package,
             authoritative=auth,
             result_seed=self._stable_seed(package, "result"),
             award_seed=self._stable_seed(package, "awards"),
+            frozen_point_authority=point_authority,
         )
         binding = TournamentRankingBinding(
             run_id=command.run_id,
@@ -738,13 +813,41 @@ class AuthoritativeRunSimulationDriver:
             expected_award_fingerprint=awards.metadata.build_fingerprint,
         )
         prepare_tournament_ranking_sources(binding, result, awards)
-        OwnedTournamentRankingSourceStore(session).append(
+        store.append(
             OwnedTournamentRankingSource(
                 binding=binding,
                 result=result,
                 awards=awards,
                 adopted_by_command_id=command.command_id,
             )
+        )
+
+    @staticmethod
+    def _validate_existing_owned_source(existing, command, package, authoritative):
+        binding = existing.binding
+        if (
+            binding.run_id != command.run_id
+            or binding.branch_id != command.branch_id
+            or binding.edition_id != package.event_id
+            or binding.event_id != package.event_id
+            or binding.completed_week != command.expected_week
+        ):
+            raise ValueError("Conflicting owned tournament source")
+        expected = {
+            group.authoritative_input.match_id: group.result_fingerprint
+            for group in (
+                *authoritative.semifinal_groups,
+                authoritative.final_group,
+            )
+        }
+        actual = {
+            ref.match_id: ref.result_fingerprint
+            for ref in existing.result.match_result_refs
+        }
+        if actual != expected:
+            raise ValueError("Conflicting owned tournament source")
+        prepare_tournament_ranking_sources(
+            existing.binding, existing.result, existing.awards
         )
 
     @staticmethod

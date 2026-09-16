@@ -303,9 +303,12 @@ class AuthoritativeRunSimulationDriver:
         ]
         if not candidates and not required:
             return None
-        if len(candidates) != 1:
+        if not candidates:
+            raise ValueError("supported tournament authority is missing")
+        if len(candidates) > 1:
             raise ValueError(
-                "current RankingWeek requires exactly one persisted tournament authority"
+                "multiple supported tournaments lack authoritative cross-event "
+                "Simulation Slot chronology"
             )
         package = candidates[0]
         validate_adopted_four_player_match_package(package)
@@ -317,7 +320,9 @@ class AuthoritativeRunSimulationDriver:
         if payload.get("schema_version") == "adopted_tournament_authority.v2":
             return (
                 SeasonEventMatchPackage.model_validate(payload["package"]),
-                FrozenPointAwardAuthority.model_validate(payload["point_award_authority"]),
+                FrozenPointAwardAuthority.model_validate(
+                    payload["point_award_authority"]
+                ),
             )
         return SeasonEventMatchPackage.model_validate(payload), None
 

@@ -4,15 +4,18 @@ This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_
 
 ## Implemented narrow tournament integration
 
-The current narrow driver automatically adopts the existing persisted supported
-four-player Main Draw, materializes semifinal/final slots, preserves its three match
-identities, and closes exactly once through the existing completion, award and
-`OwnedTournamentRankingSource` contracts. Explicit authoritative Admin routes expose
+The current narrow driver automatically adopts one persisted supported four-player
+Main Draw in the current Run/Branch/week, preserves its match identities, and closes
+it exactly once through the existing completion, award and
+`OwnedTournamentRankingSource` contracts. Multiple same-week events fail closed
+before mutation because no persisted source currently maps them onto the global
+Simulation Slot chronology; legacy `start_day`, list/event ordering and draw-round
+arithmetic are not substitutes. Explicit authoritative Admin routes expose
 position, split Next Match and Next Slot without redirecting legacy simulation.
 Independent same-slot groups now commit atomically and resume after failure, while
 transition readiness reuses the authoritative match/effect sporting preflight.
-General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling and
-health remain Gate 3 work.
+General draws, Qualification, WC/LL, Entries, AI, authoritative cross-event
+scheduling, and health remain Gate 3 work.
 The narrow Gate 3 repeated-flow criterion is now proven for exactly one supported
 four-player tournament per concrete season/week across Week 1 → Week 2 → Week 3,
 including product Save/reopen and historical replay. Gate 3 as a whole remains open.

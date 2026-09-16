@@ -49,6 +49,8 @@ from beta_engine.domain.simulation_slots import (
 )
 from beta_engine.infrastructure.db.models import (
     Base,
+    AdoptedTournamentAuthorityModel,
+    AuthoritativeSimulationCommandModel,
     PlayerLifecycleWeekStateModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -737,7 +739,9 @@ def test_next_slot_and_both_split_orders_are_equivalent(tmp_path):
     assert snapshots[0] == snapshots[1] == snapshots[2]
 
 
-def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
+def test_driver_rejects_qualification_and_insufficient_multi_event_chronology(
+    tmp_path,
+):
     from test_season_point_awards_service import make_points_service
 
     service, event_id = make_points_service(tmp_path / "unsupported")
@@ -754,12 +758,38 @@ def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
     clean = registry.matches_by_event_id[event_id].model_copy(deep=True)
     clean.qualification_matches = []
     registry.matches_by_event_id[event_id] = clean
-    registry.matches_by_event_id["ambiguous"] = clean.model_copy(
-        update={"event_id": "ambiguous"}
+    service.result_service.match_service._save_registry(registry)
+    registry.matches_by_event_id["second-registry-entry"] = clean.model_copy(
+        update={"event_id": clean.event_id + "-SECOND"}
     )
     service.result_service.match_service._save_registry(registry)
-    with pytest.raises(ValueError, match="exactly one"):
+    with pytest.raises(ValueError, match="lack authoritative cross-event"):
         driver._package(week)
+
+
+def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "multi-blocked")
+    registry = driver.match_service._load_registry()
+    package = next(iter(registry.matches_by_event_id.values()))
+    registry.matches_by_event_id["second-registry-entry"] = package.model_copy(
+        update={"event_id": package.event_id + "-SECOND"}
+    )
+    driver.match_service._save_registry(registry)
+
+    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+        driver.position(run_id="run", branch_id="branch")
+
+    with factory() as session:
+        assert session.scalars(select(SimulationSlotModel)).all() == []
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+        assert session.scalars(select(AdoptedTournamentAuthorityModel)).all() == []
+        assert session.scalars(select(AuthoritativeSimulationCommandModel)).all() == []
+        assert (
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
 
 
 def test_week_61_requires_season_transition(tmp_path):

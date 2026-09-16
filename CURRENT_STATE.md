@@ -8,7 +8,7 @@ PR #728 review hardening preserves owned InitialWorld style/profile truth, carri
 
 The follow-up compatibility correction assigns Sharpness-aware matches to `match_input_snapshot.v10` / `match_engine_v10`; v1-v9 hash payloads continue to omit the later Sharpness field and retain their historical identities.
 
-Supported persisted four-player Main Draws now have an explicit compatibility projection into one Run/Branch/week global slot ledger and back through the existing tournament completion, authored awards, ranking validation and one `OwnedTournamentRankingSource` per event; every completion ref retains the exact Slot result fingerprint. Calendar `start_day` plus stored draw-round topology supplies the narrow deterministic chronology; missing or unrecognized scheduling evidence fails closed. Gate 3 is not complete: Entries, general draws, Qualification, WC/LL, cross-week scheduling, AI, health and broader event types remain gaps.
+The single supported persisted four-player Main Draw retains its explicit compatibility projection into the Run/Branch/week slot ledger and back through tournament completion, authored awards, ranking validation and `OwnedTournamentRankingSource`; every completion ref retains the exact Slot result fingerprint. Multiple same-week events fail closed before mutation because current persisted data has no authoritative mapping onto the global Simulation Slot chronology. Legacy calendar `start_day`, calendar/list order, event identity and draw-round arithmetic are not treated as that missing authority. Gate 3 is not complete: Entries, general draws, Qualification, WC/LL, cross-event scheduling, AI, health and broader event types remain gaps.
 
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
@@ -95,24 +95,23 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 ## Best next implementation slice
 
 **Broaden the proven repeated sporting flow without weakening its authority.** The
-narrow four-player path derives a stable Run/Branch position across every supported
-event in the current week, commits independent same-slot groups separately over one
-frozen snapshot, resumes partial commands, runs the same sporting-context preflight
-consumed by Week Transition, materializes dependent Finals and closes each event
-exactly once into its own `OwnedTournamentRankingSource`. Match-derived
-Form/Sharpness/Fatigue and the tournament-to-ranking bridge are implemented, not
-future gaps. Qualification, non-four-player draws and ambiguous calendar scheduling
-continue to fail closed.
+narrow single-event four-player path still derives a stable Run/Branch position,
+commits independent same-slot groups over one frozen snapshot, resumes partial
+commands, runs the sporting-context preflight consumed by Week Transition,
+materializes the dependent Final and closes exactly once into
+`OwnedTournamentRankingSource`. Match-derived Form/Sharpness/Fatigue and the
+tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week
+events, Qualification, non-four-player draws and ambiguous scheduling continue to
+fail closed.
 
 The narrow repeated-flow acceptance now drives two distinct persisted four-player
 events through production authoritative HTTP commands and real Week Transition
 preview/confirm boundaries from Week 1 to Week 3. It saves the simulation component,
 preserves frozen tournament authority and verifies historical Week 1 replay, two
 owned sources, immutable published rankings and the three-week sporting chain.
-The real SQLite application acceptance now also covers two supported events in one
-week, including their shared global slots, independent closure and exact retry after
-a post-match/pre-source failure. This remains a narrow calendar/day plus draw-round
-projection, not a general scheduler.
+The real SQLite application regression proves that two persisted same-week events
+are rejected before any adopted authority, command, slot, group or owned tournament
+source is written. No multi-event execution or general scheduler is claimed.
 The acceptance's compact four-player player-world setup still uses the existing
 owned-state fixture writers because no production bootstrap currently emits this
 synthetic narrow package; every simulation, Save, ranking-authority and Week

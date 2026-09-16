@@ -6,7 +6,7 @@ from types import SimpleNamespace
 import pytest
 import json
 import hashlib
-from sqlalchemy import create_engine, delete, select
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import sessionmaker
 
@@ -49,9 +49,9 @@ from beta_engine.domain.simulation_slots import (
 )
 from beta_engine.infrastructure.db.models import (
     Base,
-    InitialWorldStateModel,
+    AdoptedTournamentAuthorityModel,
+    AuthoritativeSimulationCommandModel,
     PlayerLifecycleWeekStateModel,
-    PlayerSportingWeekStateModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     RunBranchModel,
@@ -564,156 +564,6 @@ def _driver_fixture(path):
     )
 
 
-def _multi_driver_fixture(path):
-    driver, factory, week = _driver_fixture(path)
-    match_service = driver.match_service
-    registry = match_service._load_registry()
-    original = next(iter(registry.matches_by_event_id.values()))
-    second_event_id = original.event_id + "-SECOND"
-    id_map = {
-        match.match_id: match.match_id + "-SECOND"
-        for match in original.main_draw_matches
-    }
-    player_map = {
-        player_id: player_id + "-SECOND"
-        for match in original.main_draw_matches
-        for player_id in (match.top_player_id, match.bottom_player_id)
-        if player_id
-    }
-    second_matches = []
-    for match in original.main_draw_matches:
-        update = {
-            "event_id": second_event_id,
-            "match_id": id_map[match.match_id],
-        }
-        if match.top_source.startswith("WINNER:"):
-            update["top_source"] = (
-                "WINNER:" + id_map[match.top_source.removeprefix("WINNER:")]
-            )
-            update["bottom_source"] = (
-                "WINNER:" + id_map[match.bottom_source.removeprefix("WINNER:")]
-            )
-        if match.winner_to_match_id:
-            update["winner_to_match_id"] = id_map[match.winner_to_match_id]
-        if match.top_player_id:
-            update["top_player_id"] = player_map[match.top_player_id]
-        if match.bottom_player_id:
-            update["bottom_player_id"] = player_map[match.bottom_player_id]
-        second_matches.append(match.model_copy(update=update))
-    registry.matches_by_event_id[second_event_id] = original.model_copy(
-        update={
-            "event_id": second_event_id,
-            "main_draw_matches": second_matches,
-            "metadata": original.metadata.model_copy(
-                update={"event_id": second_event_id}
-            ),
-        }
-    )
-    match_service._save_registry(registry)
-    active_service = match_service.active_players_service
-    active_registry = active_service._load_registry()
-    active_registry.players_by_season[original.season] = sorted(
-        active_registry.players_by_season[original.season]
-        + [
-            value.model_copy(
-                update={
-                    "player_id": player_map[value.player_id],
-                    "source_pool_player_id": value.source_pool_player_id + "-SECOND",
-                }
-            )
-            for value in active_registry.players_by_season[original.season]
-            if value.player_id in player_map
-        ],
-        key=lambda value: value.player_id,
-    )
-    active_service._save_registry(active_registry)
-    calendar_service = match_service.draw_service.calendar_service
-    calendar_registry = calendar_service._load_registry()
-    season = original.season
-    calendar = calendar_registry.calendars_by_season[season]
-    original_event = next(
-        event for event in calendar.events if event.event_id == original.event_id
-    )
-    calendar_registry.calendars_by_season[season] = calendar.model_copy(
-        update={
-            "events": calendar.events
-            + [original_event.model_copy(update={"event_id": second_event_id})]
-        }
-    )
-    calendar_service._save_registry(calendar_registry)
-    with factory.begin() as session:
-        initial = get_initial_world(session, run_id="run", branch_id="branch")
-        expanded_initial = initial.model_copy(
-            update={
-                "players": tuple(
-                    sorted(
-                        initial.players
-                        + tuple(
-                            value.model_copy(
-                                update={"player_id": player_map[value.player_id]}
-                            )
-                            for value in initial.players
-                        ),
-                        key=lambda value: value.player_id,
-                    )
-                )
-            }
-        )
-        session.execute(delete(InitialWorldStateModel))
-        put_initial_world(session, expanded_initial)
-        sporting = get_sporting(session, run_id="run", branch_id="branch", week=week)
-        expanded_sporting = sporting.model_copy(
-            update={
-                "source_initial_world_fingerprint": expanded_initial.fingerprint,
-                "players": tuple(
-                    sorted(
-                        sporting.players
-                        + tuple(
-                            value.model_copy(
-                                update={"player_id": player_map[value.player_id]}
-                            )
-                            for value in sporting.players
-                        ),
-                        key=lambda value: value.player_id,
-                    )
-                ),
-            }
-        )
-        session.execute(delete(PlayerSportingWeekStateModel))
-        put_sporting(
-            session,
-            expanded_sporting,
-        )
-        lifecycle = get_lifecycle(session, run_id="run", branch_id="branch", week=week)
-        expanded_lifecycle = lifecycle.model_copy(
-            update={
-                "source_initial_world_fingerprint": expanded_initial.fingerprint,
-                "players": tuple(
-                    sorted(
-                        lifecycle.players
-                        + tuple(
-                            value.model_copy(
-                                update={
-                                    "player_id": player_map[value.player_id],
-                                    "tie_break_token": value.tie_break_token
-                                    + "-SECOND",
-                                }
-                            )
-                            for value in lifecycle.players
-                        ),
-                        key=lambda value: value.player_id,
-                    )
-                ),
-            }
-        )
-        session.execute(delete(PlayerLifecycleWeekStateModel))
-        put_lifecycle(
-            session,
-            expanded_lifecycle,
-        )
-    return driver, factory, week, original.event_id, second_event_id
-
-
 def _driver_command(driver, week, command_id, group_id=None):
     position = driver.position(run_id="run", branch_id="branch")
     return AuthoritativeSimulationCommand(
@@ -725,81 +575,6 @@ def _driver_command(driver, week, command_id, group_id=None):
         expected_revision_id="revision",
         group_id=group_id,
     ), position
-
-
-def test_multi_event_global_timeline_partial_close_and_exact_retry(tmp_path):
-    driver, factory, week, first_event, second_event = _multi_driver_fixture(
-        tmp_path / "multi"
-    )
-    opening = driver.position(run_id="run", branch_id="branch")
-    assert len(opening.eligible_match_ids) == 4
-    assert len(opening.blocked_match_ids) == 2
-
-    semifinals, _ = _driver_command(driver, week, "both-semifinals")
-    after_semifinals = driver.simulate_next_slot(semifinals)
-    assert len(after_semifinals["eligible_match_ids"]) == 2
-    with factory() as session:
-        slots = session.scalars(
-            select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
-        ).all()
-        first_plan = AuthoritativeSlotMatchExecutor._load_plan(slots[0])
-        assert {event.event_id for event in first_plan.match_events} == {
-            first_event,
-            second_event,
-        }
-        assert (
-            len(
-                {
-                    AuthoritativeSlotMatchExecutor._load_group(
-                        group
-                    ).authoritative_input.slot_start_fingerprint
-                    for group in session.scalars(
-                        select(SimulationEventGroupModel)
-                    ).all()
-                }
-            )
-            == 1
-        )
-
-    first_final = next(
-        match_id
-        for match_id in after_semifinals["eligible_match_ids"]
-        if not match_id.endswith("-SECOND")
-    )
-    close_first, _ = _driver_command(driver, week, "close-first", first_final)
-    after_first = driver.simulate_next_match(close_first)
-    assert after_first["supported_tournament_complete"] is False
-    with factory() as session:
-        assert [
-            source.binding.edition_id
-            for source in OwnedTournamentRankingSourceStore(session).history(
-                run_id="run", branch_id="branch"
-            )
-        ] == [first_event]
-
-    close_second, saved_position = _driver_command(driver, week, "close-second")
-    with pytest.raises(RuntimeError, match="after tournament final"):
-        driver.simulate_next_slot(close_second, fault_at="after_final_before_source")
-    reopened = AuthoritativeRunSimulationDriver(
-        factory, driver.match_service, driver.awards_service
-    )
-    assert (
-        reopened.position(run_id="run", branch_id="branch").position_fingerprint
-        != saved_position.position_fingerprint
-    )
-    closed = reopened.simulate_next_slot(close_second)
-    assert closed["supported_tournament_complete"] is True
-    assert reopened.simulate_next_slot(close_second) == closed
-    with factory() as session:
-        history = OwnedTournamentRankingSourceStore(session).history(
-            run_id="run", branch_id="branch"
-        )
-        assert {source.binding.edition_id for source in history} == {
-            first_event,
-            second_event,
-        }
-        assert len(history) == 2
-        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 6
 
 
 def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):
@@ -964,7 +739,9 @@ def test_next_slot_and_both_split_orders_are_equivalent(tmp_path):
     assert snapshots[0] == snapshots[1] == snapshots[2]
 
 
-def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
+def test_driver_rejects_qualification_and_insufficient_multi_event_chronology(
+    tmp_path,
+):
     from test_season_point_awards_service import make_points_service
 
     service, event_id = make_points_service(tmp_path / "unsupported")
@@ -976,28 +753,43 @@ def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
         None, service.result_service.match_service, service
     )
     with pytest.raises(ValueError, match="exactly three Main Draw"):
-        driver._packages(week)
+        driver._package(week)
     registry = service.result_service.match_service._load_registry()
     clean = registry.matches_by_event_id[event_id].model_copy(deep=True)
     clean.qualification_matches = []
     registry.matches_by_event_id[event_id] = clean
     service.result_service.match_service._save_registry(registry)
-    calendar_service = driver.match_service.draw_service.calendar_service
-    calendar_registry = calendar_service._load_registry()
-    calendar = calendar_registry.calendars_by_season[clean.season]
-    calendar_registry.calendars_by_season[clean.season] = calendar.model_copy(
-        update={
-            "events": [
-                item.model_copy(update={"start_day": "sometime"})
-                if item.event_id == event_id
-                else item
-                for item in calendar.events
-            ]
-        }
+    registry.matches_by_event_id["second-registry-entry"] = clean.model_copy(
+        update={"event_id": clean.event_id + "-SECOND"}
     )
-    calendar_service._save_registry(calendar_registry)
-    with pytest.raises(ValueError, match="ambiguous authoritative scheduling"):
-        driver._packages(week)
+    service.result_service.match_service._save_registry(registry)
+    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+        driver._package(week)
+
+
+def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "multi-blocked")
+    registry = driver.match_service._load_registry()
+    package = next(iter(registry.matches_by_event_id.values()))
+    registry.matches_by_event_id["second-registry-entry"] = package.model_copy(
+        update={"event_id": package.event_id + "-SECOND"}
+    )
+    driver.match_service._save_registry(registry)
+
+    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+        driver.position(run_id="run", branch_id="branch")
+
+    with factory() as session:
+        assert session.scalars(select(SimulationSlotModel)).all() == []
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+        assert session.scalars(select(AdoptedTournamentAuthorityModel)).all() == []
+        assert session.scalars(select(AuthoritativeSimulationCommandModel)).all() == []
+        assert (
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
 
 
 def test_week_61_requires_season_transition(tmp_path):

@@ -110,6 +110,10 @@ preview/confirm boundaries from Week 1 to Week 3. It saves the simulation compon
 preserves frozen tournament authority and verifies historical Week 1 replay, two
 owned sources, immutable published rankings and the three-week sporting chain.
 This is not evidence for multiple events per week or a general scheduler.
+The acceptance's compact four-player player-world setup still uses the existing
+owned-state fixture writers because no production bootstrap currently emits this
+synthetic narrow package; every simulation, Save, ranking-authority and Week
+Transition operation after that setup uses its production HTTP/application boundary.
 
 ## Current limitations
 

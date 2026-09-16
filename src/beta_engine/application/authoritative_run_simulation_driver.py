@@ -53,7 +53,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     preflight_completed_context_from_authoritative_matches,
 )
 from beta_engine.infrastructure.db.authoritative_week_transition import (
-    week_transition_readiness_blockers,
+    preview_persisted_week_transition,
 )
 
 
@@ -450,8 +450,12 @@ class AuthoritativeRunSimulationDriver:
                 blockers.append("week_transition_sporting_preflight_failed")
         blockers.extend(
             code
-            for code in week_transition_readiness_blockers(
-                session, run_id=run_id, branch_id=branch_id, completed_week=week
+            for code in preview_persisted_week_transition(
+                session,
+                self.awards_service,
+                run_id=run_id,
+                branch_id=branch_id,
+                completed_week=week,
             )
             if code not in blockers
         )
@@ -480,7 +484,9 @@ class AuthoritativeRunSimulationDriver:
             "owned": owned.fingerprint if owned else None,
             "tournament_authority": frozen.authority_fingerprint
             if frozen
-            else package.metadata.build_fingerprint,
+            else self._tournament_authority_fingerprint(
+                run_id, branch_id, week, package
+            ),
             "lifecycle": lifecycle_fp,
             "sporting": sporting.fingerprint if sporting else None,
             "branch_head": branch.saved_head_revision_id if branch else None,

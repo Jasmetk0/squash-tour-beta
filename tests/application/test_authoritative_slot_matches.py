@@ -657,6 +657,26 @@ def test_pending_retry_uses_frozen_authority_after_legacy_source_changes(tmp_pat
         )
 
 
+def test_pre_adoption_full_package_change_makes_position_stale(tmp_path):
+    driver, _, week = _driver_fixture(tmp_path / "pre-adoption-stale")
+    command, opening = _driver_command(driver, week, "stale-source")
+    registry = driver.match_service._load_registry()
+    package = next(iter(registry.matches_by_event_id.values()))
+    assert package.metadata.build_fingerprint
+    (
+        package.main_draw_matches[0].top_player_id,
+        package.main_draw_matches[0].bottom_player_id,
+    ) = (
+        package.main_draw_matches[0].bottom_player_id,
+        package.main_draw_matches[0].top_player_id,
+    )
+    driver.match_service._save_registry(registry)
+    changed = driver.position(run_id="run", branch_id="branch")
+    assert changed.position_fingerprint != opening.position_fingerprint
+    with pytest.raises(ValueError, match="position is stale"):
+        driver.simulate_next_slot(command)
+
+
 def test_next_slot_and_both_split_orders_are_equivalent(tmp_path):
     snapshots = []
     for label, order in (("slot", None), ("forward", (0, 1)), ("reverse", (1, 0))):

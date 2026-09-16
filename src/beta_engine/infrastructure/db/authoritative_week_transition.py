@@ -49,6 +49,9 @@ from beta_engine.domain.rankings.official import (
     load_official_ranking_snapshot,
 )
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
+from beta_engine.infrastructure.db.owned_tournament_sources import (
+    OwnedTournamentRankingSourceStore,
+)
 
 
 def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_week):
@@ -77,21 +80,43 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     )
     if authority is None:
         blockers.append("ranking_transition_authority_missing")
-    elif not authority_carried_to_saved_head(session, authority, branch, draft):
-        blockers.append("ranking_transition_authority_stale")
+    else:
+        if (
+            authority.completed_week != completed_week
+            or authority.target_week != target
+        ):
+            blockers.append("ranking_transition_authority_boundary_mismatch")
+        if not authority_carried_to_saved_head(session, authority, branch, draft):
+            blockers.append("ranking_transition_authority_stale")
     candidates = OfficialRankingCandidateStore(session).history(
         run_id=run_id, branch_id=branch_id
     )
-    if not candidates or candidates[-1].week != completed_week:
+    predecessor = candidates[-1] if candidates else None
+    if predecessor is None or predecessor.week != completed_week:
         blockers.append("predecessor_ranking_missing")
     world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
-    if world is not None and world.current_ordinal != completed_week.ordinal:
-        blockers.append("authoritative_world_head_mismatch")
-    if (
-        get_lifecycle(session, run_id=run_id, branch_id=branch_id, week=completed_week)
-        is None
+    if world is not None and (
+        world.current_ordinal != completed_week.ordinal
+        or predecessor is None
+        or world.ranking_fingerprint != predecessor.fingerprint
     ):
+        blockers.append("authoritative_world_head_mismatch")
+    lifecycle = get_lifecycle(
+        session, run_id=run_id, branch_id=branch_id, week=completed_week
+    )
+    if lifecycle is None:
         blockers.append("lifecycle_roster_missing")
+    elif authority is not None:
+        lifecycle_identity = tuple(
+            (p.player_id, p.tie_break_token, p.tour_entry_week)
+            for p in lifecycle.ranking_roster()
+        )
+        authority_identity = tuple(
+            (p.player_id, p.tie_break_token, p.tour_entry_week)
+            for p in authority.players
+        )
+        if lifecycle_identity != authority_identity:
+            blockers.append("ranking_transition_roster_mismatch")
     position = season_week_to_calendar_position(2000 + target.season_index, target.week)
     pending = session.scalar(
         select(RunProspectModel.prospect_id)
@@ -107,6 +132,62 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     if pending is not None:
         blockers.append("prospect_bridge_missing")
     return tuple(blockers)
+
+
+def preview_persisted_week_transition(
+    session, awards, *, run_id, branch_id, completed_week
+):
+    """Run the real production staging calculation under a rolled-back savepoint."""
+    blockers = week_transition_readiness_blockers(
+        session, run_id=run_id, branch_id=branch_id, completed_week=completed_week
+    )
+    if blockers:
+        return blockers
+    branch = session.get(RunBranchModel, branch_id)
+    authority = RankingTransitionAuthorityStore(session).get(
+        run_id=run_id, branch_id=branch_id, target_ordinal=completed_week.ordinal + 1
+    )
+    sources = OwnedTournamentRankingSourceStore(session).history(
+        run_id=run_id, branch_id=branch_id
+    )
+    if branch is None or authority is None or any(source is None for source in sources):
+        return ("week_transition_preview_failed",)
+    bindings = tuple(
+        source.binding
+        for source in sources
+        if source is not None and source.binding.completed_week == completed_week
+    )
+    command = AuthoritativeWeekTransitionCommand(
+        command_id=f"readiness:{completed_week.ordinal}",
+        run_id=run_id,
+        branch_id=branch_id,
+        base_revision_id=branch.saved_head_revision_id,
+        completed_week=completed_week,
+        target_week=authority.target_week,
+        authority_fingerprint=authority.fingerprint,
+        tournaments=bindings,
+        audit=authority.audit,
+    )
+    savepoint = session.begin_nested()
+    try:
+        transition_in_transaction(session, awards, command)
+    except ValueError as exc:
+        message = str(exc)
+        mapping = (
+            ("world predecessor", "authoritative_world_head_mismatch"),
+            ("roster identity", "ranking_transition_roster_mismatch"),
+            ("prospect", "prospect_bridge_missing"),
+            ("Saved Revision", "ranking_transition_authority_stale"),
+        )
+        return (
+            next(
+                (code for text_value, code in mapping if text_value in message),
+                "week_transition_preview_failed",
+            ),
+        )
+    finally:
+        savepoint.rollback()
+    return ()
 
 
 def _fault_injection_point(_name: str) -> None:

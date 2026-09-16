@@ -317,6 +317,9 @@ def test_product_save_reopen_mid_slot_preserves_frozen_position(tmp_path):
 
 def test_week_one_to_three_repeated_authoritative_api_flow(tmp_path):
     server, package = _server_state(tmp_path)
+    matches = server.app.dependency_overrides[get_season_match_service]()
+    points = server.app.dependency_overrides[get_season_point_awards_service]()
+    reopened_server = None
     with server:
         run_id, branch_id, revision = _create_run(
             server, display_name="Repeated sporting flow"
@@ -466,6 +469,36 @@ def test_week_one_to_three_repeated_authoritative_api_flow(tmp_path):
                 },
             )[1]
             revision = saved["saved_revision"]["revision_id"]
+            if number == 1:
+                server.__exit__(None, None, None)
+                reopened_server = ApiServer(
+                    database_url=f"sqlite:///{tmp_path / 'api.sqlite'}"
+                )
+                reopened_server.app.dependency_overrides[get_season_match_service] = (
+                    lambda: matches
+                )
+                reopened_server.app.dependency_overrides[
+                    get_season_point_awards_service
+                ] = lambda: points
+                server = reopened_server.__enter__()
+                ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+                reopened_position = _request(
+                    "GET",
+                    f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation/position",
+                )[1]
+                assert reopened_position["current_week"] == {
+                    "season_index": 0,
+                    "week": 2,
+                }
+                with server.app.state.runtime.repository._session_factory() as session:
+                    assert (
+                        len(
+                            OwnedTournamentRankingSourceStore(session).history(
+                                run_id=run_id, branch_id=branch_id
+                            )
+                        )
+                        == 1
+                    )
 
         final_position = _request("GET", sim_root + "/position")[1]
         assert final_position["current_week"] == {"season_index": 0, "week": 3}
@@ -521,3 +554,5 @@ def test_week_one_to_three_repeated_authoritative_api_flow(tmp_path):
                 != (100, 50, 0)
                 for player in states[2]["players"]
             )
+        if reopened_server is not None:
+            reopened_server.__exit__(None, None, None)

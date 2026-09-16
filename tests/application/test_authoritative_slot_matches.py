@@ -6,14 +6,19 @@ from types import SimpleNamespace
 import pytest
 import json
 import hashlib
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import sessionmaker
 
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
     execute_supported_four_player_tournament,
     execute_adopted_four_player_match_package,
+)
+from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeRunSimulationDriver,
+    AuthoritativeSimulationCommand,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
@@ -46,6 +51,8 @@ from beta_engine.infrastructure.db.models import (
     Base,
     PlayerLifecycleWeekStateModel,
     SimulationEventGroupModel,
+    SimulationSlotModel,
+    RunBranchModel,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
@@ -315,6 +322,9 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
         event_id
     ]
     package.qualification_matches = []
+    registry = service.result_service.match_service._load_registry()
+    registry.matches_by_event_id[event_id] = package
+    service.result_service.match_service._save_registry(registry)
     semifinal_matches = sorted(
         (match for match in package.main_draw_matches if match.round_number == 1),
         key=lambda match: match.bracket_position,
@@ -400,6 +410,398 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
     corrupt.match_result_refs[0].result_fingerprint = "0" * 64
     with pytest.raises(ValueError, match="result fingerprint mismatch"):
         prepare_tournament_ranking_sources(binding, corrupt, awards)
+
+
+def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(tmp_path / "driver-source")
+    package = service.result_service.match_service._load_registry().matches_by_event_id[
+        event_id
+    ]
+    package.qualification_matches = []
+    registry = service.result_service.match_service._load_registry()
+    registry.matches_by_event_id[event_id] = package
+    service.result_service.match_service._save_registry(registry)
+    week = RankingWeek(season_index=0, week=package.season_week)
+    ids = tuple(
+        player_id
+        for match in sorted(
+            (m for m in package.main_draw_matches if m.round_number == 1),
+            key=lambda m: m.bracket_position,
+        )
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    session = session_at(tmp_path / "driver.sqlite", ids, week)
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision-1",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+    driver = AuthoritativeRunSimulationDriver(
+        factory, service.result_service.match_service, service
+    )
+    opening = driver.position(run_id="run", branch_id="branch")
+    assert len(opening.eligible_match_ids) == 2
+    assert len(opening.blocked_match_ids) == 1
+
+    first = AuthoritativeSimulationCommand(
+        command_id="sf-1",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision-1",
+        group_id=opening.eligible_match_ids[0],
+    )
+    after_first = driver.simulate_next_match(first)
+    assert len(after_first["eligible_match_ids"]) == 1
+    assert after_first["blocked_match_ids"]
+    assert driver.simulate_next_match(first) == after_first
+    with pytest.raises(ValueError, match="stale"):
+        driver.simulate_next_match(
+            first.model_copy(
+                update={
+                    "command_id": "stale",
+                    "group_id": opening.eligible_match_ids[1],
+                }
+            )
+        )
+
+    current = driver.position(run_id="run", branch_id="branch")
+    second = first.model_copy(
+        update={
+            "command_id": "sf-2",
+            "expected_position_fingerprint": current.position_fingerprint,
+            "group_id": current.eligible_match_ids[0],
+        }
+    )
+    driver.simulate_next_match(second)
+    final_position = driver.position(run_id="run", branch_id="branch")
+    final = first.model_copy(
+        update={
+            "command_id": "final",
+            "expected_position_fingerprint": final_position.position_fingerprint,
+            "group_id": None,
+        }
+    )
+    closed = driver.simulate_next_slot(final)
+    assert closed["supported_tournament_complete"] is True
+    assert closed["week_ready_for_transition"] is False
+    assert closed["transition_blockers"] == ["run_branch_scope_missing"]
+    with factory() as check:
+        assert (
+            len(
+                OwnedTournamentRankingSourceStore(check).history(
+                    run_id="run", branch_id="branch"
+                )
+            )
+            == 1
+        )
+        assert len(check.scalars(select(SimulationEventGroupModel)).all()) == 3
+
+
+def _driver_fixture(path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(path / "source")
+    match_service = service.result_service.match_service
+    registry = match_service._load_registry()
+    package = registry.matches_by_event_id[event_id]
+    package.qualification_matches = []
+    registry.matches_by_event_id[event_id] = package
+    match_service._save_registry(registry)
+    week = RankingWeek(season_index=0, week=package.season_week)
+    ids = tuple(
+        player_id
+        for match in sorted(
+            (m for m in package.main_draw_matches if m.round_number == 1),
+            key=lambda m: m.bracket_position,
+        )
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    session = session_at(path / "state.sqlite", ids, week)
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+    return (
+        AuthoritativeRunSimulationDriver(factory, match_service, service),
+        factory,
+        week,
+    )
+
+
+def _driver_command(driver, week, command_id, group_id=None):
+    position = driver.position(run_id="run", branch_id="branch")
+    return AuthoritativeSimulationCommand(
+        command_id=command_id,
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=position.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+    ), position
+
+
+def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "partial")
+    command, _ = _driver_command(driver, week, "slot")
+    with pytest.raises(RuntimeError, match="before second"):
+        driver.simulate_next_slot(command, fault_at="before_second_group")
+    with factory() as session:
+        rows = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(rows) == 1
+        first_fingerprint = rows[0].result_fingerprint
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    resumed = reopened.simulate_next_slot(command)
+    assert len(resumed["eligible_match_ids"]) == 1  # Final is now the next slot.
+    with factory() as session:
+        rows = session.scalars(
+            select(SimulationEventGroupModel).order_by(
+                SimulationEventGroupModel.group_id
+            )
+        ).all()
+        assert len(rows) == 2
+        assert first_fingerprint in {row.result_fingerprint for row in rows}
+
+
+def test_pending_retry_uses_frozen_authority_after_legacy_source_changes(tmp_path):
+    baseline, baseline_factory, week = _driver_fixture(tmp_path / "baseline")
+    baseline_command, _ = _driver_command(baseline, week, "slot")
+    baseline.simulate_next_slot(baseline_command)
+    baseline_final, _ = _driver_command(baseline, week, "final")
+    baseline.simulate_next_slot(baseline_final)
+    with baseline_factory() as session:
+        expected = tuple(
+            row.result_fingerprint
+            for row in session.scalars(
+                select(SimulationEventGroupModel).order_by(
+                    SimulationEventGroupModel.group_id
+                )
+            ).all()
+        )
+        expected_terminal = tuple(
+            row.terminal_checkpoint_json
+            for row in session.scalars(
+                select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+            ).all()
+        )
+        expected_source = (
+            OwnedTournamentRankingSourceStore(session)
+            .history(run_id="run", branch_id="branch")[0]
+            .fingerprint
+        )
+
+    driver, factory, week = _driver_fixture(tmp_path / "mutated")
+    command, _ = _driver_command(driver, week, "slot")
+    with pytest.raises(RuntimeError):
+        driver.simulate_next_slot(command, fault_at="before_second_group")
+    registry = driver.match_service._load_registry()
+    event_id = next(iter(registry.matches_by_event_id))
+    package = registry.matches_by_event_id[event_id]
+    package.metadata.build_fingerprint = "f" * 64
+    (
+        package.main_draw_matches[1].top_player_id,
+        package.main_draw_matches[1].bottom_player_id,
+    ) = (
+        package.main_draw_matches[1].bottom_player_id,
+        package.main_draw_matches[1].top_player_id,
+    )
+    driver.match_service._save_registry(registry)
+    driver.simulate_next_slot(command)
+    final, _ = _driver_command(driver, week, "final")
+    driver.simulate_next_slot(final)
+    with factory() as session:
+        actual = tuple(
+            row.result_fingerprint
+            for row in session.scalars(
+                select(SimulationEventGroupModel).order_by(
+                    SimulationEventGroupModel.group_id
+                )
+            ).all()
+        )
+        assert actual == expected
+        assert (
+            tuple(
+                row.terminal_checkpoint_json
+                for row in session.scalars(
+                    select(SimulationSlotModel).order_by(
+                        SimulationSlotModel.slot_ordinal
+                    )
+                ).all()
+            )
+            == expected_terminal
+        )
+        assert (
+            OwnedTournamentRankingSourceStore(session)
+            .history(run_id="run", branch_id="branch")[0]
+            .fingerprint
+            == expected_source
+        )
+
+
+def test_pre_adoption_full_package_change_makes_position_stale(tmp_path):
+    driver, _, week = _driver_fixture(tmp_path / "pre-adoption-stale")
+    command, opening = _driver_command(driver, week, "stale-source")
+    registry = driver.match_service._load_registry()
+    package = next(iter(registry.matches_by_event_id.values()))
+    assert package.metadata.build_fingerprint
+    (
+        package.main_draw_matches[0].top_player_id,
+        package.main_draw_matches[0].bottom_player_id,
+    ) = (
+        package.main_draw_matches[0].bottom_player_id,
+        package.main_draw_matches[0].top_player_id,
+    )
+    driver.match_service._save_registry(registry)
+    changed = driver.position(run_id="run", branch_id="branch")
+    assert changed.position_fingerprint != opening.position_fingerprint
+    with pytest.raises(ValueError, match="position is stale"):
+        driver.simulate_next_slot(command)
+
+
+def test_next_slot_and_both_split_orders_are_equivalent(tmp_path):
+    snapshots = []
+    for label, order in (("slot", None), ("forward", (0, 1)), ("reverse", (1, 0))):
+        driver, factory, week = _driver_fixture(tmp_path / label)
+        opening = driver.position(run_id="run", branch_id="branch")
+        if order is None:
+            command, _ = _driver_command(driver, week, "whole")
+            driver.simulate_next_slot(command)
+        else:
+            ids = opening.eligible_match_ids
+            for index in order:
+                command, _ = _driver_command(driver, week, f"split-{index}", ids[index])
+                driver.simulate_next_match(command)
+        command, _ = _driver_command(driver, week, "final")
+        driver.simulate_next_match(command)
+        with factory() as session:
+            slots = session.scalars(
+                select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+            ).all()
+            groups = session.scalars(
+                select(SimulationEventGroupModel).order_by(
+                    SimulationEventGroupModel.group_id
+                )
+            ).all()
+            snapshots.append(
+                (
+                    tuple(
+                        (
+                            g.match_input_fingerprint,
+                            g.result_fingerprint,
+                            g.payload_json,
+                        )
+                        for g in groups
+                    ),
+                    tuple(slot.terminal_checkpoint_json for slot in slots),
+                    AuthoritativeSlotMatchExecutor._load_group(
+                        next(group for group in groups if group.slot_id.endswith(":2"))
+                    ).authoritative_input.slot_start_fingerprint,
+                )
+            )
+    assert snapshots[0] == snapshots[1] == snapshots[2]
+
+
+def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
+    from test_season_point_awards_service import make_points_service
+
+    service, event_id = make_points_service(tmp_path / "unsupported")
+    package = service.result_service.match_service._load_registry().matches_by_event_id[
+        event_id
+    ]
+    week = RankingWeek(season_index=0, week=package.season_week)
+    driver = AuthoritativeRunSimulationDriver(
+        None, service.result_service.match_service, service
+    )
+    with pytest.raises(ValueError, match="exactly three Main Draw"):
+        driver._package(week)
+    registry = service.result_service.match_service._load_registry()
+    clean = registry.matches_by_event_id[event_id].model_copy(deep=True)
+    clean.qualification_matches = []
+    registry.matches_by_event_id[event_id] = clean
+    registry.matches_by_event_id["ambiguous"] = clean.model_copy(
+        update={"event_id": "ambiguous"}
+    )
+    service.result_service.match_service._save_registry(registry)
+    with pytest.raises(ValueError, match="exactly one"):
+        driver._package(week)
+
+
+def test_week_61_requires_season_transition(tmp_path):
+    from beta_engine.infrastructure.db.authoritative_week_transition import (
+        week_transition_readiness_blockers,
+    )
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'week61.sqlite'}")
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    assert week_transition_readiness_blockers(
+        session,
+        run_id="run",
+        branch_id="branch",
+        completed_week=RankingWeek(season_index=0, week=61),
+    ) == ("season_transition_required",)
+
+
+@pytest.mark.parametrize(
+    "fault", ["after_final_before_source", "after_source_staging_before_receipt"]
+)
+def test_tournament_close_fault_retry_is_exactly_once(tmp_path, fault):
+    driver, factory, week = _driver_fixture(tmp_path / fault)
+    semifinal, _ = _driver_command(driver, week, "semifinals")
+    driver.simulate_next_slot(semifinal)
+    final, _ = _driver_command(driver, week, "final")
+    with pytest.raises(RuntimeError, match="fault"):
+        driver.simulate_next_slot(final, fault_at=fault)
+    with factory() as session:
+        final_row = session.scalars(
+            select(SimulationEventGroupModel).order_by(
+                SimulationEventGroupModel.slot_id.desc()
+            )
+        ).first()
+        final_fingerprint = final_row.result_fingerprint
+        assert (
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )
+    closed = driver.simulate_next_slot(final)
+    assert closed["week_ready_for_transition"] is False
+    assert closed["transition_blockers"] == ["run_branch_scope_missing"]
+    with factory() as session:
+        final_row = session.scalars(
+            select(SimulationEventGroupModel).order_by(
+                SimulationEventGroupModel.slot_id.desc()
+            )
+        ).first()
+        assert final_row.result_fingerprint == final_fingerprint
+        assert (
+            len(
+                OwnedTournamentRankingSourceStore(session).history(
+                    run_id="run", branch_id="branch"
+                )
+            )
+            == 1
+        )
 
 
 def test_same_adopted_event_is_branch_safe_and_legacy_registry_is_read_only(tmp_path):

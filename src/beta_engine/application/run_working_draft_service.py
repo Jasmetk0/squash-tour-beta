@@ -80,27 +80,80 @@ class RunWorkingDraftService:
         )
 
     def save_ranking(
-        self, *, run_id: str, branch_id: str, expected_draft_version: int,
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
         expected_ranking_fingerprint: str,
     ) -> ViewerBranchSaveResult:
-        if not isinstance(expected_ranking_fingerprint, str) or len(expected_ranking_fingerprint) != 64 or any(
-            c not in "0123456789abcdef" for c in expected_ranking_fingerprint
+        if (
+            not isinstance(expected_ranking_fingerprint, str)
+            or len(expected_ranking_fingerprint) != 64
+            or any(c not in "0123456789abcdef" for c in expected_ranking_fingerprint)
         ):
             raise ValueError("Expected ranking fingerprint must be SHA-256")
         return self.repository.save_viewer_branch_selection_atomically(
-            run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
             expected_ranking_fingerprint=expected_ranking_fingerprint,
-            revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
-            audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
         )
 
-    def save_initial_world(self, *, run_id: str, branch_id: str, expected_draft_version: int,
-                           expected_initial_world_fingerprint: str) -> ViewerBranchSaveResult:
-        if not isinstance(expected_initial_world_fingerprint, str) or len(expected_initial_world_fingerprint) != 64:
+    def save_initial_world(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_initial_world_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_initial_world_fingerprint, str)
+            or len(expected_initial_world_fingerprint) != 64
+        ):
             raise ValueError("Expected initial-world fingerprint must be SHA-256")
         return self.repository.save_viewer_branch_selection_atomically(
-            run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
             expected_initial_world_fingerprint=expected_initial_world_fingerprint,
-            revision_id=_validated_entity_id(self.id_factory("saved-revision"), kind="saved revision"),
-            audit_event_id=_validated_entity_id(self.id_factory("revision-audit-event"), kind="revision audit event"),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_simulation(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_simulation_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_simulation_fingerprint, str)
+            or len(expected_simulation_fingerprint) != 64
+        ):
+            raise ValueError("Expected simulation fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_simulation_fingerprint=expected_simulation_fingerprint,
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
         )

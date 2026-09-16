@@ -208,6 +208,22 @@ def execute_adopted_four_player_match_package(
     seed: int,
 ) -> AuthoritativeFourPlayerTournamentResult:
     """Project an existing persisted four-player Main Draw into owned slots."""
+    ordered_players, matches = validate_adopted_four_player_match_package(package)
+    return execute_supported_four_player_tournament(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        event_id=package.event_id,
+        ordered_player_ids=ordered_players,
+        seed=seed,
+        match_ids=(matches[0].match_id, matches[1].match_id, matches[2].match_id),
+        draw_source_fingerprint=package.metadata.build_fingerprint,
+    )
+
+
+def validate_adopted_four_player_match_package(package: SeasonEventMatchPackage):
+    """Return canonical draw evidence or fail closed for unsupported topology."""
     if package.qualification_matches or len(package.main_draw_matches) != 3:
         raise ValueError(
             "supported authoritative bridge requires exactly three Main Draw matches"
@@ -239,17 +255,7 @@ def execute_adopted_four_player_match_package(
             semifinals[1].bottom_player_id,
         ),
     )
-    return execute_supported_four_player_tournament(
-        session,
-        run_id=run_id,
-        branch_id=branch_id,
-        week=week,
-        event_id=package.event_id,
-        ordered_player_ids=ordered_players,
-        seed=seed,
-        match_ids=(semifinals[0].match_id, semifinals[1].match_id, final.match_id),
-        draw_source_fingerprint=package.metadata.build_fingerprint,
-    )
+    return ordered_players, matches
 
 
 def publish_authoritative_tournament_to_existing_completion(

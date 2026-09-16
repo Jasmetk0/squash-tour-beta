@@ -137,6 +137,22 @@ def resolve_completed_context_from_authoritative_matches(
     session, *, run_id, branch_id, completed_week, player_ids
 ):
     """Prefer the Run/Branch slot ledger when authoritative matches exist."""
+    return put_completed_context(
+        session,
+        preflight_completed_context_from_authoritative_matches(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            completed_week=completed_week,
+            player_ids=player_ids,
+        ),
+    )
+
+
+def preflight_completed_context_from_authoritative_matches(
+    session, *, run_id, branch_id, completed_week, player_ids
+):
+    """Build and validate the exact transition sporting context without mutation."""
     from beta_engine.application.authoritative_slot_matches import (
         AuthoritativeSlotMatchExecutor,
     )
@@ -188,22 +204,19 @@ def resolve_completed_context_from_authoritative_matches(
             effect_fingerprints.append(effect.fingerprint)
             if effect.player_id in counts:
                 counts[effect.player_id] += 1
-    return put_completed_context(
-        session,
-        CompletedWeekSportingContext(
-            schema_version="completed_week_sporting_context.v2",
-            run_id=run_id,
-            branch_id=branch_id,
-            completed_week=completed_week,
-            competitive_match_counts=tuple(
-                CompetitiveMatchCount(player_id=player_id, count=count)
-                for player_id, count in sorted(counts.items())
-            ),
-            source_fingerprints=tuple(sorted(source_fingerprints)),
-            terminal_sporting_fingerprint=terminal.fingerprint,
-            match_effect_fingerprints=tuple(sorted(effect_fingerprints)),
-            provenance="authoritative Run/Branch Simulation Slot match/effect ledger",
+    return CompletedWeekSportingContext(
+        schema_version="completed_week_sporting_context.v2",
+        run_id=run_id,
+        branch_id=branch_id,
+        completed_week=completed_week,
+        competitive_match_counts=tuple(
+            CompetitiveMatchCount(player_id=player_id, count=count)
+            for player_id, count in sorted(counts.items())
         ),
+        source_fingerprints=tuple(sorted(source_fingerprints)),
+        terminal_sporting_fingerprint=terminal.fingerprint,
+        match_effect_fingerprints=tuple(sorted(effect_fingerprints)),
+        provenance="authoritative Run/Branch Simulation Slot match/effect ledger",
     )
 
 

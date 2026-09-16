@@ -241,6 +241,30 @@ class SimulationEventGroupModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class AuthoritativeSimulationCommandModel(Base):
+    """Idempotency/audit receipt for a Run/Branch simulation-driver mutation."""
+
+    __tablename__ = "authoritative_simulation_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    result_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class AdoptedTournamentAuthorityModel(Base):
+    """Immutable Run/Branch tournament package frozen at authoritative adoption."""
+
+    __tablename__ = "adopted_tournament_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

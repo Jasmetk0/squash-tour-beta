@@ -8,6 +8,8 @@ import json
 from sqlalchemy import delete, select
 
 from beta_engine.infrastructure.db.models import (
+    AdoptedTournamentAuthorityModel,
+    AuthoritativeSimulationCommandModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
 )
@@ -122,7 +124,15 @@ def _validate_semantics(slots, groups):
         raise ValueError("Simulation event group has no planned slot")
 
 
-def _component(slots, groups):
+def _component(
+    slots,
+    groups,
+    commands=(),
+    authorities=(),
+    *,
+    include_commands=True,
+    include_authorities=True,
+):
     _validate_semantics(slots, groups)
     body = {
         "slots": [
@@ -157,6 +167,30 @@ def _component(slots, groups):
             for row in groups
         ],
     }
+    if include_commands:
+        body["commands"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "status": row.status,
+                "result_json": row.result_json,
+            }
+            for row in commands
+        ]
+    if include_authorities:
+        body["authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "week_ordinal": row.week_ordinal,
+                "event_id": row.event_id,
+                "authority_fingerprint": row.authority_fingerprint,
+                "package_json": row.package_json,
+            }
+            for row in authorities
+        ]
     return {
         "fingerprint": hashlib.sha256(
             json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
@@ -186,25 +220,57 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             SimulationEventGroupModel.group_id,
         )
     ).all()
-    if slots or groups:
-        payload["content"][COMPONENT_KEY] = _component(slots, groups)
+    commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel)
+        .where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+        .order_by(AuthoritativeSimulationCommandModel.command_id)
+    ).all()
+    authorities = session.scalars(
+        select(AdoptedTournamentAuthorityModel)
+        .where(
+            AdoptedTournamentAuthorityModel.run_id == run_id,
+            AdoptedTournamentAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(AdoptedTournamentAuthorityModel.week_ordinal)
+    ).all()
+    if slots or groups or commands or authorities:
+        payload["content"][COMPONENT_KEY] = _component(
+            slots, groups, commands, authorities
+        )
 
 
 def _load(payload, *, run_id, branch_id):
     component = payload.get("content", {}).get(COMPONENT_KEY)
     if component is None:
         return None
-    if set(component) != {"fingerprint", "slots", "groups"}:
+    if set(component) not in (
+        {"fingerprint", "slots", "groups"},
+        {"fingerprint", "slots", "groups", "commands"},
+        {"fingerprint", "slots", "groups", "commands", "authorities"},
+    ):
         raise ValueError("Invalid Saved Revision simulation-slot component")
     calculated = _component(
         [SimulationSlotModel(**value) for value in component["slots"]],
         [SimulationEventGroupModel(**value) for value in component["groups"]],
+        [
+            AuthoritativeSimulationCommandModel(**value)
+            for value in component.get("commands", [])
+        ],
+        [
+            AdoptedTournamentAuthorityModel(**value)
+            for value in component.get("authorities", [])
+        ],
+        include_commands="commands" in component,
+        include_authorities="authorities" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
     if any(
         (value["run_id"], value["branch_id"]) != (run_id, branch_id)
-        for kind in ("slots", "groups")
+        for kind in (set(component) & {"slots", "groups", "commands", "authorities"})
         for value in component[kind]
     ):
         raise ValueError("Saved simulation-slot component scope mismatch")
@@ -236,9 +302,41 @@ def restore_saved_simulation_slots(
             SimulationEventGroupModel.group_id,
         )
     ).all()
-    live = _component(live_slots, live_groups) if live_slots or live_groups else None
+    live_commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel)
+        .where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+        .order_by(AuthoritativeSimulationCommandModel.command_id)
+    ).all()
+    live_authorities = session.scalars(
+        select(AdoptedTournamentAuthorityModel)
+        .where(
+            AdoptedTournamentAuthorityModel.run_id == run_id,
+            AdoptedTournamentAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(AdoptedTournamentAuthorityModel.week_ordinal)
+    ).all()
+    live = (
+        _component(live_slots, live_groups, live_commands, live_authorities)
+        if live_slots or live_groups or live_commands or live_authorities
+        else None
+    )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(AdoptedTournamentAuthorityModel).where(
+            AdoptedTournamentAuthorityModel.run_id == run_id,
+            AdoptedTournamentAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(AuthoritativeSimulationCommandModel).where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(SimulationEventGroupModel).where(
             SimulationEventGroupModel.run_id == run_id,
@@ -255,4 +353,8 @@ def restore_saved_simulation_slots(
         session.add(SimulationSlotModel(**value))
     for value in (target or {}).get("groups", []):
         session.add(SimulationEventGroupModel(**value))
+    for value in (target or {}).get("commands", []):
+        session.add(AuthoritativeSimulationCommandModel(**value))
+    for value in (target or {}).get("authorities", []):
+        session.add(AdoptedTournamentAuthorityModel(**value))
     session.flush()

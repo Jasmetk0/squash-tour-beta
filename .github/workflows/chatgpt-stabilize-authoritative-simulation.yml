@@ -22,24 +22,7 @@ jobs:
       - name: Apply reviewed stabilization edits
         run: python tools/chatgpt_stabilize_authoritative_simulation.py
       - name: Repair nested transaction guard indentation
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('src/beta_engine/application/authoritative_run_simulation_driver.py')
-          text = path.read_text(encoding='utf-8')
-          old = '''                session.execute(text("BEGIN IMMEDIATE"))
-            self._require_writable_scope(session, command.run_id, command.branch_id)
-                package = self._pending_package(session, command, request_fp)
-'''
-          new = '''                session.execute(text("BEGIN IMMEDIATE"))
-                self._require_writable_scope(session, command.run_id, command.branch_id)
-                package = self._pending_package(session, command, request_fp)
-'''
-          if text.count(old) != 1:
-              raise RuntimeError(f'expected one nested guard indentation defect, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
-          PY
+        run: python -c "from pathlib import Path; p=Path('src/beta_engine/application/authoritative_run_simulation_driver.py'); t=p.read_text(encoding='utf-8'); old='                session.execute(text(\"BEGIN IMMEDIATE\"))\n            self._require_writable_scope(session, command.run_id, command.branch_id)\n                package = self._pending_package(session, command, request_fp)\n'; new='                session.execute(text(\"BEGIN IMMEDIATE\"))\n                self._require_writable_scope(session, command.run_id, command.branch_id)\n                package = self._pending_package(session, command, request_fp)\n'; assert t.count(old)==1, t.count(old); p.write_text(t.replace(old,new,1),encoding='utf-8')"
       - name: Remove one-shot patch tooling
         run: |
           rm tools/chatgpt_stabilize_authoritative_simulation.py

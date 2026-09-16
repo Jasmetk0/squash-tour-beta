@@ -104,6 +104,13 @@ implemented, not future gaps. The next slice may broaden scheduling beyond the o
 unambiguous supported event per concrete season/week; Qualification and ambiguity
 must continue to fail closed.
 
+The narrow repeated-flow acceptance now drives two distinct persisted four-player
+events through production authoritative HTTP commands and real Week Transition
+preview/confirm boundaries from Week 1 to Week 3. It saves the simulation component,
+preserves frozen tournament authority and verifies historical Week 1 replay, two
+owned sources, immutable published rankings and the three-week sporting chain.
+This is not evidence for multiple events per week or a general scheduler.
+
 ## Current limitations
 
 - The explicit later-week authority adoption command remains the supported bridge after the
@@ -113,5 +120,8 @@ must continue to fail closed.
   remain audited declarations and are not inferred from legacy season files.
 - Ranking-bearing branch fork remapping, Protected Ranking, abnormal tournament
   inputs and Viewer consumption of the new publication remain unsupported.
+- Production branch-from-Saved-Revision still rejects ranking-bearing forks, so this
+  slice does not claim a real divergent sporting-branch acceptance; no model-copy
+  substitute is treated as branch evidence.
 - The legacy season execution service still has no rollback and is not the Week
   Transition transaction owner.

@@ -3530,6 +3530,42 @@ class SimulationPersistenceRepository:
                 and branch.status == "active",
             }
 
+    def preview_simulation_save(self, *, run_id: str, branch_id: str) -> dict:
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            payload = {"content": {}}
+            capture_saved_simulation_slots(
+                session, payload, run_id=run_id, branch_id=branch_id
+            )
+            component = payload["content"].get(SIMULATION_SLOT_COMPONENT_KEY)
+            saved = state.saved_revision.payload["content"].get(
+                SIMULATION_SLOT_COMPONENT_KEY
+            )
+            changed = component is not None and component != saved
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "simulation_fingerprint": component["fingerprint"]
+                if component
+                else None,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not run.read_only
+                and not branch.read_only
+                and branch.status == "active",
+            }
+
     def save_viewer_branch_selection_atomically(
         self,
         *,
@@ -3540,12 +3576,14 @@ class SimulationPersistenceRepository:
         audit_event_id: str,
         expected_ranking_fingerprint: str | None = None,
         expected_initial_world_fingerprint: str | None = None,
+        expected_simulation_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
         component_only = (
             expected_ranking_fingerprint is not None
             or expected_initial_world_fingerprint is not None
+            or expected_simulation_fingerprint is not None
         )
         ranking_only = expected_ranking_fingerprint is not None
         revision_kind = (
@@ -3553,8 +3591,12 @@ class SimulationPersistenceRepository:
             if ranking_only
             else (
                 "initial_world"
-                if component_only
-                else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                if expected_initial_world_fingerprint is not None
+                else (
+                    "authoritative_simulation"
+                    if expected_simulation_fingerprint
+                    else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                )
             )
         )
         previous_current_viewer_id = ""
@@ -3721,6 +3763,29 @@ class SimulationPersistenceRepository:
                         "kind": "initial_world",
                         "summary": "Saved initial world",
                         "initial_world_fingerprint": component["fingerprint"],
+                    }
+                elif expected_simulation_fingerprint is not None:
+                    component = payload["content"].get(SIMULATION_SLOT_COMPONENT_KEY)
+                    if (
+                        component is None
+                        or component["fingerprint"] != expected_simulation_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Simulation state changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            SIMULATION_SLOT_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Simulation state is already saved"
+                        )
+                    summary = {
+                        "kind": "authoritative_simulation",
+                        "summary": "Saved authoritative simulation state",
+                        "simulation_fingerprint": component["fingerprint"],
                     }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(

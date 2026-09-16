@@ -51,6 +51,64 @@ from beta_engine.domain.rankings.official import (
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 
 
+def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_week):
+    """Return production Week Transition prerequisite codes without mutation."""
+    if completed_week.week == 61:
+        return ("season_transition_required",)
+    blockers = []
+    run = session.get(RunContainerModel, run_id)
+    branch = session.get(RunBranchModel, branch_id)
+    draft = session.scalar(
+        select(BranchWorkingDraftModel).where(
+            BranchWorkingDraftModel.branch_id == branch_id
+        )
+    )
+    if run is None or branch is None or draft is None or branch.run_id != run_id:
+        return ("run_branch_scope_missing",)
+    if run.read_only or branch.read_only or branch.status != "active":
+        blockers.append("run_branch_not_writable")
+    if draft.status != "clean":
+        blockers.append("working_draft_dirty")
+    target = RankingWeek(
+        season_index=completed_week.season_index, week=completed_week.week + 1
+    )
+    authority = RankingTransitionAuthorityStore(session).get(
+        run_id=run_id, branch_id=branch_id, target_ordinal=target.ordinal
+    )
+    if authority is None:
+        blockers.append("ranking_transition_authority_missing")
+    elif not authority_carried_to_saved_head(session, authority, branch, draft):
+        blockers.append("ranking_transition_authority_stale")
+    candidates = OfficialRankingCandidateStore(session).history(
+        run_id=run_id, branch_id=branch_id
+    )
+    if not candidates or candidates[-1].week != completed_week:
+        blockers.append("predecessor_ranking_missing")
+    world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
+    if world is not None and world.current_ordinal != completed_week.ordinal:
+        blockers.append("authoritative_world_head_mismatch")
+    if (
+        get_lifecycle(session, run_id=run_id, branch_id=branch_id, week=completed_week)
+        is None
+    ):
+        blockers.append("lifecycle_roster_missing")
+    position = season_week_to_calendar_position(2000 + target.season_index, target.week)
+    pending = session.scalar(
+        select(RunProspectModel.prospect_id)
+        .where(
+            RunProspectModel.run_id == run_id,
+            RunProspectModel.season_start_year == 2000 + target.season_index,
+            RunProspectModel.season_week == target.week,
+            RunProspectModel.calendar_year == position.calendar_year,
+            RunProspectModel.year_week == position.year_week,
+        )
+        .limit(1)
+    )
+    if pending is not None:
+        blockers.append("prospect_bridge_missing")
+    return tuple(blockers)
+
+
 def _fault_injection_point(_name: str) -> None:
     """Test seam for proving rollback at otherwise unreachable failure points."""
 
@@ -286,6 +344,18 @@ def transition_in_transaction(session: Session, awards, command):
         raise ValueError(
             "Target week has Run-scoped prospect intake but no authoritative "
             "Run/Branch-owned player source bridge"
+        )
+
+    shared_blockers = week_transition_readiness_blockers(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        completed_week=command.completed_week,
+    )
+    if shared_blockers:
+        raise ValueError(
+            "Week Transition shared preflight changed during preview: "
+            + ",".join(shared_blockers)
         )
 
     candidates = OfficialRankingCandidateStore(session).history(

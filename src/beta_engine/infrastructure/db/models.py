@@ -253,6 +253,18 @@ class AuthoritativeSimulationCommandModel(Base):
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class AdoptedTournamentAuthorityModel(Base):
+    """Immutable Run/Branch tournament package frozen at authoritative adoption."""
+
+    __tablename__ = "adopted_tournament_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    package_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

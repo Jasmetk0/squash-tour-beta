@@ -25,7 +25,10 @@ from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
     prepare_tournament_ranking_sources,
 )
-from beta_engine.application.season_match_service import SeasonMatchService
+from beta_engine.application.season_match_service import (
+    SeasonEventMatchPackage,
+    SeasonMatchService,
+)
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
@@ -33,8 +36,11 @@ from beta_engine.domain.simulation_slots import SimulationMatchEventPlan, finger
 from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     AuthoritativeWorldStateModel,
+    AdoptedTournamentAuthorityModel,
+    BranchWorkingDraftModel,
     PlayerSportingWeekStateModel,
     RunBranchModel,
+    RankingTransitionAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
 )
@@ -43,7 +49,11 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
+    get_sporting,
     preflight_completed_context_from_authoritative_matches,
+)
+from beta_engine.infrastructure.db.authoritative_week_transition import (
+    week_transition_readiness_blockers,
 )
 
 
@@ -121,7 +131,13 @@ class AuthoritativeRunSimulationDriver:
             else:
                 before = self._position(session, command.run_id, command.branch_id)
                 self._validate_expected(session, command, before)
-                package = self._package(before.current_week)
+                package, authority_fp = self._authority_package(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    before.current_week,
+                    adopt=True,
+                )
                 self._ensure_current_slot(session, command, package)
                 position = self._position(session, command.run_id, command.branch_id)
                 targets = self._targets(session, command, mode, position, package)
@@ -133,7 +149,12 @@ class AuthoritativeRunSimulationDriver:
                         command_id=command.command_id,
                         request_fingerprint=request_fp,
                         status="pending",
-                        result_json=json.dumps({"target_group_ids": targets}),
+                        result_json=json.dumps(
+                            {
+                                "target_group_ids": targets,
+                                "authority_fingerprint": authority_fp,
+                            }
+                        ),
                     )
                 )
 
@@ -142,7 +163,7 @@ class AuthoritativeRunSimulationDriver:
                 raise RuntimeError("fault before second group")
             with self.factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
-                package = self._package(command.expected_week)
+                package = self._pending_package(session, command, request_fp)
                 current = self._position(session, command.run_id, command.branch_id)
                 if group_id in current.unresolved_group_ids:
                     self._execute_group(session, command, package, group_id)
@@ -151,7 +172,7 @@ class AuthoritativeRunSimulationDriver:
 
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
-            package = self._package(command.expected_week)
+            package = self._pending_package(session, command, request_fp)
             self._advance_or_close(session, command, package, fault_at=fault_at)
             after = self._position(session, command.run_id, command.branch_id)
             payload = after.model_dump(mode="json")
@@ -167,6 +188,43 @@ class AuthoritativeRunSimulationDriver:
                     "fault after ranking source staging before command receipt"
                 )
             return payload
+
+    def _pending_package(self, session, command, request_fp):
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            (command.run_id, command.branch_id, command.command_id),
+        )
+        if (
+            receipt is None
+            or receipt.request_fingerprint != request_fp
+            or receipt.status != "pending"
+        ):
+            raise ValueError("pending simulation command receipt is invalid")
+        evidence = json.loads(receipt.result_json)
+        package, authority_fp = self._authority_package(
+            session,
+            command.run_id,
+            command.branch_id,
+            command.expected_week,
+            adopt=False,
+        )
+        if evidence.get("authority_fingerprint") != authority_fp:
+            raise ValueError("pending command tournament authority changed")
+        slot = session.scalar(
+            select(SimulationSlotModel).where(
+                SimulationSlotModel.run_id == command.run_id,
+                SimulationSlotModel.branch_id == command.branch_id,
+                SimulationSlotModel.week_ordinal == command.expected_week.ordinal,
+                SimulationSlotModel.status != "complete",
+            )
+        )
+        if (
+            slot is not None
+            and authority_fp
+            not in AuthoritativeSlotMatchExecutor._load_plan(slot).provenance
+        ):
+            raise ValueError("pending command slot authority is incoherent")
+        return package
 
     @staticmethod
     def _validate_expected(session, command, before):
@@ -237,9 +295,60 @@ class AuthoritativeRunSimulationDriver:
         validate_adopted_four_player_match_package(package)
         return package
 
+    def _authority_package(self, session, run_id, branch_id, week, *, adopt):
+        row = session.get(
+            AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
+        )
+        if row is not None:
+            package = SeasonEventMatchPackage.model_validate_json(row.package_json)
+            authority_fp = self._tournament_authority_fingerprint(
+                run_id, branch_id, week, package
+            )
+            if (
+                authority_fp != row.authority_fingerprint
+                or package.event_id != row.event_id
+            ):
+                raise ValueError("frozen tournament authority is corrupt")
+            return package, authority_fp
+        if not adopt:
+            raise ValueError("frozen tournament authority is missing")
+        package = self._package(week)
+        if package is None:
+            raise ValueError("supported tournament authority is missing")
+        authority_fp = self._tournament_authority_fingerprint(
+            run_id, branch_id, week, package
+        )
+        session.add(
+            AdoptedTournamentAuthorityModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                event_id=package.event_id,
+                authority_fingerprint=authority_fp,
+                package_json=package.model_dump_json(),
+            )
+        )
+        session.flush()
+        return package, authority_fp
+
+    @staticmethod
+    def _tournament_authority_fingerprint(run_id, branch_id, week, package):
+        payload = package.model_dump(mode="json")
+        payload["metadata"].pop("persistence_path", None)
+        return fingerprint(
+            {"scope": [run_id, branch_id, week.ordinal], "package": payload}
+        )
+
     def _position(self, session, run_id, branch_id):
         week = self._current_week(session, run_id, branch_id)
-        package = self._package(week, required=False)
+        frozen = session.get(
+            AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
+        )
+        package = (
+            self._authority_package(session, run_id, branch_id, week, adopt=False)[0]
+            if frozen is not None
+            else self._package(week, required=False)
+        )
         slots = session.scalars(
             select(SimulationSlotModel)
             .where(
@@ -339,7 +448,25 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("owned tournament source week differs")
             except ValueError:
                 blockers.append("week_transition_sporting_preflight_failed")
+        blockers.extend(
+            code
+            for code in week_transition_readiness_blockers(
+                session, run_id=run_id, branch_id=branch_id, completed_week=week
+            )
+            if code not in blockers
+        )
         ready = not blockers
+        branch = session.get(RunBranchModel, branch_id)
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == branch_id
+            )
+        )
+        transition_authority = session.get(
+            RankingTransitionAuthorityModel, (run_id, branch_id, week.ordinal + 1)
+        )
+        lifecycle_fp = lifecycle.fingerprint if lifecycle else None
+        sporting = get_sporting(session, run_id=run_id, branch_id=branch_id, week=week)
         body = {
             "scope": [run_id, branch_id, week.ordinal],
             "slots": [
@@ -351,6 +478,30 @@ class AuthoritativeRunSimulationDriver:
                 for g in sorted(groups, key=lambda x: x.group_id)
             ],
             "owned": owned.fingerprint if owned else None,
+            "tournament_authority": frozen.authority_fingerprint
+            if frozen
+            else package.metadata.build_fingerprint,
+            "lifecycle": lifecycle_fp,
+            "sporting": sporting.fingerprint if sporting else None,
+            "branch_head": branch.saved_head_revision_id if branch else None,
+            "draft": (
+                [draft.base_revision_id, draft.status, draft.draft_version]
+                if draft
+                else None
+            ),
+            "transition_authority": (
+                transition_authority.fingerprint if transition_authority else None
+            ),
+            "world": (
+                [world.current_ordinal, world.ranking_fingerprint]
+                if (
+                    world := session.get(
+                        AuthoritativeWorldStateModel, (run_id, branch_id)
+                    )
+                )
+                else None
+            ),
+            "terminal": terminal.fingerprint if terminal else None,
         }
         return AuthoritativeSimulationPosition(
             run_id=run_id,
@@ -411,7 +562,7 @@ class AuthoritativeRunSimulationDriver:
                 ordinal=1,
                 group_ids=tuple(p.group_id for p in plans),
                 match_events=plans,
-                provenance=f"adopted-draw:{package.metadata.build_fingerprint}",
+                provenance=f"adopted-authority:{self._authority_package(session, command.run_id, command.branch_id, command.expected_week, adopt=False)[1]}",
             )
         elif pos.slot_ordinal == 2:
             feeders = tuple(m.match_id for m in matches[:2])
@@ -430,7 +581,7 @@ class AuthoritativeRunSimulationDriver:
                 group_ids=(p.group_id,),
                 match_events=(p,),
                 dependency_ids=feeders,
-                provenance=f"adopted-draw:{package.metadata.build_fingerprint}",
+                provenance=f"adopted-authority:{self._authority_package(session, command.run_id, command.branch_id, command.expected_week, adopt=False)[1]}",
             )
 
     def _eligible_groups(self, session, position, package):
@@ -483,9 +634,16 @@ class AuthoritativeRunSimulationDriver:
                 ).result.winner_player_id
                 for f in event.feeder_group_ids
             )
+        authority_fp = self._authority_package(
+            session,
+            command.run_id,
+            command.branch_id,
+            command.expected_week,
+            adopt=False,
+        )[1]
         seed = int(
             hashlib.sha256(
-                f"{command.run_id}|{command.branch_id}|{command.expected_week.ordinal}|{package.metadata.build_fingerprint}|{group_id}".encode()
+                f"{command.run_id}|{command.branch_id}|{command.expected_week.ordinal}|{authority_fp}|{group_id}".encode()
             ).hexdigest()[:15],
             16,
         )
@@ -518,6 +676,8 @@ class AuthoritativeRunSimulationDriver:
         ).all()
         if len(slots) == 1:
             return
+        if command.expected_week.week == 61:
+            raise ValueError("season_transition_required")
         executor = AuthoritativeSlotMatchExecutor(session)
         matches = sorted(
             package.main_draw_matches,

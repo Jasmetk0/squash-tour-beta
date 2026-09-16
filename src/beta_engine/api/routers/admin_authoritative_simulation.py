@@ -10,6 +10,7 @@ from beta_engine.api.deps import (
     get_runtime,
     get_season_match_service,
     get_season_point_awards_service,
+    get_run_working_draft_service,
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
@@ -17,6 +18,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 )
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
+from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation",
@@ -97,3 +99,33 @@ def simulate_next_slot(
     ],
 ):
     return _mutate(run_id, branch_id, payload, runtime, matches, awards, slot=True)
+
+
+@router.get("/save/preview")
+def preview_save(
+    run_id: str, branch_id: str, runtime: Annotated[ApiRuntime, Depends(get_runtime)]
+):
+    try:
+        return runtime.repository.preview_simulation_save(
+            run_id=run_id, branch_id=branch_id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/save", status_code=201)
+def save(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
+):
+    try:
+        return service.save_simulation(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=payload["expected_draft_version"],
+            expected_simulation_fingerprint=payload["expected_simulation_fingerprint"],
+        )
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc

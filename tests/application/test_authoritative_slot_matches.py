@@ -493,7 +493,8 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
     )
     closed = driver.simulate_next_slot(final)
     assert closed["supported_tournament_complete"] is True
-    assert closed["week_ready_for_transition"] is True
+    assert closed["week_ready_for_transition"] is False
+    assert closed["transition_blockers"] == ["run_branch_scope_missing"]
     with factory() as check:
         assert (
             len(
@@ -581,6 +582,81 @@ def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):
         assert first_fingerprint in {row.result_fingerprint for row in rows}
 
 
+def test_pending_retry_uses_frozen_authority_after_legacy_source_changes(tmp_path):
+    baseline, baseline_factory, week = _driver_fixture(tmp_path / "baseline")
+    baseline_command, _ = _driver_command(baseline, week, "slot")
+    baseline.simulate_next_slot(baseline_command)
+    baseline_final, _ = _driver_command(baseline, week, "final")
+    baseline.simulate_next_slot(baseline_final)
+    with baseline_factory() as session:
+        expected = tuple(
+            row.result_fingerprint
+            for row in session.scalars(
+                select(SimulationEventGroupModel).order_by(
+                    SimulationEventGroupModel.group_id
+                )
+            ).all()
+        )
+        expected_terminal = tuple(
+            row.terminal_checkpoint_json
+            for row in session.scalars(
+                select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+            ).all()
+        )
+        expected_source = (
+            OwnedTournamentRankingSourceStore(session)
+            .history(run_id="run", branch_id="branch")[0]
+            .fingerprint
+        )
+
+    driver, factory, week = _driver_fixture(tmp_path / "mutated")
+    command, _ = _driver_command(driver, week, "slot")
+    with pytest.raises(RuntimeError):
+        driver.simulate_next_slot(command, fault_at="before_second_group")
+    registry = driver.match_service._load_registry()
+    event_id = next(iter(registry.matches_by_event_id))
+    package = registry.matches_by_event_id[event_id]
+    package.metadata.build_fingerprint = "f" * 64
+    (
+        package.main_draw_matches[1].top_player_id,
+        package.main_draw_matches[1].bottom_player_id,
+    ) = (
+        package.main_draw_matches[1].bottom_player_id,
+        package.main_draw_matches[1].top_player_id,
+    )
+    driver.match_service._save_registry(registry)
+    driver.simulate_next_slot(command)
+    final, _ = _driver_command(driver, week, "final")
+    driver.simulate_next_slot(final)
+    with factory() as session:
+        actual = tuple(
+            row.result_fingerprint
+            for row in session.scalars(
+                select(SimulationEventGroupModel).order_by(
+                    SimulationEventGroupModel.group_id
+                )
+            ).all()
+        )
+        assert actual == expected
+        assert (
+            tuple(
+                row.terminal_checkpoint_json
+                for row in session.scalars(
+                    select(SimulationSlotModel).order_by(
+                        SimulationSlotModel.slot_ordinal
+                    )
+                ).all()
+            )
+            == expected_terminal
+        )
+        assert (
+            OwnedTournamentRankingSourceStore(session)
+            .history(run_id="run", branch_id="branch")[0]
+            .fingerprint
+            == expected_source
+        )
+
+
 def test_next_slot_and_both_split_orders_are_equivalent(tmp_path):
     snapshots = []
     for label, order in (("slot", None), ("forward", (0, 1)), ("reverse", (1, 0))):
@@ -649,6 +725,22 @@ def test_driver_rejects_qualification_and_ambiguous_week_sources(tmp_path):
         driver._package(week)
 
 
+def test_week_61_requires_season_transition(tmp_path):
+    from beta_engine.infrastructure.db.authoritative_week_transition import (
+        week_transition_readiness_blockers,
+    )
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'week61.sqlite'}")
+    Base.metadata.create_all(engine)
+    session = Session(engine)
+    assert week_transition_readiness_blockers(
+        session,
+        run_id="run",
+        branch_id="branch",
+        completed_week=RankingWeek(season_index=0, week=61),
+    ) == ("season_transition_required",)
+
+
 @pytest.mark.parametrize(
     "fault", ["after_final_before_source", "after_source_staging_before_receipt"]
 )
@@ -673,7 +765,8 @@ def test_tournament_close_fault_retry_is_exactly_once(tmp_path, fault):
             == ()
         )
     closed = driver.simulate_next_slot(final)
-    assert closed["week_ready_for_transition"] is True
+    assert closed["week_ready_for_transition"] is False
+    assert closed["transition_blockers"] == ["run_branch_scope_missing"]
     with factory() as session:
         final_row = session.scalars(
             select(SimulationEventGroupModel).order_by(

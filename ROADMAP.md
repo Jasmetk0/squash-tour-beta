@@ -13,6 +13,9 @@ Independent same-slot groups now commit atomically and resume after failure, whi
 transition readiness reuses the authoritative match/effect sporting preflight.
 General draws, Qualification, WC/LL, Entries, AI, cross-tournament scheduling and
 health remain Gate 3 work.
+The narrow Gate 3 repeated-flow criterion is now proven for exactly one supported
+four-player tournament per concrete season/week across Week 1 → Week 2 → Week 3,
+including product Save/reopen and historical replay. Gate 3 as a whole remains open.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 

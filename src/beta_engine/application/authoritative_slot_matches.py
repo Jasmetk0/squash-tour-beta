@@ -32,6 +32,7 @@ from beta_engine.application.season_match_service import (
 )
 from beta_engine.application.season_point_awards_service import (
     EventPointAwardPackage,
+    FrozenPointAwardAuthority,
     PointAwardGenerateRequest,
     SeasonPointAwardsRegistry,
     SeasonPointAwardsService,
@@ -354,6 +355,7 @@ def build_authoritative_tournament_ranking_packages(
     authoritative: AuthoritativeFourPlayerTournamentResult,
     result_seed: int,
     award_seed: int,
+    frozen_point_authority: FrozenPointAwardAuthority | None = None,
 ) -> tuple[SeasonEventMatchPackage, SeasonEventResultPackage, EventPointAwardPackage]:
     """Reuse legacy completion/award builders without using global files as scratch.
 
@@ -405,6 +407,7 @@ def build_authoritative_tournament_ranking_packages(
     awards = award_builder.generate_event_point_awards(
         event_id=package.event_id,
         request=PointAwardGenerateRequest(seed=award_seed, dry_run=True),
+        frozen_authority=frozen_point_authority,
     ).award_package
     if awards is None:
         raise ValueError("authoritative tournament award builder returned no package")

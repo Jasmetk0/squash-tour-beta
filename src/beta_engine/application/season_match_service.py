@@ -318,7 +318,10 @@ class SeasonMatchService:
         if match.match_input_snapshot is None or match.simulated_result.rally_log is None:
             raise ValueError(f"Match '{match_id}' predates the authoritative rally-log schema.")
         rally_log = match.simulated_result.rally_log
-        current_rules = match.match_input_snapshot.schema_version == "match_input_snapshot.v9"
+        current_rules = match.match_input_snapshot.schema_version in {
+            "match_input_snapshot.v9",
+            "match_input_snapshot.v10",
+        }
         if current_rules != (rally_log.schema_version == "match_rally_log.v6"):
             raise ValueError("Stored rules snapshot and rally log generations do not agree.")
         if rally_log.input_snapshot_hash != match.match_input_snapshot.snapshot_hash:
@@ -333,6 +336,7 @@ class SeasonMatchService:
             "match_input_snapshot.v7",
             "match_input_snapshot.v8",
             "match_input_snapshot.v9",
+            "match_input_snapshot.v10",
         }:
             if stamina_log is None or effective_stamina is None:
                 raise ValueError("Stored v4 match is missing authoritative stamina data.")

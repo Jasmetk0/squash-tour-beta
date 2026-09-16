@@ -53,6 +53,7 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     RunBranchModel,
+    RunContainerModel,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
@@ -434,6 +435,14 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
     )
     session = session_at(tmp_path / "driver.sqlite", ids, week)
     session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Driver test run",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
         RunBranchModel(
             branch_id="branch",
             run_id="run",
@@ -527,6 +536,14 @@ def _driver_fixture(path):
         for player_id in (match.top_player_id, match.bottom_player_id)
     )
     session = session_at(path / "state.sqlite", ids, week)
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Driver test run",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
     session.add(
         RunBranchModel(
             branch_id="branch",

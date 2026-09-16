@@ -71,6 +71,7 @@ def test_module_level_app_runtime_built_only_when_lifespan_starts(monkeypatch) -
         asyncio.run(_run_lifespan_startup())
         assert build_calls == [None]
     finally:
+        monkeypatch.undo()
         importlib.reload(reloaded_module)
 
 

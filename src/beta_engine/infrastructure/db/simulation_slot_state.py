@@ -12,6 +12,7 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    WeekSimulationScheduleModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"
@@ -132,6 +133,8 @@ def _component(
     *,
     include_commands=True,
     include_authorities=True,
+    schedules=(),
+    include_schedules=True,
 ):
     _validate_semantics(slots, groups)
     body = {
@@ -191,6 +194,19 @@ def _component(
             }
             for row in authorities
         ]
+    if include_schedules:
+        body["schedules"] = [
+            {
+                "run_id": r.run_id,
+                "branch_id": r.branch_id,
+                "week_ordinal": r.week_ordinal,
+                "request_id": r.request_id,
+                "request_fingerprint": r.request_fingerprint,
+                "schedule_fingerprint": r.schedule_fingerprint,
+                "payload_json": r.payload_json,
+            }
+            for r in schedules
+        ]
     return {
         "fingerprint": hashlib.sha256(
             json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
@@ -236,9 +252,17 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(AdoptedTournamentAuthorityModel.week_ordinal)
     ).all()
-    if slots or groups or commands or authorities:
+    schedules = session.scalars(
+        select(WeekSimulationScheduleModel)
+        .where(
+            WeekSimulationScheduleModel.run_id == run_id,
+            WeekSimulationScheduleModel.branch_id == branch_id,
+        )
+        .order_by(WeekSimulationScheduleModel.week_ordinal)
+    ).all()
+    if slots or groups or commands or authorities or schedules:
         payload["content"][COMPONENT_KEY] = _component(
-            slots, groups, commands, authorities
+            slots, groups, commands, authorities, schedules=schedules
         )
 
 
@@ -250,6 +274,7 @@ def _load(payload, *, run_id, branch_id):
         {"fingerprint", "slots", "groups"},
         {"fingerprint", "slots", "groups", "commands"},
         {"fingerprint", "slots", "groups", "commands", "authorities"},
+        {"fingerprint", "slots", "groups", "commands", "authorities", "schedules"},
     ):
         raise ValueError("Invalid Saved Revision simulation-slot component")
     calculated = _component(
@@ -265,12 +290,19 @@ def _load(payload, *, run_id, branch_id):
         ],
         include_commands="commands" in component,
         include_authorities="authorities" in component,
+        schedules=[
+            WeekSimulationScheduleModel(**value)
+            for value in component.get("schedules", [])
+        ],
+        include_schedules="schedules" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
     if any(
         (value["run_id"], value["branch_id"]) != (run_id, branch_id)
-        for kind in (set(component) & {"slots", "groups", "commands", "authorities"})
+        for kind in (
+            set(component) & {"slots", "groups", "commands", "authorities", "schedules"}
+        )
         for value in component[kind]
     ):
         raise ValueError("Saved simulation-slot component scope mismatch")
@@ -318,13 +350,37 @@ def restore_saved_simulation_slots(
         )
         .order_by(AdoptedTournamentAuthorityModel.week_ordinal)
     ).all()
+    live_schedules = session.scalars(
+        select(WeekSimulationScheduleModel)
+        .where(
+            WeekSimulationScheduleModel.run_id == run_id,
+            WeekSimulationScheduleModel.branch_id == branch_id,
+        )
+        .order_by(WeekSimulationScheduleModel.week_ordinal)
+    ).all()
     live = (
-        _component(live_slots, live_groups, live_commands, live_authorities)
-        if live_slots or live_groups or live_commands or live_authorities
+        _component(
+            live_slots,
+            live_groups,
+            live_commands,
+            live_authorities,
+            schedules=live_schedules,
+        )
+        if live_slots
+        or live_groups
+        or live_commands
+        or live_authorities
+        or live_schedules
         else None
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(WeekSimulationScheduleModel).where(
+            WeekSimulationScheduleModel.run_id == run_id,
+            WeekSimulationScheduleModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(AdoptedTournamentAuthorityModel).where(
             AdoptedTournamentAuthorityModel.run_id == run_id,
@@ -357,4 +413,6 @@ def restore_saved_simulation_slots(
         session.add(AuthoritativeSimulationCommandModel(**value))
     for value in (target or {}).get("authorities", []):
         session.add(AdoptedTournamentAuthorityModel(**value))
+    for value in (target or {}).get("schedules", []):
+        session.add(WeekSimulationScheduleModel(**value))
     session.flush()

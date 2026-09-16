@@ -46,6 +46,8 @@ from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
     SimulationMatchEventPlan,
+    WeekSimulationSchedule,
+    WeekSimulationScheduleSlot,
 )
 from beta_engine.infrastructure.db.models import (
     Base,
@@ -790,6 +792,179 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
             )
             == ()
         )
+
+
+def test_explicit_multi_event_schedule_adopts_and_executes_independent_sources(
+    tmp_path,
+):
+    driver, factory, week = _driver_fixture(tmp_path / "multi-scheduled")
+    registry = driver.match_service._load_registry()
+    first = next(iter(registry.matches_by_event_id.values()))
+    second = first.model_copy(deep=True)
+    second.event_id = f"{first.event_id}-SECOND"
+    second.metadata.build_fingerprint = "b" * 64
+    for match in second.main_draw_matches:
+        match.event_id = second.event_id
+        match.match_id = f"B-{match.match_id}"
+    registry.matches_by_event_id[second.event_id] = second
+    driver.match_service._save_registry(registry)
+    calendar_registry = driver.awards_service.calendar_service._load_registry()
+    calendar = calendar_registry.calendars_by_season[first.season]
+    original_event = next(e for e in calendar.events if e.event_id == first.event_id)
+    calendar.events.append(
+        original_event.model_copy(update={"event_id": second.event_id})
+    )
+    driver.awards_service.calendar_service._save_registry(calendar_registry)
+
+    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+        driver.position(run_id="run", branch_id="branch")
+
+    first_matches = sorted(
+        first.main_draw_matches, key=lambda m: (m.round_number, m.bracket_position)
+    )
+    second_matches = sorted(
+        second.main_draw_matches, key=lambda m: (m.round_number, m.bracket_position)
+    )
+    valid = WeekSimulationSchedule(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        slots=(
+            WeekSimulationScheduleSlot(
+                ordinal=1, group_ids=tuple(m.match_id for m in first_matches[:2])
+            ),
+            WeekSimulationScheduleSlot(
+                ordinal=2, group_ids=(first_matches[2].match_id,)
+            ),
+            WeekSimulationScheduleSlot(
+                ordinal=3, group_ids=tuple(m.match_id for m in second_matches[:2])
+            ),
+            WeekSimulationScheduleSlot(
+                ordinal=4, group_ids=(second_matches[2].match_id,)
+            ),
+        ),
+    )
+    missing = valid.model_copy(update={"slots": valid.slots[:-1]})
+    with pytest.raises(ValueError, match="cover every"):
+        driver.preview_schedule(missing)
+    same_slot_dependency = valid.model_copy(
+        update={
+            "slots": (
+                WeekSimulationScheduleSlot(
+                    ordinal=1,
+                    group_ids=valid.slots[0].group_ids + valid.slots[1].group_ids,
+                ),
+                WeekSimulationScheduleSlot(
+                    ordinal=2, group_ids=valid.slots[2].group_ids
+                ),
+                WeekSimulationScheduleSlot(
+                    ordinal=3, group_ids=valid.slots[3].group_ids
+                ),
+            )
+        }
+    )
+    with pytest.raises(ValueError, match="strictly later"):
+        driver.preview_schedule(same_slot_dependency)
+    with pytest.raises(ValueError, match="duplicate group"):
+        WeekSimulationSchedule(
+            run_id="run",
+            branch_id="branch",
+            week=week,
+            slots=(
+                WeekSimulationScheduleSlot(
+                    ordinal=1, group_ids=(first_matches[0].match_id,) * 2
+                ),
+            ),
+        )
+
+    preview = driver.preview_schedule(valid)
+    changed = valid.model_copy(
+        update={
+            "slots": (valid.slots[0], valid.slots[2], valid.slots[1], valid.slots[3])
+        }
+    )
+    assert (
+        driver.preview_schedule(changed)["position_fingerprint"]
+        != preview["position_fingerprint"]
+    )
+    adopted = driver.adopt_schedule(
+        valid,
+        request_id="schedule-1",
+        expected_position_fingerprint=preview["position_fingerprint"],
+    )
+    assert adopted["schedule_fingerprint"] == valid.fingerprint
+    assert (
+        driver.adopt_schedule(
+            valid,
+            request_id="schedule-1",
+            expected_position_fingerprint=preview["position_fingerprint"],
+        )["adoption"]
+        == "exact_retry"
+    )
+    with factory() as session:
+        saved = {"content": {}}
+        capture_saved_simulation_slots(session, saved, run_id="run", branch_id="branch")
+        component = saved["content"]["simulation_slot_match_state"]
+        assert component["schedules"][0]["schedule_fingerprint"] == valid.fingerprint
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    assert (
+        reopened.inspect_schedule(run_id="run", branch_id="branch")[
+            "schedule_fingerprint"
+        ]
+        == valid.fingerprint
+    )
+    driver = reopened
+
+    for index in range(4):
+        command, before = _driver_command(driver, week, f"slot-{index + 1}")
+        result = driver.simulate_next_slot(command)
+        if index == 1:
+            assert result["supported_tournament_complete"] is False
+            with factory() as session:
+                assert (
+                    len(
+                        OwnedTournamentRankingSourceStore(session).history(
+                            run_id="run", branch_id="branch"
+                        )
+                    )
+                    == 1
+                )
+    assert result["supported_tournament_complete"] is True
+    with factory() as session:
+        sources = OwnedTournamentRankingSourceStore(session).history(
+            run_id="run", branch_id="branch"
+        )
+        assert len(sources) == 2
+        slots = session.scalars(
+            select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+        ).all()
+        assert len(slots) == 4
+        assert (
+            len(
+                {
+                    g.match_input_fingerprint
+                    for g in session.scalars(
+                        select(SimulationEventGroupModel).where(
+                            SimulationEventGroupModel.slot_id == slots[0].slot_id
+                        )
+                    ).all()
+                }
+            )
+            == 2
+        )
+        starts = {
+            AuthoritativeSlotMatchExecutor._load_group(
+                g
+            ).authoritative_input.slot_start_fingerprint
+            for g in session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.slot_id == slots[0].slot_id
+                )
+            ).all()
+        }
+        assert len(starts) == 1
 
 
 def test_week_61_requires_season_transition(tmp_path):

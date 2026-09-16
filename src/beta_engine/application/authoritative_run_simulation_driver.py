@@ -35,7 +35,11 @@ from beta_engine.application.season_point_awards_service import (
 )
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
-from beta_engine.domain.simulation_slots import SimulationMatchEventPlan, fingerprint
+from beta_engine.domain.simulation_slots import (
+    SimulationMatchEventPlan,
+    WeekSimulationSchedule,
+    fingerprint,
+)
 from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     AuthoritativeWorldStateModel,
@@ -44,9 +48,9 @@ from beta_engine.infrastructure.db.models import (
     PlayerSportingWeekStateModel,
     RunBranchModel,
     RunContainerModel,
-    RankingTransitionAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
@@ -136,16 +140,16 @@ class AuthoritativeRunSimulationDriver:
             else:
                 before = self._position(session, command.run_id, command.branch_id)
                 self._validate_expected(session, command, before)
-                package, authority_fp = self._authority_package(
+                packages, authority_fp = self._authority_package(
                     session,
                     command.run_id,
                     command.branch_id,
                     before.current_week,
                     adopt=True,
                 )
-                self._ensure_current_slot(session, command, package)
+                self._ensure_current_slot(session, command, packages)
                 position = self._position(session, command.run_id, command.branch_id)
-                targets = self._targets(session, command, mode, position, package)
+                targets = self._targets(session, command, mode, position, packages)
                 operation_targets = targets
                 session.add(
                     AuthoritativeSimulationCommandModel(
@@ -169,18 +173,18 @@ class AuthoritativeRunSimulationDriver:
             with self.factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
                 self._require_writable_scope(session, command.run_id, command.branch_id)
-                package = self._pending_package(session, command, request_fp)
+                packages = self._pending_package(session, command, request_fp)
                 current = self._position(session, command.run_id, command.branch_id)
                 if group_id in current.unresolved_group_ids:
-                    self._execute_group(session, command, package, group_id)
+                    self._execute_group(session, command, packages, group_id)
             if fault_at == "after_first_group" and index == 0:
                 raise RuntimeError("fault after first committed group")
 
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
-            package = self._pending_package(session, command, request_fp)
-            self._advance_or_close(session, command, package, fault_at=fault_at)
+            packages = self._pending_package(session, command, request_fp)
+            self._advance_or_close(session, command, packages, fault_at=fault_at)
             after = self._position(session, command.run_id, command.branch_id)
             payload = after.model_dump(mode="json")
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
@@ -208,7 +212,7 @@ class AuthoritativeRunSimulationDriver:
         ):
             raise ValueError("pending simulation command receipt is invalid")
         evidence = json.loads(receipt.result_json)
-        package, authority_fp = self._authority_package(
+        packages, authority_fp = self._authority_package(
             session,
             command.run_id,
             command.branch_id,
@@ -231,7 +235,7 @@ class AuthoritativeRunSimulationDriver:
             not in AuthoritativeSlotMatchExecutor._load_plan(slot).provenance
         ):
             raise ValueError("pending command slot authority is incoherent")
-        return package
+        return packages
 
     @staticmethod
     def _require_writable_scope(session, run_id, branch_id):
@@ -294,45 +298,65 @@ class AuthoritativeRunSimulationDriver:
         ordinal = rows[0]
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
-    def _package(self, week, *, required=True):
+    def _packages(self, week, *, required=True):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        candidates = [
+        packages = tuple(
             p
             for p in self.match_service._load_registry().matches_by_event_id.values()
             if p.season == season and p.season_week == week.week
-        ]
-        if not candidates and not required:
-            return None
-        if not candidates:
+        )
+        if not packages and required:
             raise ValueError("supported tournament authority is missing")
-        if len(candidates) > 1:
+        for package in packages:
+            validate_adopted_four_player_match_package(package)
+        return packages
+
+    def _package(self, week, *, required=True):
+        """Legacy single-event discovery retained for reviewed compatibility."""
+        packages = self._packages(week, required=required)
+        if len(packages) > 1:
             raise ValueError(
                 "multiple supported tournaments lack authoritative cross-event "
                 "Simulation Slot chronology"
             )
-        package = candidates[0]
-        validate_adopted_four_player_match_package(package)
-        return package
+        return packages[0] if packages else None
 
     @staticmethod
     def _decode_adopted_authority(payload_json):
         payload = json.loads(payload_json)
+        if payload.get("schema_version") == "adopted_tournament_authority.v3":
+            return tuple(
+                (
+                    SeasonEventMatchPackage.model_validate(item["package"]),
+                    FrozenPointAwardAuthority.model_validate(
+                        item["point_award_authority"]
+                    ),
+                )
+                for item in payload["tournaments"]
+            )
         if payload.get("schema_version") == "adopted_tournament_authority.v2":
             return (
-                SeasonEventMatchPackage.model_validate(payload["package"]),
-                FrozenPointAwardAuthority.model_validate(
-                    payload["point_award_authority"]
+                (
+                    SeasonEventMatchPackage.model_validate(payload["package"]),
+                    FrozenPointAwardAuthority.model_validate(
+                        payload["point_award_authority"]
+                    ),
                 ),
             )
-        return SeasonEventMatchPackage.model_validate(payload), None
+        return ((SeasonEventMatchPackage.model_validate(payload), None),)
 
     @staticmethod
-    def _encode_adopted_authority(package, point_authority):
+    def _encode_adopted_authority(items):
         return json.dumps(
             {
-                "schema_version": "adopted_tournament_authority.v2",
-                "package": package.model_dump(mode="json"),
-                "point_award_authority": point_authority.model_dump(mode="json"),
+                "schema_version": "adopted_tournament_authority.v3",
+                "tournaments": [
+                    {
+                        "package": p.model_dump(mode="json"),
+                        "point_award_authority": a.model_dump(mode="json"),
+                    }
+                    for p, a in items
+                ],
             },
             sort_keys=True,
             separators=(",", ":"),
@@ -343,68 +367,238 @@ class AuthoritativeRunSimulationDriver:
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
         )
         if row is not None:
-            package, point_authority = self._decode_adopted_authority(row.package_json)
+            items = self._decode_adopted_authority(row.package_json)
+            packages = tuple(p for p, _ in items)
             authority_fp = self._tournament_authority_fingerprint(
-                run_id, branch_id, week, package, point_authority
+                run_id, branch_id, week, items
             )
-            if (
-                authority_fp != row.authority_fingerprint
-                or package.event_id != row.event_id
-            ):
+            if authority_fp != row.authority_fingerprint:
                 raise ValueError("frozen tournament authority is corrupt")
-            return package, authority_fp
+            return packages, authority_fp
         if not adopt:
             raise ValueError("frozen tournament authority is missing")
-        package = self._package(week)
-        if package is None:
-            raise ValueError("supported tournament authority is missing")
-        point_authority = self.awards_service.freeze_point_award_authority(package)
+        packages = self._packages(week)
+        if (
+            len(packages) > 1
+            and self._schedule(session, run_id, branch_id, week) is None
+        ):
+            raise ValueError(
+                "multiple supported tournaments lack authoritative cross-event Simulation Slot chronology"
+            )
+        items = tuple(
+            (p, self.awards_service.freeze_point_award_authority(p)) for p in packages
+        )
         authority_fp = self._tournament_authority_fingerprint(
-            run_id, branch_id, week, package, point_authority
+            run_id, branch_id, week, items
         )
         session.add(
             AdoptedTournamentAuthorityModel(
                 run_id=run_id,
                 branch_id=branch_id,
                 week_ordinal=week.ordinal,
-                event_id=package.event_id,
+                event_id=packages[0].event_id,
                 authority_fingerprint=authority_fp,
-                package_json=self._encode_adopted_authority(package, point_authority),
+                package_json=self._encode_adopted_authority(items),
             )
         )
         session.flush()
-        return package, authority_fp
-
-    def _point_award_authority(self, session, run_id, branch_id, week):
-        row = session.get(
-            AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
-        )
-        if row is None:
-            raise ValueError("frozen tournament authority is missing")
-        _, point_authority = self._decode_adopted_authority(row.package_json)
-        return point_authority
+        return packages, authority_fp
 
     @staticmethod
-    def _tournament_authority_fingerprint(
-        run_id, branch_id, week, package, point_authority=None
-    ):
-        payload = package.model_dump(mode="json")
-        payload["metadata"].pop("persistence_path", None)
-        body = {"scope": [run_id, branch_id, week.ordinal], "package": payload}
-        if point_authority is not None:
-            body["point_award_authority"] = point_authority.model_dump(mode="json")
-        return fingerprint(body)
+    def _tournament_authority_fingerprint(run_id, branch_id, week, items):
+        bodies = []
+        for package, point_authority in items:
+            payload = package.model_dump(mode="json")
+            payload["metadata"].pop("persistence_path", None)
+            bodies.append(
+                {
+                    "package": payload,
+                    "point_award_authority": point_authority.model_dump(mode="json")
+                    if point_authority
+                    else None,
+                }
+            )
+        return fingerprint(
+            {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}
+        )
 
-    def _position(self, session, run_id, branch_id):
+    def _schedule(self, session, run_id, branch_id, week):
+        row = session.get(
+            WeekSimulationScheduleModel, (run_id, branch_id, week.ordinal)
+        )
+        if row is None:
+            return None
+        value = WeekSimulationSchedule.model_validate_json(row.payload_json)
+        if value.fingerprint != row.schedule_fingerprint or (
+            value.run_id,
+            value.branch_id,
+            value.week,
+        ) != (run_id, branch_id, week):
+            raise ValueError("adopted week schedule is corrupt")
+        return value
+
+    def inspect_schedule(self, *, run_id, branch_id):
+        with self.factory() as session:
+            week = self._current_week(session, run_id, branch_id)
+            packages = self._packages(week, required=False)
+            schedule = self._schedule(session, run_id, branch_id, week)
+            requirement_position = self._position(
+                session, run_id, branch_id, allow_missing_schedule=True
+            )
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "required": len(packages) > 1,
+                "event_ids": [p.event_id for p in packages],
+                "group_ids": [
+                    m.match_id for p in packages for m in p.main_draw_matches
+                ],
+                "schedule": schedule.model_dump(mode="json") if schedule else None,
+                "schedule_fingerprint": schedule.fingerprint if schedule else None,
+                "expected_position_fingerprint": requirement_position.position_fingerprint,
+            }
+
+    def adopt_schedule(
+        self,
+        schedule: WeekSimulationSchedule,
+        *,
+        request_id: str,
+        expected_position_fingerprint: str,
+    ):
+        request_fp = fingerprint(
+            {"request_id": request_id, "schedule": schedule.model_dump(mode="json")}
+        )
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, schedule.run_id, schedule.branch_id)
+            current = self._position(
+                session,
+                schedule.run_id,
+                schedule.branch_id,
+                allow_missing_schedule=True,
+            )
+            row = session.get(
+                WeekSimulationScheduleModel,
+                (schedule.run_id, schedule.branch_id, schedule.week.ordinal),
+            )
+            if row:
+                if (
+                    row.request_id == request_id
+                    and row.request_fingerprint == request_fp
+                ):
+                    return {
+                        "schedule": schedule.model_dump(mode="json"),
+                        "schedule_fingerprint": schedule.fingerprint,
+                        "adoption": "exact_retry",
+                    }
+                raise ValueError("week schedule is already adopted and immutable")
+            proposal_position = fingerprint(
+                {
+                    "position": current.position_fingerprint,
+                    "schedule": schedule.fingerprint,
+                }
+            )
+            if proposal_position != expected_position_fingerprint:
+                raise ValueError("simulation position is stale")
+            if current.current_week != schedule.week:
+                raise ValueError("schedule week is stale")
+            packages = self._packages(schedule.week)
+            self._validate_schedule(schedule, packages)
+            session.add(
+                WeekSimulationScheduleModel(
+                    run_id=schedule.run_id,
+                    branch_id=schedule.branch_id,
+                    week_ordinal=schedule.week.ordinal,
+                    request_id=request_id,
+                    request_fingerprint=request_fp,
+                    schedule_fingerprint=schedule.fingerprint,
+                    payload_json=schedule.model_dump_json(),
+                )
+            )
+        return self.inspect_schedule(
+            run_id=schedule.run_id, branch_id=schedule.branch_id
+        )
+
+    def preview_schedule(self, schedule: WeekSimulationSchedule):
+        with self.factory() as session:
+            self._require_writable_scope(session, schedule.run_id, schedule.branch_id)
+            if self._schedule(
+                session, schedule.run_id, schedule.branch_id, schedule.week
+            ):
+                raise ValueError("week schedule is already adopted and immutable")
+            current = self._position(
+                session,
+                schedule.run_id,
+                schedule.branch_id,
+                allow_missing_schedule=True,
+            )
+            if current.current_week != schedule.week:
+                raise ValueError("schedule week is stale")
+            self._validate_schedule(schedule, self._packages(schedule.week))
+            return {
+                "schedule": schedule.model_dump(mode="json"),
+                "schedule_fingerprint": schedule.fingerprint,
+                "position_fingerprint": fingerprint(
+                    {
+                        "position": current.position_fingerprint,
+                        "schedule": schedule.fingerprint,
+                    }
+                ),
+            }
+
+    @staticmethod
+    def _topology(packages):
+        plans = {}
+        for package in packages:
+            matches = sorted(
+                package.main_draw_matches,
+                key=lambda m: (m.round_number, m.bracket_position),
+            )
+            feeders = tuple(m.match_id for m in matches[:2])
+            for match in matches[:2]:
+                plans[match.match_id] = SimulationMatchEventPlan(
+                    group_id=match.match_id,
+                    event_id=package.event_id,
+                    match_id=match.match_id,
+                    direct_player_ids=(match.top_player_id, match.bottom_player_id),
+                )
+            plans[matches[2].match_id] = SimulationMatchEventPlan(
+                group_id=matches[2].match_id,
+                event_id=package.event_id,
+                match_id=matches[2].match_id,
+                feeder_group_ids=feeders,
+            )
+        return plans
+
+    def _validate_schedule(self, schedule, packages):
+        plans = self._topology(packages)
+        authored = {g for slot in schedule.slots for g in slot.group_ids}
+        if authored != set(plans):
+            raise ValueError("schedule must cover every supported group exactly once")
+        ordinal = {g: slot.ordinal for slot in schedule.slots for g in slot.group_ids}
+        for group_id, plan in plans.items():
+            for feeder in plan.feeder_group_ids or ():
+                if ordinal[feeder] >= ordinal[group_id]:
+                    raise ValueError(
+                        "dependent groups require a strictly later slot than feeders"
+                    )
+
+    def _position(self, session, run_id, branch_id, *, allow_missing_schedule=False):
         week = self._current_week(session, run_id, branch_id)
         frozen = session.get(
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
         )
-        package = (
+        packages = (
             self._authority_package(session, run_id, branch_id, week, adopt=False)[0]
-            if frozen is not None
-            else self._package(week, required=False)
+            if frozen
+            else self._packages(week, required=False)
         )
+        schedule = self._schedule(session, run_id, branch_id, week)
+        if len(packages) > 1 and schedule is None and not allow_missing_schedule:
+            raise ValueError(
+                "multiple supported tournaments lack authoritative cross-event Simulation Slot chronology"
+            )
         slots = session.scalars(
             select(SimulationSlotModel)
             .where(
@@ -414,8 +608,6 @@ class AuthoritativeRunSimulationDriver:
             )
             .order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        current = next((s for s in slots if s.status != "complete"), None)
-        executor = AuthoritativeSlotMatchExecutor(session)
         groups = session.scalars(
             select(SimulationEventGroupModel).where(
                 SimulationEventGroupModel.run_id == run_id,
@@ -424,64 +616,56 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
-        if package is None:
-            body = {"scope": [run_id, branch_id, week.ordinal], "tournament": None}
-            return AuthoritativeSimulationPosition(
-                run_id=run_id,
-                branch_id=branch_id,
-                current_week=week,
-                current_slot_id=None,
-                slot_ordinal=None,
-                unresolved_group_ids=(),
-                eligible_match_ids=(),
-                blocked_match_ids=(),
-                current_slot_complete=True,
-                supported_tournament_complete=False,
-                week_ready_for_transition=False,
-                transition_blockers=("supported_tournament_missing",),
-                terminal_sporting_fingerprint=None,
-                position_fingerprint=fingerprint(body),
+        plans = self._topology(packages) if packages else {}
+        current = next((s for s in slots if s.status != "complete"), None)
+        authored_slots = schedule.slots if schedule else ()
+        if not authored_slots and len(packages) == 1:
+            matches = sorted(
+                packages[0].main_draw_matches,
+                key=lambda m: (m.round_number, m.bracket_position),
             )
-        matches = sorted(
-            package.main_draw_matches,
-            key=lambda m: (m.round_number, m.bracket_position),
+            authored_slots = (
+                type(
+                    "S",
+                    (),
+                    {"ordinal": 1, "group_ids": tuple(m.match_id for m in matches[:2])},
+                )(),
+                type("S", (), {"ordinal": 2, "group_ids": (matches[2].match_id,)})(),
+            )
+        next_spec = next(
+            (x for x in authored_slots if any(g not in done for g in x.group_ids)), None
         )
-        sf_ids = tuple(m.match_id for m in matches[:2])
-        final_id = matches[2].match_id
-        if current:
-            plan = executor._load_plan(current)
-            unresolved = tuple(g for g in plan.group_ids if g not in done)
-            eligible = tuple(
-                e.match_id
-                for e in plan.match_events
-                if e.group_id in unresolved and set(e.feeder_group_ids or ()) <= done
-            )
-            blocked = tuple(
-                e.match_id
-                for e in plan.match_events
-                if e.group_id in unresolved
-                and not set(e.feeder_group_ids or ()) <= done
-            )
-            if current.slot_ordinal == 1:
-                blocked += (final_id,)
-        elif not slots:
-            unresolved, eligible, blocked = sf_ids, sf_ids, (final_id,)
-        elif len(slots) == 1 and slots[0].status == "complete":
-            unresolved, eligible, blocked = (final_id,), (final_id,), ()
-        else:
-            unresolved = eligible = blocked = ()
-        owned = OwnedTournamentRankingSourceStore(session).get(
-            run_id=run_id, branch_id=branch_id, edition_id=package.event_id
+        current_ids = tuple(
+            current
+            and AuthoritativeSlotMatchExecutor._load_plan(current).group_ids
+            or (next_spec.group_ids if next_spec else ())
         )
+        unresolved = tuple(g for g in current_ids if g not in done)
+        eligible_groups = tuple(
+            g for g in unresolved if set(plans[g].feeder_group_ids or ()) <= done
+        )
+        blocked_groups = tuple(
+            g for g in plans if g not in done and g not in eligible_groups
+        )
+        owned_store = OwnedTournamentRankingSourceStore(session)
+        owned = {
+            p.event_id: owned_store.get(
+                run_id=run_id, branch_id=branch_id, edition_id=p.event_id
+            )
+            for p in packages
+        }
+        executor = AuthoritativeSlotMatchExecutor(session)
         terminal = (
             executor.terminal_checkpoint(run_id=run_id, branch_id=branch_id, week=week)
             if slots and all(s.status == "complete" for s in slots)
             else None
         )
         blockers = []
-        if unresolved:
+        if len(packages) > 1 and schedule is None:
+            blockers.append("week_schedule_missing")
+        if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
-        if owned is None:
+        if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
         if terminal is None:
             blockers.append("terminal_sporting_checkpoint_missing")
@@ -491,44 +675,40 @@ class AuthoritativeRunSimulationDriver:
         if lifecycle is None:
             blockers.append("lifecycle_roster_missing")
         if not blockers:
-            assert lifecycle is not None and owned is not None
             try:
                 preflight_completed_context_from_authoritative_matches(
                     session,
                     run_id=run_id,
                     branch_id=branch_id,
                     completed_week=week,
-                    player_ids=tuple(player.player_id for player in lifecycle.players),
+                    player_ids=tuple(p.player_id for p in lifecycle.players),
                 )
-                if owned.binding.completed_week != week:
-                    raise ValueError("owned tournament source week differs")
+                if any(x.binding.completed_week != week for x in owned.values()):
+                    raise ValueError()
             except ValueError:
                 blockers.append("week_transition_sporting_preflight_failed")
         blockers.extend(
-            code
-            for code in preview_persisted_week_transition(
+            x
+            for x in preview_persisted_week_transition(
                 session,
                 self.awards_service,
                 run_id=run_id,
                 branch_id=branch_id,
                 completed_week=week,
             )
-            if code not in blockers
+            if x not in blockers
         )
-        ready = not blockers
         branch = session.get(RunBranchModel, branch_id)
         draft = session.scalar(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == branch_id
             )
         )
-        transition_authority = session.get(
-            RankingTransitionAuthorityModel, (run_id, branch_id, week.ordinal + 1)
-        )
-        lifecycle_fp = lifecycle.fingerprint if lifecycle else None
         sporting = get_sporting(session, run_id=run_id, branch_id=branch_id, week=week)
         body = {
             "scope": [run_id, branch_id, week.ordinal],
+            "schedule": schedule.fingerprint if schedule else None,
+            "proposed_schedule_requirement": [p.event_id for p in packages],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
                 for s in slots
@@ -537,60 +717,57 @@ class AuthoritativeRunSimulationDriver:
                 (g.group_id, g.command_fingerprint, g.result_fingerprint)
                 for g in sorted(groups, key=lambda x: x.group_id)
             ],
-            "owned": owned.fingerprint if owned else None,
+            "owned": sorted(
+                (k, v.fingerprint if v else None) for k, v in owned.items()
+            ),
             "tournament_authority": frozen.authority_fingerprint
             if frozen
-            else self._tournament_authority_fingerprint(
-                run_id,
-                branch_id,
-                week,
-                package,
-                self.awards_service.freeze_point_award_authority(package),
-            ),
-            "lifecycle": lifecycle_fp,
-            "sporting": sporting.fingerprint if sporting else None,
-            "branch_head": branch.saved_head_revision_id if branch else None,
-            "draft": (
-                [draft.base_revision_id, draft.status, draft.draft_version]
-                if draft
-                else None
-            ),
-            "transition_authority": (
-                transition_authority.fingerprint if transition_authority else None
-            ),
-            "world": (
-                [world.current_ordinal, world.ranking_fingerprint]
-                if (
-                    world := session.get(
-                        AuthoritativeWorldStateModel, (run_id, branch_id)
-                    )
+            else (
+                self._tournament_authority_fingerprint(
+                    run_id,
+                    branch_id,
+                    week,
+                    tuple(
+                        (p, self.awards_service.freeze_point_award_authority(p))
+                        for p in packages
+                    ),
                 )
+                if packages
                 else None
             ),
+            "sporting": sporting.fingerprint if sporting else None,
+            "lifecycle": lifecycle.fingerprint if lifecycle else None,
+            "branch_head": branch.saved_head_revision_id if branch else None,
+            "draft": [draft.base_revision_id, draft.status, draft.draft_version]
+            if draft
+            else None,
             "terminal": terminal.fingerprint if terminal else None,
         }
+        ready = not blockers
         return AuthoritativeSimulationPosition(
             run_id=run_id,
             branch_id=branch_id,
             current_week=week,
             current_slot_id=current.slot_id
             if current
-            else (f"{package.event_id}:slot:{len(slots) + 1}" if not ready else None),
+            else (
+                f"week-{week.ordinal}:slot:{next_spec.ordinal}" if next_spec else None
+            ),
             slot_ordinal=current.slot_ordinal
             if current
-            else (len(slots) + 1 if not ready else None),
+            else (next_spec.ordinal if next_spec else None),
             unresolved_group_ids=unresolved,
-            eligible_match_ids=eligible,
-            blocked_match_ids=blocked,
+            eligible_match_ids=tuple(plans[g].match_id for g in eligible_groups),
+            blocked_match_ids=tuple(plans[g].match_id for g in blocked_groups),
             current_slot_complete=not unresolved,
-            supported_tournament_complete=owned is not None,
+            supported_tournament_complete=bool(packages) and all(owned.values()),
             week_ready_for_transition=ready,
             transition_blockers=tuple(blockers),
             terminal_sporting_fingerprint=terminal.fingerprint if terminal else None,
             position_fingerprint=fingerprint(body),
         )
 
-    def _ensure_current_slot(self, session, command, package):
+    def _ensure_current_slot(self, session, command, packages):
         pos = self._position(session, command.run_id, command.branch_id)
         if any(
             s.status != "complete"
@@ -603,54 +780,45 @@ class AuthoritativeRunSimulationDriver:
             ).all()
         ):
             return
-        matches = sorted(
-            package.main_draw_matches,
-            key=lambda m: (m.round_number, m.bracket_position),
+        schedule = self._schedule(
+            session, command.run_id, command.branch_id, command.expected_week
         )
-        executor = AuthoritativeSlotMatchExecutor(session)
-        if pos.current_slot_id is None:
-            raise ValueError("there is no current slot to materialize")
-        if pos.slot_ordinal == 1:
-            plans = tuple(
-                SimulationMatchEventPlan(
-                    group_id=m.match_id,
-                    event_id=package.event_id,
-                    match_id=m.match_id,
-                    direct_player_ids=(m.top_player_id, m.bottom_player_id),
-                )
-                for m in matches[:2]
-            )
-            executor.create_slot(
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-                week=command.expected_week,
-                slot_id=pos.current_slot_id,
-                ordinal=1,
-                group_ids=tuple(p.group_id for p in plans),
-                match_events=plans,
-                provenance=f"adopted-authority:{self._authority_package(session, command.run_id, command.branch_id, command.expected_week, adopt=False)[1]}",
-            )
-        elif pos.slot_ordinal == 2:
-            feeders = tuple(m.match_id for m in matches[:2])
-            p = SimulationMatchEventPlan(
-                group_id=matches[2].match_id,
-                event_id=package.event_id,
-                match_id=matches[2].match_id,
-                feeder_group_ids=feeders,
-            )
-            executor.create_slot(
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-                week=command.expected_week,
-                slot_id=pos.current_slot_id,
-                ordinal=2,
-                group_ids=(p.group_id,),
-                match_events=(p,),
-                dependency_ids=feeders,
-                provenance=f"adopted-authority:{self._authority_package(session, command.run_id, command.branch_id, command.expected_week, adopt=False)[1]}",
-            )
+        plans = self._topology(packages)
+        if schedule:
+            spec = next(x for x in schedule.slots if x.ordinal == pos.slot_ordinal)
+        else:
+            ids = tuple(plans)
+            spec = type(
+                "S",
+                (),
+                {
+                    "ordinal": pos.slot_ordinal,
+                    "group_ids": ids[:2] if pos.slot_ordinal == 1 else ids[2:],
+                },
+            )()
+        selected = tuple(plans[g] for g in spec.group_ids)
+        authority_fp = self._authority_package(
+            session,
+            command.run_id,
+            command.branch_id,
+            command.expected_week,
+            adopt=False,
+        )[1]
+        AuthoritativeSlotMatchExecutor(session).create_slot(
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            week=command.expected_week,
+            slot_id=pos.current_slot_id,
+            ordinal=spec.ordinal,
+            group_ids=spec.group_ids,
+            match_events=selected,
+            dependency_ids=tuple(
+                f for p in selected for f in (p.feeder_group_ids or ())
+            ),
+            provenance=f"adopted-authority:{authority_fp};week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'}",
+        )
 
-    def _eligible_groups(self, session, position, package):
+    def _eligible_groups(self, session, position, packages):
         slot = session.get(
             SimulationSlotModel,
             (
@@ -667,25 +835,23 @@ class AuthoritativeRunSimulationDriver:
             if e.match_id in position.eligible_match_ids
         )
 
-    def _execute_group(self, session, command, package, group_id):
+    def _execute_group(self, session, command, packages, group_id):
+        pos = self._position(session, command.run_id, command.branch_id)
         slot = session.get(
             SimulationSlotModel,
             (
                 command.run_id,
                 command.branch_id,
                 command.expected_week.ordinal,
-                self._position(
-                    session, command.run_id, command.branch_id
-                ).current_slot_id,
+                pos.current_slot_id,
             ),
         )
         plan = AuthoritativeSlotMatchExecutor._load_plan(slot)
         event = next(e for e in plan.match_events if e.group_id == group_id)
+        package = next(p for p in packages if p.event_id == event.event_id)
         if event.direct_player_ids:
             players = event.direct_player_ids
         else:
-            if event.feeder_group_ids is None:
-                raise ValueError("dependent match has no feeder plan")
             players = tuple(
                 AuthoritativeSlotMatchExecutor._load_group(
                     session.scalar(
@@ -727,28 +893,10 @@ class AuthoritativeRunSimulationDriver:
             expected_slot_start_fingerprint=plan.slot_start_fingerprint,
         )
 
-    def _advance_or_close(self, session, command, package, *, fault_at=None):
-        pos = self._position(session, command.run_id, command.branch_id)
-        if pos.unresolved_group_ids:
-            return
-        slots = session.scalars(
-            select(SimulationSlotModel)
-            .where(
-                SimulationSlotModel.run_id == command.run_id,
-                SimulationSlotModel.branch_id == command.branch_id,
-                SimulationSlotModel.week_ordinal == command.expected_week.ordinal,
-            )
-            .order_by(SimulationSlotModel.slot_ordinal)
-        ).all()
-        if len(slots) == 1:
-            return
+    def _advance_or_close(self, session, command, packages, *, fault_at=None):
         if command.expected_week.week == 61:
             raise ValueError("season_transition_required")
         executor = AuthoritativeSlotMatchExecutor(session)
-        matches = sorted(
-            package.main_draw_matches,
-            key=lambda m: (m.round_number, m.bracket_position),
-        )
         loaded = {
             g.group_id: executor._load_group(g)
             for g in session.scalars(
@@ -760,96 +908,101 @@ class AuthoritativeRunSimulationDriver:
                 )
             ).all()
         }
-        auth = AuthoritativeFourPlayerTournamentResult(
-            event_id=package.event_id,
-            semifinal_groups=(loaded[matches[0].match_id], loaded[matches[1].match_id]),
-            final_group=loaded[matches[2].match_id],
-            champion_player_id=loaded[matches[2].match_id].result.winner_player_id,
-            match_result_fingerprints=(
-                loaded[matches[0].match_id].result_fingerprint,
-                loaded[matches[1].match_id].result_fingerprint,
-                loaded[matches[2].match_id].result_fingerprint,
-            ),
+        items = self._decode_adopted_authority(
+            session.get(
+                AdoptedTournamentAuthorityModel,
+                (command.run_id, command.branch_id, command.expected_week.ordinal),
+            ).package_json
         )
-        if fault_at == "after_final_before_source":
-            raise RuntimeError(
-                "fault after tournament final before ranking source persistence"
+        for package, point_authority in items:
+            matches = sorted(
+                package.main_draw_matches,
+                key=lambda m: (m.round_number, m.bracket_position),
             )
-        store = OwnedTournamentRankingSourceStore(session)
-        existing = store.get(
-            run_id=command.run_id,
-            branch_id=command.branch_id,
-            edition_id=package.event_id,
-        )
-        if existing is not None:
-            self._validate_existing_owned_source(existing, command, package, auth)
-            return
-        point_authority = self._point_award_authority(
-            session,
-            command.run_id,
-            command.branch_id,
-            command.expected_week,
-        )
-        if point_authority is None:
-            raise ValueError(
-                "legacy adopted tournament has no frozen point-award authority"
+            if not all(m.match_id in loaded for m in matches):
+                continue
+            auth = AuthoritativeFourPlayerTournamentResult(
+                event_id=package.event_id,
+                semifinal_groups=(
+                    loaded[matches[0].match_id],
+                    loaded[matches[1].match_id],
+                ),
+                final_group=loaded[matches[2].match_id],
+                champion_player_id=loaded[matches[2].match_id].result.winner_player_id,
+                match_result_fingerprints=tuple(
+                    loaded[m.match_id].result_fingerprint for m in matches
+                ),
             )
-        _, result, awards = build_authoritative_tournament_ranking_packages(
-            self.awards_service,
-            package=package,
-            authoritative=auth,
-            result_seed=self._stable_seed(package, "result"),
-            award_seed=self._stable_seed(package, "awards"),
-            frozen_point_authority=point_authority,
-        )
-        binding = TournamentRankingBinding(
-            run_id=command.run_id,
-            branch_id=command.branch_id,
-            edition_id=package.event_id,
-            event_id=package.event_id,
-            completed_week=command.expected_week,
-            first_publication_week=RankingWeek(
-                season_index=command.expected_week.season_index,
-                week=command.expected_week.week + 1,
-            ),
-            validity_weeks=61,
-            ranking_status="ranked",
-            expected_result_fingerprint=result.metadata.build_fingerprint,
-            expected_award_fingerprint=awards.metadata.build_fingerprint,
-        )
-        prepare_tournament_ranking_sources(binding, result, awards)
-        store.append(
-            OwnedTournamentRankingSource(
-                binding=binding,
-                result=result,
-                awards=awards,
-                adopted_by_command_id=command.command_id,
+            if fault_at == "after_final_before_source":
+                raise RuntimeError(
+                    "fault after tournament final before ranking source persistence"
+                )
+            store = OwnedTournamentRankingSourceStore(session)
+            existing = store.get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                edition_id=package.event_id,
             )
-        )
+            if existing:
+                self._validate_existing_owned_source(existing, command, package, auth)
+                continue
+            _, result, awards = build_authoritative_tournament_ranking_packages(
+                self.awards_service,
+                package=package,
+                authoritative=auth,
+                result_seed=self._stable_seed(package, "result"),
+                award_seed=self._stable_seed(package, "awards"),
+                frozen_point_authority=point_authority,
+            )
+            binding = TournamentRankingBinding(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                edition_id=package.event_id,
+                event_id=package.event_id,
+                completed_week=command.expected_week,
+                first_publication_week=RankingWeek(
+                    season_index=command.expected_week.season_index,
+                    week=command.expected_week.week + 1,
+                ),
+                validity_weeks=61,
+                ranking_status="ranked",
+                expected_result_fingerprint=result.metadata.build_fingerprint,
+                expected_award_fingerprint=awards.metadata.build_fingerprint,
+            )
+            prepare_tournament_ranking_sources(binding, result, awards)
+            store.append(
+                OwnedTournamentRankingSource(
+                    binding=binding,
+                    result=result,
+                    awards=awards,
+                    adopted_by_command_id=command.command_id,
+                )
+            )
 
     @staticmethod
     def _validate_existing_owned_source(existing, command, package, authoritative):
         binding = existing.binding
         if (
-            binding.run_id != command.run_id
-            or binding.branch_id != command.branch_id
-            or binding.edition_id != package.event_id
-            or binding.event_id != package.event_id
-            or binding.completed_week != command.expected_week
+            binding.run_id,
+            binding.branch_id,
+            binding.edition_id,
+            binding.event_id,
+            binding.completed_week,
+        ) != (
+            command.run_id,
+            command.branch_id,
+            package.event_id,
+            package.event_id,
+            command.expected_week,
         ):
             raise ValueError("Conflicting owned tournament source")
         expected = {
-            group.authoritative_input.match_id: group.result_fingerprint
-            for group in (
-                *authoritative.semifinal_groups,
-                authoritative.final_group,
-            )
+            g.authoritative_input.match_id: g.result_fingerprint
+            for g in (*authoritative.semifinal_groups, authoritative.final_group)
         }
-        actual = {
-            ref.match_id: ref.result_fingerprint
-            for ref in existing.result.match_result_refs
-        }
-        if actual != expected:
+        if {
+            r.match_id: r.result_fingerprint for r in existing.result.match_result_refs
+        } != expected:
             raise ValueError("Conflicting owned tournament source")
         prepare_tournament_ranking_sources(
             existing.binding, existing.result, existing.awards

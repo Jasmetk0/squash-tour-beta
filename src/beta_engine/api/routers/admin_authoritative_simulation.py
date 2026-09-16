@@ -19,6 +19,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 
 router = APIRouter(
     prefix="/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation",
@@ -51,6 +52,72 @@ def position(
             status_code=409,
             detail={"code": "authoritative_simulation_conflict", "message": str(exc)},
         ) from exc
+
+
+@router.get("/week-schedule")
+def inspect_week_schedule(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_schedule(
+            run_id=run_id, branch_id=branch_id
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/week-schedule", status_code=201)
+def adopt_week_schedule(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        schedule = WeekSimulationSchedule.model_validate(payload["schedule"])
+        if (schedule.run_id, schedule.branch_id) != (run_id, branch_id):
+            raise ValueError("week schedule request scope mismatch")
+        return _driver(runtime, matches, awards).adopt_schedule(
+            schedule,
+            request_id=payload["request_id"],
+            expected_position_fingerprint=payload["expected_position_fingerprint"],
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/week-schedule/preview")
+def preview_week_schedule(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        schedule = WeekSimulationSchedule.model_validate(payload["schedule"])
+        if (schedule.run_id, schedule.branch_id) != (run_id, branch_id):
+            raise ValueError("week schedule request scope mismatch")
+        return _driver(runtime, matches, awards).preview_schedule(schedule)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 def _mutate(run_id, branch_id, payload, runtime, matches, awards, *, slot):

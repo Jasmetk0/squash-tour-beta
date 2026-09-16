@@ -1,0 +1,38 @@
+name: Apply authoritative simulation stabilization patch
+
+on:
+  push:
+    branches:
+      - chatgpt/stabilize-authoritative-simulation
+    paths:
+      - .github/workflows/chatgpt-stabilize-authoritative-simulation.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.event.head_commit.message == 'bootstrap stabilization patch runner'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/stabilize-authoritative-simulation
+          fetch-depth: 0
+      - name: Apply reviewed stabilization edits
+        run: python tools/chatgpt_stabilize_authoritative_simulation.py
+      - name: Remove one-shot patch tooling
+        run: |
+          rm tools/chatgpt_stabilize_authoritative_simulation.py
+          rm .github/workflows/chatgpt-stabilize-authoritative-simulation.yml
+      - name: Validate patch shape
+        run: |
+          python -m compileall -q src
+          git diff --check
+      - name: Commit stabilization
+        run: |
+          git config user.name 'ChatGPT'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Stabilize authoritative simulation closure and replay history'
+          git push origin HEAD:chatgpt/stabilize-authoritative-simulation

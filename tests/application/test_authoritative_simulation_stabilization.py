@@ -154,6 +154,7 @@ def test_pending_next_slot_still_fails_closed_on_mismatching_owned_source(tmp_pa
         # Make the store-level fingerprint agree so the driver must detect the
         # semantic mismatch rather than relying only on row corruption checks.
         from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+
         changed = OwnedTournamentRankingSource.model_validate(payload)
         row.source_fingerprint = changed.fingerprint
 
@@ -199,6 +200,16 @@ def test_legacy_replay_reader_accepts_v10_snapshot(tmp_path):
         effective_match_gameplans=current.effective_match_gameplans,
         effective_rally_rules=current.effective_rally_rules,
     )
+    result_payload = result.model_dump(mode="json")
+    result_fp = service._fingerprint(
+        {
+            "event_id": event_id,
+            "match_id": completed.match_id,
+            "match_input_snapshot_hash": current.snapshot_hash,
+            "result": result_payload,
+        }
+    )
+
     registry = service._load_registry()
     stored = next(
         match
@@ -208,13 +219,61 @@ def test_legacy_replay_reader_accepts_v10_snapshot(tmp_path):
         )
         if match.match_id == completed.match_id
     )
+    prior = stored.simulated_result
+    assert prior is not None
+    scoreline = service._scoreline(result.winner_player_id, result.sets)
+    match_log_hash = (
+        result.stamina_log.match_log_hash
+        if result.stamina_log is not None
+        else result.timeline_log.match_log_hash
+        if result.timeline_log is not None
+        else result.rally_log.match_log_hash
+        if result.rally_log is not None
+        else None
+    )
+    rally_elapsed_seconds = (
+        result.rally_log.rally_elapsed_seconds if result.rally_log is not None else None
+    )
+    match_elapsed_seconds = (
+        result.timeline_log.total_elapsed_seconds
+        if result.timeline_log is not None
+        else rally_elapsed_seconds
+    )
+
     stored.match_input_snapshot = current
-    stored.simulated_result = result
-    stored.result_fingerprint = result.simulation_fingerprint
+    stored.winner_player_id = result.winner_player_id
+    stored.loser_player_id = result.loser_player_id
+    stored.scoreline = scoreline
+    stored.simulated_result = prior.model_copy(
+        update={
+            "winner_player_id": result.winner_player_id,
+            "loser_player_id": result.loser_player_id,
+            "scoreline": scoreline,
+            "games": [item.model_dump(mode="json") for item in result.sets],
+            "points_summary": {
+                "sets_won": result.sets_won,
+                "best_of": result.best_of,
+                "games_to": result.games_to,
+                "win_by": result.win_by,
+            },
+            "retired": result.retired_player_id is not None,
+            "walkover": False,
+            "simulation_fingerprint": result_fp,
+            "seed": current.simulation_seed,
+            "rally_log": result.rally_log,
+            "timeline_log": result.timeline_log,
+            "stamina_log": result.stamina_log,
+            "match_log_hash": match_log_hash,
+            "rally_elapsed_seconds": rally_elapsed_seconds,
+            "match_elapsed_seconds": match_elapsed_seconds,
+        }
+    )
+    stored.result_fingerprint = result_fp
     stored.simulation_seed = current.simulation_seed
     service._save_registry(registry)
 
     replay = service.get_match_replay(event_id=event_id, match_id=completed.match_id)
     assert replay.verified is True
     assert replay.match_input_snapshot.schema_version == "match_input_snapshot.v10"
+    assert replay.final_result.simulation_fingerprint == result_fp
     assert replay.rng_rerun is False

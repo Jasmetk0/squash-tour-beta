@@ -203,7 +203,7 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert a_completed.model_dump() == b_completed.model_dump()
     assert a_completed.match_input_snapshot is not None
     assert a_completed.match_input_snapshot.snapshot_hash
-    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v9"
+    assert a_completed.match_input_snapshot.schema_version == "match_input_snapshot.v10"
     assert a_completed.match_input_snapshot.effective_rally_rules is not None
     assert a_completed.match_input_snapshot.effective_rally_rules.resolver_version == "pre_alpha_rules_v1"
     assert a_completed.match_input_snapshot.rally_calibration_profile is not None

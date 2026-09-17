@@ -67,6 +67,7 @@ class Server:
 
 
 def create_calendar(server: Server, season: str) -> None:
+    call("POST", f"{server.base_url}/admin/seasons/{season}/category-points/initialize")
     payload = {"dry_run": False, "overwrite_existing": True}
     status, _ = call("POST", f"{server.base_url}/admin/seasons/{season}/calendar/build", payload)
     assert status == 200

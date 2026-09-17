@@ -52,6 +52,7 @@ def test_valid_source_template_returns_disabled_read_only_contract(tmp_path: Pat
 def test_replace_all_is_blocked_deferred(tmp_path: Path) -> None:
     with CalendarTemplateServer(tmp_path) as server:
         create_template(server)
+        call_raw('POST', f'{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize')
         status, body = call_raw('POST', f'{server.base_url}/admin/seasons/calendar-templates/apply-contract-readiness', readiness_payload(policy='replace_all'))
 
     assert status == 200
@@ -64,6 +65,7 @@ def test_replace_all_is_blocked_deferred(tmp_path: Path) -> None:
 def test_duplicate_selected_source_event_ids_rejected(tmp_path: Path) -> None:
     with CalendarTemplateServer(tmp_path) as server:
         create_template(server)
+        call_raw('POST', f'{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize')
         status, body = call_raw('POST', f'{server.base_url}/admin/seasons/calendar-templates/apply-contract-readiness', readiness_payload(selected_source_event_ids=['event-a', 'event-a']))
 
     assert status == 422
@@ -73,6 +75,7 @@ def test_duplicate_selected_source_event_ids_rejected(tmp_path: Path) -> None:
 def test_unknown_selected_source_event_id_rejected(tmp_path: Path) -> None:
     with CalendarTemplateServer(tmp_path) as server:
         create_template(server)
+        call_raw('POST', f'{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize')
         status, body = call_raw('POST', f'{server.base_url}/admin/seasons/calendar-templates/apply-contract-readiness', readiness_payload(selected_source_event_ids=['missing']))
 
     assert status == 400

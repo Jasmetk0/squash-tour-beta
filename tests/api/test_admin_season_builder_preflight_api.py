@@ -90,6 +90,7 @@ def test_builder_preflight_valid_template_read_only(tmp_path: Path) -> None:
 
 def test_builder_preflight_existing_calendar_requires_policy(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize")
         build_payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", build_payload)
         payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview"}
@@ -102,6 +103,7 @@ def test_builder_preflight_existing_calendar_requires_policy(tmp_path: Path) -> 
 
 def test_builder_preflight_existing_calendar_merge_preview_policy(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize")
         build_payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", build_payload)
         payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "merge_preview"}
@@ -114,6 +116,7 @@ def test_builder_preflight_existing_calendar_merge_preview_policy(tmp_path: Path
 
 def test_builder_preflight_existing_calendar_overwrite_preview_policy(tmp_path: Path) -> None:
     with Server(tmp_path) as server:
+        call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/category-points/initialize")
         build_payload = {"seed": 1, "dry_run": False, "overwrite_existing": False, "season_start_calendar_year": 2000, "season_start_year_week": 37, "include_inactive_templates": False, "max_events": None}
         call("POST", f"{server.base_url}/admin/seasons/2000%2F2001/calendar/build", build_payload)
         payload = {"target_season_label": "2000/2001", "source_type": "season_template", "source_template_id": "default_msa_template_preview", "overwrite_policy": "overwrite_preview"}

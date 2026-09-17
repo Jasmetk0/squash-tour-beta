@@ -34,6 +34,11 @@ class Server:
         countries_path = tmp_path / 'countries.json'; write_countries(countries_path)
         templates_path = tmp_path / 'templates.json'; write_templates(templates_path)
         active_path = tmp_path / 'active.json'; write_active(active_path)
+        points_path = tmp_path / 'point_baselines.json'
+        points_path.write_text(json.dumps({'point_distributions': {'world': {
+            'champion': 100, 'finalist': 60, 'semifinal': 30, 'quarterfinal': 15,
+            'qualification_winner': 5, 'qualification_final': 2,
+        }}}), encoding='utf-8')
         app = create_app(
             database_url=f"sqlite:///{tmp_path / 'api.db'}",
             countries_config_path=str(countries_path),
@@ -41,12 +46,14 @@ class Server:
             calendar_config_dir=str(tmp_path / 'legacy'),
             season_active_players_config_path=str(active_path),
             season_calendar_registry_path=str(tmp_path / 'calendars.json'),
+            season_category_points_registry_path=str(tmp_path / 'category_points.json'),
             season_entry_lists_registry_path=str(tmp_path / 'entries.json'),
             season_draws_registry_path=str(tmp_path / 'draws.json'),
             season_matches_registry_path=str(tmp_path / 'matches.json'),
             season_event_results_registry_path=str(tmp_path / 'results.json'),
             season_point_awards_registry_path=str(tmp_path / 'points.json'),
             season_ranking_snapshots_registry_path=str(tmp_path / 'snapshots.json'),
+            points_config_path=str(points_path),
         )
         self.server = uvicorn.Server(uvicorn.Config(app=app, host='127.0.0.1', port=self.port, log_level='error'))
         self.thread = threading.Thread(target=self.server.run, daemon=True)
@@ -67,6 +74,7 @@ class Server:
         self.thread.join(timeout=10)
 
     def persist_calendar(self) -> str:
+        call('POST', f'{self.base_url}/admin/seasons/2000%2F2001/category-points/initialize')
         _, body = call('POST', f'{self.base_url}/admin/seasons/2000%2F2001/calendar/build', {'seed': 1, 'dry_run': False, 'overwrite_existing': False, 'season_start_calendar_year': 2000, 'season_start_year_week': 37, 'include_inactive_templates': False, 'max_events': 1})
         return body['calendar']['events'][0]['event_id']
 

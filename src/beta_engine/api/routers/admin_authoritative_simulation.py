@@ -1,5 +1,6 @@
 """Explicit Admin HTTP boundary for the authoritative Run simulation driver."""
 
+import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -84,7 +85,9 @@ def adopt_week_schedule(
     ],
 ):
     try:
-        schedule = WeekSimulationSchedule.model_validate(payload["schedule"])
+        schedule = WeekSimulationSchedule.model_validate_json(
+            json.dumps(payload["schedule"])
+        )
         if (schedule.run_id, schedule.branch_id) != (run_id, branch_id):
             raise ValueError("week schedule request scope mismatch")
         return _driver(runtime, matches, awards).adopt_schedule(
@@ -110,7 +113,9 @@ def preview_week_schedule(
     ],
 ):
     try:
-        schedule = WeekSimulationSchedule.model_validate(payload["schedule"])
+        schedule = WeekSimulationSchedule.model_validate_json(
+            json.dumps(payload["schedule"])
+        )
         if (schedule.run_id, schedule.branch_id) != (run_id, branch_id):
             raise ValueError("week schedule request scope mismatch")
         return _driver(runtime, matches, awards).preview_schedule(schedule)

@@ -46,6 +46,7 @@ from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     BranchWorkingDraftModel,
     PlayerSportingWeekStateModel,
+    RankingTransitionAuthorityModel,
     RunBranchModel,
     RunContainerModel,
     SimulationEventGroupModel,
@@ -301,9 +302,14 @@ class AuthoritativeRunSimulationDriver:
     def _packages(self, week, *, required=True):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
         packages = tuple(
-            p
-            for p in self.match_service._load_registry().matches_by_event_id.values()
-            if p.season == season and p.season_week == week.week
+            sorted(
+                (
+                    p
+                    for p in self.match_service._load_registry().matches_by_event_id.values()
+                    if p.season == season and p.season_week == week.week
+                ),
+                key=lambda package: package.event_id,
+            )
         )
         if not packages and required:
             raise ValueError("supported tournament authority is missing")
@@ -326,13 +332,18 @@ class AuthoritativeRunSimulationDriver:
         payload = json.loads(payload_json)
         if payload.get("schema_version") == "adopted_tournament_authority.v3":
             return tuple(
-                (
-                    SeasonEventMatchPackage.model_validate(item["package"]),
-                    FrozenPointAwardAuthority.model_validate(
-                        item["point_award_authority"]
+                sorted(
+                    (
+                        (
+                            SeasonEventMatchPackage.model_validate(item["package"]),
+                            FrozenPointAwardAuthority.model_validate(
+                                item["point_award_authority"]
+                            ),
+                        )
+                        for item in payload["tournaments"]
                     ),
+                    key=lambda item: item[0].event_id,
                 )
-                for item in payload["tournaments"]
             )
         if payload.get("schema_version") == "adopted_tournament_authority.v2":
             return (
@@ -347,6 +358,7 @@ class AuthoritativeRunSimulationDriver:
 
     @staticmethod
     def _encode_adopted_authority(items):
+        items = tuple(sorted(items, key=lambda item: item[0].event_id))
         return json.dumps(
             {
                 "schema_version": "adopted_tournament_authority.v3",
@@ -396,7 +408,14 @@ class AuthoritativeRunSimulationDriver:
                 run_id=run_id,
                 branch_id=branch_id,
                 week_ordinal=week.ordinal,
-                event_id=packages[0].event_id,
+                # Legacy v1/v2 rows identify their sole event here. A v3 multi-event
+                # row is explicitly a week bundle: consumers must decode package_json
+                # rather than interpreting this compatibility column as one event.
+                event_id=(
+                    packages[0].event_id
+                    if len(packages) == 1
+                    else "__week_tournament_authority_bundle_v1__"
+                ),
                 authority_fingerprint=authority_fp,
                 package_json=self._encode_adopted_authority(items),
             )
@@ -407,7 +426,9 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _tournament_authority_fingerprint(run_id, branch_id, week, items):
         bodies = []
-        for package, point_authority in items:
+        for package, point_authority in sorted(
+            items, key=lambda item: item[0].event_id
+        ):
             payload = package.model_dump(mode="json")
             payload["metadata"].pop("persistence_path", None)
             bodies.append(
@@ -705,6 +726,10 @@ class AuthoritativeRunSimulationDriver:
             )
         )
         sporting = get_sporting(session, run_id=run_id, branch_id=branch_id, week=week)
+        transition_authority = session.get(
+            RankingTransitionAuthorityModel, (run_id, branch_id, week.ordinal + 1)
+        )
+        world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
         body = {
             "scope": [run_id, branch_id, week.ordinal],
             "schedule": schedule.fingerprint if schedule else None,
@@ -741,6 +766,12 @@ class AuthoritativeRunSimulationDriver:
             "draft": [draft.base_revision_id, draft.status, draft.draft_version]
             if draft
             else None,
+            "transition_authority": (
+                transition_authority.fingerprint if transition_authority else None
+            ),
+            "world": (
+                [world.current_ordinal, world.ranking_fingerprint] if world else None
+            ),
             "terminal": terminal.fingerprint if terminal else None,
         }
         ready = not blockers
@@ -751,7 +782,13 @@ class AuthoritativeRunSimulationDriver:
             current_slot_id=current.slot_id
             if current
             else (
-                f"week-{week.ordinal}:slot:{next_spec.ordinal}" if next_spec else None
+                (
+                    f"week-{week.ordinal}:slot:{next_spec.ordinal}"
+                    if schedule
+                    else f"{packages[0].event_id}:slot:{next_spec.ordinal}"
+                )
+                if next_spec
+                else None
             ),
             slot_ordinal=current.slot_ordinal
             if current

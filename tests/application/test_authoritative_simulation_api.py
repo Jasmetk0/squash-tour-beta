@@ -23,7 +23,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     put_sporting,
 )
 
-from test_authoritative_slot_matches import session_at
+from test_authoritative_slot_matches import session_at, _multi_driver_fixture
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 from beta_engine.infrastructure.db.owned_tournament_sources import (
@@ -103,12 +103,16 @@ def _server_state(tmp_path):
     return server, package
 
 
-def _install_owned_state(server, package, run_id, branch_id):
-    semifinal = sorted(
-        (m for m in package.main_draw_matches if m.round_number == 1),
-        key=lambda m: m.bracket_position,
+def _install_owned_state(server, package, run_id, branch_id, additional_packages=()):
+    ids = tuple(
+        player_id
+        for owned_package in (package, *additional_packages)
+        for match in sorted(
+            (m for m in owned_package.main_draw_matches if m.round_number == 1),
+            key=lambda m: m.bracket_position,
+        )
+        for player_id in (match.top_player_id, match.bottom_player_id)
     )
-    ids = tuple(p for m in semifinal for p in (m.top_player_id, m.bottom_player_id))
     week = RankingWeek(season_index=0, week=package.season_week)
     source = session_at(
         Path(server.app.state.runtime.repository._engine.url.database + ".source"),
@@ -265,6 +269,138 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
         ).hexdigest()
         == legacy_hash
     )
+
+
+def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(tmp_path / "multi-source")
+    server = ApiServer(database_url=f"sqlite:///{tmp_path / 'multi-api.sqlite'}")
+    server.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    server.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server, display_name="HTTP multi schedule"
+        )
+        _install_owned_state(
+            server, first, run_id, branch_id, additional_packages=(second,)
+        )
+        matches_a = sorted(
+            first.main_draw_matches,
+            key=lambda match: (match.round_number, match.bracket_position),
+        )
+        matches_b = sorted(
+            second.main_draw_matches,
+            key=lambda match: (match.round_number, match.bracket_position),
+        )
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+        schedule = {
+            "schema_version": "week_simulation_schedule.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week": week.model_dump(mode="json"),
+            "slots": [
+                {
+                    "ordinal": 1,
+                    "group_ids": [
+                        match.match_id for match in (*matches_a[:2], *matches_b[:2])
+                    ],
+                },
+                {"ordinal": 2, "group_ids": [matches_a[2].match_id]},
+                {"ordinal": 3, "group_ids": [matches_b[2].match_id]},
+            ],
+        }
+        status, preview = _request(
+            "POST", root + "/week-schedule/preview", {"schedule": schedule}
+        )
+        assert status == 200, preview
+        changed = json.loads(json.dumps(schedule))
+        changed["slots"][1], changed["slots"][2] = (
+            changed["slots"][2],
+            changed["slots"][1],
+        )
+        changed["slots"][1]["ordinal"] = 2
+        changed["slots"][2]["ordinal"] = 3
+        assert (
+            _request(
+                "POST",
+                root + "/week-schedule",
+                {
+                    "schedule": changed,
+                    "request_id": "stale-proposal",
+                    "expected_position_fingerprint": preview["position_fingerprint"],
+                },
+            )[0]
+            == 409
+        )
+        adoption = {
+            "schedule": schedule,
+            "request_id": "adopt-schedule",
+            "expected_position_fingerprint": preview["position_fingerprint"],
+        }
+        status, adopted = _request("POST", root + "/week-schedule", adoption)
+        assert status == 201
+        assert (
+            _request("POST", root + "/week-schedule", adoption)[1][
+                "schedule_fingerprint"
+            ]
+            == adopted["schedule_fingerprint"]
+        )
+        position = _request("GET", root + "/position")[1]
+        assert (
+            _request(
+                "POST",
+                root + "/simulate-next-slot",
+                {
+                    "command_id": "slot-one",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "expected_week": week.model_dump(mode="json"),
+                    "expected_position_fingerprint": position["position_fingerprint"],
+                    "expected_revision_id": revision,
+                },
+            )[0]
+            == 200
+        )
+        midweek_position = _request("GET", root + "/position")[1]
+        save_preview = _request("GET", root + "/save/preview")[1]
+        save_status, save_body = _request(
+            "POST",
+            root + "/save",
+            {
+                "expected_draft_version": save_preview["draft_version"],
+                "expected_simulation_fingerprint": save_preview[
+                    "simulation_fingerprint"
+                ],
+            },
+        )
+        assert save_status == 201, save_body
+
+    reopened = ApiServer(database_url=f"sqlite:///{tmp_path / 'multi-api.sqlite'}")
+    reopened.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    reopened.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+    with reopened:
+        root = f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+        reopened_position = _request("GET", root + "/position")[1]
+        assert {
+            key: value
+            for key, value in reopened_position.items()
+            if key != "position_fingerprint"
+        } == {
+            key: value
+            for key, value in midweek_position.items()
+            if key != "position_fingerprint"
+        }
+        assert (
+            reopened_position["position_fingerprint"]
+            != midweek_position["position_fingerprint"]
+        )  # Save changed the protected Branch-head/draft authority.
 
 
 def test_product_save_reopen_mid_slot_preserves_frozen_position(tmp_path):

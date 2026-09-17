@@ -10,6 +10,12 @@ The follow-up compatibility correction assigns Sharpness-aware matches to `match
 
 The tournament bridge now freezes a v4 Run/Branch/week authority bundle and consumes a canonical executable DAG built from persisted match IDs, direct slots and `winner_to_match_id` evidence. A smoke-covered production Entry List → Draw Package → Match Package eight-player/seven-match Main Draw executes through explicit global slots and topology-driven closure into one owned ranking source; its mid-event slot state is captured, reopened at an identical position, exact-retried without duplication and every played match is replay-verified. Pre-adoption producer conflicts fail closed, while post-adoption mutation of all three legacy producer files leaves execution unchanged. Adoption freezes qualifier-index/target-side evidence plus unambiguous single-player BYE advancement; mixed direct/winner participant sources are explicit. The current production qualification fixture still fails closed at its exact boundary because its generated opening BYE nodes contain zero known players, which the existing `process_byes` contract also treats as ambiguous. Historical v1-v3 four-player readers remain compatible. WC, LL and alternates remain unsupported. Legacy `start_day`, list order and round-name text are never chronology authority.
 
+The eight-player acceptance directly exercises the Saved Revision simulation-state
+component capture and process reopen, but not the HTTP product Save/restore command;
+that command remains covered by the existing four-player and multi-event acceptance.
+Likewise, Week Transition plus post-transition replay remains production-covered by
+the existing multi-event HTTP acceptance, not yet by the eight-player fixture itself.
+
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development

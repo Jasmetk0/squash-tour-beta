@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path
+from types import SimpleNamespace
 from urllib import request
 
 import pytest
@@ -40,6 +41,128 @@ from beta_engine.infrastructure.db.models import (
 )
 from sqlalchemy import select
 from test_season_point_awards_service import make_points_service
+
+
+def _real_eight_points(tmp_path):
+    """Build the production Entry -> Draw -> Match chain used by PR #733."""
+    from test_season_entry_list_service import first_event_id, make_service
+    from beta_engine.application.season_draw_service import (
+        DrawGenerateRequest,
+        SeasonDrawService,
+    )
+    from beta_engine.application.season_entry_list_service import (
+        EntryListGenerateRequest,
+    )
+    from beta_engine.application.season_event_results_service import (
+        SeasonEventResultsService,
+    )
+    from beta_engine.application.season_match_service import (
+        MatchPackageGenerateRequest,
+        SeasonMatchService,
+    )
+    from beta_engine.application.season_point_awards_service import (
+        SeasonPointAwardsService,
+    )
+
+    entries = make_service(tmp_path, main_draw_size=8)
+    event_id = first_event_id(entries)
+    calendars = entries.calendar_service._load_registry()
+    event = calendars.calendars_by_season["2000/2001"].events[0]
+    calendars.calendars_by_season["2000/2001"].events[0] = event.model_copy(
+        update={
+            "season_week": 1,
+            "start_season_week": 1,
+            "end_season_week": 1,
+            "qualification_draw_size": 0,
+            "qualifier_spots": 0,
+            "wild_cards": 0,
+            "byes": 0,
+        }
+    )
+    entries.calendar_service._save_registry(calendars)
+    entries.generate_entry_list(
+        event_id=event_id, request=EntryListGenerateRequest(seed=4201, dry_run=False)
+    )
+    draws = SeasonDrawService(
+        entries, entries.calendar_service, tmp_path / "draws.json"
+    )
+    draws.generate_draw_package(
+        event_id=event_id, request=DrawGenerateRequest(seed=4202, dry_run=False)
+    )
+    matches = SeasonMatchService(
+        draws, entries.active_players_service, tmp_path / "matches.json"
+    )
+    package = matches.generate_match_package(
+        event_id=event_id, request=MatchPackageGenerateRequest(seed=4203, dry_run=False)
+    ).match_package
+    assert package and len(package.main_draw_matches) == 7
+    results = SeasonEventResultsService(
+        match_service=matches, results_path=tmp_path / "results.json"
+    )
+    points = SeasonPointAwardsService(
+        result_service=results,
+        active_players_service=entries.active_players_service,
+        calendar_service=entries.calendar_service,
+        template_service=entries.calendar_service.template_service,
+        awards_path=tmp_path / "awards.json",
+        points_config_path=tmp_path / "points.json",
+    )
+    return points, package
+
+
+def _add_legacy_four_player_event(points, eight, tmp_path):
+    """Add the reviewed four-player compatibility event beside the real draw."""
+    legacy_points, legacy_event_id = make_points_service(tmp_path)
+    package = (
+        legacy_points.result_service.match_service._load_registry()
+        .matches_by_event_id[legacy_event_id]
+        .model_copy(deep=True)
+    )
+    package.qualification_matches = []
+    package.event_id = f"{eight.event_id}-FOUR"
+    package.metadata.event_id = package.event_id
+    package.season_week = eight.season_week
+    id_map = {
+        match.match_id: f"{package.event_id}:{match.match_id.rsplit(':', 3)[-3]}:{match.match_id.rsplit(':', 2)[-2]}:{match.match_id.rsplit(':', 1)[-1]}"
+        for match in package.main_draw_matches
+    }
+    used = {
+        p
+        for match in eight.main_draw_matches
+        for p in (match.top_player_id, match.bottom_player_id)
+        if p
+    }
+    player_ids = [
+        player.player_id
+        for player in points.active_players_service.get_active_players(
+            season=eight.season
+        ).players
+        if player.player_id not in used
+    ][:4]
+    assert len(player_ids) == 4
+    legacy_matches = sorted(
+        package.main_draw_matches, key=lambda m: (m.round_number, m.bracket_position)
+    )
+    for match in legacy_matches:
+        original_id = match.match_id
+        match.match_id = id_map[original_id]
+        if match.winner_to_match_id:
+            match.winner_to_match_id = id_map[match.winner_to_match_id]
+        match.event_id = package.event_id
+    for match, pair in zip(
+        legacy_matches[:2], (player_ids[:2], player_ids[2:]), strict=True
+    ):
+        match.top_player_id, match.bottom_player_id = pair
+    registry = points.result_service.match_service._load_registry()
+    registry.matches_by_event_id[package.event_id] = package
+    points.result_service.match_service._save_registry(registry)
+    calendars = points.calendar_service._load_registry()
+    event = calendars.calendars_by_season["2000/2001"].events[0]
+    calendars.calendars_by_season["2000/2001"].events.append(
+        event.model_copy(update={"event_id": package.event_id, "main_draw_size": 4})
+    )
+    points.calendar_service._save_registry(calendars)
+    return package
 
 
 def confirm(url, command, preview):
@@ -110,13 +233,15 @@ def _server_state(tmp_path):
 
 def _install_owned_state(server, package, run_id, branch_id, additional_packages=()):
     ids = tuple(
-        player_id
-        for owned_package in (package, *additional_packages)
-        for match in sorted(
-            (m for m in owned_package.main_draw_matches if m.round_number == 1),
-            key=lambda m: m.bracket_position,
+        dict.fromkeys(
+            player_id
+            for owned_package in (package, *additional_packages)
+            for match in sorted(
+                (m for m in owned_package.main_draw_matches if m.round_number == 1),
+                key=lambda m: m.bracket_position,
+            )
+            for player_id in (match.top_player_id, match.bottom_player_id)
         )
-        for player_id in (match.top_player_id, match.bottom_player_id)
     )
     week = RankingWeek(season_index=0, week=package.season_week)
     source = session_at(
@@ -627,6 +752,487 @@ def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_
                     group_id=group_id,
                 )
                 assert replayed.result_fingerprint == expected[0] == expected[1]
+
+
+@pytest.mark.smoke
+def test_real_eight_player_week_transition_and_post_transition_replay(tmp_path):
+    points, package = _real_eight_points(tmp_path / "eight-source")
+    matches = points.result_service.match_service
+    database_url = f"sqlite:///{tmp_path / 'eight-transition.sqlite'}"
+    server = ApiServer(database_url=database_url)
+    server.app.dependency_overrides[get_season_match_service] = lambda: matches
+    server.app.dependency_overrides[get_season_point_awards_service] = lambda: points
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server, display_name="Eight transition"
+        )
+        week = _install_owned_state(server, package, run_id, branch_id)
+        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+        rounds = {}
+        for match in package.main_draw_matches:
+            rounds.setdefault(match.round_number, []).append(match.match_id)
+        schedule = {
+            "schema_version": "week_simulation_schedule.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week": week.model_dump(mode="json"),
+            "slots": [
+                {"ordinal": ordinal, "group_ids": rounds[number]}
+                for ordinal, number in enumerate(sorted(rounds), 1)
+            ],
+        }
+        preview = _request(
+            "POST", root + "/week-schedule/preview", {"schedule": schedule}
+        )[1]
+        assert (
+            _request(
+                "POST",
+                root + "/week-schedule",
+                {
+                    "schedule": schedule,
+                    "request_id": "eight-schedule",
+                    "expected_position_fingerprint": preview["position_fingerprint"],
+                },
+            )[0]
+            == 201
+        )
+        for ordinal in range(1, 4):
+            position = _request("GET", root + "/position")[1]
+            assert (
+                _request(
+                    "POST",
+                    root + "/simulate-next-slot",
+                    {
+                        "command_id": f"eight-slot-{ordinal}",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "expected_week": week.model_dump(mode="json"),
+                        "expected_position_fingerprint": position[
+                            "position_fingerprint"
+                        ],
+                        "expected_revision_id": revision,
+                    },
+                )[0]
+                == 200
+            )
+        with server.app.state.runtime.repository._session_factory() as session:
+            sources = OwnedTournamentRankingSourceStore(session).history(
+                run_id=run_id, branch_id=branch_id
+            )
+            assert len(sources) == 1
+            rows = session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.run_id == run_id,
+                    SimulationEventGroupModel.branch_id == branch_id,
+                    SimulationEventGroupModel.week_ordinal == week.ordinal,
+                )
+            ).all()
+            assert len(rows) == 7
+            replay_evidence = {
+                (row.slot_id, row.group_id): (
+                    row.result_fingerprint,
+                    AuthoritativeSlotMatchExecutor._load_group(
+                        row
+                    ).authoritative_input.fingerprint,
+                )
+                for row in rows
+            }
+        save_preview = _request("GET", root + "/save/preview")[1]
+        save_status, save_body = _request(
+            "POST",
+            root + "/save",
+            {
+                "expected_draft_version": save_preview["draft_version"],
+                "expected_simulation_fingerprint": save_preview[
+                    "simulation_fingerprint"
+                ],
+            },
+        )
+        assert save_status == 201, save_body
+        revision = save_body["saved_revision"]["revision_id"]
+        ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        with server.app.state.runtime.repository._session_factory() as session:
+            lifecycle = get_lifecycle(
+                session, run_id=run_id, branch_id=branch_id, week=week
+            )
+            roster = [
+                player.model_dump(mode="json") for player in lifecycle.ranking_roster()
+            ]
+        bootstrap = initial() | {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "players": roster,
+        }
+        assert _request("POST", ranking_root + "/prepare/initial", bootstrap)[0] == 201
+        ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+        revision = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": ranking_save["draft_version"],
+                "expected_ranking_fingerprint": ranking_save["ranking_fingerprint"],
+            },
+        )[1]["saved_revision"]["revision_id"]
+        target = {"season_index": 0, "week": 2}
+        authority_payload = {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": revision,
+            "completed_week": week.model_dump(mode="json"),
+            "target_week": target,
+            "players": roster,
+            "policy": bootstrap["policy"],
+            "provenance": "Real eight-player transition acceptance",
+            "adopted_by_command_id": "eight-authority",
+            "audit": bootstrap["audit"],
+        }
+        authority = _request(
+            "POST", ranking_root + "/transition-authorities", authority_payload
+        )[1]
+        ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+        revision = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": ranking_save["draft_version"],
+                "expected_ranking_fingerprint": ranking_save["ranking_fingerprint"],
+            },
+        )[1]["saved_revision"]["revision_id"]
+        ready = _request("GET", root + "/position")[1]
+        assert ready["week_ready_for_transition"] is True, ready["transition_blockers"]
+        command = {
+            "command_id": "eight-transition",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": revision,
+            "completed_week": week.model_dump(mode="json"),
+            "target_week": target,
+            "authority_fingerprint": RankingTransitionAuthority.model_validate_json(
+                json.dumps(authority)
+            ).fingerprint,
+            "tournaments": [sources[0].binding.model_dump(mode="json")],
+            "audit": bootstrap["audit"],
+        }
+        transition_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        transition_preview = _request("POST", transition_root + "/preview", command)[1]
+        assert confirm(transition_root, command, transition_preview)[0] == 201
+
+    reopened = ApiServer(database_url=database_url)
+    reopened.app.dependency_overrides[get_season_match_service] = lambda: matches
+    reopened.app.dependency_overrides[get_season_point_awards_service] = lambda: points
+    with reopened:
+        root = f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+        assert _request("GET", root + "/position")[1]["current_week"] == {
+            "season_index": 0,
+            "week": 2,
+        }
+        with reopened.app.state.runtime.repository._session_factory() as session:
+            executor = AuthoritativeSlotMatchExecutor(session)
+            for (slot_id, group_id), expected in replay_evidence.items():
+                replayed = executor.replay(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    slot_id=slot_id,
+                    group_id=group_id,
+                )
+                assert replayed.result_fingerprint == expected[0]
+                assert replayed.authoritative_input.fingerprint == expected[1]
+
+
+def test_mixed_real_eight_and_four_player_week_is_order_independent(
+    tmp_path, monkeypatch
+):
+    import beta_engine.api.deps as api_deps
+
+    snapshots = []
+    for label, reverse in (("forward", False), ("reverse", True)):
+        identities = iter(f"{index:032x}" for index in range(1, 100))
+        monkeypatch.setattr(
+            api_deps, "uuid4", lambda: SimpleNamespace(hex=next(identities))
+        )
+        points, eight = _real_eight_points(tmp_path / label / "eight")
+        four = _add_legacy_four_player_event(points, eight, tmp_path / label / "four")
+        matches = points.result_service.match_service
+        server = ApiServer(
+            database_url=f"sqlite:///{tmp_path / label / 'mixed.sqlite'}"
+        )
+        server.app.dependency_overrides[get_season_match_service] = lambda: matches
+        server.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+            points
+        )
+        with server:
+            run_id, branch_id, revision = _create_run(
+                server, display_name=f"Mixed {label}"
+            )
+            week = _install_owned_state(
+                server, eight, run_id, branch_id, additional_packages=(four,)
+            )
+            eight_rounds = {
+                number: [
+                    m.match_id
+                    for m in eight.main_draw_matches
+                    if m.round_number == number
+                ]
+                for number in sorted({m.round_number for m in eight.main_draw_matches})
+            }
+            four_matches = sorted(
+                four.main_draw_matches,
+                key=lambda m: (m.round_number, m.bracket_position),
+            )
+            slot_one = eight_rounds[1] + [m.match_id for m in four_matches[:2]]
+            schedule = {
+                "schema_version": "week_simulation_schedule.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "slots": [
+                    {"ordinal": 1, "group_ids": slot_one},
+                    {
+                        "ordinal": 2,
+                        "group_ids": [four_matches[2].match_id, *eight_rounds[2]],
+                    },
+                    {"ordinal": 3, "group_ids": eight_rounds[3]},
+                ],
+            }
+            root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+            preview_status, preview = _request(
+                "POST", root + "/week-schedule/preview", {"schedule": schedule}
+            )
+            assert preview_status == 200, preview
+            assert (
+                _request(
+                    "POST",
+                    root + "/week-schedule",
+                    {
+                        "schedule": schedule,
+                        "request_id": f"mixed-{label}",
+                        "expected_position_fingerprint": preview[
+                            "position_fingerprint"
+                        ],
+                    },
+                )[0]
+                == 201
+            )
+            execution = list(slot_one)
+            if reverse:
+                execution.reverse()
+            for index, group_id in enumerate(execution):
+                position = _request("GET", root + "/position")[1]
+                group_status, group_body = _request(
+                    "POST",
+                    root + "/simulate-next-match",
+                    {
+                        "command_id": f"mixed-{label}-{index}",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "expected_week": week.model_dump(mode="json"),
+                        "expected_position_fingerprint": position[
+                            "position_fingerprint"
+                        ],
+                        "expected_revision_id": revision,
+                        "group_id": group_id,
+                    },
+                )
+                assert group_status == 200, group_body
+            with server.app.state.runtime.repository._session_factory() as session:
+                rows = session.scalars(
+                    select(SimulationEventGroupModel).where(
+                        SimulationEventGroupModel.run_id == run_id,
+                        SimulationEventGroupModel.branch_id == branch_id,
+                    )
+                ).all()
+                loaded = [
+                    AuthoritativeSlotMatchExecutor._load_group(row) for row in rows
+                ]
+                assert (
+                    len(
+                        {
+                            group.authoritative_input.slot_start_fingerprint
+                            for group in loaded
+                        }
+                    )
+                    == 1
+                )
+                snapshots.append(
+                    tuple(
+                        sorted(
+                            (
+                                group.authoritative_input.match_id,
+                                group.result_fingerprint,
+                                tuple(effect.fingerprint for effect in group.effects),
+                            )
+                            for group in loaded
+                        )
+                    )
+                )
+            position = _request("GET", root + "/position")[1]
+            assert (
+                _request(
+                    "POST",
+                    root + "/simulate-next-slot",
+                    {
+                        "command_id": f"mixed-{label}-slot-two",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "expected_week": week.model_dump(mode="json"),
+                        "expected_position_fingerprint": position[
+                            "position_fingerprint"
+                        ],
+                        "expected_revision_id": revision,
+                    },
+                )[0]
+                == 200
+            )
+            mid = _request("GET", root + "/position")[1]
+            assert mid["week_ready_for_transition"] is False
+            with server.app.state.runtime.repository._session_factory() as session:
+                assert (
+                    len(
+                        OwnedTournamentRankingSourceStore(session).history(
+                            run_id=run_id, branch_id=branch_id
+                        )
+                    )
+                    == 1
+                )
+            assert (
+                _request(
+                    "POST",
+                    root + "/simulate-next-slot",
+                    {
+                        "command_id": f"mixed-{label}-slot-three",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "expected_week": week.model_dump(mode="json"),
+                        "expected_position_fingerprint": mid["position_fingerprint"],
+                        "expected_revision_id": revision,
+                    },
+                )[0]
+                == 200
+            )
+            with server.app.state.runtime.repository._session_factory() as session:
+                sources = OwnedTournamentRankingSourceStore(session).history(
+                    run_id=run_id, branch_id=branch_id
+                )
+                assert len(sources) == 2
+                all_rows = session.scalars(
+                    select(SimulationEventGroupModel).where(
+                        SimulationEventGroupModel.run_id == run_id,
+                        SimulationEventGroupModel.branch_id == branch_id,
+                    )
+                ).all()
+                historical = {
+                    (row.slot_id, row.group_id): row.result_fingerprint
+                    for row in all_rows
+                }
+            if not reverse:
+                save_preview = _request("GET", root + "/save/preview")[1]
+                save_status, save_body = _request(
+                    "POST",
+                    root + "/save",
+                    {
+                        "expected_draft_version": save_preview["draft_version"],
+                        "expected_simulation_fingerprint": save_preview[
+                            "simulation_fingerprint"
+                        ],
+                    },
+                )
+                assert save_status == 201, save_body
+                revision = save_body["saved_revision"]["revision_id"]
+                ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+                with server.app.state.runtime.repository._session_factory() as session:
+                    lifecycle = get_lifecycle(
+                        session, run_id=run_id, branch_id=branch_id, week=week
+                    )
+                    roster = [
+                        player.model_dump(mode="json")
+                        for player in lifecycle.ranking_roster()
+                    ]
+                bootstrap = initial() | {
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "players": roster,
+                }
+                assert (
+                    _request("POST", ranking_root + "/prepare/initial", bootstrap)[0]
+                    == 201
+                )
+                ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+                revision = _request(
+                    "POST",
+                    ranking_root + "/save",
+                    {
+                        "expected_draft_version": ranking_save["draft_version"],
+                        "expected_ranking_fingerprint": ranking_save[
+                            "ranking_fingerprint"
+                        ],
+                    },
+                )[1]["saved_revision"]["revision_id"]
+                target = {"season_index": 0, "week": 2}
+                authority = _request(
+                    "POST",
+                    ranking_root + "/transition-authorities",
+                    {
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "base_revision_id": revision,
+                        "completed_week": week.model_dump(mode="json"),
+                        "target_week": target,
+                        "players": roster,
+                        "policy": bootstrap["policy"],
+                        "provenance": "Mixed real-eight transition",
+                        "adopted_by_command_id": "mixed-authority",
+                        "audit": bootstrap["audit"],
+                    },
+                )[1]
+                ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+                revision = _request(
+                    "POST",
+                    ranking_root + "/save",
+                    {
+                        "expected_draft_version": ranking_save["draft_version"],
+                        "expected_ranking_fingerprint": ranking_save[
+                            "ranking_fingerprint"
+                        ],
+                    },
+                )[1]["saved_revision"]["revision_id"]
+                transition_command = {
+                    "command_id": "mixed-real-transition",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "base_revision_id": revision,
+                    "completed_week": week.model_dump(mode="json"),
+                    "target_week": target,
+                    "authority_fingerprint": RankingTransitionAuthority.model_validate_json(
+                        json.dumps(authority)
+                    ).fingerprint,
+                    "tournaments": [
+                        source.binding.model_dump(mode="json") for source in sources
+                    ],
+                    "audit": bootstrap["audit"],
+                }
+                transition_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+                transition_preview = _request(
+                    "POST", transition_root + "/preview", transition_command
+                )[1]
+                assert (
+                    confirm(transition_root, transition_command, transition_preview)[0]
+                    == 201
+                )
+                with server.app.state.runtime.repository._session_factory() as session:
+                    executor = AuthoritativeSlotMatchExecutor(session)
+                    for (slot_id, group_id), result_fp in historical.items():
+                        assert (
+                            executor.replay(
+                                run_id=run_id,
+                                branch_id=branch_id,
+                                week=week,
+                                slot_id=slot_id,
+                                group_id=group_id,
+                            ).result_fingerprint
+                            == result_fp
+                        )
+    assert snapshots[0] == snapshots[1]
 
 
 def test_product_save_reopen_mid_slot_preserves_frozen_position(tmp_path):

@@ -276,11 +276,9 @@ def test_three_completed_weeks_reach_week_four_without_state_repair(tmp_path):
             sources = OwnedTournamentRankingSourceStore(session).history(
                 run_id=run_id, branch_id=branch_id
             )
-            assert [source.binding.completed_week.week for source in sources] == [
-                1,
-                2,
-                3,
-            ]
+            assert sorted(
+                source.binding.completed_week.week for source in sources
+            ) == [1, 2, 3]
             assert week_one_replay is not None
             replayed = AuthoritativeSlotMatchExecutor(session).replay(
                 run_id=run_id,

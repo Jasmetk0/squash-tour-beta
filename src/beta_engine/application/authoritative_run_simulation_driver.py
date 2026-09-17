@@ -26,6 +26,7 @@ from beta_engine.application.ranking_tournament_ingestion import (
     prepare_tournament_ranking_sources,
 )
 from beta_engine.application.season_match_service import (
+    FrozenQualifierPromotion,
     SeasonEventMatchPackage,
     SeasonMatchService,
 )
@@ -313,9 +314,125 @@ class AuthoritativeRunSimulationDriver:
         )
         if not packages and required:
             raise ValueError("supported tournament authority is missing")
+        packages = tuple(self._bind_current_draw_evidence(p, week) for p in packages)
         for package in packages:
             self._topology((package,))
         return packages
+
+    def _bind_current_draw_evidence(self, package, week):
+        """Validate producer lineage and freeze qualification side mappings."""
+        package = package.model_copy(deep=True)
+        legacy_completed = bool(package.main_draw_matches) and all(
+            item.status == "completed"
+            for item in package.qualification_matches + package.main_draw_matches
+        )
+        draw = self.match_service.draw_service.get_draw_package(
+            event_id=package.event_id
+        ).draw_package
+        if draw is None:
+            if legacy_completed:
+                return package
+            raise ValueError("persisted DrawPackage authority is missing")
+        entry = self.match_service.draw_service.entry_list_service.get_entry_list(
+            event_id=package.event_id
+        ).entry_list
+        if entry is None:
+            if legacy_completed:
+                return package
+            raise ValueError("persisted EntryList authority is missing")
+        expected_season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        if not legacy_completed and (
+            package.event_id != draw.event_id
+            or package.season != draw.season
+            or package.season != expected_season
+            or package.season_week != draw.season_week
+            or package.season_week != week.week
+        ):
+            raise ValueError("persisted Match/Draw event or week identity conflicts")
+        if package.metadata.draw_package_fingerprint != draw.metadata.build_fingerprint:
+            raise ValueError("persisted MatchPackage DrawPackage fingerprint conflicts")
+        if draw.metadata.entry_list_fingerprint != entry.metadata.build_fingerprint:
+            raise ValueError("persisted DrawPackage EntryList fingerprint conflicts")
+        bracket_fingerprints = {
+            "main": draw.main_draw.generated_fingerprint,
+            "qualification": (
+                draw.qualification_draw.generated_fingerprint
+                if draw.qualification_draw
+                else None
+            ),
+        }
+        for match in package.qualification_matches + package.main_draw_matches:
+            if match.source_draw_fingerprint != bracket_fingerprints[
+                match.draw_type
+            ] and not legacy_completed:
+                raise ValueError("persisted match source Draw fingerprint conflicts")
+
+        promotions = []
+        if package.qualification_matches:
+            final_round = max(m.round_number for m in package.qualification_matches)
+            finals = sorted(
+                (
+                    m
+                    for m in package.qualification_matches
+                    if m.round_number == final_round
+                ),
+                key=lambda m: (m.bracket_position, m.match_id),
+            )
+            placeholders = sorted(
+                draw.main_draw.qualifier_placeholders,
+                key=lambda p: (p.qualifier_index, p.bracket_position, p.slot_id),
+            )
+            if len(finals) != len(placeholders):
+                raise ValueError("qualification final/placeholder mapping is ambiguous")
+            for source, placeholder in zip(finals, placeholders, strict=True):
+                targets = [
+                    (m, side)
+                    for m in package.main_draw_matches
+                    for side in ("top", "bottom")
+                    if getattr(m, f"{side}_slot_id") == placeholder.slot_id
+                ]
+                if len(targets) != 1:
+                    raise ValueError(
+                        "qualification placeholder target side is ambiguous"
+                    )
+                target, side = targets[0]
+                promotions.append(
+                    FrozenQualifierPromotion(
+                        qualifier_index=placeholder.qualifier_index,
+                        source_match_id=source.match_id,
+                        target_match_id=target.match_id,
+                        target_side=side,
+                        target_slot_id=placeholder.slot_id,
+                    )
+                )
+        bye_ids = []
+        for match in package.qualification_matches + package.main_draw_matches:
+            if match.status != "bye_auto_advance_pending":
+                continue
+            known = [p for p in (match.top_player_id, match.bottom_player_id) if p]
+            if len(known) != 1 or not match.winner_to_match_id:
+                raise ValueError("persisted BYE advancement is ambiguous")
+            match.winner_player_id = known[0]
+            match.loser_player_id = None
+            match.scoreline = "BYE"
+            match.status = "completed"
+            match.result_notes = "automatic BYE advance"
+            match.result_fingerprint = fingerprint(
+                {
+                    "action": "authoritative_bye_advance.v1",
+                    "event_id": package.event_id,
+                    "match_id": match.match_id,
+                    "winner_player_id": known[0],
+                }
+            )
+            self.match_service._propagate_winner(package, completed=match)
+            bye_ids.append(match.match_id)
+        return package.model_copy(
+            update={
+                "frozen_qualifier_promotions": promotions,
+                "frozen_bye_match_ids": bye_ids,
+            }
+        )
 
     def _package(self, week, *, required=True):
         """Legacy single-event discovery retained for reviewed compatibility."""
@@ -577,15 +694,7 @@ class AuthoritativeRunSimulationDriver:
         for package in packages:
             if package.validation_errors:
                 raise ValueError("persisted tournament topology has validation errors")
-            if package.qualification_matches:
-                # v1 DrawPackage records indexed placeholders, but the MatchPackage
-                # explicitly says promotion is not connected. Do not invent the
-                # qualifier-winner-to-placeholder mapping.
-                raise ValueError(
-                    "supported bridge no longer requires exactly three Main Draw matches, "
-                    "but persisted draw lacks authoritative qualifier winner placeholder mapping"
-                )
-            matches = tuple(package.main_draw_matches)
+            matches = tuple(package.qualification_matches + package.main_draw_matches)
             by_id = {match.match_id: match for match in matches}
             if len(by_id) != len(matches):
                 raise ValueError("persisted topology contains duplicate match identity")
@@ -614,6 +723,19 @@ class AuthoritativeRunSimulationDriver:
                             "persisted topology feeder target does not exist"
                         )
                     incoming[match.winner_to_match_id].append(match.match_id)
+            promotion_by_target = {
+                (item.target_match_id, item.target_side): item.source_match_id
+                for item in package.frozen_qualifier_promotions
+            }
+            for item in package.frozen_qualifier_promotions:
+                if (
+                    item.source_match_id not in by_id
+                    or item.target_match_id not in by_id
+                ):
+                    raise ValueError(
+                        "frozen qualifier promotion references a missing match"
+                    )
+                incoming[item.target_match_id].append(item.source_match_id)
             visiting, visited = set(), set()
 
             def validate_acyclic(node):
@@ -630,35 +752,65 @@ class AuthoritativeRunSimulationDriver:
 
             for node in by_id:
                 validate_acyclic(node)
+            bye_winners = {}
             for match in matches:
-                feeders = tuple(incoming[match.match_id])
-                if match.status == "bye_auto_advance_pending":
-                    raise ValueError(
-                        "persisted BYE advancement is not explicit enough for authoritative execution"
+                if match.match_id in package.frozen_bye_match_ids:
+                    known = [
+                        p for p in (match.top_player_id, match.bottom_player_id) if p
+                    ]
+                    winner = match.winner_player_id or (
+                        known[0] if len(known) == 1 else None
                     )
-                direct = (match.top_player_id, match.bottom_player_id)
-                if feeders:
-                    if len(feeders) != 2 or (any(direct) and not legacy_four):
-                        raise ValueError(
-                            "persisted topology has ambiguous participant sources"
-                        )
-                    plan = SimulationMatchEventPlan(
-                        group_id=match.match_id,
-                        event_id=package.event_id,
-                        match_id=match.match_id,
-                        feeder_group_ids=feeders,
+                    if winner is None or not match.winner_to_match_id:
+                        raise ValueError("persisted BYE advancement is ambiguous")
+                    bye_winners[match.match_id] = winner
+
+            def node_ref(match_id):
+                parts = match_id.split(":")
+                rounds = [p for p in parts if p.startswith("R") and p[1:].isdigit()]
+                numbers = [p for p in parts if p.startswith("M") and p[1:].isdigit()]
+                return (
+                    f"{rounds[0]}-N{numbers[0][1:]}" if rounds and numbers else match_id
+                )
+
+            for match in matches:
+                if match.match_id in bye_winners:
+                    continue
+                sources = []
+                for side_index, side in enumerate(("top", "bottom")):
+                    promoted = promotion_by_target.get((match.match_id, side))
+                    candidates = [
+                        feeder
+                        for feeder in incoming[match.match_id]
+                        if getattr(match, f"{side}_source") == node_ref(feeder)
+                        or getattr(match, f"{side}_slot_id") == feeder
+                    ]
+                    feeder = promoted or (
+                        candidates[0] if len(candidates) == 1 else None
                     )
-                else:
-                    if not all(direct):
-                        raise ValueError(
-                            "persisted topology has an unresolved participant source"
-                        )
-                    plan = SimulationMatchEventPlan(
-                        group_id=match.match_id,
-                        event_id=package.event_id,
-                        match_id=match.match_id,
-                        direct_player_ids=direct,
-                    )
+                    if (
+                        feeder is None
+                        and legacy_four
+                        and len(incoming[match.match_id]) == 2
+                    ):
+                        feeder = incoming[match.match_id][side_index]
+                    if feeder in bye_winners:
+                        sources.append(f"player:{bye_winners[feeder]}")
+                    elif feeder:
+                        sources.append(f"winner:{feeder}")
+                    else:
+                        player_id = getattr(match, f"{side}_player_id")
+                        if not player_id:
+                            raise ValueError(
+                                "persisted topology has an unresolved participant source"
+                            )
+                        sources.append(f"player:{player_id}")
+                plan = SimulationMatchEventPlan(
+                    group_id=match.match_id,
+                    event_id=package.event_id,
+                    match_id=match.match_id,
+                    participant_sources=tuple(sources),
+                )
                 if match.match_id in plans:
                     raise ValueError("week topology contains duplicate group identity")
                 plans[match.match_id] = plan
@@ -668,7 +820,11 @@ class AuthoritativeRunSimulationDriver:
             terminals = (
                 terminals
                 if legacy_four
-                else [m.match_id for m in matches if not m.winner_to_match_id]
+                else [
+                    m.match_id
+                    for m in package.main_draw_matches
+                    if not m.winner_to_match_id
+                ]
             )
             if len(terminals) != 1:
                 raise ValueError(
@@ -685,11 +841,21 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("schedule must cover every supported group exactly once")
         ordinal = {g: slot.ordinal for slot in schedule.slots for g in slot.group_ids}
         for group_id, plan in plans.items():
-            for feeder in plan.feeder_group_ids or ():
+            for feeder in self._plan_feeders(plan):
                 if ordinal[feeder] >= ordinal[group_id]:
                     raise ValueError(
                         "dependent groups require a strictly later slot than feeders"
                     )
+
+    @staticmethod
+    def _plan_feeders(plan):
+        if plan.participant_sources:
+            return tuple(
+                source.removeprefix("winner:")
+                for source in plan.participant_sources
+                if source.startswith("winner:")
+            )
+        return tuple(plan.feeder_group_ids or ())
 
     def _position(self, session, run_id, branch_id, *, allow_missing_schedule=False):
         week = self._current_week(session, run_id, branch_id)
@@ -755,7 +921,7 @@ class AuthoritativeRunSimulationDriver:
         )
         unresolved = tuple(g for g in current_ids if g not in done)
         eligible_groups = tuple(
-            g for g in unresolved if set(plans[g].feeder_group_ids or ()) <= done
+            g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
         )
         blocked_groups = tuple(
             g for g in plans if g not in done and g not in eligible_groups
@@ -941,9 +1107,7 @@ class AuthoritativeRunSimulationDriver:
             ordinal=spec.ordinal,
             group_ids=spec.group_ids,
             match_events=selected,
-            dependency_ids=tuple(
-                f for p in selected for f in (p.feeder_group_ids or ())
-            ),
+            dependency_ids=tuple(f for p in selected for f in self._plan_feeders(p)),
             provenance=f"adopted-authority:{authority_fp};week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'}",
         )
 
@@ -978,7 +1142,25 @@ class AuthoritativeRunSimulationDriver:
         plan = AuthoritativeSlotMatchExecutor._load_plan(slot)
         event = next(e for e in plan.match_events if e.group_id == group_id)
         package = next(p for p in packages if p.event_id == event.event_id)
-        if event.direct_player_ids:
+        if event.participant_sources:
+            players = tuple(
+                source.removeprefix("player:")
+                if source.startswith("player:")
+                else AuthoritativeSlotMatchExecutor._load_group(
+                    session.scalar(
+                        select(SimulationEventGroupModel).where(
+                            SimulationEventGroupModel.run_id == command.run_id,
+                            SimulationEventGroupModel.branch_id == command.branch_id,
+                            SimulationEventGroupModel.week_ordinal
+                            == command.expected_week.ordinal,
+                            SimulationEventGroupModel.group_id
+                            == source.removeprefix("winner:"),
+                        )
+                    )
+                ).result.winner_player_id
+                for source in event.participant_sources
+            )
+        elif event.direct_player_ids:
             players = event.direct_player_ids
         else:
             players = tuple(
@@ -1044,7 +1226,11 @@ class AuthoritativeRunSimulationDriver:
             ).package_json
         )
         for package, point_authority in items:
-            matches = tuple(package.qualification_matches + package.main_draw_matches)
+            matches = tuple(
+                m
+                for m in package.qualification_matches + package.main_draw_matches
+                if m.match_id not in package.frozen_bye_match_ids
+            )
             if not all(m.match_id in loaded for m in matches):
                 continue
             terminals = tuple(m for m in matches if not m.winner_to_match_id)

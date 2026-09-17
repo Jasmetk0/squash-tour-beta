@@ -450,7 +450,7 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
             branch_id="branch",
             run_id="run",
             display_name="Timeline 1",
-            saved_head_revision_id="revision-1",
+            saved_head_revision_id="revision",
         )
     )
     session.commit()
@@ -469,7 +469,7 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
         branch_id="branch",
         expected_week=week,
         expected_position_fingerprint=opening.position_fingerprint,
-        expected_revision_id="revision-1",
+        expected_revision_id="revision",
         group_id=opening.eligible_match_ids[0],
     )
     after_first = driver.simulate_next_match(first)
@@ -870,7 +870,7 @@ def test_driver_rejects_qualification_and_insufficient_multi_event_chronology(
     driver = AuthoritativeRunSimulationDriver(
         None, service.result_service.match_service, service
     )
-    with pytest.raises(ValueError, match="exactly three Main Draw"):
+    with pytest.raises(ValueError, match="qualification final/placeholder mapping"):
         driver._package(week)
     registry = service.result_service.match_service._load_registry()
     clean = registry.matches_by_event_id[event_id].model_copy(deep=True)
@@ -881,7 +881,7 @@ def test_driver_rejects_qualification_and_insufficient_multi_event_chronology(
         update={"event_id": clean.event_id + "-SECOND"}
     )
     service.result_service.match_service._save_registry(registry)
-    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+    with pytest.raises(ValueError, match="cross-event identity"):
         driver._package(week)
 
 
@@ -894,7 +894,7 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
     )
     driver.match_service._save_registry(registry)
 
-    with pytest.raises(ValueError, match="lack authoritative cross-event"):
+    with pytest.raises(ValueError, match="cross-event identity"):
         driver.position(run_id="run", branch_id="branch")
 
     with factory() as session:
@@ -1210,19 +1210,294 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         record("s2", winner_to="final"),
         record("final", label="not-a-final-name"),
     ]
+    for target, top, bottom in ((matches[4], "q1", "q2"), (matches[5], "q3", "q4"), (matches[6], "s1", "s2")):
+        target.top_source = top
+        target.bottom_source = bottom
+        target.top_slot_id = top
+        target.bottom_slot_id = bottom
     frozen = package.model_copy(
         update={"qualification_matches": [], "main_draw_matches": matches}
     )
     plans = driver._topology((frozen,))
     assert set(plans) == {m.match_id for m in matches}
-    assert plans["final"].feeder_group_ids == ("s1", "s2")
-    assert plans["q1"].direct_player_ids == ("a", "b")
+    assert plans["final"].participant_sources == ("winner:s1", "winner:s2")
+    assert plans["q1"].participant_sources == ("player:a", "player:b")
 
     cyclic = frozen.model_copy(deep=True)
     cyclic.main_draw_matches[0].winner_to_match_id = "q2"
     cyclic.main_draw_matches[1].winner_to_match_id = "q1"
     with pytest.raises(ValueError, match="cycle"):
         driver._topology((cyclic,))
+
+
+def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
+    """Production Entry -> Draw -> Match evidence drives all seven matches."""
+    from test_season_entry_list_service import first_event_id, make_service
+    from beta_engine.application.season_draw_service import (
+        DrawGenerateRequest,
+        SeasonDrawService,
+    )
+    from beta_engine.application.season_entry_list_service import (
+        EntryListGenerateRequest,
+    )
+    from beta_engine.application.season_event_results_service import (
+        SeasonEventResultsService,
+    )
+    from beta_engine.application.season_match_service import (
+        MatchPackageGenerateRequest,
+        SeasonMatchService,
+    )
+    from beta_engine.application.season_point_awards_service import (
+        SeasonPointAwardsService,
+    )
+
+    root = tmp_path / "real-eight"
+    entries = make_service(root, main_draw_size=8)
+    event_id = first_event_id(entries)
+    calendars = entries.calendar_service._load_registry()
+    calendar = calendars.calendars_by_season["2000/2001"]
+    event = calendar.events[0].model_copy(
+        update={
+            "qualification_draw_size": 0,
+            "qualifier_spots": 0,
+            "wild_cards": 0,
+            "byes": 0,
+        }
+    )
+    calendar.events[0] = event
+    entries.calendar_service._save_registry(calendars)
+    entries.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(seed=1201, dry_run=False),
+    )
+    draws = SeasonDrawService(
+        entry_list_service=entries,
+        calendar_service=entries.calendar_service,
+        draws_path=root / "draws.json",
+    )
+    draw = draws.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=1202, dry_run=False),
+    ).draw_package
+    assert draw is not None and draw.main_draw.draw_size == 8
+    matches = SeasonMatchService(
+        draw_service=draws,
+        active_players_service=entries.active_players_service,
+        matches_path=root / "matches.json",
+    )
+    package = matches.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=1203, dry_run=False),
+    ).match_package
+    assert package is not None and len(package.main_draw_matches) == 7
+    results = SeasonEventResultsService(
+        match_service=matches, results_path=root / "results.json"
+    )
+    awards = SeasonPointAwardsService(
+        result_service=results,
+        active_players_service=entries.active_players_service,
+        calendar_service=entries.calendar_service,
+        template_service=entries.calendar_service.template_service,
+        awards_path=root / "awards.json",
+        points_config_path=root / "points.json",
+    )
+    first_round = [m for m in package.main_draw_matches if m.status == "pending"]
+    player_ids = tuple(
+        player_id
+        for match in first_round
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    week = RankingWeek(season_index=0, week=package.season_week)
+    session = session_at(root / "run.sqlite", player_ids, week)
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Real eight",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
+    by_round = {}
+    for match in package.main_draw_matches:
+        by_round.setdefault(match.round_number, []).append(match.match_id)
+    schedule = WeekSimulationSchedule(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        slots=tuple(
+            WeekSimulationScheduleSlot(
+                ordinal=index,
+                group_ids=tuple(by_round[round_number]),
+            )
+            for index, round_number in enumerate(sorted(by_round), 1)
+        ),
+    )
+    preview = driver.preview_schedule(schedule)
+    driver.adopt_schedule(
+        schedule,
+        request_id="real-eight-schedule",
+        expected_position_fingerprint=preview["position_fingerprint"],
+    )
+    for ordinal in range(1, len(schedule.slots) + 1):
+        command, _ = _driver_command(driver, week, f"real-eight-{ordinal}")
+        state = driver.simulate_next_slot(command)
+    assert state["supported_tournament_complete"] is True
+    with factory() as db:
+        groups = db.scalars(select(SimulationEventGroupModel)).all()
+        assert len(groups) == 7
+        assert len({g.group_id for g in groups}) == 7
+        source = OwnedTournamentRankingSourceStore(db).history(
+            run_id="run", branch_id="branch"
+        )
+        assert len(source) == 1
+        assert len(source[0].result.match_result_refs) == 7
+        slots = db.scalars(
+            select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+        ).all()
+        opening_groups = [g for g in groups if g.slot_id == slots[0].slot_id]
+        assert (
+            len(
+                {
+                    AuthoritativeSlotMatchExecutor._load_group(
+                        g
+                    ).authoritative_input.slot_start_fingerprint
+                    for g in opening_groups
+                }
+            )
+            == 1
+        )
+
+
+def test_real_persisted_qualification_fails_only_when_bye_sources_are_ambiguous(
+    tmp_path,
+):
+    from test_season_entry_list_service import first_event_id, make_service
+    from beta_engine.application.season_draw_service import (
+        DrawGenerateRequest,
+        SeasonDrawService,
+    )
+    from beta_engine.application.season_entry_list_service import (
+        EntryListGenerateRequest,
+    )
+    from beta_engine.application.season_event_results_service import (
+        SeasonEventResultsService,
+    )
+    from beta_engine.application.season_match_service import (
+        MatchPackageGenerateRequest,
+        SeasonMatchService,
+    )
+    from beta_engine.application.season_point_awards_service import (
+        SeasonPointAwardsService,
+    )
+
+    root = tmp_path / "real-qualification"
+    entries = make_service(root, main_draw_size=8)
+    event_id = first_event_id(entries)
+    calendars = entries.calendar_service._load_registry()
+    event = calendars.calendars_by_season["2000/2001"].events[0]
+    calendars.calendars_by_season["2000/2001"].events[0] = event.model_copy(
+        update={"wild_cards": 0, "byes": 0, "qualifier_spots": 1}
+    )
+    entries.calendar_service._save_registry(calendars)
+    entries.generate_entry_list(
+        event_id=event_id, request=EntryListGenerateRequest(seed=123, dry_run=False)
+    )
+    draws = SeasonDrawService(entries, entries.calendar_service, root / "draws.json")
+    draw = draws.generate_draw_package(
+        event_id=event_id, request=DrawGenerateRequest(seed=2202, dry_run=False)
+    ).draw_package
+    matches = SeasonMatchService(
+        draws, entries.active_players_service, root / "matches.json"
+    )
+    package = matches.generate_match_package(
+        event_id=event_id, request=MatchPackageGenerateRequest(seed=2203, dry_run=False)
+    ).match_package
+    assert draw and package and len(draw.main_draw.qualifier_placeholders) == 1
+    results = SeasonEventResultsService(
+        match_service=matches, results_path=root / "results.json"
+    )
+    awards = SeasonPointAwardsService(
+        result_service=results,
+        active_players_service=entries.active_players_service,
+        calendar_service=entries.calendar_service,
+        template_service=entries.calendar_service.template_service,
+        awards_path=root / "awards.json",
+        points_config_path=root / "points.json",
+    )
+    player_ids = tuple(
+        sorted(
+            {
+                p
+                for m in package.qualification_matches + package.main_draw_matches
+                for p in (m.top_player_id, m.bottom_player_id)
+                if p
+            }
+        )
+    )
+    week = RankingWeek(season_index=0, week=package.season_week)
+    session = session_at(root / "run.sqlite", player_ids, week)
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Qualification",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
+    ordered_rounds = []
+    for draw_type in ("qualification", "main"):
+        phase = [
+            m
+            for m in package.qualification_matches + package.main_draw_matches
+            if m.draw_type == draw_type
+        ]
+        for round_number in sorted({m.round_number for m in phase}):
+            ordered_rounds.append(
+                tuple(m.match_id for m in phase if m.round_number == round_number)
+            )
+    schedule = WeekSimulationSchedule(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        slots=tuple(
+            WeekSimulationScheduleSlot(ordinal=i, group_ids=groups)
+            for i, groups in enumerate(ordered_rounds, 1)
+        ),
+    )
+    assert package.qualification_matches
+    assert all(
+        match.status == "bye_auto_advance_pending"
+        and match.top_player_id is None
+        and match.bottom_player_id is None
+        for match in package.qualification_matches
+        if match.round_number == 1
+    )
+    with pytest.raises(ValueError, match="BYE advancement is ambiguous"):
+        driver.preview_schedule(schedule)
 
 
 def test_week_61_requires_season_transition(tmp_path):

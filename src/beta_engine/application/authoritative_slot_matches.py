@@ -290,7 +290,7 @@ def publish_authoritative_tournament_to_existing_completion(
     executable_ids = {
         match.match_id
         for match in package.qualification_matches + package.main_draw_matches
-        if match.status != "bye_auto_advance_pending"
+        if match.match_id not in package.frozen_bye_match_ids
     }
     if set(by_match) != executable_ids:
         raise ValueError(
@@ -299,11 +299,17 @@ def publish_authoritative_tournament_to_existing_completion(
     projected = package.model_copy(deep=True)
     for match in projected.qualification_matches + projected.main_draw_matches:
         if match.match_id not in by_match:
-            if match.status == "bye_auto_advance_pending":
+            if match.match_id in package.frozen_bye_match_ids:
                 continue
             raise ValueError("authoritative result is missing an executable match")
         group = by_match[match.match_id]
         result = group.result
+        match.top_player_id = (
+            group.authoritative_input.engine_input.context.player_a.player.player_id
+        )
+        match.bottom_player_id = (
+            group.authoritative_input.engine_input.context.player_b.player.player_id
+        )
         match.status = "completed"
         match.winner_player_id = result.winner_player_id
         match.loser_player_id = result.loser_player_id
@@ -496,7 +502,15 @@ class AuthoritativeSlotMatchExecutor:
         feeder_ids = tuple(
             feeder
             for event in match_events
-            for feeder in (event.feeder_group_ids or ())
+            for feeder in (
+                tuple(event.feeder_group_ids or ())
+                if event.participant_sources is None
+                else tuple(
+                    source.removeprefix("winner:")
+                    for source in event.participant_sources
+                    if source.startswith("winner:")
+                )
+            )
         )
         if tuple(dependency_ids) != feeder_ids:
             raise ValueError(
@@ -609,7 +623,26 @@ class AuthoritativeSlotMatchExecutor:
         )
         if (event_id, match_id) != (event_plan.event_id, event_plan.match_id):
             raise ValueError("execution event/match identity differs from slot plan")
-        if event_plan.direct_player_ids is not None:
+        if event_plan.participant_sources is not None:
+            expected = []
+            for source in event_plan.participant_sources:
+                if source.startswith("player:"):
+                    expected.append(source.removeprefix("player:"))
+                    continue
+                feeder_id = source.removeprefix("winner:")
+                row = self.session.scalar(
+                    select(SimulationEventGroupModel).where(
+                        SimulationEventGroupModel.run_id == run_id,
+                        SimulationEventGroupModel.branch_id == branch_id,
+                        SimulationEventGroupModel.week_ordinal == week.ordinal,
+                        SimulationEventGroupModel.group_id == feeder_id,
+                    )
+                )
+                if row is None:
+                    raise ValueError("planned feeder groups are incomplete")
+                expected.append(self._load_group(row).result.winner_player_id)
+            expected_players = tuple(expected)
+        elif event_plan.direct_player_ids is not None:
             expected_players = event_plan.direct_player_ids
         else:
             feeder_rows = [

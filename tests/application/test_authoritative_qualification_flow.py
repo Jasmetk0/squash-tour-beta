@@ -276,4 +276,8 @@ def test_production_qualification_bye_promotes_into_main_draw_and_closes_once(tm
             branch_id="branch",
         )
         assert len(sources) == 1
-        assert len(sources[0].result.match_result_refs) == expected_group_count
+        refs = sources[0].result.match_result_refs
+        assert len(refs) == expected_group_count + len(package.frozen_bye_match_ids)
+        assert {
+            ref.match_id for ref in refs if ref.scoreline == "BYE"
+        } == set(package.frozen_bye_match_ids)

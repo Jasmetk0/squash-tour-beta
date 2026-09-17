@@ -9,6 +9,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from beta_engine.application.season_entry_batch_service import (
+    EntryBatchGenerateRequest,
+    SeasonEntryBatchService,
+)
 from beta_engine.application.season_event_lifecycle_service import EventLifecycleStage, SeasonEventLifecycleService
 from beta_engine.application.season_event_simulation_service import ChangedArtifacts, SimulateDrawType, SimulateOneEventReport, SimulateOneEventRequest, SeasonEventSimulationService
 from beta_engine.application.season_ranking_snapshot_service import SeasonRankingSnapshotService, WeeklyRankingSnapshotGenerateRequest
@@ -165,8 +169,21 @@ class SeasonWeekSimulationExecutionService:
             summary.next_safe_action = "build_calendar_or_adjust_event_filter"
             return self._finish(preflight=preflight, events=[], summary=summary, warnings=warnings, errors=errors)
 
-        summary.run_started = True
         selected = self._sort_events(preflight.events)
+        preseeded_entries = self._preseed_overlapping_entries(
+            request=request,
+            selected=selected,
+            warnings=warnings,
+            errors=errors,
+        )
+        if preseeded_entries is None:
+            summary.run_started = False
+            summary.run_completed = False
+            summary.stop_reason = "shared_entry_resolution_failed"
+            summary.next_safe_action = "resolve_entry_conflict_and_rerun_week"
+            return self._finish(preflight=preflight, events=[], summary=summary, warnings=warnings, errors=errors)
+
+        summary.run_started = True
         run_events: list[SeasonWeekRunEventResult] = []
         blocked_or_failed = False
         stop_reason: str | None = None
@@ -199,6 +216,14 @@ class SeasonWeekSimulationExecutionService:
             report = one_event.report
             event_errors = self._dedupe(one_event.validation_errors + report.validation_errors)
             event_warnings = self._dedupe(one_event.validation_warnings + report.validation_warnings)
+            if planned_event.event_id in preseeded_entries:
+                report.changed_artifacts.entries = True
+                event_warnings = self._dedupe(
+                    event_warnings
+                    + [
+                        "Entry list was generated from the week-owned shared overlapping-event snapshot before per-event execution."
+                    ]
+                )
             event_blocked = report.blocked or bool(event_errors)
             event_succeeded = not event_blocked and bool(report.completed or report.can_continue)
             run_events.append(SeasonWeekRunEventResult(
@@ -209,7 +234,11 @@ class SeasonWeekSimulationExecutionService:
                 year_week=planned_event.year_week,
                 run_order=index,
                 preflight_stop_reason=planned_event.stop_reason,
-                initial_stage=report.lifecycle_stage_before,
+                initial_stage=(
+                    planned_event.lifecycle_stage_before
+                    if planned_event.event_id in preseeded_entries
+                    else report.lifecycle_stage_before
+                ),
                 final_stage=report.lifecycle_stage_after,
                 event_report=report,
                 succeeded=event_succeeded,
@@ -248,6 +277,48 @@ class SeasonWeekSimulationExecutionService:
         summary.run_completed = summary.run_started and not summary.stopped_early and not blocked_or_failed and not (request.publish_snapshot and not (summary.snapshot_published or summary.snapshot_skipped))
         summary.next_safe_action = self._next_safe_action(summary=summary, request=request, blocked_or_failed=blocked_or_failed)
         return self._finish(preflight=preflight, events=run_events, summary=summary, warnings=warnings, errors=errors)
+
+    def _preseed_overlapping_entries(
+        self,
+        *,
+        request: RunSeasonWeekRequest,
+        selected: list[SeasonWeekEventPreflight],
+        warnings: list[str],
+        errors: list[str],
+    ) -> set[str] | None:
+        candidates = [
+            event
+            for event in selected
+            if event.lifecycle_stage_before == "planned"
+            and any(
+                step.step == "generate_entries" and step.status == "planned"
+                for step in event.one_event_report.steps
+            )
+        ]
+        if len(candidates) < 2:
+            return set()
+        try:
+            batch = SeasonEntryBatchService(
+                self.event_simulation_service.entry_list_service
+            ).generate_overlapping_entry_lists(
+                event_ids=[event.event_id for event in candidates],
+                request=EntryBatchGenerateRequest(
+                    seed=request.seed,
+                    dry_run=False,
+                    overwrite_existing=request.overwrite_existing,
+                    max_alternates=request.max_alternates,
+                    include_not_entered=request.include_not_entered,
+                ),
+            )
+        except ValueError as exc:
+            errors.append(f"shared_entry_resolution: {exc}")
+            return None
+        warnings.append(
+            "Concurrent event entries were frozen from one shared active-player snapshot "
+            f"for {len(batch.entry_lists_by_event_id)} overlapping events; "
+            f"{batch.metadata.resolved_conflict_player_count} player conflicts were resolved deterministically."
+        )
+        return set(batch.entry_lists_by_event_id)
 
     def _maybe_publish_week_snapshot(self, *, request: RunSeasonWeekRequest, summary: SeasonWeekRunSummary, run_events: list[SeasonWeekRunEventResult], selected_count: int, blocked_or_failed: bool, warnings: list[str], errors: list[str]) -> None:
         if not request.apply_points:

@@ -265,6 +265,19 @@ class AdoptedTournamentAuthorityModel(Base):
     package_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class WeekSimulationScheduleModel(Base):
+    """Immutable adopted cross-event global-slot schedule authority."""
+
+    __tablename__ = "week_simulation_schedules"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    schedule_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationRunModel(Base):
     __tablename__ = "simulation_runs"
 

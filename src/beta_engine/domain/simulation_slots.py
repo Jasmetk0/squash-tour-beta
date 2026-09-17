@@ -22,6 +22,40 @@ def fingerprint(value: object) -> str:
     ).hexdigest()
 
 
+class WeekSimulationScheduleSlot(FrozenInput):
+    """One explicitly authored global slot; ordering is the tuple/ordinal only."""
+
+    ordinal: int = Field(ge=1)
+    group_ids: tuple[str, ...] = Field(min_length=1)
+
+
+class WeekSimulationSchedule(FrozenInput):
+    """Immutable Run/Branch/week authority over cross-event chronology."""
+
+    schema_version: Literal["week_simulation_schedule.v1"] = (
+        "week_simulation_schedule.v1"
+    )
+    run_id: str
+    branch_id: str
+    week: RankingWeek
+    slots: tuple[WeekSimulationScheduleSlot, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_canonical_shape(self):
+        if tuple(slot.ordinal for slot in self.slots) != tuple(
+            range(1, len(self.slots) + 1)
+        ):
+            raise ValueError("schedule slot ordinals must be canonical and contiguous")
+        groups = tuple(group for slot in self.slots for group in slot.group_ids)
+        if len(groups) != len(set(groups)):
+            raise ValueError("schedule contains a duplicate group")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class CanonicalMatchInputProjectionPolicy(FrozenInput):
     """Versioned compatibility adapter; the seven projected values are not canon."""
 

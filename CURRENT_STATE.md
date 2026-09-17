@@ -1,6 +1,6 @@
 # Current implementation and next action
 
-Audited 15 September 2026 from merged PR #728 at `fbcb54d3ccea8f1c0c2b61c56a94a85767f36b84`, plus the narrow authoritative repeated-simulation driver in this branch.
+Audited 16 September 2026 from base `1f34db2e0cff159c4146e73f9039dc67061399f9`, plus the explicit multi-event week-schedule slice in this branch.
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
@@ -8,7 +8,7 @@ PR #728 review hardening preserves owned InitialWorld style/profile truth, carri
 
 The follow-up compatibility correction assigns Sharpness-aware matches to `match_input_snapshot.v10` / `match_engine_v10`; v1-v9 hash payloads continue to omit the later Sharpness field and retain their historical identities.
 
-The single supported persisted four-player Main Draw retains its explicit compatibility projection into the Run/Branch/week slot ledger and back through tournament completion, authored awards, ranking validation and `OwnedTournamentRankingSource`; every completion ref retains the exact Slot result fingerprint. Multiple same-week events fail closed before mutation because current persisted data has no authoritative mapping onto the global Simulation Slot chronology. Legacy calendar `start_day`, calendar/list order, event identity and draw-round arithmetic are not treated as that missing authority. Gate 3 is not complete: Entries, general draws, Qualification, WC/LL, cross-event scheduling, AI, health and broader event types remain gaps.
+The persisted four-player Main Draw bridge now accepts multiple supported events in one week only after an Admin previews and adopts an immutable, fingerprinted Run/Branch/RankingWeek schedule whose ordered global slots name every exact match group. Missing, duplicate, foreign, incomplete, or feeder-incoherent mappings fail before sporting mutation; each event freezes and closes independently into exactly one `OwnedTournamentRankingSource`. The historical single-event compatibility path remains. Legacy calendar `start_day`, calendar/list order, event identity and draw-round arithmetic are never chronology authority. Gate 3 is not complete: Entries, general draws, Qualification, WC/LL, general scheduling/AI, health and broader event types remain gaps.
 
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
@@ -100,18 +100,14 @@ commits independent same-slot groups over one frozen snapshot, resumes partial
 commands, runs the sporting-context preflight consumed by Week Transition,
 materializes the dependent Final and closes exactly once into
 `OwnedTournamentRankingSource`. Match-derived Form/Sharpness/Fatigue and the
-tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week
-events, Qualification, non-four-player draws and ambiguous scheduling continue to
-fail closed.
+tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week events without an adopted explicit schedule, Qualification, non-four-player draws and ambiguous scheduling continue to fail closed.
 
 The narrow repeated-flow acceptance now drives two distinct persisted four-player
 events through production authoritative HTTP commands and real Week Transition
 preview/confirm boundaries from Week 1 to Week 3. It saves the simulation component,
 preserves frozen tournament authority and verifies historical Week 1 replay, two
 owned sources, immutable published rankings and the three-week sporting chain.
-The real SQLite application regression proves that two persisted same-week events
-are rejected before any adopted authority, command, slot, group or owned tournament
-source is written. No multi-event execution or general scheduler is claimed.
+The real SQLite application regression proves that two persisted same-week events are rejected before mutation without a schedule, validates incomplete/duplicate/dependency-invalid proposals, adopts explicit chronology idempotently, shares one frozen start across each same-slot group, closes the first event while the second remains pending, and ultimately persists exactly two owned sources. This is not a general tournament scheduler.
 The acceptance's compact four-player player-world setup still uses the existing
 owned-state fixture writers because no production bootstrap currently emits this
 synthetic narrow package; every simulation, Save, ranking-authority and Week

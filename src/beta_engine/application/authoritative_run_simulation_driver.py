@@ -1,7 +1,7 @@
 """Run/Branch-owned orchestration over the authoritative Simulation Slot ledger.
 
-This intentionally supports only the persisted four-player Main Draw bridge.  It
-does not mutate, or use as execution state, the legacy match/result/award files.
+Persisted match packages derived from persisted Entry List and Draw Package evidence
+are frozen as topology authority. Legacy producer files are not execution state.
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.authoritative_slot_matches import (
-    AuthoritativeFourPlayerTournamentResult,
+    AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
     validate_adopted_four_player_match_package,
@@ -314,7 +314,7 @@ class AuthoritativeRunSimulationDriver:
         if not packages and required:
             raise ValueError("supported tournament authority is missing")
         for package in packages:
-            validate_adopted_four_player_match_package(package)
+            self._topology((package,))
         return packages
 
     def _package(self, week, *, required=True):
@@ -330,7 +330,10 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _decode_adopted_authority(payload_json):
         payload = json.loads(payload_json)
-        if payload.get("schema_version") == "adopted_tournament_authority.v3":
+        if payload.get("schema_version") in {
+            "adopted_tournament_authority.v3",
+            "adopted_tournament_authority.v4",
+        }:
             return tuple(
                 sorted(
                     (
@@ -361,7 +364,7 @@ class AuthoritativeRunSimulationDriver:
         items = tuple(sorted(items, key=lambda item: item[0].event_id))
         return json.dumps(
             {
-                "schema_version": "adopted_tournament_authority.v3",
+                "schema_version": "adopted_tournament_authority.v4",
                 "tournaments": [
                     {
                         "package": p.model_dump(mode="json"),
@@ -390,12 +393,11 @@ class AuthoritativeRunSimulationDriver:
         if not adopt:
             raise ValueError("frozen tournament authority is missing")
         packages = self._packages(week)
-        if (
-            len(packages) > 1
-            and self._schedule(session, run_id, branch_id, week) is None
-        ):
+        if (len(packages) > 1 or len(self._topology(packages)) != 3) and self._schedule(
+            session, run_id, branch_id, week
+        ) is None:
             raise ValueError(
-                "multiple supported tournaments lack authoritative cross-event Simulation Slot chronology"
+                "tournaments lack authoritative explicit Simulation Slot chronology"
             )
         items = tuple(
             (p, self.awards_service.freeze_point_award_authority(p)) for p in packages
@@ -570,32 +572,116 @@ class AuthoritativeRunSimulationDriver:
 
     @staticmethod
     def _topology(packages):
+        """Build the canonical executable DAG exclusively from persisted sources."""
         plans = {}
         for package in packages:
-            matches = sorted(
-                package.main_draw_matches,
-                key=lambda m: (m.round_number, m.bracket_position),
-            )
-            feeders = tuple(m.match_id for m in matches[:2])
-            for match in matches[:2]:
-                plans[match.match_id] = SimulationMatchEventPlan(
-                    group_id=match.match_id,
-                    event_id=package.event_id,
-                    match_id=match.match_id,
-                    direct_player_ids=(match.top_player_id, match.bottom_player_id),
+            if package.validation_errors:
+                raise ValueError("persisted tournament topology has validation errors")
+            if package.qualification_matches:
+                # v1 DrawPackage records indexed placeholders, but the MatchPackage
+                # explicitly says promotion is not connected. Do not invent the
+                # qualifier-winner-to-placeholder mapping.
+                raise ValueError(
+                    "supported bridge no longer requires exactly three Main Draw matches, "
+                    "but persisted draw lacks authoritative qualifier winner placeholder mapping"
                 )
-            plans[matches[2].match_id] = SimulationMatchEventPlan(
-                group_id=matches[2].match_id,
-                event_id=package.event_id,
-                match_id=matches[2].match_id,
-                feeder_group_ids=feeders,
+            matches = tuple(package.main_draw_matches)
+            by_id = {match.match_id: match for match in matches}
+            if len(by_id) != len(matches):
+                raise ValueError("persisted topology contains duplicate match identity")
+            incoming = {match_id: [] for match_id in by_id}
+            # Historical v1-v3 authority could omit feeder links for the reviewed
+            # three-match compatibility shape. Keep that reader; new/general
+            # topology never receives this inference.
+            legacy_four = False
+            if len(matches) == 3 and not any(m.winner_to_match_id for m in matches):
+                _, ordered = validate_adopted_four_player_match_package(package)
+                incoming[ordered[2].match_id] = [
+                    ordered[0].match_id,
+                    ordered[1].match_id,
+                ]
+                terminals = [ordered[2].match_id]
+                legacy_four = True
+            for match in matches:
+                if match.event_id != package.event_id:
+                    raise ValueError(
+                        "tournaments lack authoritative cross-event identity: "
+                        "persisted topology contains a foreign event match"
+                    )
+                if match.winner_to_match_id:
+                    if match.winner_to_match_id not in by_id:
+                        raise ValueError(
+                            "persisted topology feeder target does not exist"
+                        )
+                    incoming[match.winner_to_match_id].append(match.match_id)
+            visiting, visited = set(), set()
+
+            def validate_acyclic(node):
+                if node in visiting:
+                    raise ValueError("persisted topology contains a feeder cycle")
+                if node in visited:
+                    return
+                visiting.add(node)
+                target = by_id[node].winner_to_match_id
+                if target:
+                    validate_acyclic(target)
+                visiting.remove(node)
+                visited.add(node)
+
+            for node in by_id:
+                validate_acyclic(node)
+            for match in matches:
+                feeders = tuple(incoming[match.match_id])
+                if match.status == "bye_auto_advance_pending":
+                    raise ValueError(
+                        "persisted BYE advancement is not explicit enough for authoritative execution"
+                    )
+                direct = (match.top_player_id, match.bottom_player_id)
+                if feeders:
+                    if len(feeders) != 2 or (any(direct) and not legacy_four):
+                        raise ValueError(
+                            "persisted topology has ambiguous participant sources"
+                        )
+                    plan = SimulationMatchEventPlan(
+                        group_id=match.match_id,
+                        event_id=package.event_id,
+                        match_id=match.match_id,
+                        feeder_group_ids=feeders,
+                    )
+                else:
+                    if not all(direct):
+                        raise ValueError(
+                            "persisted topology has an unresolved participant source"
+                        )
+                    plan = SimulationMatchEventPlan(
+                        group_id=match.match_id,
+                        event_id=package.event_id,
+                        match_id=match.match_id,
+                        direct_player_ids=direct,
+                    )
+                if match.match_id in plans:
+                    raise ValueError("week topology contains duplicate group identity")
+                plans[match.match_id] = plan
+
+            # Acyclicity and reachability are validated independently of authored
+            # round names/numbers. Every node must drain into the sole terminal.
+            terminals = (
+                terminals
+                if legacy_four
+                else [m.match_id for m in matches if not m.winner_to_match_id]
             )
+            if len(terminals) != 1:
+                raise ValueError(
+                    "persisted topology must identify exactly one terminal match"
+                )
         return plans
 
     def _validate_schedule(self, schedule, packages):
         plans = self._topology(packages)
-        authored = {g for slot in schedule.slots for g in slot.group_ids}
-        if authored != set(plans):
+        authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
+        if len(authored_sequence) != len(set(authored_sequence)) or set(
+            authored_sequence
+        ) != set(plans):
             raise ValueError("schedule must cover every supported group exactly once")
         ordinal = {g: slot.ordinal for slot in schedule.slots for g in slot.group_ids}
         for group_id, plan in plans.items():
@@ -616,9 +702,15 @@ class AuthoritativeRunSimulationDriver:
             else self._packages(week, required=False)
         )
         schedule = self._schedule(session, run_id, branch_id, week)
-        if len(packages) > 1 and schedule is None and not allow_missing_schedule:
+        if (
+            schedule is None
+            and packages
+            and (len(packages) > 1 or len(self._topology(packages)) != 3)
+            and not allow_missing_schedule
+        ):
             raise ValueError(
-                "multiple supported tournaments lack authoritative cross-event Simulation Slot chronology"
+                "tournaments lack authoritative cross-event or general-draw "
+                "Simulation Slot chronology"
             )
         slots = session.scalars(
             select(SimulationSlotModel)
@@ -640,7 +732,7 @@ class AuthoritativeRunSimulationDriver:
         plans = self._topology(packages) if packages else {}
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
-        if not authored_slots and len(packages) == 1:
+        if not authored_slots and len(packages) == 1 and len(plans) == 3:
             matches = sorted(
                 packages[0].main_draw_matches,
                 key=lambda m: (m.round_number, m.bracket_position),
@@ -682,7 +774,7 @@ class AuthoritativeRunSimulationDriver:
             else None
         )
         blockers = []
-        if len(packages) > 1 and schedule is None:
+        if schedule is None and (len(packages) > 1 or len(plans) != 3):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
@@ -952,20 +1044,22 @@ class AuthoritativeRunSimulationDriver:
             ).package_json
         )
         for package, point_authority in items:
-            matches = sorted(
-                package.main_draw_matches,
-                key=lambda m: (m.round_number, m.bracket_position),
-            )
+            matches = tuple(package.qualification_matches + package.main_draw_matches)
             if not all(m.match_id in loaded for m in matches):
                 continue
-            auth = AuthoritativeFourPlayerTournamentResult(
+            terminals = tuple(m for m in matches if not m.winner_to_match_id)
+            if len(matches) == 3 and len(terminals) == 3:
+                _, ordered = validate_adopted_four_player_match_package(package)
+                terminals = (ordered[2],)
+            if len(terminals) != 1:
+                raise ValueError("frozen tournament topology has ambiguous terminal")
+            auth = AuthoritativeTournamentResult(
                 event_id=package.event_id,
-                semifinal_groups=(
-                    loaded[matches[0].match_id],
-                    loaded[matches[1].match_id],
-                ),
-                final_group=loaded[matches[2].match_id],
-                champion_player_id=loaded[matches[2].match_id].result.winner_player_id,
+                groups=tuple(loaded[m.match_id] for m in matches),
+                terminal_group_ids=(terminals[0].match_id,),
+                champion_player_id=loaded[
+                    terminals[0].match_id
+                ].result.winner_player_id,
                 match_result_fingerprints=tuple(
                     loaded[m.match_id].result_fingerprint for m in matches
                 ),
@@ -1035,7 +1129,7 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("Conflicting owned tournament source")
         expected = {
             g.authoritative_input.match_id: g.result_fingerprint
-            for g in (*authoritative.semifinal_groups, authoritative.final_group)
+            for g in authoritative.groups
         }
         if {
             r.match_id: r.result_fingerprint for r in existing.result.match_result_refs

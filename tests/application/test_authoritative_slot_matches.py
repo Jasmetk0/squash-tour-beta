@@ -1180,6 +1180,51 @@ def test_multi_event_authority_is_canonical_across_registry_insertion_order(tmp_
     assert evidence[0] == evidence[1]
 
 
+def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tmp_path):
+    """The canonical graph accepts a complete seven-match persisted DAG."""
+    driver, _, _ = _driver_fixture(tmp_path / "eight-topology")
+    package = next(
+        iter(driver.match_service._load_registry().matches_by_event_id.values())
+    )
+    base = package.main_draw_matches[0]
+
+    def record(match_id, players=(None, None), winner_to=None, label="opaque"):
+        return base.model_copy(
+            update={
+                "match_id": match_id,
+                "round_number": 1,
+                "round_name": label,
+                "top_player_id": players[0],
+                "bottom_player_id": players[1],
+                "winner_to_match_id": winner_to,
+                "status": "pending" if all(players) else "blocked_waiting_for_sources",
+            }
+        )
+
+    matches = [
+        record("q1", ("a", "b"), "s1"),
+        record("q2", ("c", "d"), "s1"),
+        record("q3", ("e", "f"), "s2"),
+        record("q4", ("g", "h"), "s2"),
+        record("s1", winner_to="final"),
+        record("s2", winner_to="final"),
+        record("final", label="not-a-final-name"),
+    ]
+    frozen = package.model_copy(
+        update={"qualification_matches": [], "main_draw_matches": matches}
+    )
+    plans = driver._topology((frozen,))
+    assert set(plans) == {m.match_id for m in matches}
+    assert plans["final"].feeder_group_ids == ("s1", "s2")
+    assert plans["q1"].direct_player_ids == ("a", "b")
+
+    cyclic = frozen.model_copy(deep=True)
+    cyclic.main_draw_matches[0].winner_to_match_id = "q2"
+    cyclic.main_draw_matches[1].winner_to_match_id = "q1"
+    with pytest.raises(ValueError, match="cycle"):
+        driver._topology((cyclic,))
+
+
 def test_week_61_requires_season_transition(tmp_path):
     from beta_engine.infrastructure.db.authoritative_week_transition import (
         week_transition_readiness_blockers,

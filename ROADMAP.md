@@ -82,6 +82,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
+- **Implemented foundation:** Run simulation freezes persisted tournament packages as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws, while retaining the historical four-player reader. Qualification placeholder promotion, BYE advancement and WC/LL/alternate resolution remain explicit Gate 3 blockers rather than inferred rules.
 
 ## 6. Match Engine v1
 

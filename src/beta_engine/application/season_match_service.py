@@ -227,6 +227,14 @@ class MatchPackageMetadata(BaseModel):
     qualification_winners_promoted: bool = False
 
 
+class FrozenQualifierPromotion(BaseModel):
+    qualifier_index: int = Field(ge=1)
+    source_match_id: str
+    target_match_id: str
+    target_side: Literal["top", "bottom"]
+    target_slot_id: str
+
+
 class SeasonEventMatchPackage(BaseModel):
     event_id: str
     season: str
@@ -239,6 +247,8 @@ class SeasonEventMatchPackage(BaseModel):
     persisted: bool
     qualification_matches: list[SeasonMatchRecord] = Field(default_factory=list)
     main_draw_matches: list[SeasonMatchRecord] = Field(default_factory=list)
+    frozen_qualifier_promotions: list[FrozenQualifierPromotion] = Field(default_factory=list)
+    frozen_bye_match_ids: list[str] = Field(default_factory=list)
     summary: MatchPackageSummary
     metadata: MatchPackageMetadata
     validation_warnings: list[MatchValidationIssue] = Field(default_factory=list)

@@ -82,6 +82,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
+- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; a production eight-player Main Draw now executes and closes through this path while retaining the historical four-player reader. Existing indexed qualifier mappings and unambiguous single-player BYEs are represented, but the currently generated zero-player Qualification BYE shape and WC/LL/alternate resolution remain explicit Gate 3 blockers.
 
 ## 6. Match Engine v1
 

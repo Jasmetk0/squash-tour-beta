@@ -453,12 +453,26 @@ class SimulationMatchEventPlan(FrozenInput):
         "competitive_match_engine_simulation"
     )
     direct_player_ids: tuple[str, str] | None = None
-    feeder_group_ids: tuple[str, str] | None = None
+    feeder_group_ids: tuple[str, ...] | None = None
+    participant_sources: tuple[str, str] | None = None
 
     @model_validator(mode="after")
     def exactly_one_participant_source(self):
-        if (self.direct_player_ids is None) == (self.feeder_group_ids is None):
-            raise ValueError("match plan requires direct players or two feeder groups")
+        choices = sum(
+            value is not None
+            for value in (
+                self.direct_player_ids,
+                self.feeder_group_ids,
+                self.participant_sources,
+            )
+        )
+        if choices != 1:
+            raise ValueError("match plan requires exactly one participant source form")
+        if self.participant_sources and any(
+            not source.startswith(("player:", "winner:"))
+            for source in self.participant_sources
+        ):
+            raise ValueError("participant source is invalid")
         return self
 
 

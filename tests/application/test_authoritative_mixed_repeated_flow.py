@@ -14,6 +14,9 @@ from beta_engine.api.deps import (
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
 )
+from beta_engine.application.season_draw_service import DrawGenerateRequest
+from beta_engine.application.season_entry_list_service import EntryListGenerateRequest
+from beta_engine.application.season_match_service import MatchPackageGenerateRequest
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 from beta_engine.infrastructure.db.models import (
@@ -28,7 +31,6 @@ from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 from test_authoritative_simulation_api import (
-    _add_legacy_four_player_event,
     _install_owned_state,
     _real_eight_points,
     confirm,
@@ -37,45 +39,115 @@ from test_authoritative_simulation_api import (
 from test_authoritative_three_completed_weeks import _save_ranking, _save_simulation
 
 
-def _clone_package_to_week(points, package, *, week_number: int, suffix: str):
-    """Prepare a later-week producer event before Run ownership begins."""
+def _accepted_player_ids(points, event_id: str) -> set[str]:
+    entries = points.result_service.match_service.draw_service.entry_list_service
+    persisted = entries.get_entry_list(event_id=event_id).entry_list
+    assert persisted is not None
+    return {
+        entry.player_id
+        for entry in persisted.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    }
 
-    clone = package.model_copy(deep=True)
-    clone.event_id = f"{package.event_id}-{suffix}"
-    clone.season_week = week_number
-    clone.year_week = week_number
-    clone.metadata.event_id = clone.event_id
-    clone.summary.event_id = clone.event_id
 
-    all_matches = clone.qualification_matches + clone.main_draw_matches
-    id_map = {match.match_id: f"{match.match_id}-{suffix}" for match in all_matches}
-    for match in all_matches:
-        original_id = match.match_id
-        match.match_id = id_map[original_id]
-        if match.winner_to_match_id:
-            match.winner_to_match_id = id_map[match.winner_to_match_id]
-        match.event_id = clone.event_id
+def _add_real_event(
+    points,
+    *,
+    source_event_id: str,
+    event_id: str,
+    week_number: int,
+    main_draw_size: int,
+    seed_base: int,
+    avoid_player_ids: set[str] | None = None,
+):
+    """Create Calendar -> Entry -> Draw -> Match evidence for one event.
 
-    match_service = points.result_service.match_service
-    registry = match_service._load_registry()
-    registry.matches_by_event_id[clone.event_id] = clone
-    match_service._save_registry(registry)
+    Seed selection is deterministic and uses the production Entry Engine.  For a
+    same-week companion event we only accept a seed whose persisted entrants do
+    not overlap the already accepted event; no player IDs are injected manually.
+    """
+
+    avoid_player_ids = avoid_player_ids or set()
+    matches = points.result_service.match_service
+    draws = matches.draw_service
+    entries = draws.entry_list_service
 
     calendars = points.calendar_service._load_registry()
-    events = calendars.calendars_by_season[clone.season].events
-    source_event = next(event for event in events if event.event_id == package.event_id)
+    events = calendars.calendars_by_season["2000/2001"].events
+    source_event = next(event for event in events if event.event_id == source_event_id)
     events.append(
         source_event.model_copy(
             update={
-                "event_id": clone.event_id,
+                "event_id": event_id,
+                "event_name": event_id,
                 "season_week": week_number,
                 "start_season_week": week_number,
                 "end_season_week": week_number,
+                "year_week": week_number,
+                "main_draw_size": main_draw_size,
+                "qualification_draw_size": 0,
+                "qualifier_spots": 0,
+                "wild_cards": 0,
+                "byes": 0,
+                "seeds_count": min(source_event.seeds_count, main_draw_size),
             }
         )
     )
     points.calendar_service._save_registry(calendars)
-    return clone
+
+    selected_seed = None
+    for seed in range(seed_base, seed_base + 1000):
+        preview = entries.generate_entry_list(
+            event_id=event_id,
+            request=EntryListGenerateRequest(
+                seed=seed,
+                dry_run=True,
+                max_alternates=0,
+            ),
+        )
+        candidate = preview.entry_list
+        assert candidate is not None
+        accepted = {
+            entry.player_id
+            for entry in candidate.entries
+            if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+        }
+        if (
+            not preview.validation_errors
+            and candidate.summary.main_draw_acceptances == main_draw_size
+            and len(accepted) == main_draw_size
+            and not (accepted & avoid_player_ids)
+        ):
+            selected_seed = seed
+            break
+    assert selected_seed is not None, (
+        f"no deterministic full non-overlapping entry seed found for {event_id}"
+    )
+
+    persisted_entries = entries.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(
+            seed=selected_seed,
+            dry_run=False,
+            max_alternates=0,
+        ),
+    ).entry_list
+    assert persisted_entries is not None
+    assert persisted_entries.summary.main_draw_acceptances == main_draw_size
+
+    draw = draws.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=selected_seed + 10_000, dry_run=False),
+    ).draw_package
+    assert draw is not None
+    package = matches.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=selected_seed + 20_000, dry_run=False),
+    ).match_package
+    assert package is not None
+    assert len(package.qualification_matches) == 0
+    assert len(package.main_draw_matches) == main_draw_size - 1
+    return package
 
 
 def _mixed_schedule(*, run_id: str, branch_id: str, week: RankingWeek, eight, four):
@@ -113,20 +185,49 @@ def _mixed_schedule(*, run_id: str, branch_id: str, week: RankingWeek, eight, fo
 @pytest.mark.smoke
 def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
     points, week_one_eight = _real_eight_points(tmp_path / "producer" / "eight")
-    week_one_four = _add_legacy_four_player_event(
-        points, week_one_eight, tmp_path / "producer" / "four"
+    source_event_id = week_one_eight.event_id
+    week_one_four = _add_real_event(
+        points,
+        source_event_id=source_event_id,
+        event_id=f"{source_event_id}-FOUR-W1",
+        week_number=1,
+        main_draw_size=4,
+        seed_base=51_000,
+        avoid_player_ids=_accepted_player_ids(points, week_one_eight.event_id),
     )
-    week_two_eight = _clone_package_to_week(
-        points, week_one_eight, week_number=2, suffix="W2"
+    week_two_eight = _add_real_event(
+        points,
+        source_event_id=source_event_id,
+        event_id=f"{source_event_id}-EIGHT-W2",
+        week_number=2,
+        main_draw_size=8,
+        seed_base=52_000,
     )
-    week_two_four = _clone_package_to_week(
-        points, week_one_four, week_number=2, suffix="W2"
+    week_two_four = _add_real_event(
+        points,
+        source_event_id=source_event_id,
+        event_id=f"{source_event_id}-FOUR-W2",
+        week_number=2,
+        main_draw_size=4,
+        seed_base=53_000,
+        avoid_player_ids=_accepted_player_ids(points, week_two_eight.event_id),
     )
-    week_three_eight = _clone_package_to_week(
-        points, week_one_eight, week_number=3, suffix="W3"
+    week_three_eight = _add_real_event(
+        points,
+        source_event_id=source_event_id,
+        event_id=f"{source_event_id}-EIGHT-W3",
+        week_number=3,
+        main_draw_size=8,
+        seed_base=54_000,
     )
-    week_three_four = _clone_package_to_week(
-        points, week_one_four, week_number=3, suffix="W3"
+    week_three_four = _add_real_event(
+        points,
+        source_event_id=source_event_id,
+        event_id=f"{source_event_id}-FOUR-W3",
+        week_number=3,
+        main_draw_size=4,
+        seed_base=55_000,
+        avoid_player_ids=_accepted_player_ids(points, week_three_eight.event_id),
     )
     packages = {
         1: (week_one_eight, week_one_four),
@@ -186,7 +287,8 @@ def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
         for number in (1, 2, 3):
             week = RankingWeek(season_index=0, week=number)
             eight, four = packages[number]
-            position = _request("GET", sim_root + "/position")[1]
+            status, position = _request("GET", sim_root + "/position")
+            assert status == 200, position
             assert position["current_week"] == week.model_dump(mode="json")
 
             schedule = _mixed_schedule(
@@ -212,7 +314,8 @@ def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
             assert status == 201, adopted
 
             for slot_ordinal in (1, 2, 3):
-                position = _request("GET", sim_root + "/position")[1]
+                status, position = _request("GET", sim_root + "/position")
+                assert status == 200, position
                 status, body = _request(
                     "POST",
                     sim_root + "/simulate-next-slot",
@@ -247,7 +350,9 @@ def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
                 ).all()
                 assert len(week_rows) == 10
                 if number == 1:
-                    row = sorted(week_rows, key=lambda value: (value.slot_id, value.group_id))[0]
+                    row = sorted(
+                        week_rows, key=lambda value: (value.slot_id, value.group_id)
+                    )[0]
                     replay = AuthoritativeSlotMatchExecutor(session).replay(
                         run_id=run_id,
                         branch_id=branch_id,
@@ -293,7 +398,8 @@ def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
             assert status == 201, authority
             revision = _save_ranking(server, ranking_root)
 
-            ready = _request("GET", sim_root + "/position")[1]
+            status, ready = _request("GET", sim_root + "/position")
+            assert status == 200, ready
             assert ready["week_ready_for_transition"] is True, ready[
                 "transition_blockers"
             ]
@@ -315,16 +421,18 @@ def test_three_mixed_generalized_weeks_reach_week_four(tmp_path):
                 ],
                 "audit": bootstrap["audit"],
             }
-            transition_preview = _request(
+            status, transition_preview = _request(
                 "POST", transition_root + "/preview", transition_command
-            )[1]
+            )
+            assert status == 200, transition_preview
             assert (
                 confirm(transition_root, transition_command, transition_preview)[0]
                 == 201
             )
             revision = _save_ranking(server, ranking_root)
 
-        final_position = _request("GET", sim_root + "/position")[1]
+        status, final_position = _request("GET", sim_root + "/position")
+        assert status == 200, final_position
         assert final_position["current_week"] == {
             "season_index": 0,
             "week": 4,

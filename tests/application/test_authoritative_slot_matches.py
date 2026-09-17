@@ -1210,7 +1210,11 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         record("s2", winner_to="final"),
         record("final", label="not-a-final-name"),
     ]
-    for target, top, bottom in ((matches[4], "q1", "q2"), (matches[5], "q3", "q4"), (matches[6], "s1", "s2")):
+    for target, top, bottom in (
+        (matches[4], "q1", "q2"),
+        (matches[5], "q3", "q4"),
+        (matches[6], "s1", "s2"),
+    ):
         target.top_source = top
         target.bottom_source = bottom
         target.top_slot_id = top
@@ -1230,6 +1234,7 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         driver._topology((cyclic,))
 
 
+@pytest.mark.smoke
 def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     """Production Entry -> Draw -> Match evidence drives all seven matches."""
     from test_season_entry_list_service import first_event_id, make_service
@@ -1350,7 +1355,36 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         request_id="real-eight-schedule",
         expected_position_fingerprint=preview["position_fingerprint"],
     )
-    for ordinal in range(1, len(schedule.slots) + 1):
+    first_command, _ = _driver_command(driver, week, "real-eight-1")
+    first_state = driver.simulate_next_slot(first_command)
+    assert driver.simulate_next_slot(first_command) == first_state
+    # The first command adopts the v4 authority. All three producer files may
+    # change after that without becoming execution truth again.
+    entry_registry = entries._load_registry()
+    entry_registry.entry_lists_by_event_id.clear()
+    entries._save_registry(entry_registry)
+    draw_registry = draws._load_registry()
+    draw_registry.draws_by_event_id.clear()
+    draws._save_registry(draw_registry)
+    match_registry = matches._load_registry()
+    match_registry.matches_by_event_id.clear()
+    matches._save_registry(match_registry)
+    assert (
+        driver.position(run_id="run", branch_id="branch").position_fingerprint
+        == first_state["position_fingerprint"]
+    )
+    with factory() as db:
+        saved = {"content": {}}
+        capture_saved_simulation_slots(db, saved, run_id="run", branch_id="branch")
+        saved_component = saved["content"]["simulation_slot_match_state"]
+        assert len(saved_component["groups"]) == 4
+    reopened = AuthoritativeRunSimulationDriver(factory, matches, awards)
+    assert (
+        reopened.position(run_id="run", branch_id="branch").position_fingerprint
+        == first_state["position_fingerprint"]
+    )
+    driver = reopened
+    for ordinal in range(2, len(schedule.slots) + 1):
         command, _ = _driver_command(driver, week, f"real-eight-{ordinal}")
         state = driver.simulate_next_slot(command)
     assert state["supported_tournament_complete"] is True
@@ -1378,6 +1412,71 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
             )
             == 1
         )
+        executor = AuthoritativeSlotMatchExecutor(db)
+        for group in groups:
+            stored = AuthoritativeSlotMatchExecutor._load_group(group)
+            replayed = executor.replay(
+                run_id="run",
+                branch_id="branch",
+                week=week,
+                slot_id=group.slot_id,
+                group_id=group.group_id,
+            )
+            assert replayed.result_fingerprint == stored.result_fingerprint
+            assert (
+                replayed.authoritative_input.fingerprint
+                == stored.authoritative_input.fingerprint
+            )
+
+
+def test_real_eight_player_pre_adoption_entry_draw_match_mutation_fails_closed(
+    tmp_path,
+):
+    """A proposal binds all current producer layers before any slot mutation."""
+    from test_season_entry_list_service import first_event_id, make_service
+    from beta_engine.application.season_draw_service import (
+        DrawGenerateRequest,
+        SeasonDrawService,
+    )
+    from beta_engine.application.season_entry_list_service import (
+        EntryListGenerateRequest,
+    )
+    from beta_engine.application.season_match_service import (
+        MatchPackageGenerateRequest,
+        SeasonMatchService,
+    )
+
+    root = tmp_path / "stale-eight"
+    entries = make_service(root, main_draw_size=8)
+    event_id = first_event_id(entries)
+    calendars = entries.calendar_service._load_registry()
+    event = calendars.calendars_by_season["2000/2001"].events[0]
+    calendars.calendars_by_season["2000/2001"].events[0] = event.model_copy(
+        update={"qualification_draw_size": 0, "qualifier_spots": 0, "wild_cards": 0}
+    )
+    entries.calendar_service._save_registry(calendars)
+    entries.generate_entry_list(
+        event_id=event_id, request=EntryListGenerateRequest(seed=3101, dry_run=False)
+    )
+    draws = SeasonDrawService(entries, entries.calendar_service, root / "draws.json")
+    draws.generate_draw_package(
+        event_id=event_id, request=DrawGenerateRequest(seed=3102, dry_run=False)
+    )
+    matches = SeasonMatchService(
+        draws, entries.active_players_service, root / "matches.json"
+    )
+    package = matches.generate_match_package(
+        event_id=event_id, request=MatchPackageGenerateRequest(seed=3103, dry_run=False)
+    ).match_package
+    assert package
+    week = RankingWeek(season_index=0, week=package.season_week)
+    driver = AuthoritativeRunSimulationDriver(None, matches, SimpleNamespace())
+    driver._packages(week)
+    draw_registry = draws._load_registry()
+    draw_registry.draws_by_event_id[event_id].metadata.entry_list_fingerprint = "0" * 64
+    draws._save_registry(draw_registry)
+    with pytest.raises(ValueError, match="EntryList fingerprint conflicts"):
+        driver._packages(week)
 
 
 def test_real_persisted_qualification_fails_only_when_bye_sources_are_ambiguous(

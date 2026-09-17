@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker
@@ -17,6 +19,7 @@ from beta_engine.application.season_match_service import (
     MatchPackageGenerateRequest,
     SeasonMatchService,
 )
+from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayersRegistry
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import (
@@ -33,12 +36,12 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
 )
 
 from test_authoritative_slot_matches import _driver_command, session_at
-from test_season_entry_list_service import first_event_id, make_service
+from test_season_entry_list_service import active_player, first_event_id, make_service
 
 
 def _persist_full_three_player_qualification(entries, event_id: str) -> int:
     """Choose fixture entropy only; all acceptance decisions remain production-owned."""
-    for seed in range(1, 501):
+    for seed in range(1, 101):
         preview = entries.generate_entry_list(
             event_id=event_id,
             request=EntryListGenerateRequest(seed=seed, dry_run=True, max_alternates=0),
@@ -66,8 +69,26 @@ def test_production_qualification_bye_promotes_into_main_draw_and_closes_once(tm
     """Real Entry -> Qualification -> Main Draw evidence becomes one owned source."""
     root = tmp_path / "qualification-flow"
     entries = make_service(root, main_draw_size=4)
-    event_id = first_event_id(entries)
 
+    # The generic fixture intentionally contains only strong players, so its
+    # production Entry Engine targets Main almost exclusively. Keep Entry logic
+    # untouched and provide a deterministic mixed-quality world instead: strong
+    # players genuinely target Main, while mid-level players genuinely target
+    # Qualification through the same production decision path.
+    active_players = [
+        *(active_player(index, ability=88) for index in range(1, 11)),
+        *(active_player(index, ability=45) for index in range(101, 121)),
+    ]
+    active_registry = SeasonActivePlayersRegistry(
+        players_by_season={"2000/2001": active_players},
+        bootstrap_metadata_by_season={},
+    )
+    (root / "active.json").write_text(
+        json.dumps(active_registry.model_dump(mode="json")),
+        encoding="utf-8",
+    )
+
+    event_id = first_event_id(entries)
     calendars = entries.calendar_service._load_registry()
     calendar = calendars.calendars_by_season["2000/2001"]
     event = calendar.events[0]

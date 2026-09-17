@@ -221,9 +221,10 @@ def test_three_generalized_scheduled_weeks_reach_week_four(tmp_path):
         for number in (1, 2, 3):
             week = RankingWeek(season_index=0, week=number)
             package = packages[number]
-            status, position = _request("GET", sim_root + "/position")
-            assert status == 200, position
-            assert position["current_week"] == week.model_dump(mode="json")
+
+            status, blocked = _request("GET", sim_root + "/position")
+            assert status == 409, blocked
+            assert blocked["detail"]["code"] == "authoritative_simulation_conflict"
 
             schedule = _eight_player_schedule(
                 run_id=run_id,
@@ -245,6 +246,10 @@ def test_three_generalized_scheduled_weeks_reach_week_four(tmp_path):
                 },
             )
             assert status == 201, adopted
+
+            status, position = _request("GET", sim_root + "/position")
+            assert status == 200, position
+            assert position["current_week"] == week.model_dump(mode="json")
 
             for slot_ordinal in (1, 2, 3):
                 status, position = _request("GET", sim_root + "/position")

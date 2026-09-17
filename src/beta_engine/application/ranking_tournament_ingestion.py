@@ -76,7 +76,8 @@ def _validate_result_structure(
         result.summary.qualification_player_count != len(qualification_ids)
         or result.summary.main_draw_player_count != len(main_ids)
         or result.summary.qualification_winner_count != len(qualification_winner_ids)
-        or qualification_winner_ids != flagged_qualifier_ids
+        or flagged_qualifier_ids != qualification_ids
+        or not qualification_winner_ids <= flagged_qualifier_ids
         or not qualification_winner_ids <= set(player_ids)
     ):
         raise ValueError("Qualification result provenance mismatch")

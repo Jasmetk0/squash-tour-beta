@@ -5,6 +5,10 @@ import json
 from pathlib import Path
 from urllib import request
 
+import pytest
+from beta_engine.application.authoritative_slot_matches import (
+    AuthoritativeSlotMatchExecutor,
+)
 from beta_engine.api.deps import (
     get_season_match_service,
     get_season_point_awards_service,
@@ -32,6 +36,7 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
 from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     PlayerSportingWeekStateModel,
+    SimulationEventGroupModel,
 )
 from sqlalchemy import select
 from test_season_point_awards_service import make_points_service
@@ -271,6 +276,7 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     )
 
 
+@pytest.mark.smoke
 def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(tmp_path / "multi-source")
     server = ApiServer(database_url=f"sqlite:///{tmp_path / 'multi-api.sqlite'}")
@@ -377,6 +383,7 @@ def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_
             },
         )
         assert save_status == 201, save_body
+        revision = save_body["saved_revision"]["revision_id"]
 
     reopened = ApiServer(database_url=f"sqlite:///{tmp_path / 'multi-api.sqlite'}")
     reopened.app.dependency_overrides[get_season_match_service] = lambda: (
@@ -401,6 +408,225 @@ def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_
             reopened_position["position_fingerprint"]
             != midweek_position["position_fingerprint"]
         )  # Save changed the protected Branch-head/draft authority.
+
+        ranking_root = f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
+        with reopened.app.state.runtime.repository._session_factory() as session:
+            lifecycle = get_lifecycle(
+                session, run_id=run_id, branch_id=branch_id, week=week
+            )
+            roster = [
+                player.model_dump(mode="json") for player in lifecycle.ranking_roster()
+            ]
+        bootstrap = initial() | {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "players": roster,
+        }
+        assert _request("POST", ranking_root + "/prepare/initial", bootstrap)[0] == 201
+        ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+        saved = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": ranking_save["draft_version"],
+                "expected_ranking_fingerprint": ranking_save["ranking_fingerprint"],
+            },
+        )[1]
+        revision = saved["saved_revision"]["revision_id"]
+
+        slot_two_position = _request("GET", root + "/position")[1]
+        assert (
+            _request(
+                "POST",
+                root + "/simulate-next-slot",
+                {
+                    "command_id": "slot-two",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "expected_week": week.model_dump(mode="json"),
+                    "expected_position_fingerprint": slot_two_position[
+                        "position_fingerprint"
+                    ],
+                    "expected_revision_id": revision,
+                },
+            )[0]
+            == 200
+        )
+        after_a = _request("GET", root + "/position")[1]
+        assert after_a["week_ready_for_transition"] is False
+        assert "pending_authoritative_groups" in after_a["transition_blockers"]
+        with reopened.app.state.runtime.repository._session_factory() as session:
+            sources = OwnedTournamentRankingSourceStore(session).history(
+                run_id=run_id, branch_id=branch_id
+            )
+            assert len(sources) == 1
+            assert sources[0].binding.event_id == first.event_id
+
+        assert (
+            _request(
+                "POST",
+                root + "/simulate-next-slot",
+                {
+                    "command_id": "slot-three",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "expected_week": week.model_dump(mode="json"),
+                    "expected_position_fingerprint": after_a["position_fingerprint"],
+                    "expected_revision_id": revision,
+                },
+            )[0]
+            == 200
+        )
+        with reopened.app.state.runtime.repository._session_factory() as session:
+            sources = OwnedTournamentRankingSourceStore(session).history(
+                run_id=run_id, branch_id=branch_id
+            )
+            assert len(sources) == 2
+            group_rows = session.execute(
+                select(
+                    SimulationEventGroupModel.slot_id,
+                    SimulationEventGroupModel.group_id,
+                    SimulationEventGroupModel.result_fingerprint,
+                ).where(
+                    SimulationEventGroupModel.run_id == run_id,
+                    SimulationEventGroupModel.branch_id == branch_id,
+                    SimulationEventGroupModel.week_ordinal == week.ordinal,
+                )
+            ).all()
+            assert len(group_rows) == 6
+            replay_evidence = {
+                (slot_id, group_id): (
+                    result_fingerprint,
+                    AuthoritativeSlotMatchExecutor(session)
+                    .replay(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week=week,
+                        slot_id=slot_id,
+                        group_id=group_id,
+                    )
+                    .result_fingerprint,
+                )
+                for slot_id, group_id, result_fingerprint in group_rows
+            }
+            assert all(
+                stored == replayed for stored, replayed in replay_evidence.values()
+            )
+
+        simulation_save = _request("GET", root + "/save/preview")[1]
+        saved = _request(
+            "POST",
+            root + "/save",
+            {
+                "expected_draft_version": simulation_save["draft_version"],
+                "expected_simulation_fingerprint": simulation_save[
+                    "simulation_fingerprint"
+                ],
+            },
+        )[1]
+        revision = saved["saved_revision"]["revision_id"]
+        target = {"season_index": 0, "week": 2}
+        authority_payload = {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": revision,
+            "completed_week": week.model_dump(mode="json"),
+            "target_week": target,
+            "players": roster,
+            "policy": bootstrap["policy"],
+            "provenance": "Multi-event schedule acceptance",
+            "adopted_by_command_id": "multi-authority",
+            "audit": bootstrap["audit"],
+        }
+        status, authority = _request(
+            "POST", ranking_root + "/transition-authorities", authority_payload
+        )
+        assert status == 201
+        ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+        saved = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": ranking_save["draft_version"],
+                "expected_ranking_fingerprint": ranking_save["ranking_fingerprint"],
+            },
+        )[1]
+        revision = saved["saved_revision"]["revision_id"]
+        ready = _request("GET", root + "/position")[1]
+        assert ready["week_ready_for_transition"] is True, ready["transition_blockers"]
+        command = {
+            "command_id": "multi-transition",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "base_revision_id": revision,
+            "completed_week": week.model_dump(mode="json"),
+            "target_week": target,
+            "authority_fingerprint": RankingTransitionAuthority.model_validate_json(
+                json.dumps(authority)
+            ).fingerprint,
+            "tournaments": [
+                source.binding.model_dump(mode="json") for source in sources
+            ],
+            "audit": bootstrap["audit"],
+        }
+        transition_root = f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
+        transition_preview = _request("POST", transition_root + "/preview", command)[1]
+        assert confirm(transition_root, command, transition_preview)[0] == 201
+        ranking_save = _request("GET", ranking_root + "/save/preview")[1]
+        assert (
+            _request(
+                "POST",
+                ranking_root + "/save",
+                {
+                    "expected_draft_version": ranking_save["draft_version"],
+                    "expected_ranking_fingerprint": ranking_save["ranking_fingerprint"],
+                },
+            )[0]
+            == 201
+        )
+
+    post_transition = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'multi-api.sqlite'}"
+    )
+    post_transition.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    post_transition.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+    with post_transition:
+        root = f"{post_transition.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+        assert _request("GET", root + "/position")[1]["current_week"] == {
+            "season_index": 0,
+            "week": 2,
+        }
+        with post_transition.app.state.runtime.repository._session_factory() as session:
+            rankings = session.scalars(
+                select(PublishedOfficialRankingModel)
+                .where(
+                    PublishedOfficialRankingModel.run_id == run_id,
+                    PublishedOfficialRankingModel.branch_id == branch_id,
+                )
+                .order_by(PublishedOfficialRankingModel.week_ordinal)
+            ).all()
+            assert [row.week_ordinal for row in rankings] == [0, 1]
+            assert (
+                len(
+                    OwnedTournamentRankingSourceStore(session).history(
+                        run_id=run_id, branch_id=branch_id
+                    )
+                )
+                == 2
+            )
+            for (slot_id, group_id), expected in replay_evidence.items():
+                replayed = AuthoritativeSlotMatchExecutor(session).replay(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    slot_id=slot_id,
+                    group_id=group_id,
+                )
+                assert replayed.result_fingerprint == expected[0] == expected[1]
 
 
 def test_product_save_reopen_mid_slot_preserves_frozen_position(tmp_path):

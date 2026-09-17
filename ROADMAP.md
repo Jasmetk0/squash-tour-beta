@@ -15,9 +15,10 @@ position, split Next Match and Next Slot without redirecting legacy simulation.
 Independent same-slot groups now commit atomically and resume after failure, while
 transition readiness reuses the authoritative match/effect sporting preflight.
 General draws, Qualification, WC/LL, Entries, AI-authored/general scheduling, and health remain Gate 3 work.
-The narrow Gate 3 repeated-flow criterion is now proven for exactly one supported
-four-player tournament per concrete season/week across Week 1 → Week 2 → Week 3,
-including product Save/reopen and historical replay. Gate 3 as a whole remains open.
+The current repeated-flow acceptance proves two completed four-player RankingWeeks
+(Week 1 → Week 2 → Week 3), including product Save/reopen and historical replay. A
+continuous three-completed-week chain, and integration of the separate mixed-event
+and generalized eight-player acceptances into that chain, remain Gate 3 blockers.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 

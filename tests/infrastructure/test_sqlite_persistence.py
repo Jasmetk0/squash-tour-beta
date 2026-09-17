@@ -15,6 +15,7 @@ from beta_engine.domain.careers import CareerProgressionEngine
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.players import Player, PlayerGenerator
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db.models import Base
 from beta_engine.infrastructure.db.repositories import PersistedSnapshotRecord, SimulationPersistenceRepository
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.points_config import load_points_config
@@ -69,40 +70,22 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
 
     repository.bootstrap_schema()
 
-    assert repository.list_table_names() == [
-        "admin_actions",
-        "branch_checkpoints",
-        "branch_fork_commands",
-        "branch_revision_audit_events",
-        "branch_saved_revision_checkpoints",
-        "branch_saved_revisions",
-        "branch_simulation_commands",
-        "branch_states",
-        "branch_working_drafts",
-        "completed_event_metadata",
-        "completed_events",
-        "completed_tournament_inputs",
-        "finals_qualification",
-        "finals_results",
-        "legacy_simulation_run_mappings",
-        "next_season_players",
-        "official_branch_selection_commands",
-        "official_ranking_candidates",
-        "official_ranking_commands",
-        "official_ranking_result_versions",
-        "player_season_transitions",
-        "race_snapshots",
-        "ranking_snapshots",
-        "run_branches",
-        "run_generated_player_provenance",
-        "run_prospects",
-        "run_talent_country_allocations",
-        "run_talent_plans",
-        "runs",
-        "season_rollovers",
-        "season_state",
-        "simulation_runs",
-    ]
+    # The ORM metadata is the production schema authority. Comparing against it
+    # keeps this bootstrap guard exhaustive as authoritative Run/Branch tables
+    # are added, without duplicating a stale historical literal in the test.
+    assert set(repository.list_table_names()) == set(Base.metadata.tables)
+    assert {
+        "adopted_tournament_authorities",
+        "authoritative_simulation_commands",
+        "authoritative_week_transition_receipts",
+        "authoritative_world_states",
+        "owned_tournament_ranking_sources",
+        "player_sporting_week_states",
+        "published_official_rankings",
+        "simulation_event_groups",
+        "simulation_slots",
+        "week_simulation_schedules",
+    } <= set(repository.list_table_names())
 
 
 

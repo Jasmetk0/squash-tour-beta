@@ -42,9 +42,13 @@ def test_export_and_import_roundtrip(tmp_path) -> None:
 
     assert imported.countries[0].code == "AAA"
     loaded = load_countries_config(output_json)
-    assert loaded.countries[0].system_quality == 5
-    assert loaded.countries[0].competition_density == 4.5
-    assert loaded.countries[0].federation_quality == 4.0
+    # Legacy JSON remains a supported read boundary, but CSV export/import is
+    # deliberately canonical Country Attributes V1 rather than resurrecting the
+    # superseded field names.
+    assert loaded.countries[0].development_quality == 5
+    assert loaded.countries[0].competition_quality == 4.5
+    assert loaded.countries[0].elite_support == 4.0
+    assert loaded.countries[0].squash_access == 3
     assert loaded.countries[0].court_count == 120
     assert loaded.countries[0].style_dna == {}
 

@@ -1,6 +1,8 @@
 # Current implementation and next action
 
-Audited 16 September 2026 from base `1f34db2e0cff159c4146e73f9039dc67061399f9`, plus the explicit multi-event week-schedule slice in this branch.
+Audited 17 September 2026 from merged PR #733 at
+`2fa9517ea3a3d89c0b2e0e2d32f2eb487e34284d`, plus this integration-baseline
+and repeated-week acceptance slice.
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
@@ -11,15 +13,13 @@ The follow-up compatibility correction assigns Sharpness-aware matches to `match
 The tournament bridge now freezes a v4 Run/Branch/week authority bundle and consumes a canonical executable DAG built from persisted match IDs, direct slots and `winner_to_match_id` evidence. A smoke-covered production Entry List → Draw Package → Match Package eight-player/seven-match Main Draw executes through explicit global slots and topology-driven closure into one owned ranking source; its mid-event slot state is captured, reopened at an identical position, exact-retried without duplication and every played match is replay-verified. Pre-adoption producer conflicts fail closed, while post-adoption mutation of all three legacy producer files leaves execution unchanged. Adoption freezes qualifier-index/target-side evidence plus unambiguous single-player BYE advancement; mixed direct/winner participant sources are explicit. The current production qualification fixture still fails closed at its exact boundary because its generated opening BYE nodes contain zero known players, which the existing `process_byes` contract also treats as ambiguous. Historical v1-v3 four-player readers remain compatible. WC, LL and alternates remain unsupported. Legacy `start_day`, list order and round-name text are never chronology authority.
 
 The eight-player acceptance directly exercises the Saved Revision simulation-state
-component capture and process reopen, but not the HTTP product Save/restore command;
-that command remains covered by the existing four-player and multi-event acceptance.
-Likewise, Week Transition plus post-transition replay remains production-covered by
-the existing multi-event HTTP acceptance, not yet by the eight-player fixture itself.
+component capture and process reopen, while Week Transition plus post-transition
+Replay remains production-covered by the existing multi-event HTTP acceptance.
 
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #728 is the latest verified merge.
+protocol is chapter 36. PR #733 is the latest verified merge in this audit base.
 
 ## What exists, and where integration stops
 
@@ -108,11 +108,9 @@ materializes the dependent Final and closes exactly once into
 `OwnedTournamentRankingSource`. Match-derived Form/Sharpness/Fatigue and the
 tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week events without an adopted explicit schedule, Qualification, non-four-player draws and ambiguous scheduling continue to fail closed.
 
-The narrow repeated-flow acceptance now drives two distinct persisted four-player
-events through production authoritative HTTP commands and real Week Transition
-preview/confirm boundaries from Week 1 to Week 3. It saves the simulation component,
-preserves frozen tournament authority and verifies historical Week 1 replay, two
-owned sources, immutable published rankings and the three-week sporting chain.
+The narrow repeated-flow acceptance drives two persisted four-player weeks through
+production authoritative HTTP commands and real Week Transition preview/confirm
+boundaries from Week 1 to Week 3, with Save/reopen and historical Week 1 replay.
 The real SQLite application regression proves that two persisted same-week events are rejected before mutation without a schedule, validates incomplete/duplicate/dependency-invalid proposals, adopts explicit chronology idempotently, shares one frozen start across each same-slot group, closes the first event while the second remains pending, and ultimately persists exactly two owned sources. This is not a general tournament scheduler.
 The acceptance's compact four-player player-world setup still uses the existing
 owned-state fixture writers because no production bootstrap currently emits this

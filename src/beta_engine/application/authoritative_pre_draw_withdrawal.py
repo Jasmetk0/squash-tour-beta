@@ -58,7 +58,7 @@ class CanonicalTournamentEntryFieldState(FrozenInput):
     below_qualification_cut_player_ids: tuple[str, ...]
     withdrawn_player_ids: tuple[str, ...]
     draw_input_committed: bool
-    can_accept_pre_draw_repair: bool
+    pre_draw_repair_locked_by_draw_input: bool
 
 
 class CanonicalPreDrawWithdrawalResult(FrozenInput):
@@ -130,7 +130,7 @@ class CanonicalPreDrawWithdrawalService:
                 ),
                 withdrawn_player_ids=latest.withdrawn_player_ids,
                 draw_input_committed=draw_input_committed,
-                can_accept_pre_draw_repair=not draw_input_committed,
+                pre_draw_repair_locked_by_draw_input=draw_input_committed,
             )
 
     def execute(

@@ -52,7 +52,7 @@ def _input(*, qualification=False):
         event_id="event",
         committed_by_command_id="input",
         draw_seed=1234,
-        main_seed_count=2,
+        main_seed_count=1,
         qualification_seed_count=1 if qualification else 0,
         field_sequence=1,
         capacity=capacity,
@@ -63,7 +63,7 @@ def _input(*, qualification=False):
         qualification_player_ids=q,
         qualifier_placeholder_ids=placeholders,
         withdrawn_player_ids=(),
-        main_seed_player_ids=direct[:2],
+        main_seed_player_ids=direct[:1],
         qualification_seed_player_ids=q[:1] if qualification else (),
     )
 
@@ -77,7 +77,7 @@ def _multi_qualification_input():
         event_id="event",
         committed_by_command_id="input-multi-q",
         draw_seed=4321,
-        main_seed_count=2,
+        main_seed_count=1,
         qualification_seed_count=4,
         field_sequence=1,
         capacity=TournamentEntryFieldCapacity(
@@ -92,7 +92,7 @@ def _multi_qualification_input():
         qualification_player_ids=qualification,
         qualifier_placeholder_ids=("Q1", "Q2", "Q3", "Q4"),
         withdrawn_player_ids=(),
-        main_seed_player_ids=direct[:2],
+        main_seed_player_ids=direct[:1],
         qualification_seed_player_ids=qualification[:4],
     )
 

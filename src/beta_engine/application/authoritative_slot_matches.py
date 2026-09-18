@@ -33,7 +33,6 @@ from beta_engine.application.season_match_service import (
 )
 from beta_engine.application.canonical_tournament_points import (
     build_tournament_point_award_authority,
-    project_tournament_point_award_legacy_dto,
 )
 from beta_engine.application.season_point_awards_service import (
     EventPointAwardPackage,
@@ -50,7 +49,6 @@ from beta_engine.domain.tournaments.point_award_authority import (
 from beta_engine.domain.tournaments.result_authority import (
     TournamentResultAuthority,
     build_tournament_result_authority,
-    project_tournament_result_legacy_dto,
 )
 from beta_engine.domain.simulation_slots import (
     AuthoritativeMatchInput,
@@ -403,8 +401,7 @@ class _ReadOnlyPointAwardsBuilder(SeasonPointAwardsService):
         raise AssertionError("authoritative award projection must remain in memory")
 
 
-def build_run_owned_tournament_ranking_packages(
-    service: SeasonPointAwardsService,
+def build_run_owned_tournament_authorities(
     *,
     package: SeasonEventMatchPackage,
     authoritative: AuthoritativeTournamentResult,
@@ -412,17 +409,14 @@ def build_run_owned_tournament_ranking_packages(
     run_id: str,
     branch_id: str,
     week: RankingWeek,
-    result_seed: int,
     award_seed: int,
     frozen_point_authority: FrozenPointAwardAuthority | None = None,
 ) -> tuple[
     SeasonEventMatchPackage,
     TournamentResultAuthority,
-    SeasonEventResultPackage,
     TournamentPointAwardAuthority,
-    EventPointAwardPackage,
 ]:
-    """Close a canonical tournament without legacy result or award generation."""
+    """Close a canonical tournament into Run-owned authorities only."""
 
     if frozen_point_authority is None:
         raise ValueError(
@@ -432,16 +426,6 @@ def build_run_owned_tournament_ranking_packages(
         package=package,
         authoritative=authoritative,
     )
-    calendar = service.calendar_service.get_calendar(season=package.season).calendar
-    if calendar is None:
-        raise ValueError("canonical tournament result requires Calendar authority")
-    event = next(
-        (item for item in calendar.events if item.event_id == package.event_id),
-        None,
-    )
-    if event is None:
-        raise ValueError("canonical tournament result Calendar Event is missing")
-
     canonical_result = build_tournament_result_authority(
         run_id=run_id,
         branch_id=branch_id,
@@ -449,23 +433,12 @@ def build_run_owned_tournament_ranking_packages(
         draw=draw,
         package=projected,
     )
-    result = project_tournament_result_legacy_dto(
-        authority=canonical_result,
-        event=event,
-        package=projected,
-        seed=result_seed,
-    )
     canonical_awards = build_tournament_point_award_authority(
         result=canonical_result,
         point_authority=frozen_point_authority,
         seed=award_seed,
     )
-    awards = project_tournament_point_award_legacy_dto(
-        authority=canonical_awards,
-        result_authority=canonical_result,
-        result=result,
-    )
-    return projected, canonical_result, result, canonical_awards, awards
+    return projected, canonical_result, canonical_awards
 
 
 def build_authoritative_tournament_ranking_packages(

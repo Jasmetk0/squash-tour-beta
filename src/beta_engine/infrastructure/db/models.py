@@ -140,6 +140,22 @@ class PublishedOfficialRankingModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentRankingSnapshotAuthorityModel(Base):
+    """Immutable event binding to one published Official Ranking snapshot."""
+
+    __tablename__ = "tournament_ranking_snapshot_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    ranking_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    ranking_snapshot_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class AuthoritativeWeekTransitionReceiptModel(Base):
     """Idempotency receipt for the transaction-owning Week Transition."""
 

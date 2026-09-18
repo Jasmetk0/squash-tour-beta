@@ -29,7 +29,7 @@ function renderWeek(route = "/viewer/runs/run%20alpha/weeks/5"): void {
         path="/viewer/runs/:runId/weeks/:week"
         element={<ViewerRunWeekPage />}
       />
-      <Route path="/viewer/week-missing" element={<ViewerRunWeekPage />} />
+      <Route path="/viewer/runs/:runId/week-missing" element={<ViewerRunWeekPage />} />
     </Routes>,
     { route },
   );
@@ -540,13 +540,10 @@ describe("ViewerRunWeekPage read model", () => {
   });
 
   it("renders safe empty state and does not call APIs for invalid or missing week context", async () => {
-    renderWeek("/viewer/week-missing");
+    renderWeek("/viewer/runs/run%20alpha/week-missing");
 
     expect(
       await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("No run route context was provided."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

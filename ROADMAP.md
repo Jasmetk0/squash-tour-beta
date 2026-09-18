@@ -189,3 +189,15 @@ and match-result references are built into immutable `TournamentResultAuthority`
 directly from canonical Draw + authoritative match receipts. New owned ranking
 sources persist that truth as v2. Legacy-shaped result DTOs remain only as temporary
 inputs to the existing points/ranking adapter.
+
+
+### Run-owned Point Award + direct ranking follow-up
+
+After #752, canonical tournament results are Run-owned. The current larger follow-up
+also removes legacy point-award generation and legacy tournament DTO ingestion from
+the canonical ranking path. Authored point distribution is frozen once, embedded in
+replayable `TournamentPointAwardAuthority`, and persisted with the result as
+`OwnedTournamentRankingSource v3`. The following Ranking Week can materialize
+Official ranking-result history directly from those canonical authorities without a
+`SeasonPointAwardsService` instance. Legacy-shaped result/award DTOs remain only
+compatibility projections for historical readers.

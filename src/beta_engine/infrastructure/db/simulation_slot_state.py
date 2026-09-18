@@ -341,6 +341,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             authorities,
             schedules=schedules,
             entry_fields=entry_fields,
+            include_entry_fields=bool(entry_fields),
         )
 
 
@@ -509,6 +510,10 @@ def restore_saved_simulation_slots(
             live_authorities,
             schedules=live_schedules,
             entry_fields=live_entry_fields,
+            include_entry_fields=(
+                bool(live_entry_fields)
+                or bool(expected is not None and "entry_fields" in expected)
+            ),
         )
         if live_slots
         or live_groups

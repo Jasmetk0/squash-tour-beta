@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRouteExists, viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import historyFinalsSource from '../ViewerRunHistoryFinalsPage.tsx?raw'
 import viewerRoutesSource from '../../viewer/viewerRoutes.ts?raw'
 import {
@@ -10,7 +11,7 @@ import {
   viewerHistoryPath
 } from '../../viewer/viewerRoutes'
 
-const registeredRoutePatterns = new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((match) => `/${match[1]}`))
+const registeredRoutePatterns = viewerAppRoutePaths(appSource)
 const visibleMutationLabels = [
   'Simulate',
   'Generate',
@@ -31,12 +32,8 @@ const visibleMutationLabels = [
   'Overwrite'
 ]
 
-function routePattern(path: string): RegExp {
-  return new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[^/]+/g, '[^/]+')}$`)
-}
-
 function viewerRouteExists(to: string): boolean {
-  return [...registeredRoutePatterns].some((route) => routePattern(route).test(to))
+  return viewerAppRouteExists(appSource, to)
 }
 
 describe('History/Finals Viewer route source guard', () => {
@@ -79,10 +76,11 @@ describe('History/Finals Viewer route source guard', () => {
     expect(historyFinalsSource).toContain('export function ViewerRunFinalsPage')
     expect(historyFinalsSource).toContain('export function ViewerRunFinalsQualificationPage')
     expect(historyFinalsSource).toContain('export function ViewerRunFinalsResultPage')
-    expect(appSource).toContain('path="viewer/runs/:runId/history" element={<ViewerRunHistoryPage />}')
-    expect(appSource).toContain('path="viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />}')
-    expect(appSource).toContain('path="viewer/runs/:runId/finals/qualification" element={<ViewerRunFinalsQualificationPage />}')
-    expect(appSource).toContain('path="viewer/runs/:runId/finals/result" element={<ViewerRunFinalsResultPage />}')
+    expect(appSource).toContain('path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}')
+    expect(appSource).toContain('path="history" element={<ViewerRunHistoryPage />}')
+    expect(appSource).toContain('path="finals" element={<ViewerRunFinalsPage />}')
+    expect(appSource).toContain('path="finals/qualification" element={<ViewerRunFinalsQualificationPage />}')
+    expect(appSource).toContain('path="finals/result" element={<ViewerRunFinalsResultPage />}')
   })
 
   it('keeps history/finals source routed through scalar-safe helpers and Viewer route helpers', () => {

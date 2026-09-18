@@ -191,6 +191,10 @@ class SeasonDrawService:
             self.draws_path = Path(self.draws_path)
         if not isinstance(self.wildcard_assignments_path, Path):
             self.wildcard_assignments_path = Path(self.wildcard_assignments_path)
+        default_wildcards = Path("config/simulation/season_wildcard_assignments.json")
+        default_draws = Path("config/simulation/season_draws.json")
+        if self.wildcard_assignments_path == default_wildcards and self.draws_path != default_draws:
+            self.wildcard_assignments_path = self.draws_path.with_name("season_wildcard_assignments.json")
 
     def get_draw_package(self, *, event_id: str) -> SeasonEventDrawPackageResult:
         registry = self._load_registry()

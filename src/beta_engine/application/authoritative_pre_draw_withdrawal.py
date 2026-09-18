@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from pydantic import Field, model_validator
 from sqlalchemy import text
@@ -18,11 +19,14 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 class CanonicalPreDrawWithdrawalCommand(FrozenInput):
     """One idempotent pre-draw withdrawal command for an authoritative event field."""
 
-    schema_version: str = "canonical_pre_draw_withdrawal_command.v1"
+    schema_version: Literal["canonical_pre_draw_withdrawal_command.v1"] = (
+        "canonical_pre_draw_withdrawal_command.v1"
+    )
     command_id: str = Field(min_length=1, max_length=128)
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
+    expected_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     withdrawn_player_ids: tuple[str, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -37,7 +41,9 @@ class CanonicalPreDrawWithdrawalCommand(FrozenInput):
 class CanonicalPreDrawWithdrawalResult(FrozenInput):
     """Audit-friendly field delta produced by one canonical withdrawal command."""
 
-    schema_version: str = "canonical_pre_draw_withdrawal_result.v1"
+    schema_version: Literal["canonical_pre_draw_withdrawal_result.v1"] = (
+        "canonical_pre_draw_withdrawal_result.v1"
+    )
     command_id: str
     run_id: str
     branch_id: str
@@ -75,6 +81,7 @@ class CanonicalPreDrawWithdrawalService:
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 event_id=command.event_id,
+                expected_field_fingerprint=command.expected_field_fingerprint,
                 withdrawn_player_ids=command.withdrawn_player_ids,
                 command_id=command.command_id,
             )

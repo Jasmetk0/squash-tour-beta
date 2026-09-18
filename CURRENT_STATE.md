@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #753 at
-`b90926ade3fdebad9029ab170e9a6db3c3e8995c`, plus the current bounded
-canonical-only tournament source v4 slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #754 at
+`f874448f6e01c45c4c0aa91f67f30dc67ee1a39a`, plus the current bounded
+canonical adopted-tournament authority v6 slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #753 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #754 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -190,3 +190,14 @@ provenance. Legacy `SeasonEventResultPackage` / `EventPointAwardPackage` copies
 are neither produced nor persisted for v4. Historical v1-v3 payloads remain
 readable with their original fingerprint contracts. Ranking-week ingestion and
 completed-week sporting context consume canonical authorities directly.
+
+
+## Current follow-up after #754
+
+New canonical week adoption now freezes `adopted_tournament_authority.v6` as
+Calendar Event snapshot + Run-owned Draw fingerprint + frozen point authority.
+It does not persist a `SeasonEventMatchPackage`. After adoption, the executable
+package is deterministically replayed from that frozen evidence and no live Calendar
+registry or legacy match registry is consulted for canonical events. Historical
+adopted-authority v1-v5 payloads remain readable with their original fingerprint
+contracts.

@@ -226,7 +226,7 @@ def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):
         assert before["direct_main_player_ids"] == ["A", "C", "D"]
         assert before["qualification_player_ids"] == ["B", "E"]
         assert before["draw_input_committed"] is False
-        assert before["can_accept_pre_draw_repair"] is True
+        assert before["pre_draw_repair_locked_by_draw_input"] is False
 
         command = _command(
             run_id=run_id,
@@ -333,7 +333,7 @@ def test_canonical_entry_field_http_rejects_stale_scope_and_post_draw_mutation(t
         status, locked_state = _request("GET", root)
         assert status == 200
         assert locked_state["draw_input_committed"] is True
-        assert locked_state["can_accept_pre_draw_repair"] is False
+        assert locked_state["pre_draw_repair_locked_by_draw_input"] is True
 
         locked = _command(
             run_id=run_id,

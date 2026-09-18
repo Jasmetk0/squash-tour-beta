@@ -56,6 +56,77 @@ class OwnedTournamentRankingSource(FrozenInput):
                 raise ValueError("Canonical tournament result binding mismatch")
             if self.provenance_kind != "canonical_run_owned_tournament_result":
                 raise ValueError("Canonical v2 source requires canonical provenance")
+            if (
+                self.result.metadata.draw_package_fingerprint
+                != self.canonical_result.draw_authority_fingerprint
+                or self.result.metadata.match_package_fingerprint
+                != self.canonical_result.match_package_fingerprint
+            ):
+                raise ValueError("Canonical tournament result provenance mismatch")
+
+            canonical_matches = {
+                match.match_id: (
+                    match.draw_type,
+                    match.round_number,
+                    match.bracket_position,
+                    match.winner_player_id,
+                    match.loser_player_id,
+                    match.scoreline,
+                    match.result_fingerprint,
+                )
+                for match in self.canonical_result.matches
+            }
+            compatibility_matches = {
+                match.match_id: (
+                    match.draw_type,
+                    match.round_number,
+                    match.bracket_position,
+                    match.winner_player_id,
+                    match.loser_player_id,
+                    match.scoreline,
+                    match.result_fingerprint,
+                )
+                for match in self.result.match_result_refs
+            }
+            if canonical_matches != compatibility_matches:
+                raise ValueError("Canonical tournament match-result projection mismatch")
+
+            canonical_players = {
+                player.player_id: (
+                    player.draw_type,
+                    player.seed_number,
+                    player.qualifier,
+                    player.reached_stage,
+                    player.final_round_number,
+                    player.eliminated_by_player_id,
+                    player.last_match_id,
+                    player.wins,
+                    player.losses,
+                    player.byes_received,
+                )
+                for player in self.canonical_result.players
+            }
+            compatibility_players = {
+                player.player_id: (
+                    player.draw_type,
+                    player.seed_number,
+                    player.qualifier,
+                    player.reached_stage,
+                    player.final_round_number,
+                    player.eliminated_by_player_id,
+                    player.last_match_id,
+                    player.wins,
+                    player.losses,
+                    player.byes_received,
+                )
+                for player in self.result.player_results
+            }
+            if canonical_players != compatibility_players:
+                raise ValueError("Canonical tournament player-result projection mismatch")
+            if tuple(
+                item.player_id for item in self.result.qualification_winners
+            ) != self.canonical_result.qualification_winner_ids:
+                raise ValueError("Canonical Qualification winner projection mismatch")
         return self
 
     @property

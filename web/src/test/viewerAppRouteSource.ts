@@ -1,7 +1,7 @@
 export function viewerAppRoutePaths(appSource: string): Set<string> {
   const routes = new Set<string>()
 
-  for (const match of appSource.matchAll(/<Route\\s+path="([^"]+)"/g)) {
+  for (const match of appSource.matchAll(/<Route\s+path="([^"]+)"/g)) {
     const path = match[1]
     if (path.startsWith('viewer')) routes.add(`/${path}`)
   }
@@ -16,7 +16,7 @@ export function viewerAppRoutePaths(appSource: string): Set<string> {
     }
     const parentSource = appSource.slice(parentStart, parentEnd)
     routes.add('/viewer/runs/:runId')
-    for (const match of parentSource.matchAll(/<Route\\s+path="([^"]+)"/g)) {
+    for (const match of parentSource.matchAll(/<Route\s+path="([^"]+)"/g)) {
       const child = match[1]
       if (child === 'viewer/runs/:runId') continue
       routes.add(`/viewer/runs/:runId/${child}`)
@@ -30,14 +30,13 @@ export function viewerAppRouteExists(
   appSource: string,
   destination: string,
 ): boolean {
-  const routePattern = (path: string): RegExp =>
-    new RegExp(
-      `^${path
-        .replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')
-        .replace(/:[^/]+/g, '[^/]+')}$`,
+  const destinationSegments = destination.split('/')
+  return [...viewerAppRoutePaths(appSource)].some((route) => {
+    const routeSegments = route.split('/')
+    if (routeSegments.length !== destinationSegments.length) return false
+    return routeSegments.every(
+      (segment, index) =>
+        segment.startsWith(':') || segment === destinationSegments[index],
     )
-
-  return [...viewerAppRoutePaths(appSource)].some((route) =>
-    routePattern(route).test(destination),
-  )
+  })
 }

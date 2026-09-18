@@ -1,9 +1,9 @@
-import { render, screen, within } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { screen, within, type RenderResult } from '@testing-library/react'
+import { Route, Routes } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithViewerProviders } from '../test/viewerTestUtils'
 import {
   ViewerRunCountriesPage,
   ViewerRunCountryDetailPage,
@@ -23,17 +23,12 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
-function renderViewerRoute(route: string, element: JSX.Element, path = '/viewer/runs/:runId/*'): ReturnType<typeof render> {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  return render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route path={path} element={element} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+function renderViewerRoute(route: string, element: JSX.Element, path = '/viewer/runs/:runId/*'): RenderResult {
+  return renderWithViewerProviders(
+    <Routes>
+      <Route path={path} element={element} />
+    </Routes>,
+    { route }
   )
 }
 

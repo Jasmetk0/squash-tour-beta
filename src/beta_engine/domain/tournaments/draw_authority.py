@@ -643,23 +643,28 @@ def _master_seed_positions(
         assigned_idealized[2] = 2
     tier_start = 3
     while tier_start <= seed_count:
-        tier_end = min(seed_count, 2 * (tier_start - 1))
-        idealized_slots = list(range(tier_start, tier_end + 1))
+        tier_capacity_end = min(bracket_size, 2 * (tier_start - 1))
+        actual_seed_end = min(seed_count, tier_capacity_end)
+        idealized_slots = list(range(tier_start, tier_capacity_end + 1))
         rng = DeterministicRng(
             _draw_named_subseed(
                 draw_seed=draw_seed,
                 event_id=event_id,
-                key=f"{draw_scope}:seed-tier:{tier_start}-{tier_end}",
+                key=(
+                    f"{draw_scope}:seed-tier:"
+                    f"{tier_start}-{tier_capacity_end}"
+                ),
             )
         )
         rng.shuffle(idealized_slots)
+        actual_seed_numbers = list(range(tier_start, actual_seed_end + 1))
         for seed_number, idealized_slot in zip(
-            range(tier_start, tier_end + 1),
-            idealized_slots,
+            actual_seed_numbers,
+            idealized_slots[: len(actual_seed_numbers)],
             strict=True,
         ):
             assigned_idealized[seed_number] = idealized_slot
-        tier_start = tier_end + 1
+        tier_start = tier_capacity_end + 1
     return {
         seed_number: physical_by_idealized[idealized_slot]
         for seed_number, idealized_slot in assigned_idealized.items()

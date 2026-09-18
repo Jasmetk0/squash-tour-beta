@@ -45,6 +45,7 @@ from beta_engine.application.season_point_awards_service import (
 )
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
@@ -92,6 +93,18 @@ class AuthoritativeSimulationCommand(FrozenInput):
     @property
     def fingerprint(self) -> str:
         return fingerprint(self.model_dump(mode="json"))
+
+
+class _AdoptedTournamentEvidence(FrozenInput):
+    """One immutable tournament entry inside adopted week authority."""
+
+    event_id: str = Field(min_length=1)
+    package: SeasonEventMatchPackage | None = None
+    calendar_event: CalendarEvent | None = None
+    point_award_authority: FrozenPointAwardAuthority | None = None
+    draw_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
 
 
 class AuthoritativeSimulationPosition(FrozenInput):

@@ -271,7 +271,7 @@ def _component(
     entry_fields=(),
     include_entry_fields=True,
     wild_card_authorities=(),
-    include_wild_card_authorities=True,
+    include_wild_card_authorities=False,
     draw_inputs=(),
     include_draw_inputs=True,
     draw_authorities=(),

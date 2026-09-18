@@ -31,6 +31,10 @@ from beta_engine.application.season_match_service import (
     SeasonEventMatchPackage,
     SeasonEventMatchPackageResult,
 )
+from beta_engine.application.canonical_tournament_points import (
+    build_tournament_point_award_authority,
+    project_tournament_point_award_legacy_dto,
+)
 from beta_engine.application.season_point_awards_service import (
     EventPointAwardPackage,
     FrozenPointAwardAuthority,
@@ -40,6 +44,9 @@ from beta_engine.application.season_point_awards_service import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+from beta_engine.domain.tournaments.point_award_authority import (
+    TournamentPointAwardAuthority,
+)
 from beta_engine.domain.tournaments.result_authority import (
     TournamentResultAuthority,
     build_tournament_result_authority,
@@ -412,10 +419,15 @@ def build_run_owned_tournament_ranking_packages(
     SeasonEventMatchPackage,
     TournamentResultAuthority,
     SeasonEventResultPackage,
+    TournamentPointAwardAuthority,
     EventPointAwardPackage,
 ]:
-    """Close a canonical tournament without SeasonEventResultsService extraction."""
+    """Close a canonical tournament without legacy result or award generation."""
 
+    if frozen_point_authority is None:
+        raise ValueError(
+            "canonical tournament close requires frozen point-award authority"
+        )
     projected = publish_authoritative_tournament_to_existing_completion(
         package=package,
         authoritative=authoritative,
@@ -443,36 +455,17 @@ def build_run_owned_tournament_ranking_packages(
         package=projected,
         seed=result_seed,
     )
-
-    result_reader = _ExplicitResultPackageReader(
-        package=result,
-        calendar_service=service.calendar_service,
+    canonical_awards = build_tournament_point_award_authority(
+        result=canonical_result,
+        point_authority=frozen_point_authority,
+        seed=award_seed,
     )
-    award_builder = _ReadOnlyPointAwardsBuilder(
-        result_service=cast(Any, result_reader),
-        active_players_service=service.active_players_service,
-        calendar_service=service.calendar_service,
-        template_service=service.template_service,
-        awards_path=Path(".authoritative-award-builder-read-only"),
-        points_config_path=service.points_config_path,
+    awards = project_tournament_point_award_legacy_dto(
+        authority=canonical_awards,
+        result_authority=canonical_result,
+        result=result,
     )
-    awards = award_builder.generate_event_point_awards(
-        event_id=package.event_id,
-        request=PointAwardGenerateRequest(seed=award_seed, dry_run=True),
-        frozen_authority=frozen_point_authority,
-    ).award_package
-    if awards is None:
-        raise ValueError("canonical tournament award builder returned no package")
-    awards = awards.model_copy(
-        update={
-            "dry_run": False,
-            "persisted": True,
-            "metadata": awards.metadata.model_copy(
-                update={"dry_run": False, "persisted": True}
-            ),
-        }
-    )
-    return projected, canonical_result, result, awards
+    return projected, canonical_result, result, canonical_awards, awards
 
 
 def build_authoritative_tournament_ranking_packages(

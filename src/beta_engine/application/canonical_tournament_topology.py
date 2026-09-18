@@ -150,8 +150,10 @@ def project_canonical_draw_to_match_topology(
                         raise ValueError(
                             "MatchPackage BYE participant conflicts with canonical Draw"
                         )
-                elif not live_source.startswith("winner:"):
-                    raise ValueError("canonical BYE auto-advance source is unsupported")
+                else:
+                    raise ValueError(
+                        "canonical BYE currently requires a directly known player winner"
+                    )
                 continue
 
             participant_sources = tuple(_collapse_auto_source(value, auto_sources) for value in resolved)

@@ -332,6 +332,37 @@ class TournamentEntryFieldStore:
         )
         return field
 
+    def stage_pre_draw_repair_from_frozen_inputs(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        withdrawn_player_ids: tuple[str, ...] | list[str],
+        command_id: str,
+    ) -> TournamentEntryField:
+        """Repair the latest field using only its already-frozen application evidence.
+
+        Canonical pre-draw withdrawal handling must not re-read mutable Entry state.
+        The initial field froze the exact application payload; every repair reuses that
+        payload and the Tournament Ranking Snapshot authority already bound to the field.
+        """
+
+        rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        if not rows:
+            raise TournamentEntryFieldConflict(
+                "Pre-draw repair requires an initial Tournament Entry Field"
+            )
+        _, frozen_applications = self._load_row(rows[-1])
+        return self.stage_pre_draw_repair(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            applications=frozen_applications,
+            withdrawn_player_ids=withdrawn_player_ids,
+            command_id=command_id,
+        )
+
     def stage_pre_draw_repair(
         self,
         *,

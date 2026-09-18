@@ -54,9 +54,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   using Entry score/Main-vs-Qualification preference. Canon permits provisional
   overlapping applications and requires later commitment/lock authority.
 - #738 is treated as a Wild Card provenance primitive, not the completed WC/RWC
-  workflow. #739/#740 are provenance experiments that must be reworked around the
-  canonical pre-draw field rebalance and post-draw repair/LL rules before being used
-  as the foundation for further tournament-repair features.
+  workflow. #739/#740 are provenance experiments, not canonical repair authority.
+  New pre-draw direct-alternate and post-draw MatchPackage replacement commands now
+  fail closed; already persisted Draw/Match packages remain readable/replayable.
+  Canonical field rebalance, draw repair phases, LL priority and replacement cutoff
+  are required before those producer paths may be re-enabled.
 - #689 (including #690) and #691–720 are in the fetched ancestry; the v64 Master
   statement that #689 was open is historical. #720 feature CI #861 succeeded.
 - Active authority pointers to v50/v54/v61 were stale documentation, not competing

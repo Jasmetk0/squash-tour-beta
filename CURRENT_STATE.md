@@ -241,9 +241,16 @@ their allowed idealized tier, and initial Main Draw BYEs occupy the highest idea
 slot numbers. Historical Draw Input/Draw v1 payloads replay with their stored
 algorithm and fingerprint shape.
 
-This still does **not** claim the complete Master draw contract. Qualification BYE
-distribution across parallel Q sections, RWC/WC repair, Qualification/Main
-redraw-cascade-freeze phases, Lucky Loser ordering, group Qualification and the
-per-player first-real-match replacement cutoff remain Gate 3 work. See
-`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Qualification capacity may now exceed the actual Q field. The missing positions are
+materialized as canonical Qualification BYEs. For multiple parallel Q sections the
+BYEs follow Master §15.6 layer allocation: each full BYE layer gives one highest
+remaining idealized BYE slot to every Q section, while an incomplete final layer is
+distributed deterministically across Q sections from the frozen draw seed. Single-Q
+BYEs use the same idealized-slot rule. Every Q section must still contain at least
+one real player so that it can produce one actual qualifier.
+
+This still does **not** claim the complete Master draw contract. RWC/WC repair,
+Qualification/Main redraw-cascade-freeze phases, Lucky Loser ordering, group
+Qualification and the per-player first-real-match replacement cutoff remain Gate 3
+work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

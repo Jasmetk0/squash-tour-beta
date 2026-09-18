@@ -70,11 +70,11 @@ def project_canonical_draw_to_match_topology(
             raise ValueError("MatchPackage contains duplicate bracket node shape")
         records_by_shape[key] = record
 
-    canonical_nodes = []
-    if draw.qualification is not None:
-        canonical_nodes.extend(
-            ("qualification", node) for node in draw.qualification.nodes
-        )
+    canonical_nodes = [
+        ("qualification", node)
+        for bracket in draw.qualification_brackets
+        for node in bracket.nodes
+    ]
     canonical_nodes.extend(("main", node) for node in draw.main.nodes)
     if len(canonical_nodes) != len(all_records):
         raise ValueError("MatchPackage node count differs from canonical Draw authority")
@@ -92,14 +92,13 @@ def project_canonical_draw_to_match_topology(
             raise ValueError("MatchPackage contains a foreign event match")
         record_by_node[node.node_id] = record
 
-    qualification_terminal = (
-        _terminal_node(draw.qualification) if draw.qualification is not None else None
-    )
-    qualification_terminal_match_id = (
-        record_by_node[qualification_terminal.node_id].match_id
-        if qualification_terminal is not None
-        else None
-    )
+    qualification_terminal_match_ids: dict[str, str] = {}
+    for index, bracket in enumerate(draw.qualification_brackets, start=1):
+        section_id = bracket.section_id or f"Q{index}"
+        terminal = _terminal_node(bracket)
+        qualification_terminal_match_ids[section_id] = record_by_node[
+            terminal.node_id
+        ].match_id
 
     auto_sources: dict[str, str] = {}
     bye_match_ids: list[str] = []
@@ -107,10 +106,7 @@ def project_canonical_draw_to_match_topology(
     promotions: list[FrozenQualifierPromotion] = []
     plans: list[SimulationMatchEventPlan] = []
 
-    brackets = []
-    if draw.qualification is not None:
-        brackets.append(draw.qualification)
-    brackets.append(draw.main)
+    brackets = [*draw.qualification_brackets, draw.main]
 
     for bracket in brackets:
         slots = {slot.slot_index: slot for slot in bracket.slots}
@@ -128,7 +124,7 @@ def project_canonical_draw_to_match_topology(
                     nodes=nodes,
                     record_by_node=record_by_node,
                     auto_sources=auto_sources,
-                    qualification_terminal_match_id=qualification_terminal_match_id,
+                    qualification_terminal_match_ids=qualification_terminal_match_ids,
                 )
                 for source in raw_sources
             )
@@ -177,16 +173,19 @@ def project_canonical_draw_to_match_topology(
                 ):
                     slot = slots[int(canonical_source.removeprefix("slot:"))]
                     if slot.entrant_kind == "qualifier_placeholder":
-                        if qualification_terminal_match_id is None:
+                        source_match_id = qualification_terminal_match_ids.get(
+                            slot.placeholder_id
+                        )
+                        if source_match_id is None:
                             raise ValueError(
-                                "Main Draw qualifier placeholder lacks Qualification authority"
+                                "Main Draw qualifier placeholder lacks linked Qualification authority"
                             )
                         promotions.append(
                             FrozenQualifierPromotion(
                                 qualifier_index=int(
                                     slot.placeholder_id.removeprefix("Q")
                                 ),
-                                source_match_id=qualification_terminal_match_id,
+                                source_match_id=source_match_id,
                                 target_match_id=record.match_id,
                                 target_side="top" if side_index == 0 else "bottom",
                                 target_slot_id=f"{package.event_id}:main:S{slot.slot_index}",
@@ -237,7 +236,7 @@ def _resolve_source(
     nodes,
     record_by_node,
     auto_sources,
-    qualification_terminal_match_id,
+    qualification_terminal_match_ids,
 ) -> str:
     if source.startswith("slot:"):
         slot = slots[int(source.removeprefix("slot:"))]
@@ -246,11 +245,12 @@ def _resolve_source(
         if slot.entrant_kind == "bye":
             return "bye"
         if slot.entrant_kind == "qualifier_placeholder":
-            if qualification_terminal_match_id is None:
+            source_match_id = qualification_terminal_match_ids.get(slot.placeholder_id)
+            if source_match_id is None:
                 raise ValueError(
-                    "canonical qualifier placeholder lacks Qualification terminal"
+                    "canonical qualifier placeholder lacks linked Qualification terminal"
                 )
-            return f"winner:{qualification_terminal_match_id}"
+            return f"winner:{source_match_id}"
         raise ValueError("canonical Draw slot entrant type is unsupported")
     if source.startswith("winner:"):
         node_id = source.removeprefix("winner:")
@@ -300,10 +300,7 @@ def _validate_legacy_feeder_hints(
     bye_match_ids: set[str],
 ) -> None:
     expected_targets: dict[str, str | None] = {}
-    brackets = []
-    if draw.qualification is not None:
-        brackets.append(draw.qualification)
-    brackets.append(draw.main)
+    brackets = [*draw.qualification_brackets, draw.main]
     for bracket in brackets:
         node_ids = {node.node_id for node in bracket.nodes}
         for node in bracket.nodes:

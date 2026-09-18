@@ -77,15 +77,25 @@ def test_one_event_run_with_apply_points_and_publish_snapshot(tmp_path: Path) ->
 
 
 @pytest.mark.smoke
-def test_multiple_events_same_week_use_shared_entry_snapshot_without_overlap(tmp_path: Path) -> None:
+def test_multiple_events_same_week_keep_shared_snapshot_conflicts_provisional(tmp_path: Path) -> None:
     service, _, week = make_execution_service(tmp_path)
     calendar_service = service.lifecycle_service.calendar_service
     registry = calendar_service._load_registry()
     calendar = registry.calendars_by_season["2000/2001"]
     first = calendar.events[0]
-    calendar.events.append(first.model_copy(update={"event_id": "EVT-2000-W01-aaa", "event_name": "AAA Event"}))
-    calendar.events.append(first.model_copy(update={"event_id": "EVT-2000-W01-zzz", "event_name": "ZZZ Event"}))
-    calendar_service._save_registry(type(registry)(calendars_by_season={"2000/2001": calendar}))
+    calendar.events.append(
+        first.model_copy(
+            update={"event_id": "EVT-2000-W01-aaa", "event_name": "AAA Event"}
+        )
+    )
+    calendar.events.append(
+        first.model_copy(
+            update={"event_id": "EVT-2000-W01-zzz", "event_name": "ZZZ Event"}
+        )
+    )
+    calendar_service._save_registry(
+        type(registry)(calendars_by_season={"2000/2001": calendar})
+    )
 
     result = service.run_week(
         RunSeasonWeekRequest(
@@ -95,12 +105,18 @@ def test_multiple_events_same_week_use_shared_entry_snapshot_without_overlap(tmp
             stop_after_stage="entries_generated",
         )
     )
-    assert [event.event_id for event in result.events] == sorted(event.event_id for event in result.events)
+    assert [event.event_id for event in result.events] == sorted(
+        event.event_id for event in result.events
+    )
     assert result.summary.event_count == 3
     assert result.summary.succeeded_event_count == 3
     assert result.summary.stopped_early is False
     assert result.summary.run_completed is True
-    assert any("shared active-player snapshot" in warning for warning in result.validation_warnings)
+    assert any(
+        "shared active-player snapshot" in warning
+        and "remain unresolved" in warning
+        for warning in result.validation_warnings
+    )
 
     entry_service = service.event_simulation_service.entry_list_service
     lists = [
@@ -119,10 +135,71 @@ def test_multiple_events_same_week_use_shared_entry_snapshot_without_overlap(tmp
         for entry_list in lists
         if entry_list is not None
     ]
-    for index, left in enumerate(accepted):
-        for right in accepted[index + 1 :]:
-            assert not (left & right)
+    overlaps = [
+        left & right
+        for index, left in enumerate(accepted)
+        for right in accepted[index + 1 :]
+        if left & right
+    ]
+    assert overlaps
+    assert all(
+        any(
+            issue.code == "player_week_overlap_unresolved"
+            for issue in entry_list.validation_warnings
+        )
+        for entry_list in lists
+        if entry_list is not None
+    )
     assert all(event.changed_artifacts.entries for event in result.events)
+
+
+@pytest.mark.smoke
+def test_unresolved_overlapping_entries_fail_closed_before_draw(tmp_path: Path) -> None:
+    service, _, week = make_execution_service(tmp_path)
+    calendar_service = service.lifecycle_service.calendar_service
+    registry = calendar_service._load_registry()
+    calendar = registry.calendars_by_season["2000/2001"]
+    first = calendar.events[0]
+    calendar.events.append(
+        first.model_copy(
+            update={"event_id": "EVT-2000-W01-aaa", "event_name": "AAA Event"}
+        )
+    )
+    calendar.events.append(
+        first.model_copy(
+            update={"event_id": "EVT-2000-W01-zzz", "event_name": "ZZZ Event"}
+        )
+    )
+    calendar_service._save_registry(
+        type(registry)(calendars_by_season={"2000/2001": calendar})
+    )
+
+    result = service.run_week(
+        RunSeasonWeekRequest(
+            season="2000/2001",
+            season_week=week,
+            seed=8,
+            stop_after_stage="draw_generated",
+        )
+    )
+    assert result.summary.run_started is False
+    assert result.summary.run_completed is False
+    assert result.summary.stop_reason == "unresolved_entry_commitment"
+    assert result.summary.next_safe_action == (
+        "resolve_entry_commitments_or_week_tournament_locks_before_play"
+    )
+    assert result.events == []
+    assert any(
+        "no commitment/Week Tournament Lock authority is implemented"
+        in error
+        for error in result.validation_errors
+    )
+
+    entry_service = service.event_simulation_service.entry_list_service
+    draw_service = service.event_simulation_service.draw_service
+    for event in calendar.events:
+        assert entry_service.get_entry_list(event_id=event.event_id).entry_list_exists
+        assert not draw_service.get_draw_package(event_id=event.event_id).draw_package_exists
 
 
 def test_event_blocked_stops_early_and_skips_snapshot(tmp_path: Path) -> None:

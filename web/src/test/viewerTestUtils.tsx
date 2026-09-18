@@ -5,6 +5,7 @@ import { MemoryRouter } from 'react-router-dom'
 
 import type { ViewerOfficialRunContext } from '../api/types'
 import { VIEWER_ACTIVE_RUN_STORAGE_KEY } from '../viewer/activeRun'
+import { VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY } from '../viewer/activeProductRun'
 import {
   ViewerProductRunRouteContextProvider,
   type ViewerProductRunRouteValue
@@ -78,10 +79,18 @@ function productRunIdFromRoute(route: string): string | null {
 
 export function setViewerActiveRunId(runId: string): void {
   localStorage.setItem(VIEWER_ACTIVE_RUN_STORAGE_KEY, runId)
+  // Historical Viewer tests used one ID before Product Run / SimulationRun
+  // identity was split. Keep the helper as a same-ID fixture convenience.
+  localStorage.setItem(VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY, runId)
+}
+
+export function setViewerActiveProductRunId(productRunId: string): void {
+  localStorage.setItem(VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY, productRunId)
 }
 
 export function clearViewerStorage(): void {
   localStorage.removeItem(VIEWER_ACTIVE_RUN_STORAGE_KEY)
+  localStorage.removeItem(VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY)
 }
 
 export function expectNoForbiddenViewerActions(

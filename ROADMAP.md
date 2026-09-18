@@ -35,9 +35,11 @@ Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a
 useful primitive. The #739/#740 pre-/post-draw replacement shortcut producers are
 now fail-closed after the post-merge canon audit; already persisted packages remain
-historically readable. Canonical replacement work must proceed through Tournament
-Ranking Snapshot field rebalance, Qualification/Main Draw repair phases, Lucky Loser
-priority and the per-player first-real-match replacement cutoff.
+historically readable. Canonical pre-draw field rebalance now has a Run/Branch application command over
+the frozen Tournament Ranking Snapshot and Entry/Application payload. The legacy
+Admin shortcut is not yet migrated onto that command. Later replacement work must
+still proceed through Qualification/Main Draw repair phases, RWC/WC handling, Lucky
+Loser priority and the per-player first-real-match replacement cutoff.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 
@@ -102,7 +104,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
-- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist, while canonical RWC, pre-draw field rebalance, draw repair phases, LL ordering and replacement cutoff remain Gate 3 work.
+- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist. Canonical pre-draw field rebalance is now implemented as an append-only Run/Branch command, while Admin migration, RWC/WC repair, post-draw repair phases, LL ordering and the replacement cutoff remain Gate 3 work.
 
 ## 6. Match Engine v1
 
@@ -220,3 +222,13 @@ adoption. v6 freezes the Calendar Event snapshot, Draw fingerprint and point
 authority, then rebuilds the execution package deterministically on replay. This
 also removes live Calendar and legacy match-registry reads after adoption while
 keeping v1-v5 historical readers intact.
+
+### Canonical pre-draw withdrawal follow-up
+
+After #756 restored the complete frontend test baseline, the next bounded Gate 3
+slice exposes the already-defined canonical Tournament Entry Field rebalance through
+a transaction-owned application command. It reuses frozen application evidence and
+the Edition's Tournament Ranking Snapshot, appends one immutable repair version and
+reports the exact Main promotion / Qualification backfill delta. New repairs remain
+locked after Tournament Draw Input commitment; post-draw redraw/cascade/freeze,
+RWC/WC, Lucky Loser and first-real-match replacement rules remain separate work.

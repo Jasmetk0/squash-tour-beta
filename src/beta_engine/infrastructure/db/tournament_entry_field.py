@@ -332,6 +332,52 @@ class TournamentEntryFieldStore:
         )
         return field
 
+    def stage_pre_draw_repair_from_frozen_inputs(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        expected_field_fingerprint: str,
+        withdrawn_player_ids: tuple[str, ...] | list[str],
+        command_id: str,
+    ) -> TournamentEntryField:
+        """Repair authoritative field state without re-reading mutable Entry evidence.
+
+        New commands use compare-and-swap semantics against the caller's expected field
+        fingerprint. Exact historical retries compare against the original predecessor,
+        so they remain replayable even if later repair versions now exist.
+        """
+
+        rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        if not rows:
+            raise TournamentEntryFieldConflict(
+                "Pre-draw repair requires an initial Tournament Entry Field"
+            )
+
+        retry = self._command_row(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=command_id,
+        )
+        latest_field, frozen_applications = self._load_row(rows[-1])
+        authoritative_expected = (
+            retry.predecessor_fingerprint if retry is not None else latest_field.fingerprint
+        )
+        if authoritative_expected != expected_field_fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Tournament entry field changed since the withdrawal command was prepared"
+            )
+
+        return self.stage_pre_draw_repair(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            applications=frozen_applications,
+            withdrawn_player_ids=withdrawn_player_ids,
+            command_id=command_id,
+        )
+
     def stage_pre_draw_repair(
         self,
         *,

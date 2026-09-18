@@ -2275,13 +2275,26 @@ def test_slot_history_saved_reopened_and_restored_backward_forward(tmp_path):
     )
     after = {"content": {}}
     capture_saved_simulation_slots(session, after, run_id="run", branch_id="branch")
+    legacy_after = json.loads(json.dumps(after))
+    legacy_component = legacy_after["content"]["simulation_slot_match_state"]
+    legacy_component.pop("commands", None)
+    legacy_component.pop("authorities", None)
+    legacy_component.pop("schedules", None)
+    legacy_component.pop("entry_fields", None)
+    legacy_body = {
+        "slots": legacy_component["slots"],
+        "groups": legacy_component["groups"],
+    }
+    legacy_component["fingerprint"] = hashlib.sha256(
+        json.dumps(legacy_body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
     session.commit()
     session.close()
 
     reopened = Session(create_engine(f"sqlite:///{path}"))
     restore_saved_simulation_slots(
         reopened,
-        current_payload=after,
+        current_payload=legacy_after,
         target_payload=before,
         run_id="run",
         branch_id="branch",
@@ -2291,7 +2304,7 @@ def test_slot_history_saved_reopened_and_restored_backward_forward(tmp_path):
     restore_saved_simulation_slots(
         reopened,
         current_payload=before,
-        target_payload=after,
+        target_payload=legacy_after,
         run_id="run",
         branch_id="branch",
     )

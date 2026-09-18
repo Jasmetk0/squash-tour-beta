@@ -39,6 +39,13 @@ export function formatRunSourceLabel(
   return String(scalar(optionalRunField(run, 'source_type')))
 }
 
+export function getSafeRunBrowserRunId(
+  run: ViewerRunBrowserListItem,
+): string | null {
+  const runId = optionalRunField(run, 'run_id')
+  return typeof runId === 'string' && runId.trim() ? runId.trim() : null
+}
+
 export function normalizeRunBrowserRuns(runs: unknown): RunContainer[] {
   if (!Array.isArray(runs)) return []
   return runs
@@ -46,10 +53,12 @@ export function normalizeRunBrowserRuns(runs: unknown): RunContainer[] {
       (run): run is RunContainer =>
         typeof run === 'object' &&
         run !== null &&
-        typeof (run as RunContainer).run_id === 'string' &&
-        Boolean((run as RunContainer).run_id.trim()),
+        getSafeRunBrowserRunId(run as ViewerRunBrowserListItem) !== null,
     )
-    .map((run) => ({ ...run, run_id: run.run_id.trim() }))
+    .map((run) => ({
+      ...run,
+      run_id: getSafeRunBrowserRunId(run) as string,
+    }))
 }
 
 export function buildRunBrowserMetadataItems(

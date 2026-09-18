@@ -56,9 +56,17 @@ class TournamentDrawInputAuthorityStore:
             )
         )
 
-    def _load_row(
-        self, row: TournamentDrawInputAuthorityModel
+    @classmethod
+    def validate_row(
+        cls,
+        row: TournamentDrawInputAuthorityModel,
+        *,
+        ranking_authority,
+        field,
+        field_sequence: int,
     ) -> TournamentDrawInputAuthority:
+        """Validate one frozen row against already-resolved target dependencies."""
+
         committed = TournamentDrawInputAuthority.model_validate_json(row.payload_json)
         if (
             committed.run_id,
@@ -80,7 +88,49 @@ class TournamentDrawInputAuthorityStore:
             row.authority_fingerprint,
         ):
             raise ValueError("Stored Tournament Draw Input authority is corrupt")
+        if row.field_sequence != field_sequence:
+            raise ValueError(
+                "Tournament Draw Input authority no longer references the terminal Entry Field"
+            )
+        if field.fingerprint != row.entry_field_fingerprint:
+            raise ValueError(
+                "Tournament Draw Input authority Entry Field fingerprint is stale"
+            )
+        if ranking_authority.fingerprint != row.ranking_authority_fingerprint:
+            raise ValueError(
+                "Tournament Draw Input authority ranking fingerprint is stale"
+            )
 
+        rebuilt = TournamentDrawInputAuthorityBuilder.build(
+            authority=ranking_authority,
+            field=field,
+            field_sequence=field_sequence,
+            command_id=row.command_id,
+            draw_seed=committed.draw_seed,
+            main_seed_count=committed.main_seed_count,
+            qualification_seed_count=committed.qualification_seed_count,
+        )
+        if rebuilt != committed:
+            raise ValueError(
+                "Tournament Draw Input authority does not replay from frozen inputs"
+            )
+        expected_request = cls._request(
+            ranking_authority_fingerprint=ranking_authority.fingerprint,
+            entry_field_fingerprint=field.fingerprint,
+            field_sequence=field_sequence,
+            draw_seed=committed.draw_seed,
+            main_seed_count=committed.main_seed_count,
+            qualification_seed_count=committed.qualification_seed_count,
+        )
+        if row.request_fingerprint != _request_fingerprint(expected_request):
+            raise ValueError(
+                "Tournament Draw Input authority request fingerprint is corrupt"
+            )
+        return committed
+
+    def _load_row(
+        self, row: TournamentDrawInputAuthorityModel
+    ) -> TournamentDrawInputAuthority:
         ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
             run_id=row.run_id,
             branch_id=row.branch_id,
@@ -95,42 +145,16 @@ class TournamentDrawInputAuthorityStore:
             branch_id=row.branch_id,
             event_id=row.event_id,
         )
-        if not history or row.field_sequence != len(history):
+        if not history:
             raise ValueError(
-                "Tournament Draw Input authority no longer references the terminal Entry Field"
+                "Tournament Draw Input authority references missing Entry Field history"
             )
-        field = history[-1]
-        if field.fingerprint != row.entry_field_fingerprint:
-            raise ValueError(
-                "Tournament Draw Input authority Entry Field fingerprint is stale"
-            )
-
-        rebuilt = TournamentDrawInputAuthorityBuilder.build(
-            authority=ranking_authority,
-            field=field,
-            field_sequence=row.field_sequence,
-            command_id=row.command_id,
-            draw_seed=committed.draw_seed,
-            main_seed_count=committed.main_seed_count,
-            qualification_seed_count=committed.qualification_seed_count,
+        return self.validate_row(
+            row,
+            ranking_authority=ranking_authority,
+            field=history[-1],
+            field_sequence=len(history),
         )
-        if rebuilt != committed:
-            raise ValueError(
-                "Tournament Draw Input authority does not replay from frozen inputs"
-            )
-        expected_request = self._request(
-            ranking_authority_fingerprint=ranking_authority.fingerprint,
-            entry_field_fingerprint=field.fingerprint,
-            field_sequence=row.field_sequence,
-            draw_seed=committed.draw_seed,
-            main_seed_count=committed.main_seed_count,
-            qualification_seed_count=committed.qualification_seed_count,
-        )
-        if row.request_fingerprint != _request_fingerprint(expected_request):
-            raise ValueError(
-                "Tournament Draw Input authority request fingerprint is corrupt"
-            )
-        return committed
 
     @staticmethod
     def _request(

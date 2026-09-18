@@ -1916,7 +1916,15 @@ class AuthoritativeRunSimulationDriver:
                 (command.run_id, command.branch_id, command.expected_week.ordinal),
             ).package_json
         )
-        for package, point_authority, draw_fp in items:
+        evidence_by_event = {item.event_id: item for item in items}
+        if set(evidence_by_event) != {package.event_id for package in packages}:
+            raise ValueError(
+                "frozen tournament authority package universe changed"
+            )
+        for package in packages:
+            evidence = evidence_by_event[package.event_id]
+            point_authority = evidence.point_award_authority
+            draw_fp = evidence.draw_authority_fingerprint
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches

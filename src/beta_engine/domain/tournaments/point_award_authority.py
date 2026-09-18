@@ -35,7 +35,7 @@ class TournamentPointAwardAuthority(FrozenInput):
     seed: int
     ranking_status: Literal["ranked"]
     tournament_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    point_distribution: dict[str, int]
+    point_distribution: tuple[tuple[str, int], ...]
     point_distribution_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     point_distribution_source: str = Field(min_length=1)
     awards: tuple[TournamentPlayerPointAwardAuthority, ...]
@@ -57,14 +57,17 @@ class TournamentPointAwardAuthority(FrozenInput):
             raise ValueError(
                 "Canonical ranked Point Award authority cannot use unranked distribution"
             )
+        distribution = dict(self.point_distribution)
         if (
             not self.point_distribution
-            or any(value < 0 for value in self.point_distribution.values())
-            or _hash(self.point_distribution) != self.point_distribution_fingerprint
+            or len(distribution) != len(self.point_distribution)
+            or tuple(sorted(distribution.items())) != self.point_distribution
+            or any(value < 0 for value in distribution.values())
+            or _hash(distribution) != self.point_distribution_fingerprint
         ):
             raise ValueError("Tournament Point Award distribution snapshot mismatch")
         for award in self.awards:
-            expected_points = self.point_distribution.get(award.reached_stage)
+            expected_points = distribution.get(award.reached_stage)
             if expected_points is None:
                 raise ValueError(
                     "Tournament Point Award stage is absent from frozen distribution"

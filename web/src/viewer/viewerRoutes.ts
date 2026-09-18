@@ -228,6 +228,10 @@ export function viewerRunsPath(): string {
   return '/viewer/runs'
 }
 
+export function viewerProductRunPath(productRunId: ViewerPathSegment): string {
+  return `/viewer/runs/${encodePathSegment(productRunId)}`
+}
+
 export function viewerPlayerProfilePath(productRunId: ViewerPathSegment, playerId: ViewerPathSegment): string {
   return `/viewer/runs/${encodePathSegment(productRunId)}/players/${encodePathSegment(playerId)}/career`
 }

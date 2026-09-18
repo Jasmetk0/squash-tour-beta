@@ -560,6 +560,8 @@ def _choose_master_bye_positions(
 ) -> tuple[int, ...]:
     if explicit_byes < 0:
         raise ValueError("Tournament draw BYE count cannot be negative")
+    if explicit_byes == 0:
+        return ()
     if len(idealized_order) != bracket_size:
         raise ValueError("Tournament idealized slot map has wrong capacity")
     physical_by_idealized = {

@@ -49,6 +49,10 @@ def canonical_qualification_seed_count(
         raise ValueError(
             "Qualification draw capacity requires at least one qualifier section"
         )
+    if actual_player_count < capacity.qualifier_spots:
+        raise ValueError(
+            "Qualification requires at least one real player per Q section"
+        )
     if capacity.qualification_draw_size % capacity.qualifier_spots:
         raise ValueError(
             "Qualification capacity must divide evenly across qualifier sections"
@@ -148,119 +152,3 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Canonical v2 Qualification seed count differs from Master §15.2/15.6"
                 )
-        return self
-
-    @property
-    def fingerprint(self) -> str:
-        return hashlib.sha256(
-            json.dumps(
-                self.model_dump(mode="json"),
-                sort_keys=True,
-                separators=(",", ":"),
-            ).encode()
-        ).hexdigest()
-
-
-class TournamentDrawInputAuthorityBuilder:
-    """Build draw commitment inputs only from already-owned tournament authority."""
-
-    @staticmethod
-    def build(
-        *,
-        authority: TournamentRankingSnapshotAuthority,
-        field: TournamentEntryField,
-        field_sequence: int,
-        command_id: str,
-        draw_seed: int,
-        main_seed_count: int | None,
-        qualification_seed_count: int | None,
-        schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1",
-    ) -> TournamentDrawInputAuthority:
-        if (field.run_id, field.branch_id, field.event_id) != (
-            authority.run_id,
-            authority.branch_id,
-            authority.event_id,
-        ):
-            raise ValueError(
-                "Tournament Entry Field scope differs from ranking authority"
-            )
-        if (
-            field.tournament_ranking_authority_fingerprint != authority.fingerprint
-            or field.ranking_snapshot_fingerprint
-            != authority.ranking_snapshot_fingerprint
-        ):
-            raise ValueError(
-                "Tournament Entry Field is not bound to the supplied ranking authority"
-            )
-        if field.capacity.wild_card_slots:
-            raise ValueError(
-                "Canonical draw input commitment requires resolved Wild Card authority"
-            )
-
-        if schema_version == "tournament_draw_input_authority.v2":
-            canonical_main = canonical_classic_seed_count(
-                bracket_capacity=field.capacity.main_draw_size,
-                actual_player_count=len(field.direct_main_player_ids),
-            )
-            canonical_qualification = canonical_qualification_seed_count(
-                capacity=field.capacity,
-                actual_player_count=len(field.qualification_player_ids),
-            )
-            if main_seed_count is not None and main_seed_count != canonical_main:
-                raise ValueError(
-                    "Requested Main seed count differs from Master §15.2"
-                )
-            if (
-                qualification_seed_count is not None
-                and qualification_seed_count != canonical_qualification
-            ):
-                raise ValueError(
-                    "Requested Qualification seed count differs from Master §15.2/15.6"
-                )
-            main_seed_count = canonical_main
-            qualification_seed_count = canonical_qualification
-        else:
-            if main_seed_count is None or qualification_seed_count is None:
-                raise ValueError(
-                    "Historical Draw Input v1 requires explicit seed counts"
-                )
-
-        if main_seed_count > len(field.direct_main_player_ids):
-            raise ValueError("Main seed count exceeds canonical direct Main field")
-        if qualification_seed_count > len(field.qualification_player_ids):
-            raise ValueError(
-                "Qualification seed count exceeds canonical Qualification field"
-            )
-
-        # TournamentEntryFieldResolver already orders each partition from the frozen
-        # Tournament Ranking Snapshot (with its canonical NR fallback). Reusing that
-        # order avoids consulting any newer/current ranking during draw commitment.
-        main_seed_player_ids = field.direct_main_player_ids[:main_seed_count]
-        qualification_seed_player_ids = field.qualification_player_ids[
-            :qualification_seed_count
-        ]
-        qualifier_placeholder_ids = tuple(
-            f"Q{index}"
-            for index in range(1, field.capacity.qualifier_spots + 1)
-        )
-        return TournamentDrawInputAuthority(
-            schema_version=schema_version,
-            run_id=authority.run_id,
-            branch_id=authority.branch_id,
-            event_id=authority.event_id,
-            committed_by_command_id=command_id,
-            draw_seed=draw_seed,
-            main_seed_count=main_seed_count,
-            qualification_seed_count=qualification_seed_count,
-            field_sequence=field_sequence,
-            capacity=field.capacity,
-            tournament_ranking_authority_fingerprint=authority.fingerprint,
-            ranking_snapshot_fingerprint=authority.ranking_snapshot_fingerprint,
-            entry_field_fingerprint=field.fingerprint,
-            direct_main_player_ids=field.direct_main_player_ids,
-            qualification_player_ids=field.qualification_player_ids,
-            qualifier_placeholder_ids=qualifier_placeholder_ids,
-            withdrawn_player_ids=field.withdrawn_player_ids,
-            main_seed_player_ids=main_seed_player_ids,
-            qualification_seed_player_ids=qualification_seed_player_ids,
-        )

@@ -132,7 +132,7 @@ def test_initial_field_keeps_main_window_cut_then_ranks_q_pool(reverse):
 
     assert field.direct_main_player_ids == ("A", "C", "D")
     assert field.qualification_player_ids == ("B", "E")
-    assert field.reserve_player_ids == ("F", "G")
+    assert field.below_qualification_cut_player_ids == ("F", "G")
     assert field.withdrawn_player_ids == ()
 
 
@@ -162,7 +162,7 @@ def test_pre_draw_main_withdrawal_promotes_best_q_and_backfills_q():
 
     assert repaired.direct_main_player_ids == ("A", "B", "C")
     assert repaired.qualification_player_ids == ("E", "F")
-    assert repaired.reserve_player_ids == ("G",)
+    assert repaired.below_qualification_cut_player_ids == ("G",)
     assert repaired.withdrawn_player_ids == ("D",)
     assert repaired.base_field_fingerprint == initial.fingerprint
 
@@ -193,7 +193,7 @@ def test_pre_draw_q_withdrawal_backfills_without_changing_main():
 
     assert repaired.direct_main_player_ids == ("A", "C", "D")
     assert repaired.qualification_player_ids == ("B", "F")
-    assert repaired.reserve_player_ids == ("G",)
+    assert repaired.below_qualification_cut_player_ids == ("G",)
     assert repaired.withdrawn_player_ids == ("E",)
 
 
@@ -230,7 +230,7 @@ def test_multi_withdrawal_repair_is_atomic_and_order_independent():
     assert forward == reverse
     assert forward.direct_main_player_ids == ("A", "B", "C")
     assert forward.qualification_player_ids == ("F", "G")
-    assert forward.reserve_player_ids == ()
+    assert forward.below_qualification_cut_player_ids == ()
     assert forward.withdrawn_player_ids == ("D", "E")
 
 

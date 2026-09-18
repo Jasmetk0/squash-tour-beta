@@ -316,14 +316,20 @@ class TournamentDrawAuthorityBuilder:
                     algorithm_version=algorithm_version,
                 )
 
+        main_pool = (
+            *draw_input.direct_main_player_ids,
+            *draw_input.wild_card_player_ids,
+        )
+        main_seed_set = set(draw_input.main_seed_player_ids)
+        main_player_ids = (
+            *draw_input.main_seed_player_ids,
+            *(player_id for player_id in main_pool if player_id not in main_seed_set),
+        )
         main = cls._build_bracket(
             draw_input=draw_input,
             draw_type="main",
             bracket_size=capacity.main_draw_size,
-            player_ids=(
-                *draw_input.direct_main_player_ids,
-                *draw_input.wild_card_player_ids,
-            ),
+            player_ids=main_player_ids,
             seed_player_ids=draw_input.main_seed_player_ids,
             placeholder_ids=draw_input.qualifier_placeholder_ids,
             explicit_byes=capacity.bye_slots,

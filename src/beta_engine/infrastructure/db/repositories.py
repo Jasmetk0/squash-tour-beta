@@ -105,6 +105,7 @@ from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     WeekSimulationScheduleModel,
     TournamentEntryFieldVersionModel,
+    TournamentDrawInputAuthorityModel,
 )
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     RANKING_COMPONENT_KEY,
@@ -3126,6 +3127,7 @@ class SimulationPersistenceRepository:
                         AdoptedTournamentAuthorityModel,
                         WeekSimulationScheduleModel,
                         TournamentEntryFieldVersionModel,
+                        TournamentDrawInputAuthorityModel,
                     )
                 )
                 if (

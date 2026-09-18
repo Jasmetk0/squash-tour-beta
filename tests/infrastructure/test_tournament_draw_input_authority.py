@@ -201,6 +201,7 @@ def test_commit_freezes_terminal_field_seed_order_and_exact_retry(database):
 
         assert committed.entry_field_fingerprint == field.fingerprint
         assert committed.field_sequence == 1
+        assert committed.capacity == field.capacity
         assert committed.direct_main_player_ids == ("A", "C", "D")
         assert committed.qualification_player_ids == ("B", "E")
         assert committed.main_seed_player_ids == ("A", "C")

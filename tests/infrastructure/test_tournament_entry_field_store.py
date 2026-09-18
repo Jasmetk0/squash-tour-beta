@@ -26,6 +26,7 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
     TournamentEntryFieldVersionModel,
+    WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -174,6 +175,41 @@ def capture(session):
         branch_id="branch",
     )
     return payload
+
+
+def test_legacy_simulation_component_without_entry_fields_keeps_wire_identity(
+    database,
+):
+    with database.begin() as session:
+        session.add(
+            WeekSimulationScheduleModel(
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=1,
+                request_id="legacy-schedule",
+                request_fingerprint="1" * 64,
+                schedule_fingerprint="2" * 64,
+                payload_json="{}",
+            )
+        )
+        session.flush()
+        saved = capture(session)
+        component = saved["content"]["simulation_slot_match_state"]
+        assert "entry_fields" not in component
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved,
+            target_payload=saved,
+            run_id="run",
+            branch_id="branch",
+        )
+        recaptured = capture(session)
+        assert (
+            recaptured["content"]["simulation_slot_match_state"]["fingerprint"]
+            == component["fingerprint"]
+        )
+        assert "entry_fields" not in recaptured["content"]["simulation_slot_match_state"]
 
 
 def test_store_replays_initial_repair_and_exact_retries(database):

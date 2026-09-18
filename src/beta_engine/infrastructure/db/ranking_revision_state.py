@@ -12,6 +12,9 @@ from beta_engine.infrastructure.db.ranking_result_history import OfficialRanking
 from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
 from beta_engine.infrastructure.db.owned_tournament_sources import OwnedTournamentRankingSourceStore
 from beta_engine.infrastructure.db.ranking_transition_authority import RankingTransitionAuthorityStore
+from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthorityStore,
+)
 from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel, AuthoritativeWeekTransitionReceiptModel,
     AuthoritativeWorldEventModel)
@@ -59,14 +62,30 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
             "publications": publications, "receipts": receipts, "events": events}
     tournament_sources = OwnedTournamentRankingSourceStore(session).history(run_id=run_id, branch_id=branch_id)
     authorities = RankingTransitionAuthorityStore(session).history(run_id=run_id, branch_id=branch_id)
-    if any(value is None for value in tournament_sources) or any(value is None for value in authorities):
+    tournament_ranking_authorities = TournamentRankingSnapshotAuthorityStore(
+        session
+    ).history(run_id=run_id, branch_id=branch_id)
+    if (
+        any(value is None for value in tournament_sources)
+        or any(value is None for value in authorities)
+        or any(value is None for value in tournament_ranking_authorities)
+    ):
         raise ValueError("Ranking revision source identity is missing")
+    frozen_tournament_rankings = tuple(
+        value for value in tournament_ranking_authorities if value is not None
+    )
     return RankingRevisionState(
+        schema_version=(
+            "ranking_revision_state.v5"
+            if frozen_tournament_rankings
+            else "ranking_revision_state.v4"
+        ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
         zero_sources=OfficialRankingZeroStore(session).history(run_id=run_id, branch_id=branch_id),
         tournament_sources=tuple(value for value in tournament_sources if value is not None),
         transition_authorities=tuple(value for value in authorities if value is not None),
+        tournament_ranking_snapshot_authorities=frozen_tournament_rankings,
         authoritative_transition_state=transition_state,
     )
 
@@ -94,7 +113,14 @@ def install_ranking_revision_state(
     current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
     if current.fingerprint == state.fingerprint:
         return current
-    if current.entries or current.sources or current.zero_sources or current.tournament_sources or current.transition_authorities:
+    if (
+        current.entries
+        or current.sources
+        or current.zero_sources
+        or current.tournament_sources
+        or current.transition_authorities
+        or current.tournament_ranking_snapshot_authorities
+    ):
         raise ValueError("Ranking restore target is not empty and differs from saved state")
     run = session.get(RunContainerModel, run_id)
     branch = session.get(RunBranchModel, branch_id)
@@ -140,6 +166,12 @@ def install_ranking_revision_state(
                 session.add(AuthoritativeWeekTransitionReceiptModel(**row))
             for row in transition["events"]:
                 session.add(AuthoritativeWorldEventModel(**row))
+            # Tournament Ranking Snapshot authority must resolve only against
+            # already restored immutable Official Ranking publications.
+            session.flush()
+        tournament_rankings = TournamentRankingSnapshotAuthorityStore(session)
+        for authority in state.tournament_ranking_snapshot_authorities:
+            tournament_rankings.append(authority)
         session.flush()
         installed = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
         if not ranking_revision_states_equivalent(installed, state):

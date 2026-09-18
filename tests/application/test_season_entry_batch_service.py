@@ -78,8 +78,9 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
 
     assert forward.metadata.build_fingerprint == reverse.metadata.build_fingerprint
     assert forward.metadata.active_players_fingerprint == reverse.metadata.active_players_fingerprint
-    assert forward.metadata.resolved_conflict_player_count > 0
-    assert not (
+    assert forward.metadata.resolved_conflict_player_count == 0
+    assert forward.metadata.unresolved_conflict_player_count > 0
+    assert (
         accepted_ids(forward.entry_lists_by_event_id[first_id])
         & accepted_ids(forward.entry_lists_by_event_id[second_id])
     )
@@ -100,7 +101,15 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
     loaded_first = service.get_entry_list(event_id=first_id).entry_list
     loaded_second = service.get_entry_list(event_id=second_id).entry_list
     assert loaded_first is not None and loaded_second is not None
-    assert not (accepted_ids(loaded_first) & accepted_ids(loaded_second))
+    assert accepted_ids(loaded_first) & accepted_ids(loaded_second)
+    assert any(
+        issue.code == "player_week_overlap_unresolved"
+        for issue in loaded_first.validation_warnings
+    )
+    assert any(
+        issue.code == "player_week_overlap_unresolved"
+        for issue in loaded_second.validation_warnings
+    )
 
     with pytest.raises(ValueError, match="overwrite_existing"):
         batch_service.generate_overlapping_entry_lists(

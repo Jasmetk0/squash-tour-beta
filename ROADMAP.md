@@ -15,10 +15,19 @@ position, split Next Match and Next Slot without redirecting legacy simulation.
 Independent same-slot groups now commit atomically and resume after failure, while
 transition readiness reuses the authoritative match/effect sporting preflight.
 General draws, Qualification, WC/LL, Entries, AI-authored/general scheduling, and health remain Gate 3 work.
-The current repeated-flow acceptance proves two completed four-player RankingWeeks
-(Week 1 → Week 2 → Week 3), including product Save/reopen and historical replay. A
-continuous three-completed-week chain, and integration of the separate mixed-event
-and generalized eight-player acceptances into that chain, remain Gate 3 blockers.
+The repeated-flow acceptance now proves three completed authoritative RankingWeeks
+(Week 1 → Week 2 → Week 3 → Week 4), and a separate production-backed acceptance
+repeats generalized eight-player/seven-match Main Draws across the same three-week
+chain with explicit schedules, ranking transitions and historical replay.
+
+Qualification promotion plus unambiguous one-player BYEs now execute through the
+authoritative tournament/ranking bridge. Wild-card, pre-draw withdrawal and
+post-draw replacement primitives were added in #738–#740, but the post-merge canon
+audit found that they must not be treated as the completed tournament-repair model:
+entry conflicts may remain provisional until commitment authority, pre-draw field
+changes must follow Tournament Ranking Snapshot promotion rules, and post-draw
+repair must respect Qualification/Main Draw repair phases, Lucky Loser priority and
+the per-player first-real-match replacement cutoff.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 
@@ -83,7 +92,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
-- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; a production eight-player Main Draw now executes and closes through this path while retaining the historical four-player reader. Existing indexed qualifier mappings and unambiguous single-player BYEs are represented, but the currently generated zero-player Qualification BYE shape and WC/LL/alternate resolution remain explicit Gate 3 blockers.
+- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist, while canonical RWC, pre-draw field rebalance, draw repair phases, LL ordering and replacement cutoff remain Gate 3 work.
 
 ## 6. Match Engine v1
 

@@ -400,7 +400,7 @@ class TournamentDrawAuthorityBuilder:
             index: None for index in range(1, bracket_size + 1)
         }
         rng = DeterministicRng(
-            _draw_subseed(
+            _draw_subseed_v2(
                 draw_seed=draw_input.draw_seed,
                 event_id=draw_input.event_id,
                 draw_type=draw_type,
@@ -505,6 +505,19 @@ def _draw_subseed(
 ) -> int:
     material = (
         f"tournament_draw_authority.v1|{draw_seed}|{event_id}|{draw_type}"
+    ).encode()
+    return int.from_bytes(
+        hashlib.blake2b(material, digest_size=16).digest(),
+        byteorder="big",
+        signed=False,
+    )
+
+
+def _draw_subseed_v2(
+    *, draw_seed: int, event_id: str, draw_type: TournamentDrawType
+) -> int:
+    material = (
+        f"tournament_draw_authority.v2|{draw_seed}|{event_id}|{draw_type}"
     ).encode()
     return int.from_bytes(
         hashlib.blake2b(material, digest_size=16).digest(),

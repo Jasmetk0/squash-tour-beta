@@ -1024,8 +1024,8 @@ def test_explicit_multi_event_schedule_adopts_and_executes_independent_sources(
         )
         assert bundle.event_id == "__week_tournament_authority_bundle_v1__"
         assert [
-            package.event_id
-            for package, _ in driver._decode_adopted_authority(bundle.package_json)
+            item.event_id
+            for item in driver._decode_adopted_authority(bundle.package_json)
         ] == sorted((first.event_id, second.event_id))
 
     for index in range(2):

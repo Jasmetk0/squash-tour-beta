@@ -5,12 +5,17 @@ import pytest
 from beta_engine.application.canonical_tournament_topology import (
     project_canonical_draw_to_match_topology,
 )
+from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeRunSimulationDriver,
+)
 from beta_engine.application.season_match_service import (
     MatchPackageMetadata,
     MatchPackageSummary,
     SeasonEventMatchPackage,
     SeasonMatchRecord,
 )
+from beta_engine.domain.simulation_slots import fingerprint
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorityBuilder
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
@@ -280,3 +285,42 @@ def test_qualification_terminal_owns_main_placeholder_promotion():
     assert qualification_plan.event_id == draw.event_id
     assert f"winner:{qualification_plan.match_id}" in target.participant_sources
     assert promotion.qualifier_index == 1
+
+
+
+def test_v5_draw_binding_does_not_rewrite_historical_v4_authority_fingerprint():
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_draw_input(),
+        command_id="draw",
+    )
+    package = _package(draw)
+    week = RankingWeek(season_index=0, week=1)
+    payload = package.model_dump(mode="json")
+    payload["metadata"].pop("persistence_path", None)
+    historical_expected = fingerprint(
+        {
+            "scope": ["run", "branch", week.ordinal],
+            "tournaments": [
+                {
+                    "package": payload,
+                    "point_award_authority": None,
+                }
+            ],
+        }
+    )
+
+    historical_actual = AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+        "run",
+        "branch",
+        week,
+        ((package, None, None),),
+    )
+    canonical_actual = AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+        "run",
+        "branch",
+        week,
+        ((package, None, draw.fingerprint),),
+    )
+
+    assert historical_actual == historical_expected
+    assert canonical_actual != historical_actual

@@ -418,3 +418,23 @@ def test_pre_draw_withdrawal_requires_an_eligible_alternate(tmp_path: Path) -> N
             event_id=event_id,
             withdrawn_player_id=withdrawn.player_id,
         )
+
+
+def test_wildcard_rejects_player_reserved_as_pre_draw_replacement(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+    withdrawn = next(
+        entry for entry in entry_list.entries if entry.decision == "accepted_main_draw"
+    )
+    replacement = service.withdraw_main_draw_player(
+        event_id=event_id,
+        withdrawn_player_id=withdrawn.player_id,
+    )
+    with pytest.raises(ValueError, match="reserved as a pre-draw replacement"):
+        service.assign_wild_card(
+            event_id=event_id,
+            wildcard_index=1,
+            player_id=replacement.replacement_player_id,
+        )

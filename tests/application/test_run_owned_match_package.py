@@ -53,7 +53,7 @@ def _input(*, qualification=False, bye=False):
         event_id="event",
         committed_by_command_id="input",
         draw_seed=1234,
-        main_seed_count=2,
+        main_seed_count=1,
         qualification_seed_count=1 if qualification else 0,
         field_sequence=1,
         capacity=capacity,
@@ -64,7 +64,7 @@ def _input(*, qualification=False, bye=False):
         qualification_player_ids=q,
         qualifier_placeholder_ids=placeholders,
         withdrawn_player_ids=(),
-        main_seed_player_ids=direct[:2],
+        main_seed_player_ids=direct[:1],
         qualification_seed_player_ids=q[:1] if qualification else (),
     )
 

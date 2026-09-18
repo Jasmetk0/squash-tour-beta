@@ -546,7 +546,7 @@ def test_multi_qualifier_sections_persist_and_replay(database):
         ) == authority
 
 
-def test_incomplete_qualification_fails_closed_without_persistence(database):
+def test_single_qualification_section_materializes_missing_player_as_master_bye(database):
     with database.begin() as session:
         applications = (
             app("A", "main"),
@@ -565,17 +565,160 @@ def test_incomplete_qualification_fails_closed_without_persistence(database):
             main_seed_count=1,
             qualification_seed_count=1,
         )
-        with pytest.raises(ValueError, match="fully resolved field"):
-            TournamentDrawAuthorityStore(session).generate(
+        authority = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+
+        assert authority.qualification is not None
+        assert len(authority.qualification.bye_slot_indexes) == 1
+        bye = next(
+            slot
+            for slot in authority.qualification.slots
+            if slot.entrant_kind == "bye"
+        )
+        assert bye.idealized_slot_number == 2
+        player = next(
+            slot
+            for slot in authority.qualification.slots
+            if slot.entrant_kind == "player"
+        )
+        assert player.player_id == "D"
+        assert player.seed_number == 1
+
+
+def test_multi_q_byes_fill_idealized_layers_across_sections_deterministically():
+    direct = ("M01", "M02", "M03", "M04", "M05")
+    qualification = tuple(f"QF{index:02d}" for index in range(1, 21))
+    draw_input = TournamentDrawInputAuthority(
+        schema_version="tournament_draw_input_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="event-q-byes",
+        committed_by_command_id="input",
+        draw_seed=6060,
+        main_seed_count=2,
+        qualification_seed_count=6,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=8,
+            qualification_draw_size=24,
+            qualifier_spots=3,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=direct,
+        qualification_player_ids=qualification,
+        qualifier_placeholder_ids=("Q1", "Q2", "Q3"),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=direct[:2],
+        qualification_seed_player_ids=qualification[:6],
+    )
+
+    first = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+    second = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+    assert first == second
+
+    sections = first.qualification_brackets
+    assert tuple(section.section_id for section in sections) == ("Q1", "Q2", "Q3")
+    assert [section.bracket_size for section in sections] == [8, 8, 8]
+
+    bye_counts = [len(section.bye_slot_indexes) for section in sections]
+    assert sorted(bye_counts) == [1, 1, 2]
+    assert sum(bye_counts) == 4
+
+    for section, bye_count in zip(sections, bye_counts, strict=True):
+        bye_idealized = {
+            slot.idealized_slot_number
+            for slot in section.slots
+            if slot.entrant_kind == "bye"
+        }
+        assert bye_idealized == set(range(9 - bye_count, 9))
+
+    first_layer = []
+    for section in sections:
+        seeded = sorted(
+            (
+                slot.seed_number,
+                slot.player_id,
+            )
+            for slot in section.slots
+            if slot.seed_number is not None
+        )
+        first_layer.append(seeded[0])
+    assert tuple(seed_number for seed_number, _ in first_layer) == (1, 2, 3)
+    assert tuple(player_id for _, player_id in first_layer) == (
+        "QF01",
+        "QF02",
+        "QF03",
+    )
+
+    q_players = {
+        slot.player_id
+        for section in sections
+        for slot in section.slots
+        if slot.player_id is not None
+    }
+    assert q_players == set(qualification)
+
+
+def test_multi_q_bye_partial_layer_changes_with_draw_seed_but_stays_in_same_layer():
+    def build(seed):
+        direct = ("M01", "M02", "M03", "M04", "M05")
+        qualification = tuple(f"QF{index:02d}" for index in range(1, 21))
+        return TournamentDrawAuthorityBuilder.build(
+            draw_input=TournamentDrawInputAuthority(
+                schema_version="tournament_draw_input_authority.v2",
                 run_id="run",
                 branch_id="branch",
-                event_id="event",
-                command_id="generate-draw",
-            )
-        assert session.get(
-            TournamentDrawAuthorityModel,
-            ("run", "branch", "event"),
-        ) is None
+                event_id="event-q-byes-seed",
+                committed_by_command_id="input",
+                draw_seed=seed,
+                main_seed_count=2,
+                qualification_seed_count=6,
+                field_sequence=1,
+                capacity=TournamentEntryFieldCapacity(
+                    main_draw_size=8,
+                    qualification_draw_size=24,
+                    qualifier_spots=3,
+                ),
+                tournament_ranking_authority_fingerprint="1" * 64,
+                ranking_snapshot_fingerprint="2" * 64,
+                entry_field_fingerprint="3" * 64,
+                direct_main_player_ids=direct,
+                qualification_player_ids=qualification,
+                qualifier_placeholder_ids=("Q1", "Q2", "Q3"),
+                withdrawn_player_ids=(),
+                main_seed_player_ids=direct[:2],
+                qualification_seed_player_ids=qualification[:6],
+            ),
+            command_id="draw",
+        )
+
+    variants = [build(seed) for seed in range(7000, 7012)]
+    extra_bye_sections = {
+        next(
+            section.section_id
+            for section in draw.qualification_brackets
+            if len(section.bye_slot_indexes) == 2
+        )
+        for draw in variants
+    }
+    assert len(extra_bye_sections) > 1
+    for draw in variants:
+        assert sorted(
+            len(section.bye_slot_indexes)
+            for section in draw.qualification_brackets
+        ) == [1, 1, 2]
 
 
 def test_corrupt_persisted_draw_fails_closed(database):

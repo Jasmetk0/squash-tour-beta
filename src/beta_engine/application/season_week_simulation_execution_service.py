@@ -170,18 +170,45 @@ class SeasonWeekSimulationExecutionService:
             return self._finish(preflight=preflight, events=[], summary=summary, warnings=warnings, errors=errors)
 
         selected = self._sort_events(preflight.events)
-        preseeded_entries = self._preseed_overlapping_entries(
+        preseed = self._preseed_overlapping_entries(
             request=request,
             selected=selected,
             warnings=warnings,
             errors=errors,
         )
-        if preseeded_entries is None:
+        if preseed is None:
             summary.run_started = False
             summary.run_completed = False
-            summary.stop_reason = "shared_entry_resolution_failed"
-            summary.next_safe_action = "resolve_entry_conflict_and_rerun_week"
-            return self._finish(preflight=preflight, events=[], summary=summary, warnings=warnings, errors=errors)
+            summary.stop_reason = "shared_entry_generation_failed"
+            summary.next_safe_action = "fix_entry_generation_and_rerun_week"
+            return self._finish(
+                preflight=preflight,
+                events=[],
+                summary=summary,
+                warnings=warnings,
+                errors=errors,
+            )
+        preseeded_entries, unresolved_entry_conflicts = preseed
+        entries_only = request.stop_after_stage == "entries_generated"
+        if unresolved_entry_conflicts and not entries_only:
+            summary.run_started = False
+            summary.run_completed = False
+            summary.stop_reason = "unresolved_entry_commitment"
+            summary.next_safe_action = (
+                "resolve_entry_commitments_or_week_tournament_locks_before_play"
+            )
+            errors.append(
+                "unresolved_entry_commitment: overlapping provisional acceptances "
+                "exist and no commitment/Week Tournament Lock authority is implemented; "
+                "competitive execution fails closed instead of choosing a tournament"
+            )
+            return self._finish(
+                preflight=preflight,
+                events=[],
+                summary=summary,
+                warnings=warnings,
+                errors=errors,
+            )
 
         summary.run_started = True
         run_events: list[SeasonWeekRunEventResult] = []
@@ -285,7 +312,7 @@ class SeasonWeekSimulationExecutionService:
         selected: list[SeasonWeekEventPreflight],
         warnings: list[str],
         errors: list[str],
-    ) -> set[str] | None:
+    ) -> tuple[set[str], int] | None:
         candidates = [
             event
             for event in selected
@@ -296,7 +323,7 @@ class SeasonWeekSimulationExecutionService:
             )
         ]
         if len(candidates) < 2:
-            return set()
+            return set(), 0
         try:
             batch = SeasonEntryBatchService(
                 self.event_simulation_service.entry_list_service
@@ -316,9 +343,13 @@ class SeasonWeekSimulationExecutionService:
         warnings.append(
             "Concurrent event entries were frozen from one shared active-player snapshot "
             f"for {len(batch.entry_lists_by_event_id)} overlapping events; "
-            f"{batch.metadata.resolved_conflict_player_count} player conflicts were resolved deterministically."
+            f"{batch.metadata.unresolved_conflict_player_count} provisional player conflicts "
+            "remain unresolved and no preferred tournament was invented."
         )
-        return set(batch.entry_lists_by_event_id)
+        return (
+            set(batch.entry_lists_by_event_id),
+            batch.metadata.unresolved_conflict_player_count,
+        )
 
     def _maybe_publish_week_snapshot(self, *, request: RunSeasonWeekRequest, summary: SeasonWeekRunSummary, run_events: list[SeasonWeekRunEventResult], selected_count: int, blocked_or_failed: bool, warnings: list[str], errors: list[str]) -> None:
         if not request.apply_points:

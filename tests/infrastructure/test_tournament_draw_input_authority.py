@@ -15,6 +15,9 @@ from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )
+from beta_engine.domain.tournaments.draw_authority import (
+    TournamentDrawAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -378,6 +381,19 @@ def test_resolved_wc_rwc_authority_commits_draw_input_v3_and_backfills_q(databas
         assert committed.qualification_player_ids == ("D", "E")
         assert committed.main_seed_player_ids == ("A",)
         assert committed.qualification_seed_player_ids == ("D",)
+
+        draw = TournamentDrawAuthorityBuilder.build(
+            draw_input=committed,
+            command_id="generate-draw",
+        )
+        wc_slots = [
+            slot
+            for slot in draw.main.slots
+            if slot.entry_status == "wild_card"
+        ]
+        assert len(wc_slots) == 1
+        assert wc_slots[0].player_id == "B"
+        assert wc_slots[0].seed_number is None
 
         with pytest.raises(
             TournamentWildCardAuthorityConflict,

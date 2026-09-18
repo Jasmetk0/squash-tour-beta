@@ -66,7 +66,9 @@ from beta_engine.infrastructure.db.models import (
     OfficialRankingCommandModel,
     OfficialRankingResultVersionModel,
     OfficialRankingZeroVersionModel,
+    OwnedTournamentRankingSourceModel,
     RankingTransitionAuthorityModel,
+    TournamentRankingSnapshotAuthorityModel,
     AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel,
     AuthoritativeWeekTransitionReceiptModel,
@@ -97,6 +99,12 @@ from beta_engine.infrastructure.db.models import (
     RunTalentPlanModel,
     SeasonStateModel,
     SimulationRunModel,
+    SimulationSlotModel,
+    SimulationEventGroupModel,
+    AuthoritativeSimulationCommandModel,
+    AdoptedTournamentAuthorityModel,
+    WeekSimulationScheduleModel,
+    TournamentEntryFieldVersionModel,
 )
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     RANKING_COMPONENT_KEY,
@@ -3046,7 +3054,9 @@ class SimulationPersistenceRepository:
                         OfficialRankingCommandModel,
                         OfficialRankingResultVersionModel,
                         OfficialRankingZeroVersionModel,
+                        OwnedTournamentRankingSourceModel,
                         RankingTransitionAuthorityModel,
+                        TournamentRankingSnapshotAuthorityModel,
                         AuthoritativeWorldStateModel,
                         PublishedOfficialRankingModel,
                         AuthoritativeWeekTransitionReceiptModel,
@@ -3102,6 +3112,30 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player sporting state"
                     )
+                has_uncaptured_simulation = any(
+                    session.scalar(
+                        select(model.run_id)
+                        .where(model.run_id == run_id, model.branch_id == branch_id)
+                        .limit(1)
+                    )
+                    is not None
+                    for model in (
+                        SimulationSlotModel,
+                        SimulationEventGroupModel,
+                        AuthoritativeSimulationCommandModel,
+                        AdoptedTournamentAuthorityModel,
+                        WeekSimulationScheduleModel,
+                        TournamentEntryFieldVersionModel,
+                    )
+                )
+                if (
+                    has_uncaptured_simulation
+                    and SIMULATION_SLOT_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture authoritative simulation state"
+                    )
 
                 supported_payload_schemas = {
                     INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
@@ -3135,6 +3169,7 @@ class SimulationPersistenceRepository:
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
+                        SIMULATION_SLOT_COMPONENT_KEY,
                     }
                     or set(target_content)
                     - {
@@ -3142,6 +3177,7 @@ class SimulationPersistenceRepository:
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
+                        SIMULATION_SLOT_COMPONENT_KEY,
                     }
                     or has_unrestorable_run_state
                 ):

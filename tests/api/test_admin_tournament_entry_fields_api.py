@@ -326,8 +326,6 @@ def test_canonical_entry_field_http_rejects_stale_scope_and_post_draw_mutation(t
                 event_id=event_id,
                 command_id="commit-draw",
                 draw_seed=123,
-                main_seed_count=2,
-                qualification_seed_count=1,
             )
 
         status, locked_state = _request("GET", root)

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRouteExists, viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import { buildRunBrowserContextLinks, buildRunBrowserPrimaryLinks } from '../../viewer/runBrowserDisplay'
 import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks } from '../../viewer/viewerHomeDisplay'
 import { viewerTopLevelHubLinks } from '../../viewer/viewerHubLinks'
@@ -74,16 +75,11 @@ const expectedViewerRoutePatterns = [
 ]
 
 function appRoutePaths(): Set<string> {
-  return new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((match) => `/${match[1]}`))
-}
-
-function routePattern(path: string): RegExp {
-  return new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[^/]+/g, '[^/]+')}$`)
+  return viewerAppRoutePaths(appSource)
 }
 
 function viewerRouteExists(to: string): boolean {
-  const routes = appRoutePaths()
-  return [...routes].some((route) => routePattern(route).test(to))
+  return viewerAppRouteExists(appSource, to)
 }
 
 function expectViewerOnlyPath(destination: string): void {

@@ -1,4 +1,5 @@
 import appSource from './App.tsx?raw'
+import { viewerAppRoutePaths } from './test/viewerAppRouteSource'
 import layoutSource from './components/Layout.tsx?raw'
 import viewerRunSelectorSource from './components/ViewerRunSelector.tsx?raw'
 
@@ -51,6 +52,8 @@ const api = vi.hoisted(() => ({
   getCountriesMetadata: vi.fn(),
   getTournamentTemplatesMetadata: vi.fn(),
   listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
@@ -82,6 +85,49 @@ function resetApiMocks(): void {
   api.getCountriesMetadata.mockResolvedValue({ country_count: 0 })
   api.getTournamentTemplatesMetadata.mockResolvedValue({ template_count: 0 })
   api.listRuns.mockResolvedValue({ runs: [] })
+  api.listRunContainers.mockImplementation(async () => {
+    const response = await api.listRuns()
+    return {
+      run_containers: (response?.runs ?? []).map((run: Record<string, unknown>) => ({
+        run_id: String(run.run_id ?? ''),
+        display_name: `${String(run.run_id ?? '')} — season ${String(run.season ?? '—')}, seed ${String(run.seed ?? '—')}`,
+        storage_kind: 'custom_local',
+        read_only: false,
+        world_id: 'test-world',
+        world_package_fingerprint: null,
+        config_version: null,
+        config_fingerprint: null,
+        global_seed: typeof run.seed === 'number' ? run.seed : 0,
+        timeline_start_season: typeof run.season === 'number' ? run.season : 2000,
+        timeline_end_season: typeof run.season === 'number' ? run.season : 2049,
+        viewer_branch_id: 'viewer',
+        official_branch_id: `${String(run.run_id ?? '')}-official`,
+        status: 'active',
+        metadata_json: {},
+        mapped_simulation_run_count: 1
+      }))
+    }
+  })
+  api.getViewerOfficialRunContext.mockImplementation(async (productRunId: string) => ({
+    product_run_id: productRunId,
+    product_run_display_name: productRunId,
+    product_run_status: 'active',
+    product_run_storage_kind: 'custom_local',
+    product_run_read_only: false,
+    official_branch_id: `${productRunId}-official`,
+    official_branch_display_name: 'Official',
+    official_branch_status: 'active',
+    official_branch_read_only: false,
+    official_branch_seed: 7,
+    legacy_simulation_run_id: productRunId,
+    head_checkpoint_id: 'checkpoint',
+    head_checkpoint_kind: 'week',
+    current_season: 2029,
+    current_week: 1,
+    current_event_id: null,
+    current_event_sequence: null,
+    resolution_version: 'viewer_official_branch_v1'
+  }))
   api.getViewerRankingTable.mockRejectedValue(new Error('Viewer read model unavailable in test'))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
@@ -141,6 +187,16 @@ function topRaceRows(count: number): Array<Record<string, unknown>> {
   }))
 }
 
+function setTestActiveRun(runId: string): void {
+  setTestActiveRun(runId)
+  localStorage.setItem('beta_engine:viewer_active_product_run_id', runId)
+}
+
+function clearTestActiveRun(): void {
+  clearTestActiveRun()
+  localStorage.removeItem('beta_engine:viewer_active_product_run_id')
+}
+
 function renderAppAt(route: string): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
@@ -167,7 +223,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  localStorage.removeItem('beta_engine:viewer_active_run_id')
+  clearTestActiveRun()
   localStorage.removeItem('beta_engine:viewer_context')
   resetApiMocks()
 })
@@ -240,26 +296,27 @@ describe('Viewer Phase 4H run-scoped route helper audit', () => {
       finalsResult: '/viewer/runs/run%20alpha/finals/result'
     })
 
+    const appRoutes = viewerAppRoutePaths(appSource)
     for (const routePattern of [
-      'viewer/runs/:runId/rankings',
-      'viewer/runs/:runId/rankings/:snapshotSequence',
-      'viewer/runs/:runId/race',
-      'viewer/runs/:runId/race/:snapshotSequence',
-      'viewer/runs/:runId/tournaments',
-      'viewer/runs/:runId/tournaments/:eventId',
-      'viewer/runs/:runId/calendar',
-      'viewer/runs/:runId/calendar/:eventId',
-      'viewer/runs/:runId/weeks/:week',
-      'viewer/runs/:runId/players',
-      'viewer/runs/:runId/players/:playerId/career',
-      'viewer/runs/:runId/countries',
-      'viewer/runs/:runId/countries/:countryCode',
-      'viewer/runs/:runId/history',
-      'viewer/runs/:runId/finals',
-      'viewer/runs/:runId/finals/qualification',
-      'viewer/runs/:runId/finals/result'
+      '/viewer/runs/:runId/rankings',
+      '/viewer/runs/:runId/rankings/:snapshotSequence',
+      '/viewer/runs/:runId/race',
+      '/viewer/runs/:runId/race/:snapshotSequence',
+      '/viewer/runs/:runId/tournaments',
+      '/viewer/runs/:runId/tournaments/:eventId',
+      '/viewer/runs/:runId/calendar',
+      '/viewer/runs/:runId/calendar/:eventId',
+      '/viewer/runs/:runId/weeks/:week',
+      '/viewer/runs/:runId/players',
+      '/viewer/runs/:runId/players/:playerId/career',
+      '/viewer/runs/:runId/countries',
+      '/viewer/runs/:runId/countries/:countryCode',
+      '/viewer/runs/:runId/history',
+      '/viewer/runs/:runId/finals',
+      '/viewer/runs/:runId/finals/qualification',
+      '/viewer/runs/:runId/finals/result'
     ]) {
-      expect(appSource).toContain(`path="${routePattern}"`)
+      expect(appRoutes).toContain(routePattern)
     }
   })
 })
@@ -495,7 +552,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active Viewer run status on the Run Browser when local storage is set', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'browser-run-active')
+    setTestActiveRun('browser-run-active')
     api.listRuns.mockResolvedValue({
       runs: [
         { run_id: 'browser-run-active', season: 2034, seed: 55, progress: { next_event_index: 1, total_events: 6, completed_event_count: 1 }, source_type: 'fresh_seed', parent_run_id: null, child_run_count: 0 }
@@ -586,7 +643,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows sports-facing empty states on top-level Viewer pages when no active run is selected', async () => {
-    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    clearTestActiveRun()
     const emptyStateRoutes = [
       ['/viewer/rankings', 'No data is available for this run yet.'],
       ['/viewer/rankings/race', 'No data is available for this run yet.'],
@@ -623,7 +680,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows no-data state on H2H when no active run is selected', async () => {
-    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    clearTestActiveRun()
 
     renderAppAt('/viewer/h2h')
 
@@ -633,7 +690,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows deferred H2H state and sample player links without player params', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    setTestActiveRun('phase-3ab-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ab-run',
       total: 2,
@@ -658,7 +715,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows matched H2H player cards, links, and numeric differences without fake outcomes', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    setTestActiveRun('phase-3ab-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ab-run',
       total: 2,
@@ -701,7 +758,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows safe missing state for unavailable comparison player ids', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    setTestActiveRun('phase-3ab-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ab-run',
       total: 1,
@@ -721,7 +778,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('keeps player compare route consistent with H2H comparison behavior', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ab-run')
+    setTestActiveRun('phase-3ab-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ab-run',
       total: 2,
@@ -754,7 +811,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       cleanup()
       resetApiMocks()
       vi.clearAllMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
 
       renderAppAt(route)
 
@@ -767,7 +824,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       cleanup()
       resetApiMocks()
       vi.clearAllMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3am-run')
+      setTestActiveRun('phase-3am-run')
       api.getRunStatusSummary.mockResolvedValue({
         run_id: 'phase-3am-run',
         season: 2034,
@@ -836,7 +893,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
 
   it('shows Match Predictor no-data state when no active run is selected', async () => {
-    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    clearTestActiveRun()
 
     renderAppAt('/viewer/predictions')
 
@@ -847,7 +904,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows Match Predictor deferred inputs and sample player profile links without player params', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
+    setTestActiveRun('phase-3ac-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ac-run',
       total: 2,
@@ -874,7 +931,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows Match Predictor selected player cards, links, numeric input differences, and deferred outputs', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
+    setTestActiveRun('phase-3ac-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ac-run',
       total: 2,
@@ -912,7 +969,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows Match Predictor safe missing-player state and keeps shortcut routes consistent', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ac-run')
+    setTestActiveRun('phase-3ac-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3ac-run',
       total: 1,
@@ -945,7 +1002,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
       renderAppAt(route)
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
       expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -967,7 +1024,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ag-run')
+      setTestActiveRun('phase-3ag-run')
       api.getRunStatusSummary.mockResolvedValue({
         run_id: 'phase-3ag-run',
         season: 2031,
@@ -1015,7 +1072,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run Search player results with profile and country links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    setTestActiveRun('phase-3aa-run')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'phase-3aa-run',
       total: 1,
@@ -1044,7 +1101,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run Search country results with country and top-player links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    setTestActiveRun('phase-3aa-run')
     api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
     api.listRunNations.mockResolvedValue({
       run_id: 'phase-3aa-run',
@@ -1068,7 +1125,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run Search tournament results with planned, week, and detail links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    setTestActiveRun('phase-3aa-run')
     api.listRunPlayers.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, players: [] })
     api.listRunNations.mockResolvedValue({ run_id: 'phase-3aa-run', total: 0, limit: 50, offset: 0, nations: [] })
     api.getRun.mockResolvedValue({
@@ -1091,7 +1148,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows safe active-run Search empty and no-match states without raw payloads', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aa-run')
+    setTestActiveRun('phase-3aa-run')
     renderAppAt('/viewer/search')
     expect(await screen.findByRole('heading', { name: 'Search', level: 2 })).toBeInTheDocument()
     expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -1111,7 +1168,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active run status, safe links, and small real summaries on the Viewer homepage', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
       season: 2030,
@@ -1180,7 +1237,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows a sports-facing unavailable state when active-run homepage APIs fail', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRun.mockRejectedValueOnce(new Error('run unavailable'))
     api.getRunStatusSummary.mockRejectedValueOnce(new Error('status unavailable'))
     api.listEvents.mockRejectedValueOnce(new Error('events unavailable'))
@@ -1198,7 +1255,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows top-level rankings snapshot metadata when an active run has ranking snapshots', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRankingSnapshots.mockResolvedValue({
       run_id: 'run-a',
       snapshots: [
@@ -1238,7 +1295,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows top-level race snapshot metadata and preview when an active run has parseable race snapshots', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRaceSnapshots.mockResolvedValue({
       run_id: 'run-a',
       snapshots: [
@@ -1279,7 +1336,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows top-level rankings and race empty snapshot states for active runs without snapshots', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
 
     renderAppAt('/viewer/rankings')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -1296,7 +1353,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows top-level Season Hub metadata when an active Viewer run exists', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
       season: 2030,
@@ -1342,7 +1399,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run Current Week events matching the selected Viewer week', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     localStorage.setItem('beta_engine:viewer_context', JSON.stringify({ selectedSeason: '2004/05', selectedWeek: 24 }))
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: [] },
@@ -1376,7 +1433,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it.each(['/viewer/tour/tournaments', '/viewer/tournaments'] as const)('shows top-level All Tournaments metadata on %s', async (route) => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 6, completed_event_ids: ['E1'] },
       season_state: {
@@ -1410,7 +1467,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows conservative active-run Tour deferred subpages with safe source links only', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: ['E1'] },
       season_state: {
@@ -1448,7 +1505,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+      setTestActiveRun('run-a')
       renderAppAt(route)
 
       expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
@@ -1482,7 +1539,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run top-level tournament and current-week empty states without event metadata', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 0, total_events: 0, completed_event_ids: [] },
       season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [] }
@@ -1494,14 +1551,14 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/tour/current-week')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
   it('links top-level History activity, week, tournament, and snapshot metadata safely', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRun.mockResolvedValue({
       run: { run_id: 'run-a', season: 2030, seed: 99, next_event_index: 1, total_events: 3, completed_event_ids: ['E1'] },
       season_state: {
@@ -1558,7 +1615,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('keeps unmatched History activity event IDs as plain text without broken detail links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRunActivity.mockResolvedValue({
       run_id: 'run-a',
       items: [{ kind: 'event', sequence: 1, label: 'Missing event noted', season: 2030, week: 7, event_id: 'MISSING-EVENT', snapshot_sequence: null, source_event_id: null, related_run_id: null }]
@@ -1575,7 +1632,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run Records and Stats source metadata with deferred groups and safe links', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.getRunStatusSummary.mockResolvedValue({
       run_id: 'run-a',
       season: 2030,
@@ -1631,7 +1688,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/stats')
     expect(await screen.findByRole('heading', { name: 'Stats' })).toBeInTheDocument()
     panel = await screen.findByLabelText('Stats active run metadata summary')
@@ -1673,7 +1730,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
       renderAppAt(route)
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
       expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -1700,7 +1757,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ah-run')
+      setTestActiveRun('phase-3ah-run')
       api.getRunStatusSummary.mockResolvedValue({
         run_id: 'phase-3ah-run',
         season: 2032,
@@ -1749,7 +1806,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run History Records and Stats empty metadata states without fake leaders', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
 
     renderAppAt('/viewer/history')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -1757,7 +1814,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/records')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveTextContent('Title Leaders: needs dedicated records read model.')
@@ -1765,7 +1822,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/stats')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('main')).toHaveTextContent('Player Stats: needs dedicated player statistics read model.')
@@ -1774,7 +1831,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run top-level Players metadata without redirecting to the run-scoped page', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'run-a',
       total: 8,
@@ -1828,7 +1885,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run top-level Countries metadata without redirecting to the run-scoped page', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRunNations.mockResolvedValue({
       run_id: 'run-a',
       total: 4,
@@ -1878,7 +1935,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
 
   it('keeps top-level sample player and country fields as plain text when IDs are missing', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRunPlayers.mockResolvedValue({
       run_id: 'run-a',
       total: 1,
@@ -1915,7 +1972,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expect(within(playersPanel).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     api.listRunNations.mockResolvedValue({
       run_id: 'run-a',
       total: 1,
@@ -1950,7 +2007,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows empty states on active-run top-level Players and Countries hubs without metadata', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
 
     renderAppAt('/viewer/players')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
@@ -1958,7 +2015,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
 
     cleanup()
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/countries')
     expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run countries' })).toHaveAttribute('href', '/viewer/runs/run-a/countries')
@@ -1966,7 +2023,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('preserves the real run-scoped Viewer ranking and race snapshot pages', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
 
     renderAppAt('/viewer/runs/run-a/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
@@ -1979,7 +2036,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('offers the active run calendar link while preserving the top-level calendar Jump to Week primitive', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'run-a')
+    setTestActiveRun('run-a')
     renderAppAt('/viewer/tour/calendar')
 
     expect(await screen.findByRole('button', { name: 'Jump to W24' })).toBeInTheDocument()
@@ -2399,7 +2456,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
       renderAppAt(route)
 
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
@@ -2422,7 +2479,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3aj-run')
+      setTestActiveRun('phase-3aj-run')
       api.getRun.mockResolvedValue({
         run: { run_id: 'phase-3aj-run', season: 2033, seed: 22, next_event_index: 1, total_events: 3, completed_event_ids: ['EVENT-DONE'] },
         season_state: {
@@ -2501,7 +2558,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
       renderAppAt(route)
 
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
@@ -2526,7 +2583,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ak-run')
+      setTestActiveRun('phase-3ak-run')
       api.listRunPlayers.mockResolvedValue({
         run_id: 'phase-3ak-run',
         total: 124,
@@ -2637,7 +2694,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
 
   it('renders conservative Country Ranking without active run data', async () => {
-    localStorage.removeItem('beta_engine:viewer_active_run_id')
+    clearTestActiveRun()
     renderAppAt('/viewer/countries/ranking')
 
     expect(await screen.findByRole('heading', { name: 'Country Ranking', level: 2 })).toBeInTheDocument()
@@ -2661,7 +2718,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.removeItem('beta_engine:viewer_active_run_id')
+      clearTestActiveRun()
       renderAppAt(route)
 
       expect(await screen.findByRole('heading', { name: title, level: 2 })).toBeInTheDocument()
@@ -2676,7 +2733,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
   })
 
   it('shows active-run metadata, safe links, samples, and deferred copy on Country Ranking', async () => {
-    localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3ap-run')
+    setTestActiveRun('phase-3ap-run')
     api.listRunNations.mockResolvedValue({
       run_id: 'phase-3ap-run',
       total: 64,
@@ -2783,7 +2840,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     for (const [route, title, deferredCopy] of routes) {
       cleanup()
       resetApiMocks()
-      localStorage.setItem('beta_engine:viewer_active_run_id', 'phase-3al-run')
+      setTestActiveRun('phase-3al-run')
       api.listRunNations.mockResolvedValue({
         run_id: 'phase-3al-run',
         total: 64,

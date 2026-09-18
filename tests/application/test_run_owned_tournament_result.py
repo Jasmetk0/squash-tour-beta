@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import hashlib
+import json
+
 import pytest
 
 from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
@@ -294,6 +297,17 @@ def test_owned_source_v2_persists_canonical_result_and_v1_remains_supported():
         awards=awards,
         adopted_by_command_id="legacy-close",
     )
-    reopened = OwnedTournamentRankingSource.model_validate_json(v1.model_dump_json())
+    old_payload = v1.model_dump(mode="json")
+    old_payload.pop("canonical_result", None)
+    expected_v1_fingerprint = hashlib.sha256(
+        json.dumps(
+            old_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    old_json = json.dumps(old_payload, sort_keys=True, separators=(",", ":"))
+    reopened = OwnedTournamentRankingSource.model_validate_json(old_json)
     assert reopened.schema_version == "owned_tournament_ranking_source.v1"
     assert reopened.canonical_result is None
+    assert reopened.fingerprint == expected_v1_fingerprint

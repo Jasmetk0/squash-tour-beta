@@ -98,12 +98,19 @@ def resolve_completed_context_from_owned_sources(
     counts = {player_id: 0 for player_id in player_ids}
     fingerprints = []
     for source in universe:
-        if source.result.completion_status != "complete" or not source.result.persisted:
-            raise ValueError(
-                "Completed sporting source is not authoritative and complete"
-            )
+        if source.canonical_result is not None:
+            matches = source.canonical_result.matches
+        else:
+            if (
+                source.result.completion_status != "complete"
+                or not source.result.persisted
+            ):
+                raise ValueError(
+                    "Completed sporting source is not authoritative and complete"
+                )
+            matches = source.result.match_result_refs
         fingerprints.append(source.fingerprint)
-        for match in source.result.match_result_refs:
+        for match in matches:
             if not match.result_fingerprint:
                 raise ValueError(
                     "Completed sporting source contains an unverified match"

@@ -243,7 +243,13 @@ derived canonically, physical slots carry idealized numbers, later seed tiers sh
 only inside their allowed idealized tier, and initial Main Draw BYEs consume the
 highest idealized slots. Historical v1 replay remains intact.
 
-The next draw-focused work is therefore Qualification BYE distribution across
-parallel Q sections, followed by WC/RWC, phase-aware redraw/cascade/freeze, Lucky
-Loser, group Qualification and the first-real-match replacement cutoff. Legacy
-simulation-run UI/endpoint retirement remains separate Gate 3 work.
+Qualification BYE distribution across parallel Q sections is now the active draw
+slice: missing Q-field positions become canonical BYEs, full BYE layers are assigned
+one-per-Q-section by descending idealized slot and incomplete final layers are
+deterministically shuffled across Q sections. The execution topology also treats a
+single-Q BYE as canonical auto-advance into its linked Q slot.
+
+The next draw-focused work after this slice is WC/RWC, phase-aware
+redraw/cascade/freeze, Lucky Loser, group Qualification and the first-real-match
+replacement cutoff. Legacy simulation-run UI/endpoint retirement remains separate
+Gate 3 work.

@@ -597,6 +597,22 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _decode_adopted_authority(payload_json):
         payload = json.loads(payload_json)
+        if payload.get("schema_version") == "adopted_tournament_authority.v5":
+            return tuple(
+                sorted(
+                    (
+                        (
+                            SeasonEventMatchPackage.model_validate(item["package"]),
+                            FrozenPointAwardAuthority.model_validate(
+                                item["point_award_authority"]
+                            ),
+                            item.get("draw_authority_fingerprint"),
+                        )
+                        for item in payload["tournaments"]
+                    ),
+                    key=lambda item: item[0].event_id,
+                )
+            )
         if payload.get("schema_version") in {
             "adopted_tournament_authority.v3",
             "adopted_tournament_authority.v4",
@@ -609,6 +625,7 @@ class AuthoritativeRunSimulationDriver:
                             FrozenPointAwardAuthority.model_validate(
                                 item["point_award_authority"]
                             ),
+                            None,
                         )
                         for item in payload["tournaments"]
                     ),
@@ -622,22 +639,24 @@ class AuthoritativeRunSimulationDriver:
                     FrozenPointAwardAuthority.model_validate(
                         payload["point_award_authority"]
                     ),
+                    None,
                 ),
             )
-        return ((SeasonEventMatchPackage.model_validate(payload), None),)
+        return ((SeasonEventMatchPackage.model_validate(payload), None, None),)
 
     @staticmethod
     def _encode_adopted_authority(items):
         items = tuple(sorted(items, key=lambda item: item[0].event_id))
         return json.dumps(
             {
-                "schema_version": "adopted_tournament_authority.v4",
+                "schema_version": "adopted_tournament_authority.v5",
                 "tournaments": [
                     {
                         "package": p.model_dump(mode="json"),
                         "point_award_authority": a.model_dump(mode="json"),
+                        "draw_authority_fingerprint": draw_fp,
                     }
-                    for p, a in items
+                    for p, a, draw_fp in items
                 ],
             },
             sort_keys=True,
@@ -650,7 +669,19 @@ class AuthoritativeRunSimulationDriver:
         )
         if row is not None:
             items = self._decode_adopted_authority(row.package_json)
-            packages = tuple(p for p, _ in items)
+            packages = tuple(p for p, _, _ in items)
+            for package, _, draw_fp in items:
+                if draw_fp is None:
+                    continue
+                current_draw = TournamentDrawAuthorityStore(session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=package.event_id,
+                )
+                if current_draw is None or current_draw.fingerprint != draw_fp:
+                    raise ValueError(
+                        "frozen tournament authority canonical Draw binding changed"
+                    )
             authority_fp = self._tournament_authority_fingerprint(
                 run_id, branch_id, week, items
             )
@@ -680,7 +711,23 @@ class AuthoritativeRunSimulationDriver:
                 "tournaments lack authoritative explicit Simulation Slot chronology"
             )
         items = tuple(
-            (p, self.awards_service.freeze_point_award_authority(p)) for p in packages
+            (
+                p,
+                self.awards_service.freeze_point_award_authority(p),
+                (
+                    draw.fingerprint
+                    if (
+                        draw := TournamentDrawAuthorityStore(session).get(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            event_id=p.event_id,
+                        )
+                    )
+                    is not None
+                    else None
+                ),
+            )
+            for p in packages
         )
         authority_fp = self._tournament_authority_fingerprint(
             run_id, branch_id, week, items
@@ -708,7 +755,7 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _tournament_authority_fingerprint(run_id, branch_id, week, items):
         bodies = []
-        for package, point_authority in sorted(
+        for package, point_authority, draw_authority_fingerprint in sorted(
             items, key=lambda item: item[0].event_id
         ):
             payload = package.model_dump(mode="json")
@@ -719,6 +766,7 @@ class AuthoritativeRunSimulationDriver:
                     "point_award_authority": point_authority.model_dump(mode="json")
                     if point_authority
                     else None,
+                    "draw_authority_fingerprint": draw_authority_fingerprint,
                 }
             )
         return fingerprint(
@@ -1248,7 +1296,22 @@ class AuthoritativeRunSimulationDriver:
                     branch_id,
                     week,
                     tuple(
-                        (p, self.awards_service.freeze_point_award_authority(p))
+                        (
+                            p,
+                            self.awards_service.freeze_point_award_authority(p),
+                            (
+                                draw.fingerprint
+                                if (
+                                    draw := TournamentDrawAuthorityStore(session).get(
+                                        run_id=run_id,
+                                        branch_id=branch_id,
+                                        event_id=p.event_id,
+                                    )
+                                )
+                                is not None
+                                else None
+                            ),
+                        )
                         for p in packages
                     ),
                 )
@@ -1464,7 +1527,7 @@ class AuthoritativeRunSimulationDriver:
                 (command.run_id, command.branch_id, command.expected_week.ordinal),
             ).package_json
         )
-        for package, point_authority in items:
+        for package, point_authority, _ in items:
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches

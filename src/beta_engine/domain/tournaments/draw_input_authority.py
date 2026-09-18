@@ -16,11 +16,15 @@ from beta_engine.domain.tournaments.entry_field import (
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority,
+)
 
 
 DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v1",
     "tournament_draw_input_authority.v2",
+    "tournament_draw_input_authority.v3",
 ]
 
 
@@ -92,7 +96,16 @@ class TournamentDrawInputAuthority(FrozenInput):
     )
     ranking_snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     entry_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    wild_card_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     direct_main_player_ids: tuple[str, ...]
+    wild_card_player_ids: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     qualification_player_ids: tuple[str, ...]
     qualifier_placeholder_ids: tuple[str, ...]
     withdrawn_player_ids: tuple[str, ...]
@@ -107,11 +120,14 @@ class TournamentDrawInputAuthority(FrozenInput):
             self.qualification_player_ids
         ):
             raise ValueError("Canonical Qualification field contains duplicate players")
-        if set(self.direct_main_player_ids) & set(self.qualification_player_ids):
+        if len(set(self.wild_card_player_ids)) != len(self.wild_card_player_ids):
+            raise ValueError("Canonical WC field contains duplicate players")
+        main_players = set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
+        if len(main_players) != len(self.direct_main_player_ids) + len(self.wild_card_player_ids):
+            raise ValueError("Player appears in both Direct Main and WC field")
+        if main_players & set(self.qualification_player_ids):
             raise ValueError("Player appears in both Main and Qualification field")
-        active = set(self.direct_main_player_ids) | set(
-            self.qualification_player_ids
-        )
+        active = main_players | set(self.qualification_player_ids)
         if active & set(self.withdrawn_player_ids):
             raise ValueError("Withdrawn player remains in committed draw input")
         if len(self.main_seed_player_ids) != self.main_seed_count:
@@ -121,9 +137,9 @@ class TournamentDrawInputAuthority(FrozenInput):
                 "Qualification seed payload does not match requested seed count"
             )
         if not set(self.main_seed_player_ids).issubset(
-            set(self.direct_main_player_ids)
+            set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
         ):
-            raise ValueError("Main seed is outside canonical direct Main field")
+            raise ValueError("Main seed is outside canonical Main field")
         if not set(self.qualification_seed_player_ids).issubset(
             set(self.qualification_player_ids)
         ):
@@ -135,10 +151,16 @@ class TournamentDrawInputAuthority(FrozenInput):
             raise ValueError(
                 "Qualifier placeholder identities/count differ from field capacity"
             )
-        if self.schema_version == "tournament_draw_input_authority.v2":
+        if self.schema_version in {
+            "tournament_draw_input_authority.v2",
+            "tournament_draw_input_authority.v3",
+        }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
-                actual_player_count=len(self.direct_main_player_ids),
+                actual_player_count=(
+                    len(self.direct_main_player_ids)
+                    + len(self.wild_card_player_ids)
+                ),
             )
             if self.main_seed_count != expected_main_seeds:
                 raise ValueError(
@@ -150,8 +172,17 @@ class TournamentDrawInputAuthority(FrozenInput):
             )
             if self.qualification_seed_count != expected_q_seeds:
                 raise ValueError(
-                    "Canonical v2 Qualification seed count differs from Master §15.2/15.6"
+                    "Canonical v2/v3 Qualification seed count differs from Master §15.2/15.6"
                 )
+        if self.schema_version == "tournament_draw_input_authority.v3":
+            if self.capacity.wild_card_slots != len(self.wild_card_player_ids):
+                raise ValueError(
+                    "Canonical v3 Draw Input requires every WC slot to be resolved"
+                )
+            if self.capacity.wild_card_slots and self.wild_card_authority_fingerprint is None:
+                raise ValueError("Canonical v3 WC field lacks WC authority fingerprint")
+        elif self.wild_card_player_ids or self.wild_card_authority_fingerprint is not None:
+            raise ValueError("Historical Draw Input cannot carry canonical WC authority")
         return self
 
     @property
@@ -179,6 +210,7 @@ class TournamentDrawInputAuthorityBuilder:
         main_seed_count: int | None,
         qualification_seed_count: int | None,
         schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1",
+        wild_card_authority: TournamentWildCardAuthority | None = None,
     ) -> TournamentDrawInputAuthority:
         if (field.run_id, field.branch_id, field.event_id) != (
             authority.run_id,
@@ -197,18 +229,51 @@ class TournamentDrawInputAuthorityBuilder:
                 "Tournament Entry Field is not bound to the supplied ranking authority"
             )
         if field.capacity.wild_card_slots:
-            raise ValueError(
-                "Canonical draw input commitment requires resolved Wild Card authority"
-            )
+            if wild_card_authority is None:
+                raise ValueError(
+                    "Canonical draw input commitment requires resolved Wild Card authority"
+                )
+            if (
+                wild_card_authority.run_id,
+                wild_card_authority.branch_id,
+                wild_card_authority.event_id,
+                wild_card_authority.entry_field_fingerprint,
+                wild_card_authority.field_sequence,
+            ) != (
+                field.run_id,
+                field.branch_id,
+                field.event_id,
+                field.fingerprint,
+                field_sequence,
+            ):
+                raise ValueError("Wild Card authority is stale for committed Entry Field")
+            if len(wild_card_authority.active_wild_card_player_ids) != field.capacity.wild_card_slots:
+                raise ValueError("All reserved Wild Card slots must be resolved before Draw Input")
+        elif wild_card_authority is not None:
+            raise ValueError("Wild Card authority supplied for event without WC capacity")
 
-        if schema_version == "tournament_draw_input_authority.v2":
+        wc_players = (
+            wild_card_authority.active_wild_card_player_ids
+            if wild_card_authority is not None
+            else ()
+        )
+        qualification_players = (
+            wild_card_authority.adjusted_qualification_player_ids
+            if wild_card_authority is not None
+            else field.qualification_player_ids
+        )
+
+        if schema_version in {
+            "tournament_draw_input_authority.v2",
+            "tournament_draw_input_authority.v3",
+        }:
             canonical_main = canonical_classic_seed_count(
                 bracket_capacity=field.capacity.main_draw_size,
-                actual_player_count=len(field.direct_main_player_ids),
+                actual_player_count=len(field.direct_main_player_ids) + len(wc_players),
             )
             canonical_qualification = canonical_qualification_seed_count(
                 capacity=field.capacity,
-                actual_player_count=len(field.qualification_player_ids),
+                actual_player_count=len(qualification_players),
             )
             if main_seed_count is not None and main_seed_count != canonical_main:
                 raise ValueError(
@@ -229,9 +294,9 @@ class TournamentDrawInputAuthorityBuilder:
                     "Historical Draw Input v1 requires explicit seed counts"
                 )
 
-        if main_seed_count > len(field.direct_main_player_ids):
-            raise ValueError("Main seed count exceeds canonical direct Main field")
-        if qualification_seed_count > len(field.qualification_player_ids):
+        if main_seed_count > len(field.direct_main_player_ids) + len(wc_players):
+            raise ValueError("Main seed count exceeds canonical Main field")
+        if qualification_seed_count > len(qualification_players):
             raise ValueError(
                 "Qualification seed count exceeds canonical Qualification field"
             )
@@ -239,8 +304,21 @@ class TournamentDrawInputAuthorityBuilder:
         # TournamentEntryFieldResolver already orders each partition from the frozen
         # Tournament Ranking Snapshot (with its canonical NR fallback). Reusing that
         # order avoids consulting any newer/current ranking during draw commitment.
-        main_seed_player_ids = field.direct_main_player_ids[:main_seed_count]
-        qualification_seed_player_ids = field.qualification_player_ids[
+        rank_by_player = {
+            row.player_id: row.rank for row in authority.ranking_snapshot.rows
+        }
+        main_players = tuple(
+            sorted(
+                (*field.direct_main_player_ids, *wc_players),
+                key=lambda player_id: (
+                    rank_by_player.get(player_id) is None,
+                    rank_by_player.get(player_id) or 10**9,
+                    player_id,
+                ),
+            )
+        )
+        main_seed_player_ids = main_players[:main_seed_count]
+        qualification_seed_player_ids = qualification_players[
             :qualification_seed_count
         ]
         qualifier_placeholder_ids = tuple(
@@ -261,8 +339,14 @@ class TournamentDrawInputAuthorityBuilder:
             tournament_ranking_authority_fingerprint=authority.fingerprint,
             ranking_snapshot_fingerprint=authority.ranking_snapshot_fingerprint,
             entry_field_fingerprint=field.fingerprint,
+            wild_card_authority_fingerprint=(
+                wild_card_authority.fingerprint
+                if wild_card_authority is not None
+                else None
+            ),
             direct_main_player_ids=field.direct_main_player_ids,
-            qualification_player_ids=field.qualification_player_ids,
+            wild_card_player_ids=wc_players,
+            qualification_player_ids=qualification_players,
             qualifier_placeholder_ids=qualifier_placeholder_ids,
             withdrawn_player_ids=field.withdrawn_player_ids,
             main_seed_player_ids=main_seed_player_ids,

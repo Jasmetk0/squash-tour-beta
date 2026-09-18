@@ -498,74 +498,25 @@ def test_authoritative_wildcard_player_survives_to_owned_ranking_source(tmp_path
 
 
 @pytest.mark.smoke
-def test_authoritative_pre_draw_replacement_survives_to_owned_ranking_source(tmp_path):
-    """A persisted pre-draw alternate becomes tournament and ranking truth."""
-    root = tmp_path / "pre-draw-withdrawal-flow"
+def test_authoritative_pre_draw_shortcut_is_blocked_before_draw_adoption(tmp_path):
+    """Non-canonical pre-draw direct-alternate authority never reaches a DrawPackage."""
+    root = tmp_path / "pre-draw-withdrawal-blocked"
     entries = make_service(root, main_draw_size=4)
 
-    active_players = [
-        *(active_player(index, ability=88) for index in range(1, 11)),
-        *(active_player(index, ability=45) for index in range(101, 121)),
-    ]
-    active_registry = SeasonActivePlayersRegistry(
-        players_by_season={"2000/2001": active_players},
-        bootstrap_metadata_by_season={},
-    )
-    (root / "active.json").write_text(
-        json.dumps(active_registry.model_dump(mode="json")),
-        encoding="utf-8",
-    )
-
     event_id = first_event_id(entries)
-    calendars = entries.calendar_service._load_registry()
-    calendar = calendars.calendars_by_season["2000/2001"]
-    event = calendar.events[0]
-    calendar.events[0] = event.model_copy(
-        update={
-            "qualification_draw_size": 3,
-            "qualifier_spots": 1,
-            "wild_cards": 0,
-            "byes": 0,
-        }
-    )
-    entries.calendar_service._save_registry(calendars)
-
-    entry_seed = None
-    for seed in range(1, 201):
-        preview = entries.generate_entry_list(
-            event_id=event_id,
-            request=EntryListGenerateRequest(
-                seed=seed,
-                dry_run=True,
-                max_alternates=16,
-            ),
-        )
-        if (
-            preview.summary.main_draw_acceptances == 3
-            and preview.summary.qualification_acceptances == 3
-            and preview.summary.alternates >= 1
-        ):
-            entries.generate_entry_list(
-                event_id=event_id,
-                request=EntryListGenerateRequest(
-                    seed=seed,
-                    dry_run=False,
-                    max_alternates=16,
-                ),
-            )
-            entry_seed = seed
-            break
-    assert entry_seed is not None
-
-    persisted_entries = entries.get_entry_list(event_id=event_id).entry_list
-    assert persisted_entries is not None
-    withdrawn = min(
-        (
-            item
-            for item in persisted_entries.entries
-            if item.decision == "accepted_main_draw"
+    persisted = entries.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(
+            seed=123,
+            dry_run=False,
+            max_alternates=16,
         ),
-        key=lambda item: (item.ranking_priority, item.player_id, item.entry_id),
+    ).entry_list
+    assert persisted is not None
+    withdrawn = next(
+        item
+        for item in persisted.entries
+        if item.decision == "accepted_main_draw"
     )
 
     draws = SeasonDrawService(
@@ -574,207 +525,40 @@ def test_authoritative_pre_draw_replacement_survives_to_owned_ranking_source(tmp
         draws_path=root / "draws.json",
         pre_draw_withdrawals_path=root / "withdrawals.json",
     )
-    replacement = draws.withdraw_main_draw_player(
-        event_id=event_id,
-        withdrawn_player_id=withdrawn.player_id,
-    )
-    assert replacement.withdrawn_player_id == withdrawn.player_id
+    with pytest.raises(
+        ValueError,
+        match="Canonical pre-draw withdrawal repair is not implemented",
+    ):
+        draws.withdraw_main_draw_player(
+            event_id=event_id,
+            withdrawn_player_id=withdrawn.player_id,
+        )
 
-    draw = draws.generate_draw_package(
+    assert draws.get_pre_draw_withdrawal_replacements(event_id=event_id) == ()
+    assert not draws.get_draw_package(event_id=event_id).draw_package_exists
+
+    preview = draws.generate_draw_package(
         event_id=event_id,
-        request=DrawGenerateRequest(seed=6102, dry_run=False),
+        request=DrawGenerateRequest(seed=6102, dry_run=True),
     ).draw_package
-    assert draw is not None
-    replacement_slots = [
-        slot
-        for slot in draw.main_draw.slots
-        if slot.entry_decision == "pre_draw_replacement"
-    ]
-    assert len(replacement_slots) == 1
-    assert replacement_slots[0].player_id == replacement.replacement_player_id
-    assert replacement_slots[0].withdrawn_player_id == withdrawn.player_id
-    assert replacement_slots[0].replacement_authority_fingerprint == replacement.authority_fingerprint
-    assert draw.metadata.pre_draw_withdrawals_fingerprint is not None
-
-    matches = SeasonMatchService(
-        draw_service=draws,
-        active_players_service=entries.active_players_service,
-        matches_path=root / "matches.json",
-    )
-    raw_package = matches.generate_match_package(
-        event_id=event_id,
-        request=MatchPackageGenerateRequest(seed=6103, dry_run=False),
-    ).match_package
-    assert raw_package is not None
-    initial_main_players = {
-        player_id
-        for match in raw_package.main_draw_matches
-        for player_id in (match.top_player_id, match.bottom_player_id)
-        if player_id
-    }
-    assert replacement.replacement_player_id in initial_main_players
-    assert withdrawn.player_id not in initial_main_players
-
-    results = SeasonEventResultsService(
-        match_service=matches,
-        results_path=root / "results.json",
-    )
-    awards = SeasonPointAwardsService(
-        result_service=results,
-        active_players_service=entries.active_players_service,
-        calendar_service=entries.calendar_service,
-        template_service=entries.calendar_service.template_service,
-        awards_path=root / "awards.json",
-        points_config_path=root / "points.json",
-    )
-    player_ids = tuple(
-        sorted(
-            {
-                player_id
-                for match in raw_package.qualification_matches
-                + raw_package.main_draw_matches
-                for player_id in (match.top_player_id, match.bottom_player_id)
-                if player_id
-            }
-        )
-    )
-    week = RankingWeek(season_index=0, week=raw_package.season_week)
-    session = session_at(root / "run.sqlite", player_ids, week)
-    session.add(
-        RunContainerModel(
-            run_id="run",
-            display_name="Pre-draw withdrawal flow",
-            timeline_start_season=2000,
-            timeline_end_season=2049,
-        )
-    )
-    session.add(
-        RunBranchModel(
-            branch_id="branch",
-            run_id="run",
-            display_name="Timeline 1",
-            saved_head_revision_id="revision",
-        )
-    )
-    session.commit()
-    factory = sessionmaker(bind=session.get_bind())
-    session.close()
-
-    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
-    package = driver._packages(week)[0]
-    ordered_groups: list[tuple[str, ...]] = []
-    for draw_type in ("qualification", "main"):
-        phase = [
-            match
-            for match in package.qualification_matches + package.main_draw_matches
-            if match.draw_type == draw_type
-        ]
-        for round_number in sorted({match.round_number for match in phase}):
-            group_ids = tuple(
-                match.match_id
-                for match in phase
-                if match.round_number == round_number
-                and match.match_id not in package.frozen_bye_match_ids
-            )
-            if group_ids:
-                ordered_groups.append(group_ids)
-
-    schedule = WeekSimulationSchedule(
-        run_id="run",
-        branch_id="branch",
-        week=week,
-        slots=tuple(
-            WeekSimulationScheduleSlot(ordinal=ordinal, group_ids=group_ids)
-            for ordinal, group_ids in enumerate(ordered_groups, 1)
-        ),
-    )
-    preview = driver.preview_schedule(schedule)
-    driver.adopt_schedule(
-        schedule,
-        request_id="pre-draw-withdrawal-schedule",
-        expected_position_fingerprint=preview["position_fingerprint"],
-    )
-
-    state = None
-    for ordinal in range(1, len(schedule.slots) + 1):
-        command, _ = _driver_command(
-            driver, week, f"pre-draw-withdrawal-slot-{ordinal}"
-        )
-        state = driver.simulate_next_slot(command)
-    assert state is not None
-    assert state["supported_tournament_complete"] is True
-
-    with factory() as db:
-        sources = OwnedTournamentRankingSourceStore(db).history(
-            run_id="run",
-            branch_id="branch",
-        )
-        assert len(sources) == 1
-        source = sources[0]
-        result_players = {result.player_id for result in source.result.player_results}
-        assert replacement.replacement_player_id in result_players
-        assert withdrawn.player_id not in result_players
+    assert preview is not None
+    assert preview.metadata.pre_draw_withdrawals_fingerprint is None
 
 
 @pytest.mark.smoke
-def test_authoritative_late_replacement_survives_to_owned_ranking_source(tmp_path):
-    """Post-draw alternate replacement becomes frozen Match/Ranking truth."""
-    root = tmp_path / "late-replacement-flow"
+def test_authoritative_post_draw_shortcut_is_blocked_before_match_adoption(tmp_path):
+    """Post-draw replacement cannot bypass phase/LL/cutoff authority."""
+    root = tmp_path / "late-replacement-blocked"
     entries = make_service(root, main_draw_size=4)
-
-    active_players = [
-        *(active_player(index, ability=88) for index in range(1, 11)),
-        *(active_player(index, ability=45) for index in range(101, 121)),
-    ]
-    active_registry = SeasonActivePlayersRegistry(
-        players_by_season={"2000/2001": active_players},
-        bootstrap_metadata_by_season={},
-    )
-    (root / "active.json").write_text(
-        json.dumps(active_registry.model_dump(mode="json")),
-        encoding="utf-8",
-    )
-
     event_id = first_event_id(entries)
-    calendars = entries.calendar_service._load_registry()
-    calendar = calendars.calendars_by_season["2000/2001"]
-    event = calendar.events[0]
-    calendar.events[0] = event.model_copy(
-        update={
-            "qualification_draw_size": 3,
-            "qualifier_spots": 1,
-            "wild_cards": 0,
-            "byes": 0,
-        }
+    entries.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(
+            seed=123,
+            dry_run=False,
+            max_alternates=16,
+        ),
     )
-    entries.calendar_service._save_registry(calendars)
-
-    entry_seed = None
-    for seed in range(1, 201):
-        preview = entries.generate_entry_list(
-            event_id=event_id,
-            request=EntryListGenerateRequest(
-                seed=seed,
-                dry_run=True,
-                max_alternates=16,
-            ),
-        )
-        if (
-            preview.summary.main_draw_acceptances == 3
-            and preview.summary.qualification_acceptances == 3
-            and preview.summary.alternates >= 1
-        ):
-            entries.generate_entry_list(
-                event_id=event_id,
-                request=EntryListGenerateRequest(
-                    seed=seed,
-                    dry_run=False,
-                    max_alternates=16,
-                ),
-            )
-            entry_seed = seed
-            break
-    assert entry_seed is not None
 
     draws = SeasonDrawService(
         entry_list_service=entries,
@@ -786,16 +570,12 @@ def test_authoritative_late_replacement_survives_to_owned_ranking_source(tmp_pat
         request=DrawGenerateRequest(seed=7102, dry_run=False),
     ).draw_package
     assert draw is not None
-
-    withdrawn_slot = min(
-        (
-            slot
-            for slot in draw.main_draw.slots
-            if slot.player_id is not None
-            and not slot.is_bye
-            and not slot.is_qualifier_placeholder
-        ),
-        key=lambda slot: (slot.bracket_position, slot.slot_id),
+    withdrawn_slot = next(
+        slot
+        for slot in draw.main_draw.slots
+        if slot.player_id is not None
+        and not slot.is_bye
+        and not slot.is_qualifier_placeholder
     )
     assert withdrawn_slot.player_id is not None
 
@@ -804,136 +584,21 @@ def test_authoritative_late_replacement_survives_to_owned_ranking_source(tmp_pat
         active_players_service=entries.active_players_service,
         matches_path=root / "matches.json",
     )
-    replacement = matches.record_late_replacement(
-        event_id=event_id,
-        withdrawn_player_id=withdrawn_slot.player_id,
-    )
-    raw_package = matches.generate_match_package(
+    with pytest.raises(
+        ValueError,
+        match="Canonical post-draw replacement is not implemented",
+    ):
+        matches.record_late_replacement(
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_slot.player_id,
+        )
+
+    assert matches.get_late_replacements(event_id=event_id) == ()
+    package = matches.generate_match_package(
         event_id=event_id,
         request=MatchPackageGenerateRequest(seed=7103, dry_run=False),
     ).match_package
-    assert raw_package is not None
-    assert len(raw_package.frozen_late_replacements) == 1
-    assert (
-        raw_package.frozen_late_replacements[0].authority_fingerprint
-        == replacement.authority_fingerprint
-    )
-    assert replacement.replacement_player_id in {
-        player_id
-        for match in raw_package.main_draw_matches
-        for player_id in (match.top_player_id, match.bottom_player_id)
-        if player_id
-    }
-    assert replacement.withdrawn_player_id not in {
-        player_id
-        for match in raw_package.main_draw_matches
-        for player_id in (match.top_player_id, match.bottom_player_id)
-        if player_id
-    }
+    assert package is not None
+    assert package.frozen_late_replacements == []
+    assert package.metadata.late_replacements_fingerprint is None
 
-    results = SeasonEventResultsService(
-        match_service=matches,
-        results_path=root / "results.json",
-    )
-    awards = SeasonPointAwardsService(
-        result_service=results,
-        active_players_service=entries.active_players_service,
-        calendar_service=entries.calendar_service,
-        template_service=entries.calendar_service.template_service,
-        awards_path=root / "awards.json",
-        points_config_path=root / "points.json",
-    )
-    player_ids = tuple(
-        sorted(
-            {
-                player_id
-                for match in raw_package.qualification_matches
-                + raw_package.main_draw_matches
-                for player_id in (match.top_player_id, match.bottom_player_id)
-                if player_id
-            }
-        )
-    )
-    week = RankingWeek(season_index=0, week=raw_package.season_week)
-    session = session_at(root / "run.sqlite", player_ids, week)
-    session.add(
-        RunContainerModel(
-            run_id="run",
-            display_name="Late replacement flow",
-            timeline_start_season=2000,
-            timeline_end_season=2049,
-        )
-    )
-    session.add(
-        RunBranchModel(
-            branch_id="branch",
-            run_id="run",
-            display_name="Timeline 1",
-            saved_head_revision_id="revision",
-        )
-    )
-    session.commit()
-    factory = sessionmaker(bind=session.get_bind())
-    session.close()
-
-    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
-    package = driver._packages(week)[0]
-    assert len(package.frozen_late_replacements) == 1
-    assert (
-        package.frozen_late_replacements[0].replacement_player_id
-        == replacement.replacement_player_id
-    )
-
-    ordered_groups: list[tuple[str, ...]] = []
-    for draw_type in ("qualification", "main"):
-        phase = [
-            match
-            for match in package.qualification_matches + package.main_draw_matches
-            if match.draw_type == draw_type
-        ]
-        for round_number in sorted({match.round_number for match in phase}):
-            group_ids = tuple(
-                match.match_id
-                for match in phase
-                if match.round_number == round_number
-                and match.match_id not in package.frozen_bye_match_ids
-            )
-            if group_ids:
-                ordered_groups.append(group_ids)
-
-    schedule = WeekSimulationSchedule(
-        run_id="run",
-        branch_id="branch",
-        week=week,
-        slots=tuple(
-            WeekSimulationScheduleSlot(ordinal=ordinal, group_ids=group_ids)
-            for ordinal, group_ids in enumerate(ordered_groups, 1)
-        ),
-    )
-    preview = driver.preview_schedule(schedule)
-    driver.adopt_schedule(
-        schedule,
-        request_id="late-replacement-schedule",
-        expected_position_fingerprint=preview["position_fingerprint"],
-    )
-
-    state = None
-    for ordinal in range(1, len(schedule.slots) + 1):
-        command, _ = _driver_command(
-            driver, week, f"late-replacement-slot-{ordinal}"
-        )
-        state = driver.simulate_next_slot(command)
-    assert state is not None
-    assert state["supported_tournament_complete"] is True
-
-    with factory() as db:
-        sources = OwnedTournamentRankingSourceStore(db).history(
-            run_id="run",
-            branch_id="branch",
-        )
-        assert len(sources) == 1
-        result_players = {
-            result.player_id for result in sources[0].result.player_results
-        }
-        assert replacement.replacement_player_id in result_players
-        assert replacement.withdrawn_player_id not in result_players

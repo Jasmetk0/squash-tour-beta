@@ -1,4 +1,5 @@
 import appSource from '../App.tsx?raw'
+import { viewerAppRouteExists } from '../test/viewerAppRouteSource'
 
 import { describe, expect, it } from 'vitest'
 
@@ -24,19 +25,8 @@ const forbiddenViewerActionLabels = [
   'Overwrite'
 ]
 
-function appViewerRoutes(): Set<string> {
-  return new Set(
-    [...appSource.matchAll(/<Route\s+path="(viewer[^"]*)"/g)].map((match) => `/${match[1]}`)
-  )
-}
-
-function routePattern(path: string): RegExp {
-  return new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[^/]+/g, '[^/]+')}$`)
-}
-
 function viewerRouteExists(to: string): boolean {
-  const appRoutes = appViewerRoutes()
-  return [...appRoutes].some((route) => routePattern(route).test(to))
+  return viewerAppRouteExists(appSource, to)
 }
 
 describe('viewerHubLinks', () => {

@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -31,6 +31,16 @@ class CanonicalPreDrawWithdrawalCommand(FrozenInput):
     event_id: str = Field(min_length=1)
     expected_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     withdrawn_player_ids: tuple[str, ...] = Field(min_length=1)
+
+    @field_validator("withdrawn_player_ids", mode="before")
+    @classmethod
+    def normalize_json_withdrawal_ids(cls, value):
+        # FrozenInput is strict, while JSON arrays arrive as Python lists.
+        # Canonicalize only that wire representation into the immutable tuple
+        # used by the command contract; all element validation remains strict.
+        if isinstance(value, list):
+            return tuple(value)
+        return value
 
     @model_validator(mode="after")
     def validate_withdrawals(self) -> "CanonicalPreDrawWithdrawalCommand":

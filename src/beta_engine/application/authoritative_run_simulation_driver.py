@@ -371,20 +371,68 @@ class AuthoritativeRunSimulationDriver:
         branch_id=None,
     ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        packages = tuple(
+
+        canonical_packages = {}
+        canonical_event_ids = set()
+        if session is not None and run_id is not None and branch_id is not None:
+            draw_event_ids = tuple(
+                session.scalars(
+                    select(TournamentDrawAuthorityModel.event_id)
+                    .where(
+                        TournamentDrawAuthorityModel.run_id == run_id,
+                        TournamentDrawAuthorityModel.branch_id == branch_id,
+                    )
+                    .order_by(TournamentDrawAuthorityModel.event_id)
+                ).all()
+            )
+            if draw_event_ids:
+                calendar = self.awards_service.calendar_service.get_calendar(
+                    season=season
+                ).calendar
+                if calendar is None:
+                    raise ValueError(
+                        "canonical Draw execution requires the season Calendar authority"
+                    )
+                events = {event.event_id: event for event in calendar.events}
+                for event_id in draw_event_ids:
+                    event = events.get(event_id)
+                    if event is None or event.season_week != week.week:
+                        continue
+                    draw = self._canonical_draw_binding(
+                        session,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week=week,
+                        event_id=event_id,
+                    )
+                    if draw is None:
+                        continue
+                    package = build_run_owned_match_package(
+                        draw=draw,
+                        event=event,
+                        week=week,
+                    )
+                    canonical_packages[event_id] = self._bind_owned_draw_evidence(
+                        package=package,
+                        draw=draw,
+                        week=week,
+                    )
+                    canonical_event_ids.add(event_id)
+
+        legacy_packages = tuple(
             sorted(
                 (
                     p
                     for p in self.match_service._load_registry().matches_by_event_id.values()
-                    if p.season == season and p.season_week == week.week
+                    if p.season == season
+                    and p.season_week == week.week
+                    and p.event_id not in canonical_event_ids
                 ),
                 key=lambda package: package.event_id,
             )
         )
-        if not packages and required:
-            raise ValueError("supported tournament authority is missing")
-        bound = []
-        for package in packages:
+        bound_legacy = []
+        for package in legacy_packages:
             canonical = None
             if session is not None and run_id is not None and branch_id is not None:
                 canonical = self._canonical_draw_binding(
@@ -395,18 +443,21 @@ class AuthoritativeRunSimulationDriver:
                     event_id=package.event_id,
                 )
             if canonical is not None:
-                package = self._bind_owned_draw_evidence(
-                    package=package,
-                    draw=canonical,
-                    week=week,
-                )
-            else:
-                package = self._bind_current_draw_evidence(package, week)
-            bound.append(package)
-        packages = tuple(bound)
-        # Preserve the historical helper contract for callers that intentionally
-        # use the legacy reader without a Run/Branch session. Production canonical
-        # paths validate through _topology_for_session instead.
+                if package.event_id not in canonical_packages:
+                    raise ValueError(
+                        "canonical Draw event could not build Run-owned MatchPackage"
+                    )
+                continue
+            bound_legacy.append(self._bind_current_draw_evidence(package, week))
+
+        packages = tuple(
+            sorted(
+                (*canonical_packages.values(), *bound_legacy),
+                key=lambda package: package.event_id,
+            )
+        )
+        if not packages and required:
+            raise ValueError("supported tournament authority is missing")
         if session is None:
             for package in packages:
                 self._topology((package,))

@@ -188,12 +188,12 @@ function topRaceRows(count: number): Array<Record<string, unknown>> {
 }
 
 function setTestActiveRun(runId: string): void {
-  setTestActiveRun(runId)
+  localStorage.setItem('beta_engine:viewer_active_run_id', runId)
   localStorage.setItem('beta_engine:viewer_active_product_run_id', runId)
 }
 
 function clearTestActiveRun(): void {
-  clearTestActiveRun()
+  localStorage.removeItem('beta_engine:viewer_active_run_id')
   localStorage.removeItem('beta_engine:viewer_active_product_run_id')
 }
 

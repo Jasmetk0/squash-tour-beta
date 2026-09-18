@@ -138,7 +138,7 @@ def _applications() -> tuple[TournamentEntryApplication, ...]:
     )
 
 
-def _stage_initial(factory) -> None:
+def _stage_initial(factory):
     snapshot = _ranking_snapshot()
     with factory.begin() as session:
         session.add(
@@ -158,7 +158,7 @@ def _stage_initial(factory) -> None:
             ranking_week=snapshot.week,
             command_id="adopt-ranking",
         )
-        TournamentEntryFieldStore(session).stage_initial(
+        return TournamentEntryFieldStore(session).stage_initial(
             run_id="run",
             branch_id="branch",
             event_id="event",
@@ -173,13 +173,14 @@ def _stage_initial(factory) -> None:
 
 
 def test_main_withdrawal_promotes_q_and_backfills_from_frozen_inputs(factory):
-    _stage_initial(factory)
+    initial = _stage_initial(factory)
     service = CanonicalPreDrawWithdrawalService(factory)
     command = CanonicalPreDrawWithdrawalCommand(
         command_id="withdraw-d",
         run_id="run",
         branch_id="branch",
         event_id="event",
+        expected_field_fingerprint=initial.fingerprint,
         withdrawn_player_ids=("D",),
     )
 
@@ -200,7 +201,7 @@ def test_main_withdrawal_promotes_q_and_backfills_from_frozen_inputs(factory):
 
 
 def test_followup_qualification_withdrawal_backfills_without_changing_main(factory):
-    _stage_initial(factory)
+    initial = _stage_initial(factory)
     service = CanonicalPreDrawWithdrawalService(factory)
     first = service.execute(
         CanonicalPreDrawWithdrawalCommand(
@@ -208,6 +209,7 @@ def test_followup_qualification_withdrawal_backfills_without_changing_main(facto
             run_id="run",
             branch_id="branch",
             event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
             withdrawn_player_ids=("D",),
         )
     )
@@ -218,6 +220,7 @@ def test_followup_qualification_withdrawal_backfills_without_changing_main(facto
             run_id="run",
             branch_id="branch",
             event_id="event",
+            expected_field_fingerprint=first.field_fingerprint,
             withdrawn_player_ids=("E",),
         )
     )
@@ -233,7 +236,7 @@ def test_followup_qualification_withdrawal_backfills_without_changing_main(facto
 
 
 def test_command_id_reuse_with_different_withdrawal_fails_closed(factory):
-    _stage_initial(factory)
+    initial = _stage_initial(factory)
     service = CanonicalPreDrawWithdrawalService(factory)
     service.execute(
         CanonicalPreDrawWithdrawalCommand(
@@ -241,6 +244,7 @@ def test_command_id_reuse_with_different_withdrawal_fails_closed(factory):
             run_id="run",
             branch_id="branch",
             event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
             withdrawn_player_ids=("D",),
         )
     )
@@ -252,6 +256,7 @@ def test_command_id_reuse_with_different_withdrawal_fails_closed(factory):
                 run_id="run",
                 branch_id="branch",
                 event_id="event",
+                expected_field_fingerprint=initial.fingerprint,
                 withdrawn_player_ids=("E",),
             )
         )
@@ -270,12 +275,13 @@ def test_missing_initial_field_fails_closed(factory):
                 run_id="run",
                 branch_id="branch",
                 event_id="event",
+                expected_field_fingerprint="0" * 64,
                 withdrawn_player_ids=("D",),
             )
         )
 
 def test_multi_withdrawal_is_atomic_and_input_order_independent(factory):
-    _stage_initial(factory)
+    initial = _stage_initial(factory)
     service = CanonicalPreDrawWithdrawalService(factory)
 
     result = service.execute(
@@ -284,6 +290,7 @@ def test_multi_withdrawal_is_atomic_and_input_order_independent(factory):
             run_id="run",
             branch_id="branch",
             event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
             withdrawn_player_ids=("E", "D"),
         )
     )
@@ -297,13 +304,14 @@ def test_multi_withdrawal_is_atomic_and_input_order_independent(factory):
 
 
 def test_draw_commit_locks_new_repairs_but_keeps_exact_retry(factory):
-    _stage_initial(factory)
+    initial = _stage_initial(factory)
     service = CanonicalPreDrawWithdrawalService(factory)
     command = CanonicalPreDrawWithdrawalCommand(
         command_id="withdraw-d",
         run_id="run",
         branch_id="branch",
         event_id="event",
+        expected_field_fingerprint=initial.fingerprint,
         withdrawn_player_ids=("D",),
     )
     result = service.execute(command)
@@ -332,6 +340,38 @@ def test_draw_commit_locks_new_repairs_but_keeps_exact_retry(factory):
                 run_id="run",
                 branch_id="branch",
                 event_id="event",
+                expected_field_fingerprint=result.field_fingerprint,
+                withdrawn_player_ids=("E",),
+            )
+        )
+
+
+def test_stale_expected_field_fingerprint_fails_closed(factory):
+    initial = _stage_initial(factory)
+    service = CanonicalPreDrawWithdrawalService(factory)
+    first = service.execute(
+        CanonicalPreDrawWithdrawalCommand(
+            command_id="withdraw-d",
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
+            withdrawn_player_ids=("D",),
+        )
+    )
+    assert first.field_fingerprint != initial.fingerprint
+
+    with pytest.raises(
+        TournamentEntryFieldConflict,
+        match="changed since the withdrawal command was prepared",
+    ):
+        service.execute(
+            CanonicalPreDrawWithdrawalCommand(
+                command_id="withdraw-e-stale",
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                expected_field_fingerprint=initial.fingerprint,
                 withdrawn_player_ids=("E",),
             )
         )

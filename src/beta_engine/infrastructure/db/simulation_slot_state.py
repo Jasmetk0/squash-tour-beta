@@ -508,7 +508,19 @@ def restore_saved_simulation_slots(
             live_groups,
             live_commands,
             live_authorities,
+            include_commands=(
+                bool(live_commands)
+                or bool(expected is not None and "commands" in expected)
+            ),
+            include_authorities=(
+                bool(live_authorities)
+                or bool(expected is not None and "authorities" in expected)
+            ),
             schedules=live_schedules,
+            include_schedules=(
+                bool(live_schedules)
+                or bool(expected is not None and "schedules" in expected)
+            ),
             entry_fields=live_entry_fields,
             include_entry_fields=(
                 bool(live_entry_fields)

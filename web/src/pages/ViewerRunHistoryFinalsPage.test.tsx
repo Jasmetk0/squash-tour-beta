@@ -1,8 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { screen, within } from '@testing-library/react'
+import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithViewerProviders } from '../test/viewerTestUtils'
 import {
   ViewerRunFinalsPage,
   ViewerRunFinalsQualificationPage,
@@ -26,19 +26,14 @@ vi.mock('../api/client', async (importOriginal) => {
 })
 
 function renderViewerRoute(route: string): void {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route path="/viewer/runs/:runId/history" element={<ViewerRunHistoryPage />} />
-          <Route path="/viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />} />
-          <Route path="/viewer/runs/:runId/finals/qualification" element={<ViewerRunFinalsQualificationPage />} />
-          <Route path="/viewer/runs/:runId/finals/result" element={<ViewerRunFinalsResultPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+  renderWithViewerProviders(
+    <Routes>
+      <Route path="/viewer/runs/:runId/history" element={<ViewerRunHistoryPage />} />
+      <Route path="/viewer/runs/:runId/finals" element={<ViewerRunFinalsPage />} />
+      <Route path="/viewer/runs/:runId/finals/qualification" element={<ViewerRunFinalsQualificationPage />} />
+      <Route path="/viewer/runs/:runId/finals/result" element={<ViewerRunFinalsResultPage />} />
+    </Routes>,
+    { route }
   )
 }
 

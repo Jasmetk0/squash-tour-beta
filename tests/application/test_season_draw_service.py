@@ -6,6 +6,7 @@ import pytest
 
 from beta_engine.application.season_draw_service import DrawGenerateRequest, SeasonDrawService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest
+from beta_engine.application.season_match_service import MatchPackageGenerateRequest, SeasonMatchService
 from test_season_entry_list_service import first_event_id, make_service
 
 
@@ -90,7 +91,7 @@ def test_capacity_byes_provenance_and_warnings(tmp_path: Path) -> None:
     assert len(package.main_draw.seeds) == min(event.seeds_count, package.summary.main_draw_players)
     assert package.metadata.entry_list_fingerprint == service.entry_list_service.get_entry_list(event_id=event_id).entry_list.metadata.build_fingerprint  # type: ignore[union-attr]
     assert package.metadata.calendar_event_fingerprint == event.calendar_fingerprint
-    assert any(issue.code == "wildcards_not_implemented" for issue in package.validation_warnings)
+    assert any(issue.code == "wildcards_unassigned" for issue in package.validation_warnings)
 
 
 def test_duplicate_player_ids_rejected(tmp_path: Path) -> None:
@@ -106,3 +107,144 @@ def test_duplicate_player_ids_rejected(tmp_path: Path) -> None:
     assert any(issue.code == "duplicate_player_id" for issue in result.validation_errors)
     with pytest.raises(ValueError, match="duplicate_player_id"):
         service.generate_draw_package(event_id=event_id, request=DrawGenerateRequest(seed=1, dry_run=False, overwrite_existing=True))
+
+
+@pytest.mark.smoke
+def test_persisted_wildcard_assignment_flows_into_draw_and_match_package(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+
+    accepted = {
+        entry.player_id
+        for entry in entry_list.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    }
+    active_players = service.entry_list_service.active_players_service.get_active_players(
+        season=entry_list.season
+    ).players
+    wildcard_player = next(player for player in active_players if player.player_id not in accepted)
+
+    assignment = service.assign_wild_card(
+        event_id=event_id,
+        wildcard_index=1,
+        player_id=wildcard_player.player_id,
+    )
+    assert assignment.player_id == wildcard_player.player_id
+
+    draw = service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=909, dry_run=False),
+    ).draw_package
+    assert draw is not None
+    wildcard_slots = [
+        slot for slot in draw.main_draw.slots if slot.entry_decision == "wild_card_assigned"
+    ]
+    assert len(wildcard_slots) == 1
+    assert wildcard_slots[0].player_id == wildcard_player.player_id
+    assert wildcard_slots[0].player_name == wildcard_player.name
+    assert draw.metadata.wild_card_assignments_fingerprint is not None
+    assert not any(
+        issue.code == "wildcards_unassigned" for issue in draw.validation_warnings
+    )
+
+    matches = SeasonMatchService(
+        draw_service=service,
+        active_players_service=service.entry_list_service.active_players_service,
+        matches_path=tmp_path / "matches.json",
+    ).generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=910, dry_run=False),
+    ).match_package
+    assert matches is not None
+    assert wildcard_player.player_id in {
+        player_id
+        for match in matches.main_draw_matches
+        for player_id in (match.top_player_id, match.bottom_player_id)
+        if player_id is not None
+    }
+
+
+def test_wildcard_assignment_rejects_existing_acceptance_and_locks_after_draw(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+
+    accepted_player = next(
+        entry.player_id
+        for entry in entry_list.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    )
+    with pytest.raises(ValueError, match="already accepted"):
+        service.assign_wild_card(
+            event_id=event_id,
+            wildcard_index=1,
+            player_id=accepted_player,
+        )
+
+    accepted = {
+        entry.player_id
+        for entry in entry_list.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    }
+    wildcard_player = next(
+        player
+        for player in service.entry_list_service.active_players_service.get_active_players(
+            season=entry_list.season
+        ).players
+        if player.player_id not in accepted
+    )
+    service.assign_wild_card(
+        event_id=event_id,
+        wildcard_index=1,
+        player_id=wildcard_player.player_id,
+    )
+    service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=911, dry_run=False),
+    )
+    with pytest.raises(ValueError, match="locked after the DrawPackage"):
+        service.assign_wild_card(
+            event_id=event_id,
+            wildcard_index=1,
+            player_id=wildcard_player.player_id,
+        )
+
+
+def test_wildcard_assignment_stales_when_entry_authority_changes(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+    accepted = {
+        entry.player_id
+        for entry in entry_list.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    }
+    wildcard_player = next(
+        player
+        for player in service.entry_list_service.active_players_service.get_active_players(
+            season=entry_list.season
+        ).players
+        if player.player_id not in accepted
+    )
+    service.assign_wild_card(
+        event_id=event_id,
+        wildcard_index=1,
+        player_id=wildcard_player.player_id,
+    )
+    service.entry_list_service.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(
+            seed=124,
+            dry_run=False,
+            overwrite_existing=True,
+        ),
+    )
+    with pytest.raises(ValueError, match="stale for the current EntryList"):
+        service.generate_draw_package(
+            event_id=event_id,
+            request=DrawGenerateRequest(seed=912, dry_run=True),
+        )

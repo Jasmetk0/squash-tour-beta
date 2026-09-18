@@ -577,8 +577,8 @@ def _build_nodes(
                     node_id=node_id,
                     round_number=round_number,
                     round_sequence=sequence,
-                    source_top=prior_sources[(sequence - 1) * 2],
-                    source_bottom=prior_sources[(sequence - 1) * 2 + 1],
+                    source_top=prior_sources[(local_sequence - 1) * 2],
+                    source_bottom=prior_sources[(local_sequence - 1) * 2 + 1],
                 )
             )
             current_sources.append(f"winner:{node_id}")

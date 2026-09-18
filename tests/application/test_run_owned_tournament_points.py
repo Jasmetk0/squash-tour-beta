@@ -19,7 +19,14 @@ from beta_engine.application.run_owned_match_package import (
 from beta_engine.application.season_point_awards_service import (
     FrozenPointAwardAuthority,
 )
-from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.application.official_ranking_transition import RankingTransitionContext
+from beta_engine.application.ranking_week_command import RankingWeekCommand
+from beta_engine.domain.rankings.official import (
+    OfficialRankingPlayer,
+    OfficialRankingPolicy,
+    RankingWeek,
+    calculate_official_ranking,
+)
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorityBuilder
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
@@ -29,9 +36,46 @@ from beta_engine.domain.tournaments.result_authority import (
     build_tournament_result_authority,
     project_tournament_result_legacy_dto,
 )
+from beta_engine.infrastructure.db.engine import (
+    DatabaseSettings,
+    create_session_factory,
+    create_sqlite_engine,
+)
+from beta_engine.infrastructure.db.models import Base, RunBranchModel, RunContainerModel
+from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
+from beta_engine.infrastructure.db.owned_tournament_sources import (
+    OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 
 
 pytestmark = pytest.mark.smoke
+
+
+@pytest.fixture
+def database(tmp_path):
+    engine = create_sqlite_engine(
+        DatabaseSettings(url=f"sqlite:///{tmp_path / 'canonical-points.db'}")
+    )
+    Base.metadata.create_all(engine)
+    factory = create_session_factory(engine)
+    with factory.begin() as session:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Timeline 1",
+            )
+        )
+    yield factory
+    engine.dispose()
 
 
 def _input():
@@ -309,3 +353,60 @@ def test_v2_fingerprint_contract_ignores_new_v3_field():
     assert reopened.schema_version == "owned_tournament_ranking_source.v2"
     assert reopened.canonical_awards is None
     assert reopened.fingerprint == expected
+
+
+
+def test_ranking_week_ingests_v3_without_legacy_award_service(database):
+    result_authority, result, point_authority, awards, binding = _authorities()
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v3",
+        binding=binding,
+        result=result,
+        awards=awards,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="close",
+        provenance_kind="canonical_run_owned_tournament_result_and_points",
+    )
+    players = tuple(
+        OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=player.player_id,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        )
+        for player in result_authority.players
+    )
+    policy = OfficialRankingPolicy(policy_id="policy")
+    with database.begin() as session:
+        OfficialRankingCandidateStore(session).append(
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=binding.completed_week,
+                policy=policy,
+                players=players,
+                results=(),
+            ),
+            bootstrap=True,
+        )
+        OwnedTournamentRankingSourceStore(session).append(source)
+
+    command = RankingWeekCommand(
+        command_id="ranking-from-canonical-points",
+        tournaments=(binding,),
+        context=RankingTransitionContext(
+            run_id="run",
+            branch_id="branch",
+            completed_week=binding.completed_week,
+            target_week=binding.first_publication_week,
+            policy=policy,
+            players=players,
+            discipline="none",
+        ),
+    )
+    snapshot = RankingWeekCommandRunner(database, awards=None).execute(command)
+    expected = {
+        award.player_id: award.ranking_points_awarded
+        for award in point_authority.awards
+    }
+    assert {row.player_id: row.points for row in snapshot.rows} == expected

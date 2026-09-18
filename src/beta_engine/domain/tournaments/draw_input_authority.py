@@ -9,7 +9,10 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.rankings.official import FrozenInput
-from beta_engine.domain.tournaments.entry_field import TournamentEntryField
+from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
+    TournamentEntryFieldCapacity,
+)
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
@@ -35,6 +38,7 @@ class TournamentDrawInputAuthority(FrozenInput):
     main_seed_count: int = Field(ge=0)
     qualification_seed_count: int = Field(ge=0)
     field_sequence: int = Field(ge=1)
+    capacity: TournamentEntryFieldCapacity
     tournament_ranking_authority_fingerprint: str = Field(
         pattern=r"^[0-9a-f]{64}$"
     )
@@ -46,7 +50,6 @@ class TournamentDrawInputAuthority(FrozenInput):
     withdrawn_player_ids: tuple[str, ...]
     main_seed_player_ids: tuple[str, ...]
     qualification_seed_player_ids: tuple[str, ...]
-    bye_slots: int = Field(ge=0)
 
     @model_validator(mode="after")
     def validate_structure(self) -> "TournamentDrawInputAuthority":
@@ -78,10 +81,12 @@ class TournamentDrawInputAuthority(FrozenInput):
         ):
             raise ValueError("Qualification seed is outside canonical Q field")
         expected_placeholders = tuple(
-            f"Q{index}" for index in range(1, len(self.qualifier_placeholder_ids) + 1)
+            f"Q{index}" for index in range(1, self.capacity.qualifier_spots + 1)
         )
         if self.qualifier_placeholder_ids != expected_placeholders:
-            raise ValueError("Qualifier placeholder identities are not canonical")
+            raise ValueError(
+                "Qualifier placeholder identities/count differ from field capacity"
+            )
         return self
 
     @property
@@ -156,6 +161,7 @@ class TournamentDrawInputAuthorityBuilder:
             main_seed_count=main_seed_count,
             qualification_seed_count=qualification_seed_count,
             field_sequence=field_sequence,
+            capacity=field.capacity,
             tournament_ranking_authority_fingerprint=authority.fingerprint,
             ranking_snapshot_fingerprint=authority.ranking_snapshot_fingerprint,
             entry_field_fingerprint=field.fingerprint,
@@ -165,5 +171,4 @@ class TournamentDrawInputAuthorityBuilder:
             withdrawn_player_ids=field.withdrawn_player_ids,
             main_seed_player_ids=main_seed_player_ids,
             qualification_seed_player_ids=qualification_seed_player_ids,
-            bye_slots=field.capacity.bye_slots,
         )

@@ -367,6 +367,86 @@ class AuthoritativeRunSimulationDriver:
             ] and not legacy_completed:
                 raise ValueError("persisted match source Draw fingerprint conflicts")
 
+        if not legacy_completed:
+            frozen_late = sorted(
+                package.frozen_late_replacements,
+                key=lambda item: item.target_slot_id,
+            )
+            expected_late_fp = (
+                fingerprint(
+                    [item.model_dump(mode="json") for item in frozen_late]
+                )
+                if frozen_late
+                else None
+            )
+            if package.metadata.late_replacements_fingerprint != expected_late_fp:
+                raise ValueError(
+                    "persisted MatchPackage late-replacement fingerprint conflicts"
+                )
+            draw_slots = {
+                slot.slot_id: slot for slot in draw.main_draw.slots
+            }
+            observed_fingerprints: list[str] = []
+            for replacement in frozen_late:
+                if (
+                    replacement.draw_package_fingerprint
+                    != draw.metadata.build_fingerprint
+                    or replacement.entry_list_fingerprint
+                    != entry.metadata.build_fingerprint
+                ):
+                    raise ValueError(
+                        "persisted late-replacement producer lineage conflicts"
+                    )
+                slot = draw_slots.get(replacement.target_slot_id)
+                if (
+                    slot is None
+                    or slot.player_id != replacement.withdrawn_player_id
+                    or slot.bracket_position
+                    != replacement.target_bracket_position
+                ):
+                    raise ValueError(
+                        "persisted late-replacement target conflicts with Draw authority"
+                    )
+                targets = [
+                    (match, side)
+                    for match in package.main_draw_matches
+                    for side in ("top", "bottom")
+                    if getattr(match, f"{side}_slot_id")
+                    == replacement.target_slot_id
+                ]
+                if len(targets) != 1:
+                    raise ValueError(
+                        "persisted late-replacement Match side is ambiguous"
+                    )
+                target, side = targets[0]
+                if (
+                    getattr(target, f"{side}_player_id")
+                    != replacement.replacement_player_id
+                    or getattr(
+                        target,
+                        f"{side}_late_replacement_fingerprint",
+                    )
+                    != replacement.authority_fingerprint
+                ):
+                    raise ValueError(
+                        "persisted late-replacement Match evidence conflicts"
+                    )
+                observed_fingerprints.append(replacement.authority_fingerprint)
+
+            all_side_fingerprints = sorted(
+                fingerprint_value
+                for match in package.main_draw_matches
+                for fingerprint_value in (
+                    match.top_late_replacement_fingerprint,
+                    match.bottom_late_replacement_fingerprint,
+                )
+                if fingerprint_value is not None
+            )
+            if all_side_fingerprints != sorted(observed_fingerprints):
+                raise ValueError(
+                    "persisted MatchPackage has orphan late-replacement evidence"
+                )
+
         promotions = []
         if package.qualification_matches:
             final_round = max(m.round_number for m in package.qualification_matches)

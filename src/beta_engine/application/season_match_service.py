@@ -436,156 +436,27 @@ class SeasonMatchService:
         event_id: str,
         withdrawn_player_id: str,
     ) -> LateReplacementAuthority:
+        """Reject the #740 alternate shortcut until phase-aware repair exists.
+
+        Post-draw repair depends on Qualification/Main Draw process phase, redraw vs
+        seed-cascade vs frozen-slot semantics, Lucky Loser priority and the player's
+        first-real-match replacement cutoff. A persisted Draw alone cannot prove
+        those facts, so this command must fail closed instead of inserting an
+        alternate directly into the MatchPackage.
+        """
         if self.get_match_package(event_id=event_id).match_package_exists:
             raise ValueError(
                 "Late-replacement authority is locked after the MatchPackage is persisted."
             )
-
         draw_result = self.draw_service.get_draw_package(event_id=event_id)
         if draw_result.draw_package is None:
             raise ValueError(
-                "Persist a DrawPackage before recording a late replacement."
+                "Persist a DrawPackage before recording a post-draw replacement."
             )
-        draw_package = draw_result.draw_package
-        entry_result = self.draw_service.entry_list_service.get_entry_list(
-            event_id=event_id
-        )
-        if entry_result.entry_list is None:
-            raise ValueError(
-                "Persisted EntryList authority is missing for late replacement."
-            )
-        entry_list = entry_result.entry_list
-        if draw_package.metadata.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
-            raise ValueError(
-                "Persisted DrawPackage EntryList authority is stale."
-            )
-
-        players = self._active_players_for_season(draw_package.season)
-        active_fp = self._active_players_fingerprint(players)
-        if active_fp != entry_list.metadata.active_players_fingerprint:
-            raise ValueError(
-                "EntryList active-player authority is stale; regenerate producers before recording late replacement."
-            )
-
-        concrete_slots = [
-            slot
-            for slot in draw_package.main_draw.slots
-            if slot.player_id is not None
-            and not slot.is_bye
-            and not slot.is_qualifier_placeholder
-        ]
-        matching_slots = [
-            slot for slot in concrete_slots if slot.player_id == withdrawn_player_id
-        ]
-        if len(matching_slots) != 1:
-            raise ValueError(
-                f"Player '{withdrawn_player_id}' does not identify exactly one concrete Main Draw slot."
-            )
-        target_slot = matching_slots[0]
-
-        registry = self._load_late_replacements_registry()
-        existing = list(registry.replacements_by_event_id.get(event_id, []))
-        if any(
-            item.draw_package_fingerprint != draw_package.metadata.build_fingerprint
-            or item.entry_list_fingerprint != entry_list.metadata.build_fingerprint
-            or item.active_players_fingerprint != active_fp
-            for item in existing
-        ):
-            raise ValueError(
-                "Persisted late-replacement authority is stale; clear it before recording a new replacement."
-            )
-        for item in existing:
-            if item.target_slot_id == target_slot.slot_id:
-                if item.withdrawn_player_id == withdrawn_player_id:
-                    return item
-                raise ValueError("Late-replacement target slot already has conflicting authority.")
-
-        target_slots_by_id = {
-            slot.slot_id: slot
-            for slot in concrete_slots
-        }
-        withdrawn_slot_ids = {item.target_slot_id for item in existing} | {
-            target_slot.slot_id
-        }
-        withdrawn_slots = sorted(
-            (target_slots_by_id[slot_id] for slot_id in withdrawn_slot_ids),
-            key=lambda slot: (slot.bracket_position, slot.slot_id),
-        )
-
-        current_draw_players = {
-            slot.player_id
-            for slot in concrete_slots
-            if slot.slot_id not in withdrawn_slot_ids and slot.player_id is not None
-        }
-        alternates = sorted(
-            (
-                item
-                for item in entry_list.entries
-                if item.decision == "alternate"
-                and item.player_id not in current_draw_players
-                and not self.draw_service._player_committed_to_overlapping_event(
-                    event=self.draw_service._find_event(event_id),
-                    player_id=item.player_id,
-                )
-            ),
-            key=lambda item: (
-                item.ranking_priority,
-                item.player_id,
-                item.entry_id,
-            ),
-        )
-        if len(alternates) < len(withdrawn_slots):
-            raise ValueError(
-                "No eligible alternate remains for every recorded late replacement."
-            )
-
-        players_by_id = {player.player_id: player for player in players}
-        replacements: list[LateReplacementAuthority] = []
-        for slot, alternate in zip(
-            withdrawn_slots,
-            alternates[: len(withdrawn_slots)],
-            strict=True,
-        ):
-            if slot.player_id is None:
-                raise ValueError("Late-replacement target unexpectedly lost its drawn player.")
-            withdrawn_player = players_by_id.get(slot.player_id)
-            replacement_player = players_by_id.get(alternate.player_id)
-            if withdrawn_player is None or replacement_player is None:
-                raise ValueError("Late-replacement player is missing from the active-player snapshot.")
-            payload = {
-                "event_id": event_id,
-                "target_slot_id": slot.slot_id,
-                "target_bracket_position": slot.bracket_position,
-                "withdrawn_player_id": slot.player_id,
-                "withdrawn_player_name": withdrawn_player.name,
-                "withdrawn_country_code": withdrawn_player.country_code,
-                "replacement_entry_id": alternate.entry_id,
-                "replacement_player_id": alternate.player_id,
-                "replacement_player_name": replacement_player.name,
-                "replacement_country_code": replacement_player.country_code,
-                "replacement_source": "alternate_waitlist",
-                "draw_package_fingerprint": draw_package.metadata.build_fingerprint,
-                "entry_list_fingerprint": entry_list.metadata.build_fingerprint,
-                "active_players_fingerprint": active_fp,
-            }
-            replacements.append(
-                LateReplacementAuthority(
-                    **payload,
-                    authority_fingerprint=self._fingerprint(payload),
-                )
-            )
-
-        next_registry = dict(registry.replacements_by_event_id)
-        next_registry[event_id] = replacements
-        self._save_late_replacements_registry(
-            SeasonLateReplacementsRegistry(
-                replacements_by_event_id=next_registry
-            )
-        )
-        return next(
-            item
-            for item in replacements
-            if item.target_slot_id == target_slot.slot_id
+        raise ValueError(
+            "Canonical post-draw replacement is not implemented: phase-aware draw "
+            "repair, Lucky Loser priority and first-real-match cutoff authority are "
+            "required. The legacy direct-alternate MatchPackage shortcut is disabled."
         )
 
     def generate_match_package(self, *, event_id: str, request: MatchPackageGenerateRequest) -> SeasonEventMatchPackageResult:
@@ -1348,79 +1219,13 @@ class SeasonMatchService:
         players: list[SeasonActivePlayer],
     ) -> dict[str, LateReplacementAuthority]:
         replacements = self.get_late_replacements(event_id=draw_package.event_id)
-        if not replacements:
-            return {}
-        active_fp = self._active_players_fingerprint(players)
-        entries_by_id = {item.entry_id: item for item in entry_list.entries}
-        players_by_id = {item.player_id: item for item in players}
-        slots_by_id = {
-            item.slot_id: item for item in draw_package.main_draw.slots
-        }
-        concrete_draw_players = {
-            item.player_id
-            for item in draw_package.main_draw.slots
-            if item.player_id is not None
-        }
-        seen_targets: set[str] = set()
-        seen_replacements: set[str] = set()
-        by_slot: dict[str, LateReplacementAuthority] = {}
-        for replacement in replacements:
-            if replacement.draw_package_fingerprint != draw_package.metadata.build_fingerprint:
-                raise ValueError(
-                    "Persisted late-replacement authority is stale for the current DrawPackage."
-                )
-            if replacement.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
-                raise ValueError(
-                    "Persisted late-replacement authority is stale for the current EntryList."
-                )
-            if replacement.active_players_fingerprint != active_fp:
-                raise ValueError(
-                    "Persisted late-replacement authority is stale for the active-player snapshot."
-                )
-            slot = slots_by_id.get(replacement.target_slot_id)
-            if (
-                slot is None
-                or slot.player_id != replacement.withdrawn_player_id
-                or slot.bracket_position != replacement.target_bracket_position
-                or slot.is_bye
-                or slot.is_qualifier_placeholder
-            ):
-                raise ValueError(
-                    "Persisted late-replacement target no longer matches Draw authority."
-                )
-            source = entries_by_id.get(replacement.replacement_entry_id)
-            if (
-                source is None
-                or source.decision != "alternate"
-                or source.player_id != replacement.replacement_player_id
-            ):
-                raise ValueError(
-                    "Persisted late replacement no longer matches alternate waitlist authority."
-                )
-            if replacement.replacement_player_id not in players_by_id:
-                raise ValueError(
-                    "Persisted late-replacement player is no longer active."
-                )
-            if replacement.target_slot_id in seen_targets:
-                raise ValueError("Duplicate target slot in late-replacement authority.")
-            if replacement.replacement_player_id in seen_replacements:
-                raise ValueError("Duplicate player in late-replacement authority.")
-            if (
-                replacement.replacement_player_id in concrete_draw_players
-                and replacement.replacement_player_id != replacement.withdrawn_player_id
-            ):
-                raise ValueError(
-                    "Late-replacement player is already present in the persisted Draw."
-                )
-            payload = replacement.model_dump(
-                mode="json", exclude={"authority_fingerprint"}
+        if replacements:
+            raise ValueError(
+                "Legacy late-replacement sidecar authority cannot produce a new "
+                "MatchPackage. Canonical phase-aware draw repair / Lucky Loser "
+                "authority is required."
             )
-            if self._fingerprint(payload) != replacement.authority_fingerprint:
-                raise ValueError("Persisted late-replacement authority is corrupt.")
-            seen_targets.add(replacement.target_slot_id)
-            seen_replacements.add(replacement.replacement_player_id)
-            by_slot[replacement.target_slot_id] = replacement
-        return by_slot
+        return {}
 
     def _load_late_replacements_registry(
         self,

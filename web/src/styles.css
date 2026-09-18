@@ -1316,7 +1316,8 @@ textarea:focus-visible {
   gap: 0.22rem;
   flex: 1 1 230px;
   min-width: 140px;
-  max-width: 260px;
+  width: min(260px, 100%);
+  max-width: 100%;
 }
 
 .viewer-topbar-search input,

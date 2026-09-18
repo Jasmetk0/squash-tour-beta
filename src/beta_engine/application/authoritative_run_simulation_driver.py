@@ -659,8 +659,21 @@ class AuthoritativeRunSimulationDriver:
             return packages, authority_fp
         if not adopt:
             raise ValueError("frozen tournament authority is missing")
-        packages = self._packages(week)
-        if (len(packages) > 1 or len(self._topology(packages)) != 3) and self._schedule(
+        packages = self._packages(
+            week,
+            session=session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        if (
+            len(packages) > 1
+            or len(
+                self._topology_for_session(
+                    session, run_id, branch_id, packages
+                )
+            )
+            != 3
+        ) and self._schedule(
             session, run_id, branch_id, week
         ) is None:
             raise ValueError(
@@ -730,7 +743,13 @@ class AuthoritativeRunSimulationDriver:
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)
-            packages = self._packages(week, required=False)
+            packages = self._packages(
+                week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
             schedule = self._schedule(session, run_id, branch_id, week)
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
@@ -793,8 +812,17 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError("simulation position is stale")
             if current.current_week != schedule.week:
                 raise ValueError("schedule week is stale")
-            packages = self._packages(schedule.week)
-            self._validate_schedule(schedule, packages)
+            packages = self._packages(
+                schedule.week,
+                session=session,
+                run_id=schedule.run_id,
+                branch_id=schedule.branch_id,
+            )
+            self._validate_schedule(
+                session,
+                schedule,
+                packages,
+            )
             session.add(
                 WeekSimulationScheduleModel(
                     run_id=schedule.run_id,
@@ -825,7 +853,16 @@ class AuthoritativeRunSimulationDriver:
             )
             if current.current_week != schedule.week:
                 raise ValueError("schedule week is stale")
-            self._validate_schedule(schedule, self._packages(schedule.week))
+            self._validate_schedule(
+                session,
+                schedule,
+                self._packages(
+                    schedule.week,
+                    session=session,
+                    run_id=schedule.run_id,
+                    branch_id=schedule.branch_id,
+                ),
+            )
             return {
                 "schedule": schedule.model_dump(mode="json"),
                 "schedule_fingerprint": schedule.fingerprint,
@@ -982,8 +1019,40 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
-    def _validate_schedule(self, schedule, packages):
-        plans = self._topology(packages)
+    def _topology_for_session(self, session, run_id, branch_id, packages):
+        """Prefer canonical Run-owned Draw authority; keep legacy reader for history."""
+        if not packages:
+            return {}
+        canonical = []
+        for package in packages:
+            draw = TournamentDrawAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=package.event_id,
+            )
+            canonical.append((package, draw))
+        if all(draw is None for _, draw in canonical):
+            return self._topology(packages)
+        if any(draw is None for _, draw in canonical):
+            raise ValueError(
+                "week mixes canonical Draw authority with legacy-only tournament topology"
+            )
+        plans = {}
+        for package, draw in canonical:
+            projection = project_canonical_draw_to_match_topology(
+                draw=draw,
+                package=package,
+            )
+            for plan in projection.plans:
+                if plan.group_id in plans:
+                    raise ValueError("week topology contains duplicate group identity")
+                plans[plan.group_id] = plan
+        return plans
+
+    def _validate_schedule(self, session, schedule, packages):
+        plans = self._topology_for_session(
+            session, schedule.run_id, schedule.branch_id, packages
+        )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
             authored_sequence
@@ -1015,13 +1084,27 @@ class AuthoritativeRunSimulationDriver:
         packages = (
             self._authority_package(session, run_id, branch_id, week, adopt=False)[0]
             if frozen
-            else self._packages(week, required=False)
+            else self._packages(
+                week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
         )
         schedule = self._schedule(session, run_id, branch_id, week)
         if (
             schedule is None
             and packages
-            and (len(packages) > 1 or len(self._topology(packages)) != 3)
+            and (
+                len(packages) > 1
+                or len(
+                    self._topology_for_session(
+                        session, run_id, branch_id, packages
+                    )
+                )
+                != 3
+            )
             and not allow_missing_schedule
         ):
             raise ValueError(
@@ -1045,7 +1128,11 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
-        plans = self._topology(packages) if packages else {}
+        plans = (
+            self._topology_for_session(session, run_id, branch_id, packages)
+            if packages
+            else {}
+        )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
         if not authored_slots and len(packages) == 1 and len(plans) == 3:
@@ -1228,7 +1315,9 @@ class AuthoritativeRunSimulationDriver:
         schedule = self._schedule(
             session, command.run_id, command.branch_id, command.expected_week
         )
-        plans = self._topology(packages)
+        plans = self._topology_for_session(
+            session, command.run_id, command.branch_id, packages
+        )
         if schedule:
             spec = next(x for x in schedule.slots if x.ordinal == pos.slot_ordinal)
         else:

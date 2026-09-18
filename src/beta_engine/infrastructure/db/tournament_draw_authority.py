@@ -91,6 +91,7 @@ class TournamentDrawAuthorityStore:
         rebuilt = TournamentDrawAuthorityBuilder.build(
             draw_input=draw_input,
             command_id=row.command_id,
+            algorithm_version=authority.algorithm_version,
         )
         if rebuilt != authority:
             raise ValueError(

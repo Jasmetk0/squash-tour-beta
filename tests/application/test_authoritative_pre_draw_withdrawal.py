@@ -337,8 +337,6 @@ def test_draw_commit_locks_new_repairs_but_keeps_exact_retry(factory):
             event_id="event",
             command_id="commit-draw",
             draw_seed=123,
-            main_seed_count=2,
-            qualification_seed_count=1,
         )
 
     # Historical exact retry remains valid after the draw commitment.

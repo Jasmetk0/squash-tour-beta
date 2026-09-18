@@ -38,7 +38,7 @@ def _draw_input(*, with_qualification=False, with_bye=False):
         direct = ("A", "B", "C")
         qualification = ("D", "E")
         placeholders = ("Q1",)
-        main_seeds = ("A", "B")
+        main_seeds = ("A",)
         qualification_seeds = ("D",)
     elif with_bye:
         capacity = TournamentEntryFieldCapacity(
@@ -50,7 +50,7 @@ def _draw_input(*, with_qualification=False, with_bye=False):
         direct = ("A", "B", "C")
         qualification = ()
         placeholders = ()
-        main_seeds = ("A", "B")
+        main_seeds = ("A",)
         qualification_seeds = ()
     else:
         capacity = TournamentEntryFieldCapacity(
@@ -61,7 +61,7 @@ def _draw_input(*, with_qualification=False, with_bye=False):
         direct = ("A", "B", "C", "D")
         qualification = ()
         placeholders = ()
-        main_seeds = ("A", "B")
+        main_seeds = ("A",)
         qualification_seeds = ()
     return TournamentDrawInputAuthority(
         run_id="run",

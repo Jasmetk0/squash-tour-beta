@@ -17,12 +17,21 @@ from beta_engine.domain.tournaments.draw_input_authority import (
 
 TournamentDrawType = Literal["qualification", "main"]
 TournamentDrawEntrantKind = Literal["player", "qualifier_placeholder", "bye"]
+TournamentDrawAlgorithmVersion = Literal[
+    "protected_seed_shuffle.v1",
+    "idealized_seed_tiers.v2",
+]
 
 
 class TournamentDrawSlot(FrozenInput):
     """One immutable first-round bracket position."""
 
     slot_index: int = Field(ge=1)
+    idealized_slot_number: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
     entrant_kind: TournamentDrawEntrantKind
     player_id: str | None = None
     placeholder_id: str | None = None
@@ -89,6 +98,20 @@ class TournamentDrawBracket(FrozenInput):
             raise ValueError("Tournament draw slots must be canonical and contiguous")
         if len(self.nodes) != self.bracket_size - 1:
             raise ValueError("Tournament draw node count does not form a complete bracket")
+        idealized = tuple(
+            slot.idealized_slot_number
+            for slot in self.slots
+            if slot.idealized_slot_number is not None
+        )
+        if idealized:
+            if len(idealized) != self.bracket_size:
+                raise ValueError(
+                    "Idealized slot numbering must cover the complete bracket"
+                )
+            if set(idealized) != set(range(1, self.bracket_size + 1)):
+                raise ValueError(
+                    "Idealized slot numbering must be a permutation of bracket capacity"
+                )
 
         expected_seed_positions = tuple(
             (slot.seed_number, slot.slot_index)
@@ -132,9 +155,7 @@ class TournamentDrawAuthority(FrozenInput):
         "tournament_draw_authority.v1",
         "tournament_draw_authority.v2",
     ] = "tournament_draw_authority.v1"
-    algorithm_version: Literal["protected_seed_shuffle.v1"] = (
-        "protected_seed_shuffle.v1"
-    )
+    algorithm_version: TournamentDrawAlgorithmVersion = "protected_seed_shuffle.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -189,6 +210,7 @@ class TournamentDrawAuthorityBuilder:
         *,
         draw_input: TournamentDrawInputAuthority,
         command_id: str,
+        algorithm_version: TournamentDrawAlgorithmVersion = "idealized_seed_tiers.v2",
     ) -> TournamentDrawAuthority:
         capacity = draw_input.capacity
         if capacity.wild_card_slots:
@@ -226,6 +248,25 @@ class TournamentDrawAuthorityBuilder:
                     "Each canonical Qualification section must be a complete binary bracket"
                 )
 
+        if algorithm_version == "idealized_seed_tiers.v2":
+            expected_main_seed_count = _master_seed_count(
+                bracket_size=capacity.main_draw_size,
+                actual_player_count=len(draw_input.direct_main_player_ids),
+            )
+            if draw_input.main_seed_count != expected_main_seed_count:
+                raise ValueError(
+                    "Main seed count differs from the Master bracket seed formula"
+                )
+            if capacity.qualification_draw_size and capacity.qualifier_spots == 1:
+                expected_q_seed_count = _master_seed_count(
+                    bracket_size=capacity.qualification_draw_size,
+                    actual_player_count=len(draw_input.qualification_player_ids),
+                )
+                if draw_input.qualification_seed_count != expected_q_seed_count:
+                    raise ValueError(
+                        "Qualification seed count differs from the Master bracket seed formula"
+                    )
+
         expected_main_occupants = (
             len(draw_input.direct_main_player_ids)
             + len(draw_input.qualifier_placeholder_ids)
@@ -252,10 +293,12 @@ class TournamentDrawAuthorityBuilder:
                     seed_player_ids=draw_input.qualification_seed_player_ids,
                     placeholder_ids=(),
                     explicit_byes=0,
+                    algorithm_version=algorithm_version,
                 )
             else:
                 qualification_sections = cls._build_qualification_sections(
                     draw_input=draw_input,
+                    algorithm_version=algorithm_version,
                 )
 
         main = cls._build_bracket(
@@ -266,6 +309,7 @@ class TournamentDrawAuthorityBuilder:
             seed_player_ids=draw_input.main_seed_player_ids,
             placeholder_ids=draw_input.qualifier_placeholder_ids,
             explicit_byes=capacity.bye_slots,
+            algorithm_version=algorithm_version,
         )
         return TournamentDrawAuthority(
             schema_version=(
@@ -273,6 +317,7 @@ class TournamentDrawAuthorityBuilder:
                 if qualification_sections
                 else "tournament_draw_authority.v1"
             ),
+            algorithm_version=algorithm_version,
             run_id=draw_input.run_id,
             branch_id=draw_input.branch_id,
             event_id=draw_input.event_id,
@@ -288,6 +333,7 @@ class TournamentDrawAuthorityBuilder:
         cls,
         *,
         draw_input: TournamentDrawInputAuthority,
+        algorithm_version: TournamentDrawAlgorithmVersion,
     ) -> tuple[TournamentDrawBracket, ...]:
         capacity = draw_input.capacity
         section_count = capacity.qualifier_spots
@@ -360,6 +406,7 @@ class TournamentDrawAuthorityBuilder:
                     section_id=section_id,
                     section_ordinal=section_index,
                     section_count=section_count,
+                    algorithm_version=algorithm_version,
                 )
             )
         if cursor != len(unseeded):
@@ -383,6 +430,7 @@ class TournamentDrawAuthorityBuilder:
         section_id: str | None = None,
         section_ordinal: int = 0,
         section_count: int = 1,
+        algorithm_version: TournamentDrawAlgorithmVersion,
     ) -> TournamentDrawBracket:
         if len(set(player_ids)) != len(player_ids):
             raise ValueError("Tournament draw contains duplicate player identities")
@@ -391,9 +439,6 @@ class TournamentDrawAuthorityBuilder:
                 "Tournament draw seeds must follow the frozen ranking-derived field order"
             )
 
-        local_seed_positions = _seed_positions(
-            bracket_size, len(seed_player_ids)
-        )
         effective_seed_numbers = (
             seed_numbers
             if seed_numbers is not None
@@ -403,6 +448,24 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError("Tournament draw seed identity count differs from seed players")
         if len(set(effective_seed_numbers)) != len(effective_seed_numbers):
             raise ValueError("Tournament draw seed identities must be unique")
+
+        draw_scope = draw_type if section_id is None else f"{draw_type}:{section_id}"
+        idealized_by_position = (
+            _idealized_slot_order(bracket_size)
+            if algorithm_version == "idealized_seed_tiers.v2"
+            else ()
+        )
+        local_seed_positions = (
+            _master_seed_positions(
+                bracket_size=bracket_size,
+                seed_count=len(seed_player_ids),
+                draw_seed=draw_input.draw_seed,
+                event_id=draw_input.event_id,
+                draw_scope=draw_scope,
+            )
+            if algorithm_version == "idealized_seed_tiers.v2"
+            else _seed_positions(bracket_size, len(seed_player_ids))
+        )
 
         seed_positions: dict[int, int] = {}
         slots: dict[int, TournamentDrawSlot | None] = {
@@ -416,21 +479,43 @@ class TournamentDrawAuthorityBuilder:
             seed_positions[seed_number] = position
             slots[position] = TournamentDrawSlot(
                 slot_index=position,
+                idealized_slot_number=(
+                    idealized_by_position[position - 1]
+                    if idealized_by_position
+                    else None
+                ),
                 entrant_kind="player",
                 player_id=player_id,
                 seed_number=seed_number,
                 is_seed_protected=True,
             )
 
-        bye_positions = _choose_bye_positions(
-            bracket_size=bracket_size,
-            explicit_byes=explicit_byes,
-            seed_positions=seed_positions,
-            occupied_positions={index for index, slot in slots.items() if slot is not None},
+        bye_positions = (
+            _choose_master_bye_positions(
+                bracket_size=bracket_size,
+                explicit_byes=explicit_byes,
+                occupied_positions={
+                    index for index, slot in slots.items() if slot is not None
+                },
+            )
+            if algorithm_version == "idealized_seed_tiers.v2"
+            else _choose_bye_positions(
+                bracket_size=bracket_size,
+                explicit_byes=explicit_byes,
+                seed_positions=seed_positions,
+                occupied_positions={
+                    index for index, slot in slots.items() if slot is not None
+                },
+            )
         )
         for position in bye_positions:
             slots[position] = TournamentDrawSlot(
                 slot_index=position,
+                idealized_slot_number=(
+                    idealized_by_position[position - 1]
+                    if idealized_by_position
+                    else None
+                ),
                 entrant_kind="bye",
             )
 
@@ -461,12 +546,22 @@ class TournamentDrawAuthorityBuilder:
             if kind == "player":
                 slots[position] = TournamentDrawSlot(
                     slot_index=position,
+                    idealized_slot_number=(
+                        idealized_by_position[position - 1]
+                        if idealized_by_position
+                        else None
+                    ),
                     entrant_kind="player",
                     player_id=identity,
                 )
             else:
                 slots[position] = TournamentDrawSlot(
                     slot_index=position,
+                    idealized_slot_number=(
+                        idealized_by_position[position - 1]
+                        if idealized_by_position
+                        else None
+                    ),
                     entrant_kind="qualifier_placeholder",
                     placeholder_id=identity,
                 )
@@ -500,6 +595,106 @@ class TournamentDrawAuthorityBuilder:
             ),
             qualifier_placeholder_slots=qualifier_slots,
         )
+
+
+def _master_seed_count(*, bracket_size: int, actual_player_count: int) -> int:
+    if actual_player_count < 0:
+        raise ValueError("Actual player count cannot be negative")
+    if actual_player_count == 0:
+        return 0
+    return min(actual_player_count, max(1, bracket_size // 4))
+
+
+def _idealized_slot_order(bracket_size: int) -> tuple[int, ...]:
+    if bracket_size < 2 or not _is_power_of_two(bracket_size):
+        raise ValueError("Tournament bracket size must be a power of two >= 2")
+    order = [1]
+    size = 1
+    while size < bracket_size:
+        next_size = size * 2
+        expanded: list[int] = []
+        for index, value in enumerate(order):
+            pair = (value, next_size + 1 - value)
+            expanded.extend(pair if index % 2 == 0 else reversed(pair))
+        order = expanded
+        size = next_size
+    return tuple(order)
+
+
+def _master_seed_positions(
+    *,
+    bracket_size: int,
+    seed_count: int,
+    draw_seed: int,
+    event_id: str,
+    draw_scope: str,
+) -> dict[int, int]:
+    if seed_count < 0 or seed_count > bracket_size:
+        raise ValueError("Tournament draw seed count exceeds bracket size")
+    if seed_count == 0:
+        return {}
+    idealized_by_position = _idealized_slot_order(bracket_size)
+    physical_by_idealized = {
+        idealized: position
+        for position, idealized in enumerate(idealized_by_position, start=1)
+    }
+    assigned_idealized: dict[int, int] = {1: 1}
+    if seed_count >= 2:
+        assigned_idealized[2] = 2
+    tier_start = 3
+    while tier_start <= seed_count:
+        tier_capacity_end = min(bracket_size, 2 * (tier_start - 1))
+        actual_seed_end = min(seed_count, tier_capacity_end)
+        idealized_slots = list(range(tier_start, tier_capacity_end + 1))
+        rng = DeterministicRng(
+            _draw_named_subseed(
+                draw_seed=draw_seed,
+                event_id=event_id,
+                key=(
+                    f"{draw_scope}:seed-tier:"
+                    f"{tier_start}-{tier_capacity_end}"
+                ),
+            )
+        )
+        rng.shuffle(idealized_slots)
+        actual_seed_numbers = list(range(tier_start, actual_seed_end + 1))
+        for seed_number, idealized_slot in zip(
+            actual_seed_numbers,
+            idealized_slots[: len(actual_seed_numbers)],
+            strict=True,
+        ):
+            assigned_idealized[seed_number] = idealized_slot
+        tier_start = tier_capacity_end + 1
+    return {
+        seed_number: physical_by_idealized[idealized_slot]
+        for seed_number, idealized_slot in assigned_idealized.items()
+    }
+
+
+def _choose_master_bye_positions(
+    *,
+    bracket_size: int,
+    explicit_byes: int,
+    occupied_positions: set[int],
+) -> tuple[int, ...]:
+    if explicit_byes < 0:
+        raise ValueError("Tournament draw BYE count cannot be negative")
+    idealized_by_position = _idealized_slot_order(bracket_size)
+    physical_by_idealized = {
+        idealized: position
+        for position, idealized in enumerate(idealized_by_position, start=1)
+    }
+    positions = []
+    for idealized_slot in range(
+        bracket_size, bracket_size - explicit_byes, -1
+    ):
+        position = physical_by_idealized[idealized_slot]
+        if position in occupied_positions:
+            raise ValueError(
+                "Master BYE idealized slot conflicts with a protected seed position"
+            )
+        positions.append(position)
+    return tuple(sorted(positions))
 
 
 def _draw_subseed(

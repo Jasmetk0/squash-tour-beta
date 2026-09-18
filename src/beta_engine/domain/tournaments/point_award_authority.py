@@ -35,6 +35,7 @@ class TournamentPointAwardAuthority(FrozenInput):
     seed: int
     ranking_status: Literal["ranked"]
     tournament_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    point_distribution: dict[str, int]
     point_distribution_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     point_distribution_source: str = Field(min_length=1)
     awards: tuple[TournamentPlayerPointAwardAuthority, ...]
@@ -56,6 +57,42 @@ class TournamentPointAwardAuthority(FrozenInput):
             raise ValueError(
                 "Canonical ranked Point Award authority cannot use unranked distribution"
             )
+        if (
+            not self.point_distribution
+            or any(value < 0 for value in self.point_distribution.values())
+            or _hash(self.point_distribution) != self.point_distribution_fingerprint
+        ):
+            raise ValueError("Tournament Point Award distribution snapshot mismatch")
+        for award in self.awards:
+            expected_points = self.point_distribution.get(award.reached_stage)
+            if expected_points is None:
+                raise ValueError(
+                    "Tournament Point Award stage is absent from frozen distribution"
+                )
+            if (
+                award.ranking_points_awarded != expected_points
+                or award.race_points_awarded != expected_points
+            ):
+                raise ValueError(
+                    "Tournament Point Award amount differs from frozen distribution"
+                )
+            expected_award_fingerprint = _hash(
+                {
+                    "schema_version": "tournament_player_point_award_authority.v1",
+                    "event_id": self.event_id,
+                    "seed": self.seed,
+                    "player_id": award.player_id,
+                    "reached_stage": award.reached_stage,
+                    "qualifier": award.qualifier,
+                    "seed_number": award.seed_number,
+                    "ranking_points_awarded": award.ranking_points_awarded,
+                    "race_points_awarded": award.race_points_awarded,
+                    "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
+                    "source_player_result_fingerprint": award.source_player_result_fingerprint,
+                }
+            )
+            if award.award_fingerprint != expected_award_fingerprint:
+                raise ValueError("Tournament Point Award fingerprint mismatch")
         if self.total_ranking_points != sum(
             award.ranking_points_awarded for award in self.awards
         ):

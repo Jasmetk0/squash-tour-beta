@@ -298,6 +298,13 @@ class SeasonDrawService:
             raise ValueError(
                 f"Player '{player_id}' is already committed to an overlapping event."
             )
+        if any(
+            item.replacement_player_id == player_id
+            for item in self.get_pre_draw_withdrawal_replacements(event_id=event_id)
+        ):
+            raise ValueError(
+                f"Player '{player_id}' is already reserved as a pre-draw replacement."
+            )
 
         registry = self._load_wildcard_registry()
         current = list(registry.assignments_by_event_id.get(event_id, []))

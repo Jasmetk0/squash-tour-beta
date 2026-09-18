@@ -36,8 +36,10 @@ authoritative tournament/ranking bridge. Wild-card provenance from #738 remains 
 useful primitive. The #739/#740 pre-/post-draw replacement shortcut producers are
 now fail-closed after the post-merge canon audit; already persisted packages remain
 historically readable. Canonical pre-draw field rebalance now has a Run/Branch application command over
-the frozen Tournament Ranking Snapshot and Entry/Application payload. The legacy
-Admin shortcut is not yet migrated onto that command. Later replacement work must
+the frozen Tournament Ranking Snapshot and Entry/Application payload, plus a
+separate canonical Run/Branch Admin HTTP boundary for field inspection and guarded
+withdrawal mutation. The older simulation-run Admin endpoint remains legacy rather
+than being silently reinterpreted. Later replacement work must
 still proceed through Qualification/Main Draw repair phases, RWC/WC handling, Lucky
 Loser priority and the per-player first-real-match replacement cutoff.
 
@@ -104,7 +106,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
-- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist. Canonical pre-draw field rebalance is now implemented as an append-only Run/Branch command, while Admin migration, RWC/WC repair, post-draw repair phases, LL ordering and the replacement cutoff remain Gate 3 work.
+- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist. Canonical pre-draw field rebalance is implemented as an append-only Run/Branch command and now has a branch-scoped Admin HTTP boundary; legacy UI/endpoint retirement, RWC/WC repair, post-draw repair phases, LL ordering and the replacement cutoff remain Gate 3 work.
 
 ## 6. Match Engine v1
 
@@ -229,6 +231,9 @@ After #756 restored the complete frontend test baseline, the next bounded Gate 3
 slice exposes the already-defined canonical Tournament Entry Field rebalance through
 a transaction-owned application command. It reuses frozen application evidence and
 the Edition's Tournament Ranking Snapshot, appends one immutable repair version and
-reports the exact Main promotion / Qualification backfill delta. New repairs remain
-locked after Tournament Draw Input commitment; post-draw redraw/cascade/freeze,
-RWC/WC, Lucky Loser and first-real-match replacement rules remain separate work.
+reports the exact Main promotion / Qualification backfill delta. The immediate
+follow-up exposes this state and command through a dedicated Run/Branch Admin HTTP
+surface with expected-field fingerprint protection. New repairs remain locked after
+Tournament Draw Input commitment; legacy simulation-run UI/endpoint retirement,
+post-draw redraw/cascade/freeze, RWC/WC, Lucky Loser and first-real-match replacement
+rules remain separate work.

@@ -40,6 +40,24 @@ The persistence store remains append-only.
 - The result exposes predecessor and new field fingerprints plus the actual
   promotion/backfill delta for audit and later Admin presentation.
 
+## Canonical Admin HTTP boundary
+
+The Run/Branch authority is exposed through a separate canonical Admin route family:
+
+- `GET /admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/entry-field`
+  returns the current field sequence/fingerprint, Main/Qualification/below-cut
+  partitions, withdrawals and whether Draw Input has already locked further repair.
+- `POST .../entry-field/pre-draw-withdrawal` accepts the exact
+  `CanonicalPreDrawWithdrawalCommand`, including the expected field fingerprint.
+
+The path scope and command scope must match. Validation errors return 422; missing
+field reads return 404; stale field identity, scope mismatch and draw-locked mutation
+return 409. Exact historical retries retain their existing idempotent behavior.
+
+This is intentionally separate from the legacy `/runs/{run_id}/events/.../pre-draw-withdrawal`
+surface, whose identity belongs to the older simulation-run namespace and whose
+direct-replacement semantics are not canonical Run/Branch authority.
+
 ## Hard boundary
 
 This command is **pre-draw only**. Once `TournamentDrawInputAuthority` is committed,
@@ -53,7 +71,7 @@ This slice deliberately does not implement:
 - Reserve Wild Card / WC repair;
 - per-player first-real-match replacement cutoff;
 - Final Commitment / Week Tournament Lock policy;
-- migration of the legacy Admin pre-draw endpoint/UI onto this command.
+- migration/retirement of the legacy simulation-run pre-draw endpoint and its UI.
 
 Those remain separate Gate 3 work. The legacy direct-alternate shortcut must stay
 non-authoritative and must not be treated as a substitute for this Run-owned field

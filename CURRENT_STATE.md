@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #756 at
-`905161ec4402667483c0878661461fcc5a4f33de`, plus the current bounded
-canonical pre-draw withdrawal command slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #757 at
+`0b3441909f89983e97e12d342c0835db63fb7654`, plus the current bounded
+canonical Tournament Entry Field Admin HTTP slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #756 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #757 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -60,10 +60,12 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   fail closed; already persisted Draw/Match packages remain readable/replayable.
   Canonical pre-draw field rebalance now has a Run/Branch transaction-owned
   application command that reuses the frozen Tournament Ranking Snapshot and
-  frozen Tournament Entry/Application payload. The legacy Admin shortcut is not
-  migrated onto it yet. Post-draw repair phases, RWC/WC repair, LL priority and
-  the first-real-match replacement cutoff are still required before those later
-  producer paths may be re-enabled.
+  frozen Tournament Entry/Application payload. The current follow-up exposes that
+  authority through a separate Run/Branch-scoped Admin HTTP boundary with field
+  fingerprint inspection and optimistic mutation guards. The legacy simulation-run
+  endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
+  priority and the first-real-match replacement cutoff are still required before
+  those later producer paths may be re-enabled.
 - #689 (including #690) and #691–720 are in the fetched ancestry; the v64 Master
   statement that #689 was open is historical. #720 feature CI #861 succeeded.
 - Active authority pointers to v50/v54/v61 were stale documentation, not competing
@@ -218,7 +220,9 @@ backfill Qualification without changing Main. Command retry is idempotent and th
 result exposes predecessor/new field fingerprints plus promotion/backfill deltas.
 
 The existing Tournament Draw Input commitment remains the hard lock for new pre-draw
-repairs. Legacy Admin UI/API migration, RWC/WC repair, Qualification redraw/cascade/
-freeze phases, Lucky Loser ordering and the per-player first-real-match replacement
-cutoff remain Gate 3 work. See
+repairs. The current follow-up adds canonical Run/Branch Admin HTTP inspection and
+mutation routes; they do not reuse or reinterpret the older simulation-run endpoint.
+Legacy UI/endpoint retirement, RWC/WC repair, Qualification redraw/cascade/freeze
+phases, Lucky Loser ordering and the per-player first-real-match replacement cutoff
+remain Gate 3 work. See
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

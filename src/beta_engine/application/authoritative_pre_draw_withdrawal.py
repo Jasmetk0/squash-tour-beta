@@ -5,12 +5,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.tournaments.entry_field import TournamentEntryField
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
@@ -29,6 +32,16 @@ class CanonicalPreDrawWithdrawalCommand(FrozenInput):
     expected_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     withdrawn_player_ids: tuple[str, ...] = Field(min_length=1)
 
+    @field_validator("withdrawn_player_ids", mode="before")
+    @classmethod
+    def normalize_json_withdrawal_ids(cls, value):
+        # FrozenInput is strict, while JSON arrays arrive as Python lists.
+        # Canonicalize only that wire representation into the immutable tuple
+        # used by the command contract; all element validation remains strict.
+        if isinstance(value, list):
+            return tuple(value)
+        return value
+
     @model_validator(mode="after")
     def validate_withdrawals(self) -> "CanonicalPreDrawWithdrawalCommand":
         if any(not player_id.strip() for player_id in self.withdrawn_player_ids):
@@ -36,6 +49,26 @@ class CanonicalPreDrawWithdrawalCommand(FrozenInput):
         if len(set(self.withdrawn_player_ids)) != len(self.withdrawn_player_ids):
             raise ValueError("withdrawn player identities must be unique")
         return self
+
+
+class CanonicalTournamentEntryFieldState(FrozenInput):
+    """Read model for the current authoritative Tournament Entry Field."""
+
+    schema_version: Literal["canonical_tournament_entry_field_state.v1"] = (
+        "canonical_tournament_entry_field_state.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    field_sequence: int = Field(ge=1)
+    field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    mode: Literal["initial", "pre_draw_repair"]
+    direct_main_player_ids: tuple[str, ...]
+    qualification_player_ids: tuple[str, ...]
+    below_qualification_cut_player_ids: tuple[str, ...]
+    withdrawn_player_ids: tuple[str, ...]
+    draw_input_committed: bool
+    pre_draw_repair_locked_by_draw_input: bool
 
 
 class CanonicalPreDrawWithdrawalResult(FrozenInput):
@@ -70,6 +103,45 @@ class CanonicalPreDrawWithdrawalService:
     """
 
     factory: sessionmaker[Session]
+
+    def inspect(
+        self, *, run_id: str, branch_id: str, event_id: str
+    ) -> CanonicalTournamentEntryFieldState:
+        with self.factory() as session:
+            history = TournamentEntryFieldStore(session).history(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if not history:
+                raise KeyError(
+                    f"Tournament Entry Field does not exist for event '{event_id}'"
+                )
+            latest = history[-1]
+            draw_input_committed = (
+                TournamentDrawInputAuthorityStore(session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                )
+                is not None
+            )
+            return CanonicalTournamentEntryFieldState(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                field_sequence=len(history),
+                field_fingerprint=latest.fingerprint,
+                mode=latest.mode,
+                direct_main_player_ids=latest.direct_main_player_ids,
+                qualification_player_ids=latest.qualification_player_ids,
+                below_qualification_cut_player_ids=(
+                    latest.below_qualification_cut_player_ids
+                ),
+                withdrawn_player_ids=latest.withdrawn_player_ids,
+                draw_input_committed=draw_input_committed,
+                pre_draw_repair_locked_by_draw_input=draw_input_committed,
+            )
 
     def execute(
         self, command: CanonicalPreDrawWithdrawalCommand

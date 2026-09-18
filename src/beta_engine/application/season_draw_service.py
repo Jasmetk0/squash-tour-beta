@@ -405,6 +405,14 @@ class SeasonDrawService:
 
         registry = self._load_pre_draw_withdrawals_registry()
         existing = list(registry.replacements_by_event_id.get(event_id, []))
+        if any(
+            item.entry_list_fingerprint != entry_list.metadata.build_fingerprint
+            or item.active_players_fingerprint != active_fp
+            for item in existing
+        ):
+            raise ValueError(
+                "Persisted pre-draw withdrawal authority is stale; clear it before recording a new withdrawal."
+            )
         withdrawn_ids = {
             item.withdrawn_player_id for item in existing
         } | {withdrawn_player_id}

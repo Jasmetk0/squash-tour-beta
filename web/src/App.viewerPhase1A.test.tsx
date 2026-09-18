@@ -427,7 +427,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer')
 
-    const picker = await screen.findByLabelText('Active run picker')
+    const picker = await screen.findByLabelText('Active Product Run picker')
     expect(picker).toHaveTextContent('No active run selected')
     expect(within(picker).getByRole('link', { name: 'Browse all runs' })).toHaveAttribute('href', '/viewer/runs')
     expect(await within(picker).findByRole('option', { name: /run-a — season 2030, seed 9/ })).toBeInTheDocument()
@@ -446,9 +446,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer')
 
-    const picker = await screen.findByLabelText('Active run picker')
+    const picker = await screen.findByLabelText('Active Product Run picker')
     await within(picker).findByRole('option', { name: /run-b — season 2031, seed 11/ })
-    await user.selectOptions(within(picker).getByLabelText('Available runs'), 'run-b')
+    await user.selectOptions(within(picker).getByLabelText('Available Product Runs'), 'run-b')
     await user.click(within(picker).getByRole('button', { name: 'Set active run' }))
 
     await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b'))
@@ -465,8 +465,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer')
 
-    const picker = await screen.findByLabelText('Active run picker')
-    expect(await within(picker).findByText('No runs are available yet.')).toBeInTheDocument()
+    const picker = await screen.findByLabelText('Active Product Run picker')
+    expect(await within(picker).findByText('No Product Runs are available yet.')).toBeInTheDocument()
     expect(within(picker).getByRole('button', { name: 'Set active run' })).toBeDisabled()
     expectNoForbiddenViewerActions()
   })
@@ -476,8 +476,8 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     renderAppAt('/viewer')
 
-    const picker = await screen.findByLabelText('Active run picker')
-    expect(await within(picker).findByText('Run list is unavailable.')).toBeInTheDocument()
+    const picker = await screen.findByLabelText('Active Product Run picker')
+    expect(await within(picker).findByText('runs unavailable')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -516,22 +516,23 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     const runCard = await screen.findByLabelText('Run browser-run-a')
     expect(runCard).toHaveTextContent('browser-run-a')
-    expect(runCard).toHaveTextContent('Season')
-    expect(runCard).toHaveTextContent('2032')
-    expect(runCard).toHaveTextContent('Seed')
-    expect(runCard).toHaveTextContent('21')
-    expect(runCard).toHaveTextContent('Source')
-    expect(runCard).toHaveTextContent('fresh_seed')
-    expect(runCard).toHaveTextContent('Child runs')
-    expect(runCard).toHaveTextContent('0')
-    expect(runCard).toHaveTextContent('Next event index')
-    expect(runCard).toHaveTextContent('2')
-    expect(runCard).toHaveTextContent('Total events')
-    expect(runCard).toHaveTextContent('9')
-    expect(runCard).toHaveTextContent('Completed event count')
+    expect(runCard).toHaveTextContent('Product Run ID')
+    expect(runCard).toHaveTextContent('Status')
+    expect(runCard).toHaveTextContent('active')
+    expect(runCard).toHaveTextContent('Storage kind')
+    expect(runCard).toHaveTextContent('custom_local')
+    expect(runCard).toHaveTextContent('Read-only')
+    expect(runCard).toHaveTextContent('false')
+    expect(runCard).toHaveTextContent('World ID')
+    expect(runCard).toHaveTextContent('test-world')
+    expect(runCard).toHaveTextContent('Timeline')
+    expect(runCard).toHaveTextContent('2032–2032')
+    expect(runCard).toHaveTextContent('Official Branch ID')
+    expect(runCard).toHaveTextContent('browser-run-a-official')
+    expect(runCard).toHaveTextContent('Mapped SimulationRuns')
+    expect(runCard).toHaveTextContent('1')
 
-    expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('Parent run')
-    expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('browser-run-a')
+    expect(screen.getByLabelText('Run browser-run-b')).toHaveTextContent('browser-run-b-official')
 
     const expectedLinks = [
       ['Season calendar', '/viewer/runs/browser-run-a/calendar'],
@@ -2420,7 +2421,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     }
   }, 20000)
 
-  it('keeps context-aware mode switcher mappings on equivalent Viewer and Admin routes', async () => {
+  it('keeps context-aware mode switcher mappings identity-safe across Viewer and Admin routes', async () => {
     const mappings = [
       ['/viewer/players', '/admin/players'],
       ['/admin/players', '/viewer/players'],
@@ -2428,10 +2429,10 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
       ['/admin/world/countries', '/viewer/countries'],
       ['/viewer/tour', '/admin/tour-seasons'],
       ['/admin/tour-seasons', '/viewer/tour'],
-      ['/viewer/runs/run-a/calendar', '/admin/runs/run-a/calendar'],
-      ['/admin/runs/run-a/calendar', '/viewer/runs/run-a/calendar'],
-      ['/viewer/runs/run-a/players', '/admin/runs/run-a/players'],
-      ['/admin/runs/run-a/players', '/viewer/runs/run-a/players']
+      ['/viewer/runs/run-a/calendar', '/admin/runs/run-a/branches'],
+      ['/admin/runs/run-a/calendar', '/viewer/runs'],
+      ['/viewer/runs/run-a/players', '/admin/runs/run-a/branches'],
+      ['/admin/runs/run-a/players', '/viewer/runs']
     ]
 
     for (const [route, expectedHref] of mappings) {

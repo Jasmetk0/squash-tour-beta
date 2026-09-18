@@ -707,6 +707,17 @@ def _validate_saved_draw_inputs_against_live_dependencies(
     for row in entry_rows:
         entry_by_event.setdefault(row.event_id, []).append(row)
 
+    from beta_engine.domain.tournaments.wild_card_authority import (
+        TournamentWildCardAuthority,
+    )
+
+    saved_wc_by_event = {
+        value["event_id"]: TournamentWildCardAuthority.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("wild_card_authorities", [])
+    }
+
     ranking_store = TournamentRankingSnapshotAuthorityStore(session)
     for value in draw_values:
         row = TournamentDrawInputAuthorityModel(**value)
@@ -736,6 +747,7 @@ def _validate_saved_draw_inputs_against_live_dependencies(
             ranking_authority=authority,
             field=fields[-1],
             field_sequence=len(fields),
+            wild_card_authority=saved_wc_by_event.get(row.event_id),
         )
 
 

@@ -1527,7 +1527,7 @@ class AuthoritativeRunSimulationDriver:
                 (command.run_id, command.branch_id, command.expected_week.ordinal),
             ).package_json
         )
-        for package, point_authority, _ in items:
+        for package, point_authority, draw_fp in items:
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches
@@ -1535,23 +1535,42 @@ class AuthoritativeRunSimulationDriver:
             )
             if not all(m.match_id in loaded for m in matches):
                 continue
-            terminals = tuple(
-                m
-                for m in package.main_draw_matches
-                if m.match_id not in package.frozen_bye_match_ids
-                and not m.winner_to_match_id
-            )
-            if len(matches) == 3 and len(terminals) == 3:
-                _, ordered = validate_adopted_four_player_match_package(package)
-                terminals = (ordered[2],)
-            if len(terminals) != 1:
-                raise ValueError("frozen tournament topology has ambiguous terminal")
+            if draw_fp is not None:
+                draw = TournamentDrawAuthorityStore(session).get(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_id=package.event_id,
+                )
+                if draw is None or draw.fingerprint != draw_fp:
+                    raise ValueError(
+                        "frozen tournament canonical Draw binding changed"
+                    )
+                projection = project_canonical_draw_to_match_topology(
+                    draw=draw,
+                    package=package,
+                )
+                terminal_match_id = projection.terminal_group_id
+            else:
+                terminals = tuple(
+                    m
+                    for m in package.main_draw_matches
+                    if m.match_id not in package.frozen_bye_match_ids
+                    and not m.winner_to_match_id
+                )
+                if len(matches) == 3 and len(terminals) == 3:
+                    _, ordered = validate_adopted_four_player_match_package(package)
+                    terminals = (ordered[2],)
+                if len(terminals) != 1:
+                    raise ValueError(
+                        "frozen tournament topology has ambiguous terminal"
+                    )
+                terminal_match_id = terminals[0].match_id
             auth = AuthoritativeTournamentResult(
                 event_id=package.event_id,
                 groups=tuple(loaded[m.match_id] for m in matches),
-                terminal_group_ids=(terminals[0].match_id,),
+                terminal_group_ids=(terminal_match_id,),
                 champion_player_id=loaded[
-                    terminals[0].match_id
+                    terminal_match_id
                 ].result.winner_player_id,
                 match_result_fingerprints=tuple(
                     loaded[m.match_id].result_fingerprint for m in matches

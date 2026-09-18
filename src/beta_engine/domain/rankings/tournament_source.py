@@ -4,16 +4,16 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
 from beta_engine.application.season_event_results_service import SeasonEventResultPackage
 from beta_engine.application.season_point_awards_service import EventPointAwardPackage
 from beta_engine.domain.rankings.official import FrozenInput
-from beta_engine.domain.tournaments.result_authority import TournamentResultAuthority
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPointAwardAuthority,
 )
+from beta_engine.domain.tournaments.result_authority import TournamentResultAuthority
 
 
 class OwnedTournamentRankingSource(FrozenInput):
@@ -21,10 +21,11 @@ class OwnedTournamentRankingSource(FrozenInput):
         "owned_tournament_ranking_source.v1",
         "owned_tournament_ranking_source.v2",
         "owned_tournament_ranking_source.v3",
+        "owned_tournament_ranking_source.v4",
     ] = "owned_tournament_ranking_source.v1"
     binding: TournamentRankingBinding
-    result: SeasonEventResultPackage
-    awards: EventPointAwardPackage
+    result: SeasonEventResultPackage | None = None
+    awards: EventPointAwardPackage | None = None
     canonical_result: TournamentResultAuthority | None = None
     canonical_awards: TournamentPointAwardAuthority | None = None
     adopted_by_command_id: str = Field(min_length=1, max_length=128)
@@ -32,17 +33,24 @@ class OwnedTournamentRankingSource(FrozenInput):
         "explicit_legacy_tournament_adoption",
         "canonical_run_owned_tournament_result",
         "canonical_run_owned_tournament_result_and_points",
+        "canonical_run_owned_tournament_authorities",
     ] = "explicit_legacy_tournament_adoption"
+
+    @model_serializer(mode="wrap")
+    def serialize_source(self, handler):
+        payload = handler(self)
+        if self.schema_version == "owned_tournament_ranking_source.v4":
+            # Canonical v4 does not persist compatibility DTO copies.
+            payload.pop("result", None)
+            payload.pop("awards", None)
+        return payload
 
     @model_validator(mode="after")
     def validate_identity(self):
-        if (
-            self.binding.event_id != self.result.event_id
-            or self.binding.event_id != self.awards.event_id
-        ):
-            raise ValueError("Owned tournament source event identity mismatch")
+        version = self.schema_version
 
-        if self.schema_version == "owned_tournament_ranking_source.v1":
+        if version == "owned_tournament_ranking_source.v1":
+            self._require_legacy_compatibility()
             if self.canonical_result is not None or self.canonical_awards is not None:
                 raise ValueError(
                     "Historical v1 tournament source cannot carry canonical authority"
@@ -53,24 +61,65 @@ class OwnedTournamentRankingSource(FrozenInput):
 
         if self.canonical_result is None:
             raise ValueError("Canonical tournament source requires canonical result")
-        self._validate_canonical_result_projection()
 
-        if self.schema_version == "owned_tournament_ranking_source.v2":
+        if version == "owned_tournament_ranking_source.v2":
+            self._require_legacy_compatibility()
             if self.canonical_awards is not None:
                 raise ValueError(
                     "Historical v2 tournament source cannot carry canonical point awards"
                 )
             if self.provenance_kind != "canonical_run_owned_tournament_result":
                 raise ValueError("Canonical v2 source requires v2 canonical provenance")
+            self._validate_canonical_result_projection()
             return self
 
         if self.canonical_awards is None:
-            raise ValueError("Canonical v3 source requires canonical point awards")
+            raise ValueError("Canonical tournament source requires canonical point awards")
+        self._validate_canonical_authority_binding()
+
+        if version == "owned_tournament_ranking_source.v3":
+            self._require_legacy_compatibility()
+            if (
+                self.provenance_kind
+                != "canonical_run_owned_tournament_result_and_points"
+            ):
+                raise ValueError("Canonical v3 source requires v3 canonical provenance")
+            self._validate_canonical_result_projection()
+            self._validate_canonical_award_projection()
+            return self
+
+        if self.result is not None or self.awards is not None:
+            raise ValueError(
+                "Canonical v4 source cannot persist legacy compatibility DTOs"
+            )
+        if self.provenance_kind != "canonical_run_owned_tournament_authorities":
+            raise ValueError("Canonical v4 source requires canonical-only provenance")
+        return self
+
+    def _require_legacy_compatibility(self) -> None:
+        if self.result is None or self.awards is None:
+            raise ValueError("Historical tournament source requires compatibility DTOs")
         if (
-            self.provenance_kind
-            != "canonical_run_owned_tournament_result_and_points"
+            self.binding.event_id != self.result.event_id
+            or self.binding.event_id != self.awards.event_id
         ):
-            raise ValueError("Canonical v3 source requires v3 canonical provenance")
+            raise ValueError("Owned tournament source event identity mismatch")
+
+    def _validate_canonical_authority_binding(self) -> None:
+        if self.canonical_result is None or self.canonical_awards is None:
+            raise ValueError("Canonical tournament authority is incomplete")
+        if (
+            self.canonical_result.run_id,
+            self.canonical_result.branch_id,
+            self.canonical_result.event_id,
+            self.canonical_result.completed_week,
+        ) != (
+            self.binding.run_id,
+            self.binding.branch_id,
+            self.binding.event_id,
+            self.binding.completed_week,
+        ):
+            raise ValueError("Canonical tournament result binding mismatch")
         if (
             self.canonical_awards.run_id,
             self.canonical_awards.branch_id,
@@ -91,26 +140,19 @@ class OwnedTournamentRankingSource(FrozenInput):
             or self.binding.expected_award_fingerprint
             != self.canonical_awards.fingerprint
         ):
-            raise ValueError("Canonical v3 binding fingerprint mismatch")
-        if (
-            self.awards.metadata.result_package_fingerprint
-            != self.result.metadata.build_fingerprint
-            or self.awards.metadata.point_distribution_fingerprint
-            != self.canonical_awards.point_distribution_fingerprint
-            or self.awards.metadata.point_distribution_source
-            != self.canonical_awards.point_distribution_source
-        ):
-            raise ValueError("Canonical point-award compatibility provenance mismatch")
+            raise ValueError("Canonical source binding fingerprint mismatch")
 
         canonical_result_players = {
             player.player_id: player for player in self.canonical_result.players
         }
+        if {award.player_id for award in self.canonical_awards.awards} != set(
+            canonical_result_players
+        ):
+            raise ValueError(
+                "Canonical point awards do not cover tournament result players"
+            )
         for award in self.canonical_awards.awards:
-            player = canonical_result_players.get(award.player_id)
-            if player is None:
-                raise ValueError(
-                    "Canonical point award references unknown tournament player"
-                )
+            player = canonical_result_players[award.player_id]
             player_fingerprint = hashlib.sha256(
                 json.dumps(
                     player.model_dump(mode="json"),
@@ -124,40 +166,9 @@ class OwnedTournamentRankingSource(FrozenInput):
                     "Canonical point award player-result provenance mismatch"
                 )
 
-        canonical_awards = {
-            award.player_id: (
-                award.reached_stage,
-                award.qualifier,
-                award.seed_number,
-                award.ranking_points_awarded,
-                award.race_points_awarded,
-            )
-            for award in self.canonical_awards.awards
-        }
-        compatibility_awards = {
-            award.player_id: (
-                award.reached_stage,
-                award.qualifier,
-                award.seed_number,
-                award.ranking_points_awarded,
-                award.race_points_awarded,
-            )
-            for award in self.awards.awards
-        }
-        if canonical_awards != compatibility_awards:
-            raise ValueError("Canonical point-award compatibility projection mismatch")
-        if (
-            self.awards.summary.total_ranking_points
-            != self.canonical_awards.total_ranking_points
-            or self.awards.summary.total_race_points
-            != self.canonical_awards.total_race_points
-        ):
-            raise ValueError("Canonical point-award compatibility totals mismatch")
-        return self
-
     def _validate_canonical_result_projection(self) -> None:
-        if self.canonical_result is None:
-            raise ValueError("Canonical result is missing")
+        if self.canonical_result is None or self.result is None:
+            raise ValueError("Canonical result compatibility projection is missing")
         if (
             self.canonical_result.run_id,
             self.canonical_result.branch_id,
@@ -246,6 +257,49 @@ class OwnedTournamentRankingSource(FrozenInput):
         ) != self.canonical_result.qualification_winner_ids:
             raise ValueError("Canonical Qualification winner projection mismatch")
 
+    def _validate_canonical_award_projection(self) -> None:
+        if self.canonical_awards is None or self.awards is None or self.result is None:
+            raise ValueError("Canonical point-award compatibility projection is missing")
+        if (
+            self.awards.metadata.result_package_fingerprint
+            != self.result.metadata.build_fingerprint
+            or self.awards.metadata.point_distribution_fingerprint
+            != self.canonical_awards.point_distribution_fingerprint
+            or self.awards.metadata.point_distribution_source
+            != self.canonical_awards.point_distribution_source
+        ):
+            raise ValueError("Canonical point-award compatibility provenance mismatch")
+
+        canonical_awards = {
+            award.player_id: (
+                award.reached_stage,
+                award.qualifier,
+                award.seed_number,
+                award.ranking_points_awarded,
+                award.race_points_awarded,
+            )
+            for award in self.canonical_awards.awards
+        }
+        compatibility_awards = {
+            award.player_id: (
+                award.reached_stage,
+                award.qualifier,
+                award.seed_number,
+                award.ranking_points_awarded,
+                award.race_points_awarded,
+            )
+            for award in self.awards.awards
+        }
+        if canonical_awards != compatibility_awards:
+            raise ValueError("Canonical point-award compatibility projection mismatch")
+        if (
+            self.awards.summary.total_ranking_points
+            != self.canonical_awards.total_ranking_points
+            or self.awards.summary.total_race_points
+            != self.canonical_awards.total_race_points
+        ):
+            raise ValueError("Canonical point-award compatibility totals mismatch")
+
     @property
     def fingerprint(self) -> str:
         payload = self.model_dump(mode="json")
@@ -256,6 +310,6 @@ class OwnedTournamentRankingSource(FrozenInput):
         elif self.schema_version == "owned_tournament_ranking_source.v2":
             # v2 introduced canonical_result, but canonical_awards did not exist.
             payload.pop("canonical_awards", None)
-        return hashlib.sha256(json.dumps(
-            payload, sort_keys=True, separators=(",", ":")
-        ).encode()).hexdigest()
+        return hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()

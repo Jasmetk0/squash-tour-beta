@@ -201,3 +201,12 @@ replayable `TournamentPointAwardAuthority`, and persisted with the result as
 Official ranking-result history directly from those canonical authorities without a
 `SeasonPointAwardsService` instance. Legacy-shaped result/award DTOs remain only
 compatibility projections for historical readers.
+
+
+### Canonical-only owned tournament source follow-up
+
+After #753, canonical result and point authorities already drive ranking directly.
+The current follow-up removes their remaining duplicated legacy persistence:
+new `OwnedTournamentRankingSource v4` stores only canonical result/point
+authorities and their binding. Historical v1-v3 sources remain immutable readers;
+new canonical closes do not build or persist legacy result/award DTO copies.

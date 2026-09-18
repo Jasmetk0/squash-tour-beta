@@ -20,7 +20,7 @@ from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
-    build_run_owned_tournament_ranking_packages,
+    build_run_owned_tournament_authorities,
     validate_adopted_four_player_match_package,
 )
 from beta_engine.application.canonical_tournament_topology import (
@@ -1725,22 +1725,20 @@ class AuthoritativeRunSimulationDriver:
                 continue
             canonical_result = None
             canonical_awards = None
+            result = None
+            awards = None
             if draw_fp is not None:
                 (
                     _,
                     canonical_result,
-                    result,
                     canonical_awards,
-                    awards,
-                ) = build_run_owned_tournament_ranking_packages(
-                    self.awards_service,
+                ) = build_run_owned_tournament_authorities(
                     package=package,
                     authoritative=auth,
                     draw=draw,
                     run_id=command.run_id,
                     branch_id=command.branch_id,
                     week=command.expected_week,
-                    result_seed=self._stable_seed(package, "result"),
                     award_seed=self._stable_seed(package, "awards"),
                     frozen_point_authority=point_authority,
                 )
@@ -1782,28 +1780,27 @@ class AuthoritativeRunSimulationDriver:
                     canonical_result,
                     canonical_awards,
                 )
-            else:
-                prepare_tournament_ranking_sources(binding, result, awards)
-            store.append(
-                OwnedTournamentRankingSource(
-                    schema_version=(
-                        "owned_tournament_ranking_source.v3"
-                        if canonical_awards is not None
-                        else "owned_tournament_ranking_source.v1"
-                    ),
+                source = OwnedTournamentRankingSource(
+                    schema_version="owned_tournament_ranking_source.v4",
                     binding=binding,
-                    result=result,
-                    awards=awards,
                     canonical_result=canonical_result,
                     canonical_awards=canonical_awards,
                     adopted_by_command_id=command.command_id,
-                    provenance_kind=(
-                        "canonical_run_owned_tournament_result_and_points"
-                        if canonical_awards is not None
-                        else "explicit_legacy_tournament_adoption"
-                    ),
+                    provenance_kind="canonical_run_owned_tournament_authorities",
                 )
-            )
+            else:
+                if result is None or awards is None:
+                    raise ValueError("Legacy tournament close produced no packages")
+                prepare_tournament_ranking_sources(binding, result, awards)
+                source = OwnedTournamentRankingSource(
+                    schema_version="owned_tournament_ranking_source.v1",
+                    binding=binding,
+                    result=result,
+                    awards=awards,
+                    adopted_by_command_id=command.command_id,
+                    provenance_kind="explicit_legacy_tournament_adoption",
+                )
+            store.append(source)
 
     @staticmethod
     def _validate_existing_owned_source(existing, command, package, authoritative):
@@ -1826,11 +1823,24 @@ class AuthoritativeRunSimulationDriver:
             g.authoritative_input.match_id: g.result_fingerprint
             for g in authoritative.groups
         }
-        if {
-            r.match_id: r.result_fingerprint for r in existing.result.match_result_refs
-        } != expected:
+        if existing.canonical_result is not None:
+            stored_results = {
+                r.match_id: r.result_fingerprint
+                for r in existing.canonical_result.matches
+            }
+        else:
+            if existing.result is None:
+                raise ValueError("Historical owned tournament source is incomplete")
+            stored_results = {
+                r.match_id: r.result_fingerprint
+                for r in existing.result.match_result_refs
+            }
+        if stored_results != expected:
             raise ValueError("Conflicting owned tournament source")
-        if existing.schema_version == "owned_tournament_ranking_source.v3":
+        if existing.schema_version in {
+            "owned_tournament_ranking_source.v3",
+            "owned_tournament_ranking_source.v4",
+        }:
             if existing.canonical_result is None or existing.canonical_awards is None:
                 raise ValueError("Canonical owned tournament source is incomplete")
             prepare_canonical_tournament_ranking_sources(
@@ -1839,6 +1849,8 @@ class AuthoritativeRunSimulationDriver:
                 existing.canonical_awards,
             )
         else:
+            if existing.result is None or existing.awards is None:
+                raise ValueError("Historical owned tournament source is incomplete")
             prepare_tournament_ranking_sources(
                 existing.binding, existing.result, existing.awards
             )

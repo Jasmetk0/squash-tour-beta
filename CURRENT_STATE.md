@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #752 at
-`d01c7e5af71d6b754fef459c11ec8ad9bf250b0e`, plus the current bounded
-Run-owned Point Award + direct ranking-materialization slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #753 at
+`b90926ade3fdebad9029ab170e9a6db3c3e8995c`, plus the current bounded
+canonical-only tournament source v4 slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #752 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #753 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -180,3 +180,13 @@ replays every award. `OwnedTournamentRankingSource v3` binds canonical result an
 point authorities while retaining self-consistent legacy-shaped DTOs only for
 compatibility. Ranking-week ingestion materializes `RankingResultVersion` directly
 from v3 authorities and does not require `SeasonPointAwardsService`.
+
+
+## Current follow-up after #753
+
+New canonical tournament closes persist `OwnedTournamentRankingSource v4` with
+only `TournamentResultAuthority`, `TournamentPointAwardAuthority`, binding and
+provenance. Legacy `SeasonEventResultPackage` / `EventPointAwardPackage` copies
+are neither produced nor persisted for v4. Historical v1-v3 payloads remain
+readable with their original fingerprint contracts. Ranking-week ingestion and
+completed-week sporting context consume canonical authorities directly.

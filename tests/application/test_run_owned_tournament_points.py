@@ -88,7 +88,7 @@ def _input():
         event_id="event",
         committed_by_command_id="input",
         draw_seed=4321,
-        main_seed_count=2,
+        main_seed_count=1,
         qualification_seed_count=0,
         field_sequence=1,
         capacity=TournamentEntryFieldCapacity(
@@ -103,7 +103,7 @@ def _input():
         qualification_player_ids=(),
         qualifier_placeholder_ids=(),
         withdrawn_player_ids=(),
-        main_seed_player_ids=("A", "B"),
+        main_seed_player_ids=("A",),
         qualification_seed_player_ids=(),
     )
 

@@ -302,7 +302,10 @@ def stage_ranking_week_command(
                     raise ValueError(
                         "Tournament binding conflicts with its owned frozen source"
                     )
-                if frozen.schema_version == "owned_tournament_ranking_source.v3":
+                if frozen.schema_version in {
+                    "owned_tournament_ranking_source.v3",
+                    "owned_tournament_ranking_source.v4",
+                }:
                     if (
                         frozen.canonical_result is None
                         or frozen.canonical_awards is None
@@ -317,6 +320,10 @@ def stage_ranking_week_command(
                         frozen.canonical_awards,
                     )
                 else:
+                    if frozen.result is None or frozen.awards is None:
+                        raise ValueError(
+                            "Historical owned tournament source is incomplete"
+                        )
                     ingest_frozen_tournament_ranking_sources(
                         sources, binding, frozen.result, frozen.awards
                     )

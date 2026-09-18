@@ -13,9 +13,42 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
+    TournamentEntryFieldVersionModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"
+
+
+def _validate_entry_field_rows(rows):
+    from beta_engine.infrastructure.db.tournament_entry_field import (
+        TournamentEntryFieldStore,
+    )
+
+    by_event = {}
+    for row in rows:
+        by_event.setdefault(row.event_id, []).append(row)
+    for event_rows in by_event.values():
+        ordered = sorted(event_rows, key=lambda row: row.sequence)
+        if [row.sequence for row in ordered] != list(range(1, len(ordered) + 1)):
+            raise ValueError("Tournament Entry Field version sequence has a gap")
+        previous = None
+        for index, row in enumerate(ordered):
+            field, _ = TournamentEntryFieldStore._load_row(row)
+            if index == 0:
+                if field.mode != "initial" or row.predecessor_fingerprint is not None:
+                    raise ValueError(
+                        "First Tournament Entry Field version must be initial"
+                    )
+            else:
+                if field.mode != "pre_draw_repair" or previous is None:
+                    raise ValueError(
+                        "Later Tournament Entry Field versions must be pre-draw repairs"
+                    )
+                if row.predecessor_fingerprint != previous.fingerprint:
+                    raise ValueError(
+                        "Tournament Entry Field predecessor chain is corrupt"
+                    )
+            previous = field
 
 
 def _validate_semantics(slots, groups):
@@ -135,8 +168,11 @@ def _component(
     include_authorities=True,
     schedules=(),
     include_schedules=True,
+    entry_fields=(),
+    include_entry_fields=True,
 ):
     _validate_semantics(slots, groups)
+    _validate_entry_field_rows(entry_fields)
     body = {
         "slots": [
             {
@@ -193,6 +229,24 @@ def _component(
                 "package_json": row.package_json,
             }
             for row in authorities
+        ]
+    if include_entry_fields:
+        body["entry_fields"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "sequence": row.sequence,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "field_fingerprint": row.field_fingerprint,
+                "predecessor_fingerprint": row.predecessor_fingerprint,
+                "ranking_authority_fingerprint": row.ranking_authority_fingerprint,
+                "applications_fingerprint": row.applications_fingerprint,
+                "applications_json": row.applications_json,
+                "payload_json": row.payload_json,
+            }
+            for row in entry_fields
         ]
     if include_schedules:
         body["schedules"] = [
@@ -260,9 +314,33 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
-    if slots or groups or commands or authorities or schedules:
+    entry_fields = session.scalars(
+        select(TournamentEntryFieldVersionModel)
+        .where(
+            TournamentEntryFieldVersionModel.run_id == run_id,
+            TournamentEntryFieldVersionModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentEntryFieldVersionModel.event_id,
+            TournamentEntryFieldVersionModel.sequence,
+        )
+    ).all()
+    if entry_fields:
+        from beta_engine.infrastructure.db.tournament_entry_field import (
+            TournamentEntryFieldStore,
+        )
+
+        store = TournamentEntryFieldStore(session)
+        for event_id in sorted({row.event_id for row in entry_fields}):
+            store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    if slots or groups or commands or authorities or schedules or entry_fields:
         payload["content"][COMPONENT_KEY] = _component(
-            slots, groups, commands, authorities, schedules=schedules
+            slots,
+            groups,
+            commands,
+            authorities,
+            schedules=schedules,
+            entry_fields=entry_fields,
         )
 
 
@@ -270,12 +348,9 @@ def _load(payload, *, run_id, branch_id):
     component = payload.get("content", {}).get(COMPONENT_KEY)
     if component is None:
         return None
-    if set(component) not in (
-        {"fingerprint", "slots", "groups"},
-        {"fingerprint", "slots", "groups", "commands"},
-        {"fingerprint", "slots", "groups", "commands", "authorities"},
-        {"fingerprint", "slots", "groups", "commands", "authorities", "schedules"},
-    ):
+    required = {"fingerprint", "slots", "groups"}
+    optional = {"commands", "authorities", "schedules", "entry_fields"}
+    if not required <= set(component) or set(component) - required - optional:
         raise ValueError("Invalid Saved Revision simulation-slot component")
     calculated = _component(
         [SimulationSlotModel(**value) for value in component["slots"]],
@@ -295,13 +370,19 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("schedules", [])
         ],
         include_schedules="schedules" in component,
+        entry_fields=[
+            TournamentEntryFieldVersionModel(**value)
+            for value in component.get("entry_fields", [])
+        ],
+        include_entry_fields="entry_fields" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
     if any(
         (value["run_id"], value["branch_id"]) != (run_id, branch_id)
         for kind in (
-            set(component) & {"slots", "groups", "commands", "authorities", "schedules"}
+            set(component)
+            & {"slots", "groups", "commands", "authorities", "schedules", "entry_fields"}
         )
         for value in component[kind]
     ):
@@ -358,6 +439,25 @@ def restore_saved_simulation_slots(
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
+    live_entry_fields = session.scalars(
+        select(TournamentEntryFieldVersionModel)
+        .where(
+            TournamentEntryFieldVersionModel.run_id == run_id,
+            TournamentEntryFieldVersionModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentEntryFieldVersionModel.event_id,
+            TournamentEntryFieldVersionModel.sequence,
+        )
+    ).all()
+    if live_entry_fields:
+        from beta_engine.infrastructure.db.tournament_entry_field import (
+            TournamentEntryFieldStore,
+        )
+
+        store = TournamentEntryFieldStore(session)
+        for event_id in sorted({row.event_id for row in live_entry_fields}):
+            store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live = (
         _component(
             live_slots,
@@ -365,16 +465,24 @@ def restore_saved_simulation_slots(
             live_commands,
             live_authorities,
             schedules=live_schedules,
+            entry_fields=live_entry_fields,
         )
         if live_slots
         or live_groups
         or live_commands
         or live_authorities
         or live_schedules
+        or live_entry_fields
         else None
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentEntryFieldVersionModel).where(
+            TournamentEntryFieldVersionModel.run_id == run_id,
+            TournamentEntryFieldVersionModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(WeekSimulationScheduleModel).where(
             WeekSimulationScheduleModel.run_id == run_id,
@@ -415,4 +523,15 @@ def restore_saved_simulation_slots(
         session.add(AdoptedTournamentAuthorityModel(**value))
     for value in (target or {}).get("schedules", []):
         session.add(WeekSimulationScheduleModel(**value))
+    for value in (target or {}).get("entry_fields", []):
+        session.add(TournamentEntryFieldVersionModel(**value))
     session.flush()
+    target_entry_fields = (target or {}).get("entry_fields", [])
+    if target_entry_fields:
+        from beta_engine.infrastructure.db.tournament_entry_field import (
+            TournamentEntryFieldStore,
+        )
+
+        store = TournamentEntryFieldStore(session)
+        for event_id in sorted({value["event_id"] for value in target_entry_fields}):
+            store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)

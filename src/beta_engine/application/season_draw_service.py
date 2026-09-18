@@ -18,7 +18,7 @@ from beta_engine.domain.draws.models import DrawEntrantType, DrawType, Generated
 from beta_engine.domain.entries.models import AcceptanceList, AcceptanceStatus, EntryTarget, TournamentEntry
 from beta_engine.domain.tournaments import LuckyLoserRules, SeasonCalendarEvent, TournamentTemplate
 
-DrawSlotDecision = Literal["accepted_main_draw", "accepted_qualification", "qualifier_placeholder", "bye", "wild_card_reserved"]
+DrawSlotDecision = Literal["accepted_main_draw", "accepted_qualification", "qualifier_placeholder", "bye", "wild_card_reserved", "wild_card_assigned"]
 DrawValidationSeverity = Literal["warning", "error"]
 DrawRecordType = Literal["qualification", "main"]
 DrawMatchStatus = Literal["pending", "bye_pending", "completed_placeholder"]
@@ -124,6 +124,7 @@ class DrawPackageMetadata(BaseModel):
     draw_engine_version: str | None = "draw_engine_v1"
     persistence_path: str | None = None
     ranking_basis: str
+    wild_card_assignments_fingerprint: str | None = None
 
 
 class SeasonEventDrawPackage(BaseModel):
@@ -163,15 +164,33 @@ class SeasonDrawsRegistry(BaseModel):
     draws_by_event_id: dict[str, SeasonEventDrawPackage] = Field(default_factory=dict)
 
 
+class WildCardAssignment(BaseModel):
+    event_id: str
+    wildcard_index: int = Field(ge=1)
+    player_id: str
+    player_name: str
+    country_code: str
+    entry_list_fingerprint: str
+    active_players_fingerprint: str
+    assignment_fingerprint: str
+
+
+class SeasonWildCardAssignmentsRegistry(BaseModel):
+    assignments_by_event_id: dict[str, list[WildCardAssignment]] = Field(default_factory=dict)
+
+
 @dataclass(slots=True)
 class SeasonDrawService:
     entry_list_service: SeasonEntryListService
     calendar_service: SeasonCalendarService
     draws_path: Path = Path("config/simulation/season_draws.json")
+    wildcard_assignments_path: Path = Path("config/simulation/season_wildcard_assignments.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.draws_path, Path):
             self.draws_path = Path(self.draws_path)
+        if not isinstance(self.wildcard_assignments_path, Path):
+            self.wildcard_assignments_path = Path(self.wildcard_assignments_path)
 
     def get_draw_package(self, *, event_id: str) -> SeasonEventDrawPackageResult:
         registry = self._load_registry()
@@ -186,6 +205,114 @@ class SeasonDrawService:
             validation_errors=package.validation_errors,
             draw_package_exists=True,
         )
+
+    def get_wild_card_assignments(self, *, event_id: str) -> tuple[WildCardAssignment, ...]:
+        registry = self._load_wildcard_registry()
+        return tuple(sorted(registry.assignments_by_event_id.get(event_id, []), key=lambda item: item.wildcard_index))
+
+    def assign_wild_card(
+        self,
+        *,
+        event_id: str,
+        wildcard_index: int,
+        player_id: str,
+        overwrite_existing: bool = False,
+    ) -> WildCardAssignment:
+        if self.get_draw_package(event_id=event_id).draw_package_exists:
+            raise ValueError("Wild-card authority is locked after the DrawPackage is persisted.")
+
+        event = self._find_event(event_id)
+        if wildcard_index < 1 or wildcard_index > event.wild_cards:
+            raise ValueError(
+                f"wildcard_index must be between 1 and {event.wild_cards} for event '{event_id}'."
+            )
+
+        entry_result = self.entry_list_service.get_entry_list(event_id=event_id)
+        if entry_result.entry_list is None:
+            raise ValueError("Persist an EntryList before assigning a wild card.")
+        entry_list = entry_result.entry_list
+
+        active_players = sorted(
+            self.entry_list_service.active_players_service.get_active_players(
+                season=str(event.season)
+            ).players,
+            key=lambda player: player.player_id,
+        )
+        active_fp = self._fingerprint(
+            [player.model_dump(mode="json") for player in active_players]
+        )
+        if active_fp != entry_list.metadata.active_players_fingerprint:
+            raise ValueError(
+                "EntryList active-player authority is stale; regenerate entries before assigning wild cards."
+            )
+        player = next((item for item in active_players if item.player_id == player_id), None)
+        if player is None:
+            raise ValueError(
+                f"Player '{player_id}' is not active in season '{event.season}'."
+            )
+        if any(
+            item.player_id == player_id
+            and item.decision in {"accepted_main_draw", "accepted_qualification"}
+            for item in entry_list.entries
+        ):
+            raise ValueError(
+                f"Player '{player_id}' is already accepted into event '{event_id}'."
+            )
+        if self._player_committed_to_overlapping_event(
+            event=event, player_id=player_id
+        ):
+            raise ValueError(
+                f"Player '{player_id}' is already committed to an overlapping event."
+            )
+
+        registry = self._load_wildcard_registry()
+        current = list(registry.assignments_by_event_id.get(event_id, []))
+        by_index = {item.wildcard_index: item for item in current}
+        existing = by_index.get(wildcard_index)
+        if existing is not None:
+            if existing.player_id == player_id:
+                return existing
+            if not overwrite_existing:
+                raise ValueError(
+                    f"Wild-card slot {wildcard_index} already has an assignment."
+                )
+        duplicate = next(
+            (
+                item
+                for item in current
+                if item.player_id == player_id and item.wildcard_index != wildcard_index
+            ),
+            None,
+        )
+        if duplicate is not None:
+            raise ValueError(
+                f"Player '{player_id}' is already assigned to wild-card slot {duplicate.wildcard_index}."
+            )
+
+        payload = {
+            "event_id": event_id,
+            "wildcard_index": wildcard_index,
+            "player_id": player.player_id,
+            "player_name": player.name,
+            "country_code": player.country_code,
+            "entry_list_fingerprint": entry_list.metadata.build_fingerprint,
+            "active_players_fingerprint": active_fp,
+        }
+        assignment = WildCardAssignment(
+            **payload,
+            assignment_fingerprint=self._fingerprint(payload),
+        )
+        by_index[wildcard_index] = assignment
+        next_registry = dict(registry.assignments_by_event_id)
+        next_registry[event_id] = [
+            by_index[index] for index in sorted(by_index)
+        ]
+        self._save_wildcard_registry(
+            SeasonWildCardAssignmentsRegistry(
+                assignments_by_event_id=next_registry
+            )
+        )
+        return assignment
 
     def generate_draw_package(self, *, event_id: str, request: DrawGenerateRequest) -> SeasonEventDrawPackageResult:
         registry = self._load_registry()
@@ -202,7 +329,24 @@ class SeasonDrawService:
         warnings, errors = self.validate_draw_inputs(event=event, entry_list=entry_list)
         template = self._template_from_event_snapshot(event)
         template = self._template_with_engine_byes(event=event, template=template, warnings=warnings)
-        acceptance = self._acceptance_from_entry_list(event=event, entry_list=entry_list)
+        wildcard_assignments = self._validated_wildcard_assignments(
+            event=event, entry_list=entry_list
+        )
+        wildcard_assignments_fp = (
+            self._fingerprint(
+                [
+                    wildcard_assignments[index].model_dump(mode="json")
+                    for index in sorted(wildcard_assignments)
+                ]
+            )
+            if wildcard_assignments
+            else None
+        )
+        acceptance = self._acceptance_from_entry_list(
+            event=event,
+            entry_list=entry_list,
+            wildcard_assignments=wildcard_assignments,
+        )
         engine = DrawEngine(rng=DeterministicRng(request.seed))
 
         qualification_bracket: DrawBracket | None = None
@@ -213,6 +357,7 @@ class SeasonDrawService:
                 event=event,
                 draw_type="qualification",
                 warnings=warnings,
+                wildcard_assignments=wildcard_assignments,
             )
         else:
             warnings.append(self._issue("warning", "no_qualification_draw", "event has no qualification draw", event_id=event.event_id, field="qualification_draw_size"))
@@ -223,9 +368,18 @@ class SeasonDrawService:
             event=event,
             draw_type="main",
             warnings=warnings,
+            wildcard_assignments=wildcard_assignments,
         )
-        if event.wild_cards > 0:
-            warnings.append(self._issue("warning", "wildcards_not_implemented", "wildcard slots are reserved but wildcard assignment is not implemented", event_id=event.event_id, field="wild_cards"))
+        if event.wild_cards > len(wildcard_assignments):
+            warnings.append(
+                self._issue(
+                    "warning",
+                    "wildcards_unassigned",
+                    "one or more reserved wild-card slots do not have persisted assignment authority",
+                    event_id=event.event_id,
+                    field="wild_cards",
+                )
+            )
         if any(entry.decision == "alternate" for entry in entry_list.entries):
             warnings.append(self._issue("warning", "alternates_not_consumed", "alternates are not consumed by draw generation yet", event_id=event.event_id))
         if event.qualifier_spots > 0 and event.qualification_draw_size == 0:
@@ -245,6 +399,7 @@ class SeasonDrawService:
                 "seed": request.seed,
                 "entry_list_fingerprint": entry_fp,
                 "calendar_event_fingerprint": calendar_fp,
+                "wild_card_assignments_fingerprint": wildcard_assignments_fp,
                 "qualification_draw": qualification_bracket.model_dump(mode="json") if qualification_bracket else None,
                 "main_draw": main_bracket.model_dump(mode="json"),
             }
@@ -261,6 +416,7 @@ class SeasonDrawService:
             calendar_event_fingerprint=calendar_fp,
             persistence_path=None if request.dry_run else str(self.draws_path),
             ranking_basis=entry_list.metadata.ranking_basis,
+            wild_card_assignments_fingerprint=wildcard_assignments_fp,
         )
         package = SeasonEventDrawPackage(
             event_id=event.event_id,
@@ -335,7 +491,13 @@ class SeasonDrawService:
                     return event
         raise ValueError(f"Unknown persisted season calendar event '{event_id}'.")
 
-    def _acceptance_from_entry_list(self, *, event: SeasonCalendarEvent, entry_list: SeasonEventEntryList) -> AcceptanceList:
+    def _acceptance_from_entry_list(
+        self,
+        *,
+        event: SeasonCalendarEvent,
+        entry_list: SeasonEventEntryList,
+        wildcard_assignments: dict[int, WildCardAssignment],
+    ) -> AcceptanceList:
         season_year = self._season_seed_component(event.season)
         main_entries: list[TournamentEntry] = []
         qualification_entries: list[TournamentEntry] = []
@@ -347,7 +509,17 @@ class SeasonDrawService:
         for index in range(1, event.qualifier_spots + 1):
             main_entries.append(self._placeholder_entry(event=event, season_year=season_year, index=index, status=AcceptanceStatus.QUALIFIER_PLACEHOLDER, reason=f"Q{index}"))
         for index in range(1, event.wild_cards + 1):
-            main_entries.append(self._placeholder_entry(event=event, season_year=season_year, index=index, status=AcceptanceStatus.WILD_CARD_PLACEHOLDER, reason=f"WC{index}"))
+            assignment = wildcard_assignments.get(index)
+            main_entries.append(
+                self._placeholder_entry(
+                    event=event,
+                    season_year=season_year,
+                    index=index,
+                    status=AcceptanceStatus.WILD_CARD_PLACEHOLDER,
+                    reason=f"WC{index}",
+                    player_id=assignment.player_id if assignment is not None else None,
+                )
+            )
         return AcceptanceList(
             event_id=event.event_id,
             template_id=event.template_id,
@@ -381,13 +553,13 @@ class SeasonDrawService:
         )
 
     @staticmethod
-    def _placeholder_entry(*, event: SeasonCalendarEvent, season_year: int, index: int, status: AcceptanceStatus, reason: str) -> TournamentEntry:
+    def _placeholder_entry(*, event: SeasonCalendarEvent, season_year: int, index: int, status: AcceptanceStatus, reason: str, player_id: str | None = None) -> TournamentEntry:
         return TournamentEntry(
             entry_id=f"{event.event_id}:{status.value}:{index}",
             event_id=event.event_id,
             season=season_year,
             week=event.season_week,
-            player_id=None,
+            player_id=player_id,
             slot=EntryTarget.MAIN,
             status=status,
             tour_level=event.tour_level or "WORLD_TOUR",
@@ -404,8 +576,13 @@ class SeasonDrawService:
         event: SeasonCalendarEvent,
         draw_type: DrawRecordType,
         warnings: list[DrawValidationIssue],
+        wildcard_assignments: dict[int, WildCardAssignment],
     ) -> DrawBracket:
         entries_by_id = {entry.entry_id: entry for entry in entry_list.entries}
+        wildcard_by_entry_id = {
+            f"{event.event_id}:{AcceptanceStatus.WILD_CARD_PLACEHOLDER.value}:{index}": assignment
+            for index, assignment in wildcard_assignments.items()
+        }
         slots: list[DrawSlotRecord] = []
         seeds: list[DrawSeedRecord] = []
         byes: list[DrawByeRecord] = []
@@ -413,6 +590,7 @@ class SeasonDrawService:
         qualifier_index = 1
         for slot in generated.slots:
             entry = entries_by_id.get(slot.entry_id or "")
+            wildcard_assignment = wildcard_by_entry_id.get(slot.entry_id or "")
             is_tbd = slot.entrant_type == DrawEntrantType.TBD
             is_bye = slot.entrant_type == DrawEntrantType.BYE or is_tbd
             if is_tbd:
@@ -423,7 +601,11 @@ class SeasonDrawService:
             elif slot.entrant_type == DrawEntrantType.QUALIFIER_PLACEHOLDER:
                 decision = "qualifier_placeholder"
             elif slot.entrant_type == DrawEntrantType.WILD_CARD_PLACEHOLDER:
-                decision = "wild_card_reserved"
+                decision = (
+                    "wild_card_assigned"
+                    if wildcard_assignment is not None and slot.player_id is not None
+                    else "wild_card_reserved"
+                )
             elif draw_type == "qualification":
                 decision = "accepted_qualification"
             else:
@@ -432,12 +614,32 @@ class SeasonDrawService:
                 slot_id=f"{generated.event_id}:{draw_type}:S{slot.slot_index}",
                 bracket_position=slot.slot_index,
                 player_id=slot.player_id,
-                player_name=entry.name if entry is not None else None,
-                country_code=entry.country_code if entry is not None else None,
+                player_name=(
+                    entry.name
+                    if entry is not None
+                    else wildcard_assignment.player_name
+                    if wildcard_assignment is not None
+                    else None
+                ),
+                country_code=(
+                    entry.country_code
+                    if entry is not None
+                    else wildcard_assignment.country_code
+                    if wildcard_assignment is not None
+                    else None
+                ),
                 entry_decision=decision,
                 seed_number=slot.seed_number,
                 source_entry_id=slot.entry_id,
-                source_entry_fingerprint=entry.generated_fingerprint if entry is not None else (self._fingerprint({"entry_id": slot.entry_id}) if slot.entry_id else None),
+                source_entry_fingerprint=(
+                    entry.generated_fingerprint
+                    if entry is not None
+                    else wildcard_assignment.assignment_fingerprint
+                    if wildcard_assignment is not None
+                    else self._fingerprint({"entry_id": slot.entry_id})
+                    if slot.entry_id
+                    else None
+                ),
                 is_bye=is_bye,
                 is_qualifier_placeholder=slot.entrant_type == DrawEntrantType.QUALIFIER_PLACEHOLDER,
             )
@@ -554,6 +756,105 @@ class SeasonDrawService:
             "active": snapshot.get("active", True),
         }
         return TournamentTemplate.model_validate(payload)
+
+    def _validated_wildcard_assignments(
+        self,
+        *,
+        event: SeasonCalendarEvent,
+        entry_list: SeasonEventEntryList,
+    ) -> dict[int, WildCardAssignment]:
+        assignments = {
+            item.wildcard_index: item
+            for item in self.get_wild_card_assignments(event_id=event.event_id)
+        }
+        if any(index > event.wild_cards for index in assignments):
+            raise ValueError("Persisted wild-card assignment exceeds current event capacity.")
+        active_players = sorted(
+            self.entry_list_service.active_players_service.get_active_players(
+                season=str(event.season)
+            ).players,
+            key=lambda player: player.player_id,
+        )
+        active_fp = self._fingerprint(
+            [player.model_dump(mode="json") for player in active_players]
+        )
+        seen_players: set[str] = set()
+        for index, assignment in sorted(assignments.items()):
+            if assignment.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
+                raise ValueError(
+                    "Persisted wild-card assignment is stale for the current EntryList."
+                )
+            if assignment.active_players_fingerprint != active_fp:
+                raise ValueError(
+                    "Persisted wild-card assignment is stale for the active-player snapshot."
+                )
+            if assignment.player_id in seen_players:
+                raise ValueError("Duplicate player across persisted wild-card assignments.")
+            seen_players.add(assignment.player_id)
+            if not any(player.player_id == assignment.player_id for player in active_players):
+                raise ValueError(
+                    f"Wild-card player '{assignment.player_id}' is no longer active."
+                )
+            if any(
+                item.player_id == assignment.player_id
+                and item.decision in {"accepted_main_draw", "accepted_qualification"}
+                for item in entry_list.entries
+            ):
+                raise ValueError(
+                    f"Wild-card player '{assignment.player_id}' is already accepted into the event."
+                )
+            if self._player_committed_to_overlapping_event(
+                event=event, player_id=assignment.player_id
+            ):
+                raise ValueError(
+                    f"Wild-card player '{assignment.player_id}' is committed to an overlapping event."
+                )
+        return assignments
+
+    def _player_committed_to_overlapping_event(
+        self, *, event: SeasonCalendarEvent, player_id: str
+    ) -> bool:
+        registry = self.entry_list_service._load_registry()
+        event_start = event.start_season_week or event.season_week
+        event_end = event.end_season_week or event_start
+        for other in registry.entry_lists_by_event_id.values():
+            if other.event_id == event.event_id or other.season != str(event.season):
+                continue
+            try:
+                other_event = self._find_event(other.event_id)
+            except ValueError:
+                continue
+            other_start = other_event.start_season_week or other_event.season_week
+            other_end = other_event.end_season_week or other_start
+            if max(event_start, other_start) > min(event_end, other_end):
+                continue
+            if any(
+                item.player_id == player_id
+                and item.decision in {"accepted_main_draw", "accepted_qualification"}
+                for item in other.entries
+            ):
+                return True
+        return False
+
+    def _load_wildcard_registry(self) -> SeasonWildCardAssignmentsRegistry:
+        if not self.wildcard_assignments_path.exists():
+            return SeasonWildCardAssignmentsRegistry()
+        return SeasonWildCardAssignmentsRegistry.model_validate(
+            json.loads(self.wildcard_assignments_path.read_text(encoding="utf-8"))
+        )
+
+    def _save_wildcard_registry(
+        self, registry: SeasonWildCardAssignmentsRegistry
+    ) -> None:
+        self.wildcard_assignments_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self.wildcard_assignments_path.with_suffix(
+            f"{self.wildcard_assignments_path.suffix}.tmp"
+        )
+        tmp_path.write_text(
+            json.dumps(registry.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(self.wildcard_assignments_path)
 
     @staticmethod
     def _summary(*, event: SeasonCalendarEvent, main_draw: DrawBracket, qualification_draw: DrawBracket | None, warnings: list[DrawValidationIssue], errors: list[DrawValidationIssue]) -> DrawPackageSummary:

@@ -14,6 +14,7 @@ from beta_engine.domain.rankings.official import (
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
 )

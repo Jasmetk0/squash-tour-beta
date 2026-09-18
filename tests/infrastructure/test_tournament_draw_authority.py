@@ -165,7 +165,7 @@ def install_draw_input(
     applications=None,
     capacity=None,
     draw_seed=123,
-    main_seed_count=2,
+    main_seed_count=1,
     qualification_seed_count=1,
 ):
     install_ranking_authority(session)
@@ -266,7 +266,7 @@ def test_master_idealized_slots_and_seed_tiers_for_eight_player_draw(database):
             event_id="event",
             command_id="commit-draw-input",
             draw_seed=777,
-            main_seed_count=2,
+            main_seed_count=1,
             qualification_seed_count=0,
         )
         authority = TournamentDrawAuthorityBuilder.build(
@@ -472,7 +472,7 @@ def test_explicit_main_bye_is_placed_against_highest_seed(database):
                 qualifier_spots=0,
                 bye_slots=1,
             ),
-            main_seed_count=2,
+            main_seed_count=1,
             qualification_seed_count=0,
         )
         authority = TournamentDrawAuthorityBuilder.build(
@@ -505,7 +505,7 @@ def test_multi_qualifier_sections_persist_and_replay(database):
                 qualification_draw_size=4,
                 qualifier_spots=2,
             ),
-            main_seed_count=2,
+            main_seed_count=1,
             qualification_seed_count=2,
         )
         store = TournamentDrawAuthorityStore(session)

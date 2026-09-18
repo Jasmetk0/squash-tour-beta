@@ -10,6 +10,17 @@ describe('getModeSwitcherTarget', () => {
     expect(getModeSwitcherTarget('/admin/tour-seasons')).toEqual({ viewerTarget: '/viewer/tour', adminTarget: '/admin/tour-seasons' })
   })
 
+  it('maps canonical Admin country library routes back to Viewer countries', () => {
+    expect(getModeSwitcherTarget('/admin/world/library/official_fax_world/countries')).toEqual({
+      viewerTarget: '/viewer/countries',
+      adminTarget: '/admin/world/library/official_fax_world/countries'
+    })
+    expect(getModeSwitcherTarget('/admin/world/library/official_fax_world/countries/EGY')).toEqual({
+      viewerTarget: '/viewer/countries',
+      adminTarget: '/admin/world/library/official_fax_world/countries/EGY'
+    })
+  })
+
   it('maps every Viewer Product Run page to Admin Branch management with IDs encoded exactly once', () => {
     expect(getModeSwitcherTarget('/viewer/runs/product-a/rankings')).toEqual({ viewerTarget: '/viewer/runs/product-a/rankings', adminTarget: '/admin/runs/product-a/branches' })
     expect(getModeSwitcherTarget('/viewer/runs/product%2Frun/calendar')).toEqual({ viewerTarget: '/viewer/runs/product%2Frun/calendar', adminTarget: '/admin/runs/product%2Frun/branches' })

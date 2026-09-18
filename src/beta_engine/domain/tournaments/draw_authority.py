@@ -229,6 +229,13 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError(
                 "Qualification Draw requires at least one qualifier spot"
             )
+        if (
+            capacity.qualifier_spots > 0
+            and len(draw_input.qualification_player_ids) < capacity.qualifier_spots
+        ):
+            raise ValueError(
+                "Qualification requires at least one real player per Q section"
+            )
         if capacity.qualification_draw_size == 1:
             raise ValueError(
                 "One-position Qualification Draw requires an explicit auto-qualification policy"
@@ -276,10 +283,14 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError(
                 "Canonical Run-owned Main Draw requires a fully resolved field including explicit BYEs"
             )
-        if len(draw_input.qualification_player_ids) != capacity.qualification_draw_size:
+        if len(draw_input.qualification_player_ids) > capacity.qualification_draw_size:
             raise ValueError(
-                "Canonical Run-owned Qualification Draw requires a fully resolved field"
+                "Canonical Run-owned Qualification field exceeds configured capacity"
             )
+        qualification_bye_count = (
+            capacity.qualification_draw_size
+            - len(draw_input.qualification_player_ids)
+        )
 
         qualification = None
         qualification_sections: tuple[TournamentDrawBracket, ...] = ()
@@ -292,7 +303,7 @@ class TournamentDrawAuthorityBuilder:
                     player_ids=draw_input.qualification_player_ids,
                     seed_player_ids=draw_input.qualification_seed_player_ids,
                     placeholder_ids=(),
-                    explicit_byes=0,
+                    explicit_byes=qualification_bye_count,
                     algorithm_version=algorithm_version,
                 )
             else:
@@ -338,38 +349,57 @@ class TournamentDrawAuthorityBuilder:
         capacity = draw_input.capacity
         section_count = capacity.qualifier_spots
         section_size = capacity.qualification_draw_size // section_count
-        seeds_per_section = min(section_size, max(1, section_size // 4))
-        expected_seed_count = section_count * seeds_per_section
+        total_byes = (
+            capacity.qualification_draw_size
+            - len(draw_input.qualification_player_ids)
+        )
+        bye_counts = _qualification_byes_by_section(
+            section_count=section_count,
+            section_size=section_size,
+            total_byes=total_byes,
+            draw_seed=draw_input.draw_seed,
+            event_id=draw_input.event_id,
+        )
+
+        expected_seed_count = _master_qualification_seed_count(
+            section_count=section_count,
+            section_size=section_size,
+            actual_player_count=len(draw_input.qualification_player_ids),
+        )
         if draw_input.qualification_seed_count != expected_seed_count:
             raise ValueError(
-                "Qualification seed count must match the Master seed formula for all Q sections"
+                "Qualification seed count must match the Master seed formula across Q sections"
             )
 
         global_seeds = draw_input.qualification_seed_player_ids
         section_seeds: list[list[tuple[int, str]]] = [
             [] for _ in range(section_count)
         ]
-        for layer in range(seeds_per_section):
+
+        seed_cursor = 0
+        layer = 0
+        while seed_cursor < len(global_seeds):
+            layer += 1
             layer_players = list(
-                global_seeds[layer * section_count : (layer + 1) * section_count]
+                global_seeds[seed_cursor : seed_cursor + section_count]
             )
             section_order = list(range(section_count))
-            if layer > 0:
+            if layer > 1:
                 rng = DeterministicRng(
                     _draw_named_subseed(
                         draw_seed=draw_input.draw_seed,
                         event_id=draw_input.event_id,
-                        key=f"qualification:seed-layer:{layer + 1}",
+                        key=f"qualification:seed-layer:{layer}",
                     )
                 )
                 rng.shuffle(section_order)
-            for offset, (player_id, section_index) in enumerate(
-                zip(layer_players, section_order, strict=True)
-            ):
-                global_seed_number = layer * section_count + offset + 1
+            for offset, player_id in enumerate(layer_players):
+                section_index = section_order[offset]
+                global_seed_number = seed_cursor + offset + 1
                 section_seeds[section_index].append(
                     (global_seed_number, player_id)
                 )
+            seed_cursor += len(layer_players)
 
         unseeded = list(
             draw_input.qualification_player_ids[draw_input.qualification_seed_count :]
@@ -383,16 +413,26 @@ class TournamentDrawAuthorityBuilder:
         )
         unseeded_rng.shuffle(unseeded)
 
-        unseeded_per_section = section_size - seeds_per_section
         sections = []
         cursor = 0
         for section_index in range(section_count):
             section_id = f"Q{section_index + 1}"
-            extras = unseeded[cursor : cursor + unseeded_per_section]
-            cursor += unseeded_per_section
             seed_pairs = tuple(section_seeds[section_index])
             seeds = tuple(player_id for _, player_id in seed_pairs)
             seed_numbers = tuple(number for number, _ in seed_pairs)
+            available_player_slots = (
+                section_size
+                - bye_counts[section_index]
+                - len(seeds)
+            )
+            if available_player_slots < 0:
+                raise ValueError(
+                    "Qualification BYE layering conflicts with protected seed capacity"
+                )
+            extras = tuple(
+                unseeded[cursor : cursor + available_player_slots]
+            )
+            cursor += available_player_slots
             sections.append(
                 cls._build_bracket(
                     draw_input=draw_input,
@@ -402,7 +442,7 @@ class TournamentDrawAuthorityBuilder:
                     seed_player_ids=seeds,
                     seed_numbers=seed_numbers,
                     placeholder_ids=(),
-                    explicit_byes=0,
+                    explicit_byes=bye_counts[section_index],
                     section_id=section_id,
                     section_ordinal=section_index,
                     section_count=section_count,
@@ -411,7 +451,7 @@ class TournamentDrawAuthorityBuilder:
             )
         if cursor != len(unseeded):
             raise ValueError(
-                "Qualification player distribution did not fill all Q sections exactly"
+                "Qualification player distribution did not fill all non-BYE Q slots exactly"
             )
         return tuple(sections)
 
@@ -695,6 +735,48 @@ def _choose_master_bye_positions(
             )
         positions.append(position)
     return tuple(sorted(positions))
+
+
+def _master_qualification_seed_count(
+    *,
+    section_count: int,
+    section_size: int,
+    actual_player_count: int,
+) -> int:
+    if actual_player_count < 0:
+        raise ValueError("Actual Qualification player count cannot be negative")
+    maximum_seed_pool = section_count * max(1, section_size // 4)
+    return min(actual_player_count, maximum_seed_pool)
+
+
+def _qualification_byes_by_section(
+    *,
+    section_count: int,
+    section_size: int,
+    total_byes: int,
+    draw_seed: int,
+    event_id: str,
+) -> tuple[int, ...]:
+    if total_byes < 0 or total_byes > section_count * section_size:
+        raise ValueError("Qualification BYE count is outside configured capacity")
+    full_layers, remainder = divmod(total_byes, section_count)
+    if full_layers > section_size:
+        raise ValueError("Qualification BYE layers exceed section capacity")
+
+    counts = [full_layers for _ in range(section_count)]
+    if remainder:
+        section_order = list(range(section_count))
+        rng = DeterministicRng(
+            _draw_named_subseed(
+                draw_seed=draw_seed,
+                event_id=event_id,
+                key=f"qualification:bye-layer:{full_layers + 1}",
+            )
+        )
+        rng.shuffle(section_order)
+        for section_index in section_order[:remainder]:
+            counts[section_index] += 1
+    return tuple(counts)
 
 
 def _draw_subseed(

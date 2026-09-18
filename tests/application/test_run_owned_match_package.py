@@ -147,6 +147,61 @@ def test_run_owned_package_projects_qualification_without_legacy_match_generatio
     }
 
 
+def test_run_owned_package_executes_single_q_bye_as_canonical_auto_advance():
+    draw_input = TournamentDrawInputAuthority(
+        schema_version="tournament_draw_input_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        committed_by_command_id="input-q-bye",
+        draw_seed=2468,
+        main_seed_count=1,
+        qualification_seed_count=1,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=2,
+            qualifier_spots=1,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=("A", "B", "C"),
+        qualification_player_ids=("D",),
+        qualifier_placeholder_ids=("Q1",),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=("A",),
+        qualification_seed_player_ids=("D",),
+    )
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+    event = _event().model_copy(
+        update={
+            "qualification_draw_size": 2,
+            "qualifier_spots": 1,
+        }
+    )
+    package = build_run_owned_match_package(
+        draw=draw,
+        event=event,
+        week=RankingWeek(season_index=0, week=1),
+    )
+    topology = project_canonical_draw_to_match_topology(
+        draw=draw,
+        package=package,
+    )
+
+    assert len(package.qualification_matches) == 1
+    q_match = package.qualification_matches[0]
+    assert q_match.status == "bye_auto_advance_pending"
+    assert q_match.match_id in topology.bye_match_ids
+    assert dict(topology.bye_winners)[q_match.match_id] == "D"
+    assert len(topology.qualifier_promotions) == 1
+    assert topology.qualifier_promotions[0].source_match_id == q_match.match_id
+
+
 def test_run_owned_package_freezes_explicit_bye_from_canonical_draw():
     draw = TournamentDrawAuthorityBuilder.build(
         draw_input=_input(bye=True),

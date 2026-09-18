@@ -49,6 +49,10 @@ def canonical_qualification_seed_count(
         raise ValueError(
             "Qualification draw capacity requires at least one qualifier section"
         )
+    if actual_player_count < capacity.qualifier_spots:
+        raise ValueError(
+            "Qualification requires at least one real player per Q section"
+        )
     if capacity.qualification_draw_size % capacity.qualifier_spots:
         raise ValueError(
             "Qualification capacity must divide evenly across qualifier sections"

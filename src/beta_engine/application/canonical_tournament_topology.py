@@ -317,11 +317,20 @@ def _validate_legacy_feeder_hints(
                 record_by_node[target.node_id].match_id if target else None
             )
 
+    qualification_terminal_match_ids = {
+        record_by_node[_terminal_node(bracket).node_id].match_id
+        for bracket in draw.qualification_brackets
+    }
+
     for record in package.qualification_matches + package.main_draw_matches:
         expected = expected_targets[record.match_id]
         if record.winner_to_match_id not in {None, expected}:
             raise ValueError(
                 "MatchPackage feeder target conflicts with canonical Draw authority"
             )
-        if record.match_id in bye_match_ids and expected is None:
+        if (
+            record.match_id in bye_match_ids
+            and expected is None
+            and record.match_id not in qualification_terminal_match_ids
+        ):
             raise ValueError("terminal canonical match cannot be a BYE")

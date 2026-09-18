@@ -249,7 +249,13 @@ one-per-Q-section by descending idealized slot and incomplete final layers are
 deterministically shuffled across Q sections. The execution topology also treats a
 single-Q BYE as canonical auto-advance into its linked Q slot.
 
-The next draw-focused work after this slice is WC/RWC, phase-aware
-redraw/cascade/freeze, Lucky Loser, group Qualification and the first-real-match
-replacement cutoff. Legacy simulation-run UI/endpoint retirement remains separate
-Gate 3 work.
+The next draw slice resolves pre-draw WC/RWC authority canonically: original WC
+nominations and ordered RWC candidates are frozen against the Entry Field, direct
+acceptance releases WC automatically, RWC has priority for the freed WC slot, and
+Qualification is atomically backfilled when its player receives WC. Draw Input v3
+then consumes the resolved WC players with frozen provenance.
+
+After this slice, draw-focused work proceeds to phase-aware post-draw WC/RWC and
+Qualification/Main redraw/cascade/freeze, Lucky Loser, group Qualification and the
+first-real-match replacement cutoff. Legacy simulation-run UI/endpoint retirement
+remains separate Gate 3 work.

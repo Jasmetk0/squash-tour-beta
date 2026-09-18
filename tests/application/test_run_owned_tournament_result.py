@@ -68,6 +68,54 @@ def _input(*, qualification=False):
     )
 
 
+def _multi_qualification_input():
+    direct = ("A", "B", "C", "D")
+    qualification = tuple(f"QF{index:02d}" for index in range(1, 17))
+    return TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        committed_by_command_id="input-multi-q",
+        draw_seed=4321,
+        main_seed_count=2,
+        qualification_seed_count=4,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=8,
+            qualification_draw_size=16,
+            qualifier_spots=4,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=direct,
+        qualification_player_ids=qualification,
+        qualifier_placeholder_ids=("Q1", "Q2", "Q3", "Q4"),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=direct[:2],
+        qualification_seed_player_ids=qualification[:4],
+    )
+
+
+def _multi_qualification_event():
+    return CalendarEvent(
+        event_id="event",
+        season="2000/2001",
+        season_week=1,
+        calendar_year=2000,
+        year_week=1,
+        template_id="template",
+        event_name="Canonical Multi-Q Open",
+        category="TEST",
+        tour_level="WORLD_TOUR",
+        host_country="CZE",
+        region="Europe",
+        main_draw_size=8,
+        qualification_draw_size=16,
+        qualifier_spots=4,
+    )
+
+
 def _event(*, qualification=False):
     return CalendarEvent(
         event_id="event",
@@ -89,10 +137,9 @@ def _event(*, qualification=False):
 
 def _complete(draw, package):
     projected = package.model_copy(deep=True)
-    q_winner = None
+    qualifier_winners: dict[str, str] = {}
 
-    def complete_bracket(bracket, records, qualifier_winner=None):
-        nonlocal q_winner
+    def complete_bracket(bracket, records):
         winners = {}
         slots = {slot.slot_index: slot for slot in bracket.slots}
         by_id = {record.match_id: record for record in records}
@@ -107,9 +154,10 @@ def _complete(draw, package):
                 if slot.entrant_kind == "player":
                     return slot.player_id
                 if slot.entrant_kind == "qualifier_placeholder":
-                    if qualifier_winner is None:
+                    winner = qualifier_winners.get(slot.placeholder_id)
+                    if winner is None:
                         raise AssertionError("qualifier winner missing")
-                    return qualifier_winner
+                    return winner
                 if slot.entrant_kind == "bye":
                     return None
                 raise AssertionError("unsupported source")
@@ -135,17 +183,20 @@ def _complete(draw, package):
                 f"{node.round_number:02x}{node.round_sequence:02x}".ljust(64, "a")
             )[:64]
             winners[node.node_id] = winner
-        return winners[max(bracket.nodes, key=lambda n: (n.round_number, n.round_sequence)).node_id]
+        terminal = max(
+            bracket.nodes,
+            key=lambda n: (n.round_number, n.round_sequence),
+        )
+        return winners[terminal.node_id]
 
-    if draw.qualification is not None:
-        q_winner = complete_bracket(
-            draw.qualification,
+    for index, bracket in enumerate(draw.qualification_brackets, start=1):
+        qualifier_winners[bracket.section_id or f"Q{index}"] = complete_bracket(
+            bracket,
             projected.qualification_matches,
         )
     complete_bracket(
         draw.main,
         projected.main_draw_matches,
-        qualifier_winner=q_winner,
     )
     return projected
 
@@ -216,6 +267,54 @@ def test_canonical_result_preserves_qualification_provenance_into_main():
     assert dto.summary.completed_matches == 4
     assert dto.qualification_winners[0].player_id == "D"
     assert dto.metadata.draw_package_fingerprint == draw.fingerprint
+
+
+def test_canonical_result_collects_four_independent_qualification_winners():
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_multi_qualification_input(),
+        command_id="draw-multi-q",
+    )
+    event = _multi_qualification_event()
+    package = build_run_owned_match_package(
+        draw=draw,
+        event=event,
+        week=RankingWeek(season_index=0, week=1),
+    )
+    completed = _complete(draw, package)
+    authority = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        draw=draw,
+        package=completed,
+    )
+
+    assert len(authority.qualification_winner_ids) == 4
+    assert len(set(authority.qualification_winner_ids)) == 4
+    assert set(authority.qualification_winner_ids).issubset(
+        {f"QF{index:02d}" for index in range(1, 17)}
+    )
+    assert len(authority.matches) == 19
+    assert all(
+        next(
+            player
+            for player in authority.players
+            if player.player_id == winner
+        ).draw_type
+        == "both"
+        for winner in authority.qualification_winner_ids
+    )
+
+    dto = project_tournament_result_legacy_dto(
+        authority=authority,
+        event=event,
+        package=completed,
+        seed=888,
+    )
+    assert dto.summary.qualification_winner_count == 4
+    assert {
+        winner.player_id for winner in dto.qualification_winners
+    } == set(authority.qualification_winner_ids)
 
 
 def test_owned_source_v2_persists_canonical_result_and_v1_remains_supported():

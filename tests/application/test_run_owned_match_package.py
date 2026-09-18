@@ -197,7 +197,7 @@ def test_run_owned_package_executes_single_q_bye_as_canonical_auto_advance():
     q_match = package.qualification_matches[0]
     assert q_match.status == "bye_auto_advance_pending"
     assert q_match.match_id in topology.bye_match_ids
-    assert topology.bye_winners[q_match.match_id] == "D"
+    assert dict(topology.bye_winners)[q_match.match_id] == "D"
     assert len(topology.qualifier_promotions) == 1
     assert topology.qualifier_promotions[0].source_match_id == q_match.match_id
 

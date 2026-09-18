@@ -129,18 +129,46 @@ def test_acceptance_counts_and_template_snapshot(tmp_path: Path) -> None:
     assert result_after_template_edit.summary.main_draw_acceptances <= 5
 
 
-def test_one_event_per_week_overlap_rejects_persistence(tmp_path: Path) -> None:
+def test_overlapping_provisional_entries_are_persisted_with_warning(tmp_path: Path) -> None:
     svc = make_service(tmp_path)
     registry = svc.calendar_service._load_registry()
     event = registry.calendars_by_season["2000/2001"].events[0]
     second = event.model_copy(update={"event_id": "EVT-2000-W01-wt_b", "template_id": "wt_b"})
-    registry.calendars_by_season["2000/2001"] = SeasonCalendar(season="2000/2001", events=[event, second], metadata=SeasonCalendarMetadata(season="2000/2001", season_start_calendar_year=2000, season_start_year_week=37))
+    registry.calendars_by_season["2000/2001"] = SeasonCalendar(
+        season="2000/2001",
+        events=[event, second],
+        metadata=SeasonCalendarMetadata(
+            season="2000/2001",
+            season_start_calendar_year=2000,
+            season_start_year_week=37,
+        ),
+    )
     svc.calendar_service._save_registry(registry)
-    svc.generate_entry_list(event_id=event.event_id, request=EntryListGenerateRequest(seed=123, dry_run=False))
-    preview = svc.generate_entry_list(event_id=second.event_id, request=EntryListGenerateRequest(seed=123, dry_run=True))
-    assert any(issue.code == "player_week_overlap" for issue in preview.validation_errors)
-    with pytest.raises(ValueError, match="player_week_overlap"):
-        svc.generate_entry_list(event_id=second.event_id, request=EntryListGenerateRequest(seed=123, dry_run=False))
+
+    first = svc.generate_entry_list(
+        event_id=event.event_id,
+        request=EntryListGenerateRequest(seed=123, dry_run=False),
+    ).entry_list
+    preview = svc.generate_entry_list(
+        event_id=second.event_id,
+        request=EntryListGenerateRequest(seed=123, dry_run=True),
+    )
+    assert first is not None and preview.entry_list is not None
+    assert any(
+        issue.code == "player_week_overlap_unresolved"
+        for issue in preview.validation_warnings
+    )
+    assert not preview.validation_errors
+
+    persisted = svc.generate_entry_list(
+        event_id=second.event_id,
+        request=EntryListGenerateRequest(seed=123, dry_run=False),
+    )
+    assert persisted.entry_list_exists is True
+    assert any(
+        issue.code == "player_week_overlap_unresolved"
+        for issue in persisted.validation_warnings
+    )
 
 
 def test_active_player_adapter_preserves_lifecycle_boundary_ages_and_birth_identity() -> None:

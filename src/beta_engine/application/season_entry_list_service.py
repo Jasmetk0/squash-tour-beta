@@ -292,7 +292,21 @@ class SeasonEntryListService:
                 continue
             existing_accepted = {entry.player_id for entry in existing.entries if entry.decision in {"accepted_main_draw", "accepted_qualification"}}
             for player_id in sorted(accepted & existing_accepted):
-                errors.append(self._issue("error", "player_week_overlap", f"player '{player_id}' is already accepted into overlapping event '{existing.event_id}'", event_id=event.event_id, player_id=player_id, field="season_week"))
+                warnings.append(
+                    self._issue(
+                        "warning",
+                        "player_week_overlap_unresolved",
+                        (
+                            f"player '{player_id}' is provisionally accepted into overlapping "
+                            f"event '{existing.event_id}'; the conflict may remain during the "
+                            "open entry process but must be resolved by commitment/lock authority "
+                            "before competitive execution"
+                        ),
+                        event_id=event.event_id,
+                        player_id=player_id,
+                        field="season_week",
+                    )
+                )
         if not accepted:
             warnings.append(self._issue("warning", "no_accepted_players", "entry list has no accepted main draw or qualification players", event_id=event.event_id))
         return warnings, errors

@@ -1,10 +1,8 @@
-"""Atomic, order-independent Entry resolution for overlapping tournament clusters."""
+"""Atomic shared-snapshot Entry generation for overlapping tournament clusters."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
-
 from pydantic import BaseModel, Field
 
 from beta_engine.application.season_entry_list_service import (
@@ -37,7 +35,10 @@ class EntryBatchMetadata(BaseModel):
     dry_run: bool
     persisted: bool
     active_players_fingerprint: str
-    resolved_conflict_player_count: int = Field(ge=0)
+    # Kept for wire compatibility with the short-lived #737 resolver contract.
+    # Canonical entry batching no longer auto-resolves competing applications.
+    resolved_conflict_player_count: int = Field(default=0, ge=0)
+    unresolved_conflict_player_count: int = Field(default=0, ge=0)
     build_fingerprint: str
     persistence_path: str | None = None
 
@@ -47,19 +48,16 @@ class SeasonEntryBatchResult(BaseModel):
     metadata: EntryBatchMetadata
 
 
-PoolTarget = Literal["main", "qualification"]
-PoolKey = tuple[str, PoolTarget]
-
-
 @dataclass(slots=True)
 class SeasonEntryBatchService:
-    """Resolve one pairwise-overlapping event cluster from one player snapshot.
+    """Generate one overlapping event cluster from one frozen player snapshot.
 
-    Event pools rank applicants by the existing Entry service ordering. Pools propose
-    in that ranking order and a player keeps the most attractive concurrent offer by
-    EntryEngine ``entry_score`` (then Main over Qualification and event identity as a
-    deterministic final tie-break). The resulting assignment is independent of the
-    caller's event ordering and all entry lists are persisted in one registry replace.
+    Each event is evaluated independently from the same pre-slot sporting/world
+    snapshot and the resulting entry lists are committed together. A player may be
+    provisionally accepted into more than one overlapping event: that is historical
+    Entry/Application state, not authority to compete twice. This layer therefore
+    records unresolved conflicts but never invents a preferred tournament. A later
+    commitment/Week Tournament Lock boundary must resolve them before play.
     """
 
     entry_list_service: SeasonEntryListService
@@ -136,28 +134,9 @@ class SeasonEntryBatchService:
             for event_id, entry_list in registry.entry_lists_by_event_id.items()
             if event_id not in ordered_event_ids
         }
-        external_blocked: dict[str, set[str]] = {
-            event_id: set() for event_id in ordered_event_ids
-        }
-        for event_id, event in events.items():
-            for existing in external_lists.values():
-                if existing.season != season:
-                    continue
-                existing_event = calendar_events.get(existing.event_id)
-                if existing_event is not None:
-                    overlaps = self._overlaps(event, existing_event)
-                else:
-                    start, end = self._interval(event)
-                    overlaps = start <= existing.season_week <= end
-                if not overlaps:
-                    continue
-                external_blocked[event_id].update(
-                    entry.player_id
-                    for entry in existing.entries
-                    if entry.decision
-                    in {"accepted_main_draw", "accepted_qualification"}
-                )
-
+        # Persisted overlapping EntryLists are not treated as irrevocable commitments.
+        # They participate in unresolved-conflict evidence below; the product permits
+        # overlapping provisional applications until an explicit commitment boundary.
         decisions_by_event: dict[str, dict[str, EntryDecision]] = {}
         warnings_by_event: dict[str, list[EntryListValidationIssue]] = {}
         for event_id, event in events.items():
@@ -194,9 +173,8 @@ class SeasonEntryBatchService:
             decisions_by_event[event_id] = decisions
             warnings_by_event[event_id] = warnings
 
-        pool_capacity: dict[PoolKey, int] = {}
-        pool_candidates: dict[PoolKey, list[EntryDecision]] = {}
-        decision_lookup: dict[tuple[PoolKey, str], EntryDecision] = {}
+        pool_capacity: dict[tuple[str, str], int] = {}
+        pool_candidates: dict[tuple[str, str], list[EntryDecision]] = {}
         for event_id, event in events.items():
             direct_slots = max(
                 0,
@@ -207,33 +185,63 @@ class SeasonEntryBatchService:
             )
             for target, capacity, enum_target in (
                 ("main", direct_slots, EntryTarget.MAIN),
-                (
-                    "qualification",
-                    event.qualification_draw_size,
-                    EntryTarget.QUALIFICATION,
-                ),
+                ("qualification", event.qualification_draw_size, EntryTarget.QUALIFICATION),
             ):
-                key: PoolKey = (event_id, target)
+                key = (event_id, target)
                 pool_capacity[key] = capacity
-                candidates = service._sort_decisions(
+                pool_candidates[key] = service._sort_decisions(
                     [
                         decision
                         for decision in decisions_by_event[event_id].values()
                         if decision.target == enum_target
-                        and decision.player_id not in external_blocked[event_id]
                     ],
                     active_by_id,
                 )
-                pool_candidates[key] = candidates
-                decision_lookup.update(
-                    {(key, decision.player_id): decision for decision in candidates}
-                )
 
-        accepted_by_pool, held_by_player, conflicted_players = self._resolve_pools(
-            pool_capacity=pool_capacity,
-            pool_candidates=pool_candidates,
-            decision_lookup=decision_lookup,
-        )
+        accepted_ids_by_event: dict[str, set[str]] = {}
+        for event_id in ordered_event_ids:
+            accepted_ids_by_event[event_id] = {
+                decision.player_id
+                for target in ("main", "qualification")
+                for decision in pool_candidates[(event_id, target)][
+                    : pool_capacity[(event_id, target)]
+                ]
+            }
+
+        accepting_events_by_player: dict[str, set[str]] = {}
+        for event_id, player_ids in accepted_ids_by_event.items():
+            for player_id in player_ids:
+                accepting_events_by_player.setdefault(player_id, set()).add(event_id)
+
+        # Existing overlapping lists are also provisional state. Include them in
+        # conflict evidence without silently treating them as a Week Tournament Lock.
+        for external in external_lists.values():
+            external_event = calendar_events.get(external.event_id)
+            external_accepted = {
+                entry.player_id
+                for entry in external.entries
+                if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+            }
+            for event_id, event in events.items():
+                if external.season != season:
+                    continue
+                if external_event is not None:
+                    overlaps = self._overlaps(event, external_event)
+                else:
+                    start, end = self._interval(event)
+                    overlaps = start <= external.season_week <= end
+                if not overlaps:
+                    continue
+                for player_id in accepted_ids_by_event[event_id] & external_accepted:
+                    accepting_events_by_player.setdefault(player_id, set()).update(
+                        {event_id, external.event_id}
+                    )
+
+        conflicted_players = {
+            player_id
+            for player_id, accepting_events in accepting_events_by_player.items()
+            if len(accepting_events) > 1
+        }
 
         lists: dict[str, SeasonEventEntryList] = {}
         for event_id, event in events.items():
@@ -245,35 +253,26 @@ class SeasonEntryBatchService:
                 ("main", "accepted_main_draw"),
                 ("qualification", "accepted_qualification"),
             ):
-                key: PoolKey = (event_id, target)
-                for decision in pool_candidates[key]:
-                    if decision.player_id not in accepted_by_pool[key]:
-                        continue
+                key = (event_id, target)
+                for decision in pool_candidates[key][: pool_capacity[key]]:
                     entries.append(
                         service._entry_from_decision(
                             decision,
                             active_by_id[decision.player_id],
                             decision_name,
                             priority,
-                            reason="accepted by shared overlapping-event resolver",
+                            reason="provisional acceptance from shared entry snapshot",
                         )
                     )
                     accepted_ids.add(decision.player_id)
                     priority += 1
 
-            assigned_elsewhere = {
-                player_id
-                for player_id, pool in held_by_player.items()
-                if pool[0] != event_id
-            }
             remaining = service._sort_decisions(
                 [
                     decision
                     for decision in decisions.values()
                     if decision.target in {EntryTarget.MAIN, EntryTarget.QUALIFICATION}
                     and decision.player_id not in accepted_ids
-                    and decision.player_id not in assigned_elsewhere
-                    and decision.player_id not in external_blocked[event_id]
                 ],
                 active_by_id,
             )
@@ -285,7 +284,7 @@ class SeasonEntryBatchService:
                         active_by_id[decision.player_id],
                         "alternate",
                         priority,
-                        reason="waitlist alternate after shared conflict resolution",
+                        reason="provisional waitlist alternate from shared entry snapshot",
                     )
                 )
                 alternate_ids.add(decision.player_id)
@@ -302,12 +301,7 @@ class SeasonEntryBatchService:
                         continue
                     if decision.target in {EntryTarget.MAIN, EntryTarget.QUALIFICATION}:
                         decision_name = "rejected"
-                        if decision.player_id in assigned_elsewhere:
-                            reason = "accepted into another overlapping event"
-                        elif decision.player_id in external_blocked[event_id]:
-                            reason = "already committed to a persisted overlapping event"
-                        else:
-                            reason = "entered but not accepted"
+                        reason = "entered but outside the current event cut"
                     else:
                         decision_name = "not_entered"
                         reason = "entry roll did not enter tournament"
@@ -323,10 +317,29 @@ class SeasonEntryBatchService:
                     priority += 1
 
             warnings = list(warnings_by_event[event_id])
+            event_conflicts = sorted(accepted_ids & conflicted_players)
+            for player_id in event_conflicts:
+                other_events = sorted(
+                    accepting_events_by_player[player_id] - {event_id}
+                )
+                warnings.append(
+                    service._issue(
+                        "warning",
+                        "player_week_overlap_unresolved",
+                        (
+                            f"player '{player_id}' is provisionally accepted into overlapping "
+                            f"event(s) {', '.join(other_events)}; no preferred tournament was "
+                            "invented and commitment authority is still required before play"
+                        ),
+                        event_id=event_id,
+                        player_id=player_id,
+                        field="season_week",
+                    )
+                )
             validation_warnings, validation_errors = service.validate_event_entry_constraints(
                 event=event,
                 entries=entries,
-                existing_entry_lists=external_lists,
+                existing_entry_lists={},
             )
             warnings.extend(validation_warnings)
             summary: EntryListSummary = service._summary(
@@ -384,7 +397,6 @@ class SeasonEntryBatchService:
                 validation_errors=validation_errors,
             )
 
-        self._assert_no_batch_overlap(lists)
         if any(item.validation_errors for item in lists.values()):
             first = next(
                 issue
@@ -404,7 +416,7 @@ class SeasonEntryBatchService:
                     lists[event_id].metadata.build_fingerprint
                     for event_id in ordered_event_ids
                 ],
-                "resolved_conflict_players": sorted(conflicted_players),
+                "unresolved_conflict_players": sorted(conflicted_players),
             }
         )
         metadata = EntryBatchMetadata(
@@ -414,7 +426,8 @@ class SeasonEntryBatchService:
             dry_run=request.dry_run,
             persisted=not request.dry_run,
             active_players_fingerprint=active_fp,
-            resolved_conflict_player_count=len(conflicted_players),
+            resolved_conflict_player_count=0,
+            unresolved_conflict_player_count=len(conflicted_players),
             build_fingerprint=batch_fp,
             persistence_path=(
                 None if request.dry_run else str(service.entry_lists_path)
@@ -432,61 +445,6 @@ class SeasonEntryBatchService:
         )
 
     @staticmethod
-    def _resolve_pools(
-        *,
-        pool_capacity: dict[PoolKey, int],
-        pool_candidates: dict[PoolKey, list[EntryDecision]],
-        decision_lookup: dict[tuple[PoolKey, str], EntryDecision],
-    ) -> tuple[dict[PoolKey, set[str]], dict[str, PoolKey], set[str]]:
-        accepted: dict[PoolKey, set[str]] = {
-            key: set() for key in pool_capacity
-        }
-        next_candidate = {key: 0 for key in pool_capacity}
-        held_by_player: dict[str, PoolKey] = {}
-        conflicted_players: set[str] = set()
-
-        while True:
-            proposals: dict[str, list[PoolKey]] = {}
-            for key in sorted(pool_capacity):
-                vacancies = pool_capacity[key] - len(accepted[key])
-                while vacancies > 0 and next_candidate[key] < len(pool_candidates[key]):
-                    decision = pool_candidates[key][next_candidate[key]]
-                    next_candidate[key] += 1
-                    proposals.setdefault(decision.player_id, []).append(key)
-                    vacancies -= 1
-            if not proposals:
-                break
-
-            for player_id in sorted(proposals):
-                options = list(proposals[player_id])
-                incumbent = held_by_player.get(player_id)
-                if incumbent is not None:
-                    options.append(incumbent)
-                unique_options = sorted(set(options))
-                if len(unique_options) > 1:
-                    conflicted_players.add(player_id)
-                chosen = min(
-                    unique_options,
-                    key=lambda key: SeasonEntryBatchService._player_preference_key(
-                        decision_lookup[(key, player_id)], key
-                    ),
-                )
-                if incumbent is not None and incumbent != chosen:
-                    accepted[incumbent].remove(player_id)
-                held_by_player[player_id] = chosen
-                accepted[chosen].add(player_id)
-        return accepted, held_by_player, conflicted_players
-
-    @staticmethod
-    def _player_preference_key(decision: EntryDecision, pool: PoolKey) -> tuple:
-        return (
-            -decision.entry_score,
-            0 if pool[1] == "main" else 1,
-            -decision.quality_score,
-            pool[0],
-        )
-
-    @staticmethod
     def _interval(event: SeasonCalendarEvent) -> tuple[int, int]:
         start = event.start_season_week or event.season_week
         end = event.end_season_week or start
@@ -497,21 +455,3 @@ class SeasonEntryBatchService:
         left_start, left_end = SeasonEntryBatchService._interval(left)
         right_start, right_end = SeasonEntryBatchService._interval(right)
         return max(left_start, right_start) <= min(left_end, right_end)
-
-    @staticmethod
-    def _assert_no_batch_overlap(
-        entry_lists: dict[str, SeasonEventEntryList],
-    ) -> None:
-        owner: dict[str, str] = {}
-        for event_id in sorted(entry_lists):
-            for entry in entry_lists[event_id].entries:
-                if entry.decision not in {
-                    "accepted_main_draw",
-                    "accepted_qualification",
-                }:
-                    continue
-                previous = owner.setdefault(entry.player_id, event_id)
-                if previous != event_id:
-                    raise ValueError(
-                        "shared Entry resolver produced an overlapping player acceptance"
-                    )

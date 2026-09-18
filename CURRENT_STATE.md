@@ -1,8 +1,9 @@
 # Current implementation and next action
 
-Audited 17 September 2026 from merged PR #733 at
-`2fa9517ea3a3d89c0b2e0e2d32f2eb487e34284d`, plus this integration-baseline
-and repeated-week acceptance slice.
+Re-audited 18 September 2026 after merged PRs #735–#740 at
+`68f39628a61a56735eedc1b1d41bc45be7f1d8be`. The audit compares merged code
+against the canonical Master Vision instead of treating PR descriptions or Fast CI
+as product authority.
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
@@ -10,7 +11,7 @@ PR #728 review hardening preserves owned InitialWorld style/profile truth, carri
 
 The follow-up compatibility correction assigns Sharpness-aware matches to `match_input_snapshot.v10` / `match_engine_v10`; v1-v9 hash payloads continue to omit the later Sharpness field and retain their historical identities.
 
-The tournament bridge now freezes a v4 Run/Branch/week authority bundle and consumes a canonical executable DAG built from persisted match IDs, direct slots and `winner_to_match_id` evidence. A smoke-covered production Entry List → Draw Package → Match Package eight-player/seven-match Main Draw executes through explicit global slots and topology-driven closure into one owned ranking source; its mid-event slot state is captured, reopened at an identical position, exact-retried without duplication and every played match is replay-verified. Pre-adoption producer conflicts fail closed, while post-adoption mutation of all three legacy producer files leaves execution unchanged. Adoption freezes qualifier-index/target-side evidence plus unambiguous single-player BYE advancement; mixed direct/winner participant sources are explicit. The current production qualification fixture still fails closed at its exact boundary because its generated opening BYE nodes contain zero known players, which the existing `process_byes` contract also treats as ambiguous. Historical v1-v3 four-player readers remain compatible. WC, LL and alternates remain unsupported. Legacy `start_day`, list order and round-name text are never chronology authority.
+The tournament bridge freezes a v4 Run/Branch/week authority bundle and consumes a canonical executable DAG built from persisted match IDs, direct slots and `winner_to_match_id` evidence. Production-backed eight-player/seven-match Main Draws now repeat across three completed authoritative weeks with explicit schedules, Week Transition and replay. Qualification promotion and unambiguous one-player BYE evidence execute through the same closure/ranking path. PRs #738–#740 also added persisted Wild Card and withdrawal/replacement provenance primitives. A post-merge Master Vision audit found that those primitives are not the completed repair workflow: overlapping entries may remain provisional until commitment authority; pre-draw withdrawals must rebalance Main/Qualification field cuts from the Tournament Ranking Snapshot; and post-draw repair must honor redraw/cascade/freeze phases, Lucky Loser priority and the first-real-match replacement cutoff. This correction branch removes the #737 automatic preferred-tournament choice and fails closed before play when overlapping commitments remain unresolved. Historical v1-v3 four-player readers remain compatible. Legacy `start_day`, list order and round-name text are never chronology authority.
 
 The eight-player acceptance directly exercises the Saved Revision simulation-state
 component capture and process reopen, while Week Transition plus post-transition
@@ -19,7 +20,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #733 is the latest verified merge in this audit base.
+protocol is chapter 36. PR #740 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -28,7 +29,7 @@ protocol is chapter 36. PR #733 is the latest verified merge in this audit base.
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
 | Packages/players | World package, owned InitialWorld, lifecycle, `player_sporting_week_states`, and slot checkpoints | Canonical 57×0–200 sporting history and match-derived Form/Sharpness/Fatigue exist for the narrow slot slice; health and prospects remain open |
-| Tournament flow | generalized persisted topology in `authoritative_run_simulation_driver.py`, result/award services, `owned_tournament_sources.py`; real production eight-player execution plus four-player SQLite acceptance | Complete explicit binary Main Draw DAGs can be frozen and scheduled; qualifier mappings and single-player BYEs are frozen when unambiguous, while zero-player BYEs, WC/LL/alternates and broader abnormal sources remain fail-closed boundaries |
+| Tournament flow | generalized persisted topology in `authoritative_run_simulation_driver.py`, result/award services, `owned_tournament_sources.py`; repeated production eight-player execution; Qualification/BYE acceptance; WC/replacement provenance primitives | Complete binary Main Draws plus the proven Qualification/BYE slice can close authoritatively. Overlapping Entry commitment, canonical RWC/field rebalance/draw-repair phases, Lucky Losers, replacement cutoff and broader abnormal sources remain boundaries. |
 | Match engine | `domain/matches/match_engine.py`, immutable inputs/replay, `simulation_slots.py`, and Run/Branch slot persistence | Narrow four-player scheduling and later-slot sporting causality exist; general global scheduling, native 57-attribute Rally Setup, and finished realism remain open |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
@@ -43,6 +44,19 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Audit findings and corrections
 
+- Post-#740 audit correction: Fast CI is only the smoke suite. The separate Full Test
+  Suite is the complete repository safety net. The latest known frontend full-suite
+  failure is the pre-existing Viewer route-context test boundary; backend full pytest
+  passed after #736, while later full-suite runs were cancelled by subsequent merges
+  or were still running during this audit.
+- #737's Qualification/BYE/ranking-ingestion work remains useful. Its overlapping
+  Entry resolver was product-wrong because it automatically chose one tournament
+  using Entry score/Main-vs-Qualification preference. Canon permits provisional
+  overlapping applications and requires later commitment/lock authority.
+- #738 is treated as a Wild Card provenance primitive, not the completed WC/RWC
+  workflow. #739/#740 are provenance experiments that must be reworked around the
+  canonical pre-draw field rebalance and post-draw repair/LL rules before being used
+  as the foundation for further tournament-repair features.
 - #689 (including #690) and #691–720 are in the fetched ancestry; the v64 Master
   statement that #689 was open is historical. #720 feature CI #861 succeeded.
 - Active authority pointers to v50/v54/v61 were stale documentation, not competing

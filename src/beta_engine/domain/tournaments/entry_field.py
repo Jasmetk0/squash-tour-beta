@@ -77,7 +77,7 @@ class TournamentEntryField(FrozenInput):
     applications_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     direct_main_player_ids: tuple[str, ...] = ()
     qualification_player_ids: tuple[str, ...] = ()
-    reserve_player_ids: tuple[str, ...] = ()
+    below_qualification_cut_player_ids: tuple[str, ...] = ()
     withdrawn_player_ids: tuple[str, ...] = ()
     base_field_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
@@ -88,7 +88,7 @@ class TournamentEntryField(FrozenInput):
         partitions = (
             self.direct_main_player_ids,
             self.qualification_player_ids,
-            self.reserve_player_ids,
+            self.below_qualification_cut_player_ids,
         )
         ids = [player_id for group in partitions for player_id in group]
         if len(ids) != len(set(ids)):
@@ -142,7 +142,7 @@ class TournamentEntryFieldResolver:
             authority, (*remaining_main, *qualification_window)
         )
         qualification = qualification_pool[: capacity.qualification_draw_size]
-        reserve = qualification_pool[capacity.qualification_draw_size :]
+        below_qualification_cut = qualification_pool[capacity.qualification_draw_size :]
 
         return TournamentEntryField(
             run_id=authority.run_id,
@@ -157,7 +157,9 @@ class TournamentEntryFieldResolver:
             qualification_player_ids=tuple(
                 app.player_id for app in qualification
             ),
-            reserve_player_ids=tuple(app.player_id for app in reserve),
+            below_qualification_cut_player_ids=tuple(
+                app.player_id for app in below_qualification_cut
+            ),
         )
 
     @classmethod
@@ -183,7 +185,7 @@ class TournamentEntryFieldResolver:
         active_before = set(
             previous.direct_main_player_ids
             + previous.qualification_player_ids
-            + previous.reserve_player_ids
+            + previous.below_qualification_cut_player_ids
         )
         requested = tuple(sorted(set(withdrawn_player_ids)))
         unknown = [player_id for player_id in requested if player_id not in active_before]
@@ -209,7 +211,7 @@ class TournamentEntryFieldResolver:
                 apps_by_player[player_id]
                 for player_id in (
                     previous.qualification_player_ids
-                    + previous.reserve_player_ids
+                    + previous.below_qualification_cut_player_ids
                 )
                 if player_id not in withdrawn
             ),
@@ -219,7 +221,7 @@ class TournamentEntryFieldResolver:
         remaining = candidate_pool[withdrawn_from_main:]
         qualification_target = len(previous.qualification_player_ids)
         qualification = remaining[:qualification_target]
-        reserve = remaining[qualification_target:]
+        below_qualification_cut = remaining[qualification_target:]
 
         direct = cls._ranked(authority, (*surviving_main, *promoted))
         return TournamentEntryField(
@@ -235,7 +237,9 @@ class TournamentEntryFieldResolver:
             qualification_player_ids=tuple(
                 app.player_id for app in qualification
             ),
-            reserve_player_ids=tuple(app.player_id for app in reserve),
+            below_qualification_cut_player_ids=tuple(
+                app.player_id for app in below_qualification_cut
+            ),
             withdrawn_player_ids=tuple(sorted(withdrawn)),
             base_field_fingerprint=previous.fingerprint,
         )

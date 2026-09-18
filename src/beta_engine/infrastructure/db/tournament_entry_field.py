@@ -145,31 +145,37 @@ class TournamentEntryFieldStore:
             raise ValueError("Stored Tournament Entry Field row is corrupt")
         return field, applications
 
-    def history(
-        self, *, run_id: str, branch_id: str, event_id: str
+    @classmethod
+    def validate_rows(
+        cls,
+        rows: tuple[TournamentEntryFieldVersionModel, ...]
+        | list[TournamentEntryFieldVersionModel],
+        *,
+        authority,
     ) -> tuple[TournamentEntryField, ...]:
-        self._scope(run_id, branch_id)
-        rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
-        if not rows:
+        ordered = tuple(sorted(rows, key=lambda row: row.sequence))
+        if not ordered:
             return ()
-        if [row.sequence for row in rows] != list(range(1, len(rows) + 1)):
+        if [row.sequence for row in ordered] != list(range(1, len(ordered) + 1)):
             raise ValueError("Tournament entry field version sequence has a gap")
-
-        authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
-        if authority is None:
-            raise ValueError(
-                "Tournament entry field references missing Tournament Ranking Snapshot authority"
-            )
 
         result: list[TournamentEntryField] = []
         previous: TournamentEntryField | None = None
-        for row in rows:
-            field, applications = self._load_row(row)
+        for row in ordered:
+            field, applications = cls._load_row(row)
+            if (row.run_id, row.branch_id, row.event_id) != (
+                authority.run_id,
+                authority.branch_id,
+                authority.event_id,
+            ):
+                raise ValueError(
+                    "Tournament Entry Field row scope differs from ranking authority"
+                )
             if row.sequence == 1:
                 if field.mode != "initial" or previous is not None:
-                    raise ValueError("First Tournament Entry Field version must be initial")
+                    raise ValueError(
+                        "First Tournament Entry Field version must be initial"
+                    )
                 rebuilt = TournamentEntryFieldResolver.build_initial(
                     authority=authority,
                     applications=applications,
@@ -178,9 +184,9 @@ class TournamentEntryFieldStore:
                 expected_request_fingerprint = _request_fingerprint(
                     {
                         "mode": "initial",
-                        "run_id": run_id,
-                        "branch_id": branch_id,
-                        "event_id": event_id,
+                        "run_id": authority.run_id,
+                        "branch_id": authority.branch_id,
+                        "event_id": authority.event_id,
                         "authority_fingerprint": authority.fingerprint,
                         "applications_fingerprint": field.applications_fingerprint,
                         "capacity": field.capacity.model_dump(mode="json"),
@@ -214,9 +220,9 @@ class TournamentEntryFieldStore:
                 expected_request_fingerprint = _request_fingerprint(
                     {
                         "mode": "pre_draw_repair",
-                        "run_id": run_id,
-                        "branch_id": branch_id,
-                        "event_id": event_id,
+                        "run_id": authority.run_id,
+                        "branch_id": authority.branch_id,
+                        "event_id": authority.event_id,
                         "authority_fingerprint": authority.fingerprint,
                         "applications_fingerprint": field.applications_fingerprint,
                         "predecessor_fingerprint": previous.fingerprint,
@@ -236,6 +242,22 @@ class TournamentEntryFieldStore:
             result.append(field)
             previous = field
         return tuple(result)
+
+    def history(
+        self, *, run_id: str, branch_id: str, event_id: str
+    ) -> tuple[TournamentEntryField, ...]:
+        self._scope(run_id, branch_id)
+        rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        if not rows:
+            return ()
+        authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if authority is None:
+            raise ValueError(
+                "Tournament entry field references missing Tournament Ranking Snapshot authority"
+            )
+        return self.validate_rows(rows, authority=authority)
 
     def latest(
         self, *, run_id: str, branch_id: str, event_id: str

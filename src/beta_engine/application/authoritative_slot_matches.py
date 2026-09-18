@@ -19,6 +19,7 @@ from beta_engine.domain.matches import (
     official_match_format_snapshot,
 )
 from beta_engine.domain.matches.models import MatchResult
+from beta_engine.application.season_draw_service import SeasonEventDrawPackageResult
 from beta_engine.application.season_event_results_service import (
     EventResultExtractRequest,
     SeasonEventResultPackage,
@@ -323,6 +324,16 @@ def publish_authoritative_tournament_to_existing_completion(
 
 
 @dataclass(slots=True)
+class _NoLegacyDrawReader:
+    """Result-builder adapter that deliberately exposes no legacy DrawPackage."""
+
+    def get_draw_package(self, *, event_id: str) -> SeasonEventDrawPackageResult:
+        return SeasonEventDrawPackageResult(
+            draw_package=None,
+            draw_package_exists=False,
+        )
+
+
 class _ExplicitMatchPackageReader:
     """Read-only adapter for the existing result builder."""
 
@@ -398,13 +409,22 @@ def build_authoritative_tournament_ranking_packages(
         package=package,
         authoritative=authoritative,
     )
+    canonical_payload = (
+        package.metadata.match_engine_version
+        == "run_owned_match_package_projection.v1"
+    )
+    result_draw_service = (
+        _NoLegacyDrawReader()
+        if canonical_payload
+        else service.result_service.draw_service
+    )
     match_reader = _ExplicitMatchPackageReader(
         package=projected,
-        draw_service=service.result_service.draw_service,
+        draw_service=result_draw_service,
     )
     result_builder = _ReadOnlyEventResultsBuilder(
         match_service=cast(Any, match_reader),
-        draw_service=service.result_service.draw_service,
+        draw_service=cast(Any, result_draw_service),
         calendar_service=service.result_service.calendar_service,
         results_path=Path(".authoritative-result-builder-read-only"),
     )

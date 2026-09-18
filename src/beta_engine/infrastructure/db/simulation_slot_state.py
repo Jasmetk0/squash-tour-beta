@@ -16,6 +16,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
+    TournamentWildCardAuthorityModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"
@@ -51,6 +52,39 @@ def _validate_entry_field_rows(rows):
                         "Tournament Entry Field predecessor chain is corrupt"
                     )
             previous = field
+
+
+def _validate_wild_card_rows_shape(rows):
+    from beta_engine.domain.tournaments.wild_card_authority import (
+        TournamentWildCardAuthority,
+    )
+
+    event_keys = [(row.run_id, row.branch_id, row.event_id) for row in rows]
+    command_keys = [(row.run_id, row.branch_id, row.command_id) for row in rows]
+    if len(event_keys) != len(set(event_keys)):
+        raise ValueError("Saved Tournament WC authority contains duplicate event authority")
+    if len(command_keys) != len(set(command_keys)):
+        raise ValueError("Saved Tournament WC authority contains duplicate command identity")
+    for row in rows:
+        authority = TournamentWildCardAuthority.model_validate_json(row.payload_json)
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.resolved_by_command_id,
+            authority.entry_field_fingerprint,
+            authority.field_sequence,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.entry_field_fingerprint,
+            row.field_sequence,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament WC authority row is corrupt")
 
 
 def _validate_draw_input_rows_shape(rows):
@@ -236,6 +270,8 @@ def _component(
     include_schedules=True,
     entry_fields=(),
     include_entry_fields=True,
+    wild_card_authorities=(),
+    include_wild_card_authorities=True,
     draw_inputs=(),
     include_draw_inputs=True,
     draw_authorities=(),
@@ -243,6 +279,7 @@ def _component(
 ):
     _validate_semantics(slots, groups)
     _validate_entry_field_rows(entry_fields)
+    _validate_wild_card_rows_shape(wild_card_authorities)
     _validate_draw_input_rows_shape(draw_inputs)
     _validate_draw_authority_rows_shape(draw_authorities)
     body = {
@@ -319,6 +356,21 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in entry_fields
+        ]
+    if include_wild_card_authorities:
+        body["wild_card_authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "entry_field_fingerprint": row.entry_field_fingerprint,
+                "field_sequence": row.field_sequence,
+                "payload_json": row.payload_json,
+            }
+            for row in wild_card_authorities
         ]
     if include_draw_inputs:
         body["draw_inputs"] = [
@@ -435,6 +487,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({row.event_id for row in entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    wild_card_authorities = session.scalars(
+        select(TournamentWildCardAuthorityModel)
+        .where(
+            TournamentWildCardAuthorityModel.run_id == run_id,
+            TournamentWildCardAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentWildCardAuthorityModel.event_id)
+    ).all()
+    if wild_card_authorities:
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            TournamentWildCardAuthorityStore,
+        )
+
+        wc_store = TournamentWildCardAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in wild_card_authorities}):
+            wc_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     draw_inputs = session.scalars(
         select(TournamentDrawInputAuthorityModel)
         .where(
@@ -474,6 +542,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or authorities
         or schedules
         or entry_fields
+        or wild_card_authorities
         or draw_inputs
         or draw_authorities
     ):
@@ -485,6 +554,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             schedules=schedules,
             entry_fields=entry_fields,
             include_entry_fields=bool(entry_fields),
+            wild_card_authorities=wild_card_authorities,
+            include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
             include_draw_inputs=bool(draw_inputs),
             draw_authorities=draw_authorities,
@@ -502,6 +573,7 @@ def _load(payload, *, run_id, branch_id):
         "authorities",
         "schedules",
         "entry_fields",
+        "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",
     }
@@ -530,6 +602,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("entry_fields", [])
         ],
         include_entry_fields="entry_fields" in component,
+        wild_card_authorities=[
+            TournamentWildCardAuthorityModel(**value)
+            for value in component.get("wild_card_authorities", [])
+        ],
+        include_wild_card_authorities="wild_card_authorities" in component,
         draw_inputs=[
             TournamentDrawInputAuthorityModel(**value)
             for value in component.get("draw_inputs", [])
@@ -554,6 +631,7 @@ def _load(payload, *, run_id, branch_id):
                 "authorities",
                 "schedules",
                 "entry_fields",
+                "wild_card_authorities",
                 "draw_inputs",
                 "draw_authorities",
             }
@@ -781,6 +859,22 @@ def restore_saved_simulation_slots(
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({row.event_id for row in live_entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_wild_card_authorities = session.scalars(
+        select(TournamentWildCardAuthorityModel)
+        .where(
+            TournamentWildCardAuthorityModel.run_id == run_id,
+            TournamentWildCardAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentWildCardAuthorityModel.event_id)
+    ).all()
+    if live_wild_card_authorities:
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            TournamentWildCardAuthorityStore,
+        )
+
+        wc_store = TournamentWildCardAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_wild_card_authorities}):
+            wc_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_draw_inputs = session.scalars(
         select(TournamentDrawInputAuthorityModel)
         .where(
@@ -837,6 +931,11 @@ def restore_saved_simulation_slots(
                 bool(live_entry_fields)
                 or bool(expected is not None and "entry_fields" in expected)
             ),
+            wild_card_authorities=live_wild_card_authorities,
+            include_wild_card_authorities=(
+                bool(live_wild_card_authorities)
+                or bool(expected is not None and "wild_card_authorities" in expected)
+            ),
             draw_inputs=live_draw_inputs,
             include_draw_inputs=(
                 bool(live_draw_inputs)
@@ -854,6 +953,7 @@ def restore_saved_simulation_slots(
         or live_authorities
         or live_schedules
         or live_entry_fields
+        or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities
         else None
@@ -864,6 +964,12 @@ def restore_saved_simulation_slots(
         delete(TournamentDrawAuthorityModel).where(
             TournamentDrawAuthorityModel.run_id == run_id,
             TournamentDrawAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(TournamentWildCardAuthorityModel).where(
+            TournamentWildCardAuthorityModel.run_id == run_id,
+            TournamentWildCardAuthorityModel.branch_id == branch_id,
         )
     )
     session.execute(
@@ -920,6 +1026,8 @@ def restore_saved_simulation_slots(
         session.add(WeekSimulationScheduleModel(**value))
     for value in (target or {}).get("entry_fields", []):
         session.add(TournamentEntryFieldVersionModel(**value))
+    for value in (target or {}).get("wild_card_authorities", []):
+        session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
         session.add(TournamentDrawInputAuthorityModel(**value))
     for value in (target or {}).get("draw_authorities", []):
@@ -934,6 +1042,15 @@ def restore_saved_simulation_slots(
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({value["event_id"] for value in target_entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_wild_cards = (target or {}).get("wild_card_authorities", [])
+    if target_wild_cards:
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            TournamentWildCardAuthorityStore,
+        )
+
+        wc_store = TournamentWildCardAuthorityStore(session)
+        for event_id in sorted({value["event_id"] for value in target_wild_cards}):
+            wc_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_draw_inputs = (target or {}).get("draw_inputs", [])
     if target_draw_inputs:
         from beta_engine.infrastructure.db.tournament_draw_input_authority import (

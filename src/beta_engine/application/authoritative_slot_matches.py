@@ -39,6 +39,12 @@ from beta_engine.application.season_point_awards_service import (
     SeasonPointAwardsService,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+from beta_engine.domain.tournaments.result_authority import (
+    TournamentResultAuthority,
+    build_tournament_result_authority,
+    project_tournament_result_legacy_dto,
+)
 from beta_engine.domain.simulation_slots import (
     AuthoritativeMatchInput,
     CanonicalMatchInputProjectionPolicy,
@@ -388,6 +394,85 @@ class _ReadOnlyPointAwardsBuilder(SeasonPointAwardsService):
 
     def _save_registry(self, registry: SeasonPointAwardsRegistry) -> None:
         raise AssertionError("authoritative award projection must remain in memory")
+
+
+def build_run_owned_tournament_ranking_packages(
+    service: SeasonPointAwardsService,
+    *,
+    package: SeasonEventMatchPackage,
+    authoritative: AuthoritativeTournamentResult,
+    draw: TournamentDrawAuthority,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    result_seed: int,
+    award_seed: int,
+    frozen_point_authority: FrozenPointAwardAuthority | None = None,
+) -> tuple[
+    SeasonEventMatchPackage,
+    TournamentResultAuthority,
+    SeasonEventResultPackage,
+    EventPointAwardPackage,
+]:
+    """Close a canonical tournament without SeasonEventResultsService extraction."""
+
+    projected = publish_authoritative_tournament_to_existing_completion(
+        package=package,
+        authoritative=authoritative,
+    )
+    calendar = service.calendar_service.get_calendar(season=package.season).calendar
+    if calendar is None:
+        raise ValueError("canonical tournament result requires Calendar authority")
+    event = next(
+        (item for item in calendar.events if item.event_id == package.event_id),
+        None,
+    )
+    if event is None:
+        raise ValueError("canonical tournament result Calendar Event is missing")
+
+    canonical_result = build_tournament_result_authority(
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        draw=draw,
+        package=projected,
+    )
+    result = project_tournament_result_legacy_dto(
+        authority=canonical_result,
+        event=event,
+        package=projected,
+        seed=result_seed,
+    )
+
+    result_reader = _ExplicitResultPackageReader(
+        package=result,
+        calendar_service=service.calendar_service,
+    )
+    award_builder = _ReadOnlyPointAwardsBuilder(
+        result_service=cast(Any, result_reader),
+        active_players_service=service.active_players_service,
+        calendar_service=service.calendar_service,
+        template_service=service.template_service,
+        awards_path=Path(".authoritative-award-builder-read-only"),
+        points_config_path=service.points_config_path,
+    )
+    awards = award_builder.generate_event_point_awards(
+        event_id=package.event_id,
+        request=PointAwardGenerateRequest(seed=award_seed, dry_run=True),
+        frozen_authority=frozen_point_authority,
+    ).award_package
+    if awards is None:
+        raise ValueError("canonical tournament award builder returned no package")
+    awards = awards.model_copy(
+        update={
+            "dry_run": False,
+            "persisted": True,
+            "metadata": awards.metadata.model_copy(
+                update={"dry_run": False, "persisted": True}
+            ),
+        }
+    )
+    return projected, canonical_result, result, awards
 
 
 def build_authoritative_tournament_ranking_packages(

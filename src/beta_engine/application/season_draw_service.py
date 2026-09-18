@@ -451,9 +451,10 @@ class SeasonDrawService:
                 "No eligible alternate remains for every recorded pre-draw withdrawal."
             )
 
+        selected_alternates = alternates[: len(withdrawn_entries)]
         replacements: list[PreDrawWithdrawalReplacement] = []
         for withdrawn, replacement in zip(
-            withdrawn_entries, alternates, strict=True
+            withdrawn_entries, selected_alternates, strict=True
         ):
             payload = {
                 "event_id": event_id,

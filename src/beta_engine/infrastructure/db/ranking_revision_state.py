@@ -71,15 +71,21 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         or any(value is None for value in tournament_ranking_authorities)
     ):
         raise ValueError("Ranking revision source identity is missing")
+    frozen_tournament_rankings = tuple(
+        value for value in tournament_ranking_authorities if value is not None
+    )
     return RankingRevisionState(
+        schema_version=(
+            "ranking_revision_state.v5"
+            if frozen_tournament_rankings
+            else "ranking_revision_state.v4"
+        ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
         zero_sources=OfficialRankingZeroStore(session).history(run_id=run_id, branch_id=branch_id),
         tournament_sources=tuple(value for value in tournament_sources if value is not None),
         transition_authorities=tuple(value for value in authorities if value is not None),
-        tournament_ranking_snapshot_authorities=tuple(
-            value for value in tournament_ranking_authorities if value is not None
-        ),
+        tournament_ranking_snapshot_authorities=frozen_tournament_rankings,
         authoritative_transition_state=transition_state,
     )
 

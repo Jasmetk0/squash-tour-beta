@@ -178,3 +178,14 @@ builds a deterministic in-memory compatibility package from canonical Draw + Cal
 evidence and freezes that payload with tournament authority. Existing result/points
 builders remain temporary adapters; canonical payloads explicitly bypass legacy
 DrawPackage lookup.
+
+
+### Run-owned Tournament Result authority follow-up
+
+After #751, canonical tournaments no longer require file-backed MatchPackage
+generation. The current follow-up removes the next legacy producer from the
+canonical close path: champion/finalist, Qualification provenance, reached stages
+and match-result references are built into immutable `TournamentResultAuthority`
+directly from canonical Draw + authoritative match receipts. New owned ranking
+sources persist that truth as v2. Legacy-shaped result DTOs remain only as temporary
+inputs to the existing points/ranking adapter.

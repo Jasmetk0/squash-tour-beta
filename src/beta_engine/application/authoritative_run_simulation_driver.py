@@ -307,6 +307,56 @@ class AuthoritativeRunSimulationDriver:
         ordinal = rows[0]
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
+    def _canonical_draw_binding(
+        self,
+        session,
+        *,
+        run_id,
+        branch_id,
+        week,
+        event_id,
+    ):
+        """Resolve Draw ownership as frozen by adopted tournament authority.
+
+        Before tournament adoption, the current Run-owned Draw Authority may be
+        consumed. After adoption, the stored v5 Draw fingerprint (or historical
+        absence in v1-v4 / v5-null) is immutable replay evidence.
+        """
+        adopted = session.get(
+            AdoptedTournamentAuthorityModel,
+            (run_id, branch_id, week.ordinal),
+        )
+        expected_fp = None
+        binding_frozen = False
+        if adopted is not None:
+            items = self._decode_adopted_authority(adopted.package_json)
+            matches = [
+                draw_fp
+                for package, _, draw_fp in items
+                if package.event_id == event_id
+            ]
+            if len(matches) != 1:
+                raise ValueError(
+                    "frozen tournament authority lacks unique event Draw binding"
+                )
+            expected_fp = matches[0]
+            binding_frozen = True
+
+        draw = TournamentDrawAuthorityStore(session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if binding_frozen:
+            if expected_fp is None:
+                return None
+            if draw is None or draw.fingerprint != expected_fp:
+                raise ValueError(
+                    "frozen tournament authority canonical Draw binding changed"
+                )
+            return draw
+        return draw
+
     def _packages(
         self,
         week,
@@ -333,9 +383,11 @@ class AuthoritativeRunSimulationDriver:
         for package in packages:
             canonical = None
             if session is not None and run_id is not None and branch_id is not None:
-                canonical = TournamentDrawAuthorityStore(session).get(
+                canonical = self._canonical_draw_binding(
+                    session,
                     run_id=run_id,
                     branch_id=branch_id,
+                    week=week,
                     event_id=package.event_id,
                 )
             if canonical is not None:
@@ -707,7 +759,7 @@ class AuthoritativeRunSimulationDriver:
             len(packages) > 1
             or len(
                 self._topology_for_session(
-                    session, run_id, branch_id, packages
+                    session, run_id, branch_id, packages, week=week
                 )
             )
             != 3
@@ -810,7 +862,7 @@ class AuthoritativeRunSimulationDriver:
             )
             schedule = self._schedule(session, run_id, branch_id, week)
             plans = self._topology_for_session(
-                session, run_id, branch_id, packages
+                session, run_id, branch_id, packages, week=week
             ) if packages else {}
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
@@ -1078,15 +1130,19 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
-    def _topology_for_session(self, session, run_id, branch_id, packages):
-        """Prefer canonical Run-owned Draw authority; keep legacy reader for history."""
+    def _topology_for_session(
+        self, session, run_id, branch_id, packages, *, week
+    ):
+        """Prefer the Draw source frozen for this tournament authority generation."""
         if not packages:
             return {}
         canonical = []
         for package in packages:
-            draw = TournamentDrawAuthorityStore(session).get(
+            draw = self._canonical_draw_binding(
+                session,
                 run_id=run_id,
                 branch_id=branch_id,
+                week=week,
                 event_id=package.event_id,
             )
             canonical.append((package, draw))
@@ -1110,7 +1166,11 @@ class AuthoritativeRunSimulationDriver:
 
     def _validate_schedule(self, session, schedule, packages):
         plans = self._topology_for_session(
-            session, schedule.run_id, schedule.branch_id, packages
+            session,
+            schedule.run_id,
+            schedule.branch_id,
+            packages,
+            week=schedule.week,
         )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
@@ -1390,7 +1450,11 @@ class AuthoritativeRunSimulationDriver:
             session, command.run_id, command.branch_id, command.expected_week
         )
         plans = self._topology_for_session(
-            session, command.run_id, command.branch_id, packages
+            session,
+            command.run_id,
+            command.branch_id,
+            packages,
+            week=command.expected_week,
         )
         if schedule:
             spec = next(x for x in schedule.slots if x.ordinal == pos.slot_ordinal)

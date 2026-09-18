@@ -234,6 +234,20 @@ def test_followup_qualification_withdrawal_backfills_without_changing_main(facto
     assert second.qualification_player_ids == ("F", "G")
     assert second.withdrawn_player_ids == ("D", "E")
 
+    # The first historical command remains an exact replay even after a later
+    # repair version advanced the event field.
+    replayed_first = service.execute(
+        CanonicalPreDrawWithdrawalCommand(
+            command_id="withdraw-d",
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
+            withdrawn_player_ids=("D",),
+        )
+    )
+    assert replayed_first == first
+
 
 def test_command_id_reuse_with_different_withdrawal_fails_closed(factory):
     initial = _stage_initial(factory)

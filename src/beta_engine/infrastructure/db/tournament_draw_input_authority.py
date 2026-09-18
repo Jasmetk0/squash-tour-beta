@@ -67,6 +67,7 @@ class TournamentDrawInputAuthorityStore:
         ranking_authority,
         field,
         field_sequence: int,
+        wild_card_authority=None,
     ) -> TournamentDrawInputAuthority:
         """Validate one frozen row against already-resolved target dependencies."""
 
@@ -104,15 +105,6 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament Draw Input authority ranking fingerprint is stale"
             )
 
-        wild_card_authority = (
-            TournamentWildCardAuthorityStore(self.session).get(
-                run_id=row.run_id,
-                branch_id=row.branch_id,
-                event_id=row.event_id,
-            )
-            if field.capacity.wild_card_slots
-            else None
-        )
         rebuilt = TournamentDrawInputAuthorityBuilder.build(
             authority=ranking_authority,
             field=field,
@@ -164,11 +156,21 @@ class TournamentDrawInputAuthorityStore:
             raise ValueError(
                 "Tournament Draw Input authority references missing Entry Field history"
             )
+        wild_card_authority = (
+            TournamentWildCardAuthorityStore(self.session).get(
+                run_id=row.run_id,
+                branch_id=row.branch_id,
+                event_id=row.event_id,
+            )
+            if history[-1].capacity.wild_card_slots
+            else None
+        )
         return self.validate_row(
             row,
             ranking_authority=ranking_authority,
             field=history[-1],
             field_sequence=len(history),
+            wild_card_authority=wild_card_authority,
         )
 
     @staticmethod

@@ -27,8 +27,13 @@ backfills Qualification without changing Main when no Main vacancy exists.
 
 The persistence store remains append-only.
 
+- Every new command carries the field fingerprint it was prepared against; if another
+  repair has advanced the field first, the stale command fails closed instead of
+  silently rebasing itself.
 - Command IDs are idempotent.
 - Reusing a command ID with different withdrawal input fails closed.
+- An exact historical retry keeps using its original predecessor fingerprint and
+  remains replayable even after later field versions or Draw Input commitment.
 - Frozen application evidence is not re-read from mutable legacy Entry state.
 - Every stored field version is replayed against its frozen applications and
   Tournament Ranking Snapshot authority.

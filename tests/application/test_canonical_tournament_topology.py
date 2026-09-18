@@ -85,6 +85,35 @@ def _draw_input(*, with_qualification=False, with_bye=False):
     )
 
 
+def _multi_q_draw_input():
+    direct = tuple(f"M{index:02d}" for index in range(1, 29))
+    qualification = tuple(f"QF{index:02d}" for index in range(1, 17))
+    return TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        committed_by_command_id="draw-input-multi-q",
+        draw_seed=91234,
+        main_seed_count=8,
+        qualification_seed_count=4,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=32,
+            qualification_draw_size=16,
+            qualifier_spots=4,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=direct,
+        qualification_player_ids=qualification,
+        qualifier_placeholder_ids=("Q1", "Q2", "Q3", "Q4"),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=direct[:8],
+        qualification_seed_player_ids=qualification[:4],
+    )
+
+
 def _player_for_source(bracket, source):
     if not source.startswith("slot:"):
         return None
@@ -94,10 +123,7 @@ def _player_for_source(bracket, source):
 
 def _package(draw):
     id_by_node = {}
-    brackets = []
-    if draw.qualification is not None:
-        brackets.append(draw.qualification)
-    brackets.append(draw.main)
+    brackets = [*draw.qualification_brackets, draw.main]
     for bracket in brackets:
         for node in bracket.nodes:
             id_by_node[node.node_id] = (
@@ -180,6 +206,75 @@ def _package(draw):
             draw_package_fingerprint="legacy-not-authority",
             active_players_fingerprint="players",
         ),
+    )
+
+
+def test_master_style_four_q_sections_feed_distinct_main_placeholders():
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_multi_q_draw_input(),
+        command_id="draw-multi-q",
+    )
+
+    assert draw.schema_version == "tournament_draw_authority.v2"
+    assert draw.qualification is None
+    assert tuple(section.section_id for section in draw.qualification_brackets) == (
+        "Q1",
+        "Q2",
+        "Q3",
+        "Q4",
+    )
+    assert all(section.bracket_size == 4 for section in draw.qualification_brackets)
+    assert all(len(section.nodes) == 3 for section in draw.qualification_brackets)
+    assert len(draw.main.nodes) == 31
+
+    # Master 15.6: first global seed layer is fixed one-per-section.
+    first_seed_players = []
+    first_seed_numbers = []
+    for section in draw.qualification_brackets:
+        seeded = [slot for slot in section.slots if slot.seed_number is not None]
+        assert len(seeded) == 1
+        first_seed_players.append(seeded[0].player_id)
+        first_seed_numbers.append(seeded[0].seed_number)
+    assert tuple(first_seed_players) == ("QF01", "QF02", "QF03", "QF04")
+    assert tuple(first_seed_numbers) == (1, 2, 3, 4)
+
+    q_players = {
+        slot.player_id
+        for section in draw.qualification_brackets
+        for slot in section.slots
+        if slot.player_id is not None
+    }
+    assert q_players == {f"QF{index:02d}" for index in range(1, 17)}
+    assert {
+        placeholder_id for placeholder_id, _ in draw.main.qualifier_placeholder_slots
+    } == {"Q1", "Q2", "Q3", "Q4"}
+
+    package = _package(draw)
+    projection = project_canonical_draw_to_match_topology(
+        draw=draw,
+        package=package,
+    )
+
+    assert len(package.qualification_matches) == 12
+    assert len(package.main_draw_matches) == 31
+    assert len(projection.plans) == 43
+    assert len(projection.qualifier_promotions) == 4
+    assert tuple(
+        promotion.qualifier_index for promotion in projection.qualifier_promotions
+    ) == (1, 2, 3, 4)
+    assert len(
+        {promotion.source_match_id for promotion in projection.qualifier_promotions}
+    ) == 4
+    assert all(
+        any(
+            source == f"winner:{promotion.source_match_id}"
+            for source in next(
+                plan
+                for plan in projection.plans
+                if plan.match_id == promotion.target_match_id
+            ).participant_sources
+        )
+        for promotion in projection.qualifier_promotions
     )
 
 

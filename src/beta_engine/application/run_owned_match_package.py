@@ -84,6 +84,7 @@ def build_run_owned_match_package(
         active_players_fingerprint=draw.draw_input_fingerprint,
         persistence_path=None,
         qualification_winners_promoted=draw.qualification is not None,
+        match_engine_version="run_owned_match_package_projection.v1",
     )
     return SeasonEventMatchPackage(
         event_id=event.event_id,

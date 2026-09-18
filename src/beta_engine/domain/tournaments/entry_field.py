@@ -187,18 +187,28 @@ class TournamentEntryFieldResolver:
             + previous.qualification_player_ids
             + previous.below_qualification_cut_player_ids
         )
+        already_withdrawn = set(previous.withdrawn_player_ids)
         requested = tuple(sorted(set(withdrawn_player_ids)))
-        unknown = [player_id for player_id in requested if player_id not in active_before]
+        unknown = [
+            player_id
+            for player_id in requested
+            if player_id not in active_before and player_id not in already_withdrawn
+        ]
         if unknown:
             raise ValueError(
                 "Pre-draw withdrawal references player outside predecessor field: "
                 + ", ".join(unknown)
             )
+        newly_withdrawn = tuple(
+            player_id for player_id in requested if player_id not in already_withdrawn
+        )
+        if not newly_withdrawn:
+            return previous
 
-        withdrawn = set(previous.withdrawn_player_ids) | set(requested)
+        withdrawn = already_withdrawn | set(newly_withdrawn)
+        previous_main = set(previous.direct_main_player_ids)
         withdrawn_from_main = sum(
-            player_id in set(previous.direct_main_player_ids)
-            for player_id in requested
+            player_id in previous_main for player_id in newly_withdrawn
         )
         surviving_main = [
             apps_by_player[player_id]

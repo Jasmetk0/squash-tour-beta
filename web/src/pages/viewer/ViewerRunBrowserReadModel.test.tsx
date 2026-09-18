@@ -11,7 +11,14 @@ import {
 import { ViewerRunBrowserPage } from './ViewerRunBrowserPage'
 
 const api = vi.hoisted(() => ({
-  listRunContainers: vi.fn()
+  listRunContainers: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status = 500) {
+      super(message)
+      this.status = status
+    }
+  }
 }))
 
 vi.mock('../../api/client', () => api)

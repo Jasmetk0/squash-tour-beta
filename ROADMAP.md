@@ -21,13 +21,12 @@ repeats generalized eight-player/seven-match Main Draws across the same three-we
 chain with explicit schedules, ranking transitions and historical replay.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
-authoritative tournament/ranking bridge. Wild-card, pre-draw withdrawal and
-post-draw replacement primitives were added in #738–#740, but the post-merge canon
-audit found that they must not be treated as the completed tournament-repair model:
-entry conflicts may remain provisional until commitment authority, pre-draw field
-changes must follow Tournament Ranking Snapshot promotion rules, and post-draw
-repair must respect Qualification/Main Draw repair phases, Lucky Loser priority and
-the per-player first-real-match replacement cutoff.
+authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a
+useful primitive. The #739/#740 pre-/post-draw replacement shortcut producers are
+now fail-closed after the post-merge canon audit; already persisted packages remain
+historically readable. Canonical replacement work must proceed through Tournament
+Ranking Snapshot field rebalance, Qualification/Main Draw repair phases, Lucky Loser
+priority and the per-player first-real-match replacement cutoff.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 

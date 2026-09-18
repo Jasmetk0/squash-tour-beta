@@ -109,6 +109,7 @@ class TournamentDrawInputAuthorityStore:
             draw_seed=committed.draw_seed,
             main_seed_count=committed.main_seed_count,
             qualification_seed_count=committed.qualification_seed_count,
+            schema_version=committed.schema_version,
         )
         if rebuilt != committed:
             raise ValueError(
@@ -193,8 +194,8 @@ class TournamentDrawInputAuthorityStore:
         event_id: str,
         command_id: str,
         draw_seed: int,
-        main_seed_count: int,
-        qualification_seed_count: int,
+        main_seed_count: int | None = None,
+        qualification_seed_count: int | None = None,
     ) -> TournamentDrawInputAuthority:
         self._scope(run_id, branch_id, writing=True)
         if not isinstance(command_id, str) or not command_id.strip() or len(command_id) > 128:
@@ -220,13 +221,27 @@ class TournamentDrawInputAuthorityStore:
             )
         field = history[-1]
         field_sequence = len(history)
+
+        # All new commitments use the Master-aligned v2 contract. Explicit seed
+        # counts are accepted only as a validation assertion; the canonical counts
+        # are derived from bracket capacity and actual player count.
+        proposed = TournamentDrawInputAuthorityBuilder.build(
+            authority=ranking_authority,
+            field=field,
+            field_sequence=field_sequence,
+            command_id=command_id,
+            draw_seed=draw_seed,
+            main_seed_count=main_seed_count,
+            qualification_seed_count=qualification_seed_count,
+            schema_version="tournament_draw_input_authority.v2",
+        )
         request = self._request(
             ranking_authority_fingerprint=ranking_authority.fingerprint,
             entry_field_fingerprint=field.fingerprint,
             field_sequence=field_sequence,
             draw_seed=draw_seed,
-            main_seed_count=main_seed_count,
-            qualification_seed_count=qualification_seed_count,
+            main_seed_count=proposed.main_seed_count,
+            qualification_seed_count=proposed.qualification_seed_count,
         )
         request_fp = _request_fingerprint(request)
 
@@ -254,15 +269,7 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament event already has committed Draw Input authority"
             )
 
-        committed = TournamentDrawInputAuthorityBuilder.build(
-            authority=ranking_authority,
-            field=field,
-            field_sequence=field_sequence,
-            command_id=command_id,
-            draw_seed=draw_seed,
-            main_seed_count=main_seed_count,
-            qualification_seed_count=qualification_seed_count,
-        )
+        committed = proposed
         self.session.add(
             TournamentDrawInputAuthorityModel(
                 run_id=run_id,

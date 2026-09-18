@@ -17,6 +17,7 @@ from beta_engine.domain.tournaments.entry_field import (
 from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
+    TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
 )
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
@@ -343,6 +344,13 @@ class TournamentEntryFieldStore:
         command_id: str,
     ) -> TournamentEntryField:
         self._scope(run_id, branch_id, writing=True)
+        if self.session.get(
+            TournamentDrawInputAuthorityModel,
+            (run_id, branch_id, event_id),
+        ) is not None:
+            raise TournamentEntryFieldConflict(
+                "Pre-draw repair is locked after Tournament Draw Input authority is committed"
+            )
         authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )

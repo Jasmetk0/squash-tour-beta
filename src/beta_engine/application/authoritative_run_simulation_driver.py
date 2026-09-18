@@ -1219,7 +1219,7 @@ class AuthoritativeRunSimulationDriver:
                 len(packages) > 1
                 or len(
                     self._topology_for_session(
-                        session, run_id, branch_id, packages
+                        session, run_id, branch_id, packages, week=week
                     )
                 )
                 != 3
@@ -1248,7 +1248,9 @@ class AuthoritativeRunSimulationDriver:
         ).all()
         done = {g.group_id for g in groups}
         plans = (
-            self._topology_for_session(session, run_id, branch_id, packages)
+            self._topology_for_session(
+                session, run_id, branch_id, packages, week=week
+            )
             if packages
             else {}
         )

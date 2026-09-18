@@ -292,12 +292,6 @@ class SeasonDrawService:
             raise ValueError(
                 f"Player '{player_id}' is already accepted into event '{event_id}'."
             )
-        if self._player_committed_to_overlapping_event(
-            event=event, player_id=player_id
-        ):
-            raise ValueError(
-                f"Player '{player_id}' is already committed to an overlapping event."
-            )
         if any(
             item.replacement_player_id == player_id
             for item in self.get_pre_draw_withdrawal_replacements(event_id=event_id)
@@ -375,119 +369,26 @@ class SeasonDrawService:
         event_id: str,
         withdrawn_player_id: str,
     ) -> PreDrawWithdrawalReplacement:
+        """Reject the #739 direct-alternate shortcut until canonical field repair exists.
+
+        Before a Draw exists the Master Vision requires field rebalancing from the
+        Tournament Ranking Snapshot (Qualification -> Main and reserve -> Qualification
+        where applicable), not direct insertion of an arbitrary alternate into Main.
+        Existing persisted packages remain readable; this command no longer creates
+        new non-canonical authority.
+        """
         if self.get_draw_package(event_id=event_id).draw_package_exists:
             raise ValueError(
                 "Pre-draw withdrawal authority is locked after the DrawPackage is persisted."
             )
-
-        event = self._find_event(event_id)
-        entry_result = self.entry_list_service.get_entry_list(event_id=event_id)
-        if entry_result.entry_list is None:
-            raise ValueError("Persist an EntryList before recording a pre-draw withdrawal.")
-        entry_list = entry_result.entry_list
-
-        active_players = sorted(
-            self.entry_list_service.active_players_service.get_active_players(
-                season=str(event.season)
-            ).players,
-            key=lambda player: player.player_id,
-        )
-        active_fp = self._fingerprint(
-            [player.model_dump(mode="json") for player in active_players]
-        )
-        if active_fp != entry_list.metadata.active_players_fingerprint:
-            raise ValueError(
-                "EntryList active-player authority is stale; regenerate entries before recording withdrawals."
-            )
-
-        direct_by_player = {
-            item.player_id: item
-            for item in entry_list.entries
-            if item.decision == "accepted_main_draw"
-        }
-        if withdrawn_player_id not in direct_by_player:
-            raise ValueError(
-                f"Player '{withdrawn_player_id}' is not a direct Main Draw acceptance for event '{event_id}'."
-            )
-
-        registry = self._load_pre_draw_withdrawals_registry()
-        existing = list(registry.replacements_by_event_id.get(event_id, []))
-        if any(
-            item.entry_list_fingerprint != entry_list.metadata.build_fingerprint
-            or item.active_players_fingerprint != active_fp
-            for item in existing
-        ):
-            raise ValueError(
-                "Persisted pre-draw withdrawal authority is stale; clear it before recording a new withdrawal."
-            )
-        withdrawn_ids = {
-            item.withdrawn_player_id for item in existing
-        } | {withdrawn_player_id}
-
-        withdrawn_entries = sorted(
-            (direct_by_player[player_id] for player_id in withdrawn_ids),
-            key=lambda item: (item.ranking_priority, item.player_id, item.entry_id),
-        )
-
-        wildcard_players = {
-            item.player_id
-            for item in self.get_wild_card_assignments(event_id=event_id)
-        }
-        alternates = sorted(
-            (
-                item
-                for item in entry_list.entries
-                if item.decision == "alternate"
-                and item.player_id not in wildcard_players
-                and item.player_id not in withdrawn_ids
-                and not self._player_committed_to_overlapping_event(
-                    event=event, player_id=item.player_id
-                )
-            ),
-            key=lambda item: (item.ranking_priority, item.player_id, item.entry_id),
-        )
-        if len(alternates) < len(withdrawn_entries):
-            raise ValueError(
-                "No eligible alternate remains for every recorded pre-draw withdrawal."
-            )
-
-        selected_alternates = alternates[: len(withdrawn_entries)]
-        replacements: list[PreDrawWithdrawalReplacement] = []
-        for withdrawn, replacement in zip(
-            withdrawn_entries, selected_alternates, strict=True
-        ):
-            payload = {
-                "event_id": event_id,
-                "withdrawn_entry_id": withdrawn.entry_id,
-                "withdrawn_player_id": withdrawn.player_id,
-                "withdrawn_player_name": withdrawn.name,
-                "withdrawn_country_code": withdrawn.country_code,
-                "replacement_entry_id": replacement.entry_id,
-                "replacement_player_id": replacement.player_id,
-                "replacement_player_name": replacement.name,
-                "replacement_country_code": replacement.country_code,
-                "replacement_source": "alternate_waitlist",
-                "entry_list_fingerprint": entry_list.metadata.build_fingerprint,
-                "active_players_fingerprint": active_fp,
-            }
-            replacements.append(
-                PreDrawWithdrawalReplacement(
-                    **payload,
-                    authority_fingerprint=self._fingerprint(payload),
-                )
-            )
-
-        next_registry = dict(registry.replacements_by_event_id)
-        next_registry[event_id] = replacements
-        self._save_pre_draw_withdrawals_registry(
-            SeasonPreDrawWithdrawalsRegistry(
-                replacements_by_event_id=next_registry
-            )
-        )
-        return next(
-            item
-            for item in replacements
-            if item.withdrawn_player_id == withdrawn_player_id
+        # Validate the caller refers to a real event before surfacing the capability
+        # boundary; do not silently accept an unknown ID.
+        self._find_event(event_id)
+        raise ValueError(
+            "Canonical pre-draw withdrawal repair is not implemented: the field must "
+            "rebalance from the Tournament Ranking Snapshot (including Qualification "
+            "promotion/backfill where applicable). The legacy direct-alternate "
+            "replacement shortcut is disabled."
         )
 
     def generate_draw_package(self, *, event_id: str, request: DrawGenerateRequest) -> SeasonEventDrawPackageResult:
@@ -1075,38 +976,7 @@ class SeasonDrawService:
                 raise ValueError(
                     f"Wild-card player '{assignment.player_id}' is already accepted into the event."
                 )
-            if self._player_committed_to_overlapping_event(
-                event=event, player_id=assignment.player_id
-            ):
-                raise ValueError(
-                    f"Wild-card player '{assignment.player_id}' is committed to an overlapping event."
-                )
         return assignments
-
-    def _player_committed_to_overlapping_event(
-        self, *, event: SeasonCalendarEvent, player_id: str
-    ) -> bool:
-        registry = self.entry_list_service._load_registry()
-        event_start = event.start_season_week or event.season_week
-        event_end = event.end_season_week or event_start
-        for other in registry.entry_lists_by_event_id.values():
-            if other.event_id == event.event_id or other.season != str(event.season):
-                continue
-            try:
-                other_event = self._find_event(other.event_id)
-            except ValueError:
-                continue
-            other_start = other_event.start_season_week or other_event.season_week
-            other_end = other_event.end_season_week or other_start
-            if max(event_start, other_start) > min(event_end, other_end):
-                continue
-            if any(
-                item.player_id == player_id
-                and item.decision in {"accepted_main_draw", "accepted_qualification"}
-                for item in other.entries
-            ):
-                return True
-        return False
 
     def _validated_pre_draw_replacements(
         self,
@@ -1118,6 +988,11 @@ class SeasonDrawService:
         replacements = self.get_pre_draw_withdrawal_replacements(
             event_id=event.event_id
         )
+        if replacements:
+            raise ValueError(
+                "Legacy pre-draw replacement authority cannot produce a new DrawPackage. "
+                "Canonical field rebalance from the Tournament Ranking Snapshot is required."
+            )
         active_players = sorted(
             self.entry_list_service.active_players_service.get_active_players(
                 season=str(event.season)

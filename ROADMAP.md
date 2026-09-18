@@ -210,3 +210,13 @@ The current follow-up removes their remaining duplicated legacy persistence:
 new `OwnedTournamentRankingSource v4` stores only canonical result/point
 authorities and their binding. Historical v1-v3 sources remain immutable readers;
 new canonical closes do not build or persist legacy result/award DTO copies.
+
+
+### Canonical adopted-tournament authority v6 follow-up
+
+After #754, ranking-source persistence is canonical-only. The current follow-up
+removes the remaining pre-execution MatchPackage snapshot from new canonical week
+adoption. v6 freezes the Calendar Event snapshot, Draw fingerprint and point
+authority, then rebuilds the execution package deterministically on replay. This
+also removes live Calendar and legacy match-registry reads after adoption while
+keeping v1-v5 historical readers intact.

@@ -45,6 +45,7 @@ from beta_engine.application.season_point_awards_service import (
 )
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
@@ -92,6 +93,18 @@ class AuthoritativeSimulationCommand(FrozenInput):
     @property
     def fingerprint(self) -> str:
         return fingerprint(self.model_dump(mode="json"))
+
+
+class _AdoptedTournamentEvidence(FrozenInput):
+    """One immutable tournament entry inside adopted week authority."""
+
+    event_id: str = Field(min_length=1)
+    package: SeasonEventMatchPackage | None = None
+    calendar_event: CalendarEvent | None = None
+    point_award_authority: FrozenPointAwardAuthority | None = None
+    draw_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
 
 
 class AuthoritativeSimulationPosition(FrozenInput):
@@ -322,12 +335,8 @@ class AuthoritativeRunSimulationDriver:
         week,
         event_id,
     ):
-        """Resolve Draw ownership as frozen by adopted tournament authority.
+        """Resolve Draw ownership as frozen by adopted tournament authority."""
 
-        Before tournament adoption, the current Run-owned Draw Authority may be
-        consumed. After adoption, the stored v5 Draw fingerprint (or historical
-        absence in v1-v4 / v5-null) is immutable replay evidence.
-        """
         adopted = session.get(
             AdoptedTournamentAuthorityModel,
             (run_id, branch_id, week.ordinal),
@@ -337,9 +346,9 @@ class AuthoritativeRunSimulationDriver:
         if adopted is not None:
             items = self._decode_adopted_authority(adopted.package_json)
             matches = [
-                draw_fp
-                for package, _, draw_fp in items
-                if package.event_id == event_id
+                item.draw_authority_fingerprint
+                for item in items
+                if item.event_id == event_id
             ]
             if len(matches) != 1:
                 raise ValueError(
@@ -363,6 +372,97 @@ class AuthoritativeRunSimulationDriver:
             return draw
         return draw
 
+    def _replay_adopted_authority(
+        self,
+        session,
+        *,
+        run_id,
+        branch_id,
+        week,
+        row,
+    ):
+        items = self._decode_adopted_authority(row.package_json)
+        packages = []
+        draw_store = TournamentDrawAuthorityStore(session)
+        for item in items:
+            if item.package is not None:
+                package = item.package
+                if package.event_id != item.event_id:
+                    raise ValueError(
+                        "historical frozen tournament authority event identity changed"
+                    )
+                if item.draw_authority_fingerprint is not None:
+                    draw = draw_store.get(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=item.event_id,
+                    )
+                    if (
+                        draw is None
+                        or draw.fingerprint != item.draw_authority_fingerprint
+                    ):
+                        raise ValueError(
+                            "frozen tournament authority canonical Draw binding changed"
+                        )
+                packages.append(package)
+                continue
+
+            if (
+                item.calendar_event is None
+                or item.point_award_authority is None
+                or item.draw_authority_fingerprint is None
+            ):
+                raise ValueError(
+                    "canonical frozen tournament authority is incomplete"
+                )
+            event = item.calendar_event
+            if event.event_id != item.event_id or event.season_week != week.week:
+                raise ValueError(
+                    "canonical frozen tournament Calendar Event scope changed"
+                )
+            expected_start = 2000 + week.season_index
+            expected_season = f"{expected_start}/{expected_start + 1}"
+            event_season_matches = (
+                event.season == expected_start
+                if isinstance(event.season, int)
+                else str(event.season) == expected_season
+            )
+            if not event_season_matches:
+                raise ValueError(
+                    "canonical frozen tournament Calendar Event season changed"
+                )
+            draw = draw_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=item.event_id,
+            )
+            if draw is None or draw.fingerprint != item.draw_authority_fingerprint:
+                raise ValueError(
+                    "frozen tournament authority canonical Draw binding changed"
+                )
+            package = build_run_owned_match_package(
+                draw=draw,
+                event=event,
+                week=week,
+            )
+            packages.append(
+                self._bind_owned_draw_evidence(
+                    package=package,
+                    draw=draw,
+                    week=week,
+                )
+            )
+
+        authority_fp = self._tournament_authority_fingerprint(
+            run_id,
+            branch_id,
+            week,
+            items,
+        )
+        if authority_fp != row.authority_fingerprint:
+            raise ValueError("frozen tournament authority is corrupt")
+        return tuple(sorted(packages, key=lambda package: package.event_id)), authority_fp
+
     def _packages(
         self,
         week,
@@ -373,6 +473,23 @@ class AuthoritativeRunSimulationDriver:
         branch_id=None,
     ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+
+        if session is not None and run_id is not None and branch_id is not None:
+            adopted = session.get(
+                AdoptedTournamentAuthorityModel,
+                (run_id, branch_id, week.ordinal),
+            )
+            if adopted is not None:
+                packages, _ = self._replay_adopted_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    row=adopted,
+                )
+                if not packages and required:
+                    raise ValueError("supported tournament authority is missing")
+                return packages
 
         canonical_packages = {}
         canonical_event_ids = set()
@@ -713,70 +830,176 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _decode_adopted_authority(payload_json):
         payload = json.loads(payload_json)
-        if payload.get("schema_version") == "adopted_tournament_authority.v5":
+        version = payload.get("schema_version")
+
+        if version == "adopted_tournament_authority.v6":
+            items = []
+            for item in payload["tournaments"]:
+                event = CalendarEvent.model_validate(item["calendar_event"])
+                evidence = _AdoptedTournamentEvidence(
+                    event_id=item["event_id"],
+                    calendar_event=event,
+                    point_award_authority=FrozenPointAwardAuthority.model_validate(
+                        item["point_award_authority"]
+                    ),
+                    draw_authority_fingerprint=item["draw_authority_fingerprint"],
+                )
+                if evidence.event_id != event.event_id:
+                    raise ValueError(
+                        "canonical adopted tournament event identity mismatch"
+                    )
+                items.append(evidence)
+            return tuple(sorted(items, key=lambda item: item.event_id))
+
+        if version == "adopted_tournament_authority.v5":
             return tuple(
                 sorted(
                     (
-                        (
-                            SeasonEventMatchPackage.model_validate(item["package"]),
-                            FrozenPointAwardAuthority.model_validate(
+                        _AdoptedTournamentEvidence(
+                            event_id=package.event_id,
+                            package=package,
+                            point_award_authority=FrozenPointAwardAuthority.model_validate(
                                 item["point_award_authority"]
                             ),
-                            item.get("draw_authority_fingerprint"),
+                            draw_authority_fingerprint=item.get(
+                                "draw_authority_fingerprint"
+                            ),
                         )
                         for item in payload["tournaments"]
+                        for package in (
+                            SeasonEventMatchPackage.model_validate(item["package"]),
+                        )
                     ),
-                    key=lambda item: item[0].event_id,
+                    key=lambda item: item.event_id,
                 )
             )
-        if payload.get("schema_version") in {
+
+        if version in {
             "adopted_tournament_authority.v3",
             "adopted_tournament_authority.v4",
         }:
             return tuple(
                 sorted(
                     (
-                        (
-                            SeasonEventMatchPackage.model_validate(item["package"]),
-                            FrozenPointAwardAuthority.model_validate(
+                        _AdoptedTournamentEvidence(
+                            event_id=package.event_id,
+                            package=package,
+                            point_award_authority=FrozenPointAwardAuthority.model_validate(
                                 item["point_award_authority"]
                             ),
-                            None,
                         )
                         for item in payload["tournaments"]
+                        for package in (
+                            SeasonEventMatchPackage.model_validate(item["package"]),
+                        )
                     ),
-                    key=lambda item: item[0].event_id,
+                    key=lambda item: item.event_id,
                 )
             )
-        if payload.get("schema_version") == "adopted_tournament_authority.v2":
+
+        if version == "adopted_tournament_authority.v2":
+            package = SeasonEventMatchPackage.model_validate(payload["package"])
             return (
-                (
-                    SeasonEventMatchPackage.model_validate(payload["package"]),
-                    FrozenPointAwardAuthority.model_validate(
+                _AdoptedTournamentEvidence(
+                    event_id=package.event_id,
+                    package=package,
+                    point_award_authority=FrozenPointAwardAuthority.model_validate(
                         payload["point_award_authority"]
                     ),
-                    None,
                 ),
             )
-        return ((SeasonEventMatchPackage.model_validate(payload), None, None),)
+
+        package = SeasonEventMatchPackage.model_validate(payload)
+        return (
+            _AdoptedTournamentEvidence(
+                event_id=package.event_id,
+                package=package,
+            ),
+        )
 
     @staticmethod
     def _encode_adopted_authority(items):
-        items = tuple(sorted(items, key=lambda item: item[0].event_id))
+        items = tuple(sorted(items, key=lambda item: item.event_id))
+        canonical = all(
+            item.package is None
+            and item.calendar_event is not None
+            and item.point_award_authority is not None
+            and item.draw_authority_fingerprint is not None
+            for item in items
+        )
+        if canonical:
+            return json.dumps(
+                {
+                    "schema_version": "adopted_tournament_authority.v6",
+                    "tournaments": [
+                        {
+                            "event_id": item.event_id,
+                            "calendar_event": item.calendar_event.model_dump(
+                                mode="json",
+                                exclude_computed_fields=True,
+                            ),
+                            "point_award_authority": (
+                                item.point_award_authority.model_dump(mode="json")
+                            ),
+                            "draw_authority_fingerprint": (
+                                item.draw_authority_fingerprint
+                            ),
+                        }
+                        for item in items
+                    ],
+                },
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+
+        if any(item.package is None for item in items):
+            raise ValueError(
+                "adopted tournament week cannot mix canonical-only and legacy evidence"
+            )
         return json.dumps(
             {
                 "schema_version": "adopted_tournament_authority.v5",
                 "tournaments": [
                     {
-                        "package": p.model_dump(mode="json"),
-                        "point_award_authority": a.model_dump(mode="json"),
-                        "draw_authority_fingerprint": draw_fp,
+                        "package": item.package.model_dump(mode="json"),
+                        "point_award_authority": (
+                            item.point_award_authority.model_dump(mode="json")
+                            if item.point_award_authority is not None
+                            else None
+                        ),
+                        "draw_authority_fingerprint": (
+                            item.draw_authority_fingerprint
+                        ),
                     }
-                    for p, a, draw_fp in items
+                    for item in items
                 ],
             },
             sort_keys=True,
             separators=(",", ":"),
+        )
+
+    def _freeze_calendar_event_snapshot(self, *, package, week):
+        calendar = self.awards_service.calendar_service.get_calendar(
+            season=package.season
+        ).calendar
+        if calendar is None:
+            raise ValueError(
+                "canonical tournament adoption requires Calendar authority"
+            )
+        matches = [
+            event for event in calendar.events if event.event_id == package.event_id
+        ]
+        if len(matches) != 1:
+            raise ValueError(
+                "canonical tournament adoption requires unique Calendar Event"
+            )
+        event = matches[0]
+        if event.season_week != week.week:
+            raise ValueError(
+                "canonical tournament Calendar Event belongs to a different week"
+            )
+        return CalendarEvent.model_validate(
+            event.model_dump(mode="json", exclude_computed_fields=True)
         )
 
     def _authority_package(self, session, run_id, branch_id, week, *, adopt):
@@ -784,28 +1007,16 @@ class AuthoritativeRunSimulationDriver:
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
         )
         if row is not None:
-            items = self._decode_adopted_authority(row.package_json)
-            packages = tuple(p for p, _, _ in items)
-            for package, _, draw_fp in items:
-                if draw_fp is None:
-                    continue
-                current_draw = TournamentDrawAuthorityStore(session).get(
-                    run_id=run_id,
-                    branch_id=branch_id,
-                    event_id=package.event_id,
-                )
-                if current_draw is None or current_draw.fingerprint != draw_fp:
-                    raise ValueError(
-                        "frozen tournament authority canonical Draw binding changed"
-                    )
-            authority_fp = self._tournament_authority_fingerprint(
-                run_id, branch_id, week, items
+            return self._replay_adopted_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                row=row,
             )
-            if authority_fp != row.authority_fingerprint:
-                raise ValueError("frozen tournament authority is corrupt")
-            return packages, authority_fp
         if not adopt:
             raise ValueError("frozen tournament authority is missing")
+
         packages = self._packages(
             week,
             session=session,
@@ -826,25 +1037,53 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "tournaments lack authoritative explicit Simulation Slot chronology"
             )
-        items = tuple(
-            (
-                p,
-                self.awards_service.freeze_point_award_authority(p),
-                (
-                    draw.fingerprint
-                    if (
-                        draw := TournamentDrawAuthorityStore(session).get(
-                            run_id=run_id,
-                            branch_id=branch_id,
-                            event_id=p.event_id,
-                        )
-                    )
-                    is not None
-                    else None
-                ),
+
+        draw_store = TournamentDrawAuthorityStore(session)
+        items = []
+        for package in packages:
+            point_authority = self.awards_service.freeze_point_award_authority(package)
+            draw = draw_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=package.event_id,
             )
-            for p in packages
-        )
+            if draw is None:
+                items.append(
+                    _AdoptedTournamentEvidence(
+                        event_id=package.event_id,
+                        package=package,
+                        point_award_authority=point_authority,
+                    )
+                )
+                continue
+
+            event = self._freeze_calendar_event_snapshot(
+                package=package,
+                week=week,
+            )
+            rebuilt = self._bind_owned_draw_evidence(
+                package=build_run_owned_match_package(
+                    draw=draw,
+                    event=event,
+                    week=week,
+                ),
+                draw=draw,
+                week=week,
+            )
+            if rebuilt != package:
+                raise ValueError(
+                    "canonical tournament package cannot replay from Draw + Calendar evidence"
+                )
+            items.append(
+                _AdoptedTournamentEvidence(
+                    event_id=package.event_id,
+                    calendar_event=event,
+                    point_award_authority=point_authority,
+                    draw_authority_fingerprint=draw.fingerprint,
+                )
+            )
+        items = tuple(items)
+
         authority_fp = self._tournament_authority_fingerprint(
             run_id, branch_id, week, items
         )
@@ -853,9 +1092,6 @@ class AuthoritativeRunSimulationDriver:
                 run_id=run_id,
                 branch_id=branch_id,
                 week_ordinal=week.ordinal,
-                # Legacy v1/v2 rows identify their sole event here. A v3 multi-event
-                # row is explicitly a week bundle: consumers must decode package_json
-                # rather than interpreting this compatibility column as one event.
                 event_id=(
                     packages[0].event_id
                     if len(packages) == 1
@@ -870,23 +1106,60 @@ class AuthoritativeRunSimulationDriver:
 
     @staticmethod
     def _tournament_authority_fingerprint(run_id, branch_id, week, items):
+        normalized = []
+        for raw in items:
+            if isinstance(raw, _AdoptedTournamentEvidence):
+                normalized.append(raw)
+                continue
+            package, point_authority, draw_fp = raw
+            normalized.append(
+                _AdoptedTournamentEvidence(
+                    event_id=package.event_id,
+                    package=package,
+                    point_award_authority=point_authority,
+                    draw_authority_fingerprint=draw_fp,
+                )
+            )
         bodies = []
-        for package, point_authority, draw_authority_fingerprint in sorted(
-            items, key=lambda item: item[0].event_id
-        ):
-            payload = package.model_dump(mode="json")
-            payload["metadata"].pop("persistence_path", None)
-            body = {
-                "package": payload,
-                "point_award_authority": point_authority.model_dump(mode="json")
-                if point_authority
-                else None,
-            }
-            # Preserve historical v1-v4 authority fingerprints exactly. The
-            # canonical Draw anchor is a v5 addition and therefore exists in the
-            # hash payload only when a Draw Authority is actually bound.
-            if draw_authority_fingerprint is not None:
-                body["draw_authority_fingerprint"] = draw_authority_fingerprint
+        for item in sorted(normalized, key=lambda item: item.event_id):
+            if item.package is not None:
+                payload = item.package.model_dump(mode="json")
+                payload["metadata"].pop("persistence_path", None)
+                body = {
+                    "package": payload,
+                    "point_award_authority": (
+                        item.point_award_authority.model_dump(mode="json")
+                        if item.point_award_authority
+                        else None
+                    ),
+                }
+                # Preserve historical v1-v4/v5 authority fingerprints exactly.
+                if item.draw_authority_fingerprint is not None:
+                    body["draw_authority_fingerprint"] = (
+                        item.draw_authority_fingerprint
+                    )
+            else:
+                if (
+                    item.calendar_event is None
+                    or item.point_award_authority is None
+                    or item.draw_authority_fingerprint is None
+                ):
+                    raise ValueError(
+                        "canonical adopted tournament evidence is incomplete"
+                    )
+                body = {
+                    "event_id": item.event_id,
+                    "calendar_event": item.calendar_event.model_dump(
+                        mode="json",
+                        exclude_computed_fields=True,
+                    ),
+                    "point_award_authority": (
+                        item.point_award_authority.model_dump(mode="json")
+                    ),
+                    "draw_authority_fingerprint": (
+                        item.draw_authority_fingerprint
+                    ),
+                }
             bodies.append(body)
         return fingerprint(
             {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}
@@ -1661,7 +1934,15 @@ class AuthoritativeRunSimulationDriver:
                 (command.run_id, command.branch_id, command.expected_week.ordinal),
             ).package_json
         )
-        for package, point_authority, draw_fp in items:
+        evidence_by_event = {item.event_id: item for item in items}
+        if set(evidence_by_event) != {package.event_id for package in packages}:
+            raise ValueError(
+                "frozen tournament authority package universe changed"
+            )
+        for package in packages:
+            evidence = evidence_by_event[package.event_id]
+            point_authority = evidence.point_award_authority
+            draw_fp = evidence.draw_authority_fingerprint
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches

@@ -245,6 +245,17 @@ def test_repaired_terminal_field_is_committed_and_newer_ranking_does_not_move_it
         assert committed.main_seed_player_ids == ("A", "B")
         assert committed.qualification_seed_player_ids == ("E",)
 
+        # The draw lock blocks new pre-draw changes but must preserve exact
+        # idempotent retries of a repair that was already committed beforehand.
+        assert TournamentEntryFieldStore(session).stage_pre_draw_repair(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=list(reversed(applications())),
+            withdrawn_player_ids=("D",),
+            command_id="withdraw-d",
+        ) == repaired
+
         newer = ranking_snapshot(
             week=4,
             points={

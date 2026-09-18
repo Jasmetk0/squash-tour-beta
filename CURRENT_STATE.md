@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #749 at
-`01b3d5bfae6ac2f143a8cdb5d5cca10e9ffd2736`, plus the current bounded
-canonical Draw-to-match-topology slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #750 at
+`3f3151afa7838c9aeb7e324c700f89f5e6112515`, plus the current bounded
+Run-owned MatchPackage projection slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #749 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #750 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -148,3 +148,14 @@ Transition operation after that setup uses its production HTTP/application bound
   substitute is treated as branch evidence.
 - The legacy season execution service still has no rollback and is not the Week
   Transition transaction owner.
+
+
+## Current follow-up after #750
+
+The current branch removes the legacy `season_matches.json` prerequisite for
+canonical Draw events. A deterministic in-memory `SeasonEventMatchPackage`
+compatibility payload is projected directly from Run-owned Draw Authority plus the
+season Calendar Event, then frozen by the existing adopted tournament authority.
+For this canonical payload the authoritative result builder deliberately performs no
+legacy DrawPackage lookup. Legacy MatchPackage/DrawPackage files remain readers only
+for historical events that do not have canonical Draw authority.

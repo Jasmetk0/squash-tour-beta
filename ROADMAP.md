@@ -168,3 +168,13 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Package snapshots are not live links to global source Packages.
 - Do not claim target behavior as already implemented.
 - Do not silently finalize open/provisional areas such as final navigation, Viewer reveal modes, Country Ranking, full seed contract, final Forecast architecture, complete Entry Freeze rules, Match Reconstruction probability details, exact stamina derivation or mental-bar mechanics.
+
+
+### Run-owned MatchPackage projection follow-up
+
+After #750, canonical Draw Authority owns match topology. The current follow-up also
+removes the file-backed MatchPackage prerequisite for canonical events: the driver
+builds a deterministic in-memory compatibility package from canonical Draw + Calendar
+evidence and freezes that payload with tournament authority. Existing result/points
+builders remain temporary adapters; canonical payloads explicitly bypass legacy
+DrawPackage lookup.

@@ -338,14 +338,15 @@ class TournamentEntryFieldStore:
         run_id: str,
         branch_id: str,
         event_id: str,
+        expected_field_fingerprint: str,
         withdrawn_player_ids: tuple[str, ...] | list[str],
         command_id: str,
     ) -> TournamentEntryField:
-        """Repair the latest field using only its already-frozen application evidence.
+        """Repair authoritative field state without re-reading mutable Entry evidence.
 
-        Canonical pre-draw withdrawal handling must not re-read mutable Entry state.
-        The initial field froze the exact application payload; every repair reuses that
-        payload and the Tournament Ranking Snapshot authority already bound to the field.
+        New commands use compare-and-swap semantics against the caller's expected field
+        fingerprint. Exact historical retries compare against the original predecessor,
+        so they remain replayable even if later repair versions now exist.
         """
 
         rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
@@ -353,7 +354,21 @@ class TournamentEntryFieldStore:
             raise TournamentEntryFieldConflict(
                 "Pre-draw repair requires an initial Tournament Entry Field"
             )
-        _, frozen_applications = self._load_row(rows[-1])
+
+        retry = self._command_row(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=command_id,
+        )
+        latest_field, frozen_applications = self._load_row(rows[-1])
+        authoritative_expected = (
+            retry.predecessor_fingerprint if retry is not None else latest_field.fingerprint
+        )
+        if authoritative_expected != expected_field_fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Tournament entry field changed since the withdrawal command was prepared"
+            )
+
         return self.stage_pre_draw_repair(
             run_id=run_id,
             branch_id=branch_id,

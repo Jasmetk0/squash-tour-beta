@@ -30,6 +30,9 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
 )
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldConflict,
     TournamentEntryFieldStore,
@@ -268,5 +271,67 @@ def test_missing_initial_field_fails_closed(factory):
                 branch_id="branch",
                 event_id="event",
                 withdrawn_player_ids=("D",),
+            )
+        )
+
+def test_multi_withdrawal_is_atomic_and_input_order_independent(factory):
+    _stage_initial(factory)
+    service = CanonicalPreDrawWithdrawalService(factory)
+
+    result = service.execute(
+        CanonicalPreDrawWithdrawalCommand(
+            command_id="withdraw-d-e",
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            withdrawn_player_ids=("E", "D"),
+        )
+    )
+
+    assert result.newly_withdrawn_player_ids == ("D", "E")
+    assert result.promoted_to_main_player_ids == ("B",)
+    assert result.qualification_backfill_player_ids == ("F", "G")
+    assert result.direct_main_player_ids == ("A", "B", "C")
+    assert result.qualification_player_ids == ("F", "G")
+    assert result.withdrawn_player_ids == ("D", "E")
+
+
+def test_draw_commit_locks_new_repairs_but_keeps_exact_retry(factory):
+    _stage_initial(factory)
+    service = CanonicalPreDrawWithdrawalService(factory)
+    command = CanonicalPreDrawWithdrawalCommand(
+        command_id="withdraw-d",
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        withdrawn_player_ids=("D",),
+    )
+    result = service.execute(command)
+
+    with factory.begin() as session:
+        TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="commit-draw",
+            draw_seed=123,
+            main_seed_count=2,
+            qualification_seed_count=1,
+        )
+
+    # Historical exact retry remains valid after the draw commitment.
+    assert service.execute(command) == result
+
+    with pytest.raises(
+        TournamentEntryFieldConflict,
+        match="locked after Tournament Draw Input authority is committed",
+    ):
+        service.execute(
+            CanonicalPreDrawWithdrawalCommand(
+                command_id="withdraw-e",
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                withdrawn_player_ids=("E",),
             )
         )

@@ -175,6 +175,17 @@ class TournamentEntryFieldStore:
                     applications=applications,
                     capacity=field.capacity,
                 )
+                expected_request_fingerprint = _request_fingerprint(
+                    {
+                        "mode": "initial",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "event_id": event_id,
+                        "authority_fingerprint": authority.fingerprint,
+                        "applications_fingerprint": field.applications_fingerprint,
+                        "capacity": field.capacity.model_dump(mode="json"),
+                    }
+                )
             else:
                 if previous is None or field.mode != "pre_draw_repair":
                     raise ValueError(
@@ -200,10 +211,28 @@ class TournamentEntryFieldStore:
                     previous=previous,
                     withdrawn_player_ids=newly_withdrawn,
                 )
+                expected_request_fingerprint = _request_fingerprint(
+                    {
+                        "mode": "pre_draw_repair",
+                        "run_id": run_id,
+                        "branch_id": branch_id,
+                        "event_id": event_id,
+                        "authority_fingerprint": authority.fingerprint,
+                        "applications_fingerprint": field.applications_fingerprint,
+                        "predecessor_fingerprint": previous.fingerprint,
+                        "withdrawn_player_ids": newly_withdrawn,
+                    }
+                )
             if rebuilt != field:
                 raise ValueError(
                     "Tournament Entry Field does not replay from frozen authoritative inputs"
                 )
+            if row.request_fingerprint != expected_request_fingerprint:
+                raise ValueError(
+                    "Tournament Entry Field command request fingerprint is corrupt"
+                )
+            if not row.command_id.strip() or len(row.command_id) > 128:
+                raise ValueError("Tournament Entry Field command identity is corrupt")
             result.append(field)
             previous = field
         return tuple(result)

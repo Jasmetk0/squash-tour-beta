@@ -248,3 +248,173 @@ def test_wildcard_assignment_stales_when_entry_authority_changes(tmp_path: Path)
             event_id=event_id,
             request=DrawGenerateRequest(seed=912, dry_run=True),
         )
+
+
+@pytest.mark.smoke
+def test_pre_draw_withdrawal_replacement_flows_into_draw_and_match_package(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+
+    withdrawn = min(
+        (entry for entry in entry_list.entries if entry.decision == "accepted_main_draw"),
+        key=lambda entry: (entry.ranking_priority, entry.player_id, entry.entry_id),
+    )
+    expected_replacement = min(
+        (entry for entry in entry_list.entries if entry.decision == "alternate"),
+        key=lambda entry: (entry.ranking_priority, entry.player_id, entry.entry_id),
+    )
+
+    authority = service.withdraw_main_draw_player(
+        event_id=event_id,
+        withdrawn_player_id=withdrawn.player_id,
+    )
+    assert authority.withdrawn_entry_id == withdrawn.entry_id
+    assert authority.replacement_player_id == expected_replacement.player_id
+    assert authority.replacement_entry_id == expected_replacement.entry_id
+
+    draw = service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=1201, dry_run=False),
+    ).draw_package
+    assert draw is not None
+    replacement_slots = [
+        slot
+        for slot in draw.main_draw.slots
+        if slot.entry_decision == "pre_draw_replacement"
+    ]
+    assert len(replacement_slots) == 1
+    slot = replacement_slots[0]
+    assert slot.player_id == expected_replacement.player_id
+    assert slot.withdrawn_player_id == withdrawn.player_id
+    assert slot.replacement_source_entry_id == expected_replacement.entry_id
+    assert slot.replacement_authority_fingerprint == authority.authority_fingerprint
+    assert draw.metadata.pre_draw_withdrawals_fingerprint is not None
+    assert withdrawn.player_id not in {
+        item.player_id for item in draw.main_draw.slots if item.player_id is not None
+    }
+
+    matches = SeasonMatchService(
+        draw_service=service,
+        active_players_service=service.entry_list_service.active_players_service,
+        matches_path=tmp_path / "matches.json",
+    ).generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=1202, dry_run=False),
+    ).match_package
+    assert matches is not None
+    main_players = {
+        player_id
+        for match in matches.main_draw_matches
+        for player_id in (match.top_player_id, match.bottom_player_id)
+        if player_id is not None
+    }
+    assert expected_replacement.player_id in main_players
+    assert withdrawn.player_id not in main_players
+
+
+def test_pre_draw_withdrawal_mapping_is_order_independent(tmp_path: Path) -> None:
+    def resolve(root: Path, reverse: bool) -> dict[str, str]:
+        service = make_draw_service(root)
+        event_id = persist_entry_list(service, seed=123)
+        entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+        assert entry_list is not None
+        direct = sorted(
+            (entry for entry in entry_list.entries if entry.decision == "accepted_main_draw"),
+            key=lambda entry: (entry.ranking_priority, entry.player_id, entry.entry_id),
+        )
+        assert len(direct) >= 2
+        order = [direct[0].player_id, direct[1].player_id]
+        if reverse:
+            order.reverse()
+        for player_id in order:
+            service.withdraw_main_draw_player(
+                event_id=event_id,
+                withdrawn_player_id=player_id,
+            )
+        return {
+            item.withdrawn_player_id: item.replacement_player_id
+            for item in service.get_pre_draw_withdrawal_replacements(event_id=event_id)
+        }
+
+    forward = resolve(tmp_path / "forward", False)
+    reverse = resolve(tmp_path / "reverse", True)
+    assert forward == reverse
+    assert len(set(forward.values())) == len(forward)
+
+
+def test_pre_draw_withdrawal_locks_after_draw_and_stales_with_entry_list(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path / "locked")
+    event_id = persist_entry_list(service, seed=123)
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+    withdrawn = next(
+        entry for entry in entry_list.entries if entry.decision == "accepted_main_draw"
+    )
+    service.withdraw_main_draw_player(
+        event_id=event_id,
+        withdrawn_player_id=withdrawn.player_id,
+    )
+    service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=1301, dry_run=False),
+    )
+    with pytest.raises(ValueError, match="locked after the DrawPackage"):
+        service.withdraw_main_draw_player(
+            event_id=event_id,
+            withdrawn_player_id=withdrawn.player_id,
+        )
+
+    stale_service = make_draw_service(tmp_path / "stale")
+    stale_event_id = persist_entry_list(stale_service, seed=123)
+    stale_entries = stale_service.entry_list_service.get_entry_list(
+        event_id=stale_event_id
+    ).entry_list
+    assert stale_entries is not None
+    stale_withdrawn = next(
+        entry
+        for entry in stale_entries.entries
+        if entry.decision == "accepted_main_draw"
+    )
+    stale_service.withdraw_main_draw_player(
+        event_id=stale_event_id,
+        withdrawn_player_id=stale_withdrawn.player_id,
+    )
+    stale_service.entry_list_service.generate_entry_list(
+        event_id=stale_event_id,
+        request=EntryListGenerateRequest(
+            seed=124,
+            dry_run=False,
+            overwrite_existing=True,
+        ),
+    )
+    with pytest.raises(ValueError, match="stale for the current EntryList"):
+        stale_service.generate_draw_package(
+            event_id=stale_event_id,
+            request=DrawGenerateRequest(seed=1302, dry_run=True),
+        )
+
+
+def test_pre_draw_withdrawal_requires_an_eligible_alternate(tmp_path: Path) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = first_event_id(service.entry_list_service)
+    service.entry_list_service.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(
+            seed=123,
+            dry_run=False,
+            overwrite_existing=False,
+            max_alternates=0,
+        ),
+    )
+    entry_list = service.entry_list_service.get_entry_list(event_id=event_id).entry_list
+    assert entry_list is not None
+    withdrawn = next(
+        entry for entry in entry_list.entries if entry.decision == "accepted_main_draw"
+    )
+    with pytest.raises(ValueError, match="No eligible alternate"):
+        service.withdraw_main_draw_player(
+            event_id=event_id,
+            withdrawn_player_id=withdrawn.player_id,
+        )

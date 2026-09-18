@@ -300,7 +300,9 @@ class TournamentDrawAuthorityBuilder:
             )
 
         global_seeds = draw_input.qualification_seed_player_ids
-        section_seeds: list[list[str]] = [[] for _ in range(section_count)]
+        section_seeds: list[list[tuple[int, str]]] = [
+            [] for _ in range(section_count)
+        ]
         for layer in range(seeds_per_section):
             layer_players = list(
                 global_seeds[layer * section_count : (layer + 1) * section_count]
@@ -315,10 +317,13 @@ class TournamentDrawAuthorityBuilder:
                     )
                 )
                 rng.shuffle(section_order)
-            for player_id, section_index in zip(
-                layer_players, section_order, strict=True
+            for offset, (player_id, section_index) in enumerate(
+                zip(layer_players, section_order, strict=True)
             ):
-                section_seeds[section_index].append(player_id)
+                global_seed_number = layer * section_count + offset + 1
+                section_seeds[section_index].append(
+                    (global_seed_number, player_id)
+                )
 
         unseeded = list(
             draw_input.qualification_player_ids[draw_input.qualification_seed_count :]
@@ -339,7 +344,9 @@ class TournamentDrawAuthorityBuilder:
             section_id = f"Q{section_index + 1}"
             extras = unseeded[cursor : cursor + unseeded_per_section]
             cursor += unseeded_per_section
-            seeds = tuple(section_seeds[section_index])
+            seed_pairs = tuple(section_seeds[section_index])
+            seeds = tuple(player_id for _, player_id in seed_pairs)
+            seed_numbers = tuple(number for number, _ in seed_pairs)
             sections.append(
                 cls._build_bracket(
                     draw_input=draw_input,
@@ -347,6 +354,7 @@ class TournamentDrawAuthorityBuilder:
                     bracket_size=section_size,
                     player_ids=(*seeds, *extras),
                     seed_player_ids=seeds,
+                    seed_numbers=seed_numbers,
                     placeholder_ids=(),
                     explicit_byes=0,
                     section_id=section_id,
@@ -369,6 +377,7 @@ class TournamentDrawAuthorityBuilder:
         bracket_size: int,
         player_ids: tuple[str, ...],
         seed_player_ids: tuple[str, ...],
+        seed_numbers: tuple[int, ...] | None = None,
         placeholder_ids: tuple[str, ...],
         explicit_byes: int,
         section_id: str | None = None,
@@ -382,12 +391,29 @@ class TournamentDrawAuthorityBuilder:
                 "Tournament draw seeds must follow the frozen ranking-derived field order"
             )
 
-        seed_positions = _seed_positions(bracket_size, len(seed_player_ids))
+        local_seed_positions = _seed_positions(
+            bracket_size, len(seed_player_ids)
+        )
+        effective_seed_numbers = (
+            seed_numbers
+            if seed_numbers is not None
+            else tuple(range(1, len(seed_player_ids) + 1))
+        )
+        if len(effective_seed_numbers) != len(seed_player_ids):
+            raise ValueError("Tournament draw seed identity count differs from seed players")
+        if len(set(effective_seed_numbers)) != len(effective_seed_numbers):
+            raise ValueError("Tournament draw seed identities must be unique")
+
+        seed_positions: dict[int, int] = {}
         slots: dict[int, TournamentDrawSlot | None] = {
             index: None for index in range(1, bracket_size + 1)
         }
-        for seed_number, player_id in enumerate(seed_player_ids, start=1):
-            position = seed_positions[seed_number]
+        for local_seed_number, (seed_number, player_id) in enumerate(
+            zip(effective_seed_numbers, seed_player_ids, strict=True),
+            start=1,
+        ):
+            position = local_seed_positions[local_seed_number]
+            seed_positions[seed_number] = position
             slots[position] = TournamentDrawSlot(
                 slot_index=position,
                 entrant_kind="player",

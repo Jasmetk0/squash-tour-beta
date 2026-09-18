@@ -604,7 +604,10 @@ class SeasonDrawService:
                 decision = "bye"
             elif slot.entrant_type == DrawEntrantType.QUALIFIER_PLACEHOLDER:
                 decision = "qualifier_placeholder"
-            elif slot.entrant_type == DrawEntrantType.WILD_CARD_PLACEHOLDER:
+            elif (
+                wildcard_assignment is not None
+                or slot.entrant_type == DrawEntrantType.WILD_CARD_PLACEHOLDER
+            ):
                 decision = (
                     "wild_card_assigned"
                     if wildcard_assignment is not None and slot.player_id is not None

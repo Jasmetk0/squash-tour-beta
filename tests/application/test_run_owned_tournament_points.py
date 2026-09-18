@@ -424,3 +424,127 @@ def test_ranking_week_ingests_v3_without_legacy_award_service(database):
         for award in point_authority.awards
     }
     assert {row.player_id: row.points for row in snapshot.rows} == expected
+
+
+
+def test_owned_source_v4_persists_no_legacy_result_or_award_dtos():
+    result_authority, _, point_authority, _, binding = _authorities()
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="canonical-close",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+
+    payload = json.loads(source.model_dump_json())
+    assert "result" not in payload
+    assert "awards" not in payload
+    assert payload["canonical_result"]["event_id"] == "event"
+    assert payload["canonical_awards"]["event_id"] == "event"
+
+    reopened = OwnedTournamentRankingSource.model_validate_json(
+        source.model_dump_json()
+    )
+    assert reopened == source
+    assert reopened.result is None
+    assert reopened.awards is None
+    assert reopened.fingerprint == source.fingerprint
+
+
+def test_owned_source_v4_rejects_legacy_compatibility_copies():
+    result_authority, result, point_authority, awards, binding = _authorities()
+    with pytest.raises(ValueError, match="cannot persist legacy compatibility DTOs"):
+        OwnedTournamentRankingSource(
+            schema_version="owned_tournament_ranking_source.v4",
+            binding=binding,
+            result=result,
+            awards=awards,
+            canonical_result=result_authority,
+            canonical_awards=point_authority,
+            adopted_by_command_id="bad-close",
+            provenance_kind="canonical_run_owned_tournament_authorities",
+        )
+
+
+def test_owned_source_v3_fingerprint_contract_survives_v4_model():
+    result_authority, result, point_authority, awards, binding = _authorities()
+    v3 = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v3",
+        binding=binding,
+        result=result,
+        awards=awards,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="historical-v3",
+        provenance_kind="canonical_run_owned_tournament_result_and_points",
+    )
+    historical_payload = v3.model_dump(mode="json")
+    expected = hashlib.sha256(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+    reopened = OwnedTournamentRankingSource.model_validate_json(
+        json.dumps(historical_payload, sort_keys=True, separators=(",", ":"))
+    )
+    assert reopened.fingerprint == expected
+
+
+def test_ranking_week_ingests_v4_without_legacy_dtos_or_award_service(database):
+    result_authority, _, point_authority, _, binding = _authorities()
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="close-v4",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+    players = tuple(
+        OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=player.player_id,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        )
+        for player in result_authority.players
+    )
+    policy = OfficialRankingPolicy(policy_id="policy")
+    with database.begin() as session:
+        OfficialRankingCandidateStore(session).append(
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=binding.completed_week,
+                policy=policy,
+                players=players,
+                results=(),
+            ),
+            bootstrap=True,
+        )
+        stored = OwnedTournamentRankingSourceStore(session).append(source)
+        assert stored.result is None
+        assert stored.awards is None
+
+    command = RankingWeekCommand(
+        command_id="ranking-from-canonical-only-source",
+        tournaments=(binding,),
+        context=RankingTransitionContext(
+            run_id="run",
+            branch_id="branch",
+            completed_week=binding.completed_week,
+            target_week=binding.first_publication_week,
+            policy=policy,
+            players=players,
+            discipline="none",
+        ),
+    )
+    snapshot = RankingWeekCommandRunner(database, awards=None).execute(command)
+    expected = {
+        award.player_id: award.ranking_points_awarded
+        for award in point_authority.awards
+    }
+    assert {row.player_id: row.points for row in snapshot.rows} == expected

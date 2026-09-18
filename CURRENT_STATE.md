@@ -220,9 +220,20 @@ backfill Qualification without changing Main. Command retry is idempotent and th
 result exposes predecessor/new field fingerprints plus promotion/backfill deltas.
 
 The existing Tournament Draw Input commitment remains the hard lock for new pre-draw
-repairs. The current follow-up adds canonical Run/Branch Admin HTTP inspection and
-mutation routes; they do not reuse or reinterpret the older simulation-run endpoint.
-Legacy UI/endpoint retirement, RWC/WC repair, Qualification redraw/cascade/freeze
-phases, Lucky Loser ordering and the per-player first-real-match replacement cutoff
-remain Gate 3 work. See
-`docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.
+repairs. The canonical Run/Branch Admin HTTP inspection and mutation routes do not
+reuse or reinterpret the older simulation-run endpoint.
+
+The current Tournament Draw follow-up removes the single-qualifier topology limit.
+For multiple qualifier spots, canonical Draw Authority v2 now materializes equal,
+independent bracket Qualification sections `Q1..Qn`; each section has one terminal
+winner permanently bound to the same-named Main Draw placeholder. The first global
+Qualification seed layer is fixed one-per-section, later section allocation remains
+deterministic from frozen Draw Input, all Q sections project into authoritative match
+topology, and Tournament Result authority records every Qualification winner.
+Historical single-Q Draw Authority v1 remains the compatibility representation.
+
+This does **not** yet claim the complete Master draw contract. Master idealized-slot
+tier placement, Qualification BYE distribution across sections, RWC/WC repair,
+Qualification/Main redraw-cascade-freeze phases, Lucky Loser ordering, group
+Qualification and the per-player first-real-match replacement cutoff remain Gate 3
+work. See `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

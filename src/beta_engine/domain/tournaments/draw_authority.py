@@ -67,6 +67,11 @@ class TournamentDrawBracket(FrozenInput):
     """One complete binary bracket generated from committed draw inputs."""
 
     draw_type: TournamentDrawType
+    section_id: str | None = Field(
+        default=None,
+        min_length=1,
+        exclude_if=lambda value: value is None,
+    )
     bracket_size: int = Field(ge=2)
     seed_positions: tuple[tuple[int, int], ...]
     slots: tuple[TournamentDrawSlot, ...]
@@ -123,9 +128,10 @@ class TournamentDrawBracket(FrozenInput):
 class TournamentDrawAuthority(FrozenInput):
     """Immutable canonical bracket package owned by one Run/Branch/Event."""
 
-    schema_version: Literal["tournament_draw_authority.v1"] = (
-        "tournament_draw_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_draw_authority.v1",
+        "tournament_draw_authority.v2",
+    ] = "tournament_draw_authority.v1"
     algorithm_version: Literal["protected_seed_shuffle.v1"] = (
         "protected_seed_shuffle.v1"
     )
@@ -135,6 +141,10 @@ class TournamentDrawAuthority(FrozenInput):
     generated_by_command_id: str = Field(min_length=1, max_length=128)
     draw_input_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     qualification: TournamentDrawBracket | None = None
+    qualification_sections: tuple[TournamentDrawBracket, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     main: TournamentDrawBracket
 
     @model_validator(mode="after")
@@ -143,7 +153,27 @@ class TournamentDrawAuthority(FrozenInput):
             raise ValueError("Tournament Main bracket has wrong draw type")
         if self.qualification is not None and self.qualification.draw_type != "qualification":
             raise ValueError("Tournament Qualification bracket has wrong draw type")
+        if any(section.draw_type != "qualification" for section in self.qualification_sections):
+            raise ValueError("Tournament Qualification section has wrong draw type")
+        if self.schema_version == "tournament_draw_authority.v1":
+            if self.qualification_sections:
+                raise ValueError("Historical Draw authority v1 cannot contain Qualification sections")
+        else:
+            if self.qualification is not None:
+                raise ValueError("Draw authority v2 uses Qualification sections, not the v1 bracket")
+            expected_section_ids = tuple(
+                f"Q{index}" for index in range(1, len(self.qualification_sections) + 1)
+            )
+            actual_section_ids = tuple(section.section_id for section in self.qualification_sections)
+            if actual_section_ids != expected_section_ids:
+                raise ValueError("Qualification section identities must be canonical Q1..Qn")
         return self
+
+    @property
+    def qualification_brackets(self) -> tuple[TournamentDrawBracket, ...]:
+        if self.qualification_sections:
+            return self.qualification_sections
+        return (self.qualification,) if self.qualification is not None else ()
 
     @property
     def fingerprint(self) -> str:
@@ -169,26 +199,32 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError(
                 "Canonical Run-owned Main Draw currently supports complete binary brackets"
             )
-        if (
-            capacity.qualification_draw_size == 0
-            and capacity.qualifier_spots != 0
-        ) or (
-            capacity.qualification_draw_size > 0
-            and capacity.qualifier_spots != 1
-        ):
+        if capacity.qualification_draw_size == 0 and capacity.qualifier_spots != 0:
             raise ValueError(
-                "Canonical Qualification Draw currently supports exactly one qualifier spot"
+                "Qualification slots require a non-empty Qualification Draw"
             )
-        if capacity.qualification_draw_size not in (0, 1) and not _is_power_of_two(
-            capacity.qualification_draw_size
-        ):
+        if capacity.qualification_draw_size > 0 and capacity.qualifier_spots <= 0:
             raise ValueError(
-                "Canonical Run-owned Qualification Draw currently supports complete binary brackets"
+                "Qualification Draw requires at least one qualifier spot"
             )
         if capacity.qualification_draw_size == 1:
             raise ValueError(
                 "One-position Qualification Draw requires an explicit auto-qualification policy"
             )
+        if capacity.qualifier_spots > 0:
+            if capacity.qualification_draw_size % capacity.qualifier_spots:
+                raise ValueError(
+                    "Qualification field must split evenly across equal Q sections"
+                )
+            qualification_section_size = (
+                capacity.qualification_draw_size // capacity.qualifier_spots
+            )
+            if qualification_section_size < 2 or not _is_power_of_two(
+                qualification_section_size
+            ):
+                raise ValueError(
+                    "Each canonical Qualification section must be a complete binary bracket"
+                )
 
         expected_main_occupants = (
             len(draw_input.direct_main_player_ids)
@@ -205,16 +241,22 @@ class TournamentDrawAuthorityBuilder:
             )
 
         qualification = None
+        qualification_sections: tuple[TournamentDrawBracket, ...] = ()
         if capacity.qualification_draw_size:
-            qualification = cls._build_bracket(
-                draw_input=draw_input,
-                draw_type="qualification",
-                bracket_size=capacity.qualification_draw_size,
-                player_ids=draw_input.qualification_player_ids,
-                seed_player_ids=draw_input.qualification_seed_player_ids,
-                placeholder_ids=(),
-                explicit_byes=0,
-            )
+            if capacity.qualifier_spots == 1:
+                qualification = cls._build_bracket(
+                    draw_input=draw_input,
+                    draw_type="qualification",
+                    bracket_size=capacity.qualification_draw_size,
+                    player_ids=draw_input.qualification_player_ids,
+                    seed_player_ids=draw_input.qualification_seed_player_ids,
+                    placeholder_ids=(),
+                    explicit_byes=0,
+                )
+            else:
+                qualification_sections = cls._build_qualification_sections(
+                    draw_input=draw_input,
+                )
 
         main = cls._build_bracket(
             draw_input=draw_input,
@@ -226,14 +268,105 @@ class TournamentDrawAuthorityBuilder:
             explicit_byes=capacity.bye_slots,
         )
         return TournamentDrawAuthority(
+            schema_version=(
+                "tournament_draw_authority.v2"
+                if qualification_sections
+                else "tournament_draw_authority.v1"
+            ),
             run_id=draw_input.run_id,
             branch_id=draw_input.branch_id,
             event_id=draw_input.event_id,
             generated_by_command_id=command_id,
             draw_input_fingerprint=draw_input.fingerprint,
             qualification=qualification,
+            qualification_sections=qualification_sections,
             main=main,
         )
+
+    @classmethod
+    def _build_qualification_sections(
+        cls,
+        *,
+        draw_input: TournamentDrawInputAuthority,
+    ) -> tuple[TournamentDrawBracket, ...]:
+        capacity = draw_input.capacity
+        section_count = capacity.qualifier_spots
+        section_size = capacity.qualification_draw_size // section_count
+        seeds_per_section = min(section_size, max(1, section_size // 4))
+        expected_seed_count = section_count * seeds_per_section
+        if draw_input.qualification_seed_count != expected_seed_count:
+            raise ValueError(
+                "Qualification seed count must match the Master seed formula for all Q sections"
+            )
+
+        global_seeds = draw_input.qualification_seed_player_ids
+        section_seeds: list[list[tuple[int, str]]] = [
+            [] for _ in range(section_count)
+        ]
+        for layer in range(seeds_per_section):
+            layer_players = list(
+                global_seeds[layer * section_count : (layer + 1) * section_count]
+            )
+            section_order = list(range(section_count))
+            if layer > 0:
+                rng = DeterministicRng(
+                    _draw_named_subseed(
+                        draw_seed=draw_input.draw_seed,
+                        event_id=draw_input.event_id,
+                        key=f"qualification:seed-layer:{layer + 1}",
+                    )
+                )
+                rng.shuffle(section_order)
+            for offset, (player_id, section_index) in enumerate(
+                zip(layer_players, section_order, strict=True)
+            ):
+                global_seed_number = layer * section_count + offset + 1
+                section_seeds[section_index].append(
+                    (global_seed_number, player_id)
+                )
+
+        unseeded = list(
+            draw_input.qualification_player_ids[draw_input.qualification_seed_count :]
+        )
+        unseeded_rng = DeterministicRng(
+            _draw_named_subseed(
+                draw_seed=draw_input.draw_seed,
+                event_id=draw_input.event_id,
+                key="qualification:unseeded-distribution",
+            )
+        )
+        unseeded_rng.shuffle(unseeded)
+
+        unseeded_per_section = section_size - seeds_per_section
+        sections = []
+        cursor = 0
+        for section_index in range(section_count):
+            section_id = f"Q{section_index + 1}"
+            extras = unseeded[cursor : cursor + unseeded_per_section]
+            cursor += unseeded_per_section
+            seed_pairs = tuple(section_seeds[section_index])
+            seeds = tuple(player_id for _, player_id in seed_pairs)
+            seed_numbers = tuple(number for number, _ in seed_pairs)
+            sections.append(
+                cls._build_bracket(
+                    draw_input=draw_input,
+                    draw_type="qualification",
+                    bracket_size=section_size,
+                    player_ids=(*seeds, *extras),
+                    seed_player_ids=seeds,
+                    seed_numbers=seed_numbers,
+                    placeholder_ids=(),
+                    explicit_byes=0,
+                    section_id=section_id,
+                    section_ordinal=section_index,
+                    section_count=section_count,
+                )
+            )
+        if cursor != len(unseeded):
+            raise ValueError(
+                "Qualification player distribution did not fill all Q sections exactly"
+            )
+        return tuple(sections)
 
     @classmethod
     def _build_bracket(
@@ -244,8 +377,12 @@ class TournamentDrawAuthorityBuilder:
         bracket_size: int,
         player_ids: tuple[str, ...],
         seed_player_ids: tuple[str, ...],
+        seed_numbers: tuple[int, ...] | None = None,
         placeholder_ids: tuple[str, ...],
         explicit_byes: int,
+        section_id: str | None = None,
+        section_ordinal: int = 0,
+        section_count: int = 1,
     ) -> TournamentDrawBracket:
         if len(set(player_ids)) != len(player_ids):
             raise ValueError("Tournament draw contains duplicate player identities")
@@ -254,12 +391,29 @@ class TournamentDrawAuthorityBuilder:
                 "Tournament draw seeds must follow the frozen ranking-derived field order"
             )
 
-        seed_positions = _seed_positions(bracket_size, len(seed_player_ids))
+        local_seed_positions = _seed_positions(
+            bracket_size, len(seed_player_ids)
+        )
+        effective_seed_numbers = (
+            seed_numbers
+            if seed_numbers is not None
+            else tuple(range(1, len(seed_player_ids) + 1))
+        )
+        if len(effective_seed_numbers) != len(seed_player_ids):
+            raise ValueError("Tournament draw seed identity count differs from seed players")
+        if len(set(effective_seed_numbers)) != len(effective_seed_numbers):
+            raise ValueError("Tournament draw seed identities must be unique")
+
+        seed_positions: dict[int, int] = {}
         slots: dict[int, TournamentDrawSlot | None] = {
             index: None for index in range(1, bracket_size + 1)
         }
-        for seed_number, player_id in enumerate(seed_player_ids, start=1):
-            position = seed_positions[seed_number]
+        for local_seed_number, (seed_number, player_id) in enumerate(
+            zip(effective_seed_numbers, seed_player_ids, strict=True),
+            start=1,
+        ):
+            position = local_seed_positions[local_seed_number]
+            seed_positions[seed_number] = position
             slots[position] = TournamentDrawSlot(
                 slot_index=position,
                 entrant_kind="player",
@@ -287,7 +441,9 @@ class TournamentDrawAuthorityBuilder:
             _draw_subseed(
                 draw_seed=draw_input.draw_seed,
                 event_id=draw_input.event_id,
-                draw_type=draw_type,
+                draw_type=(
+                    draw_type if section_id is None else f"{draw_type}:{section_id}"
+                ),
             )
         )
         rng.shuffle(open_positions)
@@ -327,10 +483,18 @@ class TournamentDrawAuthorityBuilder:
         )
         return TournamentDrawBracket(
             draw_type=draw_type,
+            section_id=section_id,
             bracket_size=bracket_size,
             seed_positions=tuple(sorted(seed_positions.items())),
             slots=typed_slots,
-            nodes=_build_nodes(draw_input.event_id, draw_type, bracket_size),
+            nodes=_build_nodes(
+                draw_input.event_id,
+                draw_type,
+                bracket_size,
+                section_id=section_id,
+                section_ordinal=section_ordinal,
+                section_count=section_count,
+            ),
             bye_slot_indexes=tuple(
                 slot.slot_index for slot in typed_slots if slot.entrant_kind == "bye"
             ),
@@ -339,7 +503,7 @@ class TournamentDrawAuthorityBuilder:
 
 
 def _draw_subseed(
-    *, draw_seed: int, event_id: str, draw_type: TournamentDrawType
+    *, draw_seed: int, event_id: str, draw_type: str
 ) -> int:
     material = (
         f"tournament_draw_authority.v1|{draw_seed}|{event_id}|{draw_type}"
@@ -349,6 +513,10 @@ def _draw_subseed(
         byteorder="big",
         signed=False,
     )
+
+
+def _draw_named_subseed(*, draw_seed: int, event_id: str, key: str) -> int:
+    return _draw_subseed(draw_seed=draw_seed, event_id=event_id, draw_type=key)
 
 
 def _is_power_of_two(value: int) -> bool:
@@ -415,6 +583,10 @@ def _build_nodes(
     event_id: str,
     draw_type: TournamentDrawType,
     bracket_size: int,
+    *,
+    section_id: str | None = None,
+    section_ordinal: int = 0,
+    section_count: int = 1,
 ) -> tuple[TournamentDrawNode, ...]:
     prior_sources = [f"slot:{index}" for index in range(1, bracket_size + 1)]
     nodes: list[TournamentDrawNode] = []
@@ -422,17 +594,17 @@ def _build_nodes(
     for round_number in range(1, rounds + 1):
         current_sources: list[str] = []
         node_count = bracket_size // (2**round_number)
-        for sequence in range(1, node_count + 1):
-            node_id = (
-                f"{event_id}:{draw_type}:R{round_number}-N{sequence}"
-            )
+        for local_sequence in range(1, node_count + 1):
+            sequence = section_ordinal * node_count + local_sequence
+            scope = draw_type if section_id is None else f"{draw_type}:{section_id}"
+            node_id = f"{event_id}:{scope}:R{round_number}-N{local_sequence}"
             nodes.append(
                 TournamentDrawNode(
                     node_id=node_id,
                     round_number=round_number,
                     round_sequence=sequence,
-                    source_top=prior_sources[(sequence - 1) * 2],
-                    source_bottom=prior_sources[(sequence - 1) * 2 + 1],
+                    source_top=prior_sources[(local_sequence - 1) * 2],
+                    source_bottom=prior_sources[(local_sequence - 1) * 2 + 1],
                 )
             )
             current_sources.append(f"winner:{node_id}")

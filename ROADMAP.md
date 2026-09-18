@@ -234,6 +234,15 @@ the Edition's Tournament Ranking Snapshot, appends one immutable repair version 
 reports the exact Main promotion / Qualification backfill delta. The immediate
 follow-up exposes this state and command through a dedicated Run/Branch Admin HTTP
 surface with expected-field fingerprint protection. New repairs remain locked after
-Tournament Draw Input commitment; legacy simulation-run UI/endpoint retirement,
-post-draw redraw/cascade/freeze, RWC/WC, Lucky Loser and first-real-match replacement
-rules remain separate work.
+Tournament Draw Input commitment.
+
+The next Tournament Draw slice generalizes the canonical authority from one
+Qualification winner to equal `Q1..Qn` bracket sections. Each section owns one
+terminal winner and one stable Main Draw Q placeholder, and the execution/result
+pipeline preserves all such promotions. This establishes the structural path toward
+the Master-style `Qualification 16 -> 4 Q -> Main 32` tournament without yet
+claiming full draw compliance. Next draw-focused work should implement the Master's
+idealized-slot/tier seeding contract and initial BYE allocation, then Qualification
+BYE distribution, WC/RWC, phase-aware redraw/cascade/freeze, LL and group
+Qualification. Legacy simulation-run UI/endpoint retirement and the first-real-match
+replacement cutoff remain separate Gate 3 work.

@@ -119,7 +119,11 @@ def build_tournament_result_authority(
     draw_node_ids = {
         node.node_id
         for node in (
-            *((draw.qualification.nodes) if draw.qualification is not None else ()),
+            *(
+                node
+                for bracket in draw.qualification_brackets
+                for node in bracket.nodes
+            ),
             *draw.main.nodes,
         )
     }
@@ -139,17 +143,20 @@ def build_tournament_result_authority(
     finalist_id = main_final.loser_player_id
 
     qualification_winners: tuple[str, ...] = ()
-    if draw.qualification is not None:
-        q_terminal = max(
-            draw.qualification.nodes,
-            key=lambda node: (node.round_number, node.round_sequence),
-        )
-        q_final = next(
-            match
-            for match in package.qualification_matches
-            if match.match_id == q_terminal.node_id
-        )
-        qualification_winners = (q_final.winner_player_id,)
+    if draw.qualification_brackets:
+        winners = []
+        for bracket in draw.qualification_brackets:
+            q_terminal = max(
+                bracket.nodes,
+                key=lambda node: (node.round_number, node.round_sequence),
+            )
+            q_final = next(
+                match
+                for match in package.qualification_matches
+                if match.match_id == q_terminal.node_id
+            )
+            winners.append(q_final.winner_player_id)
+        qualification_winners = tuple(winners)
 
     seed_by_player: dict[str, int] = {}
     direct_main_ids: set[str] = set()
@@ -159,8 +166,8 @@ def build_tournament_result_authority(
             direct_main_ids.add(slot.player_id)
             if slot.seed_number is not None:
                 seed_by_player[slot.player_id] = slot.seed_number
-    if draw.qualification is not None:
-        for slot in draw.qualification.slots:
+    for bracket in draw.qualification_brackets:
+        for slot in bracket.slots:
             if slot.player_id:
                 q_ids.add(slot.player_id)
                 if slot.seed_number is not None and slot.player_id not in seed_by_player:

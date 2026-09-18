@@ -213,6 +213,8 @@ def test_builder_generates_complete_main_and_qualification_brackets(database):
         )
 
         assert authority.draw_input_fingerprint == draw_input.fingerprint
+        assert authority.schema_version == "tournament_draw_authority.v1"
+        assert "qualification_sections" not in authority.model_dump(mode="json")
         assert authority.qualification is not None
         assert authority.qualification.bracket_size == 2
         assert len(authority.qualification.nodes) == 1
@@ -311,9 +313,7 @@ def test_explicit_main_bye_is_placed_against_highest_seed(database):
         assert authority.main.slots[1].entrant_kind == "bye"
 
 
-def test_multi_qualifier_topology_fails_closed_until_sections_are_authoritative(
-    database,
-):
+def test_multi_qualifier_sections_persist_and_replay(database):
     with database.begin() as session:
         applications = (
             app("A", "main"),
@@ -323,7 +323,7 @@ def test_multi_qualifier_topology_fails_closed_until_sections_are_authoritative(
             app("E", "qualification"),
             app("F", "qualification"),
         )
-        install_draw_input(
+        draw_input = install_draw_input(
             session,
             applications=applications,
             capacity=TournamentEntryFieldCapacity(
@@ -334,13 +334,39 @@ def test_multi_qualifier_topology_fails_closed_until_sections_are_authoritative(
             main_seed_count=2,
             qualification_seed_count=2,
         )
-        with pytest.raises(ValueError, match="exactly one qualifier spot"):
-            TournamentDrawAuthorityStore(session).generate(
-                run_id="run",
-                branch_id="branch",
-                event_id="event",
-                command_id="generate-draw",
+        store = TournamentDrawAuthorityStore(session)
+        authority = store.generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+
+        assert authority.schema_version == "tournament_draw_authority.v2"
+        assert authority.qualification is None
+        assert tuple(
+            section.section_id for section in authority.qualification_brackets
+        ) == ("Q1", "Q2")
+        assert all(
+            section.bracket_size == 2 for section in authority.qualification_brackets
+        )
+        assert tuple(
+            next(
+                slot.player_id
+                for slot in section.slots
+                if slot.seed_number is not None
             )
+            for section in authority.qualification_brackets
+        ) == ("C", "D")
+        assert store.get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == authority
+        assert TournamentDrawAuthorityBuilder.build(
+            draw_input=draw_input,
+            command_id="generate-draw",
+        ) == authority
 
 
 def test_incomplete_qualification_fails_closed_without_persistence(database):

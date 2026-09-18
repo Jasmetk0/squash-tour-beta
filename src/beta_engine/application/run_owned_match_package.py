@@ -36,11 +36,11 @@ def build_run_owned_match_package(
     if event.season_week != week.week:
         raise ValueError("canonical Draw Calendar Event belongs to a different week")
 
-    qualification = (
-        _build_bracket_records(draw, draw.qualification)
-        if draw.qualification is not None
-        else []
-    )
+    qualification = [
+        record
+        for bracket in draw.qualification_brackets
+        for record in _build_bracket_records(draw, bracket)
+    ]
     main = _build_bracket_records(draw, draw.main)
     records = qualification + main
     build_fp = fingerprint(
@@ -83,7 +83,7 @@ def build_run_owned_match_package(
         draw_package_fingerprint=draw.fingerprint,
         active_players_fingerprint=draw.draw_input_fingerprint,
         persistence_path=None,
-        qualification_winners_promoted=draw.qualification is not None,
+        qualification_winners_promoted=bool(draw.qualification_brackets),
         match_engine_version="run_owned_match_package_projection.v1",
     )
     return SeasonEventMatchPackage(

@@ -14,6 +14,9 @@ from beta_engine.domain.rankings.official import (
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.draw_input_authority import (
+    TournamentDrawInputAuthority,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
@@ -266,7 +269,7 @@ def test_master_idealized_slots_and_seed_tiers_for_eight_player_draw(database):
             event_id="event",
             command_id="commit-draw-input",
             draw_seed=777,
-            main_seed_count=1,
+            main_seed_count=2,
             qualification_seed_count=0,
         )
         authority = TournamentDrawAuthorityBuilder.build(
@@ -559,7 +562,7 @@ def test_incomplete_qualification_fails_closed_without_persistence(database):
                 qualification_draw_size=2,
                 qualifier_spots=1,
             ),
-            main_seed_count=2,
+            main_seed_count=1,
             qualification_seed_count=1,
         )
         with pytest.raises(ValueError, match="fully resolved field"):

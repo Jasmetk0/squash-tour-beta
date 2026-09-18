@@ -1,7 +1,8 @@
 """Run/Branch-owned orchestration over the authoritative Simulation Slot ledger.
 
-Persisted match packages derived from persisted Entry List and Draw Package evidence
-are frozen as topology authority. Legacy producer files are not execution state.
+Canonical Run-owned Draw authority is the preferred tournament topology source.
+Legacy MatchPackage data remains a temporary execution/result payload and historical
+compatibility reader; legacy producer files are not execution state.
 """
 
 from __future__ import annotations
@@ -799,6 +800,9 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=branch_id,
             )
             schedule = self._schedule(session, run_id, branch_id, week)
+            plans = self._topology_for_session(
+                session, run_id, branch_id, packages
+            ) if packages else {}
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
@@ -806,11 +810,9 @@ class AuthoritativeRunSimulationDriver:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "week": week.model_dump(mode="json"),
-                "required": len(packages) > 1,
+                "required": len(packages) > 1 or len(plans) != 3,
                 "event_ids": [p.event_id for p in packages],
-                "group_ids": [
-                    m.match_id for p in packages for m in p.main_draw_matches
-                ],
+                "group_ids": list(plans),
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,

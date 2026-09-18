@@ -86,6 +86,7 @@ def build_tournament_point_award_authority(
         seed=seed,
         ranking_status="ranked",
         tournament_result_fingerprint=result.fingerprint,
+        point_distribution=distribution,
         point_distribution_fingerprint=distribution_fp,
         point_distribution_source=point_authority.point_distribution_source,
         awards=tuple(awards),

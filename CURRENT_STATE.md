@@ -232,8 +232,18 @@ deterministic from frozen Draw Input, all Q sections project into authoritative 
 topology, and Tournament Result authority records every Qualification winner.
 Historical single-Q Draw Authority v1 remains the compatibility representation.
 
-This does **not** yet claim the complete Master draw contract. Master idealized-slot
-tier placement, Qualification BYE distribution across sections, RWC/WC repair,
-Qualification/Main redraw-cascade-freeze phases, Lucky Loser ordering, group
-Qualification and the per-player first-real-match replacement cutoff remain Gate 3
-work. See `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.
+New Draw Input commitments now use the Master-aligned v2 contract: classic seed
+counts are derived from bracket capacity and actual player count, while explicitly
+supplied counts are treated only as validation assertions. New Draw authorities use
+`idealized_seed_tiers.v2`: every physical position carries its idealized slot number,
+seed 1 / seed 2 are fixed to idealized 1 / 2, later seed tiers shuffle only within
+their allowed idealized tier, and initial Main Draw BYEs occupy the highest idealized
+slot numbers. Historical Draw Input/Draw v1 payloads replay with their stored
+algorithm and fingerprint shape.
+
+This still does **not** claim the complete Master draw contract. Qualification BYE
+distribution across parallel Q sections, RWC/WC repair, Qualification/Main
+redraw-cascade-freeze phases, Lucky Loser ordering, group Qualification and the
+per-player first-real-match replacement cutoff remain Gate 3 work. See
+`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+`docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import manualQaSource from '../../../../docs/viewer_phase_1_manual_qa.md?raw'
 import readModelIntegrationGuardSource from './ViewerReadModelRouteIntegration.test.tsx?raw'
 import runScopedFinalGuardSource from './ViewerRunScopedModuleFinalGuard.test.ts?raw'
@@ -67,7 +68,7 @@ const expectedCoreViewerRoutes = [
 ]
 
 function appRoutePaths(): Set<string> {
-  return new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((match) => `/${match[1]}`))
+  return viewerAppRoutePaths(appSource)
 }
 
 describe('Viewer Phase 1 final release guard', () => {

@@ -234,6 +234,50 @@ def test_multi_withdrawal_repair_is_atomic_and_order_independent():
     assert forward.withdrawn_player_ids == ("D", "E")
 
 
+
+def test_pre_draw_repair_retry_is_idempotent_and_new_withdrawal_can_follow():
+    auth = authority()
+    applications = [
+        app("A", "main"),
+        app("C", "main"),
+        app("D", "main"),
+        app("B", "qualification"),
+        app("E", "qualification"),
+        app("F", "qualification"),
+        app("G", "qualification"),
+    ]
+    initial = TournamentEntryFieldResolver.build_initial(
+        authority=auth,
+        applications=applications,
+        capacity=capacity(),
+    )
+
+    first = TournamentEntryFieldResolver.repair_pre_draw(
+        authority=auth,
+        applications=applications,
+        previous=initial,
+        withdrawn_player_ids=("D",),
+    )
+    retry = TournamentEntryFieldResolver.repair_pre_draw(
+        authority=auth,
+        applications=reversed(applications),
+        previous=first,
+        withdrawn_player_ids=("D",),
+    )
+    assert retry is first
+
+    second = TournamentEntryFieldResolver.repair_pre_draw(
+        authority=auth,
+        applications=applications,
+        previous=first,
+        withdrawn_player_ids=("D", "E"),
+    )
+    assert second.direct_main_player_ids == ("A", "B", "C")
+    assert second.qualification_player_ids == ("F", "G")
+    assert second.below_qualification_cut_player_ids == ()
+    assert second.withdrawn_player_ids == ("D", "E")
+
+
 def test_nr_players_are_below_ranked_and_use_slot_then_stable_token():
     auth = authority({"A": 100})
     applications = [

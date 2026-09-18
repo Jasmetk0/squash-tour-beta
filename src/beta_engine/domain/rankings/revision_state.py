@@ -18,6 +18,9 @@ from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.result_history import RankingResultVersion, validate_result_successor
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
+from beta_engine.domain.tournaments.ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthority,
+)
 
 
 class RankingRevisionReceipt(FrozenInput):
@@ -40,7 +43,13 @@ class RankingRevisionEntry(FrozenInput):
 
 
 class RankingRevisionState(FrozenInput):
-    schema_version: Literal["ranking_revision_state.v1", "ranking_revision_state.v2", "ranking_revision_state.v3", "ranking_revision_state.v4"] = "ranking_revision_state.v4"
+    schema_version: Literal[
+        "ranking_revision_state.v1",
+        "ranking_revision_state.v2",
+        "ranking_revision_state.v3",
+        "ranking_revision_state.v4",
+        "ranking_revision_state.v5",
+    ] = "ranking_revision_state.v5"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
@@ -48,6 +57,9 @@ class RankingRevisionState(FrozenInput):
     zero_sources: tuple[RankingZeroVersion, ...] = ()
     tournament_sources: tuple[OwnedTournamentRankingSource, ...] = ()
     transition_authorities: tuple[RankingTransitionAuthority, ...] = ()
+    tournament_ranking_snapshot_authorities: tuple[
+        TournamentRankingSnapshotAuthority, ...
+    ] = ()
     authoritative_transition_state: dict | None = None
 
     @model_serializer(mode="wrap")
@@ -59,6 +71,8 @@ class RankingRevisionState(FrozenInput):
             data.pop("tournament_sources", None)
         if not self.transition_authorities:
             data.pop("transition_authorities", None)
+        if not self.tournament_ranking_snapshot_authorities:
+            data.pop("tournament_ranking_snapshot_authorities", None)
         if self.authoritative_transition_state is None:
             data.pop("authoritative_transition_state", None)
         return data
@@ -69,8 +83,15 @@ class RankingRevisionState(FrozenInput):
             raise ValueError("Ranking revision state v1 cannot contain tournament sources")
         if self.schema_version in ("ranking_revision_state.v1", "ranking_revision_state.v2") and self.transition_authorities:
             raise ValueError("Legacy ranking revision state cannot contain transition authority")
-        if self.schema_version != "ranking_revision_state.v4" and self.authoritative_transition_state is not None:
+        if self.schema_version not in {"ranking_revision_state.v4", "ranking_revision_state.v5"} and self.authoritative_transition_state is not None:
             raise ValueError("Legacy ranking revision state cannot contain Week Transition state")
+        if (
+            self.schema_version != "ranking_revision_state.v5"
+            and self.tournament_ranking_snapshot_authorities
+        ):
+            raise ValueError(
+                "Legacy ranking revision state cannot contain Tournament Ranking Snapshot authority"
+            )
         if self.authoritative_transition_state is not None:
             state = self.authoritative_transition_state
             if set(state) != {"world", "publications", "receipts", "events"}:
@@ -106,6 +127,41 @@ class RankingRevisionState(FrozenInput):
             if world is not None and (not ordinals or world["current_ordinal"] != ordinals[-1]
                     or world["ranking_fingerprint"] != state["publications"][-1]["snapshot_fingerprint"]):
                 raise ValueError("Authoritative world head differs from published ranking")
+        tournament_snapshot_keys = [
+            authority.event_id
+            for authority in self.tournament_ranking_snapshot_authorities
+        ]
+        if tournament_snapshot_keys != sorted(set(tournament_snapshot_keys)):
+            raise ValueError(
+                "Tournament Ranking Snapshot authority order or uniqueness is invalid"
+            )
+        publication_by_week = {}
+        if self.authoritative_transition_state is not None:
+            publication_by_week = {
+                row["week_ordinal"]: row
+                for row in self.authoritative_transition_state["publications"]
+            }
+        for authority in self.tournament_ranking_snapshot_authorities:
+            if (authority.run_id, authority.branch_id) != (
+                self.run_id,
+                self.branch_id,
+            ):
+                raise ValueError(
+                    "Tournament Ranking Snapshot authority scope mismatch"
+                )
+            publication = publication_by_week.get(authority.ranking_week.ordinal)
+            if publication is None:
+                raise ValueError(
+                    "Tournament Ranking Snapshot authority publication is missing"
+                )
+            if (
+                publication["snapshot_fingerprint"]
+                != authority.ranking_snapshot_fingerprint
+            ):
+                raise ValueError(
+                    "Tournament Ranking Snapshot authority publication fingerprint differs"
+                )
+
         ordinals = [a.target_week.ordinal for a in self.transition_authorities]
         if ordinals != sorted(set(ordinals)):
             raise ValueError("Ranking transition authority order or uniqueness is invalid")
@@ -197,7 +253,7 @@ def ranking_revision_states_equivalent(
     represents the same live state; non-empty V2 evidence never does.
     """
     return left.model_copy(
-        update={"schema_version": "ranking_revision_state.v4"}
+        update={"schema_version": "ranking_revision_state.v5"}
     ).model_dump(mode="json") == right.model_copy(
         update={"schema_version": "ranking_revision_state.v4"}
     ).model_dump(mode="json")

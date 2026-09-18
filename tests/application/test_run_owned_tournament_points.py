@@ -32,6 +32,9 @@ from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorit
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.domain.tournaments.models import CalendarEvent
+from beta_engine.domain.tournaments.point_award_authority import (
+    TournamentPointAwardAuthority,
+)
 from beta_engine.domain.tournaments.result_authority import (
     build_tournament_result_authority,
     project_tournament_result_legacy_dto,
@@ -243,6 +246,15 @@ def test_canonical_point_authority_maps_frozen_distribution_without_legacy_servi
     assert all(award.ranking_points_awarded == 400 for award in semifinalists)
     assert point_authority.total_ranking_points == 2450
     assert point_authority.total_race_points == 2450
+
+
+def test_canonical_point_authority_rejects_corrupt_distribution_on_reopen():
+    _, _, point_authority, _, _ = _authorities()
+    payload = point_authority.model_dump(mode="json")
+    payload["point_distribution"][0][1] += 1
+
+    with pytest.raises(ValueError, match="distribution snapshot mismatch"):
+        TournamentPointAwardAuthority.model_validate(payload)
 
 
 def test_canonical_point_authority_fails_closed_on_fallback_distribution():

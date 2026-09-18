@@ -165,8 +165,8 @@ def install_draw_input(
     applications=None,
     capacity=None,
     draw_seed=123,
-    main_seed_count=2,
-    qualification_seed_count=1,
+    main_seed_count=None,
+    qualification_seed_count=None,
 ):
     install_ranking_authority(session)
     TournamentEntryFieldStore(session).stage_initial(
@@ -224,11 +224,12 @@ def test_builder_generates_complete_main_and_qualification_brackets(database):
 
         assert authority.main.bracket_size == 4
         assert len(authority.main.nodes) == 3
-        assert authority.main.seed_positions == ((1, 1), (2, 4))
+        assert authority.schema_version == "tournament_draw_authority.v2"
+        assert authority.algorithm_version == "idealized_seed_tiers.v2"
+        assert authority.main.seed_positions == ((1, 1),)
         assert authority.main.slots[0].player_id == "A"
         assert authority.main.slots[0].seed_number == 1
-        assert authority.main.slots[3].player_id == "C"
-        assert authority.main.slots[3].seed_number == 2
+        assert sum(slot.seed_number is not None for slot in authority.main.slots) == 1
         assert {
             slot.player_id
             for slot in authority.main.slots
@@ -296,8 +297,8 @@ def test_explicit_main_bye_is_placed_against_highest_seed(database):
                 qualifier_spots=0,
                 bye_slots=1,
             ),
-            main_seed_count=2,
-            qualification_seed_count=0,
+            main_seed_count=None,
+            qualification_seed_count=None,
         )
         authority = TournamentDrawAuthorityBuilder.build(
             draw_input=draw_input,
@@ -331,8 +332,8 @@ def test_multi_qualifier_topology_fails_closed_until_sections_are_authoritative(
                 qualification_draw_size=4,
                 qualifier_spots=2,
             ),
-            main_seed_count=2,
-            qualification_seed_count=2,
+            main_seed_count=None,
+            qualification_seed_count=None,
         )
         with pytest.raises(ValueError, match="exactly one qualifier spot"):
             TournamentDrawAuthorityStore(session).generate(
@@ -359,8 +360,8 @@ def test_incomplete_qualification_fails_closed_without_persistence(database):
                 qualification_draw_size=2,
                 qualifier_spots=1,
             ),
-            main_seed_count=2,
-            qualification_seed_count=1,
+            main_seed_count=None,
+            qualification_seed_count=None,
         )
         with pytest.raises(ValueError, match="fully resolved field"):
             TournamentDrawAuthorityStore(session).generate(

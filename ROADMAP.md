@@ -236,13 +236,14 @@ follow-up exposes this state and command through a dedicated Run/Branch Admin HT
 surface with expected-field fingerprint protection. New repairs remain locked after
 Tournament Draw Input commitment.
 
-The next Tournament Draw slice generalizes the canonical authority from one
-Qualification winner to equal `Q1..Qn` bracket sections. Each section owns one
-terminal winner and one stable Main Draw Q placeholder, and the execution/result
-pipeline preserves all such promotions. This establishes the structural path toward
-the Master-style `Qualification 16 -> 4 Q -> Main 32` tournament without yet
-claiming full draw compliance. Next draw-focused work should implement the Master's
-idealized-slot/tier seeding contract and initial BYE allocation, then Qualification
-BYE distribution, WC/RWC, phase-aware redraw/cascade/freeze, LL and group
-Qualification. Legacy simulation-run UI/endpoint retirement and the first-real-match
-replacement cutoff remain separate Gate 3 work.
+The canonical authority now supports equal `Q1..Qn` bracket sections and the
+execution/result pipeline preserves all corresponding promotions. The next draw slice
+also aligns new Draw Input/Draw generation with Master §15.2–15.4: seed counts are
+derived canonically, physical slots carry idealized numbers, later seed tiers shuffle
+only inside their allowed idealized tier, and initial Main Draw BYEs consume the
+highest idealized slots. Historical v1 replay remains intact.
+
+The next draw-focused work is therefore Qualification BYE distribution across
+parallel Q sections, followed by WC/RWC, phase-aware redraw/cascade/freeze, Lucky
+Loser, group Qualification and the first-real-match replacement cutoff. Legacy
+simulation-run UI/endpoint retirement remains separate Gate 3 work.

@@ -12,7 +12,16 @@ const api = vi.hoisted(() => ({
   listEvents: vi.fn(),
   listRaceSnapshots: vi.fn(),
   listRankingSnapshots: vi.fn(),
-  listRuns: vi.fn()
+  listRuns: vi.fn(),
+  listRunContainers: vi.fn(),
+  getViewerOfficialRunContext: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status = 500) {
+      super(message)
+      this.status = status
+    }
+  }
 }))
 
 vi.mock('../../api/client', () => api)
@@ -38,6 +47,46 @@ function sampleRun() {
 
 function resetApiMocks(): void {
   api.listRuns.mockResolvedValue({ runs: [sampleRun()] })
+  api.listRunContainers.mockResolvedValue({
+    run_containers: [{
+      run_id: 'run alpha',
+      display_name: 'Run Alpha',
+      storage_kind: 'custom_local',
+      read_only: false,
+      world_id: 'fax-world',
+      world_package_fingerprint: 'world-fp',
+      config_version: 'v1',
+      config_fingerprint: 'config-fp',
+      global_seed: 42,
+      timeline_start_season: 2000,
+      timeline_end_season: 2049,
+      viewer_branch_id: 'viewer',
+      official_branch_id: 'official',
+      status: 'active',
+      metadata_json: {},
+      mapped_simulation_run_count: 1
+    }]
+  })
+  api.getViewerOfficialRunContext.mockImplementation(async (productRunId: string) => ({
+    product_run_id: productRunId,
+    product_run_display_name: productRunId,
+    product_run_status: 'active',
+    product_run_storage_kind: 'custom_local',
+    product_run_read_only: false,
+    official_branch_id: 'official',
+    official_branch_display_name: 'Official',
+    official_branch_status: 'active',
+    official_branch_read_only: false,
+    official_branch_seed: 42,
+    legacy_simulation_run_id: productRunId,
+    head_checkpoint_id: 'checkpoint',
+    head_checkpoint_kind: 'week',
+    current_season: 2031,
+    current_week: 7,
+    current_event_id: null,
+    current_event_sequence: null,
+    resolution_version: 'viewer_official_branch_v1'
+  }))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run alpha', season: 2031, seed: 42, next_event_index: 0, total_events: 2, completed_event_ids: ['EVT-OLD'] },
     season_state: {

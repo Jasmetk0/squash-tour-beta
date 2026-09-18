@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import viewerRoutesSource from '../../viewer/viewerRoutes.ts?raw'
 import viewerRunCalendarSource from '../ViewerRunCalendarPage.tsx?raw'
 import viewerRunHistoryFinalsSource from '../ViewerRunHistoryFinalsPage.tsx?raw'
@@ -74,7 +75,7 @@ const unsafeRunScopedRouteTemplates = [
 const forbiddenFakeClaimLanguage = /(?:fake champion|fake winner|invented champion|invented winner|invented standings|fake standings|fake profile|fixture profile|fake tournament|fixture tournament|fake history|invented history|fake finals|invented finals|fake finalist|invented finalist|world champion|grand slam|career high no\. 1|Team Championship|medals|Top 100|standings table)/i
 
 function appRoutePaths(): Set<string> {
-  return new Set([...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((match) => `/${match[1]}`))
+  return viewerAppRoutePaths(appSource)
 }
 
 describe('Viewer run-scoped module final source guard', () => {

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import { buildViewerHomeActiveRunLinks, buildViewerHomePrimaryHubLinks } from '../../viewer/viewerHomeDisplay'
 import {
   viewerHistoryPath,
@@ -19,7 +20,7 @@ const viewerOnlyPathPattern = /^\/viewer(?:\/|$)/
 const adminPathPattern = /^\/admin(?:\/|$)/
 
 function appRoutePaths(): Set<string> {
-  return new Set([...appSource.matchAll(/<Route path="([^"]+)"/g)].map((match) => `/${match[1]}`))
+  return viewerAppRoutePaths(appSource)
 }
 
 describe('Viewer Home route safety', () => {

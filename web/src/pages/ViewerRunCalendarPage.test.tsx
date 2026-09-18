@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 
+import { renderWithViewerProviders } from '../test/viewerTestUtils'
 import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } from './ViewerRunCalendarPage'
 
 const api = vi.hoisted(() => ({
@@ -16,18 +16,13 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/client', () => api)
 
 function renderViewerCalendarRoute(route: string): void {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route path="/viewer/runs/:runId/calendar" element={<ViewerRunCalendarPage />} />
-          <Route path="/viewer/runs/:runId/calendar/:eventId" element={<ViewerRunPlannedEventPage />} />
-          <Route path="/viewer/runs/:runId/weeks/:week" element={<ViewerRunWeekPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+  renderWithViewerProviders(
+    <Routes>
+      <Route path="/viewer/runs/:runId/calendar" element={<ViewerRunCalendarPage />} />
+      <Route path="/viewer/runs/:runId/calendar/:eventId" element={<ViewerRunPlannedEventPage />} />
+      <Route path="/viewer/runs/:runId/weeks/:week" element={<ViewerRunWeekPage />} />
+    </Routes>,
+    { route }
   )
 }
 

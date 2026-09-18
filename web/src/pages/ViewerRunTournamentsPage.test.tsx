@@ -1,9 +1,9 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { renderWithViewerProviders } from '../test/viewerTestUtils'
 import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './ViewerRunTournamentsPage'
 
 const api = vi.hoisted(() => ({
@@ -24,17 +24,12 @@ const api = vi.hoisted(() => ({
 vi.mock('../api/client', () => api)
 
 function renderViewerTournamentRoute(route: string): void {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route path="/viewer/runs/:runId/tournaments" element={<ViewerRunTournamentsPage />} />
-          <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>
+  renderWithViewerProviders(
+    <Routes>
+      <Route path="/viewer/runs/:runId/tournaments" element={<ViewerRunTournamentsPage />} />
+      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
+    </Routes>,
+    { route }
   )
 }
 

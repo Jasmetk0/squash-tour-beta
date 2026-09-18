@@ -57,6 +57,14 @@ export function getModeSwitcherTarget(
     }
   }
 
+  const adminWorldCountriesMatch = pathname.match(/^\/admin\/world\/library\/[^/]+\/countries(?:\/[^/]+)?$/)
+  if (adminWorldCountriesMatch) {
+    return {
+      viewerTarget: viewerTopCountriesPath(),
+      adminTarget: pathname
+    }
+  }
+
   const mappings: Record<string, { viewerTarget: string; adminTarget: string }> = {
     [viewerHomePath()]: { viewerTarget: viewerHomePath(), adminTarget: '/admin' },
     '/admin': { viewerTarget: viewerHomePath(), adminTarget: '/admin' },

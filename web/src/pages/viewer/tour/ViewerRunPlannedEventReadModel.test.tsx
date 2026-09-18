@@ -26,7 +26,7 @@ function renderPlanned(route = '/viewer/runs/run%20alpha/calendar/EVENT%2F1'): v
   renderWithViewerProviders(
     <Routes>
       <Route path="/viewer/runs/:runId/calendar/:eventId" element={<ViewerRunPlannedEventPage />} />
-      <Route path="/viewer/planned-missing" element={<ViewerRunPlannedEventPage />} />
+      <Route path="/viewer/runs/:runId/planned-missing" element={<ViewerRunPlannedEventPage />} />
     </Routes>,
     { route }
   )
@@ -270,10 +270,9 @@ describe('ViewerRunPlannedEventPage read model', () => {
   })
 
   it('does not call APIs when route params are missing', async () => {
-    renderPlanned('/viewer/planned-missing')
+    renderPlanned('/viewer/runs/run%20alpha/planned-missing')
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
-    expect(screen.getByText('No planned event route context was provided.')).toBeInTheDocument()
     expect(screen.getByText('No planned event ID was provided in the URL.')).toBeInTheDocument()
     expect(api.getRun).not.toHaveBeenCalled()
     expect(api.listEvents).not.toHaveBeenCalled()

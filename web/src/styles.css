@@ -1251,6 +1251,7 @@ textarea:focus-visible {
   left: 0;
   z-index: 10;
   display: grid;
+  min-width: min(calc(100vw - 2rem), 220px);
   width: min(calc(100vw - 2rem), 250px);
   gap: 0.32rem;
   padding: 0.62rem;
@@ -1316,7 +1317,8 @@ textarea:focus-visible {
   gap: 0.22rem;
   flex: 1 1 230px;
   min-width: 140px;
-  max-width: 260px;
+  width: min(260px, 100%);
+  max-width: 100%;
 }
 
 .viewer-topbar-search input,

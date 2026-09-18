@@ -1,9 +1,8 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, within } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { screen, within } from "@testing-library/react";
+import { Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { expectNoForbiddenViewerActions } from "../../../test/viewerTestUtils";
+import { expectNoForbiddenViewerActions, renderWithViewerProviders } from "../../../test/viewerTestUtils";
 import { ViewerRunWeekPage } from "../../ViewerRunCalendarPage";
 
 const api = vi.hoisted(() => ({
@@ -24,22 +23,15 @@ const api = vi.hoisted(() => ({
 vi.mock("../../../api/client", () => api);
 
 function renderWeek(route = "/viewer/runs/run%20alpha/weeks/5"): void {
-  const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false } },
-  });
-
-  render(
-    <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[route]}>
-        <Routes>
-          <Route
-            path="/viewer/runs/:runId/weeks/:week"
-            element={<ViewerRunWeekPage />}
-          />
-          <Route path="/viewer/week-missing" element={<ViewerRunWeekPage />} />
-        </Routes>
-      </MemoryRouter>
-    </QueryClientProvider>,
+  renderWithViewerProviders(
+    <Routes>
+      <Route
+        path="/viewer/runs/:runId/weeks/:week"
+        element={<ViewerRunWeekPage />}
+      />
+      <Route path="/viewer/runs/:runId/week-missing" element={<ViewerRunWeekPage />} />
+    </Routes>,
+    { route },
   );
 }
 
@@ -548,13 +540,10 @@ describe("ViewerRunWeekPage read model", () => {
   });
 
   it("renders safe empty state and does not call APIs for invalid or missing week context", async () => {
-    renderWeek("/viewer/week-missing");
+    renderWeek("/viewer/runs/run%20alpha/week-missing");
 
     expect(
       await screen.findByRole("heading", { name: "Week Detail" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("No run route context was provided."),
     ).toBeInTheDocument();
     expect(
       screen.getByText(

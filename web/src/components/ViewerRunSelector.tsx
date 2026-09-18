@@ -1,18 +1,18 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import type { RunContainer, ViewerOfficialRunContext } from '../api/types'
+import type { ViewerOfficialRunContext } from '../api/types'
 import { getViewerOfficialRunContext, listRunContainers } from '../api/client'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY, readViewerActiveProductRunId, writeViewerActiveProductRunId } from '../viewer/activeProductRun'
 import { readLastRunId, readViewerActiveRunId, writeLastRunId, writeViewerActiveRunId } from '../viewer/activeRun'
 import { formatViewerActiveRunLabel, formatViewerProductRunOptionLabel } from '../viewer/activeRunDisplay'
+import { normalizeRunBrowserRuns } from '../viewer/runBrowserDisplay'
 import { useActiveViewerProductRunId } from '../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../viewer/useViewerOfficialRunContext'
-import { viewerRunsPath } from '../viewer/viewerRoutes'
+import { viewerProductRunPath, viewerRunsPath } from '../viewer/viewerRoutes'
 
 type ViewerRunSelectorProps = { compact?: boolean }
-function safeContainers(value: unknown): RunContainer[] { return Array.isArray(value) ? value.filter((r): r is RunContainer => typeof r === 'object' && r !== null && typeof (r as RunContainer).run_id === 'string' && Boolean((r as RunContainer).run_id.trim())) : [] }
 function contextDetails(context: ViewerOfficialRunContext): string { return `${context.product_run_display_name || context.product_run_id} (${context.product_run_id}) · Official Branch ${context.official_branch_display_name} (${context.official_branch_id}) · legacy SimulationRun ${context.legacy_simulation_run_id} · season ${context.current_season ?? '—'}, week ${context.current_week ?? '—'}${context.official_branch_read_only ? ' · read-only' : ''}` }
 
 function useSelection() {
@@ -23,12 +23,12 @@ function useSelection() {
   const [selectedRunId, setSelectedRunId] = useState(() => readViewerActiveProductRunId() ?? '')
   const [pending, setPending] = useState(false); const [selectionError, setSelectionError] = useState<string | null>(null); const [context, setContext] = useState<ViewerOfficialRunContext | null>(null); const previous = useRef<ViewerOfficialRunContext | null>(null); const migrated = useRef(false)
   const containersQuery = useQuery({ queryKey: ['viewer-run-containers'], queryFn: listRunContainers, retry: false })
-  const runs = safeContainers(containersQuery.data?.run_containers)
+  const runs = normalizeRunBrowserRuns(containersQuery.data?.run_containers)
   const officialQuery = useViewerOfficialRunContext(activeProductRunId)
   const applyContext = (next: ViewerOfficialRunContext) => { const old = previous.current; setContext(next); previous.current = next; writeViewerActiveRunId(next.legacy_simulation_run_id); writeLastRunId(next.legacy_simulation_run_id); if (old && (old.official_branch_id !== next.official_branch_id || old.legacy_simulation_run_id !== next.legacy_simulation_run_id)) setSelectionError(`The official Branch changed from ${old.official_branch_display_name} to ${next.official_branch_display_name}. Viewer now resolves this Product Run through the new official Branch. An already-open legacy run-scoped URL may still represent the previously opened namespace until you follow a refreshed active-run link.`) }
   useEffect(() => { if (officialQuery.data) applyContext(officialQuery.data) }, [officialQuery.data])
   useEffect(() => { if (activeProductRunId) { setSelectedRunId(activeProductRunId); return } const legacy = readViewerActiveRunId(); if (!migrated.current && legacy && runs.some(r => r.run_id === legacy)) { migrated.current = true; void select(legacy, true) } }, [activeProductRunId, runs])
-  async function select(productRunId: string, migration = false) { const normalized = productRunId.trim(); if (!normalized || pending) return; setPending(true); setSelectionError(null); try { const next = await getViewerOfficialRunContext(normalized); writeViewerActiveProductRunId(normalized); applyContext(next); queryClient.setQueryData(['viewer-official-run-context', normalized], next); const match = location.pathname.match(/^\/viewer\/runs\/[^/]+(.*)$/); if (match) navigate(`/viewer/runs/${encodeURIComponent(normalized)}${match[1]}${location.search}${location.hash}`) } catch (error) { setSelectionError(isApiNotFound(error) ? 'This Product Run no longer exists. ' + formatApiError(error) : formatApiError(error)); if (!migration) setSelectedRunId(normalized) } finally { setPending(false) } }
+  async function select(productRunId: string, migration = false) { const normalized = productRunId.trim(); if (!normalized || pending) return; setPending(true); setSelectionError(null); try { const next = await getViewerOfficialRunContext(normalized); writeViewerActiveProductRunId(normalized); applyContext(next); queryClient.setQueryData(['viewer-official-run-context', normalized], next); const match = location.pathname.match(/^\/viewer\/runs\/[^/]+(.*)$/); if (match) navigate(`${viewerProductRunPath(normalized)}${match[1]}${location.search}${location.hash}`) } catch (error) { setSelectionError(isApiNotFound(error) ? 'This Product Run no longer exists. ' + formatApiError(error) : formatApiError(error)); if (!migration) setSelectedRunId(normalized) } finally { setPending(false) } }
   const displayed = context ?? officialQuery.data ?? previous.current
   const contextError = officialQuery.isError && previous.current ? `Official context is temporarily unavailable; showing the last resolved context. ${formatApiError(officialQuery.error)}` : officialQuery.isError ? (isApiNotFound(officialQuery.error) ? 'This Product Run no longer exists.' : formatApiError(officialQuery.error)) : null
   return { activeProductRunId, legacyRunId: readViewerActiveRunId(), selectedRunId, setSelectedRunId, pending, selectionError, contextError, displayed, containersQuery, runs, select }

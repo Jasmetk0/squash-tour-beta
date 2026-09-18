@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import appSource from '../../App.tsx?raw'
+import { viewerAppRouteExists, viewerAppRoutePaths } from '../../test/viewerAppRouteSource'
 import layoutSource from '../../components/Layout.tsx?raw'
 import viewerTopbarSource from '../../components/ViewerTopbar.tsx?raw'
 import viewerRunSelectorSource from '../../components/ViewerRunSelector.tsx?raw'
@@ -105,15 +106,11 @@ const forbiddenRunScopedProductionModuleNames = [
 ]
 
 function appRoutePaths(): string[] {
-  return [...appSource.matchAll(/<Route\s+path="([^"]+)"/g)].map((match) => `/${match[1]}`)
-}
-
-function routePattern(path: string): RegExp {
-  return new RegExp(`^${path.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/:[^/]+/g, '[^/]+')}$`)
+  return [...viewerAppRoutePaths(appSource)]
 }
 
 function appRouteExists(destination: string): boolean {
-  return appRoutePaths().some((route) => routePattern(route).test(destination))
+  return viewerAppRouteExists(appSource, destination)
 }
 
 describe('Viewer shell/navigation source guard', () => {

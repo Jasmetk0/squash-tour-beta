@@ -14,7 +14,7 @@ Legacy `start_day`, list/event ordering and draw-round arithmetic are not substi
 position, split Next Match and Next Slot without redirecting legacy simulation.
 Independent same-slot groups now commit atomically and resume after failure, while
 transition readiness reuses the authoritative match/effect sporting preflight.
-General draws, Qualification, WC/LL, Entries, AI-authored/general scheduling, and health remain Gate 3 work.
+General Master-complete brackets remain Gate 3 work. The current slice aligns new classic Draw Input/Draw authority with §15.2–15.4 seed counts, idealized seed tiers and initial BYEs; multi-Q Qualification sections, groups, WC/RWC, LL, phase-aware repair, Entries/commitment, AI-authored scheduling and health remain follow-ups.
 The repeated-flow acceptance now proves three completed authoritative RankingWeeks
 (Week 1 → Week 2 → Week 3 → Week 4), and a separate production-backed acceptance
 repeats generalized eight-player/seven-match Main Draws across the same three-week
@@ -27,9 +27,10 @@ source of authoritative match topology: direct participants, feeder winners,
 terminal identity, explicit BYE auto-advance and the single-Q promotion edge are
 projected from the canonical bracket. Legacy MatchPackage remains only a temporary
 execution/result payload and must bind one-to-one to canonical nodes. New frozen
-tournament authority v5 includes the exact Draw Authority fingerprint. Multi-Q
-sections, dynamic qualifier-vs-BYE auto-advance, WC/LL and post-draw repair still
-fail closed rather than borrowing legacy DrawPackage policy.
+tournament authority v5 includes the exact Draw Authority fingerprint. New Draw Input/Draw v2 now owns Master §15.2–15.4 classic bracket geometry while
+historical v1 readers retain their original replay. Multi-Q sections, Qualification
+BYE layering, dynamic qualifier-vs-BYE auto-advance, group Qualification, WC/LL and
+post-draw repair still fail closed rather than borrowing legacy DrawPackage policy.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a
@@ -106,7 +107,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Keep entry decisions within a slot on a shared snapshot and commit them transactionally.
 - Preserve entry/application objects as historical state.
 - Keep unresolved Entry Freeze/cut-off details open.
-- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining the historical four-player reader. Indexed qualifier mappings and unambiguous one-player Qualification BYEs execute and ingest into ranking authority. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved competing acceptances remain provisional and must fail closed before play until Final Commitment / Week Tournament Lock authority exists. WC and alternate-replacement provenance primitives exist. Canonical pre-draw field rebalance is implemented as an append-only Run/Branch command and now has a branch-scoped Admin HTTP boundary; legacy UI/endpoint retirement, RWC/WC repair, post-draw repair phases, LL ordering and the replacement cutoff remain Gate 3 work.
+- **Implemented foundation:** Run simulation freezes persisted Entry/Draw/Match evidence as a versioned topology DAG and validates explicit global-slot coverage for complete binary Main Draws; production eight-player Main Draws repeat across three authoritative weeks while retaining historical readers. New v2 classic draws derive seed count from Master §15.2, place seed tiers in §15.3 idealized sectors and assign initial BYEs by §15.4 highest idealized slots. Indexed single-Q promotion already executes. Entry decisions for overlapping events are generated transactionally from one shared snapshot, but unresolved commitments still fail closed. Canonical pre-draw field rebalance has a branch-scoped Admin HTTP boundary; multi-Q sections, group Qualification, legacy UI retirement, RWC/WC repair, three-phase post-draw repair, LL ordering and the replacement cutoff remain Gate 3 work.
 
 ## 6. Match Engine v1
 
@@ -231,9 +232,10 @@ After #756 restored the complete frontend test baseline, the next bounded Gate 3
 slice exposes the already-defined canonical Tournament Entry Field rebalance through
 a transaction-owned application command. It reuses frozen application evidence and
 the Edition's Tournament Ranking Snapshot, appends one immutable repair version and
-reports the exact Main promotion / Qualification backfill delta. The immediate
-follow-up exposes this state and command through a dedicated Run/Branch Admin HTTP
-surface with expected-field fingerprint protection. New repairs remain locked after
-Tournament Draw Input commitment; legacy simulation-run UI/endpoint retirement,
+reports the exact Main promotion / Qualification backfill delta. The branch-scoped
+Admin HTTP surface now exposes that state and command. The current bracket track then
+starts Master-complete generation with v2 seed-count, idealized seed-tier and initial
+BYE authority. The immediate next bracket slice is multiple linked Q1..Qm sections
+with §15.6 global seed layers and cross-section BYE layers, followed by groups,
 post-draw redraw/cascade/freeze, RWC/WC, Lucky Loser and first-real-match replacement
-rules remain separate work.
+rules.

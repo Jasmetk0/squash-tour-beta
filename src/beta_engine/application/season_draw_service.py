@@ -18,7 +18,7 @@ from beta_engine.domain.draws.models import DrawEntrantType, DrawType, Generated
 from beta_engine.domain.entries.models import AcceptanceList, AcceptanceStatus, EntryTarget, TournamentEntry
 from beta_engine.domain.tournaments import LuckyLoserRules, SeasonCalendarEvent, TournamentTemplate
 
-DrawSlotDecision = Literal["accepted_main_draw", "accepted_qualification", "qualifier_placeholder", "bye", "wild_card_reserved", "wild_card_assigned"]
+DrawSlotDecision = Literal["accepted_main_draw", "accepted_qualification", "qualifier_placeholder", "bye", "wild_card_reserved", "wild_card_assigned", "pre_draw_replacement"]
 DrawValidationSeverity = Literal["warning", "error"]
 DrawRecordType = Literal["qualification", "main"]
 DrawMatchStatus = Literal["pending", "bye_pending", "completed_placeholder"]
@@ -64,6 +64,9 @@ class DrawSlotRecord(BaseModel):
     source_entry_fingerprint: str | None = None
     is_bye: bool = False
     is_qualifier_placeholder: bool = False
+    withdrawn_player_id: str | None = None
+    replacement_source_entry_id: str | None = None
+    replacement_authority_fingerprint: str | None = None
 
 
 class DrawSeedRecord(BaseModel):
@@ -125,6 +128,7 @@ class DrawPackageMetadata(BaseModel):
     persistence_path: str | None = None
     ranking_basis: str
     wild_card_assignments_fingerprint: str | None = None
+    pre_draw_withdrawals_fingerprint: str | None = None
 
 
 class SeasonEventDrawPackage(BaseModel):
@@ -179,22 +183,48 @@ class SeasonWildCardAssignmentsRegistry(BaseModel):
     assignments_by_event_id: dict[str, list[WildCardAssignment]] = Field(default_factory=dict)
 
 
+class PreDrawWithdrawalReplacement(BaseModel):
+    event_id: str
+    withdrawn_entry_id: str
+    withdrawn_player_id: str
+    withdrawn_player_name: str
+    withdrawn_country_code: str
+    replacement_entry_id: str
+    replacement_player_id: str
+    replacement_player_name: str
+    replacement_country_code: str
+    replacement_source: Literal["alternate_waitlist"] = "alternate_waitlist"
+    entry_list_fingerprint: str
+    active_players_fingerprint: str
+    authority_fingerprint: str
+
+
+class SeasonPreDrawWithdrawalsRegistry(BaseModel):
+    replacements_by_event_id: dict[str, list[PreDrawWithdrawalReplacement]] = Field(default_factory=dict)
+
+
 @dataclass(slots=True)
 class SeasonDrawService:
     entry_list_service: SeasonEntryListService
     calendar_service: SeasonCalendarService
     draws_path: Path = Path("config/simulation/season_draws.json")
     wildcard_assignments_path: Path = Path("config/simulation/season_wildcard_assignments.json")
+    pre_draw_withdrawals_path: Path = Path("config/simulation/season_pre_draw_withdrawals.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.draws_path, Path):
             self.draws_path = Path(self.draws_path)
         if not isinstance(self.wildcard_assignments_path, Path):
             self.wildcard_assignments_path = Path(self.wildcard_assignments_path)
+        if not isinstance(self.pre_draw_withdrawals_path, Path):
+            self.pre_draw_withdrawals_path = Path(self.pre_draw_withdrawals_path)
         default_wildcards = Path("config/simulation/season_wildcard_assignments.json")
+        default_withdrawals = Path("config/simulation/season_pre_draw_withdrawals.json")
         default_draws = Path("config/simulation/season_draws.json")
         if self.wildcard_assignments_path == default_wildcards and self.draws_path != default_draws:
             self.wildcard_assignments_path = self.draws_path.with_name("season_wildcard_assignments.json")
+        if self.pre_draw_withdrawals_path == default_withdrawals and self.draws_path != default_draws:
+            self.pre_draw_withdrawals_path = self.draws_path.with_name("season_pre_draw_withdrawals.json")
 
     def get_draw_package(self, *, event_id: str) -> SeasonEventDrawPackageResult:
         registry = self._load_registry()
@@ -268,6 +298,13 @@ class SeasonDrawService:
             raise ValueError(
                 f"Player '{player_id}' is already committed to an overlapping event."
             )
+        if any(
+            item.replacement_player_id == player_id
+            for item in self.get_pre_draw_withdrawal_replacements(event_id=event_id)
+        ):
+            raise ValueError(
+                f"Player '{player_id}' is already reserved as a pre-draw replacement."
+            )
 
         registry = self._load_wildcard_registry()
         current = list(registry.assignments_by_event_id.get(event_id, []))
@@ -318,6 +355,141 @@ class SeasonDrawService:
         )
         return assignment
 
+    def get_pre_draw_withdrawal_replacements(
+        self, *, event_id: str
+    ) -> tuple[PreDrawWithdrawalReplacement, ...]:
+        registry = self._load_pre_draw_withdrawals_registry()
+        return tuple(
+            sorted(
+                registry.replacements_by_event_id.get(event_id, []),
+                key=lambda item: (
+                    item.withdrawn_entry_id,
+                    item.withdrawn_player_id,
+                ),
+            )
+        )
+
+    def withdraw_main_draw_player(
+        self,
+        *,
+        event_id: str,
+        withdrawn_player_id: str,
+    ) -> PreDrawWithdrawalReplacement:
+        if self.get_draw_package(event_id=event_id).draw_package_exists:
+            raise ValueError(
+                "Pre-draw withdrawal authority is locked after the DrawPackage is persisted."
+            )
+
+        event = self._find_event(event_id)
+        entry_result = self.entry_list_service.get_entry_list(event_id=event_id)
+        if entry_result.entry_list is None:
+            raise ValueError("Persist an EntryList before recording a pre-draw withdrawal.")
+        entry_list = entry_result.entry_list
+
+        active_players = sorted(
+            self.entry_list_service.active_players_service.get_active_players(
+                season=str(event.season)
+            ).players,
+            key=lambda player: player.player_id,
+        )
+        active_fp = self._fingerprint(
+            [player.model_dump(mode="json") for player in active_players]
+        )
+        if active_fp != entry_list.metadata.active_players_fingerprint:
+            raise ValueError(
+                "EntryList active-player authority is stale; regenerate entries before recording withdrawals."
+            )
+
+        direct_by_player = {
+            item.player_id: item
+            for item in entry_list.entries
+            if item.decision == "accepted_main_draw"
+        }
+        if withdrawn_player_id not in direct_by_player:
+            raise ValueError(
+                f"Player '{withdrawn_player_id}' is not a direct Main Draw acceptance for event '{event_id}'."
+            )
+
+        registry = self._load_pre_draw_withdrawals_registry()
+        existing = list(registry.replacements_by_event_id.get(event_id, []))
+        if any(
+            item.entry_list_fingerprint != entry_list.metadata.build_fingerprint
+            or item.active_players_fingerprint != active_fp
+            for item in existing
+        ):
+            raise ValueError(
+                "Persisted pre-draw withdrawal authority is stale; clear it before recording a new withdrawal."
+            )
+        withdrawn_ids = {
+            item.withdrawn_player_id for item in existing
+        } | {withdrawn_player_id}
+
+        withdrawn_entries = sorted(
+            (direct_by_player[player_id] for player_id in withdrawn_ids),
+            key=lambda item: (item.ranking_priority, item.player_id, item.entry_id),
+        )
+
+        wildcard_players = {
+            item.player_id
+            for item in self.get_wild_card_assignments(event_id=event_id)
+        }
+        alternates = sorted(
+            (
+                item
+                for item in entry_list.entries
+                if item.decision == "alternate"
+                and item.player_id not in wildcard_players
+                and item.player_id not in withdrawn_ids
+                and not self._player_committed_to_overlapping_event(
+                    event=event, player_id=item.player_id
+                )
+            ),
+            key=lambda item: (item.ranking_priority, item.player_id, item.entry_id),
+        )
+        if len(alternates) < len(withdrawn_entries):
+            raise ValueError(
+                "No eligible alternate remains for every recorded pre-draw withdrawal."
+            )
+
+        selected_alternates = alternates[: len(withdrawn_entries)]
+        replacements: list[PreDrawWithdrawalReplacement] = []
+        for withdrawn, replacement in zip(
+            withdrawn_entries, selected_alternates, strict=True
+        ):
+            payload = {
+                "event_id": event_id,
+                "withdrawn_entry_id": withdrawn.entry_id,
+                "withdrawn_player_id": withdrawn.player_id,
+                "withdrawn_player_name": withdrawn.name,
+                "withdrawn_country_code": withdrawn.country_code,
+                "replacement_entry_id": replacement.entry_id,
+                "replacement_player_id": replacement.player_id,
+                "replacement_player_name": replacement.name,
+                "replacement_country_code": replacement.country_code,
+                "replacement_source": "alternate_waitlist",
+                "entry_list_fingerprint": entry_list.metadata.build_fingerprint,
+                "active_players_fingerprint": active_fp,
+            }
+            replacements.append(
+                PreDrawWithdrawalReplacement(
+                    **payload,
+                    authority_fingerprint=self._fingerprint(payload),
+                )
+            )
+
+        next_registry = dict(registry.replacements_by_event_id)
+        next_registry[event_id] = replacements
+        self._save_pre_draw_withdrawals_registry(
+            SeasonPreDrawWithdrawalsRegistry(
+                replacements_by_event_id=next_registry
+            )
+        )
+        return next(
+            item
+            for item in replacements
+            if item.withdrawn_player_id == withdrawn_player_id
+        )
+
     def generate_draw_package(self, *, event_id: str, request: DrawGenerateRequest) -> SeasonEventDrawPackageResult:
         registry = self._load_registry()
         exists = event_id in registry.draws_by_event_id
@@ -336,6 +508,11 @@ class SeasonDrawService:
         wildcard_assignments = self._validated_wildcard_assignments(
             event=event, entry_list=entry_list
         )
+        pre_draw_replacements = self._validated_pre_draw_replacements(
+            event=event,
+            entry_list=entry_list,
+            wildcard_assignments=wildcard_assignments,
+        )
         wildcard_assignments_fp = (
             self._fingerprint(
                 [
@@ -346,10 +523,21 @@ class SeasonDrawService:
             if wildcard_assignments
             else None
         )
+        pre_draw_replacements_fp = (
+            self._fingerprint(
+                [
+                    pre_draw_replacements[key].model_dump(mode="json")
+                    for key in sorted(pre_draw_replacements)
+                ]
+            )
+            if pre_draw_replacements
+            else None
+        )
         acceptance = self._acceptance_from_entry_list(
             event=event,
             entry_list=entry_list,
             wildcard_assignments=wildcard_assignments,
+            pre_draw_replacements=pre_draw_replacements,
         )
         engine = DrawEngine(rng=DeterministicRng(request.seed))
 
@@ -362,6 +550,7 @@ class SeasonDrawService:
                 draw_type="qualification",
                 warnings=warnings,
                 wildcard_assignments=wildcard_assignments,
+                pre_draw_replacements=pre_draw_replacements,
             )
         else:
             warnings.append(self._issue("warning", "no_qualification_draw", "event has no qualification draw", event_id=event.event_id, field="qualification_draw_size"))
@@ -373,6 +562,7 @@ class SeasonDrawService:
             draw_type="main",
             warnings=warnings,
             wildcard_assignments=wildcard_assignments,
+            pre_draw_replacements=pre_draw_replacements,
         )
         if event.wild_cards > len(wildcard_assignments):
             warnings.append(
@@ -404,6 +594,7 @@ class SeasonDrawService:
                 "entry_list_fingerprint": entry_fp,
                 "calendar_event_fingerprint": calendar_fp,
                 "wild_card_assignments_fingerprint": wildcard_assignments_fp,
+                "pre_draw_withdrawals_fingerprint": pre_draw_replacements_fp,
                 "qualification_draw": qualification_bracket.model_dump(mode="json") if qualification_bracket else None,
                 "main_draw": main_bracket.model_dump(mode="json"),
             }
@@ -421,6 +612,7 @@ class SeasonDrawService:
             persistence_path=None if request.dry_run else str(self.draws_path),
             ranking_basis=entry_list.metadata.ranking_basis,
             wild_card_assignments_fingerprint=wildcard_assignments_fp,
+            pre_draw_withdrawals_fingerprint=pre_draw_replacements_fp,
         )
         package = SeasonEventDrawPackage(
             event_id=event.event_id,
@@ -501,13 +693,47 @@ class SeasonDrawService:
         event: SeasonCalendarEvent,
         entry_list: SeasonEventEntryList,
         wildcard_assignments: dict[int, WildCardAssignment],
+        pre_draw_replacements: dict[str, PreDrawWithdrawalReplacement],
     ) -> AcceptanceList:
         season_year = self._season_seed_component(event.season)
         main_entries: list[TournamentEntry] = []
         qualification_entries: list[TournamentEntry] = []
         for entry in sorted(entry_list.entries, key=lambda item: (item.ranking_priority, item.player_id, item.entry_id)):
             if entry.decision == "accepted_main_draw":
-                main_entries.append(self._tournament_entry(event=event, entry=entry, season_year=season_year, slot=EntryTarget.MAIN, status=AcceptanceStatus.DIRECT_ACCEPTANCE))
+                replacement = pre_draw_replacements.get(entry.entry_id)
+                if replacement is None:
+                    main_entries.append(
+                        self._tournament_entry(
+                            event=event,
+                            entry=entry,
+                            season_year=season_year,
+                            slot=EntryTarget.MAIN,
+                            status=AcceptanceStatus.DIRECT_ACCEPTANCE,
+                        )
+                    )
+                else:
+                    source_entry = next(
+                        item
+                        for item in entry_list.entries
+                        if item.entry_id == replacement.replacement_entry_id
+                    )
+                    main_entries.append(
+                        TournamentEntry(
+                            entry_id=entry.entry_id,
+                            event_id=event.event_id,
+                            season=season_year,
+                            week=event.season_week,
+                            player_id=replacement.replacement_player_id,
+                            slot=EntryTarget.MAIN,
+                            status=AcceptanceStatus.DIRECT_ACCEPTANCE,
+                            tour_level=event.tour_level or "WORLD_TOUR",
+                            category=event.category or "UNKNOWN",
+                            quality_score=source_entry.quality_score,
+                            entry_score=source_entry.entry_score,
+                            ranking_priority=source_entry.ranking_priority,
+                            placeholder_reason=f"pre_draw_replacement:{replacement.replacement_entry_id}",
+                        )
+                    )
             elif entry.decision == "accepted_qualification":
                 qualification_entries.append(self._tournament_entry(event=event, entry=entry, season_year=season_year, slot=EntryTarget.QUALIFICATION, status=AcceptanceStatus.QUALIFICATION_ACCEPTANCE))
         for index in range(1, event.qualifier_spots + 1):
@@ -581,6 +807,7 @@ class SeasonDrawService:
         draw_type: DrawRecordType,
         warnings: list[DrawValidationIssue],
         wildcard_assignments: dict[int, WildCardAssignment],
+        pre_draw_replacements: dict[str, PreDrawWithdrawalReplacement],
     ) -> DrawBracket:
         entries_by_id = {entry.entry_id: entry for entry in entry_list.entries}
         wildcard_by_entry_id = {
@@ -595,6 +822,12 @@ class SeasonDrawService:
         for slot in generated.slots:
             entry = entries_by_id.get(slot.entry_id or "")
             wildcard_assignment = wildcard_by_entry_id.get(slot.entry_id or "")
+            replacement = pre_draw_replacements.get(slot.entry_id or "")
+            replacement_entry = (
+                entries_by_id.get(replacement.replacement_entry_id)
+                if replacement is not None
+                else None
+            )
             is_tbd = slot.entrant_type == DrawEntrantType.TBD
             is_bye = slot.entrant_type == DrawEntrantType.BYE or is_tbd
             if is_tbd:
@@ -604,6 +837,8 @@ class SeasonDrawService:
                 decision = "bye"
             elif slot.entrant_type == DrawEntrantType.QUALIFIER_PLACEHOLDER:
                 decision = "qualifier_placeholder"
+            elif replacement is not None:
+                decision = "pre_draw_replacement"
             elif (
                 wildcard_assignment is not None
                 or slot.entrant_type == DrawEntrantType.WILD_CARD_PLACEHOLDER
@@ -622,14 +857,18 @@ class SeasonDrawService:
                 bracket_position=slot.slot_index,
                 player_id=slot.player_id,
                 player_name=(
-                    entry.name
+                    replacement.replacement_player_name
+                    if replacement is not None
+                    else entry.name
                     if entry is not None
                     else wildcard_assignment.player_name
                     if wildcard_assignment is not None
                     else None
                 ),
                 country_code=(
-                    entry.country_code
+                    replacement.replacement_country_code
+                    if replacement is not None
+                    else entry.country_code
                     if entry is not None
                     else wildcard_assignment.country_code
                     if wildcard_assignment is not None
@@ -639,7 +878,9 @@ class SeasonDrawService:
                 seed_number=slot.seed_number,
                 source_entry_id=slot.entry_id,
                 source_entry_fingerprint=(
-                    entry.generated_fingerprint
+                    replacement.authority_fingerprint
+                    if replacement is not None
+                    else entry.generated_fingerprint
                     if entry is not None
                     else wildcard_assignment.assignment_fingerprint
                     if wildcard_assignment is not None
@@ -649,6 +890,21 @@ class SeasonDrawService:
                 ),
                 is_bye=is_bye,
                 is_qualifier_placeholder=slot.entrant_type == DrawEntrantType.QUALIFIER_PLACEHOLDER,
+                withdrawn_player_id=(
+                    replacement.withdrawn_player_id
+                    if replacement is not None
+                    else None
+                ),
+                replacement_source_entry_id=(
+                    replacement.replacement_entry_id
+                    if replacement is not None
+                    else None
+                ),
+                replacement_authority_fingerprint=(
+                    replacement.authority_fingerprint
+                    if replacement is not None
+                    else None
+                ),
             )
             slots.append(record)
             if record.is_bye:
@@ -656,8 +912,17 @@ class SeasonDrawService:
             if record.is_qualifier_placeholder:
                 qualifier_placeholders.append(QualifierPlaceholderRecord(placeholder_id=f"Q{qualifier_index}", slot_id=record.slot_id, bracket_position=record.bracket_position, qualifier_index=qualifier_index))
                 qualifier_index += 1
-            if slot.seed_number is not None and entry is not None and slot.player_id is not None:
-                seeds.append(DrawSeedRecord(seed_number=slot.seed_number, player_id=slot.player_id, player_name=entry.name, ranking_priority=entry.ranking_priority, placement_position=slot.slot_index))
+            seed_entry = replacement_entry if replacement_entry is not None else entry
+            if slot.seed_number is not None and seed_entry is not None and slot.player_id is not None:
+                seeds.append(
+                    DrawSeedRecord(
+                        seed_number=slot.seed_number,
+                        player_id=slot.player_id,
+                        player_name=seed_entry.name,
+                        ranking_priority=seed_entry.ranking_priority,
+                        placement_position=slot.slot_index,
+                    )
+                )
         rounds = self._rounds_from_nodes(generated=generated, slots_by_index={slot.bracket_position: slot for slot in slots})
         fingerprint = self._fingerprint(
             {
@@ -842,6 +1107,104 @@ class SeasonDrawService:
             ):
                 return True
         return False
+
+    def _validated_pre_draw_replacements(
+        self,
+        *,
+        event: SeasonCalendarEvent,
+        entry_list: SeasonEventEntryList,
+        wildcard_assignments: dict[int, WildCardAssignment],
+    ) -> dict[str, PreDrawWithdrawalReplacement]:
+        replacements = self.get_pre_draw_withdrawal_replacements(
+            event_id=event.event_id
+        )
+        active_players = sorted(
+            self.entry_list_service.active_players_service.get_active_players(
+                season=str(event.season)
+            ).players,
+            key=lambda player: player.player_id,
+        )
+        active_fp = self._fingerprint(
+            [player.model_dump(mode="json") for player in active_players]
+        )
+        entries_by_id = {item.entry_id: item for item in entry_list.entries}
+        wildcard_players = {item.player_id for item in wildcard_assignments.values()}
+        seen_withdrawn: set[str] = set()
+        seen_replacements: set[str] = set()
+        by_entry: dict[str, PreDrawWithdrawalReplacement] = {}
+
+        for replacement in replacements:
+            if replacement.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
+                raise ValueError(
+                    "Persisted pre-draw withdrawal authority is stale for the current EntryList."
+                )
+            if replacement.active_players_fingerprint != active_fp:
+                raise ValueError(
+                    "Persisted pre-draw withdrawal authority is stale for the active-player snapshot."
+                )
+            withdrawn = entries_by_id.get(replacement.withdrawn_entry_id)
+            source = entries_by_id.get(replacement.replacement_entry_id)
+            if (
+                withdrawn is None
+                or withdrawn.decision != "accepted_main_draw"
+                or withdrawn.player_id != replacement.withdrawn_player_id
+            ):
+                raise ValueError(
+                    "Persisted pre-draw withdrawn entry no longer matches direct Main Draw authority."
+                )
+            if (
+                source is None
+                or source.decision != "alternate"
+                or source.player_id != replacement.replacement_player_id
+            ):
+                raise ValueError(
+                    "Persisted pre-draw replacement no longer matches alternate waitlist authority."
+                )
+            if replacement.withdrawn_player_id in seen_withdrawn:
+                raise ValueError("Duplicate withdrawn player in pre-draw authority.")
+            if replacement.replacement_player_id in seen_replacements:
+                raise ValueError("Duplicate replacement player in pre-draw authority.")
+            if replacement.replacement_player_id in wildcard_players:
+                raise ValueError(
+                    "Pre-draw replacement player is also assigned as a Wild Card."
+                )
+            if self._player_committed_to_overlapping_event(
+                event=event, player_id=replacement.replacement_player_id
+            ):
+                raise ValueError(
+                    "Pre-draw replacement player is committed to an overlapping event."
+                )
+            payload = replacement.model_dump(
+                mode="json", exclude={"authority_fingerprint"}
+            )
+            if self._fingerprint(payload) != replacement.authority_fingerprint:
+                raise ValueError("Persisted pre-draw withdrawal authority is corrupt.")
+            seen_withdrawn.add(replacement.withdrawn_player_id)
+            seen_replacements.add(replacement.replacement_player_id)
+            by_entry[replacement.withdrawn_entry_id] = replacement
+        return by_entry
+
+    def _load_pre_draw_withdrawals_registry(
+        self,
+    ) -> SeasonPreDrawWithdrawalsRegistry:
+        if not self.pre_draw_withdrawals_path.exists():
+            return SeasonPreDrawWithdrawalsRegistry()
+        return SeasonPreDrawWithdrawalsRegistry.model_validate(
+            json.loads(self.pre_draw_withdrawals_path.read_text(encoding="utf-8"))
+        )
+
+    def _save_pre_draw_withdrawals_registry(
+        self, registry: SeasonPreDrawWithdrawalsRegistry
+    ) -> None:
+        self.pre_draw_withdrawals_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self.pre_draw_withdrawals_path.with_suffix(
+            f"{self.pre_draw_withdrawals_path.suffix}.tmp"
+        )
+        tmp_path.write_text(
+            json.dumps(registry.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(self.pre_draw_withdrawals_path)
 
     def _load_wildcard_registry(self) -> SeasonWildCardAssignmentsRegistry:
         if not self.wildcard_assignments_path.exists():

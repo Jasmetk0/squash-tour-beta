@@ -169,6 +169,16 @@ class TournamentDrawAuthorityBuilder:
             raise ValueError(
                 "Canonical Run-owned Main Draw currently supports complete binary brackets"
             )
+        if (
+            capacity.qualification_draw_size == 0
+            and capacity.qualifier_spots != 0
+        ) or (
+            capacity.qualification_draw_size > 0
+            and capacity.qualifier_spots != 1
+        ):
+            raise ValueError(
+                "Canonical Qualification Draw currently supports exactly one qualifier spot"
+            )
         if capacity.qualification_draw_size not in (0, 1) and not _is_power_of_two(
             capacity.qualification_draw_size
         ):

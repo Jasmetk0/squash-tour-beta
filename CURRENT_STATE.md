@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #747 at
-`e7cb625a44ec558d51d844af879e293a03e0b8c6`, plus the current bounded
-Tournament Draw Input authority slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #748 at
+`2f294fe38f38c0429ee317f29a92a8d026583d72`, plus the current bounded
+Run-owned Tournament Draw bracket slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #747 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #748 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -30,7 +30,7 @@ protocol is chapter 36. PR #747 is the latest merged implementation in this audi
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
 | Packages/players | World package, owned InitialWorld, lifecycle, `player_sporting_week_states`, and slot checkpoints | Canonical 57×0–200 sporting history and match-derived Form/Sharpness/Fatigue exist for the narrow slot slice; health and prospects remain open |
-| Tournament flow | generalized persisted topology in `authoritative_run_simulation_driver.py`, result/award services, `owned_tournament_sources.py`; repeated production eight-player execution; Qualification/BYE acceptance; persisted Tournament Ranking Snapshot + append-only Tournament Entry Field authority; current branch adds immutable Run/Branch/Event draw-input commitment | The canonical terminal Entry Field can now be frozen for Draw without consulting mutable legacy Entry ordering, and further pre-draw repair is locked after commitment. Actual Run-owned bracket placement/DrawPackage generation, overlapping Entry commitment, canonical RWC/draw-repair phases, Lucky Losers, replacement cutoff and broader abnormal sources remain boundaries. |
+| Tournament flow | generalized persisted topology in `authoritative_run_simulation_driver.py`, result/award services, `owned_tournament_sources.py`; repeated production eight-player execution; Qualification/BYE acceptance; persisted Tournament Ranking Snapshot + append-only Tournament Entry Field + immutable Draw Input authority; current branch adds a replayable Run/Branch/Event-owned Qualification/Main bracket package | Complete supported binary brackets now derive only from frozen Draw Input authority, with explicit seeds, qualifier placeholders, BYEs and feeder-node topology. The first canonical Qualification slice supports zero or one qualifier spot; multi-qualifier sections fail closed. Legacy DrawPackage is still not authority; incomplete Qualification fields, WC/LL, overlapping Entry commitment, canonical RWC/draw-repair phases, replacement cutoff and broader abnormal sources remain boundaries. |
 | Match engine | `domain/matches/match_engine.py`, immutable inputs/replay, `simulation_slots.py`, and Run/Branch slot persistence | Narrow four-player scheduling and later-slot sporting causality exist; general global scheduling, native 57-attribute Rally Setup, and finished realism remain open |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |

@@ -197,6 +197,7 @@ def test_legacy_simulation_component_without_entry_fields_keeps_wire_identity(
         component = saved["content"]["simulation_slot_match_state"]
         assert "entry_fields" not in component
         assert "draw_inputs" not in component
+        assert "draw_authorities" not in component
 
         restore_saved_simulation_slots(
             session,
@@ -212,6 +213,7 @@ def test_legacy_simulation_component_without_entry_fields_keeps_wire_identity(
         )
         assert "entry_fields" not in recaptured["content"]["simulation_slot_match_state"]
         assert "draw_inputs" not in recaptured["content"]["simulation_slot_match_state"]
+        assert "draw_authorities" not in recaptured["content"]["simulation_slot_match_state"]
 
 
 def test_store_replays_initial_repair_and_exact_retries(database):

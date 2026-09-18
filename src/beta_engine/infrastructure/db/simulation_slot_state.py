@@ -13,6 +13,7 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
+    TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
 )
@@ -85,6 +86,35 @@ def _validate_draw_input_rows_shape(rows):
             row.authority_fingerprint,
         ):
             raise ValueError("Saved Tournament Draw Input authority row is corrupt")
+
+
+def _validate_draw_authority_rows_shape(rows):
+    from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+
+    event_keys = [(row.run_id, row.branch_id, row.event_id) for row in rows]
+    command_keys = [(row.run_id, row.branch_id, row.command_id) for row in rows]
+    if len(event_keys) != len(set(event_keys)):
+        raise ValueError("Saved Tournament Draw contains duplicate event authority")
+    if len(command_keys) != len(set(command_keys)):
+        raise ValueError("Saved Tournament Draw contains duplicate command identity")
+    for row in rows:
+        authority = TournamentDrawAuthority.model_validate_json(row.payload_json)
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.draw_input_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.draw_input_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Draw authority row is corrupt")
 
 
 def _validate_semantics(slots, groups):
@@ -208,10 +238,13 @@ def _component(
     include_entry_fields=True,
     draw_inputs=(),
     include_draw_inputs=True,
+    draw_authorities=(),
+    include_draw_authorities=True,
 ):
     _validate_semantics(slots, groups)
     _validate_entry_field_rows(entry_fields)
     _validate_draw_input_rows_shape(draw_inputs)
+    _validate_draw_authority_rows_shape(draw_authorities)
     body = {
         "slots": [
             {
@@ -302,6 +335,20 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in draw_inputs
+        ]
+    if include_draw_authorities:
+        body["draw_authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "draw_input_fingerprint": row.draw_input_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in draw_authorities
         ]
     if include_schedules:
         body["schedules"] = [
@@ -404,6 +451,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         draw_store = TournamentDrawInputAuthorityStore(session)
         for event_id in sorted({row.event_id for row in draw_inputs}):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    draw_authorities = session.scalars(
+        select(TournamentDrawAuthorityModel)
+        .where(
+            TournamentDrawAuthorityModel.run_id == run_id,
+            TournamentDrawAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawAuthorityModel.event_id)
+    ).all()
+    if draw_authorities:
+        from beta_engine.infrastructure.db.tournament_draw_authority import (
+            TournamentDrawAuthorityStore,
+        )
+
+        draw_store = TournamentDrawAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in draw_authorities}):
+            draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     if (
         slots
         or groups
@@ -412,6 +475,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or schedules
         or entry_fields
         or draw_inputs
+        or draw_authorities
     ):
         payload["content"][COMPONENT_KEY] = _component(
             slots,
@@ -423,6 +487,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_entry_fields=bool(entry_fields),
             draw_inputs=draw_inputs,
             include_draw_inputs=bool(draw_inputs),
+            draw_authorities=draw_authorities,
+            include_draw_authorities=bool(draw_authorities),
         )
 
 
@@ -437,6 +503,7 @@ def _load(payload, *, run_id, branch_id):
         "schedules",
         "entry_fields",
         "draw_inputs",
+        "draw_authorities",
     }
     if not required <= set(component) or set(component) - required - optional:
         raise ValueError("Invalid Saved Revision simulation-slot component")
@@ -468,6 +535,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("draw_inputs", [])
         ],
         include_draw_inputs="draw_inputs" in component,
+        draw_authorities=[
+            TournamentDrawAuthorityModel(**value)
+            for value in component.get("draw_authorities", [])
+        ],
+        include_draw_authorities="draw_authorities" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
@@ -483,6 +555,7 @@ def _load(payload, *, run_id, branch_id):
                 "schedules",
                 "entry_fields",
                 "draw_inputs",
+                "draw_authorities",
             }
         )
         for value in component[kind]
@@ -588,6 +661,45 @@ def _validate_saved_draw_inputs_against_live_dependencies(
         )
 
 
+def _validate_saved_draw_authorities_against_target_inputs(
+    component,
+) -> None:
+    draw_values = (component or {}).get("draw_authorities", [])
+    if not draw_values:
+        return
+
+    input_values = (component or {}).get("draw_inputs", [])
+    if not input_values:
+        raise ValueError(
+            "Saved Tournament Draw authority requires saved Draw Input authority"
+        )
+
+    from beta_engine.domain.tournaments.draw_input_authority import (
+        TournamentDrawInputAuthority,
+    )
+    from beta_engine.infrastructure.db.tournament_draw_authority import (
+        TournamentDrawAuthorityStore,
+    )
+
+    inputs_by_event = {
+        value["event_id"]: TournamentDrawInputAuthority.model_validate_json(
+            value["payload_json"]
+        )
+        for value in input_values
+    }
+    for value in draw_values:
+        row = TournamentDrawAuthorityModel(**value)
+        draw_input = inputs_by_event.get(row.event_id)
+        if draw_input is None:
+            raise ValueError(
+                "Saved Tournament Draw authority references missing Draw Input"
+            )
+        TournamentDrawAuthorityStore.validate_row(
+            row,
+            draw_input=draw_input,
+        )
+
+
 def restore_saved_simulation_slots(
     session, *, current_payload, target_payload, run_id, branch_id
 ):
@@ -605,6 +717,7 @@ def restore_saved_simulation_slots(
         run_id=run_id,
         branch_id=branch_id,
     )
+    _validate_saved_draw_authorities_against_target_inputs(target)
     live_slots = session.scalars(
         select(SimulationSlotModel)
         .where(
@@ -684,6 +797,22 @@ def restore_saved_simulation_slots(
         draw_store = TournamentDrawInputAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_draw_inputs}):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_draw_authorities = session.scalars(
+        select(TournamentDrawAuthorityModel)
+        .where(
+            TournamentDrawAuthorityModel.run_id == run_id,
+            TournamentDrawAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawAuthorityModel.event_id)
+    ).all()
+    if live_draw_authorities:
+        from beta_engine.infrastructure.db.tournament_draw_authority import (
+            TournamentDrawAuthorityStore,
+        )
+
+        draw_store = TournamentDrawAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_draw_authorities}):
+            draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live = (
         _component(
             live_slots,
@@ -713,6 +842,11 @@ def restore_saved_simulation_slots(
                 bool(live_draw_inputs)
                 or bool(expected is not None and "draw_inputs" in expected)
             ),
+            draw_authorities=live_draw_authorities,
+            include_draw_authorities=(
+                bool(live_draw_authorities)
+                or bool(expected is not None and "draw_authorities" in expected)
+            ),
         )
         if live_slots
         or live_groups
@@ -721,10 +855,17 @@ def restore_saved_simulation_slots(
         or live_schedules
         or live_entry_fields
         or live_draw_inputs
+        or live_draw_authorities
         else None
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentDrawAuthorityModel).where(
+            TournamentDrawAuthorityModel.run_id == run_id,
+            TournamentDrawAuthorityModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(TournamentDrawInputAuthorityModel).where(
             TournamentDrawInputAuthorityModel.run_id == run_id,
@@ -781,6 +922,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentEntryFieldVersionModel(**value))
     for value in (target or {}).get("draw_inputs", []):
         session.add(TournamentDrawInputAuthorityModel(**value))
+    for value in (target or {}).get("draw_authorities", []):
+        session.add(TournamentDrawAuthorityModel(**value))
     session.flush()
     target_entry_fields = (target or {}).get("entry_fields", [])
     if target_entry_fields:
@@ -797,6 +940,17 @@ def restore_saved_simulation_slots(
             TournamentDrawInputAuthorityStore,
         )
 
-        draw_store = TournamentDrawInputAuthorityStore(session)
+        input_store = TournamentDrawInputAuthorityStore(session)
         for event_id in sorted({value["event_id"] for value in target_draw_inputs}):
+            input_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_draw_authorities = (target or {}).get("draw_authorities", [])
+    if target_draw_authorities:
+        from beta_engine.infrastructure.db.tournament_draw_authority import (
+            TournamentDrawAuthorityStore,
+        )
+
+        draw_store = TournamentDrawAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_draw_authorities}
+        ):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)

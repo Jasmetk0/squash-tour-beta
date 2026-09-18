@@ -20,13 +20,16 @@ The repeated-flow acceptance now proves three completed authoritative RankingWee
 repeats generalized eight-player/seven-match Main Draws across the same three-week
 chain with explicit schedules, ranking transitions and historical replay.
 
-The merged #743–#747 chain now owns an event-scoped Tournament Ranking
-Snapshot and append-only canonical Tournament Entry Field history. The current
-bounded follow-up freezes the terminal field into immutable Run/Branch/Event Draw
-Input authority, including seed order and qualifier-placeholder identities, and
-locks later pre-draw field repair while preserving exact retries of already
-committed repair commands. Actual bracket placement remains the next Draw slice; no
-legacy DrawPackage file is promoted to Run authority by this step.
+The merged #743–#748 chain now owns an event-scoped Tournament Ranking
+Snapshot, append-only canonical Tournament Entry Field history and immutable
+Run/Branch/Event Draw Input authority. The current bounded follow-up generates and
+persists replayable Qualification/Main bracket authority directly from that frozen
+input, including explicit seed positions, qualifier placeholders, Main BYEs and a
+complete binary feeder-node DAG. The first Qualification slice supports exactly
+zero or one qualifier spot and fails closed for multi-qualifier topology, incomplete
+Qualification fields and unresolved Wild Card authority. Legacy DrawPackage files are still not
+promoted to Run authority, and the full seed-band/randomization contract remains a
+later canonical expansion rather than being inferred from legacy UI behavior.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a

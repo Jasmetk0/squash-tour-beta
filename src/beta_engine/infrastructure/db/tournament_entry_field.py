@@ -344,10 +344,15 @@ class TournamentEntryFieldStore:
         command_id: str,
     ) -> TournamentEntryField:
         self._scope(run_id, branch_id, writing=True)
-        if self.session.get(
+        draw_committed = self.session.get(
             TournamentDrawInputAuthorityModel,
             (run_id, branch_id, event_id),
-        ) is not None:
+        ) is not None
+        if draw_committed and self._command_row(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=command_id,
+        ) is None:
             raise TournamentEntryFieldConflict(
                 "Pre-draw repair is locked after Tournament Draw Input authority is committed"
             )

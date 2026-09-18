@@ -20,6 +20,7 @@ from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
+    build_run_owned_tournament_ranking_packages,
     validate_adopted_four_player_match_package,
 )
 from beta_engine.application.canonical_tournament_topology import (
@@ -1721,14 +1722,31 @@ class AuthoritativeRunSimulationDriver:
             if existing:
                 self._validate_existing_owned_source(existing, command, package, auth)
                 continue
-            _, result, awards = build_authoritative_tournament_ranking_packages(
-                self.awards_service,
-                package=package,
-                authoritative=auth,
-                result_seed=self._stable_seed(package, "result"),
-                award_seed=self._stable_seed(package, "awards"),
-                frozen_point_authority=point_authority,
-            )
+            canonical_result = None
+            if draw_fp is not None:
+                _, canonical_result, result, awards = (
+                    build_run_owned_tournament_ranking_packages(
+                        self.awards_service,
+                        package=package,
+                        authoritative=auth,
+                        draw=draw,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=command.expected_week,
+                        result_seed=self._stable_seed(package, "result"),
+                        award_seed=self._stable_seed(package, "awards"),
+                        frozen_point_authority=point_authority,
+                    )
+                )
+            else:
+                _, result, awards = build_authoritative_tournament_ranking_packages(
+                    self.awards_service,
+                    package=package,
+                    authoritative=auth,
+                    result_seed=self._stable_seed(package, "result"),
+                    award_seed=self._stable_seed(package, "awards"),
+                    frozen_point_authority=point_authority,
+                )
             binding = TournamentRankingBinding(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
@@ -1747,10 +1765,21 @@ class AuthoritativeRunSimulationDriver:
             prepare_tournament_ranking_sources(binding, result, awards)
             store.append(
                 OwnedTournamentRankingSource(
+                    schema_version=(
+                        "owned_tournament_ranking_source.v2"
+                        if canonical_result is not None
+                        else "owned_tournament_ranking_source.v1"
+                    ),
                     binding=binding,
                     result=result,
                     awards=awards,
+                    canonical_result=canonical_result,
                     adopted_by_command_id=command.command_id,
+                    provenance_kind=(
+                        "canonical_run_owned_tournament_result"
+                        if canonical_result is not None
+                        else "explicit_legacy_tournament_adoption"
+                    ),
                 )
             )
 

@@ -60,6 +60,11 @@ class OwnedTournamentRankingSource(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
+        payload = self.model_dump(mode="json")
+        if self.schema_version == "owned_tournament_ranking_source.v1":
+            # Preserve the exact historical v1 fingerprint contract. This field
+            # did not exist before v2 and must not appear as an injected null.
+            payload.pop("canonical_result", None)
         return hashlib.sha256(json.dumps(
-            self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
+            payload, sort_keys=True, separators=(",", ":")
         ).encode()).hexdigest()

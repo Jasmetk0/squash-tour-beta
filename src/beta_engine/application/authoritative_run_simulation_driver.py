@@ -420,10 +420,14 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "canonical frozen tournament Calendar Event scope changed"
                 )
-            expected_season = (
-                f"{2000 + week.season_index}/{2001 + week.season_index}"
+            expected_start = 2000 + week.season_index
+            expected_season = f"{expected_start}/{expected_start + 1}"
+            event_season_matches = (
+                event.season == expected_start
+                if isinstance(event.season, int)
+                else str(event.season) == expected_season
             )
-            if str(event.season) != expected_season:
+            if not event_season_matches:
                 raise ValueError(
                     "canonical frozen tournament Calendar Event season changed"
                 )
@@ -1102,8 +1106,22 @@ class AuthoritativeRunSimulationDriver:
 
     @staticmethod
     def _tournament_authority_fingerprint(run_id, branch_id, week, items):
+        normalized = []
+        for raw in items:
+            if isinstance(raw, _AdoptedTournamentEvidence):
+                normalized.append(raw)
+                continue
+            package, point_authority, draw_fp = raw
+            normalized.append(
+                _AdoptedTournamentEvidence(
+                    event_id=package.event_id,
+                    package=package,
+                    point_award_authority=point_authority,
+                    draw_authority_fingerprint=draw_fp,
+                )
+            )
         bodies = []
-        for item in sorted(items, key=lambda item: item.event_id):
+        for item in sorted(normalized, key=lambda item: item.event_id):
             if item.package is not None:
                 payload = item.package.model_dump(mode="json")
                 payload["metadata"].pop("persistence_path", None)

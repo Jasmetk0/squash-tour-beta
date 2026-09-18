@@ -334,6 +334,7 @@ class _NoLegacyDrawReader:
         )
 
 
+@dataclass(slots=True)
 class _ExplicitMatchPackageReader:
     """Read-only adapter for the existing result builder."""
 

@@ -291,6 +291,26 @@ def test_owned_source_v2_persists_canonical_result_and_v1_remains_supported():
         == v2
     )
 
+    changed_players = list(result.player_results)
+    changed_players[0] = changed_players[0].model_copy(
+        update={"reached_stage": "unknown"}
+    )
+    mismatched_result = result.model_copy(
+        update={"player_results": changed_players}
+    )
+    with pytest.raises(
+        ValueError, match="Canonical tournament player-result projection mismatch"
+    ):
+        OwnedTournamentRankingSource(
+            schema_version="owned_tournament_ranking_source.v2",
+            binding=binding,
+            result=mismatched_result,
+            awards=awards,
+            canonical_result=canonical,
+            adopted_by_command_id="bad-close",
+            provenance_kind="canonical_run_owned_tournament_result",
+        )
+
     v1 = OwnedTournamentRankingSource(
         binding=binding,
         result=result,

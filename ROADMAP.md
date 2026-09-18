@@ -20,16 +20,16 @@ The repeated-flow acceptance now proves three completed authoritative RankingWee
 repeats generalized eight-player/seven-match Main Draws across the same three-week
 chain with explicit schedules, ranking transitions and historical replay.
 
-The merged #743–#748 chain now owns an event-scoped Tournament Ranking
-Snapshot, append-only canonical Tournament Entry Field history and immutable
-Run/Branch/Event Draw Input authority. The current bounded follow-up generates and
-persists replayable Qualification/Main bracket authority directly from that frozen
-input, including explicit seed positions, qualifier placeholders, Main BYEs and a
-complete binary feeder-node DAG. The first Qualification slice supports exactly
-zero or one qualifier spot and fails closed for multi-qualifier topology, incomplete
-Qualification fields and unresolved Wild Card authority. Legacy DrawPackage files are still not
-promoted to Run authority, and the full seed-band/randomization contract remains a
-later canonical expansion rather than being inferred from legacy UI behavior.
+The merged #743–#749 chain now owns Tournament Ranking Snapshot → canonical
+Entry Field → immutable Draw Input → replayable Run-owned Qualification/Main Draw
+Authority. The current bounded follow-up makes that Draw Authority the preferred
+source of authoritative match topology: direct participants, feeder winners,
+terminal identity, explicit BYE auto-advance and the single-Q promotion edge are
+projected from the canonical bracket. Legacy MatchPackage remains only a temporary
+execution/result payload and must bind one-to-one to canonical nodes. New frozen
+tournament authority v5 includes the exact Draw Authority fingerprint. Multi-Q
+sections, dynamic qualifier-vs-BYE auto-advance, WC/LL and post-draw repair still
+fail closed rather than borrowing legacy DrawPackage policy.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a

@@ -359,6 +359,28 @@ class TournamentEntryFieldStore:
         )
         if retry is not None:
             field, frozen_apps = self._load_row(retry)
+            history = self.history(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            predecessor = next(
+                (
+                    candidate
+                    for candidate in history
+                    if candidate.fingerprint == retry.predecessor_fingerprint
+                ),
+                None,
+            )
+            if predecessor is None:
+                raise TournamentEntryFieldConflict(
+                    "Tournament entry field retry predecessor is missing"
+                )
+            canonical_requested = tuple(
+                player_id
+                for player_id in requested
+                if player_id not in set(predecessor.withdrawn_player_ids)
+            )
             retry_fp = _request_fingerprint(
                 {
                     "mode": "pre_draw_repair",
@@ -368,7 +390,7 @@ class TournamentEntryFieldStore:
                     "authority_fingerprint": authority.fingerprint,
                     "applications_fingerprint": apps_fp,
                     "predecessor_fingerprint": retry.predecessor_fingerprint,
-                    "withdrawn_player_ids": requested,
+                    "withdrawn_player_ids": canonical_requested,
                 }
             )
             if (
@@ -388,6 +410,16 @@ class TournamentEntryFieldStore:
             raise TournamentEntryFieldConflict(
                 "Pre-draw repair requires an initial Tournament Entry Field"
             )
+        previous_withdrawn = set(previous.withdrawn_player_ids)
+        canonical_requested = tuple(
+            player_id
+            for player_id in requested
+            if player_id not in previous_withdrawn
+        )
+        if not canonical_requested:
+            raise TournamentEntryFieldConflict(
+                "Tournament entry field repair contains no new withdrawal"
+            )
         request_fp = _request_fingerprint(
             {
                 "mode": "pre_draw_repair",
@@ -397,14 +429,14 @@ class TournamentEntryFieldStore:
                 "authority_fingerprint": authority.fingerprint,
                 "applications_fingerprint": apps_fp,
                 "predecessor_fingerprint": previous.fingerprint,
-                "withdrawn_player_ids": requested,
+                "withdrawn_player_ids": canonical_requested,
             }
         )
         field = TournamentEntryFieldResolver.repair_pre_draw(
             authority=authority,
             applications=canonical_apps,
             previous=previous,
-            withdrawn_player_ids=requested,
+            withdrawn_player_ids=canonical_requested,
         )
         if field == previous:
             raise TournamentEntryFieldConflict(

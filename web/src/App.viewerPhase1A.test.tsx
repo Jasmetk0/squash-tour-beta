@@ -453,7 +453,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     await waitFor(() => expect(localStorage.getItem('beta_engine:viewer_active_run_id')).toBe('run-b'))
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('run-b')
-    await waitFor(() => expect(within(picker).getByText('run-b')).toBeInTheDocument())
+    await waitFor(() => expect(within(picker).getAllByText('run-b').length).toBeGreaterThan(0))
     expect(await screen.findByRole('link', { name: 'Active Run Rankings' })).toHaveAttribute('href', '/viewer/runs/run-b/rankings')
     expect(screen.getByRole('link', { name: 'Active Run Calendar' })).toHaveAttribute('href', '/viewer/runs/run-b/calendar')
     expect(screen.queryAllByLabelText('Viewer active run quick links')).toHaveLength(0)

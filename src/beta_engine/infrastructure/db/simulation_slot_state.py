@@ -390,11 +390,54 @@ def _load(payload, *, run_id, branch_id):
     return component
 
 
+def _validate_saved_entry_fields_against_live_ranking_authority(
+    session, component, *, run_id: str, branch_id: str
+) -> None:
+    values = (component or {}).get("entry_fields", [])
+    if not values:
+        return
+
+    from beta_engine.infrastructure.db.tournament_entry_field import (
+        TournamentEntryFieldStore,
+    )
+    from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+        TournamentRankingSnapshotAuthorityStore,
+    )
+
+    rows = [TournamentEntryFieldVersionModel(**value) for value in values]
+    by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
+    for row in rows:
+        by_event.setdefault(row.event_id, []).append(row)
+
+    ranking_store = TournamentRankingSnapshotAuthorityStore(session)
+    for event_id, event_rows in sorted(by_event.items()):
+        authority = ranking_store.get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if authority is None:
+            raise ValueError(
+                "Saved Tournament Entry Field references missing Tournament "
+                "Ranking Snapshot authority"
+            )
+        TournamentEntryFieldStore.validate_rows(
+            event_rows,
+            authority=authority,
+        )
+
+
 def restore_saved_simulation_slots(
     session, *, current_payload, target_payload, run_id, branch_id
 ):
     expected = _load(current_payload, run_id=run_id, branch_id=branch_id)
     target = _load(target_payload, run_id=run_id, branch_id=branch_id)
+    _validate_saved_entry_fields_against_live_ranking_authority(
+        session,
+        target,
+        run_id=run_id,
+        branch_id=branch_id,
+    )
     live_slots = session.scalars(
         select(SimulationSlotModel)
         .where(

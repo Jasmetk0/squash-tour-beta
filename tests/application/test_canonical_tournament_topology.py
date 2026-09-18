@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from types import SimpleNamespace
 
 import pytest
@@ -338,24 +337,8 @@ def test_historical_frozen_authority_does_not_adopt_later_canonical_draw(monkeyp
         command_id="draw",
     )
     package = _package(draw)
-    payload = json.dumps(
-        {
-            "schema_version": "adopted_tournament_authority.v4",
-            "tournaments": [
-                {
-                    "package": package.model_dump(mode="json"),
-                    "point_award_authority": {
-                        "event_id": "event",
-                        "authority_fingerprint": "4" * 64,
-                        "payload": {},
-                    },
-                }
-            ],
-        }
-    )
-
-    # Use the historical raw-package reader instead because constructing the
-    # unrelated point-award authority contract is outside this topology test.
+    # Historical raw-package authority has no canonical Draw binding. A Draw
+    # created later in the same Run/Branch must not retroactively change replay.
     payload = package.model_dump_json()
 
     class FakeSession:

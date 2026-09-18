@@ -21,6 +21,9 @@ from beta_engine.application.authoritative_slot_matches import (
     build_authoritative_tournament_ranking_packages,
     validate_adopted_four_player_match_package,
 )
+from beta_engine.application.canonical_tournament_topology import (
+    project_canonical_draw_to_match_topology,
+)
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
     prepare_tournament_ranking_sources,
@@ -56,6 +59,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
@@ -300,7 +306,15 @@ class AuthoritativeRunSimulationDriver:
         ordinal = rows[0]
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
-    def _packages(self, week, *, required=True):
+    def _packages(
+        self,
+        week,
+        *,
+        required=True,
+        session=None,
+        run_id=None,
+        branch_id=None,
+    ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
         packages = tuple(
             sorted(
@@ -314,10 +328,66 @@ class AuthoritativeRunSimulationDriver:
         )
         if not packages and required:
             raise ValueError("supported tournament authority is missing")
-        packages = tuple(self._bind_current_draw_evidence(p, week) for p in packages)
+        bound = []
         for package in packages:
-            self._topology((package,))
+            canonical = None
+            if session is not None and run_id is not None and branch_id is not None:
+                canonical = TournamentDrawAuthorityStore(session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=package.event_id,
+                )
+            if canonical is not None:
+                package = self._bind_owned_draw_evidence(
+                    package=package,
+                    draw=canonical,
+                    week=week,
+                )
+            else:
+                package = self._bind_current_draw_evidence(package, week)
+            bound.append(package)
+        packages = tuple(bound)
         return packages
+
+    def _bind_owned_draw_evidence(self, *, package, draw, week):
+        """Bind MatchPackage execution payload to canonical Run-owned Draw authority."""
+        expected_season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        if (
+            package.event_id != draw.event_id
+            or package.season != expected_season
+            or package.season_week != week.week
+        ):
+            raise ValueError("canonical Draw/MatchPackage event or week identity conflicts")
+        projected = package.model_copy(deep=True)
+        topology = project_canonical_draw_to_match_topology(
+            draw=draw,
+            package=projected,
+        )
+        bye_winners = dict(topology.bye_winners)
+        for match in projected.qualification_matches + projected.main_draw_matches:
+            winner = bye_winners.get(match.match_id)
+            if winner is None:
+                continue
+            match.winner_player_id = winner
+            match.loser_player_id = None
+            match.scoreline = "BYE"
+            match.status = "completed"
+            match.result_notes = "automatic BYE advance from canonical Draw authority"
+            match.result_fingerprint = fingerprint(
+                {
+                    "action": "canonical_draw_bye_advance.v1",
+                    "draw_authority_fingerprint": draw.fingerprint,
+                    "event_id": projected.event_id,
+                    "match_id": match.match_id,
+                    "winner_player_id": winner,
+                }
+            )
+        return projected.model_copy(
+            update={
+                "frozen_qualifier_promotions": list(topology.qualifier_promotions),
+                "frozen_bye_match_ids": list(topology.bye_match_ids),
+            }
+        )
 
     def _bind_current_draw_evidence(self, package, week):
         """Validate producer lineage and freeze qualification side mappings."""

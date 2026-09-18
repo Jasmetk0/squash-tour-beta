@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import json
+from types import SimpleNamespace
+
 import pytest
 
 from beta_engine.application.canonical_tournament_topology import (
     project_canonical_draw_to_match_topology,
 )
+from beta_engine.application import authoritative_run_simulation_driver as driver_module
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
 )
@@ -19,6 +23,7 @@ from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorityBuilder
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
+from beta_engine.infrastructure.db.models import AdoptedTournamentAuthorityModel
 
 
 pytestmark = pytest.mark.smoke
@@ -324,3 +329,59 @@ def test_v5_draw_binding_does_not_rewrite_historical_v4_authority_fingerprint():
 
     assert historical_actual == historical_expected
     assert canonical_actual != historical_actual
+
+
+
+def test_historical_frozen_authority_does_not_adopt_later_canonical_draw(monkeypatch):
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_draw_input(),
+        command_id="draw",
+    )
+    package = _package(draw)
+    payload = json.dumps(
+        {
+            "schema_version": "adopted_tournament_authority.v4",
+            "tournaments": [
+                {
+                    "package": package.model_dump(mode="json"),
+                    "point_award_authority": {
+                        "event_id": "event",
+                        "authority_fingerprint": "4" * 64,
+                        "payload": {},
+                    },
+                }
+            ],
+        }
+    )
+
+    # Use the historical raw-package reader instead because constructing the
+    # unrelated point-award authority contract is outside this topology test.
+    payload = package.model_dump_json()
+
+    class FakeSession:
+        def get(self, model, key):
+            if model is AdoptedTournamentAuthorityModel:
+                return SimpleNamespace(package_json=payload)
+            return None
+
+    class FakeDrawStore:
+        def __init__(self, session):
+            pass
+
+        def get(self, **kwargs):
+            return draw
+
+    monkeypatch.setattr(
+        driver_module,
+        "TournamentDrawAuthorityStore",
+        FakeDrawStore,
+    )
+    driver = AuthoritativeRunSimulationDriver(None, None, None)
+    resolved = driver._canonical_draw_binding(
+        FakeSession(),
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        event_id="event",
+    )
+    assert resolved is None

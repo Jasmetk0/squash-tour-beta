@@ -5,7 +5,6 @@ import {
   buildRunBrowserMetadataItems,
   buildRunBrowserPrimaryLinks,
   buildViewerRunBrowserLinks,
-  formatRunSourceLabel,
   hasSafeRunMetadataValue,
   optionalRunField,
   type ViewerRunBrowserListItem
@@ -14,33 +13,62 @@ import {
 function run(overrides: Record<string, unknown> = {}): ViewerRunBrowserListItem {
   return {
     run_id: 'read model/run #1',
-    season: 2035,
-    seed: 99,
-    progress: { next_event_index: 8, total_events: 20, completed_event_count: 7 },
-    source_type: 'rollover_bootstrap',
-    parent_run_id: 'parent run',
-    child_run_count: 2,
+    display_name: 'Read Model',
+    storage_kind: 'built_in',
+    read_only: true,
+    world_id: 'fax-world',
+    world_package_fingerprint: 'world-fp',
+    config_version: null,
+    config_fingerprint: null,
+    global_seed: 99,
+    timeline_start_season: 2000,
+    timeline_end_season: 2049,
+    official_branch_id: 'official',
+    status: 'ready',
+    metadata_json: {},
+    mapped_simulation_run_count: 2,
     ...overrides
   } as ViewerRunBrowserListItem
 }
 
 describe('run browser read-model display helpers', () => {
-  it('builds metadata from only run-list fields with stable fallbacks', () => {
-    expect(buildRunBrowserMetadataItems(run({ source_type: undefined, parent_run_id: undefined }))).toEqual([
-      { label: 'Run id', value: 'read model/run #1' },
-      { label: 'Season', value: 2035 },
-      { label: 'Seed', value: 99 },
-      { label: 'Source', value: '—' },
-      { label: 'Parent run', value: '—' },
-      { label: 'Child runs', value: 2 },
-      { label: 'Next event index', value: 8 },
-      { label: 'Total events', value: 20 },
-      { label: 'Completed event count', value: 7 }
+  it('builds only safe Product Run metadata with stable fallbacks', () => {
+    expect(buildRunBrowserMetadataItems(run({ world_id: null, official_branch_id: null }))).toEqual([
+      { label: 'Product Run ID', value: 'read model/run #1' },
+      { label: 'Status', value: 'ready' },
+      { label: 'Storage kind', value: 'built_in' },
+      { label: 'Read-only', value: 'true' },
+      { label: 'World ID', value: '—' },
+      { label: 'Timeline', value: '2000–2049' },
+      { label: 'Official Branch ID', value: '—' },
+      { label: 'Mapped SimulationRuns', value: 2 }
     ])
   })
 
-  it('builds encoded primary and context route-helper links in read-only order', () => {
-    expect([...buildRunBrowserPrimaryLinks('read model/run #1'), ...buildRunBrowserContextLinks('read model/run #1')]).toEqual([
+  it('does not stringify object metadata or incomplete timelines', () => {
+    const fields = buildRunBrowserMetadataItems(run({
+      status: ['unsafe'],
+      storage_kind: { unsafe: true },
+      world_id: { id: 'world' },
+      timeline_start_season: { value: 2000 },
+      timeline_end_season: null,
+      official_branch_id: ['branch'],
+      mapped_simulation_run_count: { count: 2 }
+    }))
+    expect(fields.filter((field) => field.value === '—').map((field) => field.label)).toEqual([
+      'Status',
+      'Storage kind',
+      'World ID',
+      'Timeline',
+      'Official Branch ID',
+      'Mapped SimulationRuns'
+    ])
+    expect(fields.map((field) => String(field.value))).not.toContain('[object Object]')
+  })
+
+  it('keeps encoded Product Run route helpers stable', () => {
+    const id = 'read model/run #1'
+    expect([...buildRunBrowserPrimaryLinks(id), ...buildRunBrowserContextLinks(id)]).toEqual([
       { label: 'Season calendar', to: '/viewer/runs/read%20model%2Frun%20%231/calendar' },
       { label: 'Tournaments', to: '/viewer/runs/read%20model%2Frun%20%231/tournaments' },
       { label: 'Rankings', to: '/viewer/runs/read%20model%2Frun%20%231/rankings' },
@@ -50,67 +78,14 @@ describe('run browser read-model display helpers', () => {
       { label: 'History', to: '/viewer/runs/read%20model%2Frun%20%231/history' },
       { label: 'Finals', to: '/viewer/runs/read%20model%2Frun%20%231/finals' }
     ])
-  })
-
-  it('returns em dash progress values when progress is missing', () => {
-    expect(buildRunBrowserMetadataItems(run({ progress: undefined })).slice(-3)).toEqual([
-      { label: 'Next event index', value: '—' },
-      { label: 'Total events', value: '—' },
-      { label: 'Completed event count', value: '—' }
+    expect(buildViewerRunBrowserLinks(id)).toEqual([
+      ...buildRunBrowserPrimaryLinks(id),
+      ...buildRunBrowserContextLinks(id)
     ])
   })
 
-  it('does not stringify array or object metadata values from the run-list shape', () => {
-    const fields = buildRunBrowserMetadataItems(
-      run({
-        source_type: ['unsafe-source'],
-        parent_run_id: { id: 'parent run' },
-        child_run_count: [2],
-        progress: { next_event_index: { index: 8 }, total_events: ['20'], completed_event_count: { count: 7 } }
-      })
-    )
-
-    expect(fields.filter((field) => field.value === '—').map((field) => field.label)).toEqual([
-      'Source',
-      'Parent run',
-      'Child runs',
-      'Next event index',
-      'Total events',
-      'Completed event count'
-    ])
-    expect(fields.map((field) => String(field.value))).not.toContain('[object Object]')
-  })
-
-  it('formats source labels according to the current primitive helper contract', () => {
-    expect(formatRunSourceLabel(run({ source_type: true }))).toBe('true')
-    expect(formatRunSourceLabel(run({ source_type: 12 }))).toBe('12')
-    expect(formatRunSourceLabel(run({ source_type: null }))).toBe('—')
-  })
-
-  it('keeps primary and context link helpers stable and combines them without mutation', () => {
-    const runId = 'read model/run #1'
-    const primary = buildRunBrowserPrimaryLinks(runId)
-    const context = buildRunBrowserContextLinks(runId)
-
-    expect(primary).toEqual([
-      { label: 'Season calendar', to: '/viewer/runs/read%20model%2Frun%20%231/calendar' },
-      { label: 'Tournaments', to: '/viewer/runs/read%20model%2Frun%20%231/tournaments' },
-      { label: 'Rankings', to: '/viewer/runs/read%20model%2Frun%20%231/rankings' },
-      { label: 'Race', to: '/viewer/runs/read%20model%2Frun%20%231/race' }
-    ])
-    expect(context).toEqual([
-      { label: 'Players', to: '/viewer/runs/read%20model%2Frun%20%231/players' },
-      { label: 'Countries', to: '/viewer/runs/read%20model%2Frun%20%231/countries' },
-      { label: 'History', to: '/viewer/runs/read%20model%2Frun%20%231/history' },
-      { label: 'Finals', to: '/viewer/runs/read%20model%2Frun%20%231/finals' }
-    ])
-    expect(buildViewerRunBrowserLinks(runId)).toEqual([...primary, ...context])
-  })
-
-  it('keeps optional field and safe metadata predicates consistent', () => {
-    const sample = run({ source_type: false, custom: 0 })
-
-    expect(optionalRunField(sample, 'source_type')).toBe(false)
+  it('keeps optional-field and safe-value predicates conservative', () => {
+    const sample = run({ custom: 0 })
     expect(optionalRunField(sample, 'custom')).toBe(0)
     expect(hasSafeRunMetadataValue(false)).toBe(true)
     expect(hasSafeRunMetadataValue(0)).toBe(true)
@@ -119,5 +94,4 @@ describe('run browser read-model display helpers', () => {
     expect(hasSafeRunMetadataValue(['unsafe'])).toBe(false)
     expect(hasSafeRunMetadataValue({ unsafe: true })).toBe(false)
   })
-
 })

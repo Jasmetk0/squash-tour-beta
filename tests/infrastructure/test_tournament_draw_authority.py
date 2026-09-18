@@ -226,11 +226,13 @@ def test_builder_generates_complete_main_and_qualification_brackets(database):
 
         assert authority.main.bracket_size == 4
         assert len(authority.main.nodes) == 3
-        assert authority.main.seed_positions == ((1, 1), (2, 4))
+        assert authority.algorithm_version == "idealized_seed_tiers.v2"
+        assert authority.main.seed_positions == ((1, 1),)
         assert authority.main.slots[0].player_id == "A"
         assert authority.main.slots[0].seed_number == 1
-        assert authority.main.slots[3].player_id == "C"
-        assert authority.main.slots[3].seed_number == 2
+        assert tuple(
+            slot.idealized_slot_number for slot in authority.main.slots
+        ) == (1, 4, 3, 2)
         assert {
             slot.player_id
             for slot in authority.main.slots
@@ -239,6 +241,178 @@ def test_builder_generates_complete_main_and_qualification_brackets(database):
         assert len(authority.main.qualifier_placeholder_slots) == 1
         assert authority.main.qualifier_placeholder_slots[0][0] == "Q1"
         assert authority.main.bye_slot_indexes == ()
+
+
+def test_master_idealized_slots_and_seed_tiers_for_eight_player_draw(database):
+    with database.begin() as session:
+        players = tuple(chr(ord("A") + index) for index in range(8))
+        applications = tuple(app(player_id, "main") for player_id in players)
+        install_ranking_authority(session, players)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications,
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=8,
+                qualification_draw_size=0,
+                qualifier_spots=0,
+            ),
+            command_id="initial-field",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="commit-draw-input",
+            draw_seed=777,
+            main_seed_count=2,
+            qualification_seed_count=0,
+        )
+        authority = TournamentDrawAuthorityBuilder.build(
+            draw_input=draw_input,
+            command_id="generate-draw",
+        )
+
+        assert tuple(
+            slot.idealized_slot_number for slot in authority.main.slots
+        ) == (1, 8, 5, 4, 3, 6, 7, 2)
+        seeded = {
+            slot.seed_number: (slot.player_id, slot.idealized_slot_number)
+            for slot in authority.main.slots
+            if slot.seed_number is not None
+        }
+        assert seeded == {
+            1: ("A", 1),
+            2: ("B", 2),
+        }
+
+
+def test_master_seed_tier_three_four_is_replayable_but_not_fixed_to_player_order():
+    draw_input = TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-tier",
+        committed_by_command_id="input",
+        draw_seed=2026,
+        main_seed_count=4,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=16,
+            qualification_draw_size=0,
+            qualifier_spots=0,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=tuple(f"P{index:02d}" for index in range(1, 17)),
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=("P01", "P02", "P03", "P04"),
+        qualification_seed_player_ids=(),
+    )
+    first = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+    second = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+    assert first == second
+
+    seeded = {
+        slot.seed_number: slot.idealized_slot_number
+        for slot in first.main.slots
+        if slot.seed_number is not None
+    }
+    assert seeded[1] == 1
+    assert seeded[2] == 2
+    assert {seeded[3], seeded[4]} == {3, 4}
+
+
+def test_master_initial_byes_use_highest_idealized_slots():
+    direct = tuple(f"P{index:02d}" for index in range(1, 29))
+    draw_input = TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-byes",
+        committed_by_command_id="input",
+        draw_seed=3030,
+        main_seed_count=8,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=32,
+            qualification_draw_size=0,
+            qualifier_spots=0,
+            bye_slots=4,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=direct,
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=direct[:8],
+        qualification_seed_player_ids=(),
+    )
+    authority = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="draw",
+    )
+
+    bye_slots = [
+        slot for slot in authority.main.slots if slot.entrant_kind == "bye"
+    ]
+    assert {
+        slot.idealized_slot_number for slot in bye_slots
+    } == {29, 30, 31, 32}
+    for slot in bye_slots:
+        opponent_index = slot.slot_index + 1 if slot.slot_index % 2 else slot.slot_index - 1
+        opponent = authority.main.slots[opponent_index - 1]
+        assert opponent.seed_number in {1, 2, 3, 4}
+
+
+def test_historical_v1_algorithm_replays_without_idealized_slot_fields():
+    draw_input = TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="legacy",
+        committed_by_command_id="legacy-input",
+        draw_seed=9,
+        main_seed_count=2,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=0,
+            qualifier_spots=0,
+        ),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=("A", "B", "C", "D"),
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=("A", "B"),
+        qualification_seed_player_ids=(),
+    )
+    authority = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="legacy-draw",
+        algorithm_version="protected_seed_shuffle.v1",
+    )
+    assert authority.algorithm_version == "protected_seed_shuffle.v1"
+    assert authority.main.seed_positions == ((1, 1), (2, 4))
+    assert all(
+        slot.idealized_slot_number is None for slot in authority.main.slots
+    )
+    assert "idealized_slot_number" not in authority.model_dump_json()
 
 
 def test_same_frozen_input_replays_identical_bracket_and_store_retry(database):

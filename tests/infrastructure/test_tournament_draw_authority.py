@@ -311,6 +311,38 @@ def test_explicit_main_bye_is_placed_against_highest_seed(database):
         assert authority.main.slots[1].entrant_kind == "bye"
 
 
+def test_multi_qualifier_topology_fails_closed_until_sections_are_authoritative(
+    database,
+):
+    with database.begin() as session:
+        applications = (
+            app("A", "main"),
+            app("B", "main"),
+            app("C", "qualification"),
+            app("D", "qualification"),
+            app("E", "qualification"),
+            app("F", "qualification"),
+        )
+        install_draw_input(
+            session,
+            applications=applications,
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=4,
+                qualifier_spots=2,
+            ),
+            main_seed_count=2,
+            qualification_seed_count=2,
+        )
+        with pytest.raises(ValueError, match="exactly one qualifier spot"):
+            TournamentDrawAuthorityStore(session).generate(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="generate-draw",
+            )
+
+
 def test_incomplete_qualification_fails_closed_without_persistence(database):
     with database.begin() as session:
         applications = (

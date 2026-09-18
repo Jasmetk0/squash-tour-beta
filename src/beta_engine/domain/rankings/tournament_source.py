@@ -102,6 +102,28 @@ class OwnedTournamentRankingSource(FrozenInput):
         ):
             raise ValueError("Canonical point-award compatibility provenance mismatch")
 
+        canonical_result_players = {
+            player.player_id: player for player in self.canonical_result.players
+        }
+        for award in self.canonical_awards.awards:
+            player = canonical_result_players.get(award.player_id)
+            if player is None:
+                raise ValueError(
+                    "Canonical point award references unknown tournament player"
+                )
+            player_fingerprint = hashlib.sha256(
+                json.dumps(
+                    player.model_dump(mode="json"),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ).encode()
+            ).hexdigest()
+            if award.source_player_result_fingerprint != player_fingerprint:
+                raise ValueError(
+                    "Canonical point award player-result provenance mismatch"
+                )
+
         canonical_awards = {
             award.player_id: (
                 award.reached_stage,

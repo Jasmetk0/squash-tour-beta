@@ -348,6 +348,12 @@ class AuthoritativeRunSimulationDriver:
                 package = self._bind_current_draw_evidence(package, week)
             bound.append(package)
         packages = tuple(bound)
+        # Preserve the historical helper contract for callers that intentionally
+        # use the legacy reader without a Run/Branch session. Production canonical
+        # paths validate through _topology_for_session instead.
+        if session is None:
+            for package in packages:
+                self._topology((package,))
         return packages
 
     def _bind_owned_draw_evidence(self, *, package, draw, week):
@@ -761,15 +767,18 @@ class AuthoritativeRunSimulationDriver:
         ):
             payload = package.model_dump(mode="json")
             payload["metadata"].pop("persistence_path", None)
-            bodies.append(
-                {
-                    "package": payload,
-                    "point_award_authority": point_authority.model_dump(mode="json")
-                    if point_authority
-                    else None,
-                    "draw_authority_fingerprint": draw_authority_fingerprint,
-                }
-            )
+            body = {
+                "package": payload,
+                "point_award_authority": point_authority.model_dump(mode="json")
+                if point_authority
+                else None,
+            }
+            # Preserve historical v1-v4 authority fingerprints exactly. The
+            # canonical Draw anchor is a v5 addition and therefore exists in the
+            # hash payload only when a Draw Authority is actually bound.
+            if draw_authority_fingerprint is not None:
+                body["draw_authority_fingerprint"] = draw_authority_fingerprint
+            bodies.append(body)
         return fingerprint(
             {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}
         )

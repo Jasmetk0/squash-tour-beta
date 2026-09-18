@@ -197,6 +197,8 @@ class SeasonMatchRecord(BaseModel):
     result_fingerprint: str | None = None
     simulation_seed: int | None = None
     result_notes: str | None = None
+    top_late_replacement_fingerprint: str | None = None
+    bottom_late_replacement_fingerprint: str | None = None
 
 
 class MatchPackageSummary(BaseModel):
@@ -212,6 +214,30 @@ class MatchPackageSummary(BaseModel):
     validation_error_count: int = 0
 
 
+class LateReplacementAuthority(BaseModel):
+    event_id: str
+    target_slot_id: str
+    target_bracket_position: int = Field(ge=1)
+    withdrawn_player_id: str
+    withdrawn_player_name: str
+    withdrawn_country_code: str
+    replacement_entry_id: str
+    replacement_player_id: str
+    replacement_player_name: str
+    replacement_country_code: str
+    replacement_source: Literal["alternate_waitlist"] = "alternate_waitlist"
+    draw_package_fingerprint: str
+    entry_list_fingerprint: str
+    active_players_fingerprint: str
+    authority_fingerprint: str
+
+
+class SeasonLateReplacementsRegistry(BaseModel):
+    replacements_by_event_id: dict[str, list[LateReplacementAuthority]] = Field(
+        default_factory=dict
+    )
+
+
 class MatchPackageMetadata(BaseModel):
     event_id: str
     season: str
@@ -221,6 +247,7 @@ class MatchPackageMetadata(BaseModel):
     build_fingerprint: str
     draw_package_fingerprint: str
     active_players_fingerprint: str
+    late_replacements_fingerprint: str | None = None
     match_engine_version: str | None = MATCH_ENGINE_VERSION
     persistence_path: str | None = None
     ranking_updates_implemented: bool = False
@@ -249,6 +276,7 @@ class SeasonEventMatchPackage(BaseModel):
     main_draw_matches: list[SeasonMatchRecord] = Field(default_factory=list)
     frozen_qualifier_promotions: list[FrozenQualifierPromotion] = Field(default_factory=list)
     frozen_bye_match_ids: list[str] = Field(default_factory=list)
+    frozen_late_replacements: list[LateReplacementAuthority] = Field(default_factory=list)
     summary: MatchPackageSummary
     metadata: MatchPackageMetadata
     validation_warnings: list[MatchValidationIssue] = Field(default_factory=list)
@@ -302,10 +330,19 @@ class SeasonMatchService:
     draw_service: SeasonDrawService
     active_players_service: InitialPoolSeasonBootstrapService
     matches_path: Path = Path("config/simulation/season_matches.json")
+    late_replacements_path: Path = Path("config/simulation/season_late_replacements.json")
 
     def __post_init__(self) -> None:
         if not isinstance(self.matches_path, Path):
             self.matches_path = Path(self.matches_path)
+        if not isinstance(self.late_replacements_path, Path):
+            self.late_replacements_path = Path(self.late_replacements_path)
+        default_matches = Path("config/simulation/season_matches.json")
+        default_late = Path("config/simulation/season_late_replacements.json")
+        if self.late_replacements_path == default_late and self.matches_path != default_matches:
+            self.late_replacements_path = self.matches_path.with_name(
+                "season_late_replacements.json"
+            )
 
     def get_match_package(self, *, event_id: str) -> SeasonEventMatchPackageResult:
         package = self._load_registry().matches_by_event_id.get(event_id)
@@ -378,6 +415,179 @@ class SeasonMatchService:
             final_result=match.simulated_result,
         )
 
+    def get_late_replacements(
+        self, *, event_id: str
+    ) -> tuple[LateReplacementAuthority, ...]:
+        registry = self._load_late_replacements_registry()
+        return tuple(
+            sorted(
+                registry.replacements_by_event_id.get(event_id, []),
+                key=lambda item: (
+                    item.target_bracket_position,
+                    item.target_slot_id,
+                    item.withdrawn_player_id,
+                ),
+            )
+        )
+
+    def record_late_replacement(
+        self,
+        *,
+        event_id: str,
+        withdrawn_player_id: str,
+    ) -> LateReplacementAuthority:
+        if self.get_match_package(event_id=event_id).match_package_exists:
+            raise ValueError(
+                "Late-replacement authority is locked after the MatchPackage is persisted."
+            )
+
+        draw_result = self.draw_service.get_draw_package(event_id=event_id)
+        if draw_result.draw_package is None:
+            raise ValueError(
+                "Persist a DrawPackage before recording a late replacement."
+            )
+        draw_package = draw_result.draw_package
+        entry_result = self.draw_service.entry_list_service.get_entry_list(
+            event_id=event_id
+        )
+        if entry_result.entry_list is None:
+            raise ValueError(
+                "Persisted EntryList authority is missing for late replacement."
+            )
+        entry_list = entry_result.entry_list
+        if draw_package.metadata.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
+            raise ValueError(
+                "Persisted DrawPackage EntryList authority is stale."
+            )
+
+        players = self._active_players_for_season(draw_package.season)
+        active_fp = self._active_players_fingerprint(players)
+        if active_fp != entry_list.metadata.active_players_fingerprint:
+            raise ValueError(
+                "EntryList active-player authority is stale; regenerate producers before recording late replacement."
+            )
+
+        concrete_slots = [
+            slot
+            for slot in draw_package.main_draw.slots
+            if slot.player_id is not None
+            and not slot.is_bye
+            and not slot.is_qualifier_placeholder
+        ]
+        matching_slots = [
+            slot for slot in concrete_slots if slot.player_id == withdrawn_player_id
+        ]
+        if len(matching_slots) != 1:
+            raise ValueError(
+                f"Player '{withdrawn_player_id}' does not identify exactly one concrete Main Draw slot."
+            )
+        target_slot = matching_slots[0]
+
+        registry = self._load_late_replacements_registry()
+        existing = list(registry.replacements_by_event_id.get(event_id, []))
+        if any(
+            item.draw_package_fingerprint != draw_package.metadata.build_fingerprint
+            or item.entry_list_fingerprint != entry_list.metadata.build_fingerprint
+            or item.active_players_fingerprint != active_fp
+            for item in existing
+        ):
+            raise ValueError(
+                "Persisted late-replacement authority is stale; clear it before recording a new replacement."
+            )
+        for item in existing:
+            if item.target_slot_id == target_slot.slot_id:
+                if item.withdrawn_player_id == withdrawn_player_id:
+                    return item
+                raise ValueError("Late-replacement target slot already has conflicting authority.")
+
+        target_slots_by_id = {
+            slot.slot_id: slot
+            for slot in concrete_slots
+        }
+        withdrawn_slot_ids = {item.target_slot_id for item in existing} | {
+            target_slot.slot_id
+        }
+        withdrawn_slots = sorted(
+            (target_slots_by_id[slot_id] for slot_id in withdrawn_slot_ids),
+            key=lambda slot: (slot.bracket_position, slot.slot_id),
+        )
+
+        current_draw_players = {
+            slot.player_id
+            for slot in concrete_slots
+            if slot.slot_id not in withdrawn_slot_ids and slot.player_id is not None
+        }
+        alternates = sorted(
+            (
+                item
+                for item in entry_list.entries
+                if item.decision == "alternate"
+                and item.player_id not in current_draw_players
+                and not self.draw_service._player_committed_to_overlapping_event(
+                    event=self.draw_service._find_event(event_id),
+                    player_id=item.player_id,
+                )
+            ),
+            key=lambda item: (
+                item.ranking_priority,
+                item.player_id,
+                item.entry_id,
+            ),
+        )
+        if len(alternates) < len(withdrawn_slots):
+            raise ValueError(
+                "No eligible alternate remains for every recorded late replacement."
+            )
+
+        players_by_id = {player.player_id: player for player in players}
+        replacements: list[LateReplacementAuthority] = []
+        for slot, alternate in zip(
+            withdrawn_slots,
+            alternates[: len(withdrawn_slots)],
+            strict=True,
+        ):
+            if slot.player_id is None:
+                raise ValueError("Late-replacement target unexpectedly lost its drawn player.")
+            withdrawn_player = players_by_id.get(slot.player_id)
+            replacement_player = players_by_id.get(alternate.player_id)
+            if withdrawn_player is None or replacement_player is None:
+                raise ValueError("Late-replacement player is missing from the active-player snapshot.")
+            payload = {
+                "event_id": event_id,
+                "target_slot_id": slot.slot_id,
+                "target_bracket_position": slot.bracket_position,
+                "withdrawn_player_id": slot.player_id,
+                "withdrawn_player_name": withdrawn_player.name,
+                "withdrawn_country_code": withdrawn_player.country_code,
+                "replacement_entry_id": alternate.entry_id,
+                "replacement_player_id": alternate.player_id,
+                "replacement_player_name": replacement_player.name,
+                "replacement_country_code": replacement_player.country_code,
+                "replacement_source": "alternate_waitlist",
+                "draw_package_fingerprint": draw_package.metadata.build_fingerprint,
+                "entry_list_fingerprint": entry_list.metadata.build_fingerprint,
+                "active_players_fingerprint": active_fp,
+            }
+            replacements.append(
+                LateReplacementAuthority(
+                    **payload,
+                    authority_fingerprint=self._fingerprint(payload),
+                )
+            )
+
+        next_registry = dict(registry.replacements_by_event_id)
+        next_registry[event_id] = replacements
+        self._save_late_replacements_registry(
+            SeasonLateReplacementsRegistry(
+                replacements_by_event_id=next_registry
+            )
+        )
+        return next(
+            item
+            for item in replacements
+            if item.target_slot_id == target_slot.slot_id
+        )
+
     def generate_match_package(self, *, event_id: str, request: MatchPackageGenerateRequest) -> SeasonEventMatchPackageResult:
         registry = self._load_registry()
         existing = registry.matches_by_event_id.get(event_id)
@@ -396,14 +606,34 @@ class SeasonMatchService:
 
         players = self._active_players_for_season(draw_package.season)
         players_by_id = {player.player_id: player for player in players}
+        entry_result = self.draw_service.entry_list_service.get_entry_list(
+            event_id=event_id
+        )
+        if entry_result.entry_list is None:
+            raise ValueError("Persisted EntryList authority is missing.")
+        late_replacements = self._validated_late_replacements(
+            draw_package=draw_package,
+            entry_list=entry_result.entry_list,
+            players=players,
+        )
+        late_replacements_fp = (
+            self._fingerprint(
+                [
+                    late_replacements[key].model_dump(mode="json")
+                    for key in sorted(late_replacements)
+                ]
+            )
+            if late_replacements
+            else None
+        )
         warnings = [
             self._issue("warning", "ranking_race_not_implemented", "ranking/race updates are not implemented by match simulation yet", event_id=event_id),
             self._issue("warning", "walkovers_withdrawals_not_implemented", "walkovers/withdrawals are not implemented in this match foundation", event_id=event_id),
         ]
         errors: list[MatchValidationIssue] = []
 
-        qualification_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.qualification_draw, draw_type="qualification", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request)
-        main_draw_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.main_draw, draw_type="main", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request)
+        qualification_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.qualification_draw, draw_type="qualification", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request, late_replacements={})
+        main_draw_matches = self._records_from_bracket(draw_package=draw_package, bracket=draw_package.main_draw, draw_type="main", players_by_id=players_by_id, warnings=warnings, errors=errors, format_request=request, late_replacements=late_replacements)
         all_matches = qualification_matches + main_draw_matches
         seen: set[str] = set()
         for match in all_matches:
@@ -418,6 +648,11 @@ class SeasonMatchService:
             "seed": request.seed,
             "draw_package_fingerprint": draw_fp,
             "active_players_fingerprint": active_fp,
+            "late_replacements_fingerprint": late_replacements_fp,
+            "frozen_late_replacements": [
+                late_replacements[key].model_dump(mode="json")
+                for key in sorted(late_replacements)
+            ],
             "qualification_matches": [m.model_dump(mode="json", exclude={"generated_fingerprint"}) for m in qualification_matches],
             "main_draw_matches": [m.model_dump(mode="json", exclude={"generated_fingerprint"}) for m in main_draw_matches],
         })
@@ -437,6 +672,9 @@ class SeasonMatchService:
             persisted=not request.dry_run,
             qualification_matches=qualification_matches,
             main_draw_matches=main_draw_matches,
+            frozen_late_replacements=[
+                late_replacements[key] for key in sorted(late_replacements)
+            ],
             summary=self._summary(event_id=event_id, qualification_matches=qualification_matches, main_draw_matches=main_draw_matches, warnings=warnings, errors=errors),
             metadata=MatchPackageMetadata(
                 event_id=event_id,
@@ -447,6 +685,7 @@ class SeasonMatchService:
                 build_fingerprint=build_fp,
                 draw_package_fingerprint=draw_fp,
                 active_players_fingerprint=active_fp,
+                late_replacements_fingerprint=late_replacements_fp,
                 persistence_path=None if request.dry_run else str(self.matches_path),
             ),
             validation_warnings=warnings,
@@ -686,7 +925,7 @@ class SeasonMatchService:
                 break
         return self._save_progression_result(registry, package, action="simulate_draw", changed_match_ids=changed, promoted_player_ids=[], warnings=warnings, errors=[], before_points=before_points)
 
-    def _records_from_bracket(self, *, draw_package: SeasonEventDrawPackage, bracket: DrawBracket | None, draw_type: MatchDrawType, players_by_id: dict[str, SeasonActivePlayer], warnings: list[MatchValidationIssue], errors: list[MatchValidationIssue], format_request: MatchPackageGenerateRequest) -> list[SeasonMatchRecord]:
+    def _records_from_bracket(self, *, draw_package: SeasonEventDrawPackage, bracket: DrawBracket | None, draw_type: MatchDrawType, players_by_id: dict[str, SeasonActivePlayer], warnings: list[MatchValidationIssue], errors: list[MatchValidationIssue], format_request: MatchPackageGenerateRequest, late_replacements: dict[str, LateReplacementAuthority]) -> list[SeasonMatchRecord]:
         if bracket is None:
             return []
         slots_by_id = {slot.slot_id: slot for slot in bracket.slots}
@@ -696,8 +935,20 @@ class SeasonMatchService:
             for draw_match in round_.matches:
                 top_slot = slots_by_id.get(draw_match.top_slot_id)
                 bottom_slot = slots_by_id.get(draw_match.bottom_slot_id)
-                top = self._slot_player(top_slot, draw_match.top_source, players_by_id)
-                bottom = self._slot_player(bottom_slot, draw_match.bottom_source, players_by_id)
+                top_replacement = late_replacements.get(draw_match.top_slot_id)
+                bottom_replacement = late_replacements.get(draw_match.bottom_slot_id)
+                top = self._slot_player(
+                    top_slot,
+                    draw_match.top_source,
+                    players_by_id,
+                    replacement=top_replacement,
+                )
+                bottom = self._slot_player(
+                    bottom_slot,
+                    draw_match.bottom_source,
+                    players_by_id,
+                    replacement=bottom_replacement,
+                )
                 status = self._initial_status(top_slot=top_slot, bottom_slot=bottom_slot, top_player_id=top["player_id"], bottom_player_id=bottom["player_id"], top_source=draw_match.top_source, bottom_source=draw_match.bottom_source)
                 if status == "bye_auto_advance_pending":
                     warnings.append(self._issue("warning", "bye_auto_advances_pending", "BYE auto-advances are pending and not processed automatically", event_id=draw_package.event_id, match_id=draw_match.match_id))
@@ -727,15 +978,32 @@ class SeasonMatchService:
                     "winner_to_match_id": winner_to,
                     "effective_match_format": resolve_effective_match_format(draw_type=draw_type, round_number=draw_match.round_number, tournament_edition_override=format_request.tournament_edition_match_format, phase_overrides=format_request.phase_match_formats, round_overrides=format_request.round_match_formats).model_dump(mode="json"),
                     "source_draw_fingerprint": bracket.generated_fingerprint,
+                    "top_late_replacement_fingerprint": (
+                        top_replacement.authority_fingerprint
+                        if top_replacement is not None
+                        else None
+                    ),
+                    "bottom_late_replacement_fingerprint": (
+                        bottom_replacement.authority_fingerprint
+                        if bottom_replacement is not None
+                        else None
+                    ),
                 }
                 payload["generated_fingerprint"] = self._fingerprint(payload)
                 records.append(SeasonMatchRecord.model_validate(payload))
         return records
 
     @staticmethod
-    def _slot_player(slot: DrawSlotRecord | None, source: str, players_by_id: dict[str, SeasonActivePlayer]) -> dict[str, str | None]:
+    def _slot_player(slot: DrawSlotRecord | None, source: str, players_by_id: dict[str, SeasonActivePlayer], *, replacement: LateReplacementAuthority | None = None) -> dict[str, str | None]:
         if slot is None or not source.startswith("SLOT:") or slot.is_bye or slot.is_qualifier_placeholder or slot.player_id is None:
             return {"player_id": None, "player_name": None, "country_code": None}
+        if replacement is not None:
+            player = players_by_id.get(replacement.replacement_player_id)
+            return {
+                "player_id": replacement.replacement_player_id,
+                "player_name": player.name if player else replacement.replacement_player_name,
+                "country_code": player.country_code if player else replacement.replacement_country_code,
+            }
         player = players_by_id.get(slot.player_id)
         return {"player_id": slot.player_id, "player_name": player.name if player else slot.player_name, "country_code": player.country_code if player else slot.country_code}
 
@@ -995,6 +1263,11 @@ class SeasonMatchService:
             "seed": package.seed,
             "draw_package_fingerprint": package.metadata.draw_package_fingerprint,
             "active_players_fingerprint": package.metadata.active_players_fingerprint,
+            "late_replacements_fingerprint": package.metadata.late_replacements_fingerprint,
+            "frozen_late_replacements": [
+                item.model_dump(mode="json")
+                for item in package.frozen_late_replacements
+            ],
             "qualification_matches": [m.model_dump(mode="json") for m in package.qualification_matches],
             "main_draw_matches": [m.model_dump(mode="json") for m in package.main_draw_matches],
         })
@@ -1066,6 +1339,110 @@ class SeasonMatchService:
             return f"{round_part}-N{match_part[1:]}"
         except StopIteration:
             return match_id
+
+    def _validated_late_replacements(
+        self,
+        *,
+        draw_package: SeasonEventDrawPackage,
+        entry_list,
+        players: list[SeasonActivePlayer],
+    ) -> dict[str, LateReplacementAuthority]:
+        replacements = self.get_late_replacements(event_id=draw_package.event_id)
+        if not replacements:
+            return {}
+        active_fp = self._active_players_fingerprint(players)
+        entries_by_id = {item.entry_id: item for item in entry_list.entries}
+        players_by_id = {item.player_id: item for item in players}
+        slots_by_id = {
+            item.slot_id: item for item in draw_package.main_draw.slots
+        }
+        concrete_draw_players = {
+            item.player_id
+            for item in draw_package.main_draw.slots
+            if item.player_id is not None
+        }
+        seen_targets: set[str] = set()
+        seen_replacements: set[str] = set()
+        by_slot: dict[str, LateReplacementAuthority] = {}
+        for replacement in replacements:
+            if replacement.draw_package_fingerprint != draw_package.metadata.build_fingerprint:
+                raise ValueError(
+                    "Persisted late-replacement authority is stale for the current DrawPackage."
+                )
+            if replacement.entry_list_fingerprint != entry_list.metadata.build_fingerprint:
+                raise ValueError(
+                    "Persisted late-replacement authority is stale for the current EntryList."
+                )
+            if replacement.active_players_fingerprint != active_fp:
+                raise ValueError(
+                    "Persisted late-replacement authority is stale for the active-player snapshot."
+                )
+            slot = slots_by_id.get(replacement.target_slot_id)
+            if (
+                slot is None
+                or slot.player_id != replacement.withdrawn_player_id
+                or slot.bracket_position != replacement.target_bracket_position
+                or slot.is_bye
+                or slot.is_qualifier_placeholder
+            ):
+                raise ValueError(
+                    "Persisted late-replacement target no longer matches Draw authority."
+                )
+            source = entries_by_id.get(replacement.replacement_entry_id)
+            if (
+                source is None
+                or source.decision != "alternate"
+                or source.player_id != replacement.replacement_player_id
+            ):
+                raise ValueError(
+                    "Persisted late replacement no longer matches alternate waitlist authority."
+                )
+            if replacement.replacement_player_id not in players_by_id:
+                raise ValueError(
+                    "Persisted late-replacement player is no longer active."
+                )
+            if replacement.target_slot_id in seen_targets:
+                raise ValueError("Duplicate target slot in late-replacement authority.")
+            if replacement.replacement_player_id in seen_replacements:
+                raise ValueError("Duplicate player in late-replacement authority.")
+            if (
+                replacement.replacement_player_id in concrete_draw_players
+                and replacement.replacement_player_id != replacement.withdrawn_player_id
+            ):
+                raise ValueError(
+                    "Late-replacement player is already present in the persisted Draw."
+                )
+            payload = replacement.model_dump(
+                mode="json", exclude={"authority_fingerprint"}
+            )
+            if self._fingerprint(payload) != replacement.authority_fingerprint:
+                raise ValueError("Persisted late-replacement authority is corrupt.")
+            seen_targets.add(replacement.target_slot_id)
+            seen_replacements.add(replacement.replacement_player_id)
+            by_slot[replacement.target_slot_id] = replacement
+        return by_slot
+
+    def _load_late_replacements_registry(
+        self,
+    ) -> SeasonLateReplacementsRegistry:
+        if not self.late_replacements_path.exists():
+            return SeasonLateReplacementsRegistry()
+        return SeasonLateReplacementsRegistry.model_validate(
+            json.loads(self.late_replacements_path.read_text(encoding="utf-8"))
+        )
+
+    def _save_late_replacements_registry(
+        self, registry: SeasonLateReplacementsRegistry
+    ) -> None:
+        self.late_replacements_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self.late_replacements_path.with_suffix(
+            f"{self.late_replacements_path.suffix}.tmp"
+        )
+        tmp_path.write_text(
+            json.dumps(registry.model_dump(mode="json"), indent=2) + "\n",
+            encoding="utf-8",
+        )
+        tmp_path.replace(self.late_replacements_path)
 
     def _load_registry(self) -> SeasonMatchesRegistry:
         if not self.matches_path.exists():

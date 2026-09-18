@@ -402,3 +402,139 @@ def test_simulate_round_deterministic_propagates_and_preserves_points(tmp_path: 
     assert all(match.winner_player_id for match in completed_a)
     after = {p.player_id: (p.ranking_points, p.race_points) for p in service_a.active_players_service.get_active_players(season="2000/2001").players}
     assert after == before
+
+
+@pytest.mark.smoke
+def test_late_replacement_preserves_draw_and_changes_match_side(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path)
+    draw_before = service.draw_service.get_draw_package(event_id=event_id).draw_package
+    assert draw_before is not None
+    draw_dump = draw_before.model_dump(mode="json")
+    draw_fp = draw_before.metadata.build_fingerprint
+
+    concrete_slots = sorted(
+        (
+            slot
+            for slot in draw_before.main_draw.slots
+            if slot.player_id is not None
+            and not slot.is_bye
+            and not slot.is_qualifier_placeholder
+        ),
+        key=lambda slot: (slot.bracket_position, slot.slot_id),
+    )
+    assert concrete_slots
+    withdrawn_slot = concrete_slots[0]
+    assert withdrawn_slot.player_id is not None
+
+    authority = service.record_late_replacement(
+        event_id=event_id,
+        withdrawn_player_id=withdrawn_slot.player_id,
+    )
+    assert authority.target_slot_id == withdrawn_slot.slot_id
+    assert authority.withdrawn_player_id == withdrawn_slot.player_id
+
+    draw_after = service.draw_service.get_draw_package(event_id=event_id).draw_package
+    assert draw_after is not None
+    assert draw_after.metadata.build_fingerprint == draw_fp
+    assert draw_after.model_dump(mode="json") == draw_dump
+
+    package = service.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=1401, dry_run=False),
+    ).match_package
+    assert package is not None
+    assert package.metadata.draw_package_fingerprint == draw_fp
+    assert package.metadata.late_replacements_fingerprint is not None
+    assert len(package.frozen_late_replacements) == 1
+
+    target_sides = [
+        (match, side)
+        for match in package.main_draw_matches
+        for side in ("top", "bottom")
+        if getattr(match, f"{side}_slot_id") == authority.target_slot_id
+    ]
+    assert len(target_sides) == 1
+    target, side = target_sides[0]
+    assert getattr(target, f"{side}_player_id") == authority.replacement_player_id
+    assert (
+        getattr(target, f"{side}_late_replacement_fingerprint")
+        == authority.authority_fingerprint
+    )
+    assert authority.withdrawn_player_id not in {
+        player_id
+        for match in package.main_draw_matches
+        for player_id in (match.top_player_id, match.bottom_player_id)
+        if player_id is not None
+    }
+
+    with pytest.raises(ValueError, match="locked after the MatchPackage"):
+        service.record_late_replacement(
+            event_id=event_id,
+            withdrawn_player_id=concrete_slots[-1].player_id or "",
+        )
+
+
+def test_late_replacement_mapping_is_order_independent(tmp_path: Path) -> None:
+    def resolve(root: Path, reverse: bool) -> dict[str, str]:
+        service, event_id = make_match_service(root)
+        draw = service.draw_service.get_draw_package(event_id=event_id).draw_package
+        assert draw is not None
+        concrete = sorted(
+            (
+                slot
+                for slot in draw.main_draw.slots
+                if slot.player_id is not None
+                and not slot.is_bye
+                and not slot.is_qualifier_placeholder
+            ),
+            key=lambda slot: (slot.bracket_position, slot.slot_id),
+        )
+        assert len(concrete) >= 2
+        order = [concrete[0].player_id, concrete[1].player_id]
+        assert all(order)
+        if reverse:
+            order.reverse()
+        for player_id in order:
+            service.record_late_replacement(
+                event_id=event_id,
+                withdrawn_player_id=player_id or "",
+            )
+        return {
+            item.target_slot_id: item.replacement_player_id
+            for item in service.get_late_replacements(event_id=event_id)
+        }
+
+    assert resolve(tmp_path / "forward", False) == resolve(
+        tmp_path / "reverse", True
+    )
+
+
+def test_late_replacement_stales_when_draw_changes(tmp_path: Path) -> None:
+    service, event_id = make_match_service(tmp_path)
+    draw = service.draw_service.get_draw_package(event_id=event_id).draw_package
+    assert draw is not None
+    withdrawn = next(
+        slot.player_id
+        for slot in draw.main_draw.slots
+        if slot.player_id is not None
+        and not slot.is_bye
+        and not slot.is_qualifier_placeholder
+    )
+    service.record_late_replacement(
+        event_id=event_id,
+        withdrawn_player_id=withdrawn,
+    )
+
+    service.draw_service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(
+            seed=999,
+            dry_run=False,
+            overwrite_existing=True,
+        ),
+    )
+    with pytest.raises(ValueError, match="stale for the current DrawPackage"):
+        service.generate_match_package(
+            event_id=event_id,
+            request=MatchPackageGenerateRequest(seed=1402, dry_run=True),
+        )

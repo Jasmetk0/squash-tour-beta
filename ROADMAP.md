@@ -24,8 +24,9 @@ The merged #743–#747 chain now owns an event-scoped Tournament Ranking
 Snapshot and append-only canonical Tournament Entry Field history. The current
 bounded follow-up freezes the terminal field into immutable Run/Branch/Event Draw
 Input authority, including seed order and qualifier-placeholder identities, and
-locks later pre-draw field repair. Actual bracket placement remains the next Draw
-slice; no legacy DrawPackage file is promoted to Run authority by this step.
+locks later pre-draw field repair while preserving exact retries of already
+committed repair commands. Actual bracket placement remains the next Draw slice; no
+legacy DrawPackage file is promoted to Run authority by this step.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a

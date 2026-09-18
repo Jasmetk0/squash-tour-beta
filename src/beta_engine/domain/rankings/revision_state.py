@@ -49,7 +49,7 @@ class RankingRevisionState(FrozenInput):
         "ranking_revision_state.v3",
         "ranking_revision_state.v4",
         "ranking_revision_state.v5",
-    ] = "ranking_revision_state.v5"
+    ] = "ranking_revision_state.v4"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     entries: tuple[RankingRevisionEntry, ...]
@@ -247,13 +247,24 @@ def load_ranking_revision_state(payload: str, *, expected_fingerprint: str, run_
 def ranking_revision_states_equivalent(
     left: RankingRevisionState, right: RankingRevisionState
 ) -> bool:
-    """Compare authoritative content while preserving each historical wire hash.
+    """Compare authoritative content without rewriting historical wire identity.
 
-    V1 had no tournament-source field.  An empty V2 source collection therefore
-    represents the same live state; non-empty V2 evidence never does.
+    V1-v4 predate Tournament Ranking Snapshot authority.  When neither side carries
+    that authority they retain the established v4 normalization used by Saved
+    Revision compatibility.  Once either side carries event ranking authority the
+    comparison upgrades both sides to v5; a v4 state cannot silently erase that
+    authority because the non-empty field remains part of the normalized payload.
     """
+    normalized_version = (
+        "ranking_revision_state.v5"
+        if (
+            left.tournament_ranking_snapshot_authorities
+            or right.tournament_ranking_snapshot_authorities
+        )
+        else "ranking_revision_state.v4"
+    )
     return left.model_copy(
-        update={"schema_version": "ranking_revision_state.v5"}
+        update={"schema_version": normalized_version}
     ).model_dump(mode="json") == right.model_copy(
-        update={"schema_version": "ranking_revision_state.v4"}
+        update={"schema_version": normalized_version}
     ).model_dump(mode="json")

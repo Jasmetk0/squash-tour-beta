@@ -1233,7 +1233,12 @@ class AuthoritativeRunSimulationDriver:
             )
             if not all(m.match_id in loaded for m in matches):
                 continue
-            terminals = tuple(m for m in matches if not m.winner_to_match_id)
+            terminals = tuple(
+                m
+                for m in package.main_draw_matches
+                if m.match_id not in package.frozen_bye_match_ids
+                and not m.winner_to_match_id
+            )
             if len(matches) == 3 and len(terminals) == 3:
                 _, ordered = validate_adopted_four_player_match_package(package)
                 terminals = (ordered[2],)

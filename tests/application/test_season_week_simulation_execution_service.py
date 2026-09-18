@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_week_simulation_execution_service import RunSeasonWeekRequest, SeasonWeekSimulationExecutionService
 from test_season_event_simulation_service import make_simulation_service
 
@@ -23,6 +25,14 @@ def make_execution_service(tmp_path: Path) -> tuple[SeasonWeekSimulationExecutio
 def _total_points(service: SeasonWeekSimulationExecutionService) -> tuple[int, int]:
     players = service.event_simulation_service.entry_list_service.active_players_service.get_active_players(season="2000/2001").players
     return sum(player.ranking_points for player in players), sum(player.race_points for player in players)
+
+
+def _accepted_ids(entry_list) -> set[str]:
+    return {
+        entry.player_id
+        for entry in entry_list.entries
+        if entry.decision in {"accepted_main_draw", "accepted_qualification"}
+    }
 
 
 def test_preflight_unsafe_no_mutation(tmp_path: Path) -> None:
@@ -66,7 +76,8 @@ def test_one_event_run_with_apply_points_and_publish_snapshot(tmp_path: Path) ->
     assert all(not event.event_report.requested_publish_snapshot for event in result.events)
 
 
-def test_multiple_events_same_week_deterministic_order_stops_on_overlap_blocker(tmp_path: Path) -> None:
+@pytest.mark.smoke
+def test_multiple_events_same_week_use_shared_entry_snapshot_without_overlap(tmp_path: Path) -> None:
     service, _, week = make_execution_service(tmp_path)
     calendar_service = service.lifecycle_service.calendar_service
     registry = calendar_service._load_registry()
@@ -76,13 +87,42 @@ def test_multiple_events_same_week_deterministic_order_stops_on_overlap_blocker(
     calendar.events.append(first.model_copy(update={"event_id": "EVT-2000-W01-zzz", "event_name": "ZZZ Event"}))
     calendar_service._save_registry(type(registry)(calendars_by_season={"2000/2001": calendar}))
 
-    result = service.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=8, apply_points=True, publish_snapshot=True))
+    result = service.run_week(
+        RunSeasonWeekRequest(
+            season="2000/2001",
+            season_week=week,
+            seed=8,
+            stop_after_stage="entries_generated",
+        )
+    )
     assert [event.event_id for event in result.events] == sorted(event.event_id for event in result.events)
     assert result.summary.event_count == 3
-    assert result.summary.succeeded_event_count == 1
-    assert result.summary.stopped_early is True
-    assert result.summary.snapshot_published is False
-    assert service.ranking_snapshot_service.get_snapshot(season="2000/2001", season_week=week).snapshot_exists is False
+    assert result.summary.succeeded_event_count == 3
+    assert result.summary.stopped_early is False
+    assert result.summary.run_completed is True
+    assert any("shared active-player snapshot" in warning for warning in result.validation_warnings)
+
+    entry_service = service.event_simulation_service.entry_list_service
+    lists = [
+        entry_service.get_entry_list(event_id=event.event_id).entry_list
+        for event in result.events
+    ]
+    assert all(entry_list is not None for entry_list in lists)
+    fingerprints = {
+        entry_list.metadata.active_players_fingerprint
+        for entry_list in lists
+        if entry_list is not None
+    }
+    assert len(fingerprints) == 1
+    accepted = [
+        _accepted_ids(entry_list)
+        for entry_list in lists
+        if entry_list is not None
+    ]
+    for index, left in enumerate(accepted):
+        for right in accepted[index + 1 :]:
+            assert not (left & right)
+    assert all(event.changed_artifacts.entries for event in result.events)
 
 
 def test_event_blocked_stops_early_and_skips_snapshot(tmp_path: Path) -> None:

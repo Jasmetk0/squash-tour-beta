@@ -1,4 +1,4 @@
-"""Validated initial ingestion of ordinary completed main-draw awards."""
+"""Validated ingestion of completed tournament awards into ranking history."""
 
 import hashlib
 import json
@@ -46,6 +46,85 @@ def _hash(value: object) -> str:
     ).hexdigest()
 
 
+def _validate_result_structure(
+    result: SeasonEventResultPackage, player_ids: list[str]
+) -> None:
+    """Validate Main + Qualification elimination evidence without inferring results.
+
+    BYEs are accepted only as one-player automatic advances. W/O and RET remain
+    intentionally unsupported until their dedicated sporting/award semantics exist.
+    """
+
+    by_id = {player.player_id: player for player in result.player_results}
+    qualification_ids = {
+        player.player_id
+        for player in result.player_results
+        if player.draw_type in {"qualification", "both"}
+    }
+    main_ids = {
+        player.player_id
+        for player in result.player_results
+        if player.draw_type in {"main", "both"}
+    }
+    qualification_winner_ids = {
+        player.player_id for player in result.qualification_winners
+    }
+    flagged_qualifier_ids = {
+        player.player_id for player in result.player_results if player.qualifier
+    }
+    if (
+        result.summary.qualification_player_count != len(qualification_ids)
+        or result.summary.main_draw_player_count != len(main_ids)
+        or result.summary.qualification_winner_count != len(qualification_winner_ids)
+        or flagged_qualifier_ids != qualification_ids
+        or not qualification_winner_ids <= flagged_qualifier_ids
+        or not qualification_winner_ids <= set(player_ids)
+    ):
+        raise ValueError("Qualification result provenance mismatch")
+    if any(
+        by_id[player_id].draw_type not in {"both", "main"}
+        for player_id in qualification_winner_ids
+    ):
+        raise ValueError("Qualification winner was not promoted into Main Draw")
+    if any(
+        player.walkovers_received or player.retired_or_walkover_loss
+        for player in result.player_results
+    ):
+        raise ValueError("W/O/RET requires a dedicated ranking adapter")
+
+    refs = result.match_result_refs
+    if (
+        len({match.match_id for match in refs}) != len(refs)
+        or result.summary.completed_matches != len(refs)
+        or result.champion is None
+        or result.finalist is None
+    ):
+        raise ValueError("Incomplete or unsupported tournament match references")
+
+    competitive_refs = 0
+    for match in refs:
+        if match.winner_player_id not in by_id or not match.scoreline:
+            raise ValueError("Incomplete or unsupported tournament match references")
+        if match.scoreline == "BYE":
+            if match.loser_player_id is not None:
+                raise ValueError("BYE result must have exactly one known player")
+            continue
+        if match.scoreline in {"W/O", "RET"}:
+            raise ValueError("W/O/RET requires a dedicated ranking adapter")
+        if (
+            match.loser_player_id not in by_id
+            or match.winner_player_id == match.loser_player_id
+        ):
+            raise ValueError("Incomplete or unsupported tournament match references")
+        competitive_refs += 1
+
+    # Qualification promotion joins its elimination subtree to the Main Draw.
+    # Therefore a complete event still has exactly N-1 competitive eliminations;
+    # BYE auto-advances add persisted refs but do not eliminate another player.
+    if competitive_refs != len(player_ids) - 1:
+        raise ValueError("Tournament elimination graph is incomplete or ambiguous")
+
+
 def prepare_tournament_ranking_sources(
     binding: TournamentRankingBinding,
     result: SeasonEventResultPackage,
@@ -87,20 +166,6 @@ def prepare_tournament_ranking_sources(
     ):
         raise ValueError("Tournament must be complete")
     if (
-        result.qualification_winners
-        or result.summary.qualification_player_count
-        or any(
-            p.draw_type != "main"
-            or p.qualifier
-            or p.byes_received
-            or p.walkovers_received
-            or p.retired_or_walkover_loss
-            for p in result.player_results
-        )
-        or any(m.draw_type != "main" for m in result.match_result_refs)
-    ):
-        raise ValueError("Qualification/BYE/W/O/RET requires a dedicated award adapter")
-    if (
         awards.metadata.point_distribution_source.startswith("fallback")
         or awards.metadata.point_distribution_source == "calendar_event.unranked"
     ):
@@ -118,23 +183,7 @@ def prepare_tournament_ranking_sources(
         player_ids
     ) or awards.summary.player_count != len(award_ids):
         raise ValueError("Tournament player count mismatch")
-    refs = result.match_result_refs
-    if (
-        len(refs) != len(player_ids) - 1
-        or len({m.match_id for m in refs}) != len(refs)
-        or result.summary.completed_matches != len(refs)
-        or result.champion is None
-        or result.finalist is None
-        or any(
-            m.winner_player_id not in player_ids
-            or m.loser_player_id not in player_ids
-            or m.winner_player_id == m.loser_player_id
-            or not m.scoreline
-            or m.scoreline in {"BYE", "W/O", "RET"}
-            for m in refs
-        )
-    ):
-        raise ValueError("Incomplete or unsupported main-draw match references")
+    _validate_result_structure(result, player_ids)
     result_fp = _hash(
         {
             "event_id": result.event_id,
@@ -181,7 +230,7 @@ def prepare_tournament_ranking_sources(
         player = by_id[award.player_id]
         if (
             award.reached_stage != player.reached_stage
-            or award.qualifier
+            or award.qualifier != player.qualifier
             or award.source_result_fingerprint != result_fp
             or award.source_player_result_fingerprint
             != _hash(player.model_dump(mode="json"))

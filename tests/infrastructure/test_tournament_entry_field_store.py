@@ -228,6 +228,51 @@ def test_store_replays_initial_repair_and_exact_retries(database):
         ) == (initial, repaired)
 
 
+def test_followup_repair_canonicalizes_already_withdrawn_players(database):
+    with database.begin() as session:
+        install_ranking_authority(session)
+        store = TournamentEntryFieldStore(session)
+        initial = store.stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications(),
+            capacity=capacity(),
+            command_id="initial-field",
+        )
+        first = store.stage_pre_draw_repair(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications(),
+            withdrawn_player_ids=("D",),
+            command_id="withdraw-d",
+        )
+        second = store.stage_pre_draw_repair(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications(),
+            withdrawn_player_ids=("D", "E"),
+            command_id="withdraw-e",
+        )
+        assert second.withdrawn_player_ids == ("D", "E")
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (initial, first, second)
+
+        assert store.stage_pre_draw_repair(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=list(reversed(applications())),
+            withdrawn_player_ids=("D", "E"),
+            command_id="withdraw-e",
+        ) == second
+
+
 def test_command_reuse_and_corrupt_frozen_inputs_fail_closed(database):
     with database.begin() as session:
         install_ranking_authority(session)

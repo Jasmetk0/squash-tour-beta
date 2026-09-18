@@ -18,6 +18,52 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 )
 
 
+DrawInputSchemaVersion = Literal[
+    "tournament_draw_input_authority.v1",
+    "tournament_draw_input_authority.v2",
+]
+
+
+def canonical_classic_seed_count(*, bracket_capacity: int, actual_player_count: int) -> int:
+    """Master §15.2 seed-count rule for one classic elimination bracket."""
+
+    if bracket_capacity < 2 or bracket_capacity & (bracket_capacity - 1):
+        raise ValueError("Classic tournament bracket capacity must be a power of two")
+    if actual_player_count < 0 or actual_player_count > bracket_capacity:
+        raise ValueError("Actual player count must fit inside bracket capacity")
+    return min(actual_player_count, max(1, bracket_capacity // 4))
+
+
+def canonical_qualification_seed_count(
+    *, capacity: TournamentEntryFieldCapacity, actual_player_count: int
+) -> int:
+    """Total global seed pool across equal Master §15.6 Qualification sections."""
+
+    if capacity.qualification_draw_size == 0:
+        if capacity.qualifier_spots != 0:
+            raise ValueError(
+                "Qualification qualifier spots require Qualification draw capacity"
+            )
+        return 0
+    if capacity.qualifier_spots < 1:
+        raise ValueError(
+            "Qualification draw capacity requires at least one qualifier section"
+        )
+    if capacity.qualification_draw_size % capacity.qualifier_spots:
+        raise ValueError(
+            "Qualification capacity must divide evenly across qualifier sections"
+        )
+    section_capacity = (
+        capacity.qualification_draw_size // capacity.qualifier_spots
+    )
+    if section_capacity < 2 or section_capacity & (section_capacity - 1):
+        raise ValueError(
+            "Each classic Qualification section must have power-of-two capacity"
+        )
+    maximum_seed_pool = capacity.qualifier_spots * max(1, section_capacity // 4)
+    return min(actual_player_count, maximum_seed_pool)
+
+
 class TournamentDrawInputAuthority(FrozenInput):
     """Frozen canonical field/ranking inputs at the pre-draw commitment boundary.
 
@@ -27,9 +73,7 @@ class TournamentDrawInputAuthority(FrozenInput):
     generator cannot fall back to mutable legacy Entry/Draw files.
     """
 
-    schema_version: Literal["tournament_draw_input_authority.v1"] = (
-        "tournament_draw_input_authority.v1"
-    )
+    schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -87,6 +131,23 @@ class TournamentDrawInputAuthority(FrozenInput):
             raise ValueError(
                 "Qualifier placeholder identities/count differ from field capacity"
             )
+        if self.schema_version == "tournament_draw_input_authority.v2":
+            expected_main_seeds = canonical_classic_seed_count(
+                bracket_capacity=self.capacity.main_draw_size,
+                actual_player_count=len(self.direct_main_player_ids),
+            )
+            if self.main_seed_count != expected_main_seeds:
+                raise ValueError(
+                    "Canonical v2 Main seed count differs from Master §15.2"
+                )
+            expected_q_seeds = canonical_qualification_seed_count(
+                capacity=self.capacity,
+                actual_player_count=len(self.qualification_player_ids),
+            )
+            if self.qualification_seed_count != expected_q_seeds:
+                raise ValueError(
+                    "Canonical v2 Qualification seed count differs from Master §15.2/15.6"
+                )
         return self
 
     @property
@@ -111,8 +172,9 @@ class TournamentDrawInputAuthorityBuilder:
         field_sequence: int,
         command_id: str,
         draw_seed: int,
-        main_seed_count: int,
-        qualification_seed_count: int,
+        main_seed_count: int | None,
+        qualification_seed_count: int | None,
+        schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1",
     ) -> TournamentDrawInputAuthority:
         if (field.run_id, field.branch_id, field.event_id) != (
             authority.run_id,
@@ -134,6 +196,35 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError(
                 "Canonical draw input commitment requires resolved Wild Card authority"
             )
+
+        if schema_version == "tournament_draw_input_authority.v2":
+            canonical_main = canonical_classic_seed_count(
+                bracket_capacity=field.capacity.main_draw_size,
+                actual_player_count=len(field.direct_main_player_ids),
+            )
+            canonical_qualification = canonical_qualification_seed_count(
+                capacity=field.capacity,
+                actual_player_count=len(field.qualification_player_ids),
+            )
+            if main_seed_count is not None and main_seed_count != canonical_main:
+                raise ValueError(
+                    "Requested Main seed count differs from Master §15.2"
+                )
+            if (
+                qualification_seed_count is not None
+                and qualification_seed_count != canonical_qualification
+            ):
+                raise ValueError(
+                    "Requested Qualification seed count differs from Master §15.2/15.6"
+                )
+            main_seed_count = canonical_main
+            qualification_seed_count = canonical_qualification
+        else:
+            if main_seed_count is None or qualification_seed_count is None:
+                raise ValueError(
+                    "Historical Draw Input v1 requires explicit seed counts"
+                )
+
         if main_seed_count > len(field.direct_main_player_ids):
             raise ValueError("Main seed count exceeds canonical direct Main field")
         if qualification_seed_count > len(field.qualification_player_ids):
@@ -153,6 +244,7 @@ class TournamentDrawInputAuthorityBuilder:
             for index in range(1, field.capacity.qualifier_spots + 1)
         )
         return TournamentDrawInputAuthority(
+            schema_version=schema_version,
             run_id=authority.run_id,
             branch_id=authority.branch_id,
             event_id=authority.event_id,

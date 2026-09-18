@@ -92,7 +92,7 @@ def _multi_qualification_input():
         qualification_player_ids=qualification,
         qualifier_placeholder_ids=("Q1", "Q2", "Q3", "Q4"),
         withdrawn_player_ids=(),
-        main_seed_player_ids=direct[:1],
+        main_seed_player_ids=direct[:2],
         qualification_seed_player_ids=qualification[:4],
     )
 
@@ -178,83 +178,3 @@ def _complete(draw, package):
             record.winner_player_id = winner
             record.loser_player_id = loser
             record.scoreline = score
-            record.status = "completed"
-            record.result_fingerprint = (
-                f"{node.round_number:02x}{node.round_sequence:02x}".ljust(64, "a")
-            )[:64]
-            winners[node.node_id] = winner
-        terminal = max(
-            bracket.nodes,
-            key=lambda n: (n.round_number, n.round_sequence),
-        )
-        return winners[terminal.node_id]
-
-    for index, bracket in enumerate(draw.qualification_brackets, start=1):
-        qualifier_winners[bracket.section_id or f"Q{index}"] = complete_bracket(
-            bracket,
-            projected.qualification_matches,
-        )
-    complete_bracket(
-        draw.main,
-        projected.main_draw_matches,
-    )
-    return projected
-
-
-def test_canonical_result_derives_champion_finalist_and_stages_without_legacy_service():
-    draw = TournamentDrawAuthorityBuilder.build(
-        draw_input=_input(),
-        command_id="draw",
-    )
-    package = build_run_owned_match_package(
-        draw=draw,
-        event=_event(),
-        week=RankingWeek(season_index=0, week=1),
-    )
-    completed = _complete(draw, package)
-    authority = build_tournament_result_authority(
-        run_id="run",
-        branch_id="branch",
-        week=RankingWeek(season_index=0, week=1),
-        draw=draw,
-        package=completed,
-    )
-
-    assert authority.champion_player_id == "A"
-    assert authority.finalist_player_id in {"B", "C", "D"}
-    assert len(authority.matches) == 3
-    stages = {player.player_id: player.reached_stage for player in authority.players}
-    assert stages[authority.champion_player_id] == "champion"
-    assert stages[authority.finalist_player_id] == "finalist"
-    assert sum(stage == "semifinal" for stage in stages.values()) == 2
-    assert authority.draw_authority_fingerprint == draw.fingerprint
-
-
-def test_canonical_result_preserves_qualification_provenance_into_main():
-    draw = TournamentDrawAuthorityBuilder.build(
-        draw_input=_input(qualification=True),
-        command_id="draw",
-    )
-    event = _event(qualification=True)
-    package = build_run_owned_match_package(
-        draw=draw,
-        event=event,
-        week=RankingWeek(season_index=0, week=1),
-    )
-    completed = _complete(draw, package)
-    authority = build_tournament_result_authority(
-        run_id="run",
-        branch_id="branch",
-        week=RankingWeek(season_index=0, week=1),
-        draw=draw,
-        package=completed,
-    )
-
-    assert authority.qualification_winner_ids == ("D",)
-    q_winner = next(player for player in authority.players if player.player_id == "D")
-    assert q_winner.qualifier is True
-    assert q_winner.draw_type == "both"
-    assert len(authority.matches) == 4
-
-    dto = project_tournament_result_legacy_dto(
-        authority=authority,

@@ -38,6 +38,10 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
+from beta_engine.infrastructure.db.simulation_slot_state import (
+    capture_saved_simulation_slots,
+    restore_saved_simulation_slots,
+)
 
 
 pytestmark = pytest.mark.smoke
@@ -192,6 +196,17 @@ def commit_draw_input(session, *, command_id: str = "commit-draw", seed: int = 1
         main_seed_count=2,
         qualification_seed_count=1,
     )
+
+
+def capture(session):
+    payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    return payload
 
 
 def test_commit_freezes_terminal_field_seed_order_and_exact_retry(database):
@@ -386,3 +401,116 @@ def test_corrupt_payload_and_read_only_scope_fail_closed(database):
                 qualification_seed_count=0,
             )
     engine.dispose()
+
+
+def test_saved_revision_restores_draw_input_backward_and_forward(database):
+    with database.begin() as session:
+        field = stage_initial_field(session)
+        saved_before_draw = capture(session)
+        before_component = saved_before_draw["content"]["simulation_slot_match_state"]
+        assert "draw_inputs" not in before_component
+
+        committed = commit_draw_input(session)
+        saved_after_draw = capture(session)
+        after_component = saved_after_draw["content"]["simulation_slot_match_state"]
+        assert len(after_component["draw_inputs"]) == 1
+        assert after_component["fingerprint"] != before_component["fingerprint"]
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after_draw,
+            target_payload=saved_before_draw,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) is None
+        assert TournamentEntryFieldStore(session).latest(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == field
+        recaptured_before = capture(session)
+        assert (
+            recaptured_before["content"]["simulation_slot_match_state"]["fingerprint"]
+            == before_component["fingerprint"]
+        )
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured_before,
+            target_payload=saved_after_draw,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == committed
+        recaptured_after = capture(session)
+        assert (
+            recaptured_after["content"]["simulation_slot_match_state"]["fingerprint"]
+            == after_component["fingerprint"]
+        )
+
+
+def test_unsaved_draw_input_blocks_restore_and_remains_live(database):
+    with database.begin() as session:
+        stage_initial_field(session)
+        saved_before_draw = capture(session)
+        committed = commit_draw_input(session)
+
+        with pytest.raises(
+            ValueError, match="Live simulation-slot state differs from saved head"
+        ):
+            restore_saved_simulation_slots(
+                session,
+                current_payload=saved_before_draw,
+                target_payload=saved_before_draw,
+                run_id="run",
+                branch_id="branch",
+            )
+
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == committed
+
+
+def test_corrupt_saved_draw_input_is_rejected_before_live_mutation(database):
+    with database.begin() as session:
+        stage_initial_field(session)
+        committed = commit_draw_input(session)
+        saved = capture(session)
+
+        corrupt = {
+            "content": {
+                key: (dict(value) if isinstance(value, dict) else value)
+                for key, value in saved["content"].items()
+            }
+        }
+        component = dict(corrupt["content"]["simulation_slot_match_state"])
+        draw_inputs = [dict(value) for value in component["draw_inputs"]]
+        draw_inputs[0]["authority_fingerprint"] = "0" * 64
+        component["draw_inputs"] = draw_inputs
+        corrupt["content"]["simulation_slot_match_state"] = component
+
+        with pytest.raises(ValueError):
+            restore_saved_simulation_slots(
+                session,
+                current_payload=saved,
+                target_payload=corrupt,
+                run_id="run",
+                branch_id="branch",
+            )
+
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == committed

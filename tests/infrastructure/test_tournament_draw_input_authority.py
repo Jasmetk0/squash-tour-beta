@@ -193,8 +193,6 @@ def commit_draw_input(session, *, command_id: str = "commit-draw", seed: int = 1
         event_id="event",
         command_id=command_id,
         draw_seed=seed,
-        main_seed_count=2,
-        qualification_seed_count=1,
     )
 
 
@@ -219,7 +217,10 @@ def test_commit_freezes_terminal_field_seed_order_and_exact_retry(database):
         assert committed.capacity == field.capacity
         assert committed.direct_main_player_ids == ("A", "C", "D")
         assert committed.qualification_player_ids == ("B", "E")
-        assert committed.main_seed_player_ids == ("A", "C")
+        assert committed.schema_version == "tournament_draw_input_authority.v2"
+        assert committed.main_seed_count == 1
+        assert committed.qualification_seed_count == 1
+        assert committed.main_seed_player_ids == ("A",)
         assert committed.qualification_seed_player_ids == ("B",)
         assert committed.qualifier_placeholder_ids == ("Q1",)
         assert committed.withdrawn_player_ids == ()
@@ -258,7 +259,7 @@ def test_repaired_terminal_field_is_committed_and_newer_ranking_does_not_move_it
         assert committed.direct_main_player_ids == ("A", "B", "C")
         assert committed.qualification_player_ids == ("E", "F")
         assert committed.withdrawn_player_ids == ("D",)
-        assert committed.main_seed_player_ids == ("A", "B")
+        assert committed.main_seed_player_ids == ("A",)
         assert committed.qualification_seed_player_ids == ("E",)
 
         # The draw lock blocks new pre-draw changes but must preserve exact
@@ -301,7 +302,7 @@ def test_repaired_terminal_field_is_committed_and_newer_ranking_does_not_move_it
             event_id="event",
         )
         assert reloaded == committed
-        assert reloaded.main_seed_player_ids == ("A", "B")
+        assert reloaded.main_seed_player_ids == ("A",)
 
 
 def test_draw_commit_locks_further_pre_draw_field_repair(database):

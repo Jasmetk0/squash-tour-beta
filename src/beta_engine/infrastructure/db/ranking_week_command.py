@@ -7,6 +7,7 @@ from beta_engine.application.official_ranking_transition import (
     stage_official_ranking_from_history,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
+    ingest_canonical_tournament_ranking_sources,
     ingest_frozen_tournament_ranking_sources,
     prepare_tournament_ranking_sources,
 )
@@ -254,8 +255,6 @@ def stage_ranking_week_command(
                 bootstrap=True,
             )
         else:
-            if command.tournaments and awards is None:
-                raise ValueError("Tournament ingestion requires an award service")
             sources = OfficialRankingResultStore(session)
             owned = OwnedTournamentRankingSourceStore(session)
             for binding in sorted(command.tournaments, key=lambda t: t.edition_id):
@@ -265,6 +264,10 @@ def stage_ranking_week_command(
                     edition_id=binding.edition_id,
                 )
                 if frozen is None:
+                    if awards is None:
+                        raise ValueError(
+                            "Legacy tournament adoption requires an award service"
+                        )
                     run = session.get(RunContainerModel, context.run_id)
                     branch = session.get(RunBranchModel, context.branch_id)
                     if run is None or branch is None or branch.run_id != context.run_id:
@@ -299,9 +302,24 @@ def stage_ranking_week_command(
                     raise ValueError(
                         "Tournament binding conflicts with its owned frozen source"
                     )
-                ingest_frozen_tournament_ranking_sources(
-                    sources, binding, frozen.result, frozen.awards
-                )
+                if frozen.schema_version == "owned_tournament_ranking_source.v3":
+                    if (
+                        frozen.canonical_result is None
+                        or frozen.canonical_awards is None
+                    ):
+                        raise ValueError(
+                            "Canonical owned tournament source is incomplete"
+                        )
+                    ingest_canonical_tournament_ranking_sources(
+                        sources,
+                        binding,
+                        frozen.canonical_result,
+                        frozen.canonical_awards,
+                    )
+                else:
+                    ingest_frozen_tournament_ranking_sources(
+                        sources, binding, frozen.result, frozen.awards
+                    )
             for correction in sorted(
                 command.corrections,
                 key=lambda v: (v.result.edition_id, v.result.player_id),

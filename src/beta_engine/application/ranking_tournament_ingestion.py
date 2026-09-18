@@ -19,6 +19,10 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
 )
 from beta_engine.domain.rankings.result_history import RankingResultVersion
+from beta_engine.domain.tournaments.point_award_authority import (
+    TournamentPointAwardAuthority,
+)
+from beta_engine.domain.tournaments.result_authority import TournamentResultAuthority
 
 
 class TournamentRankingBinding(FrozenInput):
@@ -259,6 +263,119 @@ def prepare_tournament_ranking_sources(
             )
         )
     return tuple(versions)
+
+
+def prepare_canonical_tournament_ranking_sources(
+    binding: TournamentRankingBinding,
+    result: TournamentResultAuthority,
+    awards: TournamentPointAwardAuthority,
+) -> tuple[RankingResultVersion, ...]:
+    """Materialize ranking history directly from canonical Run-owned authorities."""
+
+    binding = TournamentRankingBinding.model_validate_json(binding.model_dump_json())
+    result = TournamentResultAuthority.model_validate_json(result.model_dump_json())
+    awards = TournamentPointAwardAuthority.model_validate_json(awards.model_dump_json())
+    if (
+        binding.run_id,
+        binding.branch_id,
+        binding.event_id,
+        binding.edition_id,
+        binding.completed_week,
+        binding.ranking_status,
+    ) != (
+        result.run_id,
+        result.branch_id,
+        result.event_id,
+        result.event_id,
+        result.completed_week,
+        "ranked",
+    ):
+        raise ValueError("Canonical tournament ranking scope mismatch")
+    if (
+        awards.run_id,
+        awards.branch_id,
+        awards.event_id,
+        awards.completed_week,
+        awards.ranking_status,
+        awards.tournament_result_fingerprint,
+    ) != (
+        result.run_id,
+        result.branch_id,
+        result.event_id,
+        result.completed_week,
+        "ranked",
+        result.fingerprint,
+    ):
+        raise ValueError("Canonical tournament point authority scope mismatch")
+    if (
+        binding.expected_result_fingerprint != result.fingerprint
+        or binding.expected_award_fingerprint != awards.fingerprint
+    ):
+        raise ValueError("Canonical tournament ranking fingerprint mismatch")
+
+    result_by_id = {player.player_id: player for player in result.players}
+    award_by_id = {award.player_id: award for award in awards.awards}
+    if not result_by_id or set(result_by_id) != set(award_by_id):
+        raise ValueError(
+            "Canonical tournament awards must cover every result player exactly once"
+        )
+
+    versions: list[RankingResultVersion] = []
+    for player_id in sorted(award_by_id):
+        player = result_by_id[player_id]
+        award = award_by_id[player_id]
+        if (
+            award.reached_stage,
+            award.qualifier,
+            award.seed_number,
+            award.source_player_result_fingerprint,
+        ) != (
+            player.reached_stage,
+            player.qualifier,
+            player.seed_number,
+            _hash(player.model_dump(mode="json")),
+        ):
+            raise ValueError("Canonical player award provenance mismatch")
+        versions.append(
+            RankingResultVersion(
+                run_id=binding.run_id,
+                branch_id=binding.branch_id,
+                effective_week=binding.first_publication_week,
+                previous_fingerprint=None,
+                result=OfficialRankingResult(
+                    edition_id=binding.edition_id,
+                    player_id=player_id,
+                    completed_week=binding.completed_week,
+                    first_publication_week=binding.first_publication_week,
+                    validity_weeks=binding.validity_weeks,
+                    main_points=award.ranking_points_awarded,
+                    source_fingerprint=_hash(
+                        {
+                            "binding": binding.model_dump(mode="json"),
+                            "tournament_result": result.fingerprint,
+                            "point_award": award.award_fingerprint,
+                        }
+                    ),
+                ),
+            )
+        )
+    return tuple(versions)
+
+
+def ingest_canonical_tournament_ranking_sources(
+    writer: RankingSourceWriter,
+    binding: TournamentRankingBinding,
+    result: TournamentResultAuthority,
+    awards: TournamentPointAwardAuthority,
+) -> tuple[RankingResultVersion, ...]:
+    """Persist ranking history without legacy result/award DTO ingestion."""
+
+    versions = prepare_canonical_tournament_ranking_sources(
+        binding,
+        result,
+        awards,
+    )
+    return tuple(writer.append(version) for version in versions)
 
 
 def ingest_tournament_ranking_sources(

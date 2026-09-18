@@ -319,6 +319,7 @@ def test_owned_source_v2_persists_canonical_result_and_v1_remains_supported():
     )
     old_payload = v1.model_dump(mode="json")
     old_payload.pop("canonical_result", None)
+    old_payload.pop("canonical_awards", None)
     expected_v1_fingerprint = hashlib.sha256(
         json.dumps(
             old_payload,

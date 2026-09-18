@@ -1,8 +1,8 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #751 at
-`d992d110d1743fe4786d872ff82db443cffd063f`, plus the current bounded
-Run-owned Tournament Result authority slice. The audit compares merged code against the
+Re-audited 18 September 2026 from merged PR #752 at
+`d01c7e5af71d6b754fef459c11ec8ad9bf250b0e`, plus the current bounded
+Run-owned Point Award + direct ranking-materialization slice. The audit compares merged code against the
 canonical Master Vision instead of treating PR descriptions or Fast CI as product
 authority.
 
@@ -21,7 +21,7 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #751 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #752 is the latest merged implementation in this audit base.
 
 ## What exists, and where integration stops
 
@@ -30,7 +30,7 @@ protocol is chapter 36. PR #751 is the latest merged implementation in this audi
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
 | Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
 | Packages/players | World package, owned InitialWorld, lifecycle, `player_sporting_week_states`, and slot checkpoints | Canonical 57×0–200 sporting history and match-derived Form/Sharpness/Fatigue exist for the narrow slot slice; health and prospects remain open |
-| Tournament flow | generalized persisted topology in `authoritative_run_simulation_driver.py`, result/award services, `owned_tournament_sources.py`; repeated production eight-player execution; persisted Tournament Ranking Snapshot → Entry Field → Draw Input → Run-owned Draw Authority; current branch projects that Draw Authority into Simulation Match topology | When canonical Draw Authority exists, bracket participants/feeders/terminal/BYE/Q-promotion topology comes from the Run-owned Draw, not legacy DrawPackage. MatchPackage remains a temporary execution/result payload that must bind one-to-one to canonical nodes. New adopted tournament authority v5 fingerprints the exact canonical Draw. Multi-qualifier sections, dynamic Q-vs-BYE auto-advance, WC/LL and post-draw repair remain fail-closed boundaries. |
+| Tournament flow | Tournament Ranking Snapshot → Entry Field → Draw Input → Run-owned Draw → canonical Match topology/package → Tournament Result Authority; current branch adds Run-owned Point Award Authority and direct ranking-history materialization | Canonical events no longer use legacy DrawPackage, file-backed MatchPackage, SeasonEventResultsService extraction or SeasonPointAwardsService award generation as sporting/ranking producers. OwnedTournamentRankingSource v3 persists canonical result + point authorities and next-week ranking ingestion can run without a legacy award service. Legacy-shaped result/award DTOs remain compatibility children only. Multi-Q, dynamic Q-vs-BYE, WC/LL and post-draw repair remain fail-closed boundaries. |
 | Match engine | `domain/matches/match_engine.py`, immutable inputs/replay, `simulation_slots.py`, and Run/Branch slot persistence | Narrow four-player scheduling and later-slot sporting causality exist; general global scheduling, native 57-attribute Rally Setup, and finished realism remain open |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
@@ -169,3 +169,14 @@ authority. New `OwnedTournamentRankingSource v2` persists that result truth.
 The legacy `SeasonEventResultPackage` survives only as an in-memory compatibility
 DTO for the still-legacy point/ranking adapter; canonical close no longer calls
 `SeasonEventResultsService.extract_event_result()`.
+
+
+## Current follow-up after #752
+
+Canonical tournament close now derives immutable `TournamentPointAwardAuthority`
+from `TournamentResultAuthority` plus the already-frozen authored point
+distribution. The authority stores the full distribution snapshot and semantically
+replays every award. `OwnedTournamentRankingSource v3` binds canonical result and
+point authorities while retaining self-consistent legacy-shaped DTOs only for
+compatibility. Ranking-week ingestion materializes `RankingResultVersion` directly
+from v3 authorities and does not require `SeasonPointAwardsService`.

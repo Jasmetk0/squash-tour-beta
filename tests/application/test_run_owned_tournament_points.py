@@ -251,10 +251,12 @@ def test_canonical_point_authority_maps_frozen_distribution_without_legacy_servi
 def test_canonical_point_authority_rejects_corrupt_distribution_on_reopen():
     _, _, point_authority, _, _ = _authorities()
     payload = point_authority.model_dump(mode="json")
-    payload["point_distribution"][0][1] += 1
+    distribution = [list(item) for item in payload["point_distribution"]]
+    distribution[0][1] += 1
+    payload["point_distribution"] = distribution
 
     with pytest.raises(ValueError, match="distribution snapshot mismatch"):
-        TournamentPointAwardAuthority.model_validate(payload)
+        TournamentPointAwardAuthority.model_validate_json(json.dumps(payload))
 
 
 def test_canonical_point_authority_fails_closed_on_fallback_distribution():

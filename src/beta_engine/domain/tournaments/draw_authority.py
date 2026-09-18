@@ -123,12 +123,14 @@ class TournamentDrawBracket(FrozenInput):
 class TournamentDrawAuthority(FrozenInput):
     """Immutable canonical bracket package owned by one Run/Branch/Event."""
 
-    schema_version: Literal["tournament_draw_authority.v1"] = (
-        "tournament_draw_authority.v1"
-    )
-    algorithm_version: Literal["protected_seed_shuffle.v1"] = (
-        "protected_seed_shuffle.v1"
-    )
+    schema_version: Literal[
+        "tournament_draw_authority.v1",
+        "tournament_draw_authority.v2",
+    ] = "tournament_draw_authority.v1"
+    algorithm_version: Literal[
+        "protected_seed_shuffle.v1",
+        "idealized_seed_tiers.v2",
+    ] = "protected_seed_shuffle.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -143,6 +145,13 @@ class TournamentDrawAuthority(FrozenInput):
             raise ValueError("Tournament Main bracket has wrong draw type")
         if self.qualification is not None and self.qualification.draw_type != "qualification":
             raise ValueError("Tournament Qualification bracket has wrong draw type")
+        expected_algorithm = (
+            "idealized_seed_tiers.v2"
+            if self.schema_version == "tournament_draw_authority.v2"
+            else "protected_seed_shuffle.v1"
+        )
+        if self.algorithm_version != expected_algorithm:
+            raise ValueError("Tournament Draw schema/algorithm version mismatch")
         return self
 
     @property
@@ -161,6 +170,12 @@ class TournamentDrawAuthorityBuilder:
         command_id: str,
     ) -> TournamentDrawAuthority:
         capacity = draw_input.capacity
+        master_geometry = (
+            draw_input.schema_version == "tournament_draw_input_authority.v2"
+        )
+        bracket_builder = (
+            cls._build_bracket_v2 if master_geometry else cls._build_bracket_v1
+        )
         if capacity.wild_card_slots:
             raise ValueError(
                 "Tournament Draw authority requires Wild Card resolution before generation"
@@ -206,7 +221,7 @@ class TournamentDrawAuthorityBuilder:
 
         qualification = None
         if capacity.qualification_draw_size:
-            qualification = cls._build_bracket(
+            qualification = bracket_builder(
                 draw_input=draw_input,
                 draw_type="qualification",
                 bracket_size=capacity.qualification_draw_size,
@@ -216,7 +231,7 @@ class TournamentDrawAuthorityBuilder:
                 explicit_byes=0,
             )
 
-        main = cls._build_bracket(
+        main = bracket_builder(
             draw_input=draw_input,
             draw_type="main",
             bracket_size=capacity.main_draw_size,
@@ -226,6 +241,16 @@ class TournamentDrawAuthorityBuilder:
             explicit_byes=capacity.bye_slots,
         )
         return TournamentDrawAuthority(
+            schema_version=(
+                "tournament_draw_authority.v2"
+                if master_geometry
+                else "tournament_draw_authority.v1"
+            ),
+            algorithm_version=(
+                "idealized_seed_tiers.v2"
+                if master_geometry
+                else "protected_seed_shuffle.v1"
+            ),
             run_id=draw_input.run_id,
             branch_id=draw_input.branch_id,
             event_id=draw_input.event_id,
@@ -236,7 +261,7 @@ class TournamentDrawAuthorityBuilder:
         )
 
     @classmethod
-    def _build_bracket(
+    def _build_bracket_v1(
         cls,
         *,
         draw_input: TournamentDrawInputAuthority,
@@ -337,6 +362,143 @@ class TournamentDrawAuthorityBuilder:
             qualifier_placeholder_slots=qualifier_slots,
         )
 
+    @classmethod
+    def _build_bracket_v2(
+        cls,
+        *,
+        draw_input: TournamentDrawInputAuthority,
+        draw_type: TournamentDrawType,
+        bracket_size: int,
+        player_ids: tuple[str, ...],
+        seed_player_ids: tuple[str, ...],
+        placeholder_ids: tuple[str, ...],
+        explicit_byes: int,
+    ) -> TournamentDrawBracket:
+        """Master §15.2–15.4 classic bracket geometry.
+
+        Idealized seed slots are stable bracket identities. Seed 1/2 are fixed,
+        later seed tiers are shuffled only inside their allowed idealized tier,
+        BYEs consume the highest idealized slot numbers, and all remaining entrants
+        are shuffled only across the remaining unseeded physical slots.
+        """
+
+        if len(set(player_ids)) != len(player_ids):
+            raise ValueError("Tournament draw contains duplicate player identities")
+        if tuple(player_ids[: len(seed_player_ids)]) != seed_player_ids:
+            raise ValueError(
+                "Tournament draw seeds must follow the frozen ranking-derived field order"
+            )
+        if not _is_power_of_two(bracket_size) or bracket_size < 2:
+            raise ValueError("Tournament bracket size must be a power of two >= 2")
+
+        idealized_order = _idealized_slot_order(bracket_size)
+        physical_by_idealized = {
+            idealized: physical
+            for physical, idealized in enumerate(idealized_order, start=1)
+        }
+        slots: dict[int, TournamentDrawSlot | None] = {
+            index: None for index in range(1, bracket_size + 1)
+        }
+        rng = DeterministicRng(
+            _draw_subseed(
+                draw_seed=draw_input.draw_seed,
+                event_id=draw_input.event_id,
+                draw_type=draw_type,
+            )
+        )
+
+        seed_positions: dict[int, int] = {}
+        seed_count = len(seed_player_ids)
+        if seed_count:
+            seed_positions[1] = physical_by_idealized[1]
+        if seed_count >= 2:
+            seed_positions[2] = physical_by_idealized[2]
+
+        tier_start = 3
+        while tier_start <= seed_count:
+            tier_end = 1 << (tier_start - 1).bit_length()
+            available_idealized = list(range(tier_start, tier_end + 1))
+            rng.shuffle(available_idealized)
+            for seed_number in range(
+                tier_start, min(seed_count, tier_end) + 1
+            ):
+                idealized = available_idealized.pop()
+                seed_positions[seed_number] = physical_by_idealized[idealized]
+            tier_start = tier_end + 1
+
+        for seed_number, player_id in enumerate(seed_player_ids, start=1):
+            position = seed_positions[seed_number]
+            slots[position] = TournamentDrawSlot(
+                slot_index=position,
+                entrant_kind="player",
+                player_id=player_id,
+                seed_number=seed_number,
+                is_seed_protected=True,
+            )
+
+        bye_positions = _choose_master_bye_positions(
+            bracket_size=bracket_size,
+            explicit_byes=explicit_byes,
+            idealized_order=idealized_order,
+            occupied_positions={
+                index for index, slot in slots.items() if slot is not None
+            },
+        )
+        for position in bye_positions:
+            slots[position] = TournamentDrawSlot(
+                slot_index=position,
+                entrant_kind="bye",
+            )
+
+        open_positions = [
+            index for index in range(1, bracket_size + 1) if slots[index] is None
+        ]
+        rng.shuffle(open_positions)
+        remaining_players = player_ids[seed_count:]
+        entrants: tuple[tuple[str, str], ...] = tuple(
+            ("player", player_id) for player_id in remaining_players
+        ) + tuple(("qualifier_placeholder", value) for value in placeholder_ids)
+        if len(entrants) != len(open_positions):
+            raise ValueError(
+                "Tournament draw entrant count differs from available bracket positions"
+            )
+
+        for position, (kind, identity) in zip(open_positions, entrants, strict=True):
+            if kind == "player":
+                slots[position] = TournamentDrawSlot(
+                    slot_index=position,
+                    entrant_kind="player",
+                    player_id=identity,
+                )
+            else:
+                slots[position] = TournamentDrawSlot(
+                    slot_index=position,
+                    entrant_kind="qualifier_placeholder",
+                    placeholder_id=identity,
+                )
+
+        final_slots = tuple(slots[index] for index in range(1, bracket_size + 1))
+        if any(slot is None for slot in final_slots):
+            raise ValueError("Tournament draw generation left unresolved bracket slots")
+        typed_slots = tuple(slot for slot in final_slots if slot is not None)
+        qualifier_slots = tuple(
+            (slot.placeholder_id, slot.slot_index)
+            for slot in typed_slots
+            if slot.entrant_kind == "qualifier_placeholder"
+            and slot.placeholder_id is not None
+        )
+        return TournamentDrawBracket(
+            draw_type=draw_type,
+            bracket_size=bracket_size,
+            seed_positions=tuple(sorted(seed_positions.items())),
+            slots=typed_slots,
+            nodes=_build_nodes(draw_input.event_id, draw_type, bracket_size),
+            bye_slot_indexes=tuple(
+                slot.slot_index for slot in typed_slots if slot.entrant_kind == "bye"
+            ),
+            qualifier_placeholder_slots=qualifier_slots,
+        )
+
 
 def _draw_subseed(
     *, draw_seed: int, event_id: str, draw_type: TournamentDrawType
@@ -353,6 +515,55 @@ def _draw_subseed(
 
 def _is_power_of_two(value: int) -> bool:
     return value > 0 and (value & (value - 1)) == 0
+
+
+def _idealized_slot_order(bracket_size: int) -> tuple[int, ...]:
+    """Idealized slot numbers from top to bottom (Master §15.3)."""
+
+    if bracket_size < 2 or not _is_power_of_two(bracket_size):
+        raise ValueError("Tournament bracket size must be a power of two >= 2")
+    order = [1, 2]
+    size = 2
+    while size < bracket_size:
+        next_size = size * 2
+        expanded: list[int] = []
+        for index, idealized in enumerate(order):
+            complement = next_size + 1 - idealized
+            if index % 2 == 0:
+                expanded.extend((idealized, complement))
+            else:
+                expanded.extend((complement, idealized))
+        order = expanded
+        size = next_size
+    return tuple(order)
+
+
+def _choose_master_bye_positions(
+    *,
+    bracket_size: int,
+    explicit_byes: int,
+    idealized_order: tuple[int, ...],
+    occupied_positions: set[int],
+) -> tuple[int, ...]:
+    if explicit_byes < 0:
+        raise ValueError("Tournament draw BYE count cannot be negative")
+    if len(idealized_order) != bracket_size:
+        raise ValueError("Tournament idealized slot map has wrong capacity")
+    physical_by_idealized = {
+        idealized: physical
+        for physical, idealized in enumerate(idealized_order, start=1)
+    }
+    bye_positions: list[int] = []
+    for idealized in range(bracket_size, 0, -1):
+        physical = physical_by_idealized[idealized]
+        if physical in occupied_positions:
+            continue
+        bye_positions.append(physical)
+        if len(bye_positions) == explicit_byes:
+            break
+    if len(bye_positions) != explicit_byes:
+        raise ValueError("Tournament draw cannot place all explicit BYEs")
+    return tuple(sorted(bye_positions))
 
 
 def _paired_slot(slot_index: int) -> int:

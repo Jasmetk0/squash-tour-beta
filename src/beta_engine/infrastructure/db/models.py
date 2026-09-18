@@ -220,6 +220,45 @@ class CompletedWeekSportingContextModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentEntryFieldVersionModel(Base):
+    """Append-only canonical tournament field derived from one ranking snapshot."""
+
+    __tablename__ = "tournament_entry_field_versions"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_entry_field_command",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "event_id",
+            "field_fingerprint",
+            name="uq_tournament_entry_field_fingerprint",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    sequence: Mapped[int] = mapped_column(Integer, primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    ranking_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    applications_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    applications_json: Mapped[str] = mapped_column(Text, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationSlotModel(Base):
     """Immutable plan plus evolving completion head for one global slot."""
     __tablename__ = "simulation_slots"

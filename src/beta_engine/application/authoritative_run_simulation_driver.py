@@ -1,7 +1,8 @@
 """Run/Branch-owned orchestration over the authoritative Simulation Slot ledger.
 
-Persisted match packages derived from persisted Entry List and Draw Package evidence
-are frozen as topology authority. Legacy producer files are not execution state.
+Canonical Run-owned Draw authority is the preferred tournament topology source.
+Legacy MatchPackage data remains a temporary execution/result payload and historical
+compatibility reader; legacy producer files are not execution state.
 """
 
 from __future__ import annotations
@@ -20,6 +21,9 @@ from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
     build_authoritative_tournament_ranking_packages,
     validate_adopted_four_player_match_package,
+)
+from beta_engine.application.canonical_tournament_topology import (
+    project_canonical_draw_to_match_topology,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
@@ -56,6 +60,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
@@ -300,7 +307,65 @@ class AuthoritativeRunSimulationDriver:
         ordinal = rows[0]
         return RankingWeek(season_index=ordinal // 61, week=ordinal % 61 + 1)
 
-    def _packages(self, week, *, required=True):
+    def _canonical_draw_binding(
+        self,
+        session,
+        *,
+        run_id,
+        branch_id,
+        week,
+        event_id,
+    ):
+        """Resolve Draw ownership as frozen by adopted tournament authority.
+
+        Before tournament adoption, the current Run-owned Draw Authority may be
+        consumed. After adoption, the stored v5 Draw fingerprint (or historical
+        absence in v1-v4 / v5-null) is immutable replay evidence.
+        """
+        adopted = session.get(
+            AdoptedTournamentAuthorityModel,
+            (run_id, branch_id, week.ordinal),
+        )
+        expected_fp = None
+        binding_frozen = False
+        if adopted is not None:
+            items = self._decode_adopted_authority(adopted.package_json)
+            matches = [
+                draw_fp
+                for package, _, draw_fp in items
+                if package.event_id == event_id
+            ]
+            if len(matches) != 1:
+                raise ValueError(
+                    "frozen tournament authority lacks unique event Draw binding"
+                )
+            expected_fp = matches[0]
+            binding_frozen = True
+
+        draw = TournamentDrawAuthorityStore(session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if binding_frozen:
+            if expected_fp is None:
+                return None
+            if draw is None or draw.fingerprint != expected_fp:
+                raise ValueError(
+                    "frozen tournament authority canonical Draw binding changed"
+                )
+            return draw
+        return draw
+
+    def _packages(
+        self,
+        week,
+        *,
+        required=True,
+        session=None,
+        run_id=None,
+        branch_id=None,
+    ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
         packages = tuple(
             sorted(
@@ -314,10 +379,74 @@ class AuthoritativeRunSimulationDriver:
         )
         if not packages and required:
             raise ValueError("supported tournament authority is missing")
-        packages = tuple(self._bind_current_draw_evidence(p, week) for p in packages)
+        bound = []
         for package in packages:
-            self._topology((package,))
+            canonical = None
+            if session is not None and run_id is not None and branch_id is not None:
+                canonical = self._canonical_draw_binding(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    event_id=package.event_id,
+                )
+            if canonical is not None:
+                package = self._bind_owned_draw_evidence(
+                    package=package,
+                    draw=canonical,
+                    week=week,
+                )
+            else:
+                package = self._bind_current_draw_evidence(package, week)
+            bound.append(package)
+        packages = tuple(bound)
+        # Preserve the historical helper contract for callers that intentionally
+        # use the legacy reader without a Run/Branch session. Production canonical
+        # paths validate through _topology_for_session instead.
+        if session is None:
+            for package in packages:
+                self._topology((package,))
         return packages
+
+    def _bind_owned_draw_evidence(self, *, package, draw, week):
+        """Bind MatchPackage execution payload to canonical Run-owned Draw authority."""
+        expected_season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        if (
+            package.event_id != draw.event_id
+            or package.season != expected_season
+            or package.season_week != week.week
+        ):
+            raise ValueError("canonical Draw/MatchPackage event or week identity conflicts")
+        projected = package.model_copy(deep=True)
+        topology = project_canonical_draw_to_match_topology(
+            draw=draw,
+            package=projected,
+        )
+        bye_winners = dict(topology.bye_winners)
+        for match in projected.qualification_matches + projected.main_draw_matches:
+            winner = bye_winners.get(match.match_id)
+            if winner is None:
+                continue
+            match.winner_player_id = winner
+            match.loser_player_id = None
+            match.scoreline = "BYE"
+            match.status = "completed"
+            match.result_notes = "automatic BYE advance from canonical Draw authority"
+            match.result_fingerprint = fingerprint(
+                {
+                    "action": "canonical_draw_bye_advance.v1",
+                    "draw_authority_fingerprint": draw.fingerprint,
+                    "event_id": projected.event_id,
+                    "match_id": match.match_id,
+                    "winner_player_id": winner,
+                }
+            )
+        return projected.model_copy(
+            update={
+                "frozen_qualifier_promotions": list(topology.qualifier_promotions),
+                "frozen_bye_match_ids": list(topology.bye_match_ids),
+            }
+        )
 
     def _bind_current_draw_evidence(self, package, week):
         """Validate producer lineage and freeze qualification side mappings."""
@@ -527,6 +656,22 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _decode_adopted_authority(payload_json):
         payload = json.loads(payload_json)
+        if payload.get("schema_version") == "adopted_tournament_authority.v5":
+            return tuple(
+                sorted(
+                    (
+                        (
+                            SeasonEventMatchPackage.model_validate(item["package"]),
+                            FrozenPointAwardAuthority.model_validate(
+                                item["point_award_authority"]
+                            ),
+                            item.get("draw_authority_fingerprint"),
+                        )
+                        for item in payload["tournaments"]
+                    ),
+                    key=lambda item: item[0].event_id,
+                )
+            )
         if payload.get("schema_version") in {
             "adopted_tournament_authority.v3",
             "adopted_tournament_authority.v4",
@@ -539,6 +684,7 @@ class AuthoritativeRunSimulationDriver:
                             FrozenPointAwardAuthority.model_validate(
                                 item["point_award_authority"]
                             ),
+                            None,
                         )
                         for item in payload["tournaments"]
                     ),
@@ -552,22 +698,24 @@ class AuthoritativeRunSimulationDriver:
                     FrozenPointAwardAuthority.model_validate(
                         payload["point_award_authority"]
                     ),
+                    None,
                 ),
             )
-        return ((SeasonEventMatchPackage.model_validate(payload), None),)
+        return ((SeasonEventMatchPackage.model_validate(payload), None, None),)
 
     @staticmethod
     def _encode_adopted_authority(items):
         items = tuple(sorted(items, key=lambda item: item[0].event_id))
         return json.dumps(
             {
-                "schema_version": "adopted_tournament_authority.v4",
+                "schema_version": "adopted_tournament_authority.v5",
                 "tournaments": [
                     {
                         "package": p.model_dump(mode="json"),
                         "point_award_authority": a.model_dump(mode="json"),
+                        "draw_authority_fingerprint": draw_fp,
                     }
-                    for p, a in items
+                    for p, a, draw_fp in items
                 ],
             },
             sort_keys=True,
@@ -580,7 +728,19 @@ class AuthoritativeRunSimulationDriver:
         )
         if row is not None:
             items = self._decode_adopted_authority(row.package_json)
-            packages = tuple(p for p, _ in items)
+            packages = tuple(p for p, _, _ in items)
+            for package, _, draw_fp in items:
+                if draw_fp is None:
+                    continue
+                current_draw = TournamentDrawAuthorityStore(session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=package.event_id,
+                )
+                if current_draw is None or current_draw.fingerprint != draw_fp:
+                    raise ValueError(
+                        "frozen tournament authority canonical Draw binding changed"
+                    )
             authority_fp = self._tournament_authority_fingerprint(
                 run_id, branch_id, week, items
             )
@@ -589,15 +749,44 @@ class AuthoritativeRunSimulationDriver:
             return packages, authority_fp
         if not adopt:
             raise ValueError("frozen tournament authority is missing")
-        packages = self._packages(week)
-        if (len(packages) > 1 or len(self._topology(packages)) != 3) and self._schedule(
+        packages = self._packages(
+            week,
+            session=session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        if (
+            len(packages) > 1
+            or len(
+                self._topology_for_session(
+                    session, run_id, branch_id, packages, week=week
+                )
+            )
+            != 3
+        ) and self._schedule(
             session, run_id, branch_id, week
         ) is None:
             raise ValueError(
                 "tournaments lack authoritative explicit Simulation Slot chronology"
             )
         items = tuple(
-            (p, self.awards_service.freeze_point_award_authority(p)) for p in packages
+            (
+                p,
+                self.awards_service.freeze_point_award_authority(p),
+                (
+                    draw.fingerprint
+                    if (
+                        draw := TournamentDrawAuthorityStore(session).get(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            event_id=p.event_id,
+                        )
+                    )
+                    is not None
+                    else None
+                ),
+            )
+            for p in packages
         )
         authority_fp = self._tournament_authority_fingerprint(
             run_id, branch_id, week, items
@@ -625,19 +814,23 @@ class AuthoritativeRunSimulationDriver:
     @staticmethod
     def _tournament_authority_fingerprint(run_id, branch_id, week, items):
         bodies = []
-        for package, point_authority in sorted(
+        for package, point_authority, draw_authority_fingerprint in sorted(
             items, key=lambda item: item[0].event_id
         ):
             payload = package.model_dump(mode="json")
             payload["metadata"].pop("persistence_path", None)
-            bodies.append(
-                {
-                    "package": payload,
-                    "point_award_authority": point_authority.model_dump(mode="json")
-                    if point_authority
-                    else None,
-                }
-            )
+            body = {
+                "package": payload,
+                "point_award_authority": point_authority.model_dump(mode="json")
+                if point_authority
+                else None,
+            }
+            # Preserve historical v1-v4 authority fingerprints exactly. The
+            # canonical Draw anchor is a v5 addition and therefore exists in the
+            # hash payload only when a Draw Authority is actually bound.
+            if draw_authority_fingerprint is not None:
+                body["draw_authority_fingerprint"] = draw_authority_fingerprint
+            bodies.append(body)
         return fingerprint(
             {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}
         )
@@ -660,8 +853,17 @@ class AuthoritativeRunSimulationDriver:
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)
-            packages = self._packages(week, required=False)
+            packages = self._packages(
+                week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
             schedule = self._schedule(session, run_id, branch_id, week)
+            plans = self._topology_for_session(
+                session, run_id, branch_id, packages, week=week
+            ) if packages else {}
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
@@ -669,11 +871,9 @@ class AuthoritativeRunSimulationDriver:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "week": week.model_dump(mode="json"),
-                "required": len(packages) > 1,
+                "required": len(packages) > 1 or len(plans) != 3,
                 "event_ids": [p.event_id for p in packages],
-                "group_ids": [
-                    m.match_id for p in packages for m in p.main_draw_matches
-                ],
+                "group_ids": list(plans),
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
@@ -723,8 +923,17 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError("simulation position is stale")
             if current.current_week != schedule.week:
                 raise ValueError("schedule week is stale")
-            packages = self._packages(schedule.week)
-            self._validate_schedule(schedule, packages)
+            packages = self._packages(
+                schedule.week,
+                session=session,
+                run_id=schedule.run_id,
+                branch_id=schedule.branch_id,
+            )
+            self._validate_schedule(
+                session,
+                schedule,
+                packages,
+            )
             session.add(
                 WeekSimulationScheduleModel(
                     run_id=schedule.run_id,
@@ -755,7 +964,16 @@ class AuthoritativeRunSimulationDriver:
             )
             if current.current_week != schedule.week:
                 raise ValueError("schedule week is stale")
-            self._validate_schedule(schedule, self._packages(schedule.week))
+            self._validate_schedule(
+                session,
+                schedule,
+                self._packages(
+                    schedule.week,
+                    session=session,
+                    run_id=schedule.run_id,
+                    branch_id=schedule.branch_id,
+                ),
+            )
             return {
                 "schedule": schedule.model_dump(mode="json"),
                 "schedule_fingerprint": schedule.fingerprint,
@@ -912,8 +1130,48 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
-    def _validate_schedule(self, schedule, packages):
-        plans = self._topology(packages)
+    def _topology_for_session(
+        self, session, run_id, branch_id, packages, *, week
+    ):
+        """Prefer the Draw source frozen for this tournament authority generation."""
+        if not packages:
+            return {}
+        canonical = []
+        for package in packages:
+            draw = self._canonical_draw_binding(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                event_id=package.event_id,
+            )
+            canonical.append((package, draw))
+        if all(draw is None for _, draw in canonical):
+            return self._topology(packages)
+        if any(draw is None for _, draw in canonical):
+            raise ValueError(
+                "week mixes canonical Draw authority with legacy-only tournament topology"
+            )
+        plans = {}
+        for package, draw in canonical:
+            projection = project_canonical_draw_to_match_topology(
+                draw=draw,
+                package=package,
+            )
+            for plan in projection.plans:
+                if plan.group_id in plans:
+                    raise ValueError("week topology contains duplicate group identity")
+                plans[plan.group_id] = plan
+        return plans
+
+    def _validate_schedule(self, session, schedule, packages):
+        plans = self._topology_for_session(
+            session,
+            schedule.run_id,
+            schedule.branch_id,
+            packages,
+            week=schedule.week,
+        )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
             authored_sequence
@@ -945,13 +1203,27 @@ class AuthoritativeRunSimulationDriver:
         packages = (
             self._authority_package(session, run_id, branch_id, week, adopt=False)[0]
             if frozen
-            else self._packages(week, required=False)
+            else self._packages(
+                week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
         )
         schedule = self._schedule(session, run_id, branch_id, week)
         if (
             schedule is None
             and packages
-            and (len(packages) > 1 or len(self._topology(packages)) != 3)
+            and (
+                len(packages) > 1
+                or len(
+                    self._topology_for_session(
+                        session, run_id, branch_id, packages, week=week
+                    )
+                )
+                != 3
+            )
             and not allow_missing_schedule
         ):
             raise ValueError(
@@ -975,7 +1247,13 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
-        plans = self._topology(packages) if packages else {}
+        plans = (
+            self._topology_for_session(
+                session, run_id, branch_id, packages, week=week
+            )
+            if packages
+            else {}
+        )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
         if not authored_slots and len(packages) == 1 and len(plans) == 3:
@@ -1091,7 +1369,22 @@ class AuthoritativeRunSimulationDriver:
                     branch_id,
                     week,
                     tuple(
-                        (p, self.awards_service.freeze_point_award_authority(p))
+                        (
+                            p,
+                            self.awards_service.freeze_point_award_authority(p),
+                            (
+                                draw.fingerprint
+                                if (
+                                    draw := TournamentDrawAuthorityStore(session).get(
+                                        run_id=run_id,
+                                        branch_id=branch_id,
+                                        event_id=p.event_id,
+                                    )
+                                )
+                                is not None
+                                else None
+                            ),
+                        )
                         for p in packages
                     ),
                 )
@@ -1158,7 +1451,13 @@ class AuthoritativeRunSimulationDriver:
         schedule = self._schedule(
             session, command.run_id, command.branch_id, command.expected_week
         )
-        plans = self._topology(packages)
+        plans = self._topology_for_session(
+            session,
+            command.run_id,
+            command.branch_id,
+            packages,
+            week=command.expected_week,
+        )
         if schedule:
             spec = next(x for x in schedule.slots if x.ordinal == pos.slot_ordinal)
         else:
@@ -1305,7 +1604,7 @@ class AuthoritativeRunSimulationDriver:
                 (command.run_id, command.branch_id, command.expected_week.ordinal),
             ).package_json
         )
-        for package, point_authority in items:
+        for package, point_authority, draw_fp in items:
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches
@@ -1313,23 +1612,42 @@ class AuthoritativeRunSimulationDriver:
             )
             if not all(m.match_id in loaded for m in matches):
                 continue
-            terminals = tuple(
-                m
-                for m in package.main_draw_matches
-                if m.match_id not in package.frozen_bye_match_ids
-                and not m.winner_to_match_id
-            )
-            if len(matches) == 3 and len(terminals) == 3:
-                _, ordered = validate_adopted_four_player_match_package(package)
-                terminals = (ordered[2],)
-            if len(terminals) != 1:
-                raise ValueError("frozen tournament topology has ambiguous terminal")
+            if draw_fp is not None:
+                draw = TournamentDrawAuthorityStore(session).get(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_id=package.event_id,
+                )
+                if draw is None or draw.fingerprint != draw_fp:
+                    raise ValueError(
+                        "frozen tournament canonical Draw binding changed"
+                    )
+                projection = project_canonical_draw_to_match_topology(
+                    draw=draw,
+                    package=package,
+                )
+                terminal_match_id = projection.terminal_group_id
+            else:
+                terminals = tuple(
+                    m
+                    for m in package.main_draw_matches
+                    if m.match_id not in package.frozen_bye_match_ids
+                    and not m.winner_to_match_id
+                )
+                if len(matches) == 3 and len(terminals) == 3:
+                    _, ordered = validate_adopted_four_player_match_package(package)
+                    terminals = (ordered[2],)
+                if len(terminals) != 1:
+                    raise ValueError(
+                        "frozen tournament topology has ambiguous terminal"
+                    )
+                terminal_match_id = terminals[0].match_id
             auth = AuthoritativeTournamentResult(
                 event_id=package.event_id,
                 groups=tuple(loaded[m.match_id] for m in matches),
-                terminal_group_ids=(terminals[0].match_id,),
+                terminal_group_ids=(terminal_match_id,),
                 champion_player_id=loaded[
-                    terminals[0].match_id
+                    terminal_match_id
                 ].result.winner_player_id,
                 match_result_fingerprints=tuple(
                     loaded[m.match_id].result_fingerprint for m in matches

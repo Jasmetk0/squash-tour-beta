@@ -25,8 +25,9 @@ Snapshot, append-only canonical Tournament Entry Field history and immutable
 Run/Branch/Event Draw Input authority. The current bounded follow-up generates and
 persists replayable Qualification/Main bracket authority directly from that frozen
 input, including explicit seed positions, qualifier placeholders, Main BYEs and a
-complete binary feeder-node DAG. It fails closed for incomplete Qualification
-fields and unresolved Wild Card authority. Legacy DrawPackage files are still not
+complete binary feeder-node DAG. The first Qualification slice supports exactly
+zero or one qualifier spot and fails closed for multi-qualifier topology, incomplete
+Qualification fields and unresolved Wild Card authority. Legacy DrawPackage files are still not
 promoted to Run authority, and the full seed-band/randomization contract remains a
 later canonical expansion rather than being inferred from legacy UI behavior.
 

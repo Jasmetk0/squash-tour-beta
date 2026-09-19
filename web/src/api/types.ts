@@ -836,6 +836,14 @@ export type AdoptAuthoritativeWeekScheduleProposalPayload = {
   expected_position_fingerprint: string
 }
 
+export type AuthoritativeWeekScheduleAdoptionResult =
+  | AuthoritativeWeekScheduleInspection
+  | {
+      schedule: AuthoritativeWeekSchedule
+      schedule_fingerprint: string
+      adoption: 'exact_retry'
+    }
+
 export type AuthoritativeSimulationCommandPayload = {
   command_id: string
   run_id: string

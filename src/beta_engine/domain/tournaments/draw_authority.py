@@ -109,7 +109,10 @@ class TournamentDrawBracket(FrozenInput):
     nodes: tuple[TournamentDrawNode, ...]
     bye_slot_indexes: tuple[int, ...] = ()
     qualifier_placeholder_slots: tuple[tuple[str, int], ...] = ()
-    lucky_loser_placeholder_slots: tuple[tuple[str, int], ...] = ()
+    lucky_loser_placeholder_slots: tuple[tuple[str, int], ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
 
     @model_validator(mode="after")
     def validate_bracket(self) -> "TournamentDrawBracket":

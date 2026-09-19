@@ -335,3 +335,150 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
             ),
             candidates=candidates,
         )
+
+
+class TournamentLuckyLoserFillAuthority(FrozenInput):
+    """One chronological LL placeholder bound to one frozen LL candidate."""
+
+    schema_version: Literal["tournament_lucky_loser_fill.v1"] = (
+        "tournament_lucky_loser_fill.v1"
+    )
+    run_id: str = Field(min_length=1)
+    branch_id: str = Field(min_length=1)
+    event_id: str = Field(min_length=1)
+    command_id: str = Field(min_length=1, max_length=128)
+    predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    predecessor_draw_input_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    placeholder_id: str = Field(pattern=r"^LL[1-9][0-9]*$")
+    lucky_loser_ordinal: int = Field(ge=1)
+    physical_slot_index: int = Field(ge=1)
+    order_authority: TournamentLuckyLoserOrderAuthority
+    selected_candidate: TournamentLuckyLoserCandidate
+    prior_assigned_player_ids: tuple[str, ...] = ()
+    unavailable_player_ids: tuple[str, ...] = ()
+    skipped_candidate_player_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_fill(self):
+        if self.placeholder_id != f"LL{self.lucky_loser_ordinal}":
+            raise ValueError("LL fill placeholder identity differs from ordinal")
+        if (
+            self.order_authority.run_id,
+            self.order_authority.branch_id,
+            self.order_authority.event_id,
+        ) != (self.run_id, self.branch_id, self.event_id):
+            raise ValueError("LL fill order authority scope mismatch")
+        if tuple(sorted(set(self.unavailable_player_ids))) != self.unavailable_player_ids:
+            raise ValueError("LL unavailable identities must be sorted and unique")
+        if len(set(self.prior_assigned_player_ids)) != len(
+            self.prior_assigned_player_ids
+        ):
+            raise ValueError("LL prior assignments must be unique")
+        if self.selected_candidate.player_id in set(self.prior_assigned_player_ids):
+            raise ValueError("LL selected candidate is already assigned")
+        if self.selected_candidate.player_id in set(self.unavailable_player_ids):
+            raise ValueError("LL selected candidate is unavailable")
+        candidates = self.order_authority.candidates
+        if self.selected_candidate not in candidates:
+            raise ValueError("LL selected candidate is absent from frozen LL order")
+        selected_index = candidates.index(self.selected_candidate)
+        blocked = set(self.prior_assigned_player_ids) | set(self.unavailable_player_ids)
+        expected_skipped = tuple(
+            item.player_id
+            for item in candidates[:selected_index]
+            if item.player_id in blocked
+        )
+        if expected_skipped != self.skipped_candidate_player_ids:
+            raise ValueError("LL skipped-candidate evidence differs from frozen order")
+        if any(
+            item.player_id not in blocked
+            for item in candidates[:selected_index]
+        ):
+            raise ValueError("LL fill skipped an eligible higher-priority candidate")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                self.model_dump(mode="json"),
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+
+
+class TournamentLuckyLoserFillAuthorityBuilder:
+    @staticmethod
+    def build(
+        *,
+        predecessor: TournamentDrawAuthority,
+        predecessor_draw_input: TournamentDrawInputAuthority,
+        command_id: str,
+        order_authority: TournamentLuckyLoserOrderAuthority,
+        unavailable_player_ids: tuple[str, ...],
+    ) -> TournamentLuckyLoserFillAuthority:
+        scope = (predecessor.run_id, predecessor.branch_id, predecessor.event_id)
+        if (
+            predecessor_draw_input.run_id,
+            predecessor_draw_input.branch_id,
+            predecessor_draw_input.event_id,
+        ) != scope:
+            raise ValueError("LL fill predecessor Draw Input scope mismatch")
+        if predecessor.draw_input_fingerprint != predecessor_draw_input.fingerprint:
+            raise ValueError("LL fill predecessor Draw/Input binding mismatch")
+        if (
+            order_authority.run_id,
+            order_authority.branch_id,
+            order_authority.event_id,
+        ) != scope:
+            raise ValueError("LL fill order authority scope mismatch")
+
+        filled_count = len(predecessor_draw_input.lucky_loser_player_ids)
+        if filled_count >= len(predecessor_draw_input.lucky_loser_placeholder_ids):
+            raise ValueError("No unresolved Lucky Loser placeholder remains")
+        expected_placeholder = predecessor_draw_input.lucky_loser_placeholder_ids[
+            filled_count
+        ]
+        matching = [
+            slot
+            for slot in predecessor.main.slots
+            if slot.entrant_kind == "lucky_loser_placeholder"
+            and slot.placeholder_id == expected_placeholder
+        ]
+        if len(matching) != 1:
+            raise ValueError("Next Lucky Loser placeholder is not present exactly once")
+        slot = matching[0]
+        prior = predecessor_draw_input.lucky_loser_player_ids
+        unavailable = tuple(sorted(set(unavailable_player_ids)))
+        blocked = set(prior) | set(unavailable)
+
+        skipped = []
+        selected = None
+        for candidate in order_authority.candidates:
+            if candidate.player_id in blocked:
+                skipped.append(candidate.player_id)
+                continue
+            selected = candidate
+            break
+        if selected is None:
+            raise ValueError(
+                "Lucky Loser candidate pool is exhausted; external reserve fallback required"
+            )
+
+        return TournamentLuckyLoserFillAuthority(
+            run_id=scope[0],
+            branch_id=scope[1],
+            event_id=scope[2],
+            command_id=command_id,
+            predecessor_draw_fingerprint=predecessor.fingerprint,
+            predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
+            placeholder_id=expected_placeholder,
+            lucky_loser_ordinal=filled_count + 1,
+            physical_slot_index=slot.slot_index,
+            order_authority=order_authority,
+            selected_candidate=selected,
+            prior_assigned_player_ids=prior,
+            unavailable_player_ids=unavailable,
+            skipped_candidate_player_ids=tuple(skipped),
+        )

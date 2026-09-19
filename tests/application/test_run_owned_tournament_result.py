@@ -269,6 +269,81 @@ def test_canonical_result_preserves_qualification_provenance_into_main():
     assert dto.metadata.draw_package_fingerprint == draw.fingerprint
 
 
+def test_canonical_result_keeps_withdrawn_q_winner_separate_from_lucky_loser():
+    initial = TournamentDrawAuthorityBuilder.build(
+        draw_input=_input(qualification=True),
+        command_id="draw-q-winner-ll-repair",
+    )
+    q_winner = "D"
+    lucky_loser = "E"
+
+    linked_q_slot = next(
+        slot
+        for slot in initial.main.slots
+        if slot.entrant_kind == "qualifier_placeholder"
+    )
+    repaired_slots = tuple(
+        slot.model_copy(
+            update={
+                "entrant_kind": "player",
+                "player_id": lucky_loser,
+                "placeholder_id": None,
+                "seed_number": None,
+                "is_seed_protected": False,
+                "entry_status": "lucky_loser",
+                "lucky_loser_placeholder_id": "LL1",
+            }
+        )
+        if slot.slot_index == linked_q_slot.slot_index
+        else slot
+        for slot in initial.main.slots
+    )
+    repaired_main = initial.main.model_copy(
+        update={
+            "slots": repaired_slots,
+            "qualifier_placeholder_slots": (),
+            "lucky_loser_placeholder_slots": (),
+        }
+    )
+    draw = initial.model_copy(update={"main": repaired_main})
+
+    event = _event(qualification=True)
+    package = build_run_owned_match_package(
+        draw=draw,
+        event=event,
+        week=RankingWeek(season_index=0, week=1),
+    )
+    completed = _complete(draw, package)
+    authority = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        draw=draw,
+        package=completed,
+    )
+
+    assert authority.qualification_winner_ids == (q_winner,)
+    by_player = {player.player_id: player for player in authority.players}
+
+    withdrawn_winner = by_player[q_winner]
+    assert withdrawn_winner.draw_type == "qualification"
+    assert withdrawn_winner.qualifier is True
+    assert withdrawn_winner.reached_stage == "qualification_winner"
+
+    replacement = by_player[lucky_loser]
+    assert replacement.draw_type == "both"
+    assert replacement.qualifier is True
+    assert lucky_loser not in authority.qualification_winner_ids
+
+    q_match = next(
+        match
+        for match in authority.matches
+        if match.draw_type == "qualification"
+    )
+    assert q_match.winner_player_id == q_winner
+    assert q_match.loser_player_id == lucky_loser
+
+
 def test_canonical_result_collects_four_independent_qualification_winners():
     draw = TournamentDrawAuthorityBuilder.build(
         draw_input=_multi_qualification_input(),

@@ -602,9 +602,9 @@ class TournamentDrawInputAuthorityBuilder:
                     "tournament_draw_input_authority.v8"
                     if previous.schema_version == "tournament_draw_input_authority.v8"
                     else (
-                    "tournament_draw_input_authority.v7"
-                    if previous.lucky_loser_player_ids
-                    else "tournament_draw_input_authority.v6"
+                        "tournament_draw_input_authority.v7"
+                        if previous.lucky_loser_player_ids
+                        else "tournament_draw_input_authority.v6"
                     )
                 )
             ),

@@ -25,11 +25,16 @@ from beta_engine.domain.tournaments.draw_process_authority import (
 )
 
 
-TournamentDrawRevisionRepairKind = Literal["full_redraw", "seed_cascade_phase"]
+TournamentDrawRevisionRepairKind = Literal[
+    "full_redraw",
+    "seed_cascade_phase",
+    "draw_frozen_phase",
+]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
     "seed_cascade",
     "direct_slot_fill",
+    "frozen_slot_fill",
 ]
 
 
@@ -37,6 +42,7 @@ class TournamentDrawRevision(FrozenInput):
     schema_version: Literal[
         "tournament_draw_revision.v2",
         "tournament_draw_revision.v3",
+        "tournament_draw_revision.v4",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -111,7 +117,7 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Historical full redraw revision cannot carry cascade actions"
                 )
-        else:
+        elif self.repair_kind == "seed_cascade_phase":
             if self.schema_version != "tournament_draw_revision.v3":
                 raise ValueError(
                     "Seed-cascade phase repair requires revision schema v3"
@@ -147,6 +153,47 @@ class TournamentDrawRevision(FrozenInput):
             if "full_redraw" not in actions and self.repair_draw_seed is not None:
                 raise ValueError(
                     "Pure seed-cascade phase repair cannot introduce a new draw seed"
+                )
+        else:
+            if self.schema_version != "tournament_draw_revision.v4":
+                raise ValueError(
+                    "Draw-Freeze phase repair requires revision schema v4"
+                )
+            if "main" in self.affected_draw_types:
+                if self.main_repair_action is None:
+                    raise ValueError(
+                        "Main Draw-Freeze phase repair lacks repair action"
+                    )
+            elif self.main_repair_action is not None:
+                raise ValueError("Unchanged Main Draw cannot carry a repair action")
+            if "qualification" in self.affected_draw_types:
+                if self.qualification_repair_action is None:
+                    raise ValueError(
+                        "Qualification Draw-Freeze phase repair lacks repair action"
+                    )
+            elif self.qualification_repair_action is not None:
+                raise ValueError(
+                    "Unchanged Qualification Draw cannot carry a repair action"
+                )
+            actions = {
+                action
+                for action in (
+                    self.main_repair_action,
+                    self.qualification_repair_action,
+                )
+                if action is not None
+            }
+            if "frozen_slot_fill" not in actions:
+                raise ValueError(
+                    "Draw-Freeze phase repair requires at least one frozen-slot action"
+                )
+            if "full_redraw" in actions and self.repair_draw_seed is None:
+                raise ValueError(
+                    "Mixed Draw-Freeze repair with full redraw requires repair seed"
+                )
+            if "full_redraw" not in actions and self.repair_draw_seed is not None:
+                raise ValueError(
+                    "Draw-Freeze repair without full redraw cannot introduce a new draw seed"
                 )
         return self
 
@@ -430,6 +477,193 @@ class TournamentDrawRevisionBuilder:
             successor_draw=successor,
         )
 
+    @staticmethod
+    def build_draw_frozen_phase(
+        *,
+        predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
+        successor_draw_input: TournamentDrawInputAuthority,
+        process_authority: TournamentDrawProcessAuthority,
+        affected_draw_types: tuple[TournamentDrawType, ...],
+        main_process_window_ordinal: int | None,
+        qualification_process_window_ordinal: int | None,
+        withdrawn_player_ids: tuple[str, ...],
+        sequence: int,
+        command_id: str,
+        repair_draw_seed: int | None = None,
+    ) -> TournamentDrawRevision:
+        if not affected_draw_types:
+            raise ValueError(
+                "Draw-Freeze phase repair requires at least one affected draw component"
+            )
+
+        phases = {}
+        if "main" in affected_draw_types:
+            if main_process_window_ordinal is None:
+                raise ValueError("Main repair requires Main process-window evidence")
+            phases["main"] = process_authority.phase_for(
+                draw_type="main",
+                process_window_ordinal=main_process_window_ordinal,
+            )
+        if "qualification" in affected_draw_types:
+            if qualification_process_window_ordinal is None:
+                raise ValueError(
+                    "Qualification repair requires Qualification process-window evidence"
+                )
+            phases["qualification"] = process_authority.phase_for(
+                draw_type="qualification",
+                process_window_ordinal=qualification_process_window_ordinal,
+            )
+
+        if "draw_frozen" not in phases.values():
+            raise ValueError(
+                "This repair path requires at least one affected component after Draw Freeze"
+            )
+
+        needs_full_redraw = "full_redraw" in phases.values()
+        if needs_full_redraw and repair_draw_seed is None:
+            raise ValueError(
+                "Mixed Draw-Freeze repair requires a seed for full-redraw components"
+            )
+        if not needs_full_redraw and repair_draw_seed is not None:
+            raise ValueError(
+                "Draw-Freeze repair without full redraw cannot introduce a new draw seed"
+            )
+
+        regenerated = None
+        if needs_full_redraw:
+            regenerated = TournamentDrawAuthorityBuilder.build(
+                draw_input=successor_draw_input,
+                command_id=command_id,
+                algorithm_version=predecessor.algorithm_version,
+                draw_seed_override=repair_draw_seed,
+            )
+
+        main = predecessor.main
+        main_action = None
+        if "main" in affected_draw_types:
+            phase = phases["main"]
+            if phase == "full_redraw":
+                assert regenerated is not None
+                main = regenerated.main
+                main_action = "full_redraw"
+            elif phase == "seed_cascade":
+                repaired, main_action = _repair_bracket_family(
+                    brackets=(predecessor.main,),
+                    target_player_ids=(
+                        *successor_draw_input.direct_main_player_ids,
+                        *successor_draw_input.wild_card_player_ids,
+                    ),
+                    draw_type="main",
+                    qualification_section_count=1,
+                )
+                main = repaired[0]
+            else:
+                repaired = _repair_frozen_bracket_family(
+                    brackets=(predecessor.main,),
+                    target_player_ids=(
+                        *successor_draw_input.direct_main_player_ids,
+                        *successor_draw_input.wild_card_player_ids,
+                    ),
+                )
+                main = repaired[0]
+                main_action = "frozen_slot_fill"
+
+        qualification = predecessor.qualification
+        qualification_sections = predecessor.qualification_sections
+        qualification_action = None
+        if "qualification" in affected_draw_types:
+            phase = phases["qualification"]
+            if phase == "full_redraw":
+                assert regenerated is not None
+                qualification = regenerated.qualification
+                qualification_sections = regenerated.qualification_sections
+                qualification_action = "full_redraw"
+            else:
+                original_q = predecessor.qualification_brackets
+                if not original_q:
+                    raise ValueError(
+                        "Qualification repair requested for tournament without Q Draw"
+                    )
+                if phase == "seed_cascade":
+                    repaired_q, qualification_action = _repair_bracket_family(
+                        brackets=original_q,
+                        target_player_ids=successor_draw_input.qualification_player_ids,
+                        draw_type="qualification",
+                        qualification_section_count=len(original_q),
+                    )
+                else:
+                    repaired_q = _repair_frozen_bracket_family(
+                        brackets=original_q,
+                        target_player_ids=successor_draw_input.qualification_player_ids,
+                    )
+                    qualification_action = "frozen_slot_fill"
+                if predecessor.qualification_sections:
+                    qualification = None
+                    qualification_sections = repaired_q
+                else:
+                    qualification = repaired_q[0]
+                    qualification_sections = ()
+
+        successor = TournamentDrawAuthority(
+            schema_version=predecessor.schema_version,
+            algorithm_version=predecessor.algorithm_version,
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            generated_by_command_id=command_id,
+            draw_input_fingerprint=successor_draw_input.fingerprint,
+            qualification=qualification,
+            qualification_sections=qualification_sections,
+            main=main,
+        )
+
+        before_q_ids = {
+            placeholder_id
+            for placeholder_id, _ in predecessor.main.qualifier_placeholder_slots
+        }
+        after_q_ids = {
+            placeholder_id
+            for placeholder_id, _ in successor.main.qualifier_placeholder_slots
+        }
+        if before_q_ids != after_q_ids:
+            raise ValueError(
+                "Draw-Freeze phase repair changed Q placeholder identities"
+            )
+        if tuple(
+            bracket.section_id for bracket in predecessor.qualification_brackets
+        ) != tuple(
+            bracket.section_id for bracket in successor.qualification_brackets
+        ):
+            raise ValueError(
+                "Draw-Freeze phase repair changed Q1..Qn linkage identities"
+            )
+
+        return TournamentDrawRevision(
+            schema_version="tournament_draw_revision.v4",
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            sequence=sequence,
+            command_id=command_id,
+            repair_kind="draw_frozen_phase",
+            affected_draw_types=affected_draw_types,
+            main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                qualification_process_window_ordinal
+            ),
+            repair_draw_seed=repair_draw_seed,
+            main_repair_action=main_action,
+            qualification_repair_action=qualification_action,
+            withdrawn_player_ids=withdrawn_player_ids,
+            predecessor_draw_fingerprint=predecessor.fingerprint,
+            process_authority_fingerprint=process_authority.fingerprint,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            successor_draw=successor,
+        )
+
+
 def _repair_bracket_family(
     *,
     brackets: tuple[TournamentDrawBracket, ...],
@@ -660,6 +894,128 @@ def _repair_bracket_family(
     return tuple(rebuilt), (
         "seed_cascade" if seeded_removed_refs else "direct_slot_fill"
     )
+
+
+def _repair_frozen_bracket_family(
+    *,
+    brackets: tuple[TournamentDrawBracket, ...],
+    target_player_ids: tuple[str, ...],
+) -> tuple[TournamentDrawBracket, ...]:
+    templates: dict[tuple[int, int], TournamentDrawSlot] = {}
+    mutable: dict[tuple[int, int], TournamentDrawSlot] = {}
+    player_ref: dict[str, tuple[int, int]] = {}
+    for bracket_index, bracket in enumerate(brackets):
+        for slot in bracket.slots:
+            ref = (bracket_index, slot.slot_index)
+            templates[ref] = slot
+            mutable[ref] = slot
+            if slot.player_id is not None:
+                if slot.player_id in player_ref:
+                    raise ValueError(
+                        "Draw-Freeze repair contains duplicate predecessor player"
+                    )
+                player_ref[slot.player_id] = ref
+
+    predecessor_players = set(player_ref)
+    target_set = set(target_player_ids)
+    if len(target_set) != len(target_player_ids):
+        raise ValueError("Draw-Freeze repair target contains duplicate players")
+
+    removed = predecessor_players - target_set
+    incoming = tuple(
+        player_id
+        for player_id in target_player_ids
+        if player_id not in predecessor_players
+    )
+    if not removed:
+        raise ValueError(
+            "Draw-Freeze repair component has no removed predecessor player"
+        )
+    if len(incoming) > len(removed):
+        raise ValueError(
+            "Draw-Freeze repair has more incoming players than physical vacancies"
+        )
+
+    ordered_vacancies = sorted(
+        (player_ref[player_id] for player_id in removed),
+        key=lambda ref: _ordinary_vacancy_priority(ref, templates),
+    )
+    replacement_count = len(incoming)
+    for destination, player_id in zip(
+        ordered_vacancies[:replacement_count],
+        incoming,
+        strict=True,
+    ):
+        template = templates[destination]
+        mutable[destination] = TournamentDrawSlot(
+            slot_index=template.slot_index,
+            idealized_slot_number=template.idealized_slot_number,
+            entrant_kind="player",
+            player_id=player_id,
+        )
+
+    for destination in ordered_vacancies[replacement_count:]:
+        template = templates[destination]
+        mutable[destination] = TournamentDrawSlot(
+            slot_index=template.slot_index,
+            idealized_slot_number=template.idealized_slot_number,
+            entrant_kind="bye",
+        )
+
+    rebuilt = []
+    for bracket_index, bracket in enumerate(brackets):
+        slots = tuple(
+            mutable[(bracket_index, index)]
+            for index in range(1, bracket.bracket_size + 1)
+        )
+        players = {
+            slot.player_id
+            for slot in slots
+            if slot.player_id is not None
+        }
+        rebuilt.append(
+            TournamentDrawBracket(
+                draw_type=bracket.draw_type,
+                section_id=bracket.section_id,
+                bracket_size=bracket.bracket_size,
+                seed_positions=tuple(
+                    sorted(
+                        (slot.seed_number, slot.slot_index)
+                        for slot in slots
+                        if slot.seed_number is not None
+                    )
+                ),
+                slots=slots,
+                nodes=bracket.nodes,
+                bye_slot_indexes=tuple(
+                    slot.slot_index
+                    for slot in slots
+                    if slot.entrant_kind == "bye"
+                ),
+                qualifier_placeholder_slots=tuple(
+                    (slot.placeholder_id, slot.slot_index)
+                    for slot in slots
+                    if slot.entrant_kind == "qualifier_placeholder"
+                    and slot.placeholder_id is not None
+                ),
+            )
+        )
+        if not players <= target_set:
+            raise ValueError(
+                "Draw-Freeze repair retained a player outside successor field"
+            )
+
+    actual_players = {
+        slot.player_id
+        for bracket in rebuilt
+        for slot in bracket.slots
+        if slot.player_id is not None
+    }
+    if actual_players != target_set:
+        raise ValueError(
+            "Draw-Freeze repair physical player set differs from successor field"
+        )
+    return tuple(rebuilt)
 
 
 def _seed_tier(

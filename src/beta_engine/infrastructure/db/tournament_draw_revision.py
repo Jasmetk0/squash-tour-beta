@@ -187,8 +187,20 @@ class TournamentDrawRevisionStore:
                 TournamentDrawRevisionModel.command_id == command_id,
             )
         )
+        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if retry is not None:
-            revision = TournamentDrawRevision.model_validate_json(retry.payload_json)
+            revision = next(
+                (
+                    item
+                    for item in history
+                    if item.command_id == command_id
+                ),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Tournament Draw revision command exists outside validated history"
+                )
             if (
                 retry.event_id != event_id
                 or revision.withdrawn_player_ids != requested
@@ -202,7 +214,6 @@ class TournamentDrawRevisionStore:
                 )
             return revision
 
-        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         predecessor = (
             history[-1].successor_draw
             if history

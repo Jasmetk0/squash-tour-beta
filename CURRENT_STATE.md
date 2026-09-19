@@ -298,11 +298,20 @@ canonicalized, and the complete v3 repair revision deterministically replays fro
 frozen authority.
 Historical v2 full-redraw fingerprints remain backward-compatible.
 
-This still does **not** claim the complete Master draw contract. The current middle
-phase intentionally fails closed when the repaired field cannot maintain physical
-player-count parity; replacement exhaustion / late BYE handling belongs with the
-remaining replacement slices rather than being invented here. Direct frozen-slot
-mutation after Draw Freeze, post-draw WC/RWC repair, Lucky Loser ordering, group
-Qualification and the per-player first-real-match replacement cutoff remain Gate 3
-work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Draw Freeze now has append-only v4 physical-slot repair. Once a component is
+frozen, no seed cascade, sector movement or other-slot mutation is allowed: the
+ranking-resolved incoming player enters the exact vacated physical slot without
+inheriting seed number, seed protection or entry status. If no replacement remains,
+that exact slot becomes a late BYE. Main and Qualification still gate independently,
+so one atomic v4 revision may combine a frozen-slot repair with a seed cascade or
+full redraw in the other component. Multi-Q section/Q identities stay fixed, pure
+frozen repair keeps the existing draw seed, replay is deterministic from frozen
+authority, and Saved Revision restore covers the v4 successor.
+
+This still does **not** claim the complete Master draw contract. The middle
+seed-cascade phase still intentionally fails closed when replacement-backed
+player-count parity cannot be maintained. Post-draw WC/RWC repair, Lucky Loser
+ordering, group Qualification and the per-player first-real-match replacement cutoff
+remain Gate 3 work; W/O after that player-specific cutoff is therefore not inferred
+from Draw Freeze alone. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

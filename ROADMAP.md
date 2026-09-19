@@ -283,8 +283,19 @@ Multi-Q identities are preserved and the append-only revision is deterministic S
 Revision state. Pure cascade keeps the existing draw seed. The slice currently fails
 closed if replacement-backed player-count parity cannot be maintained.
 
-The next draw-focused slice is direct frozen physical-slot fill after Draw Freeze,
-including the remaining replacement-exhaustion boundary rather than inventing it in
-the middle phase. Post-draw WC/RWC, Lucky Loser, group Qualification and the
-first-real-match replacement cutoff remain subsequent Gate 3 work. Legacy
-simulation-run UI/endpoint retirement remains separate Gate 3 work.
+The Draw Freeze repair phase now uses append-only v4 revisions. Every affected
+component is gated independently: a frozen component changes only the exact vacated
+physical slot, while another affected component in the same atomic revision may
+still full-redraw or seed-cascade according to its own process window. Frozen-slot
+replacements never inherit the predecessor's seed number, seed protection or entry
+status. If the ranking-ordered frozen field has no permitted replacement left, the
+same physical slot becomes a late BYE with no reshuffle. Multi-Q section identities,
+the existing draw seed and deterministic revision replay remain stable. The middle
+seed-cascade path still intentionally requires replacement-backed player-count
+parity.
+
+Post-draw WC/RWC, Lucky Loser, group Qualification and the per-player
+first-real-match replacement cutoff remain subsequent Gate 3 work. W/O after that
+player-specific cutoff therefore remains fail-closed rather than being inferred from
+Draw Freeze alone. Legacy simulation-run UI/endpoint retirement remains separate
+Gate 3 work.

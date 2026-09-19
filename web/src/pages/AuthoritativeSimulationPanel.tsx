@@ -496,6 +496,8 @@ export function AuthoritativeSimulationPanel({
             <p className="error">Authoritative simulation Save failed: {formatApiError(saveMutation.error)}</p>
           ) : null}
         </>
+      ) : null}
+
       {position ? (
         <>
           <h4>Canonical Week Transition</h4>
@@ -582,7 +584,6 @@ export function AuthoritativeSimulationPanel({
             </>
           ) : null}
         </>
-      ) : null}
       ) : null}
     </SectionCard>
   )

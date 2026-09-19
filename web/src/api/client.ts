@@ -46,6 +46,7 @@ import type {
   PreDrawWithdrawalActionHistoryResponse,
   PreDrawWithdrawalResultResponse,
   PreDrawWithdrawalStateResponse,
+  CanonicalTournamentEntryFieldState,
   RunLineageApiResponse,
   RunStatusSummary,
   RunWorldStatus,
@@ -1198,6 +1199,25 @@ export function assignEventWildcards(
 
 export function getEventPreDrawWithdrawalState(runId: string, eventId: string): Promise<PreDrawWithdrawalStateResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal`)
+}
+
+export async function getCanonicalTournamentEntryFieldState(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentEntryFieldState> {
+  const data = await request<CanonicalTournamentEntryFieldState>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field`
+  )
+  if (
+    data.schema_version !== 'canonical_tournament_entry_field_state.v2' ||
+    data.run_id !== runId ||
+    data.branch_id !== branchId ||
+    data.event_id !== eventId
+  ) {
+    throw new Error('Canonical Tournament Entry Field response does not match the requested scope.')
+  }
+  return data
 }
 
 export function applyEventPreDrawWithdrawal(

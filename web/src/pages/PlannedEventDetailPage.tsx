@@ -11,6 +11,7 @@ import {
   getEventLateReplacementState,
   getEventPreDrawWithdrawalActions,
   getEventPreDrawWithdrawalState,
+  getCanonicalTournamentEntryFieldState,
   getEventWildcardActions,
   getEventWildcardCandidates,
   getEventWildcards,
@@ -95,6 +96,19 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
+  const activeBranchId = viewed.time?.branchId ?? ''
+  const canonicalEntryFieldQuery = useQuery({
+    queryKey: ['canonical-entry-field', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentEntryFieldState(runId, activeBranchId, eventId),
+    enabled: Boolean(runId && activeBranchId && eventId) && !viewed.historical,
+    retry: false
+  })
+  const canonicalEntryFieldUnavailable = Boolean(
+    canonicalEntryFieldQuery.error &&
+      typeof canonicalEntryFieldQuery.error === 'object' &&
+      'status' in canonicalEntryFieldQuery.error &&
+      canonicalEntryFieldQuery.error.status === 404
+  )
   const preDrawWithdrawalActionsQuery = useQuery({
     queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
     queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
@@ -308,6 +322,48 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <SectionCard title="Canonical Main Draw preflight">
+          {canonicalEntryFieldQuery.isLoading ? <p className="status">Loading canonical Main Draw geometry...</p> : null}
+          {canonicalEntryFieldUnavailable ? (
+            <p className="status">Canonical Tournament Entry Field is not available for this event yet.</p>
+          ) : null}
+          {canonicalEntryFieldQuery.error && !canonicalEntryFieldUnavailable ? (
+            <p className="error">
+              Failed to load canonical Main Draw preflight: {formatApiError(canonicalEntryFieldQuery.error)}
+            </p>
+          ) : null}
+          {canonicalEntryFieldQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Active Branch', value: canonicalEntryFieldQuery.data.branch_id },
+                  { label: 'Field version', value: canonicalEntryFieldQuery.data.field_sequence },
+                  { label: 'Bracket capacity', value: canonicalEntryFieldQuery.data.main_draw_capacity },
+                  { label: 'Current entrants', value: canonicalEntryFieldQuery.data.active_main_entrant_count },
+                  { label: 'Effective BYEs', value: canonicalEntryFieldQuery.data.effective_main_bye_count },
+                  {
+                    label: 'Draw Input',
+                    value: canonicalEntryFieldQuery.data.draw_input_committed ? 'Committed' : 'Not committed'
+                  }
+                ]}
+              />
+              {canonicalEntryFieldQuery.data.main_diagnostics.length > 0 ? (
+                <ul aria-label="Main Draw warnings">
+                  {canonicalEntryFieldQuery.data.main_diagnostics.map((diagnostic) => (
+                    <li key={diagnostic.code}>
+                      <strong>{diagnostic.message}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="status">No Main Draw geometry warnings.</p>
+              )}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
 
       {plannedEvent && !viewed.historical ? (
         <SectionCard title="Commissioner late replacement lucky loser">

@@ -409,10 +409,23 @@ with a player carrying `entry_status=lucky_loser` plus the retained `LLx` identi
 No Lucky Loser ever inherits a seed. Successive fills reuse the first frozen LL order
 rather than recalculating priority from the changed Draw.
 
-LL exhaustion now fails closed at an explicit external-reserve boundary. RWC
-exhaustion still needs to route into the same shared LL source chain, followed by
-external reserves / late BYE behavior. Auto-BYE-only Q terminals and group-
-Qualification LL ordering remain explicit later edges. The generic middle seed-
-cascade phase still intentionally requires replacement-backed player-count parity.
-See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Replacement-source selection is now canonical in
+`tournament_replacement_source.v1`. The resolver evaluates the current effective
+Draw/Input and player cutoff, derives real Q/Main start evidence from authoritative
+receipts, applies RWC priority for WC slots, switches from pre-Q Q-list promotion to
+post-Q LL workflow, then falls through to ranking-ordered external reserves and, if
+Main has not started, a late BYE. A closed player replacement cutoff always resolves
+to W/O before any candidate source is considered. External reserves explicitly skip
+players now active in Main or Qualification, even when they came from an older
+below-cut list. The resolver reads the latest revision successor field/input rather
+than stale persisted base state.
+
+This PR is the **decision layer only**; it does not yet replace all specialized
+mutation commands with one orchestrator. The next step is to route the selected
+source into existing RWC / LL / W/O repairs and add canonical external-reserve / BYE
+mutations where needed. The intermediate state where Main has already started,
+player cutoff remains open and all sources are exhausted remains fail-closed because
+Master §15.8 does not explicitly define it. Auto-BYE-only Q terminals and group-
+Qualification LL ordering remain later edges. See
+`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

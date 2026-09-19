@@ -390,6 +390,9 @@ class TournamentDrawRevisionStore:
                         qualification_origin_player_ids=(
                             initial_draw_input.qualification_player_ids
                         ),
+                        replacement_source_authority=(
+                            revision.replacement_source_authority
+                        ),
                     )
                 )
                 if rebuilt_authority != authority:
@@ -403,6 +406,11 @@ class TournamentDrawRevisionStore:
                         withdrawn_player_id=authority.withdrawn_player_id,
                         placeholder_id=authority.placeholder_id,
                         vacated_main_seed_number=authority.vacated_main_seed_number,
+                        replacement_source_authority_fingerprint=(
+                            revision.replacement_source_authority.fingerprint
+                            if revision.replacement_source_authority is not None
+                            else None
+                        ),
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
@@ -421,6 +429,9 @@ class TournamentDrawRevisionStore:
                         sequence=revision.sequence,
                         command_id=revision.command_id,
                         lucky_loser_vacancy_authority=rebuilt_authority,
+                        replacement_source_authority=(
+                            revision.replacement_source_authority
+                        ),
                     )
                 )
                 if rebuilt_revision != revision:
@@ -1222,6 +1233,7 @@ class TournamentDrawRevisionStore:
         command_id: str,
         withdrawn_player_id: str,
         main_process_window_ordinal: int,
+        replacement_source_authority=None,
     ) -> TournamentDrawRevision:
         draw_store = TournamentDrawAuthorityStore(self.session)
         draw_store._scope(run_id, branch_id, writing=True)
@@ -1255,6 +1267,8 @@ class TournamentDrawRevisionStore:
                 != main_process_window_ordinal
                 or authority is None
                 or authority.withdrawn_player_id != withdrawn_player_id
+                or revision.replacement_source_authority
+                != replacement_source_authority
             ):
                 raise TournamentDrawRevisionConflict(
                     "Lucky Loser command already has a different request"
@@ -1333,6 +1347,7 @@ class TournamentDrawRevisionStore:
                 qualification_origin_player_ids=(
                     original_input.qualification_player_ids
                 ),
+                replacement_source_authority=replacement_source_authority,
             )
             successor_input = (
                 TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
@@ -1341,6 +1356,11 @@ class TournamentDrawRevisionStore:
                     withdrawn_player_id=withdrawn_player_id,
                     placeholder_id=authority.placeholder_id,
                     vacated_main_seed_number=authority.vacated_main_seed_number,
+                    replacement_source_authority_fingerprint=(
+                        replacement_source_authority.fingerprint
+                        if replacement_source_authority is not None
+                        else None
+                    ),
                 )
             )
             revision = (
@@ -1353,6 +1373,7 @@ class TournamentDrawRevisionStore:
                     sequence=len(history) + 1,
                     command_id=command_id,
                     lucky_loser_vacancy_authority=authority,
+                    replacement_source_authority=replacement_source_authority,
                 )
             )
         except ValueError as exc:
@@ -1366,6 +1387,11 @@ class TournamentDrawRevisionStore:
             "lucky_loser_ordinal": authority.lucky_loser_ordinal,
             "qualification_start_fingerprint": (
                 authority.qualification_start_authority.fingerprint
+            ),
+            "replacement_source_authority_fingerprint": (
+                replacement_source_authority.fingerprint
+                if replacement_source_authority is not None
+                else None
             ),
         }
         self.session.add(

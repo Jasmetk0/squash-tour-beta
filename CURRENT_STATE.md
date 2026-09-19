@@ -434,10 +434,13 @@ WC capacity. Revision history rebuilds these transitions from frozen source auth
 rather than recalculating today's candidate state.
 
 This unified slice deliberately stops at Main Draw Freeze. After RWC exhaustion, a
-WC slot can currently fall through canonically to **external reserve or BYE**.
-WC-to-pre-Q Qualification promotion and WC-to-Lucky-Loser fallback remain
-fail-closed until those mutation paths themselves can release WC status without
-re-ranking or losing source lineage. Pre-Q promotion with explicit unavailable-player
+WC slot can now fall through canonically to **Lucky Loser, external reserve or BYE**.
+For the LL path, Draw revision v13 binds the chronological `LLx` vacancy to the
+frozen replacement-source authority while Draw Input v9 releases the original WC
+ordinal and appends that source fingerprint; a later LL fill therefore uses the same
+ordinary LL machinery without ever restoring WC status. WC-to-pre-Q Qualification
+promotion remains fail-closed until that Q-field mutation itself can consume source
+authority and release WC status. Pre-Q promotion with explicit unavailable-player
 skips also remains fail-closed until Q-field repair consumes source authority. The
 intermediate state where Main has already started, player cutoff remains open and all
 sources are exhausted remains fail-closed because Master §15.8 does not explicitly

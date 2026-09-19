@@ -102,13 +102,17 @@ class AuthoritativeFrozenMainReplacement:
             )
             return AuthoritativeFrozenMainReplacementResult(
                 source="lucky_loser",
-                source_authority=None,
+                source_authority=(
+                    vacancy.replacement_source_authority
+                    if vacancy is not None
+                    else None
+                ),
                 draw_revisions=revisions,
             )
         if vacancy is not None:
             return AuthoritativeFrozenMainReplacementResult(
                 source="lucky_loser_pending",
-                source_authority=None,
+                source_authority=vacancy.replacement_source_authority,
                 draw_revisions=(vacancy,),
             )
         return None
@@ -227,10 +231,10 @@ class AuthoritativeFrozenMainReplacement:
 
         if (
             target.entry_status == "wild_card"
-            and source.source not in {"external_reserve", "bye"}
+            and source.source == "qualification_promotion"
         ):
             raise AuthoritativeFrozenMainReplacementConflict(
-                "WC-slot Qualification/LL fallback after RWC exhaustion is not canonical yet"
+                "WC-slot Qualification fallback after RWC exhaustion is not canonical yet"
             )
 
         if source.source == "qualification_promotion":
@@ -273,6 +277,9 @@ class AuthoritativeFrozenMainReplacement:
                 command_id=_child_command_id(command_id, "ll-vacancy"),
                 withdrawn_player_id=withdrawn_player_id,
                 main_process_window_ordinal=main_process_window_ordinal,
+                replacement_source_authority=(
+                    source if target.entry_status == "wild_card" else None
+                ),
             )
             if source.source == "lucky_loser_pending":
                 return AuthoritativeFrozenMainReplacementResult(

@@ -47,6 +47,7 @@ def test_hierarchy_derivation_is_reproducible() -> None:
     ]
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_branching_rng_uses_deterministic_child_seed() -> None:
     root_a = DeterministicRng(555)

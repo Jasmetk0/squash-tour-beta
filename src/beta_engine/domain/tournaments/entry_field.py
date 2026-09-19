@@ -154,6 +154,42 @@ class TournamentEntryField(FrozenInput):
         return self
 
     @property
+    def active_main_entrant_count(self) -> int:
+        """Current non-BYE Main entrants represented by this field.
+
+        Direct players are materialized identities. Qualification and Wild Card
+        capacity remains reserved as future Main entrants until those authorities
+        resolve the exact identities.
+        """
+
+        return (
+            len(self.direct_main_player_ids)
+            + self.capacity.qualifier_spots
+            + self.capacity.wild_card_slots
+        )
+
+    @property
+    def effective_main_bye_count(self) -> int:
+        """Current Main vacancies that will be represented as BYEs if unresolved."""
+
+        return self.capacity.main_draw_size - self.active_main_entrant_count
+
+    @property
+    def main_diagnostics(self) -> tuple[TournamentBracketDiagnostic, ...]:
+        """Derived Admin warnings for the *current* field, never persisted."""
+
+        entrant_count = self.active_main_entrant_count
+        if entrant_count < 2:
+            # The bracket itself cannot execute below two entrants. Keep inspection
+            # readable; hard validity remains owned by the draw-generation boundary.
+            return ()
+        return main_bracket_diagnostics(
+            entrant_count=entrant_count,
+            bracket_capacity=self.capacity.main_draw_size,
+            bye_count=self.effective_main_bye_count,
+        )
+
+    @property
     def fingerprint(self) -> str:
         return _fingerprint(self.model_dump(mode="json"))
 

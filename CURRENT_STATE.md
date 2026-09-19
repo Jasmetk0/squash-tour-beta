@@ -290,9 +290,12 @@ layers move, the highest-ranked surviving eligible unseeded player closes the fi
 seed vacancy, and the ordinary incoming replacement fills that player's vacated
 physical slot. Seed 2 therefore does not get renamed after seed 1 withdraws. An
 ordinary unseeded withdrawal in the same phase bypasses cascade and directly fills
-its exact physical slot. Main and Qualification still gate independently, multi-Q
-section/Q identities remain stable, simultaneous withdrawals are canonicalized, and
-the complete v3 repair revision deterministically replays from frozen authority.
+its exact physical slot. Main and Qualification gate independently: one atomic v3
+revision can therefore fully redraw one affected component while cascading the other,
+with the repair seed applying only to the component that is actually redrawn.
+Multi-Q section/Q identities remain stable, simultaneous withdrawals are
+canonicalized, and the complete v3 repair revision deterministically replays from
+frozen authority.
 Historical v2 full-redraw fingerprints remain backward-compatible.
 
 This still does **not** claim the complete Master draw contract. The current middle

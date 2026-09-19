@@ -21,12 +21,23 @@ if TYPE_CHECKING:
     )
 
 
+class TournamentLuckyLoserQualificationWinnerEvidence(FrozenInput):
+    """Canonical proof that a withdrawn Main occupant came from one Q section."""
+
+    section_id: str = Field(pattern=r"^Q[1-9][0-9]*$")
+    terminal_match_id: str = Field(min_length=1)
+    winner_player_id: str = Field(min_length=1)
+    evidence_kind: Literal["played_terminal", "auto_bye_terminal"]
+    evidence_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 class TournamentLuckyLoserVacancyAuthority(FrozenInput):
     """One chronological Main Draw vacancy converted into LL1 / LL2 / ..."""
 
-    schema_version: Literal["tournament_lucky_loser_vacancy.v1"] = (
-        "tournament_lucky_loser_vacancy.v1"
-    )
+    schema_version: Literal[
+        "tournament_lucky_loser_vacancy.v1",
+        "tournament_lucky_loser_vacancy.v2",
+    ] = "tournament_lucky_loser_vacancy.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -44,6 +55,11 @@ class TournamentLuckyLoserVacancyAuthority(FrozenInput):
     )
     withdrawn_player_cutoff_authority: TournamentPlayerReplacementCutoffAuthority
     qualification_start_authority: TournamentPlayerReplacementCutoffAuthority
+
+    qualification_winner_evidence: TournamentLuckyLoserQualificationWinnerEvidence | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
     @model_validator(mode="after")
     def validate_authority(self):
@@ -70,6 +86,13 @@ class TournamentLuckyLoserVacancyAuthority(FrozenInput):
             raise ValueError("LL Qualification-start evidence scope mismatch")
         if not qualification.played_matches:
             raise ValueError("LL vacancy requires real Qualification-start evidence")
+        if self.schema_version == "tournament_lucky_loser_vacancy.v1":
+            if self.qualification_winner_evidence is not None:
+                raise ValueError("Historical LL vacancy v1 cannot carry Q-winner evidence")
+        elif self.qualification_winner_evidence is None:
+            raise ValueError("Q-winner LL vacancy v2 requires terminal winner evidence")
+        elif self.qualification_winner_evidence.winner_player_id != self.withdrawn_player_id:
+            raise ValueError("Q-winner evidence does not belong to withdrawn player")
         return self
 
     @property
@@ -96,6 +119,7 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         qualification_start_authority: TournamentPlayerReplacementCutoffAuthority,
         qualification_origin_player_ids: tuple[str, ...],
         replacement_source_authority: TournamentReplacementSourceAuthority | None = None,
+        qualification_winner_evidence: TournamentLuckyLoserQualificationWinnerEvidence | None = None,
     ) -> TournamentLuckyLoserVacancyAuthority:
         scope = (predecessor.run_id, predecessor.branch_id, predecessor.event_id)
         if (
@@ -117,23 +141,60 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         if not qualification_start_authority.played_matches:
             raise ValueError("Qualification has not started")
 
-        matching = [
-            slot for slot in predecessor.main.slots
-            if slot.player_id == withdrawn_player_id
-        ]
-        if len(matching) != 1:
-            raise ValueError("LL vacancy cannot resolve one active Main player slot")
-        slot = matching[0]
         in_direct = (
             withdrawn_player_id in set(predecessor_draw_input.direct_main_player_ids)
         )
         in_wild_card = (
             withdrawn_player_id in set(predecessor_draw_input.wild_card_player_ids)
         )
-        if in_direct == in_wild_card:
-            raise ValueError(
-                "LL vacancy withdrawal must belong to exactly one Main entry class"
+        if qualification_winner_evidence is not None:
+            evidence = qualification_winner_evidence
+            if evidence.winner_player_id != withdrawn_player_id:
+                raise ValueError("Q-winner evidence belongs to a different player")
+            bracket = next(
+                (
+                    item
+                    for item in predecessor.qualification_brackets
+                    if (item.section_id or "") == evidence.section_id
+                ),
+                None,
             )
+            if bracket is None:
+                raise ValueError("Q-winner evidence references missing Qualification section")
+            terminal = max(
+                bracket.nodes,
+                key=lambda item: (item.round_number, item.round_sequence),
+            )
+            if terminal.node_id != evidence.terminal_match_id:
+                raise ValueError("Q-winner evidence references wrong Qualification terminal")
+            matching = [
+                slot
+                for slot in predecessor.main.slots
+                if slot.entrant_kind == "qualifier_placeholder"
+                and slot.placeholder_id == evidence.section_id
+            ]
+            if len(matching) != 1:
+                raise ValueError("Q-winner LL vacancy cannot resolve one linked Main Q slot")
+            if in_direct or in_wild_card:
+                raise ValueError("Q winner cannot simultaneously be Direct Main or WC")
+            slot = matching[0]
+            if slot.seed_number is not None:
+                raise ValueError("Q placeholder cannot carry Main seed number")
+            if replacement_source_authority is not None:
+                raise ValueError("Q-winner LL vacancy cannot carry WC release source authority")
+        else:
+            matching = [
+                slot for slot in predecessor.main.slots
+                if slot.player_id == withdrawn_player_id
+            ]
+            if len(matching) != 1:
+                raise ValueError("LL vacancy cannot resolve one active Main player slot")
+            slot = matching[0]
+            if in_direct == in_wild_card:
+                raise ValueError(
+                    "LL vacancy withdrawal must belong to exactly one Main entry class"
+                )
+
         if in_wild_card:
             source = replacement_source_authority
             if source is None:
@@ -179,12 +240,17 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
                 raise ValueError(
                     "WC Lucky Loser source lacks Qualification-start evidence"
                 )
-        elif replacement_source_authority is not None:
+        elif qualification_winner_evidence is None and replacement_source_authority is not None:
             raise ValueError(
                 "Direct Main LL vacancy cannot carry WC release source authority"
             )
 
         return TournamentLuckyLoserVacancyAuthority(
+            schema_version=(
+                "tournament_lucky_loser_vacancy.v2"
+                if qualification_winner_evidence is not None
+                else "tournament_lucky_loser_vacancy.v1"
+            ),
             run_id=scope[0],
             branch_id=scope[1],
             event_id=scope[2],
@@ -198,6 +264,7 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
             vacated_main_seed_number=slot.seed_number,
             withdrawn_player_cutoff_authority=withdrawn_player_cutoff_authority,
             qualification_start_authority=qualification_start_authority,
+            qualification_winner_evidence=qualification_winner_evidence,
         )
 
 

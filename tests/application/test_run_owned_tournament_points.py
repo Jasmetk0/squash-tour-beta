@@ -897,6 +897,30 @@ def test_qualification_winner_walkover_unlocks_main_stage_and_keeps_additive_q_p
     assert finalist.race_points_awarded == 800
     assert by_player["D"].ranking_points_awarded == 100
 
+    prize = build_tournament_prize_money_award_authority(
+        result=result,
+        event=_event().model_copy(
+            update={
+                "main_draw_size": 8,
+                "qualification_draw_size": 2,
+                "qualifier_spots": 1,
+                "prize_money_currency": "EUR",
+                "prize_money_table": {
+                    "qualification_final": 1000,
+                    "quarterfinal": 2000,
+                    "semifinal": 3000,
+                    "finalist": 6000,
+                    "champion": 10000,
+                },
+            }
+        ),
+    )
+    prize_by_player = {award.player_id: award for award in prize.awards}
+    assert prize_by_player["A"].reached_stage == "finalist"
+    assert prize_by_player["A"].amount == 6000
+    assert prize_by_player["D"].reached_stage == "qualification_final"
+    assert prize_by_player["D"].amount == 1000
+
 
 @pytest.mark.pr_critical
 def test_walkover_after_bye_unlocks_actual_finishing_stage_points():

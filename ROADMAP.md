@@ -5,10 +5,14 @@ This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_
 ## Implemented narrow tournament integration
 
 The current narrow driver retains automatic compatibility adoption for one persisted
-supported four-player Main Draw. For multiple supported events it requires an
-immutable, fingerprinted Run/Branch/RankingWeek schedule explicitly adopted through
-the Admin preview/confirm boundary; that payload alone maps exact match groups onto
-ordered global Simulation Slots. Each event closes independently and exactly once
+supported four-player Main Draw. For multiple/general supported topologies it still
+requires an immutable, fingerprinted Run/Branch/RankingWeek schedule adopted through
+the Admin preview/confirm boundary, but the engine can now generate a deterministic
+topological proposal from the canonical match DAG. The proposal places every group
+in the earliest dependency-safe global Simulation Slot, parallelizes independent
+groups at the same depth, remains read-only until adoption, and fails instead of
+choosing chronology when one directly known player appears in parallel independent
+groups. Each event closes independently and exactly once
 through the existing completion, award and `OwnedTournamentRankingSource` contracts.
 Legacy `start_day`, list/event ordering and draw-round arithmetic are not substitutes. Explicit authoritative Admin routes expose
 position, split Next Match and Next Slot without redirecting legacy simulation.

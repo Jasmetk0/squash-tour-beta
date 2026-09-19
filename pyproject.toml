@@ -35,5 +35,6 @@ where = ["src"]
 testpaths = ["tests"]
 addopts = "-q"
 markers = [
-  "smoke: small, high-value catastrophic-regression suite for pull-request feedback",
+  "pr_critical: tiny must-pass suite for fast pull-request feedback",
+  "smoke: broader regression suite retained for targeted/manual use",
 ]

@@ -283,8 +283,26 @@ corrupt predecessor chains fail closed before live mutation. WC/RWC events remai
 deliberately blocked from this generic slice until their dedicated post-draw repair
 authority exists.
 
-This still does **not** claim the complete Master draw contract. Tier-aware seed
-cascade, frozen-slot mutation, post-draw WC/RWC repair, Lucky Loser ordering, group
+The Redraw Cutoff → Draw Freeze middle phase now has append-only physical repair.
+A seeded withdrawal executes tier-aware seed cascade without a new draw seed: moved
+seeded players retain their original seed numbers, only the necessary later seed
+layers move, the highest-ranked surviving eligible unseeded player closes the final
+seed vacancy, and the ordinary incoming replacement fills that player's vacated
+physical slot. Seed 2 therefore does not get renamed after seed 1 withdraws. An
+ordinary unseeded withdrawal in the same phase bypasses cascade and directly fills
+its exact physical slot. Main and Qualification gate independently: one atomic v3
+revision can therefore fully redraw one affected component while cascading the other,
+with the repair seed applying only to the component that is actually redrawn.
+Multi-Q section/Q identities remain stable, simultaneous withdrawals are
+canonicalized, and the complete v3 repair revision deterministically replays from
+frozen authority.
+Historical v2 full-redraw fingerprints remain backward-compatible.
+
+This still does **not** claim the complete Master draw contract. The current middle
+phase intentionally fails closed when the repaired field cannot maintain physical
+player-count parity; replacement exhaustion / late BYE handling belongs with the
+remaining replacement slices rather than being invented here. Direct frozen-slot
+mutation after Draw Freeze, post-draw WC/RWC repair, Lucky Loser ordering, group
 Qualification and the per-player first-real-match replacement cutoff remain Gate 3
 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

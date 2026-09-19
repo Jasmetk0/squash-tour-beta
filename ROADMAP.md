@@ -271,7 +271,20 @@ draw component must independently still be in its own full-redraw phase, and Q1.
 linkage identities remain stable. WC/RWC events stay blocked from this generic slice
 until their dedicated post-draw repair path exists.
 
-The next draw-focused slice is tier-aware seed cascade between Redraw Cutoff and
-Draw Freeze, followed by direct frozen-slot fill after Draw Freeze. Post-draw WC/RWC,
-Lucky Loser, group Qualification and the first-real-match replacement cutoff remain
-subsequent Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.
+The middle repair phase from Redraw Cutoff through the window before Draw Freeze
+now performs tier-aware seed cascade for seeded withdrawals and exact physical-slot
+fill for ordinary unseeded withdrawals. Cascade preserves original seed identities,
+moves only the necessary later seed layers, promotes the highest-ranked surviving
+eligible unseeded player into the final seed vacancy and fills that player's old slot
+with the ordinary incoming replacement. Main and Qualification remain independently
+phase-gated, so one atomic v3 repair may fully redraw one affected component while
+cascading the other; the dedicated repair seed affects only the redrawn component.
+Multi-Q identities are preserved and the append-only revision is deterministic Saved
+Revision state. Pure cascade keeps the existing draw seed. The slice currently fails
+closed if replacement-backed player-count parity cannot be maintained.
+
+The next draw-focused slice is direct frozen physical-slot fill after Draw Freeze,
+including the remaining replacement-exhaustion boundary rather than inventing it in
+the middle phase. Post-draw WC/RWC, Lucky Loser, group Qualification and the
+first-real-match replacement cutoff remain subsequent Gate 3 work. Legacy
+simulation-run UI/endpoint retirement remains separate Gate 3 work.

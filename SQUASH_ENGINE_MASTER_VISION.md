@@ -2487,7 +2487,9 @@ Obě varianty nesou Manual provenance, správný historický čas a Audit Log.
 
 ## 15.2 Kapacita pavouku a počet nasazených
 
-**[ROZHODNUTO]** Každý klasický eliminační pavouk má kapacitu rovnou mocnině dvou: `2, 4, 8, 16, 32, 64, 128…`.
+**[ROZHODNUTO]** Každý klasický eliminační pavouk má kapacitu rovnou mocnině dvou: `2, 4, 8, 16, 32, 64, 128`.
+
+**[ROZHODNUTO PRO PRVNÍ VERZI]** Maximální podporovaná kapacita jednoho klasického pavouku je **128 slotů**. Pavouky 256 a větší se zatím nevytvářejí ani nesimulují. Běžný automatický workflow proto přijme nejvýše 128 skutečných účastníků Main Draw; požadavek na 129 a více účastníků je v této verzi blokující nepodporovaná konfigurace, nikoliv advisory warning. Budoucí rozšíření nad 128 lze doplnit samostatným rozhodnutím bez změny současného sportovního významu menších pavouků.
 
 **[ROZHODNUTO]** Běžný workflow při vytváření nové Tournament Edition nevyžaduje, aby Admin ručně počítal velikost klasického pavouku. Z plánovaného skutečného počtu účastníků Main Draw engine automaticky zvolí nejmenší kapacitu rovnou mocnině dvou, do které se celý field vejde; rozdíl mezi kapacitou a skutečným počtem účastníků vznikne jako explicitní BYE. Například 13 účastníků automaticky vytvoří kapacitu 16 a tři BYE, 28 účastníků kapacitu 32 a čtyři BYE.
 

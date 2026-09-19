@@ -933,7 +933,9 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate(proposed["schedule"])
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
 
     assert proposed["persisted"] is False
     assert "not Match Day timing" in proposed["provenance"]
@@ -1437,7 +1439,9 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate(proposed["schedule"])
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
     assert [len(slot.group_ids) for slot in schedule.slots] == [4, 2, 1]
     preview = driver.preview_schedule(schedule)
     assert preview["position_fingerprint"] == proposed["position_fingerprint"]

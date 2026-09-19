@@ -2489,9 +2489,27 @@ Obě varianty nesou Manual provenance, správný historický čas a Audit Log.
 
 **[ROZHODNUTO]** Každý klasický eliminační pavouk má kapacitu rovnou mocnině dvou: `2, 4, 8, 16, 32, 64, 128…`.
 
-**[ROZHODNUTO]** Kapacita je předem nastavenou vlastností turnaje. Odhlášení nebo nenaplnění field nevede k automatickému zmenšení pavouku; neobsazená místa jsou datově vedena jako BYE.
+**[ROZHODNUTO]** Běžný workflow při vytváření nové Tournament Edition nevyžaduje, aby Admin ručně počítal velikost klasického pavouku. Z plánovaného skutečného počtu účastníků Main Draw engine automaticky zvolí nejmenší kapacitu rovnou mocnině dvou, do které se celý field vejde; rozdíl mezi kapacitou a skutečným počtem účastníků vznikne jako explicitní BYE. Například 13 účastníků automaticky vytvoří kapacitu 16 a tři BYE, 28 účastníků kapacitu 32 a čtyři BYE.
 
-**[ROZHODNUTO]** Automatická nejbližší mocnina dvou může sloužit jako návrh při vytváření nového turnaje bez zadané kapacity, nikoliv jako průběžný přepočet již existujícího losu.
+**[ROZHODNUTO]** Takto odvozená kapacita se při založení Tournament Edition stává její pevnou vlastností. Pozdější odhlášení, nenaplnění field nebo jiné změny počtu hráčů již existující pavouk automaticky nezmenšují ani nezvětšují; neobsazená místa jsou datově vedena jako BYE.
+
+**[ROZHODNUTO]** Počet nasazených se v běžném workflow také nezadává ručně. Engine jej pro klasický pavouk automaticky vypočítá:
+
+> `seed_count = min(počet skutečných hráčů, max(1, kapacita pavouku ÷ 4))`
+
+Ruční override velikosti pavouku nebo počtu nasazených není standardní cesta první pre-alpha verze; případný budoucí Admin override musí být výslovný, auditovatelný a nesmí tiše přepsat automatický výpočet.
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI]** Engine vytváří nad automaticky odvozeným klasickým pavoukem neblokující diagnostická upozornění. Upozornění nesmí samo zabránit vytvoření technicky validního pavouku; jeho účelem je upozornit Admina na nezvyklou sportovní strukturu a uvést konkrétní důvod. Blokující chybou zůstává pouze technicky neplatná konfigurace.
+
+Minimální diagnostika první pre-alpha verze:
+
+- **lichý skutečný počet účastníků Main Draw vždy vytvoří warning s vykřičníkem a vysvětlením**, i když je jinak pavouk technicky validní,
+- warning vznikne, pokud **více než polovina zápasů prvního kola obsahuje BYE**,
+- warning vznikne, pokud **skutečný počet účastníků Main Draw přesáhne 64**; více než 64 hráčů v jednom Main Draw má být považováno za výjimečné použití, nikoliv běžný standard,
+- více warningů může platit současně a každý musí mít vlastní stabilní důvod/kód,
+- tyto warningy jsou odvozená Admin diagnostika, nikoliv sportovní autorita; změna textu nebo budoucí doladění hranic nesmí měnit Draw fingerprint ani historickou sportovní pravdu.
+
+**[ROZHODNUTO, DETAIL ODLOŽEN]** Pozdější promakaná verze diagnostiky má navíc vyhodnocovat asymetrii prvního kola, rozdělení BYE mezi idealizované seed bands a jednotlivé části pavouku, případně další nezvyklé kombinace. Přesné metriky, hranice a více úrovní závažnosti těchto rozšířených warningů se doladí podle modelových pavouků a zkušeností z pre-alphy; nesmí se doplnit jako skrytý blokující zákaz.
 
 **[ROZHODNUTO]** Počet nasazených v klasickém pavouku se vypočítá:
 

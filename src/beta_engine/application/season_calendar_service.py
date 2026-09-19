@@ -541,6 +541,8 @@ class SeasonCalendarService:
                     ranking_points_table=edition_points,
                     ranking_configuration_legacy=False,
                     prize_money=template.prize_money,
+                    prize_money_currency=template.prize_money_currency,
+                    prize_money_table=dict(template.prize_money_table),
                     prestige=template.prestige,
                     event_level_overrides={},
                     source_template_fingerprint=template_fingerprint,

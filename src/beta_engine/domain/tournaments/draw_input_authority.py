@@ -295,7 +295,10 @@ class TournamentDrawInputAuthority(FrozenInput):
                     raise ValueError(
                         "Post-draw WC Draw Input requires repair evidence"
                     )
-            elif self.post_draw_wild_card_repair_fingerprints:
+            elif (
+                self.schema_version == "tournament_draw_input_authority.v3"
+                and self.post_draw_wild_card_repair_fingerprints
+            ):
                 raise ValueError(
                     "Pre-repair WC Draw Input cannot carry post-draw repair evidence"
                 )

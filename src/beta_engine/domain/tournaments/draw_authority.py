@@ -42,8 +42,13 @@ class TournamentDrawSlot(FrozenInput):
     placeholder_id: str | None = None
     seed_number: int | None = Field(default=None, ge=1)
     is_seed_protected: bool = False
-    entry_status: Literal["wild_card"] | None = Field(
+    entry_status: Literal["wild_card", "lucky_loser"] | None = Field(
         default=None,
+        exclude_if=lambda value: value is None,
+    )
+    lucky_loser_placeholder_id: str | None = Field(
+        default=None,
+        pattern=r"^LL[1-9][0-9]*$",
         exclude_if=lambda value: value is None,
     )
 
@@ -52,6 +57,13 @@ class TournamentDrawSlot(FrozenInput):
         if self.entrant_kind == "player":
             if not self.player_id or self.placeholder_id is not None:
                 raise ValueError("Player draw slot requires exactly one player identity")
+            if self.entry_status == "lucky_loser":
+                if self.lucky_loser_placeholder_id is None:
+                    raise ValueError("Lucky Loser player slot requires LL identity")
+                if self.seed_number is not None or self.is_seed_protected:
+                    raise ValueError("Lucky Loser replacement cannot inherit seed status")
+            elif self.lucky_loser_placeholder_id is not None:
+                raise ValueError("Only Lucky Loser player slot can carry LL identity")
         elif self.entrant_kind in {
             "qualifier_placeholder",
             "lucky_loser_placeholder",
@@ -62,6 +74,8 @@ class TournamentDrawSlot(FrozenInput):
                 )
             if self.seed_number is not None or self.is_seed_protected:
                 raise ValueError("Placeholder draw slot cannot be seeded")
+            if self.lucky_loser_placeholder_id is not None:
+                raise ValueError("Placeholder draw slot cannot carry filled LL identity")
             if (
                 self.entrant_kind == "qualifier_placeholder"
                 and not self.placeholder_id.startswith("Q")
@@ -73,7 +87,11 @@ class TournamentDrawSlot(FrozenInput):
             ):
                 raise ValueError("Lucky Loser placeholder must use LL identity")
         else:
-            if self.player_id is not None or self.placeholder_id is not None:
+            if (
+                self.player_id is not None
+                or self.placeholder_id is not None
+                or self.lucky_loser_placeholder_id is not None
+            ):
                 raise ValueError("BYE draw slot cannot carry an entrant identity")
             if self.seed_number is not None or self.is_seed_protected:
                 raise ValueError("BYE draw slot cannot be seeded")

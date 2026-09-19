@@ -388,9 +388,21 @@ eliminated candidate's elimination round/result. Candidates sort exactly by Mast
 The resolver deliberately refuses to publish an order while Qualification is still
 incomplete; unresolved auto-BYE-only Q terminals remain an explicit later edge case.
 
-The next LL slice is now concrete: **fill LL1, LL2, ... from this frozen candidate
-order**, skipping players who are no longer available/eligible without changing the
-relative order. RWC exhaustion can then route into the same source-priority resolver
-rather than duplicating LL logic. External reserves after LL exhaustion and group
-Qualification LL ordering remain later Gate 3 work. Legacy simulation-run
+Lucky Loser placeholders can now be **filled canonically** from the frozen bracket-Q
+candidate order. The fill authority always resolves the earliest still-unfilled
+`LLx` slot, skips candidates already assigned to an earlier LL or explicitly frozen
+as unavailable, and selects the first remaining candidate without reordering the
+Master priority. Each fill freezes the order authority, selected candidate, skipped
+identities, prior LL assignments and exact physical slot. The resulting Main slot is
+a normal player entrant with `entry_status=lucky_loser` plus its retained `LLx`
+identity; it never inherits seed status. Draw Input v7 tracks the chronological LL
+players while preserving their original Qualification membership, and Draw revision
+v10 records the exact fill. All later LL fills reuse the same frozen order authority
+instead of recalculating priority after the Draw changes.
+
+If every LL candidate is unavailable/used, the fill fails closed with an explicit
+**external reserve fallback required** boundary. The next work is therefore to wire
+RWC exhaustion and LL exhaustion into the shared replacement-source chain, then add
+external reserve / late BYE behavior. Auto-BYE-only Qualification terminals and
+group-Qualification LL ordering remain later Gate 3 work. Legacy simulation-run
 UI/endpoint retirement remains separate Gate 3 work.

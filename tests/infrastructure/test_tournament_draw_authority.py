@@ -3617,3 +3617,231 @@ def test_lucky_loser_order_waits_for_completed_qualification_terminal(
                 branch_id="branch",
                 event_id="event",
             )
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_fill_skips_unavailable_then_prior_assigned_without_reordering(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        draw_input, initial = _install_four_player_q_for_ll_order(session)
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-fill-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        _fake_q_receipts(
+            session,
+            monkeypatch,
+            initial,
+            include_final=True,
+        )
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+
+        direct_main = draw_input.direct_main_player_ids
+        assert len(direct_main) >= 2
+        original_slots = {
+            player_id: next(
+                slot.slot_index
+                for slot in initial.main.slots
+                if slot.player_id == player_id
+            )
+            for player_id in direct_main[:2]
+        }
+
+        store = TournamentDrawRevisionStore(session)
+        first_vacancy = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-fill-vacancy-1",
+            withdrawn_player_id=direct_main[0],
+            main_process_window_ordinal=3,
+        )
+        second_vacancy = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-fill-vacancy-2",
+            withdrawn_player_id=direct_main[1],
+            main_process_window_ordinal=3,
+        )
+        assert second_vacancy.successor_draw_input.lucky_loser_placeholder_ids == (
+            "LL1",
+            "LL2",
+        )
+
+        order = TournamentLuckyLoserOrderAuthorityStore(session).resolve_for_draw(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            draw=second_vacancy.successor_draw,
+        )
+        assert len(order.ordered_player_ids) >= 3
+        unavailable = (order.ordered_player_ids[0],)
+
+        first_fill = store.fill_next_frozen_lucky_loser(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="fill-ll1",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=unavailable,
+        )
+        first_authority = first_fill.lucky_loser_fill_authority
+        assert first_authority is not None
+        assert first_authority.placeholder_id == "LL1"
+        assert first_authority.selected_candidate.player_id == (
+            order.ordered_player_ids[1]
+        )
+        assert first_authority.selected_candidate.priority_ordinal == 2
+        assert first_authority.skipped_candidate_player_ids == unavailable
+        assert first_authority.prior_assigned_player_ids == ()
+        assert first_fill.schema_version == "tournament_draw_revision.v10"
+        assert first_fill.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v7"
+        )
+        assert first_fill.successor_draw_input.lucky_loser_player_ids == (
+            order.ordered_player_ids[1],
+        )
+
+        ll1 = next(
+            slot
+            for slot in first_fill.successor_draw.main.slots
+            if slot.lucky_loser_placeholder_id == "LL1"
+        )
+        assert ll1.slot_index == original_slots[direct_main[0]]
+        assert ll1.entrant_kind == "player"
+        assert ll1.player_id == order.ordered_player_ids[1]
+        assert ll1.entry_status == "lucky_loser"
+        assert ll1.seed_number is None
+        assert ll1.placeholder_id is None
+
+        second_fill = store.fill_next_frozen_lucky_loser(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="fill-ll2",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=unavailable,
+        )
+        second_authority = second_fill.lucky_loser_fill_authority
+        assert second_authority is not None
+        assert second_authority.placeholder_id == "LL2"
+        assert second_authority.order_authority == first_authority.order_authority
+        assert second_authority.prior_assigned_player_ids == (
+            order.ordered_player_ids[1],
+        )
+        assert second_authority.skipped_candidate_player_ids == (
+            order.ordered_player_ids[0],
+            order.ordered_player_ids[1],
+        )
+        assert second_authority.selected_candidate.player_id == (
+            order.ordered_player_ids[2]
+        )
+        assert second_authority.selected_candidate.priority_ordinal == 3
+        assert second_fill.successor_draw_input.lucky_loser_player_ids == (
+            order.ordered_player_ids[1],
+            order.ordered_player_ids[2],
+        )
+
+        ll2 = next(
+            slot
+            for slot in second_fill.successor_draw.main.slots
+            if slot.lucky_loser_placeholder_id == "LL2"
+        )
+        assert ll2.slot_index == original_slots[direct_main[1]]
+        assert ll2.player_id == order.ordered_player_ids[2]
+        assert ll2.entry_status == "lucky_loser"
+        assert ll2.seed_number is None
+        assert second_fill.successor_draw.main.lucky_loser_placeholder_slots == ()
+
+        assert store.fill_next_frozen_lucky_loser(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="fill-ll1",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=unavailable,
+        ) == first_fill
+
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (
+            first_vacancy,
+            second_vacancy,
+            first_fill,
+            second_fill,
+        )
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_fill_fails_closed_when_candidate_pool_is_exhausted(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        draw_input, initial = _install_four_player_q_for_ll_order(session)
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-exhaust-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        _fake_q_receipts(
+            session,
+            monkeypatch,
+            initial,
+            include_final=True,
+        )
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+        store = TournamentDrawRevisionStore(session)
+        store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-exhaust-vacancy",
+            withdrawn_player_id=draw_input.direct_main_player_ids[0],
+            main_process_window_ordinal=3,
+        )
+        current = TournamentDrawAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert current is not None
+        order = TournamentLuckyLoserOrderAuthorityStore(session).resolve_for_draw(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            draw=current,
+        )
+
+        with pytest.raises(
+            TournamentDrawRevisionConflict,
+            match="external reserve fallback required",
+        ):
+            store.fill_next_frozen_lucky_loser(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="ll-exhausted",
+                main_process_window_ordinal=3,
+                unavailable_player_ids=order.ordered_player_ids,
+            )

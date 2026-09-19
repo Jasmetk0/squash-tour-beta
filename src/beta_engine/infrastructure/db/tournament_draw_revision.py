@@ -16,6 +16,9 @@ from beta_engine.domain.tournaments.draw_revision_authority import (
     TournamentDrawRevisionBuilder,
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldResolver
+from beta_engine.domain.tournaments.post_draw_wild_card_repair import (
+    TournamentPostDrawWildCardRepairAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.models import TournamentDrawRevisionModel
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
@@ -34,6 +37,9 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 )
 from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+    TournamentWildCardAuthorityStore,
 )
 
 
@@ -157,6 +163,74 @@ class TournamentDrawRevisionStore:
                 raise ValueError(
                     "Tournament Draw revision predecessor chain is corrupt"
                 )
+
+            if revision.repair_kind == "frozen_wild_card_repair":
+                authority = revision.wild_card_repair_authority
+                if authority is None:
+                    raise ValueError("Stored frozen WC repair lacks authority")
+                if revision.successor_field != previous_field:
+                    raise ValueError(
+                        "Frozen WC repair unexpectedly changed Tournament Entry Field"
+                    )
+                base_wc = TournamentWildCardAuthorityStore(self.session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                )
+                if base_wc is None:
+                    raise ValueError(
+                        "Frozen WC repair references missing base WC authority"
+                    )
+                rebuilt_wc = TournamentPostDrawWildCardRepairAuthorityBuilder.build(
+                    predecessor=predecessor,
+                    predecessor_draw_input=previous_draw_input,
+                    base_wild_card_authority=base_wc,
+                    command_id=revision.command_id,
+                    withdrawn_player_id=authority.withdrawn_player_id,
+                    unavailable_player_ids=authority.unavailable_player_ids,
+                    replacement_cutoff_authority=(
+                        authority.replacement_cutoff_authority
+                    ),
+                )
+                if rebuilt_wc != authority:
+                    raise ValueError(
+                        "Frozen WC repair authority does not replay from frozen evidence"
+                    )
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
+                        previous=previous_draw_input,
+                        command_id=revision.command_id,
+                        withdrawn_player_id=authority.withdrawn_player_id,
+                        replacement_player_id=authority.replacement_player_id,
+                        repair_authority_fingerprint=authority.fingerprint,
+                    )
+                )
+                if rebuilt_input != revision.successor_draw_input:
+                    raise ValueError(
+                        "Frozen WC successor Draw Input does not replay"
+                    )
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_wild_card_repair(
+                        predecessor=predecessor,
+                        successor_field=previous_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        wild_card_repair_authority=rebuilt_wc,
+                    )
+                )
+                if rebuilt_revision != revision:
+                    raise ValueError(
+                        "Frozen WC Draw revision does not replay from frozen evidence"
+                    )
+                out.append(revision)
+                previous_draw_input = revision.successor_draw_input
+                predecessor = revision.successor_draw
+                continue
 
             rebuilt_field = TournamentEntryFieldResolver.repair_pre_draw(
                 authority=ranking,
@@ -673,6 +747,174 @@ class TournamentDrawRevisionStore:
         return revision
 
 
+
+    def draw_frozen_wild_card_withdrawal(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        withdrawn_player_id: str,
+        main_process_window_ordinal: int,
+        unavailable_reserve_player_ids: tuple[str, ...] = (),
+    ) -> TournamentDrawRevision:
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        history = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = next(
+                (item for item in history if item.command_id == command_id),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Frozen WC repair command exists outside validated history"
+                )
+            authority = revision.wild_card_repair_authority
+            expected_unavailable = tuple(
+                sorted(set(unavailable_reserve_player_ids))
+            )
+            if (
+                retry.event_id != event_id
+                or revision.repair_kind != "frozen_wild_card_repair"
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or authority is None
+                or authority.withdrawn_player_id != withdrawn_player_id
+                or authority.unavailable_player_ids != expected_unavailable
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Frozen WC repair command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise ValueError("Frozen WC repair requires canonical Draw authority")
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        base_wc = TournamentWildCardAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if original_input is None or process is None or base_wc is None:
+            raise ValueError(
+                "Frozen WC repair requires Draw Input, Draw process and WC authority"
+            )
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        field_rows = field_store._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not field_rows:
+            raise ValueError("Frozen WC repair requires Tournament Entry Field")
+        persisted_field, _ = field_store._load_row(field_rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+
+        cutoff = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=(withdrawn_player_id,),
+        )[0]
+        unavailable = tuple(sorted(set(unavailable_reserve_player_ids)))
+        try:
+            wc_repair = TournamentPostDrawWildCardRepairAuthorityBuilder.build(
+                predecessor=predecessor,
+                predecessor_draw_input=previous_input,
+                base_wild_card_authority=base_wc,
+                command_id=command_id,
+                withdrawn_player_id=withdrawn_player_id,
+                unavailable_player_ids=unavailable,
+                replacement_cutoff_authority=cutoff,
+            )
+        except ValueError as exc:
+            raise TournamentDrawRevisionConflict(str(exc)) from exc
+
+        successor_input = (
+            TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
+                previous=previous_input,
+                command_id=command_id,
+                withdrawn_player_id=withdrawn_player_id,
+                replacement_player_id=wc_repair.replacement_player_id,
+                repair_authority_fingerprint=wc_repair.fingerprint,
+            )
+        )
+        sequence = len(history) + 1
+        revision = TournamentDrawRevisionBuilder.build_frozen_wild_card_repair(
+            predecessor=predecessor,
+            successor_field=previous_field,
+            successor_draw_input=successor_input,
+            process_authority=process,
+            main_process_window_ordinal=main_process_window_ordinal,
+            sequence=sequence,
+            command_id=command_id,
+            wild_card_repair_authority=wc_repair,
+        )
+        request = {
+            "repair_kind": "frozen_wild_card_repair",
+            "predecessor_draw_fingerprint": predecessor.fingerprint,
+            "withdrawn_player_id": withdrawn_player_id,
+            "main_process_window_ordinal": main_process_window_ordinal,
+            "unavailable_reserve_player_ids": list(unavailable),
+            "wild_card_repair_authority_fingerprint": wc_repair.fingerprint,
+        }
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=_fp(request),
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=(
+                    revision.predecessor_draw_fingerprint
+                ),
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
 
     def draw_frozen_phase_withdrawal(
         self,

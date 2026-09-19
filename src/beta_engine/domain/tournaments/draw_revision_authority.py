@@ -26,18 +26,23 @@ from beta_engine.domain.tournaments.draw_process_authority import (
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthority,
 )
+from beta_engine.domain.tournaments.post_draw_wild_card_repair import (
+    TournamentPostDrawWildCardRepairAuthority,
+)
 
 
 TournamentDrawRevisionRepairKind = Literal[
     "full_redraw",
     "seed_cascade_phase",
     "draw_frozen_phase",
+    "frozen_wild_card_repair",
 ]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
     "seed_cascade",
     "direct_slot_fill",
     "frozen_slot_fill",
+    "frozen_wild_card_fill",
 ]
 
 
@@ -47,6 +52,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v3",
         "tournament_draw_revision.v4",
         "tournament_draw_revision.v5",
+        "tournament_draw_revision.v6",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -70,6 +76,10 @@ class TournamentDrawRevision(FrozenInput):
     replacement_cutoff_authorities: tuple[
         TournamentPlayerReplacementCutoffAuthority, ...
     ] = Field(default=(), exclude_if=lambda value: not value)
+    wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     process_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     successor_field: TournamentEntryField
@@ -117,7 +127,10 @@ class TournamentDrawRevision(FrozenInput):
         cutoff_ids = tuple(
             authority.player_id for authority in self.replacement_cutoff_authorities
         )
-        if self.schema_version == "tournament_draw_revision.v5":
+        if self.schema_version in {
+            "tournament_draw_revision.v5",
+            "tournament_draw_revision.v6",
+        }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
                     "Cutoff-aware Draw revision must freeze one authority per withdrawal"
@@ -199,13 +212,17 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Pure seed-cascade phase repair cannot introduce a new draw seed"
                 )
-        else:
+        elif self.repair_kind == "draw_frozen_phase":
             if self.schema_version not in {
                 "tournament_draw_revision.v4",
                 "tournament_draw_revision.v5",
             }:
                 raise ValueError(
                     "Draw-Freeze phase repair requires revision schema v4 or v5"
+                )
+            if self.wild_card_repair_authority is not None:
+                raise ValueError(
+                    "Generic Draw-Freeze repair cannot carry dedicated WC repair authority"
                 )
             if "main" in self.affected_draw_types:
                 if self.main_repair_action is None:
@@ -243,6 +260,42 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Draw-Freeze repair without full redraw cannot introduce a new draw seed"
                 )
+        else:
+            if self.schema_version != "tournament_draw_revision.v6":
+                raise ValueError(
+                    "Frozen WC repair requires revision schema v6"
+                )
+            if self.affected_draw_types != ("main",):
+                raise ValueError("Frozen WC repair may affect Main Draw only")
+            if self.main_repair_action != "frozen_wild_card_fill":
+                raise ValueError("Frozen WC repair requires WC physical-slot action")
+            if self.qualification_repair_action is not None:
+                raise ValueError("Frozen WC repair cannot mutate Qualification")
+            if self.repair_draw_seed is not None:
+                raise ValueError("Frozen WC repair cannot introduce a draw seed")
+            authority = self.wild_card_repair_authority
+            if authority is None:
+                raise ValueError("Frozen WC repair lacks dedicated authority")
+            if (
+                authority.run_id,
+                authority.branch_id,
+                authority.event_id,
+                authority.command_id,
+                authority.predecessor_draw_fingerprint,
+            ) != (
+                self.run_id,
+                self.branch_id,
+                self.event_id,
+                self.command_id,
+                self.predecessor_draw_fingerprint,
+            ):
+                raise ValueError("Frozen WC repair authority scope mismatch")
+            if self.withdrawn_player_ids != (authority.withdrawn_player_id,):
+                raise ValueError("Frozen WC repair withdrawal identity mismatch")
+            if self.replacement_cutoff_authorities != (
+                authority.replacement_cutoff_authority,
+            ):
+                raise ValueError("Frozen WC repair cutoff evidence mismatch")
         return self
 
     @property
@@ -729,6 +782,111 @@ class TournamentDrawRevisionBuilder:
             qualification_repair_action=qualification_action,
             withdrawn_player_ids=withdrawn_player_ids,
             replacement_cutoff_authorities=replacement_cutoff_authorities,
+            predecessor_draw_fingerprint=predecessor.fingerprint,
+            process_authority_fingerprint=process_authority.fingerprint,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            successor_draw=successor,
+        )
+
+
+    @staticmethod
+    def build_frozen_wild_card_repair(
+        *,
+        predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
+        successor_draw_input: TournamentDrawInputAuthority,
+        process_authority: TournamentDrawProcessAuthority,
+        main_process_window_ordinal: int,
+        sequence: int,
+        command_id: str,
+        wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority,
+    ) -> TournamentDrawRevision:
+        if process_authority.phase_for(
+            draw_type="main",
+            process_window_ordinal=main_process_window_ordinal,
+        ) != "draw_frozen":
+            raise ValueError("Dedicated RWC physical-slot repair requires Draw Freeze")
+        if (
+            wild_card_repair_authority.predecessor_draw_fingerprint
+            != predecessor.fingerprint
+        ):
+            raise ValueError("RWC repair authority predecessor mismatch")
+        if (
+            wild_card_repair_authority.predecessor_draw_input_fingerprint
+            != predecessor.draw_input_fingerprint
+        ):
+            raise ValueError("RWC repair authority Draw Input mismatch")
+        if (
+            successor_draw_input.entry_field_fingerprint
+            != successor_field.fingerprint
+        ):
+            raise ValueError("RWC successor Draw Input/Field binding mismatch")
+        if (
+            successor_draw_input.post_draw_wild_card_repair_fingerprints[-1]
+            != wild_card_repair_authority.fingerprint
+        ):
+            raise ValueError("RWC successor Draw Input lacks repair lineage")
+
+        slots = list(predecessor.main.slots)
+        index = wild_card_repair_authority.physical_slot_index - 1
+        if index < 0 or index >= len(slots):
+            raise ValueError("RWC physical slot is outside Main Draw")
+        template = slots[index]
+        if (
+            template.player_id
+            != wild_card_repair_authority.withdrawn_player_id
+            or template.entry_status != "wild_card"
+            or template.seed_number is not None
+        ):
+            raise ValueError("RWC physical slot no longer matches repair authority")
+        slots[index] = TournamentDrawSlot(
+            slot_index=template.slot_index,
+            idealized_slot_number=template.idealized_slot_number,
+            entrant_kind="player",
+            player_id=wild_card_repair_authority.replacement_player_id,
+            entry_status="wild_card",
+        )
+        main = TournamentDrawBracket(
+            draw_type=predecessor.main.draw_type,
+            section_id=predecessor.main.section_id,
+            bracket_size=predecessor.main.bracket_size,
+            seed_positions=predecessor.main.seed_positions,
+            slots=tuple(slots),
+            nodes=predecessor.main.nodes,
+            bye_slot_indexes=predecessor.main.bye_slot_indexes,
+            qualifier_placeholder_slots=predecessor.main.qualifier_placeholder_slots,
+        )
+        successor = TournamentDrawAuthority(
+            schema_version=predecessor.schema_version,
+            algorithm_version=predecessor.algorithm_version,
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            generated_by_command_id=command_id,
+            draw_input_fingerprint=successor_draw_input.fingerprint,
+            qualification=predecessor.qualification,
+            qualification_sections=predecessor.qualification_sections,
+            main=main,
+        )
+        return TournamentDrawRevision(
+            schema_version="tournament_draw_revision.v6",
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            sequence=sequence,
+            command_id=command_id,
+            repair_kind="frozen_wild_card_repair",
+            affected_draw_types=("main",),
+            main_process_window_ordinal=main_process_window_ordinal,
+            main_repair_action="frozen_wild_card_fill",
+            withdrawn_player_ids=(
+                wild_card_repair_authority.withdrawn_player_id,
+            ),
+            replacement_cutoff_authorities=(
+                wild_card_repair_authority.replacement_cutoff_authority,
+            ),
+            wild_card_repair_authority=wild_card_repair_authority,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,

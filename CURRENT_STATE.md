@@ -339,8 +339,22 @@ Canonical ranking/point/prize handling for W/O is intentionally **not** claimed:
 point-award construction fails closed until its dedicated Master semantics are
 implemented.
 
-This still does **not** claim the complete Master draw contract. The middle
-seed-cascade phase still intentionally requires replacement-backed player-count
-parity. Post-draw WC/RWC repair, Lucky Loser ordering and group Qualification remain
-Gate 3 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Frozen external RWC repair is now canonical for the bounded case where an
+unseeded active WC holder withdraws after Main Draw Freeze and the next available
+Reserve Wild Card is not already active in Qualification. The new
+`tournament_post_draw_wild_card_repair.v1` authority freezes the original WC
+authority, predecessor Draw/Input, exact physical WC slot, stored RWC ordinal,
+replacement-cutoff evidence and explicit unavailable reserves. Draw revision v6
+replaces that exact physical slot with the RWC, keeps `entry_status=wild_card`,
+does not inherit seed status, leaves Qualification untouched, and chains Draw Input
+v4 post-draw WC repair fingerprints. Repeated RWC use and Saved Revision
+backward/forward replay are deterministic.
+
+The workflow deliberately fails closed instead of skipping priority when the next
+available RWC is still in Qualification; that case needs an atomic Main+Q promotion
+and Q backfill. Seeded WC withdrawals and RWC exhaustion likewise remain for the
+next WC slice. The middle seed-cascade phase still intentionally requires
+replacement-backed player-count parity. Lucky Loser ordering and group
+Qualification remain Gate 3 work. See
+`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

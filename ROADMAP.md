@@ -320,6 +320,18 @@ Canonical result authority distinguishes W/O from played wins/losses while still
 using it for bracket stage progression. **W/O ranking/point/prize semantics remain
 fail-closed**: canonical point award construction rejects a W/O tournament until the
 dedicated Master award rules are implemented, rather than silently treating W/O as
-an ordinary played loss. The next draw-focused work is post-draw WC/RWC and Lucky
-Loser authority, followed by group Qualification. Legacy simulation-run
-UI/endpoint retirement remains separate Gate 3 work.
+an ordinary played loss. Post-draw WC/RWC work has now started with the first bounded canonical slice:
+after Main Draw Freeze, withdrawal of an **unseeded active WC holder** can consume
+the next available **external** Reserve Wild Card in stored RWC order. The repair is
+append-only revision v6, preserves the exact physical Main slot, preserves the
+`[WC]` entry status without inheriting a seed, freezes replacement-cutoff evidence,
+and carries explicit post-draw WC lineage in Draw Input v4. Sequential RWC use and
+Saved Revision replay are deterministic.
+
+This slice intentionally fails closed when the highest-priority available RWC is
+still active in Qualification, when the WC holder is seeded, or when RWC is
+exhausted. Those cases require the next atomic cross-draw/seed-aware WC repair slice
+rather than skipping the correct RWC priority. After that, Lucky Loser authority
+remains the next major Main Draw replacement workflow, followed by group
+Qualification. Legacy simulation-run UI/endpoint retirement remains separate Gate 3
+work.

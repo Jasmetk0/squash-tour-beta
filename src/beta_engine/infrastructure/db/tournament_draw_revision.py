@@ -223,6 +223,74 @@ class TournamentDrawRevisionStore:
                     "Tournament Draw revision predecessor chain is corrupt"
                 )
 
+            if revision.repair_kind == "frozen_ordinary_fallback":
+                authority = revision.replacement_source_authority
+                if authority is None:
+                    raise ValueError(
+                        "Stored frozen ordinary fallback lacks source authority"
+                    )
+                if revision.successor_field != previous_field:
+                    raise ValueError(
+                        "Frozen ordinary fallback unexpectedly changed Entry Field"
+                    )
+                if authority.predecessor_draw_fingerprint != predecessor.fingerprint:
+                    raise ValueError(
+                        "Frozen ordinary fallback source predecessor does not replay"
+                    )
+                if (
+                    authority.predecessor_draw_input_fingerprint
+                    != previous_draw_input.fingerprint
+                ):
+                    raise ValueError(
+                        "Frozen ordinary fallback source Draw Input does not replay"
+                    )
+                slot = predecessor.main.slots[authority.physical_slot_index - 1]
+                if slot.player_id != authority.withdrawn_player_id:
+                    raise ValueError(
+                        "Frozen ordinary fallback source physical slot does not replay"
+                    )
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder.build_frozen_ordinary_fallback(
+                        previous=previous_draw_input,
+                        command_id=revision.command_id,
+                        withdrawn_player_id=authority.withdrawn_player_id,
+                        replacement_source_authority_fingerprint=authority.fingerprint,
+                        replacement_player_id=(
+                            authority.selected_player_id
+                            if authority.source == "external_reserve"
+                            else None
+                        ),
+                        vacated_main_seed_number=slot.seed_number,
+                        create_bye=authority.source == "bye",
+                    )
+                )
+                if rebuilt_input != revision.successor_draw_input:
+                    raise ValueError(
+                        "Frozen ordinary fallback Draw Input does not replay"
+                    )
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_ordinary_fallback(
+                        predecessor=predecessor,
+                        successor_field=previous_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        replacement_source_authority=authority,
+                    )
+                )
+                if rebuilt_revision != revision:
+                    raise ValueError(
+                        "Frozen ordinary fallback Draw revision does not replay"
+                    )
+                out.append(revision)
+                previous_draw_input = revision.successor_draw_input
+                predecessor = revision.successor_draw
+                continue
+
             if revision.repair_kind == "lucky_loser_fill":
                 authority = revision.lucky_loser_fill_authority
                 if authority is None:
@@ -968,6 +1036,182 @@ class TournamentDrawRevisionStore:
         return revision
 
 
+
+    def apply_frozen_ordinary_fallback(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        main_process_window_ordinal: int,
+        replacement_source_authority,
+    ) -> TournamentDrawRevision:
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        history = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = next(
+                (item for item in history if item.command_id == command_id),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Frozen ordinary fallback command exists outside validated history"
+                )
+            if (
+                retry.event_id != event_id
+                or revision.repair_kind != "frozen_ordinary_fallback"
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or revision.replacement_source_authority
+                != replacement_source_authority
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Frozen ordinary fallback command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise ValueError(
+                "Frozen ordinary fallback requires canonical Draw authority"
+            )
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if original_input is None or process is None:
+            raise ValueError(
+                "Frozen ordinary fallback requires Draw Input and process authority"
+            )
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        field_rows = field_store._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not field_rows:
+            raise ValueError(
+                "Frozen ordinary fallback requires Tournament Entry Field"
+            )
+        persisted_field, _ = field_store._load_row(field_rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+
+        authority = replacement_source_authority
+        if authority.source not in {"external_reserve", "bye"}:
+            raise TournamentDrawRevisionConflict(
+                "Frozen ordinary fallback requires external reserve or BYE source"
+            )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.predecessor_draw_fingerprint,
+            authority.predecessor_draw_input_fingerprint,
+        ) != (
+            run_id,
+            branch_id,
+            event_id,
+            predecessor.fingerprint,
+            previous_input.fingerprint,
+        ):
+            raise TournamentDrawRevisionConflict(
+                "Frozen ordinary fallback source authority is stale"
+            )
+        slot = predecessor.main.slots[authority.physical_slot_index - 1]
+        if slot.player_id != authority.withdrawn_player_id:
+            raise TournamentDrawRevisionConflict(
+                "Frozen ordinary fallback physical slot is stale"
+            )
+
+        try:
+            successor_input = (
+                TournamentDrawInputAuthorityBuilder.build_frozen_ordinary_fallback(
+                    previous=previous_input,
+                    command_id=command_id,
+                    withdrawn_player_id=authority.withdrawn_player_id,
+                    replacement_source_authority_fingerprint=authority.fingerprint,
+                    replacement_player_id=(
+                        authority.selected_player_id
+                        if authority.source == "external_reserve"
+                        else None
+                    ),
+                    vacated_main_seed_number=slot.seed_number,
+                    create_bye=authority.source == "bye",
+                )
+            )
+            revision = (
+                TournamentDrawRevisionBuilder.build_frozen_ordinary_fallback(
+                    predecessor=predecessor,
+                    successor_field=previous_field,
+                    successor_draw_input=successor_input,
+                    process_authority=process,
+                    main_process_window_ordinal=main_process_window_ordinal,
+                    sequence=len(history) + 1,
+                    command_id=command_id,
+                    replacement_source_authority=authority,
+                )
+            )
+        except ValueError as exc:
+            raise TournamentDrawRevisionConflict(str(exc)) from exc
+
+        request = {
+            "repair_kind": "frozen_ordinary_fallback",
+            "predecessor_draw_fingerprint": predecessor.fingerprint,
+            "replacement_source_authority_fingerprint": authority.fingerprint,
+            "main_process_window_ordinal": main_process_window_ordinal,
+        }
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=_fp(request),
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=(
+                    revision.predecessor_draw_fingerprint
+                ),
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
 
     def draw_frozen_lucky_loser_vacancy(
         self,

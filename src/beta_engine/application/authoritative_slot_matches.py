@@ -46,6 +46,10 @@ from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorit
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPointAwardAuthority,
 )
+from beta_engine.domain.tournaments.walkover_authority import (
+    TournamentWalkoverAuthority,
+    TournamentWalkoverResult,
+)
 from beta_engine.domain.tournaments.result_authority import (
     TournamentResultAuthority,
     build_tournament_result_authority,
@@ -85,11 +89,26 @@ class AuthoritativeGroupResult:
 
 
 @dataclass(frozen=True)
+class AuthoritativeWalkoverGroupResult:
+    authoritative_input: TournamentWalkoverAuthority
+    result: TournamentWalkoverResult
+    result_fingerprint: str
+    effects: tuple[PlayerMatchSportingEffect, ...]
+    terminal_checkpoint: PlayerSportingCheckpoint
+    exact_retry: bool = False
+
+
+AuthoritativeTournamentGroupResult = (
+    AuthoritativeGroupResult | AuthoritativeWalkoverGroupResult
+)
+
+
+@dataclass(frozen=True)
 class AuthoritativeTournamentResult:
     """General result authority for an explicitly persisted topology."""
 
     event_id: str
-    groups: tuple[AuthoritativeGroupResult, ...]
+    groups: tuple[AuthoritativeTournamentGroupResult, ...]
     terminal_group_ids: tuple[str, ...]
     champion_player_id: str
     match_result_fingerprints: tuple[str, ...]
@@ -316,6 +335,21 @@ def publish_authoritative_tournament_to_existing_completion(
             raise ValueError("authoritative result is missing an executable match")
         group = by_match[match.match_id]
         result = group.result
+        if isinstance(result, TournamentWalkoverResult):
+            match.top_player_id, match.bottom_player_id = (
+                group.authoritative_input.resolved_player_ids
+            )
+            match.status = "completed"
+            match.winner_player_id = result.winner_player_id
+            match.loser_player_id = result.loser_player_id
+            match.scoreline = result.scoreline
+            match.result_fingerprint = group.result_fingerprint
+            match.match_input_snapshot = None
+            match.simulation_seed = None
+            match.result_notes = (
+                "canonical post-cutoff W/O; no Match Engine simulation"
+            )
+            continue
         match.top_player_id = (
             group.authoritative_input.engine_input.context.player_a.player.player_id
         )
@@ -889,6 +923,108 @@ class AuthoritativeSlotMatchExecutor:
         terminal = self._rebuild_terminal(slot)
         return AuthoritativeGroupResult(protected, result, result_fp, effects, terminal)
 
+    def execute_walkover_group(
+        self,
+        *,
+        authority: TournamentWalkoverAuthority,
+        expected_slot_start_fingerprint: str,
+    ) -> AuthoritativeWalkoverGroupResult:
+        slot = self._get_slot(
+            authority.run_id,
+            authority.branch_id,
+            authority.week,
+            authority.slot_id,
+        )
+        plan = self._load_plan(slot)
+        if authority.group_id not in plan.group_ids:
+            raise ValueError("walkover group is not included in the slot plan")
+        event_plan = next(
+            item
+            for item in plan.match_events
+            if item.group_id == authority.group_id
+        )
+        if (authority.event_id, authority.match_id) != (
+            event_plan.event_id,
+            event_plan.match_id,
+        ):
+            raise ValueError("walkover event/match identity differs from slot plan")
+        if event_plan.participant_sources is None:
+            raise ValueError(
+                "canonical post-cutoff W/O requires explicit participant sources"
+            )
+        if tuple(event_plan.participant_sources) != authority.participant_sources:
+            raise ValueError(
+                "walkover participant sources differ from authoritative slot plan"
+            )
+        if expected_slot_start_fingerprint != plan.slot_start_fingerprint:
+            raise ValueError("slot-start fingerprint changed; W/O retry conflicts")
+        if authority.slot_start_fingerprint != plan.slot_start_fingerprint:
+            raise ValueError("walkover authority is bound to a different slot start")
+
+        command = fingerprint(
+            {
+                "kind": "authoritative_walkover_group.v1",
+                "authority": authority.model_dump(mode="json"),
+            }
+        )
+        existing = self.session.get(
+            SimulationEventGroupModel,
+            (
+                authority.run_id,
+                authority.branch_id,
+                authority.week.ordinal,
+                authority.slot_id,
+                authority.group_id,
+            ),
+        )
+        if existing:
+            if existing.command_fingerprint != command:
+                raise ValueError(
+                    "completed event group command conflicts with W/O receipt"
+                )
+            loaded = self._load_group(existing, exact_retry=True)
+            if not isinstance(loaded, AuthoritativeWalkoverGroupResult):
+                raise ValueError(
+                    "existing event group is not the expected W/O receipt"
+                )
+            return loaded
+
+        result = authority.result
+        result_fp = fingerprint(
+            {
+                "authority": authority.fingerprint,
+                "result": result.model_dump(mode="json"),
+            }
+        )
+        payload = {
+            "schema_version": "authoritative_walkover_group.v1",
+            "walkover_authority": authority.model_dump(mode="json"),
+            "result": result.model_dump(mode="json"),
+            "result_fingerprint": result_fp,
+        }
+        row = SimulationEventGroupModel(
+            run_id=authority.run_id,
+            branch_id=authority.branch_id,
+            week_ordinal=authority.week.ordinal,
+            slot_id=authority.slot_id,
+            group_id=authority.group_id,
+            command_fingerprint=command,
+            match_id=authority.match_id,
+            match_input_fingerprint=authority.fingerprint,
+            result_fingerprint=result_fp,
+            payload_json=json.dumps(payload, sort_keys=True, separators=(",", ":")),
+        )
+        self.session.add(row)
+        self.session.flush()
+        terminal = self._rebuild_terminal(slot)
+        return AuthoritativeWalkoverGroupResult(
+            authoritative_input=authority,
+            result=result,
+            result_fingerprint=result_fp,
+            effects=(),
+            terminal_checkpoint=terminal,
+        )
+
     def replay(
         self,
         *,
@@ -982,8 +1118,72 @@ class AuthoritativeSlotMatchExecutor:
         return terminal
 
     @staticmethod
-    def _load_group(row, exact_retry: bool = False) -> AuthoritativeGroupResult:
+    def _load_group(
+        row, exact_retry: bool = False
+    ) -> AuthoritativeTournamentGroupResult:
         payload = json.loads(row.payload_json)
+        if payload.get("schema_version") == "authoritative_walkover_group.v1":
+            authority = TournamentWalkoverAuthority.model_validate(
+                payload.get("walkover_authority")
+            )
+            result = TournamentWalkoverResult.model_validate(payload.get("result"))
+            result_fp = fingerprint(
+                {
+                    "authority": authority.fingerprint,
+                    "result": result.model_dump(mode="json"),
+                }
+            )
+            command = fingerprint(
+                {
+                    "kind": "authoritative_walkover_group.v1",
+                    "authority": authority.model_dump(mode="json"),
+                }
+            )
+            if (
+                authority.run_id,
+                authority.branch_id,
+                authority.week.ordinal,
+                authority.slot_id,
+                authority.group_id,
+                authority.match_id,
+            ) != (
+                row.run_id,
+                row.branch_id,
+                row.week_ordinal,
+                row.slot_id,
+                row.group_id,
+                row.match_id,
+            ):
+                raise ValueError("persisted W/O group scope or match mismatch")
+            if (
+                authority.fingerprint != row.match_input_fingerprint
+                or payload.get("result_fingerprint") != row.result_fingerprint
+                or result_fp != row.result_fingerprint
+                or command != row.command_fingerprint
+                or result != authority.result
+            ):
+                raise ValueError("persisted W/O authority/result fingerprint mismatch")
+            terminal = PlayerSportingCheckpoint(
+                run_id=authority.run_id,
+                branch_id=authority.branch_id,
+                week=authority.week,
+                slot_id=authority.slot_id,
+                slot_ordinal=0,
+                opening_week_fingerprint=authority.slot_start_fingerprint,
+                slot_start_fingerprint=authority.slot_start_fingerprint,
+                predecessor_checkpoint_fingerprint=None,
+                applied_effect_fingerprints=(),
+                players=(),
+            )
+            return AuthoritativeWalkoverGroupResult(
+                authoritative_input=authority,
+                result=result,
+                result_fingerprint=row.result_fingerprint,
+                effects=(),
+                terminal_checkpoint=terminal,
+                exact_retry=exact_retry,
+            )
+
         protected = AuthoritativeMatchInput.model_validate_json(
             json.dumps(payload["authoritative_input"])
         )

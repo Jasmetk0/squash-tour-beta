@@ -9,6 +9,10 @@ from typing import Iterable, Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.tournaments.bracket_diagnostics import (
+    TournamentBracketDiagnostic,
+    main_bracket_diagnostics,
+)
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
@@ -79,6 +83,17 @@ class TournamentEntryFieldCapacity(FrozenInput):
         if reserved > self.main_draw_size:
             raise ValueError("Reserved Main Draw slots exceed Main Draw capacity")
         return self
+
+    @property
+    def main_diagnostics(self) -> tuple[TournamentBracketDiagnostic, ...]:
+        """Derived Admin diagnostics; not persisted and not part of field identity."""
+
+        entrant_count = self.main_draw_size - self.bye_slots
+        return main_bracket_diagnostics(
+            entrant_count=entrant_count,
+            bracket_capacity=self.main_draw_size,
+            bye_count=self.bye_slots,
+        )
 
     @property
     def direct_main_slots(self) -> int:

@@ -980,7 +980,7 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
 
 @pytest.mark.pr_critical
 def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_path):
-    driver, factory, _, _, _ = _multi_driver_fixture(
+    driver, factory, week, _, _ = _multi_driver_fixture(
         tmp_path / "proposal-adoption"
     )
     proposed = driver.propose_topological_schedule(
@@ -993,6 +993,7 @@ def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_pat
             run_id="run",
             branch_id="branch",
             request_id="adopt-proposal",
+            expected_week=week,
             expected_schedule_fingerprint="0" * 64,
             expected_position_fingerprint=proposed["position_fingerprint"],
         )
@@ -1004,6 +1005,7 @@ def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_pat
             run_id="run",
             branch_id="branch",
             request_id="adopt-proposal",
+            expected_week=week,
             expected_schedule_fingerprint=proposed["schedule_fingerprint"],
             expected_position_fingerprint="0" * 64,
         )
@@ -1035,6 +1037,7 @@ def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_pat
             run_id="run",
             branch_id="branch",
             request_id="different-request",
+            expected_week=week,
             expected_schedule_fingerprint=proposed["schedule_fingerprint"],
             expected_position_fingerprint=proposed["position_fingerprint"],
         )

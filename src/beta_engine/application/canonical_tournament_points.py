@@ -171,6 +171,9 @@ def build_tournament_point_award_authority(
             )
         points = max(0, int(distribution[point_stage]))
         player_fp = _hash(player.model_dump(mode="json"))
+        stored_point_stage = (
+            point_stage if point_stage != player.reached_stage else None
+        )
         award_fp_payload = {
             "schema_version": (
                 "tournament_player_point_award_authority.v2"
@@ -188,9 +191,6 @@ def build_tournament_point_award_authority(
             "source_tournament_result_fingerprint": result.fingerprint,
             "source_player_result_fingerprint": player_fp,
         }
-        stored_point_stage = (
-            point_stage if point_stage != player.reached_stage else None
-        )
         if stored_point_stage is not None:
             award_fp_payload["point_stage"] = stored_point_stage
         award_fp = _hash(award_fp_payload)

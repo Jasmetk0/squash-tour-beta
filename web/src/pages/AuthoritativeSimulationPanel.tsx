@@ -48,6 +48,7 @@ export function AuthoritativeSimulationPanel({
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
+  const [weekTransitionCommitted, setWeekTransitionCommitted] = useState(false)
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -73,7 +74,7 @@ export function AuthoritativeSimulationPanel({
   const transitionSaveQuery = useQuery({
     queryKey: ['authoritative-week-transition-save-preview', runId, branchId],
     queryFn: () => previewRankingSave(runId, branchId),
-    enabled: Boolean(weekTransitionReview && weekTransitionReview.result && positionQuery.data?.week_ready_for_transition === false),
+    enabled: weekTransitionCommitted,
     retry: false
   })
 
@@ -86,6 +87,7 @@ export function AuthoritativeSimulationPanel({
     setNextSlotCommandId(newCommandId())
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
+    setWeekTransitionCommitted(false)
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
@@ -99,6 +101,7 @@ export function AuthoritativeSimulationPanel({
     setNextSlotCommandId(newCommandId())
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
+    setWeekTransitionCommitted(false)
     setConfirmed(false)
   }, [positionQuery.data?.position_fingerprint])
 
@@ -256,6 +259,7 @@ export function AuthoritativeSimulationPanel({
       return confirmAuthoritativeWeekTransition(runId, branchId, weekTransitionReview)
     },
     onSuccess: async () => {
+      setWeekTransitionCommitted(true)
       await queryClient.invalidateQueries({
         queryKey: ['authoritative-week-transition-save-preview', runId, branchId]
       })
@@ -279,6 +283,7 @@ export function AuthoritativeSimulationPanel({
     },
     onSuccess: async () => {
       setWeekTransitionReview(null)
+      setWeekTransitionCommitted(false)
       setWeekTransitionCommandId(newCommandId())
       weekTransitionConfirmMutation.reset()
       weekTransitionPreviewMutation.reset()
@@ -543,7 +548,7 @@ export function AuthoritativeSimulationPanel({
             </>
           )}
 
-          {weekTransitionConfirmMutation.isSuccess ? (
+          {weekTransitionCommitted ? (
             <>
               <p className="status">
                 Week Transition committed to the Branch Working Draft. Save it as a recoverable Saved Revision before continuing simulation.

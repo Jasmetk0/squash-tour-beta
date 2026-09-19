@@ -402,7 +402,7 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
 
 
 @pytest.mark.pr_critical
-def test_topological_schedule_proposal_over_http_adopts_exact_payload(tmp_path):
+def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(
         tmp_path / "proposal-http-source"
     )
@@ -441,22 +441,46 @@ def test_topological_schedule_proposal_over_http_adopts_exact_payload(tmp_path):
         assert proposed["persisted"] is False
         assert len(proposed["schedule"]["slots"]) == 2
 
+        adoption = {
+            "request_id": "adopt-topological-proposal",
+            "expected_schedule_fingerprint": proposed[
+                "schedule_fingerprint"
+            ],
+            "expected_position_fingerprint": proposed[
+                "position_fingerprint"
+            ],
+        }
         status, adopted = _request(
             "POST",
-            root + "/week-schedule",
-            {
-                "schedule": proposed["schedule"],
-                "request_id": "adopt-topological-proposal",
-                "expected_position_fingerprint": proposed[
-                    "position_fingerprint"
-                ],
-            },
+            root + "/week-schedule/adopt-proposal",
+            adoption,
         )
         assert status == 201, adopted
+        assert adopted["adoption"] == "adopted_topological_proposal"
         assert (
             adopted["schedule_fingerprint"]
             == proposed["schedule_fingerprint"]
         )
+
+        status, retry = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            adoption,
+        )
+        assert status == 201, retry
+        assert retry["adoption"] == "exact_retry"
+        assert (
+            retry["schedule_fingerprint"]
+            == proposed["schedule_fingerprint"]
+        )
+
+        status, immutable = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            adoption | {"request_id": "different-request"},
+        )
+        assert status == 409
+        assert immutable["detail"]["code"] == "topological_schedule_adoption_conflict"
 
         status, conflict = _request(
             "GET",

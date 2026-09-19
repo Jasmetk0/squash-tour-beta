@@ -4,7 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from tests.api.test_admin_tournament_entry_fields_api import _install_entry_field
+from tests.api.test_admin_tournament_entry_fields_api import (
+    _command as _withdrawal_payload,
+    _install_entry_field,
+    _root as _entry_root,
+)
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 
@@ -105,6 +109,27 @@ def test_canonical_draw_input_commit_and_initial_generation_over_http(tmp_path):
 
         # Exact command retry is idempotent and returns the same frozen state.
         assert _request("POST", root + "/commit-input", commit) == (200, committed)
+
+        # Committing Draw Input through the canonical HTTP boundary hard-locks
+        # subsequent pre-draw field mutation through the existing Entry Field API.
+        withdrawal = _withdrawal_payload(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            command_id="withdraw-after-draw-input",
+            expected_field_fingerprint=field.fingerprint,
+            withdrawn_player_ids=("D",),
+        )
+        status, body = _request(
+            "POST",
+            _entry_root(server, run_id, branch_id, event_id)
+            + "/pre-draw-withdrawal",
+            withdrawal,
+        )
+        assert status == 409
+        assert "locked after Tournament Draw Input authority is committed" in body[
+            "detail"
+        ]["message"]
 
         generate = _generate_payload(
             run_id=run_id,

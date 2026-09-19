@@ -289,6 +289,70 @@ def test_main_entrant_count_derives_classic_capacity(
 
 
 @pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    ("bracket_size", "expected_seed_count"),
+    ((2, 1), (64, 16)),
+)
+def test_missing_supported_main_draw_boundaries_generate_canonical_geometry(
+    bracket_size,
+    expected_seed_count,
+):
+    player_ids = tuple(
+        f"P{index:03d}" for index in range(1, bracket_size + 1)
+    )
+    capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+        main_entrant_count=bracket_size,
+    )
+    seed_count = canonical_classic_seed_count(
+        bracket_capacity=capacity.main_draw_size,
+        actual_player_count=len(player_ids),
+    )
+    draw_input = TournamentDrawInputAuthority(
+        schema_version="tournament_draw_input_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id=f"boundary-{bracket_size}",
+        committed_by_command_id=f"commit-boundary-{bracket_size}",
+        draw_seed=64002 + bracket_size,
+        main_seed_count=seed_count,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=capacity,
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=player_ids,
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=player_ids[:seed_count],
+        qualification_seed_player_ids=(),
+    )
+
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id=f"generate-boundary-{bracket_size}",
+    )
+
+    assert capacity.main_draw_size == bracket_size
+    assert capacity.bye_slots == 0
+    assert seed_count == expected_seed_count
+    assert draw.main.bracket_size == bracket_size
+    assert len(draw.main.slots) == bracket_size
+    assert len(draw.main.nodes) == bracket_size - 1
+    assert draw.main.bye_slot_indexes == ()
+    assert {
+        slot.idealized_slot_number for slot in draw.main.slots
+    } == set(range(1, bracket_size + 1))
+    assert {
+        slot.seed_number
+        for slot in draw.main.slots
+        if slot.seed_number is not None
+    } == set(range(1, expected_seed_count + 1))
+    assert draw.main_bracket_diagnostics == ()
+
+
+@pytest.mark.pr_critical
 def test_max_supported_128_player_draw_has_complete_canonical_geometry():
     player_ids = tuple(f"P{index:03d}" for index in range(1, 129))
     capacity = TournamentEntryFieldCapacity.for_main_entrant_count(

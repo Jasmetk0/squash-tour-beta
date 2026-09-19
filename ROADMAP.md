@@ -328,10 +328,18 @@ append-only revision v6, preserves the exact physical Main slot, preserves the
 and carries explicit post-draw WC lineage in Draw Input v4. Sequential RWC use and
 Saved Revision replay are deterministic.
 
-This slice intentionally fails closed when the highest-priority available RWC is
-still active in Qualification, when the WC holder is seeded, or when RWC is
-exhausted. Those cases require the next atomic cross-draw/seed-aware WC repair slice
-rather than skipping the correct RWC priority. After that, Lucky Loser authority
-remains the next major Main Draw replacement workflow, followed by group
-Qualification. Legacy simulation-run UI/endpoint retirement remains separate Gate 3
-work.
+The next frozen cross-draw RWC slice is now canonical too. If the highest-priority
+available RWC is already an **unseeded Qualification player** and both Main and
+Qualification are after Draw Freeze, one atomic revision promotes that player into
+the exact vacated `[WC]` Main slot and fills the exact vacated Q slot with the
+highest available player below the Qualification cut from the same frozen
+Tournament Ranking Snapshot. `tournament_post_draw_wild_card_repair.v2` freezes
+the Q section/slot and backfill ordinal; Draw revision v7 records Main + Q as one
+transaction and Saved Revision replay rebuilds both sides deterministically.
+
+The WC workflow still fails closed for seeded WC holders, seeded Qualification RWC
+candidates, non-frozen Qualification repair phases, and RWC exhaustion. Those need
+the remaining seed/phase-aware WC fallback slices rather than silently skipping
+priority. Lucky Loser authority remains the next major Main Draw replacement
+workflow after those bounded WC gaps, followed by group Qualification. Legacy
+simulation-run UI/endpoint retirement remains separate Gate 3 work.

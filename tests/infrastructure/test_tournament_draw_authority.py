@@ -39,6 +39,7 @@ from beta_engine.domain.tournaments.replacement_source_authority import (
 from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserOrderAuthorityBuilder,
     TournamentLuckyLoserQualificationMatchEvidence,
+    TournamentLuckyLoserQualificationWinnerEvidence,
 )
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
@@ -5106,6 +5107,92 @@ def test_replacement_source_chain_closed_cutoff_wins_over_all_replacement_source
         )
         assert source.source == "walkover"
         assert source.selected_player_id is None
+
+
+@pytest.mark.pr_critical
+def test_q_winner_main_cutoff_forces_walkover_before_any_replacement_source(
+    database,
+):
+    with database.begin() as session:
+        draw_input, draw = _install_mixed_auto_bye_q_for_ll_order(session)
+        bracket = next(
+            item
+            for item in draw.qualification_brackets
+            if sum(slot.player_id is not None for slot in item.slots) == 2
+        )
+        section_id = bracket.section_id
+        assert section_id is not None
+        terminal = max(
+            bracket.nodes,
+            key=lambda node: (node.round_number, node.round_sequence),
+        )
+        q_winner = next(
+            slot.player_id for slot in bracket.slots if slot.player_id is not None
+        )
+        assert q_winner is not None
+        linked_main_slot = next(
+            slot
+            for slot in draw.main.slots
+            if slot.entrant_kind == "qualifier_placeholder"
+            and slot.placeholder_id == section_id
+        )
+
+        main_win = TournamentPlayedMatchCutoffEvidence(
+            match_id="main-r1-win",
+            week_ordinal=7,
+            slot_id="main-r1-slot",
+            slot_ordinal=1,
+            group_id="main-r1-group",
+            result_fingerprint="a" * 64,
+            opponent_player_id="MAIN-OPPONENT",
+            outcome="win",
+        )
+        cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            player_id=q_winner,
+            played_matches=(main_win,),
+            draw_type="main",
+        )
+        evidence = TournamentLuckyLoserQualificationWinnerEvidence(
+            section_id=section_id,
+            terminal_match_id=terminal.node_id,
+            winner_player_id=q_winner,
+            evidence_kind="played_terminal",
+            evidence_fingerprint="b" * 64,
+        )
+
+        source = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id=q_winner,
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=TournamentDrawStartEvidence(
+                match_id=terminal.node_id,
+                result_fingerprint="b" * 64,
+            ),
+            main_start_evidence=TournamentDrawStartEvidence(
+                match_id=main_win.match_id,
+                result_fingerprint=main_win.result_fingerprint,
+            ),
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=None,
+            external_reserve_player_ids=("RESERVE-1", "RESERVE-2"),
+            qualification_winner_evidence=evidence,
+        )
+
+        assert source.schema_version == "tournament_replacement_source.v2"
+        assert source.source == "walkover"
+        assert source.selected_player_id is None
+        assert source.source_ordinal is None
+        assert source.physical_slot_index == linked_main_slot.slot_index
+        assert source.qualification_winner_evidence == evidence
+        assert source.replacement_cutoff_authority.schema_version == (
+            "tournament_player_replacement_cutoff.v2"
+        )
+        assert source.replacement_cutoff_authority.draw_type == "main"
+        assert source.replacement_cutoff_authority.status == "walkover_required"
 
 
 @pytest.mark.pr_critical

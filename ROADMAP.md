@@ -363,7 +363,25 @@ seed number; the final active seed set may therefore shrink and Draw Input v5 re
 the explicit vacancy. After Q Freeze, the already-canonical frozen vacancy behavior
 still applies.
 
-The WC/RWC workflow now fails closed mainly at **RWC exhaustion / ordinary replacement
-fallback**. Once that source-priority fallback is canonical, Lucky Loser authority is
-the next major Main Draw replacement workflow, followed by group Qualification.
-Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.
+The WC/RWC phase mechanics are now complete through seeded/unseeded Q promotion.
+Master §15.1 makes the remaining RWC-exhaustion fallback phase-dependent: before
+Qualification starts it falls back to the ordinary Q-list promotion source, while
+after Qualification starts it falls into Lucky Loser priority. The latter is no
+longer left as an unnamed gap.
+
+The first canonical Lucky Loser slice now owns **vacancy identity and chronology**.
+After at least one real Qualification match exists, a replacement-open Direct Main
+withdrawal in a frozen Main Draw can convert its exact physical slot into anonymous
+`LL1`; later vacancies become `LL2`, `LL3`, etc. strictly by vacancy creation
+order, not physical draw position. The authority freezes the first real Q-match
+evidence that proves Qualification has started, the withdrawn player's replacement
+cutoff, the exact Main slot and any vacated seed number. Draw Input v6 stores the
+chronological LL placeholder lineage and Draw revision v9 stores the exact frozen
+slot mutation. Unresolved LL placeholders deliberately block executable topology.
+
+The next Lucky Loser slice must derive and freeze **candidate order** for bracket
+Qualification (reached Q round first, then Tournament Ranking Snapshot), then fill
+LL placeholders once candidates are known. RWC exhaustion can then route into that
+same source-priority authority rather than duplicating LL logic. Group Qualification
+LL ordering remains later Gate 3 work. Legacy simulation-run UI/endpoint retirement
+remains separate Gate 3 work.

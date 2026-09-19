@@ -15,6 +15,7 @@ const api = vi.hoisted(() => ({
   getEventLateReplacementActions: vi.fn(),
   applyEventLateReplacement: vi.fn(),
   getEventPreDrawWithdrawalState: vi.fn(),
+  getCanonicalTournamentEntryFieldState: vi.fn(),
   getEventPreDrawWithdrawalActions: vi.fn(),
   applyEventPreDrawWithdrawal: vi.fn(),
   getEventWildcardCandidates: vi.fn(),
@@ -27,6 +28,14 @@ vi.mock('../api/client', () => api)
 vi.mock('../admin/useAdminViewedSeasonState', () => ({ useAdminViewedSeasonState: adminTime.viewed }))
 
 const presentView = () => ({ historical: false, seasonState: null, unavailable: false, failed: false, query: { isLoading: false }, time: null })
+const presentBranchView = () => ({
+  historical: false,
+  seasonState: null,
+  unavailable: false,
+  failed: false,
+  query: { isLoading: false },
+  time: { branchId: 'branch-a' }
+})
 const historicalView = () => ({ historical: true, unavailable: false, failed: false, query: { isLoading: false }, time: { viewCheckpointId: 'cp-old' }, seasonState: {
   season: 2005, completed_event_ids: ['event-a'], next_event_index: 1, ordered_events: [
     { event_id: 'event-before', season: 2005, week: 9, tour: 'ELITE', category: 'SILVER', template_id: 'BEFORE' },
@@ -248,7 +257,7 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
     for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Late-replacement action history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
-    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions'] as const) expect(api[method]).not.toHaveBeenCalled()
+    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
 
@@ -310,6 +319,52 @@ describe('PlannedEventDetailPage', () => {
     expect(await screen.findByText('Slot 1: Unassigned')).toBeInTheDocument()
     expect(await screen.findByRole('option', { name: /Player One \(P1\)/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Assign wildcard' })).toBeInTheDocument()
+  })
+
+  it('renders canonical Main Draw warning for the active Admin Branch', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentEntryFieldState.mockResolvedValue({
+      schema_version: 'canonical_tournament_entry_field_state.v2',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      field_sequence: 2,
+      field_fingerprint: 'a'.repeat(64),
+      mode: 'pre_draw_repair',
+      direct_main_player_ids: ['P1', 'P2', 'P3'],
+      qualification_player_ids: [],
+      below_qualification_cut_player_ids: [],
+      withdrawn_player_ids: ['P4'],
+      main_draw_capacity: 4,
+      active_main_entrant_count: 3,
+      effective_main_bye_count: 1,
+      main_diagnostics: [
+        {
+          severity: 'warning',
+          code: 'odd_main_entrant_count',
+          message: '! Main Draw has an odd entrant count (3). Odd fields always receive an Admin warning because opening-round paths cannot be fully symmetric.',
+          entrant_count: 3,
+          bracket_capacity: 4,
+          bye_count: 1,
+          first_round_match_count: 2,
+          first_round_bye_match_count: 1,
+          first_round_bye_share: 0.5
+        }
+      ],
+      draw_input_committed: false,
+      pre_draw_repair_locked_by_draw_input: false
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('heading', { name: 'Canonical Main Draw preflight' })).toBeInTheDocument()
+    expect(api.getCanonicalTournamentEntryFieldState).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
+    expect(screen.getByText('branch-a')).toBeInTheDocument()
+    expect(screen.getByText('4')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getByText('1')).toBeInTheDocument()
+    const warnings = screen.getByRole('list', { name: 'Main Draw warnings' })
+    expect(warnings).toHaveTextContent('! Main Draw has an odd entrant count (3).')
   })
 
   it('renders pre-draw withdrawal controls and submits deterministic one-step action', async () => {

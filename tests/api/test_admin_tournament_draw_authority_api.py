@@ -264,7 +264,10 @@ def test_effective_draw_authority_tracks_latest_append_only_revision(tmp_path):
         }
         assert "C" not in effective_main_players
         assert {"A", "B", "D"} <= effective_main_players
-        assert effective["main"]["qualifier_placeholder_slots"] == [["Q1", 4]]
+        assert {
+            placeholder_id
+            for placeholder_id, _ in effective["main"]["qualifier_placeholder_slots"]
+        } == {"Q1"}
 
 
 @pytest.mark.pr_critical

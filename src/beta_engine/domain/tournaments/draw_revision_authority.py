@@ -173,6 +173,14 @@ class TournamentDrawRevision(FrozenInput):
                 "Historical Draw revision schema cannot carry replacement cutoff authority"
             )
 
+        if (
+            self.repair_kind != "lucky_loser_vacancy"
+            and self.lucky_loser_vacancy_authority is not None
+        ):
+            raise ValueError(
+                "Non-Lucky-Loser Draw revision cannot carry LL vacancy authority"
+            )
+
         if self.repair_kind == "full_redraw":
             if self.schema_version not in {
                 "tournament_draw_revision.v2",

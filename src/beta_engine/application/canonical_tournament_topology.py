@@ -251,6 +251,11 @@ def _resolve_source(
                     "canonical qualifier placeholder lacks linked Qualification terminal"
                 )
             return f"winner:{source_match_id}"
+        if slot.entrant_kind == "lucky_loser_placeholder":
+            raise ValueError(
+                "canonical Draw contains unresolved Lucky Loser placeholder "
+                + str(slot.placeholder_id)
+            )
         raise ValueError("canonical Draw slot entrant type is unsupported")
     if source.startswith("winner:"):
         node_id = source.removeprefix("winner:")

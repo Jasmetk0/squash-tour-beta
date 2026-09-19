@@ -136,7 +136,7 @@ class TournamentDrawProcessAuthorityStore:
         )
         if row is None:
             return None
-        draw = TournamentDrawAuthorityStore(self.session).get(
+        draw = TournamentDrawAuthorityStore(self.session).get_initial(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
@@ -161,7 +161,7 @@ class TournamentDrawProcessAuthorityStore:
         if not isinstance(command_id, str) or not command_id.strip() or len(command_id) > 128:
             raise ValueError("Tournament Draw process requires a valid command ID")
 
-        draw = TournamentDrawAuthorityStore(self.session).get(
+        draw = TournamentDrawAuthorityStore(self.session).get_initial(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,

@@ -16,6 +16,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
     TournamentDrawProcessAuthorityModel,
+    TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
 )
@@ -150,6 +151,34 @@ def _validate_draw_authority_rows_shape(rows):
             row.authority_fingerprint,
         ):
             raise ValueError("Saved Tournament Draw authority row is corrupt")
+
+
+def _validate_draw_revision_rows_shape(rows):
+    from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
+
+    by_event = {}
+    for row in rows:
+        by_event.setdefault((row.run_id, row.branch_id, row.event_id), []).append(row)
+    for event_rows in by_event.values():
+        ordered = sorted(event_rows, key=lambda row: row.sequence)
+        if [row.sequence for row in ordered] != list(range(1, len(ordered) + 1)):
+            raise ValueError("Saved Tournament Draw revision sequence has a gap")
+        for row in ordered:
+            revision = TournamentDrawRevision.model_validate_json(row.payload_json)
+            if (
+                revision.sequence,
+                revision.command_id,
+                revision.predecessor_draw_fingerprint,
+                revision.successor_draw.fingerprint,
+                revision.fingerprint,
+            ) != (
+                row.sequence,
+                row.command_id,
+                row.predecessor_draw_fingerprint,
+                row.successor_draw_fingerprint,
+                row.revision_fingerprint,
+            ):
+                raise ValueError("Saved Tournament Draw revision row is corrupt")
 
 
 def _validate_draw_process_rows_shape(rows):
@@ -310,6 +339,8 @@ def _component(
     include_draw_authorities=True,
     draw_process_authorities=(),
     include_draw_process_authorities=False,
+    draw_revisions=(),
+    include_draw_revisions=False,
 ):
     _validate_semantics(slots, groups)
     _validate_entry_field_rows(entry_fields)
@@ -317,6 +348,7 @@ def _component(
     _validate_draw_input_rows_shape(draw_inputs)
     _validate_draw_authority_rows_shape(draw_authorities)
     _validate_draw_process_rows_shape(draw_process_authorities)
+    _validate_draw_revision_rows_shape(draw_revisions)
     body = {
         "slots": [
             {
@@ -436,6 +468,22 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in draw_authorities
+        ]
+    if include_draw_revisions:
+        body["draw_revisions"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "sequence": row.sequence,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "revision_fingerprint": row.revision_fingerprint,
+                "predecessor_draw_fingerprint": row.predecessor_draw_fingerprint,
+                "successor_draw_fingerprint": row.successor_draw_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in draw_revisions
         ]
     if include_draw_process_authorities:
         body["draw_process_authorities"] = [
@@ -584,6 +632,19 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         draw_store = TournamentDrawAuthorityStore(session)
         for event_id in sorted({row.event_id for row in draw_authorities}):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    draw_revisions = session.scalars(
+        select(TournamentDrawRevisionModel)
+        .where(
+            TournamentDrawRevisionModel.run_id == run_id,
+            TournamentDrawRevisionModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence)
+    ).all()
+    if draw_revisions:
+        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        revision_store = TournamentDrawRevisionStore(session)
+        for event_id in sorted({row.event_id for row in draw_revisions}):
+            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
     draw_process_authorities = session.scalars(
         select(TournamentDrawProcessAuthorityModel)
         .where(
@@ -611,6 +672,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or draw_inputs
         or draw_authorities
         or draw_process_authorities
+        or draw_revisions
     ):
         payload["content"][COMPONENT_KEY] = _component(
             slots,
@@ -628,6 +690,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_draw_authorities=bool(draw_authorities),
             draw_process_authorities=draw_process_authorities,
             include_draw_process_authorities=bool(draw_process_authorities),
+            draw_revisions=draw_revisions,
+            include_draw_revisions=bool(draw_revisions),
         )
 
 
@@ -645,6 +709,7 @@ def _load(payload, *, run_id, branch_id):
         "draw_inputs",
         "draw_authorities",
         "draw_process_authorities",
+        "draw_revisions",
     }
     if not required <= set(component) or set(component) - required - optional:
         raise ValueError("Invalid Saved Revision simulation-slot component")
@@ -691,6 +756,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("draw_process_authorities", [])
         ],
         include_draw_process_authorities="draw_process_authorities" in component,
+        draw_revisions=[
+            TournamentDrawRevisionModel(**value)
+            for value in component.get("draw_revisions", [])
+        ],
+        include_draw_revisions="draw_revisions" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
@@ -709,6 +779,7 @@ def _load(payload, *, run_id, branch_id):
                 "draw_inputs",
                 "draw_authorities",
                 "draw_process_authorities",
+                "draw_revisions",
             }
         )
         for value in component[kind]
@@ -865,6 +936,44 @@ def _validate_saved_draw_authorities_against_target_inputs(
         )
 
 
+def _validate_saved_draw_revisions_against_target_draw(component) -> None:
+    revision_values = (component or {}).get("draw_revisions", [])
+    if not revision_values:
+        return
+
+    draw_values = (component or {}).get("draw_authorities", [])
+    if not draw_values:
+        raise ValueError("Saved Draw revisions require saved initial Draw authority")
+
+    from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+    from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
+
+    initial_by_event = {
+        value["event_id"]: TournamentDrawAuthority.model_validate_json(
+            value["payload_json"]
+        )
+        for value in draw_values
+    }
+    by_event = {}
+    for value in revision_values:
+        by_event.setdefault(value["event_id"], []).append(value)
+
+    for event_id, values in by_event.items():
+        predecessor = initial_by_event.get(event_id)
+        if predecessor is None:
+            raise ValueError("Saved Draw revision references missing initial Draw")
+        for expected, value in enumerate(
+            sorted(values, key=lambda item: item["sequence"]),
+            start=1,
+        ):
+            revision = TournamentDrawRevision.model_validate_json(value["payload_json"])
+            if revision.sequence != expected:
+                raise ValueError("Saved Draw revision sequence has a gap")
+            if revision.predecessor_draw_fingerprint != predecessor.fingerprint:
+                raise ValueError("Saved Draw revision predecessor chain is corrupt")
+            predecessor = revision.successor_draw
+
+
 def _validate_saved_draw_process_against_target_draw(
     component,
 ) -> None:
@@ -917,6 +1026,7 @@ def restore_saved_simulation_slots(
         branch_id=branch_id,
     )
     _validate_saved_draw_authorities_against_target_inputs(target)
+    _validate_saved_draw_revisions_against_target_draw(target)
     _validate_saved_draw_process_against_target_draw(target)
     live_slots = session.scalars(
         select(SimulationSlotModel)
@@ -1029,6 +1139,19 @@ def restore_saved_simulation_slots(
         draw_store = TournamentDrawAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_draw_authorities}):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_draw_revisions = session.scalars(
+        select(TournamentDrawRevisionModel)
+        .where(
+            TournamentDrawRevisionModel.run_id == run_id,
+            TournamentDrawRevisionModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence)
+    ).all()
+    if live_draw_revisions:
+        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        revision_store = TournamentDrawRevisionStore(session)
+        for event_id in sorted({row.event_id for row in live_draw_revisions}):
+            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_draw_process_authorities = session.scalars(
         select(TournamentDrawProcessAuthorityModel)
         .where(
@@ -1089,6 +1212,11 @@ def restore_saved_simulation_slots(
                 bool(live_draw_process_authorities)
                 or bool(expected is not None and "draw_process_authorities" in expected)
             ),
+            draw_revisions=live_draw_revisions,
+            include_draw_revisions=(
+                bool(live_draw_revisions)
+                or bool(expected is not None and "draw_revisions" in expected)
+            ),
         )
         if live_slots
         or live_groups
@@ -1100,10 +1228,17 @@ def restore_saved_simulation_slots(
         or live_draw_inputs
         or live_draw_authorities
         or live_draw_process_authorities
+        or live_draw_revisions
         else None
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentDrawRevisionModel).where(
+            TournamentDrawRevisionModel.run_id == run_id,
+            TournamentDrawRevisionModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(TournamentDrawProcessAuthorityModel).where(
             TournamentDrawProcessAuthorityModel.run_id == run_id,
@@ -1184,6 +1319,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentDrawAuthorityModel(**value))
     for value in (target or {}).get("draw_process_authorities", []):
         session.add(TournamentDrawProcessAuthorityModel(**value))
+    for value in (target or {}).get("draw_revisions", []):
+        session.add(TournamentDrawRevisionModel(**value))
     session.flush()
     target_entry_fields = (target or {}).get("entry_fields", [])
     if target_entry_fields:
@@ -1234,3 +1371,9 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_draw_process}
         ):
             process_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_draw_revisions = (target or {}).get("draw_revisions", [])
+    if target_draw_revisions:
+        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        revision_store = TournamentDrawRevisionStore(session)
+        for event_id in sorted({value["event_id"] for value in target_draw_revisions}):
+            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)

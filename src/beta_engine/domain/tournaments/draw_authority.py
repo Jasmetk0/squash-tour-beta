@@ -215,7 +215,15 @@ class TournamentDrawAuthorityBuilder:
         draw_input: TournamentDrawInputAuthority,
         command_id: str,
         algorithm_version: TournamentDrawAlgorithmVersion = "idealized_seed_tiers.v2",
+        draw_seed_override: int | None = None,
     ) -> TournamentDrawAuthority:
+        source_draw_input = draw_input
+        effective_draw_input = (
+            draw_input.model_copy(update={"draw_seed": draw_seed_override})
+            if draw_seed_override is not None
+            else draw_input
+        )
+        draw_input = effective_draw_input
         capacity = draw_input.capacity
         if capacity.main_draw_size < 2 or not _is_power_of_two(capacity.main_draw_size):
             raise ValueError(
@@ -347,7 +355,7 @@ class TournamentDrawAuthorityBuilder:
             branch_id=draw_input.branch_id,
             event_id=draw_input.event_id,
             generated_by_command_id=command_id,
-            draw_input_fingerprint=draw_input.fingerprint,
+            draw_input_fingerprint=source_draw_input.fingerprint,
             qualification=qualification,
             qualification_sections=qualification_sections,
             main=main,

@@ -261,8 +261,17 @@ penultimate window fixed as Redraw Cutoff / seed-cascade and the final window fi
 as Draw Freeze. The authority is bound to the exact canonical Draw fingerprint and
 is Saved Revision state.
 
-The next draw-focused slice can now execute real phase-aware repair against that
-authority: full redraw before cutoff, tier-aware seed cascade between cutoff/freeze,
-and direct frozen-slot fill after freeze. Post-draw WC/RWC, Lucky Loser, group
-Qualification and the first-real-match replacement cutoff remain subsequent Gate 3
-work. Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.
+Phase-aware repair now starts with append-only full-redraw withdrawal repair before
+Redraw Cutoff. The repair re-resolves the affected Entry Field from the same frozen
+Tournament Ranking Snapshot, freezes that successor field plus its derived Draw Input,
+uses a new repair draw seed and stores a predecessor-linked Draw revision. Main
+withdrawal can therefore atomically promote from Qualification and backfill Q from
+below the cut; Qualification-only withdrawal leaves Main unchanged. Every affected
+draw component must independently still be in its own full-redraw phase, and Q1..Qn
+linkage identities remain stable. WC/RWC events stay blocked from this generic slice
+until their dedicated post-draw repair path exists.
+
+The next draw-focused slice is tier-aware seed cascade between Redraw Cutoff and
+Draw Freeze, followed by direct frozen-slot fill after Draw Freeze. Post-draw WC/RWC,
+Lucky Loser, group Qualification and the first-real-match replacement cutoff remain
+subsequent Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.

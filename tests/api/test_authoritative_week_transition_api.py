@@ -481,6 +481,7 @@ def test_failure_at_each_write_boundary_rolls_back_everything(
         assert dump(path) == before and counts(path) == (0, 0, 0, 0)
 
 
+@pytest.mark.pr_critical
 def test_target_week_prospect_is_frozen_as_branch_owned_pre_tour_arrival(tmp_path):
     path = tmp_path / "prospect-arrival.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:

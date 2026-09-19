@@ -1848,3 +1848,283 @@ def test_saved_revision_restores_active_seed_cascade(database):
             == component_after["fingerprint"]
         )
 
+
+
+
+def test_draw_freeze_seeded_withdrawal_fills_exact_slot_without_cascade(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        before = draw_player_slots(initial.main)
+        store = TournamentDrawRevisionStore(session)
+
+        revision = store.draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-seed-one-frozen",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=3,
+        )
+        retry = store.draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-seed-one-frozen",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=3,
+        )
+
+        assert retry == revision
+        assert revision.schema_version == "tournament_draw_revision.v4"
+        assert revision.repair_kind == "draw_frozen_phase"
+        assert revision.main_repair_action == "frozen_slot_fill"
+        assert revision.repair_draw_seed is None
+        assert revision.successor_draw_input.draw_seed == 12345
+
+        after = draw_player_slots(revision.successor_draw.main)
+        assert after["P33"].slot_index == before["P01"].slot_index
+        assert after["P33"].seed_number is None
+        assert after["P33"].is_seed_protected is False
+        for player_id, slot in before.items():
+            if player_id != "P01":
+                assert after[player_id] == slot
+
+        with pytest.raises(TournamentDrawRevisionConflict):
+            store.draw_frozen_phase_withdrawal(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="withdraw-seed-one-frozen",
+                withdrawn_player_ids=("P02",),
+                main_process_window_ordinal=3,
+            )
+
+
+def test_draw_freeze_unseeded_withdrawal_only_changes_exact_slot(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        before = draw_player_slots(initial.main)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-unseeded-frozen",
+            withdrawn_player_ids=("P20",),
+            main_process_window_ordinal=3,
+        )
+
+        after = draw_player_slots(revision.successor_draw.main)
+        assert revision.main_repair_action == "frozen_slot_fill"
+        assert after["P33"].slot_index == before["P20"].slot_index
+        assert after["P33"].seed_number is None
+        for player_id, slot in before.items():
+            if player_id != "P20":
+                assert after[player_id] == slot
+
+
+def test_draw_freeze_supports_main_frozen_with_q_cascade(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        before_main = draw_player_slots(initial.main)
+        before_q = {
+            slot.player_id: (section.section_id, slot)
+            for section in initial.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="main-frozen-q-cascade",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=2,
+        )
+
+        assert revision.main_repair_action == "frozen_slot_fill"
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert revision.repair_draw_seed is None
+
+        after_main = draw_player_slots(revision.successor_draw.main)
+        assert after_main["Q01"].slot_index == before_main["M01"].slot_index
+        assert after_main["Q01"].seed_number is None
+        for player_id, slot in before_main.items():
+            if player_id != "M01":
+                assert after_main[player_id] == slot
+
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+        after_q = {
+            slot.player_id: (section.section_id, slot)
+            for section in revision.successor_draw.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+        assert "Q01" not in after_q
+        assert "Q25" in after_q
+        assert before_q["Q01"][0] == "Q1"
+
+
+def test_draw_freeze_supports_main_frozen_with_q_full_redraw(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        before_main = draw_player_slots(initial.main)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="main-frozen-q-redraw",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=424242,
+        )
+
+        assert revision.main_repair_action == "frozen_slot_fill"
+        assert revision.qualification_repair_action == "full_redraw"
+        assert revision.repair_draw_seed == 424242
+        after_main = draw_player_slots(revision.successor_draw.main)
+        assert after_main["Q01"].slot_index == before_main["M01"].slot_index
+        assert after_main["Q01"].seed_number is None
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+
+
+def test_draw_freeze_replacement_exhaustion_creates_late_bye_in_vacated_slot(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session, player_count=32)
+        before = draw_player_slots(initial.main)
+        withdrawn_slot = before["P20"].slot_index
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="frozen-late-bye",
+            withdrawn_player_ids=("P20",),
+            main_process_window_ordinal=3,
+        )
+
+        slot = revision.successor_draw.main.slots[withdrawn_slot - 1]
+        assert slot.entrant_kind == "bye"
+        assert slot.player_id is None
+        assert slot.seed_number is None
+        assert withdrawn_slot in revision.successor_draw.main.bye_slot_indexes
+        for player_id, prior in before.items():
+            if player_id != "P20":
+                assert draw_player_slots(revision.successor_draw.main)[player_id] == prior
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+def test_draw_freeze_multi_q_fills_exact_section_slot_and_keeps_q_identity(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        before = {
+            slot.player_id: (section.section_id, slot)
+            for section in initial.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="q-frozen-direct-slot",
+            withdrawn_player_ids=("Q01",),
+            qualification_process_window_ordinal=3,
+        )
+
+        assert revision.qualification_repair_action == "frozen_slot_fill"
+        assert revision.successor_draw.main == initial.main
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+
+        after = {
+            slot.player_id: (section.section_id, slot)
+            for section in revision.successor_draw.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+        before_section, before_slot = before["Q01"]
+        after_section, replacement_slot = after["Q25"]
+        assert after_section == before_section
+        assert replacement_slot.slot_index == before_slot.slot_index
+        assert replacement_slot.seed_number is None
+
+
+def test_saved_revision_restores_active_draw_freeze_revision(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        draw_store = TournamentDrawAuthorityStore(session)
+        saved_before = capture(session)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="saved-draw-freeze",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=3,
+        )
+        saved_after = capture(session)
+        component_after = saved_after["content"]["simulation_slot_match_state"]
+        assert len(component_after["draw_revisions"]) == 1
+        assert component_after["draw_revisions"][0]["revision_fingerprint"] == (
+            revision.fingerprint
+        )
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert draw_store.get(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == initial
+
+        recaptured_before = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured_before,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert draw_store.get(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == revision.successor_draw
+        recaptured_after = capture(session)
+        assert (
+            recaptured_after["content"]["simulation_slot_match_state"]["fingerprint"]
+            == component_after["fingerprint"]
+        )

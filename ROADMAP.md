@@ -210,10 +210,15 @@ After #752, canonical tournament results are Run-owned. The current larger follo
 also removes legacy point-award generation and legacy tournament DTO ingestion from
 the canonical ranking path. Authored point distribution is frozen once, embedded in
 replayable `TournamentPointAwardAuthority`, and persisted with the result as
-`OwnedTournamentRankingSource v3`. The following Ranking Week can materialize
-Official ranking-result history directly from those canonical authorities without a
-`SeasonPointAwardsService` instance. Legacy-shaped result/award DTOs remain only
-compatibility projections for historical readers.
+`OwnedTournamentRankingSource v3`. Point Award v3 now also carries Master §18.1
+additive Qualification + Main values for players who participate in both draws:
+successful qualifiers use their Qualification-winner value, Lucky Losers retain the
+value of the Qualification stage they actually reached, and each draw applies the
+BYE/W/O unlock contract independently before the two values are summed. Historical
+v1/v2 Point Award fingerprints remain stable. The following Ranking Week can
+materialize Official ranking-result history directly from those canonical authorities
+without a `SeasonPointAwardsService` instance. Legacy-shaped result/award DTOs remain
+only compatibility projections for historical readers.
 
 
 ### Canonical-only owned tournament source follow-up

@@ -19,6 +19,16 @@ class TournamentPlayerPointAwardAuthority(FrozenInput):
         min_length=1,
         exclude_if=lambda value: value is None,
     )
+    qualification_point_stage: str | None = Field(
+        default=None,
+        min_length=1,
+        exclude_if=lambda value: value is None,
+    )
+    qualification_points_awarded: int | None = Field(
+        default=None,
+        ge=0,
+        exclude_if=lambda value: value is None,
+    )
     qualifier: bool = False
     seed_number: int | None = Field(default=None, ge=1)
     ranking_points_awarded: int = Field(ge=0)
@@ -33,6 +43,7 @@ class TournamentPointAwardAuthority(FrozenInput):
     schema_version: Literal[
         "tournament_point_award_authority.v1",
         "tournament_point_award_authority.v2",
+        "tournament_point_award_authority.v3",
     ] = "tournament_point_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -63,14 +74,31 @@ class TournamentPointAwardAuthority(FrozenInput):
             raise ValueError(
                 "Canonical ranked Point Award authority cannot use unranked distribution"
             )
+        has_point_override = any(
+            award.point_stage is not None for award in self.awards
+        )
+        has_qualification_component = any(
+            award.qualification_point_stage is not None
+            or award.qualification_points_awarded is not None
+            for award in self.awards
+        )
         if self.schema_version == "tournament_point_award_authority.v1":
-            if any(award.point_stage is not None for award in self.awards):
+            if has_point_override or has_qualification_component:
                 raise ValueError(
-                    "Historical Point Award v1 cannot carry point-stage override"
+                    "Historical Point Award v1 cannot carry v2/v3 point metadata"
                 )
-        elif not any(award.point_stage is not None for award in self.awards):
+        elif self.schema_version == "tournament_point_award_authority.v2":
+            if has_qualification_component:
+                raise ValueError(
+                    "Historical Point Award v2 cannot carry Qualification component metadata"
+                )
+            if not has_point_override:
+                raise ValueError(
+                    "Point Award v2 requires at least one point-stage override"
+                )
+        elif not has_qualification_component:
             raise ValueError(
-                "Point Award v2 requires at least one point-stage override"
+                "Point Award v3 requires at least one additive Qualification component"
             )
 
         distribution = dict(self.point_distribution)
@@ -83,12 +111,45 @@ class TournamentPointAwardAuthority(FrozenInput):
         ):
             raise ValueError("Tournament Point Award distribution snapshot mismatch")
         for award in self.awards:
+            has_q_stage = award.qualification_point_stage is not None
+            has_q_points = award.qualification_points_awarded is not None
+            if has_q_stage != has_q_points:
+                raise ValueError(
+                    "Qualification point component requires both stage and amount"
+                )
+
             effective_point_stage = award.point_stage or award.reached_stage
-            expected_points = distribution.get(effective_point_stage)
-            if expected_points is None:
+            main_points = distribution.get(effective_point_stage)
+            if main_points is None:
                 raise ValueError(
                     "Tournament Point Award stage is absent from frozen distribution"
                 )
+
+            expected_points = main_points
+            if has_q_stage:
+                assert award.qualification_point_stage is not None
+                assert award.qualification_points_awarded is not None
+                if not award.qualifier:
+                    raise ValueError(
+                        "Qualification point component requires Qualification provenance"
+                    )
+                if award.reached_stage.startswith("qualification_"):
+                    raise ValueError(
+                        "Qualification-only result cannot carry an additive Qualification component"
+                    )
+                qualification_points = distribution.get(
+                    award.qualification_point_stage
+                )
+                if qualification_points is None:
+                    raise ValueError(
+                        "Qualification point component stage is absent from frozen distribution"
+                    )
+                if award.qualification_points_awarded != qualification_points:
+                    raise ValueError(
+                        "Qualification point component amount differs from frozen distribution"
+                    )
+                expected_points += qualification_points
+
             if (
                 award.ranking_points_awarded != expected_points
                 or award.race_points_awarded != expected_points
@@ -96,12 +157,18 @@ class TournamentPointAwardAuthority(FrozenInput):
                 raise ValueError(
                     "Tournament Point Award amount differs from frozen distribution"
                 )
-            award_fingerprint_payload = {
-                "schema_version": (
+
+            player_schema = (
+                "tournament_player_point_award_authority.v3"
+                if has_q_stage
+                else (
                     "tournament_player_point_award_authority.v2"
                     if award.point_stage is not None
                     else "tournament_player_point_award_authority.v1"
-                ),
+                )
+            )
+            award_fingerprint_payload = {
+                "schema_version": player_schema,
                 "event_id": self.event_id,
                 "seed": self.seed,
                 "player_id": award.player_id,
@@ -115,6 +182,13 @@ class TournamentPointAwardAuthority(FrozenInput):
             }
             if award.point_stage is not None:
                 award_fingerprint_payload["point_stage"] = award.point_stage
+            if has_q_stage:
+                award_fingerprint_payload["qualification_point_stage"] = (
+                    award.qualification_point_stage
+                )
+                award_fingerprint_payload["qualification_points_awarded"] = (
+                    award.qualification_points_awarded
+                )
             expected_award_fingerprint = _hash(award_fingerprint_payload)
             if award.award_fingerprint != expected_award_fingerprint:
                 raise ValueError("Tournament Point Award fingerprint mismatch")

@@ -1122,6 +1122,57 @@ def test_multiple_full_redraw_withdrawals_chain_from_frozen_successor_field(data
         assert second.successor_field.withdrawn_player_ids == ("C", "E")
 
 
+def test_full_redraw_retry_returns_original_revision_after_later_revision(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-process",
+            main_process_window_count=5,
+            qualification_process_window_count=3,
+        )
+
+        store = TournamentDrawRevisionStore(session)
+        first = store.full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-c",
+            withdrawn_player_ids=("C",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=101,
+        )
+        store.full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-e",
+            withdrawn_player_ids=("E",),
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=202,
+        )
+
+        assert store.full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-c",
+            withdrawn_player_ids=("C",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=101,
+        ) == first
+
+
 def test_saved_revision_restores_active_full_redraw_withdrawal(database):
     with database.begin() as session:
         install_draw_input(session)

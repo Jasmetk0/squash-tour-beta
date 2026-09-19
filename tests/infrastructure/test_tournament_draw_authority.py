@@ -47,6 +47,7 @@ from beta_engine.infrastructure.db.tournament_draw_process_authority import (
     TournamentDrawProcessAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionConflict,
     TournamentDrawRevisionStore,
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (

@@ -22,9 +22,12 @@ Independent same-slot groups now commit atomically and resume after failure, whi
 transition readiness reuses the authoritative match/effect sporting preflight.
 General draws, Qualification, WC/LL, Entries, AI-authored/general scheduling, and health remain Gate 3 work.
 The repeated-flow acceptance now proves three completed authoritative RankingWeeks
-(Week 1 → Week 2 → Week 3 → Week 4), and a separate production-backed acceptance
-repeats generalized eight-player/seven-match Main Draws across the same three-week
-chain with explicit schedules, ranking transitions and historical replay.
+(Week 1 → Week 2 → Week 3 → Week 4), and a production-backed acceptance repeats
+eight-player/seven-match Main Draws across the same three-week chain with ranking
+transitions and historical replay. A separate Run-owned canonical acceptance now
+executes a sixteen-player/fifteen-match complete-binary Main Draw across four derived
+Simulation Slots and closes it into `OwnedTournamentRankingSource v5`, including
+correct R16/QF/SF/finalist/champion finishing-stage distribution.
 
 The merged #743–#749 chain now owns Tournament Ranking Snapshot → canonical
 Entry Field → immutable Draw Input → replayable Run-owned Qualification/Main Draw

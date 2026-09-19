@@ -1407,7 +1407,6 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         driver._topology((cyclic,))
 
 
-@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     """Production Entry -> Draw -> Match evidence drives all seven matches."""
@@ -1595,6 +1594,275 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
                 replayed.authoritative_input.fingerprint
                 == stored.authoritative_input.fingerprint
             )
+
+
+@pytest.mark.pr_critical
+def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
+    """Run-owned Ranking -> Field -> Draw drives all fifteen canonical matches."""
+    from test_season_entry_list_service import make_service
+    from beta_engine.application.season_draw_service import SeasonDrawService
+    from beta_engine.application.season_event_results_service import (
+        SeasonEventResultsService,
+    )
+    from beta_engine.application.season_match_service import SeasonMatchService
+    from beta_engine.application.season_point_awards_service import (
+        SeasonPointAwardsService,
+    )
+    from beta_engine.domain.rankings.official import (
+        OfficialRankingPlayer,
+        OfficialRankingPolicy,
+        OfficialRankingResult,
+        calculate_official_ranking,
+    )
+    from beta_engine.domain.tournaments.entry_field import (
+        TournamentEntryApplication,
+        TournamentEntryFieldCapacity,
+    )
+    from beta_engine.infrastructure.db.models import PublishedOfficialRankingModel
+    from beta_engine.infrastructure.db.tournament_draw_authority import (
+        TournamentDrawAuthorityStore,
+    )
+    from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+        TournamentDrawInputAuthorityStore,
+    )
+    from beta_engine.infrastructure.db.tournament_entry_field import (
+        TournamentEntryFieldStore,
+    )
+    from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+        TournamentRankingSnapshotAuthorityStore,
+    )
+
+    root = tmp_path / "real-sixteen-canonical"
+    entries = make_service(root, main_draw_size=16)
+    calendars = entries.calendar_service._load_registry()
+    calendar = calendars.calendars_by_season["2000/2001"]
+    event = calendar.events[0].model_copy(
+        update={
+            "event_id": "event",
+            "season_week": 3,
+            "start_season_week": 3,
+            "end_season_week": 3,
+            "qualification_draw_size": 0,
+            "qualifier_spots": 0,
+            "wild_cards": 0,
+            "byes": 0,
+        }
+    )
+    calendar.events[0] = event
+    entries.calendar_service._save_registry(calendars)
+
+    player_ids = tuple(chr(ord("A") + index) for index in range(16))
+    week = RankingWeek(season_index=0, week=3)
+    ranking_week = RankingWeek(season_index=0, week=2)
+    completed_week = RankingWeek(season_index=0, week=1)
+
+    session = session_at(root / "run.sqlite", player_ids, week)
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Canonical sixteen",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision",
+        )
+    )
+    ranking_players = tuple(
+        OfficialRankingPlayer(
+            player_id=player_id,
+            tie_break_token=f"rank-{player_id}",
+            tour_entry_week=completed_week,
+        )
+        for player_id in player_ids
+    )
+    ranking_results = tuple(
+        OfficialRankingResult(
+            edition_id=f"prior-{player_id}",
+            player_id=player_id,
+            source_fingerprint=f"source-{player_id}",
+            completed_week=completed_week,
+            first_publication_week=ranking_week,
+            main_points=(len(player_ids) - index) * 10,
+        )
+        for index, player_id in enumerate(player_ids)
+    )
+    ranking = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=ranking_week,
+        policy=OfficialRankingPolicy(policy_id="policy"),
+        players=ranking_players,
+        results=ranking_results,
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=ranking.week.ordinal,
+            snapshot_fingerprint=ranking.fingerprint,
+            payload_json=ranking.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).adopt(
+        run_id="run",
+        branch_id="branch",
+        event_id=event.event_id,
+        ranking_week=ranking.week,
+        command_id="adopt-ranking",
+    )
+
+    applications = tuple(
+        TournamentEntryApplication(
+            application_id=f"app-{player_id}",
+            run_id="run",
+            branch_id="branch",
+            event_id=event.event_id,
+            player_id=player_id,
+            entry_window="main",
+            decision_slot_ordinal=10,
+            nr_tie_break_token=f"entry-{player_id}",
+        )
+        for player_id in player_ids
+    )
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id=event.event_id,
+        applications=applications,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=16,
+            qualification_draw_size=0,
+            qualifier_spots=0,
+        ),
+        command_id="initial-field",
+    )
+    draw_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id=event.event_id,
+        command_id="commit-draw-input",
+        draw_seed=1802,
+        main_seed_count=4,
+        qualification_seed_count=0,
+    )
+    draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id=event.event_id,
+        command_id="generate-draw",
+    )
+    assert draw.draw_input_fingerprint == draw_input.fingerprint
+    assert draw.main.bracket_size == 16
+    assert len(draw.main.nodes) == 15
+    session.commit()
+
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+
+    draws = SeasonDrawService(
+        entry_list_service=entries,
+        calendar_service=entries.calendar_service,
+        draws_path=root / "legacy-draws-unused.json",
+    )
+    matches = SeasonMatchService(
+        draw_service=draws,
+        active_players_service=entries.active_players_service,
+        matches_path=root / "legacy-matches-unused.json",
+    )
+    results = SeasonEventResultsService(
+        match_service=matches,
+        results_path=root / "legacy-results-unused.json",
+    )
+    awards = SeasonPointAwardsService(
+        result_service=results,
+        active_players_service=entries.active_players_service,
+        calendar_service=entries.calendar_service,
+        template_service=entries.calendar_service.template_service,
+        awards_path=root / "legacy-awards-unused.json",
+        points_config_path=root / "legacy-points-unused.json",
+    )
+
+    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    assert [len(slot.group_ids) for slot in schedule.slots] == [8, 4, 2, 1]
+
+    adopted = driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="real-sixteen-schedule",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+    assert adopted["adoption"] == "adopted_topological_proposal"
+
+    for ordinal in range(1, len(schedule.slots) + 1):
+        command, _ = _driver_command(
+            driver,
+            week,
+            f"real-sixteen-{ordinal}",
+        )
+        state = driver.simulate_next_slot(command)
+
+    assert state["supported_tournament_complete"] is True
+
+    with factory() as db:
+        groups = db.scalars(select(SimulationEventGroupModel)).all()
+        assert len(groups) == 15
+        assert len({group.group_id for group in groups}) == 15
+
+        sources = OwnedTournamentRankingSourceStore(db).history(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert len(sources) == 1
+        source = sources[0]
+        assert source.schema_version == "owned_tournament_ranking_source.v5"
+        assert source.canonical_result is not None
+        assert len(source.canonical_result.matches) == 15
+        assert len(source.canonical_result.players) == 16
+
+        stages = [
+            player.reached_stage for player in source.canonical_result.players
+        ]
+        assert stages.count("round_of_16") == 8
+        assert stages.count("quarterfinal") == 4
+        assert stages.count("semifinal") == 2
+        assert stages.count("finalist") == 1
+        assert stages.count("champion") == 1
+
+        slots = db.scalars(
+            select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+        ).all()
+        assert len(slots) == 4
+        opening_groups = [
+            group for group in groups if group.slot_id == slots[0].slot_id
+        ]
+        assert len(opening_groups) == 8
+        assert (
+            len(
+                {
+                    AuthoritativeSlotMatchExecutor._load_group(
+                        group
+                    ).authoritative_input.slot_start_fingerprint
+                    for group in opening_groups
+                }
+            )
+            == 1
+        )
 
 
 def test_real_eight_player_pre_adoption_entry_draw_match_mutation_fails_closed(

@@ -70,7 +70,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   at every supported capacity, including 128. Planned Event Detail consumes the
   canonical field/draw surfaces, renders the existing geometry warnings, allows the
   technical deterministic draw seed to be frozen, generates the initial authority
-  without client-supplied seed counts, and renders immutable Main/Q slot tables.
+  without client-supplied seed counts, and renders Main/Q slot tables. Planned Event
+  now also consumes the immutable Draw process-window authority, requires explicit
+  Main/Q window counts rather than inventing defaults, renders the effective Draw
+  after append-only revisions and exposes compact revision audit history while
+  preserving the initial Draw as historical truth.
   The legacy simulation-run endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
   priority and the first-real-match replacement cutoff are still required before
   those later producer paths may be re-enabled.

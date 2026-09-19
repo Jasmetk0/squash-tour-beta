@@ -509,6 +509,7 @@ def test_target_week_unowned_run_prospect_blocks_preview_and_confirm(tmp_path):
         assert dump(path) == before and counts(path) == (0, 0, 0, 0)
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_atomic_publication_retry_save_reopen_and_bidirectional_restore(tmp_path):
     path = tmp_path / "week-transition.db"

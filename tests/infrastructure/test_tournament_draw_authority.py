@@ -4095,6 +4095,187 @@ def test_withdrawn_q_winner_turns_exact_linked_main_slot_into_next_lucky_loser(
         assert filled.seed_number is None
 
 
+def _prepare_orchestrated_q_winner_replacement(
+    session,
+    monkeypatch,
+):
+    draw_input, initial = _install_mixed_auto_bye_q_for_ll_order(session)
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="q-winner-orchestrator-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+    real_bracket, terminal, q_winner, q_loser = _fake_single_real_q_terminal(
+        session,
+        monkeypatch,
+        initial,
+    )
+
+    original_resolve = TournamentPlayerReplacementCutoffAuthorityStore.resolve
+
+    def component_resolve(
+        self,
+        *,
+        run_id,
+        branch_id,
+        event_id,
+        player_id,
+        draw_type=None,
+    ):
+        if player_id == q_winner and draw_type == "main":
+            return TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                player_id=player_id,
+                played_matches=(),
+                draw_type="main",
+            )
+        return original_resolve(
+            self,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            player_id=player_id,
+            draw_type=draw_type,
+        )
+
+    monkeypatch.setattr(
+        TournamentPlayerReplacementCutoffAuthorityStore,
+        "resolve",
+        component_resolve,
+    )
+
+    section_id = real_bracket.section_id
+    assert section_id is not None
+    q_slot = next(
+        slot
+        for slot in initial.main.slots
+        if slot.entrant_kind == "qualifier_placeholder"
+        and slot.placeholder_id == section_id
+    )
+    return draw_input, initial, terminal, q_winner, q_loser, section_id, q_slot
+
+
+@pytest.mark.pr_critical
+def test_frozen_main_replacement_orchestrates_q_winner_into_lucky_loser(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        (
+            _,
+            _,
+            terminal,
+            q_winner,
+            q_loser,
+            section_id,
+            q_slot,
+        ) = _prepare_orchestrated_q_winner_replacement(
+            session,
+            monkeypatch,
+        )
+
+        result = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-q-winner-ll",
+            withdrawn_player_id=q_winner,
+            main_process_window_ordinal=3,
+        )
+
+        assert result.source == "lucky_loser"
+        assert result.source_authority is not None
+        assert result.source_authority.schema_version == (
+            "tournament_replacement_source.v2"
+        )
+        evidence = result.source_authority.qualification_winner_evidence
+        assert evidence is not None
+        assert evidence.section_id == section_id
+        assert evidence.terminal_match_id == terminal.node_id
+        assert evidence.winner_player_id == q_winner
+        assert result.source_authority.physical_slot_index == q_slot.slot_index
+        assert result.source_authority.replacement_cutoff_authority.draw_type == "main"
+        assert len(result.draw_revisions) == 2
+
+        filled = result.draw_revisions[-1].successor_draw.main.slots[
+            q_slot.slot_index - 1
+        ]
+        assert filled.entrant_kind == "player"
+        assert filled.player_id == q_loser
+        assert filled.entry_status == "lucky_loser"
+        assert filled.lucky_loser_placeholder_id == "LL1"
+        assert section_id not in dict(
+            result.draw_revisions[-1].successor_draw.main.qualifier_placeholder_slots
+        )
+
+
+@pytest.mark.pr_critical
+def test_frozen_main_replacement_orchestrates_q_winner_to_late_bye_after_ll_exhaustion(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        (
+            draw_input,
+            _,
+            _,
+            q_winner,
+            q_loser,
+            section_id,
+            q_slot,
+        ) = _prepare_orchestrated_q_winner_replacement(
+            session,
+            monkeypatch,
+        )
+
+        result = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-q-winner-bye",
+            withdrawn_player_id=q_winner,
+            main_process_window_ordinal=3,
+            unavailable_player_ids=(q_loser,),
+        )
+
+        assert result.source == "bye"
+        assert result.source_authority is not None
+        assert result.source_authority.schema_version == (
+            "tournament_replacement_source.v2"
+        )
+        assert result.source_authority.qualification_winner_evidence is not None
+        assert result.source_authority.qualification_winner_evidence.section_id == (
+            section_id
+        )
+        assert result.source_authority.selected_player_id is None
+        assert len(result.draw_revisions) == 1
+
+        revision = result.draw_revisions[0]
+        bye = revision.successor_draw.main.slots[q_slot.slot_index - 1]
+        assert bye.entrant_kind == "bye"
+        assert bye.player_id is None
+        assert section_id not in dict(
+            revision.successor_draw.main.qualifier_placeholder_slots
+        )
+        assert q_winner not in revision.successor_draw_input.withdrawn_player_ids
+        assert revision.successor_draw_input.qualification_player_ids == (
+            draw_input.qualification_player_ids
+        )
+        assert revision.successor_draw_input.late_bye_count == 1
+
+        # Replay must remain fully deterministic from the frozen source authority.
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
 @pytest.mark.pr_critical
 def test_lucky_loser_order_accepts_mixed_auto_bye_terminal(
     database,

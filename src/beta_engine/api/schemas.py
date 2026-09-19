@@ -1835,6 +1835,8 @@ class TournamentTemplateUpsertRequest(BaseModel):
     preferred_week_type: str | None = None
     seasonal_grouping: str | None = None
     prize_money: int = Field(default=0, ge=0)
+    prize_money_currency: str | None = Field(default=None, min_length=3, max_length=3)
+    prize_money_table: dict[str, int | None] = Field(default_factory=dict)
     prestige: float = Field(default=0.0, ge=0)
     duration_in_season_weeks: int = Field(default=1, ge=1)
     host_requirements: dict[str, object] = Field(default_factory=dict)

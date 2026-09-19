@@ -270,6 +270,88 @@ def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):
 
 
 @pytest.mark.pr_critical
+def test_canonical_entry_field_warning_tracks_post_withdrawal_underfill(tmp_path):
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'entry-field-underfill.sqlite'}"
+    )
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server, display_name="Dynamic Main Field Diagnostics"
+        )
+        event_id = "event"
+        snapshot = _ranking_snapshot(run_id=run_id, branch_id=branch_id)
+
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                PublishedOfficialRankingModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=snapshot.week.ordinal,
+                    snapshot_fingerprint=snapshot.fingerprint,
+                    payload_json=snapshot.model_dump_json(),
+                )
+            )
+            session.flush()
+            TournamentRankingSnapshotAuthorityStore(session).adopt(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                ranking_week=snapshot.week,
+                command_id="adopt-underfill-ranking",
+            )
+            initial = TournamentEntryFieldStore(session).stage_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                applications=tuple(
+                    _application(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        player_id=player_id,
+                        window="main",
+                    )
+                    for player_id in ("A", "B", "C", "D")
+                ),
+                capacity=TournamentEntryFieldCapacity(main_draw_size=4),
+                command_id="underfill-initial-field",
+            )
+
+        root = _root(server, run_id, branch_id, event_id)
+        status, before = _request("GET", root)
+        assert status == 200
+        assert before["active_main_entrant_count"] == 4
+        assert before["effective_main_bye_count"] == 0
+        assert before["main_diagnostics"] == []
+
+        status, repaired = _request(
+            "POST",
+            root + "/pre-draw-withdrawal",
+            _command(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="withdraw-d-without-reserve",
+                expected_field_fingerprint=initial.fingerprint,
+                withdrawn_player_ids=("D",),
+            ),
+        )
+        assert status == 200
+        assert repaired["direct_main_player_ids"] == ["A", "B", "C"]
+
+        status, after = _request("GET", root)
+        assert status == 200
+        assert after["main_draw_capacity"] == 4
+        assert after["active_main_entrant_count"] == 3
+        assert after["effective_main_bye_count"] == 1
+        assert [item["code"] for item in after["main_diagnostics"]] == [
+            "odd_main_entrant_count"
+        ]
+        assert after["main_diagnostics"][0]["entrant_count"] == 3
+        assert after["main_diagnostics"][0]["bye_count"] == 1
+
+
+@pytest.mark.pr_critical
 def test_canonical_entry_field_http_exposes_odd_main_warning(tmp_path):
     server = ApiServer(database_url=f"sqlite:///{tmp_path / 'entry-field-odd.sqlite'}")
     with server:

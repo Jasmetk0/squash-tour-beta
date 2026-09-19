@@ -474,6 +474,66 @@ def test_owned_source_v5_freezes_prize_money_and_ranking_remains_point_bound(dat
 
 
 @pytest.mark.pr_critical
+def test_qualifier_or_lucky_loser_gets_only_final_main_stage_payout():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="A",
+        finalist_player_id="B",
+        qualification_winner_ids=("QMAIN",),
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="champion",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="finalist",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="QMAIN",
+                draw_type="both",
+                qualifier=True,
+                reached_stage="semifinal",
+            ),
+        ),
+        matches=(),
+    )
+    event = _event().model_copy(
+        update={
+            "main_draw_size": 4,
+            "qualification_draw_size": 2,
+            "qualifier_spots": 1,
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "qualification_final": 1000,
+                "semifinal": 3000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+    qmain = next(
+        award for award in authority.awards if award.player_id == "QMAIN"
+    )
+
+    assert qmain.reached_stage == "semifinal"
+    assert qmain.amount == 3000
+    assert authority.known_awarded_amount == 19000
+
+
+@pytest.mark.pr_critical
 def test_prize_money_required_q_stages_use_each_section_capacity():
     result = TournamentResultAuthority(
         run_id="run",

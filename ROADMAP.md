@@ -318,10 +318,13 @@ real-match cutoff evidence. Saved Revision capture/restore reuses the common gro
 ledger, and the Admin boundary exposes an explicit post-cutoff W/O command.
 
 Canonical result authority distinguishes W/O from played wins/losses while still
-using it for bracket stage progression. **W/O ranking/point/prize semantics remain
-fail-closed**: canonical point award construction rejects a W/O tournament until the
-dedicated Master award rules are implemented, rather than silently treating W/O as
-an ordinary played loss. Post-draw WC/RWC work has now started with the first bounded canonical slice:
+using it for bracket stage progression. Canonical ranking points now implement the
+Master §16.3 exception: a W/O advance can unlock the authored value of the player's
+actual finishing stage without creating a played win/loss or H2H result. The point
+builder revalidates those counters from frozen match evidence, and a terminal W/O
+command now executes the normal canonical tournament close and ranking-source
+persistence. Dedicated canonical prize-money authority remains separate future
+work. Post-draw WC/RWC work has now started with the first bounded canonical slice:
 after Main Draw Freeze, withdrawal of an **unseeded active WC holder** can consume
 the next available **external** Reserve Wild Card in stored RWC order. The repair is
 append-only revision v6, preserves the exact physical Main slot, preserves the

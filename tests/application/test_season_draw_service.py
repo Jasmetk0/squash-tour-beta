@@ -7,6 +7,7 @@ import pytest
 from beta_engine.application.season_draw_service import DrawGenerateRequest, SeasonDrawService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest
 from beta_engine.application.season_match_service import MatchPackageGenerateRequest, SeasonMatchService
+from beta_engine.domain.tournaments.bracket_diagnostics import TournamentBracketDiagnostic
 from test_season_entry_list_service import first_event_id, make_service
 
 
@@ -92,6 +93,44 @@ def test_capacity_byes_provenance_and_warnings(tmp_path: Path) -> None:
     assert package.metadata.entry_list_fingerprint == service.entry_list_service.get_entry_list(event_id=event_id).entry_list.metadata.build_fingerprint  # type: ignore[union-attr]
     assert package.metadata.calendar_event_fingerprint == event.calendar_fingerprint
     assert any(issue.code == "wildcards_unassigned" for issue in package.validation_warnings)
+
+
+def test_draw_package_surfaces_shared_bracket_diagnostics(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    service = make_draw_service(tmp_path)
+    event_id = persist_entry_list(service)
+
+    diagnostic = TournamentBracketDiagnostic(
+        code="odd_main_entrant_count",
+        message="! shared bracket diagnostic",
+        entrant_count=7,
+        bracket_capacity=8,
+        bye_count=1,
+        first_round_match_count=4,
+        first_round_bye_match_count=1,
+        first_round_bye_share=0.25,
+    )
+    monkeypatch.setattr(
+        "beta_engine.application.season_draw_service.main_bracket_diagnostics",
+        lambda **_: (diagnostic,),
+    )
+
+    package = service.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=91001, dry_run=True),
+    ).draw_package
+
+    assert package is not None
+    issue = next(
+        warning
+        for warning in package.validation_warnings
+        if warning.code == "odd_main_entrant_count"
+    )
+    assert issue.severity == "warning"
+    assert issue.message.startswith("!")
+    assert issue.field == "main_draw"
 
 
 def test_duplicate_player_ids_rejected(tmp_path: Path) -> None:

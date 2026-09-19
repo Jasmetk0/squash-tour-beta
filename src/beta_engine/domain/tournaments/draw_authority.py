@@ -10,6 +10,10 @@ from pydantic import Field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.tournaments.bracket_diagnostics import (
+    TournamentBracketDiagnostic,
+    main_bracket_diagnostics,
+)
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
 )
@@ -244,6 +248,22 @@ class TournamentDrawAuthority(FrozenInput):
             if actual_section_ids != expected_section_ids:
                 raise ValueError("Qualification section identities must be canonical Q1..Qn")
         return self
+
+    @property
+    def main_bracket_diagnostics(self) -> tuple[TournamentBracketDiagnostic, ...]:
+        """Derived Admin diagnostics; excluded from persisted authority/fingerprint."""
+
+        slots = tuple(sorted(self.main.slots, key=lambda slot: slot.slot_index))
+        first_round_bye_matches = sum(
+            any(slot.entrant_kind == "bye" for slot in slots[index : index + 2])
+            for index in range(0, len(slots), 2)
+        )
+        return main_bracket_diagnostics(
+            entrant_count=self.main.bracket_size - len(self.main.bye_slot_indexes),
+            bracket_capacity=self.main.bracket_size,
+            bye_count=len(self.main.bye_slot_indexes),
+            first_round_bye_match_count=first_round_bye_matches,
+        )
 
     @property
     def qualification_brackets(self) -> tuple[TournamentDrawBracket, ...]:

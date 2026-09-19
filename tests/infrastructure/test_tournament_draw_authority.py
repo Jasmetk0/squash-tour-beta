@@ -317,6 +317,10 @@ def test_thirteen_player_main_draw_generates_with_three_byes(database):
     assert len(draw.main.nodes) == 15
     assert len(draw.main.bye_slot_indexes) == 3
     assert sum(slot.entrant_kind == "player" for slot in draw.main.slots) == 13
+    assert {item.code for item in draw.main_bracket_diagnostics} == {
+        "odd_main_entrant_count"
+    }
+    assert "main_bracket_diagnostics" not in draw.model_dump(mode="json")
 
 
 def test_builder_generates_complete_main_and_qualification_brackets(database):

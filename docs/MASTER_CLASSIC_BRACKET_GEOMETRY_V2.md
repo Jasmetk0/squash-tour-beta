@@ -23,6 +23,12 @@ later withdrawals or an underfilled field add/preserve BYEs and never auto-resiz
 existing bracket. This preserves one canonical binary DAG instead of introducing
 irregular match-node geometry.
 
+Pre-alpha also exposes derived, non-authoritative Main-bracket diagnostics. They do
+not alter Draw identity or block a technically valid bracket. The first policy set
+warns for every odd entrant count, when more than half of first-round matches contain
+a BYE, and when the Main Draw has more than 64 entrants. Seed-band and section
+asymmetry diagnostics are intentionally deferred for later refinement.
+
 The resulting seed examples are therefore:
 
 - 2 -> 1 seed

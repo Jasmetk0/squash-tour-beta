@@ -17,6 +17,7 @@ from beta_engine.domain.draws import DrawEngine
 from beta_engine.domain.draws.models import DrawEntrantType, DrawType, GeneratedDraw
 from beta_engine.domain.entries.models import AcceptanceList, AcceptanceStatus, EntryTarget, TournamentEntry
 from beta_engine.domain.tournaments import LuckyLoserRules, SeasonCalendarEvent, TournamentTemplate
+from beta_engine.domain.tournaments.bracket_diagnostics import main_bracket_diagnostics
 
 DrawSlotDecision = Literal["accepted_main_draw", "accepted_qualification", "qualifier_placeholder", "bye", "wild_card_reserved", "wild_card_assigned", "pre_draw_replacement"]
 DrawValidationSeverity = Literal["warning", "error"]
@@ -465,6 +466,29 @@ class SeasonDrawService:
             wildcard_assignments=wildcard_assignments,
             pre_draw_replacements=pre_draw_replacements,
         )
+        first_round_bye_matches = (
+            sum(
+                match.status == "bye_pending"
+                for match in main_bracket.rounds[0].matches
+            )
+            if main_bracket.rounds
+            else 0
+        )
+        for diagnostic in main_bracket_diagnostics(
+            entrant_count=main_bracket.draw_size - len(main_bracket.byes),
+            bracket_capacity=main_bracket.draw_size,
+            bye_count=len(main_bracket.byes),
+            first_round_bye_match_count=first_round_bye_matches,
+        ):
+            warnings.append(
+                self._issue(
+                    "warning",
+                    diagnostic.code,
+                    diagnostic.message,
+                    event_id=event.event_id,
+                    field="main_draw",
+                )
+            )
         if event.wild_cards > len(wildcard_assignments):
             warnings.append(
                 self._issue(

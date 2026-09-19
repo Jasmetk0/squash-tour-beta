@@ -390,10 +390,18 @@ withdrawn-player cutoff and physical/seed provenance. Draw Input v6 stores
 `LL1..LLn` chronology, Draw revision v9 stores the frozen slot mutation, and
 unresolved LL placeholders remain blocked from executable topology.
 
-Candidate ranking/filling is not yet claimed: bracket-Q LL candidates still need to
-be ordered by reached Qualification round and then Tournament Ranking Snapshot, and
-RWC exhaustion still needs to route into that shared source resolver. The generic
-middle seed-cascade phase still intentionally requires replacement-backed
-player-count parity. Group Qualification LL ordering remains Gate 3 work. See
-`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Bracket-Q candidate ranking is now canonical. The
+`tournament_lucky_loser_order.v1` resolver reads the current canonical Q Draw,
+validated authoritative Q match receipts and the frozen Tournament Ranking Snapshot.
+It waits until every real Q terminal is resolved, then orders eliminated players by
+highest reached Q round and uses Tournament Ranking rank only inside the same
+elimination round. The authority freezes terminal result fingerprints plus every
+candidate's elimination result, so a later fill does not recalculate historical LL
+priority from mutable state.
+
+Actual LL placeholder filling is still the next boundary, including availability /
+eligibility skips and RWC-exhaustion routing into the shared LL source. Auto-BYE-only
+Q terminals and group-Qualification LL ordering remain explicit later edges. The
+generic middle seed-cascade phase still intentionally requires replacement-backed
+player-count parity. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

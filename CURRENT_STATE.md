@@ -353,6 +353,16 @@ status Incomplete/Unknown; events with no payout table are explicitly
 `not_configured`. Historical v1-v4 owned tournament sources remain readable and
 retain their old fingerprint contracts.
 
+Branch-scoped player prize-money history is now projected directly from immutable
+owned tournament sources rather than persisted a second time. The read model exposes
+chronological per-event payout status, season summaries and career known totals
+**grouped by original currency**. Known EUR/USD/etc. values are never added together
+without FX conversion; Unknown and not-configured payouts remain distinct, and
+pre-v5 tournament history is surfaced as `historical_unavailable` rather than
+retroactively becoming zero. The Admin read endpoint is scoped to one Run/Branch.
+Master §19.1 reporting-currency season/career totals remain a separate gap until a
+historical week-indexed FX authority and rounding policy exist.
+
 Frozen external RWC repair is now canonical for the bounded case where an
 unseeded active WC holder withdraws after Main Draw Freeze and the next available
 Reserve Wild Card is not already active in Qualification. The new

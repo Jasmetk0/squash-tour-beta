@@ -434,14 +434,17 @@ WC capacity. Revision history rebuilds these transitions from frozen source auth
 rather than recalculating today's candidate state.
 
 This unified slice deliberately stops at Main Draw Freeze. After RWC exhaustion, a
-WC slot can now fall through canonically to **Lucky Loser, external reserve or BYE**.
-For the LL path, Draw revision v13 binds the chronological `LLx` vacancy to the
-frozen replacement-source authority while Draw Input v9 releases the original WC
-ordinal and appends that source fingerprint; a later LL fill therefore uses the same
-ordinary LL machinery without ever restoring WC status. WC-to-pre-Q Qualification
-promotion remains fail-closed until that Q-field mutation itself can consume source
-authority and release WC status. Pre-Q promotion with explicit unavailable-player
-skips also remains fail-closed until Q-field repair consumes source authority. The
+WC slot can now fall through canonically to **pre-Q Qualification promotion, Lucky
+Loser, external reserve or BYE**. For the LL path, Draw revision v13 binds the
+chronological `LLx` vacancy to the frozen replacement-source authority while Draw
+Input v9 releases the original WC ordinal and appends that source fingerprint; a
+later LL fill therefore uses the same ordinary LL machinery without ever restoring
+WC status. Pre-Q promotion is now source-bound too: Draw revision v14 consumes the
+frozen `qualification_promotion` source, preserves the exact frozen Main slot,
+releases WC status when applicable, honors explicit unavailable-player skips, and
+repairs Qualification according to its own redraw / seed-cascade / freeze phase.
+Draw Input v8 is used for ordinary Direct-Main promotion and v9 when a WC ordinal is
+released; both retain the replacement-source fingerprint for deterministic replay. The
 intermediate state where Main has already started, player cutoff remains open and all
 sources are exhausted remains fail-closed because Master §15.8 does not explicitly
 define it. Auto-BYE-only Q terminals and group-Qualification LL ordering remain

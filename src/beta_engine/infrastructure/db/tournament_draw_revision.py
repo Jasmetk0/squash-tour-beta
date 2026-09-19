@@ -63,6 +63,30 @@ def _fp(value: object) -> str:
     ).hexdigest()
 
 
+def _source_bound_pre_q_backfill(
+    *,
+    previous_draw_input,
+    replacement_source_authority,
+) -> str | None:
+    selected = replacement_source_authority.selected_player_id
+    if selected is None:
+        raise ValueError("Q-promotion source lacks selected player")
+    if selected not in set(previous_draw_input.qualification_player_ids):
+        return None
+
+    blocked = (
+        set(replacement_source_authority.unavailable_player_ids)
+        | set(previous_draw_input.direct_main_player_ids)
+        | set(previous_draw_input.wild_card_player_ids)
+        | set(previous_draw_input.qualification_player_ids)
+        | set(previous_draw_input.lucky_loser_player_ids)
+    )
+    for candidate in replacement_source_authority.external_reserve_player_ids:
+        if candidate not in blocked:
+            return candidate
+    return None
+
+
 class TournamentDrawRevisionStore:
     def __init__(self, session: Session):
         self.session = session
@@ -222,6 +246,97 @@ class TournamentDrawRevisionStore:
                 raise ValueError(
                     "Tournament Draw revision predecessor chain is corrupt"
                 )
+
+            if revision.repair_kind == "source_bound_pre_q_promotion":
+                source = revision.replacement_source_authority
+                if source is None or source.source != "qualification_promotion":
+                    raise ValueError(
+                        "Stored source-bound pre-Q promotion lacks source authority"
+                    )
+                if revision.successor_field != previous_field:
+                    raise ValueError(
+                        "Source-bound pre-Q promotion unexpectedly changed Entry Field"
+                    )
+                if (
+                    source.predecessor_draw_fingerprint != predecessor.fingerprint
+                    or source.predecessor_draw_input_fingerprint
+                    != previous_draw_input.fingerprint
+                ):
+                    raise ValueError(
+                        "Source-bound pre-Q promotion source does not replay"
+                    )
+                target = predecessor.main.slots[source.physical_slot_index - 1]
+                if target.player_id != source.withdrawn_player_id:
+                    raise ValueError(
+                        "Source-bound pre-Q promotion Main slot does not replay"
+                    )
+                selected = source.selected_player_id
+                if selected is None:
+                    raise ValueError(
+                        "Stored source-bound pre-Q promotion lacks selected player"
+                    )
+                q_slot = next(
+                    (
+                        slot
+                        for bracket in predecessor.qualification_brackets
+                        for slot in bracket.slots
+                        if slot.player_id == selected
+                    ),
+                    None,
+                )
+                q_backfill = _source_bound_pre_q_backfill(
+                    previous_draw_input=previous_draw_input,
+                    replacement_source_authority=source,
+                )
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder
+                    .build_source_bound_pre_q_promotion(
+                        previous=previous_draw_input,
+                        command_id=revision.command_id,
+                        withdrawn_player_id=source.withdrawn_player_id,
+                        promoted_player_id=selected,
+                        replacement_source_authority_fingerprint=source.fingerprint,
+                        qualification_backfill_player_id=q_backfill,
+                        main_vacated_seed_number=target.seed_number,
+                        qualification_vacated_seed_number=(
+                            q_slot.seed_number if q_slot is not None else None
+                        ),
+                        qualification_full_redraw_reseed=(
+                            revision.qualification_repair_action == "full_redraw"
+                        ),
+                    )
+                )
+                if rebuilt_input != revision.successor_draw_input:
+                    raise ValueError(
+                        "Source-bound pre-Q Draw Input does not replay"
+                    )
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder
+                    .build_source_bound_pre_q_promotion(
+                        predecessor=predecessor,
+                        successor_field=previous_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        qualification_process_window_ordinal=(
+                            revision.qualification_process_window_ordinal
+                        ),
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        repair_draw_seed=revision.repair_draw_seed,
+                        replacement_source_authority=source,
+                    )
+                )
+                if rebuilt_revision != revision:
+                    raise ValueError(
+                        "Source-bound pre-Q Draw revision does not replay"
+                    )
+                out.append(revision)
+                previous_draw_input = revision.successor_draw_input
+                predecessor = revision.successor_draw
+                continue
 
             if revision.repair_kind == "frozen_ordinary_fallback":
                 authority = revision.replacement_source_authority
@@ -1204,6 +1319,262 @@ class TournamentDrawRevisionStore:
             "predecessor_draw_fingerprint": predecessor.fingerprint,
             "replacement_source_authority_fingerprint": authority.fingerprint,
             "main_process_window_ordinal": main_process_window_ordinal,
+        }
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=_fp(request),
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=(
+                    revision.predecessor_draw_fingerprint
+                ),
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
+
+    def apply_source_bound_pre_q_promotion(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        main_process_window_ordinal: int,
+        qualification_process_window_ordinal: int | None,
+        repair_draw_seed: int | None,
+        replacement_source_authority,
+    ) -> TournamentDrawRevision:
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        history = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = next(
+                (item for item in history if item.command_id == command_id),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Source-bound pre-Q command exists outside validated history"
+                )
+            if (
+                retry.event_id != event_id
+                or revision.repair_kind != "source_bound_pre_q_promotion"
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or revision.qualification_process_window_ordinal
+                != qualification_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
+                or revision.replacement_source_authority
+                != replacement_source_authority
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Source-bound pre-Q command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise ValueError(
+                "Source-bound pre-Q promotion requires canonical Draw authority"
+            )
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if original_input is None or process is None:
+            raise ValueError(
+                "Source-bound pre-Q promotion requires Draw Input and process authority"
+            )
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        field_rows = field_store._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not field_rows:
+            raise ValueError(
+                "Source-bound pre-Q promotion requires Tournament Entry Field"
+            )
+        persisted_field, _ = field_store._load_row(field_rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+
+        source = replacement_source_authority
+        if source.source != "qualification_promotion":
+            raise TournamentDrawRevisionConflict(
+                "Source-bound pre-Q promotion requires Q-promotion source"
+            )
+        if source.selected_player_id is None:
+            raise TournamentDrawRevisionConflict(
+                "Q-promotion source lacks selected player"
+            )
+        if (
+            source.run_id,
+            source.branch_id,
+            source.event_id,
+            source.predecessor_draw_fingerprint,
+            source.predecessor_draw_input_fingerprint,
+        ) != (
+            run_id,
+            branch_id,
+            event_id,
+            predecessor.fingerprint,
+            previous_input.fingerprint,
+        ):
+            raise TournamentDrawRevisionConflict(
+                "Source-bound pre-Q promotion source authority is stale"
+            )
+
+        target = predecessor.main.slots[source.physical_slot_index - 1]
+        if target.player_id != source.withdrawn_player_id:
+            raise TournamentDrawRevisionConflict(
+                "Source-bound pre-Q promotion Main physical slot is stale"
+            )
+
+        selected = source.selected_player_id
+        selected_from_q = selected in set(
+            previous_input.qualification_player_ids
+        )
+        q_slot = None
+        if selected_from_q:
+            if qualification_process_window_ordinal is None:
+                raise TournamentDrawRevisionConflict(
+                    "Q-list promotion requires Qualification process-window evidence"
+                )
+            q_slot = next(
+                (
+                    slot
+                    for bracket in predecessor.qualification_brackets
+                    for slot in bracket.slots
+                    if slot.player_id == selected
+                ),
+                None,
+            )
+            if q_slot is None:
+                raise TournamentDrawRevisionConflict(
+                    "Selected Q-promotion player is missing from active Q Draw"
+                )
+            q_phase = process.phase_for(
+                draw_type="qualification",
+                process_window_ordinal=qualification_process_window_ordinal,
+            )
+            if (q_phase == "full_redraw") != (repair_draw_seed is not None):
+                raise TournamentDrawRevisionConflict(
+                    "Q full redraw requires exactly one repair draw seed"
+                )
+        else:
+            if qualification_process_window_ordinal is not None:
+                raise TournamentDrawRevisionConflict(
+                    "External pre-Q Main promotion cannot carry Q process-window evidence"
+                )
+            if repair_draw_seed is not None:
+                raise TournamentDrawRevisionConflict(
+                    "Main-only pre-Q promotion cannot introduce Q redraw seed"
+                )
+
+        q_backfill = _source_bound_pre_q_backfill(
+            previous_draw_input=previous_input,
+            replacement_source_authority=source,
+        )
+        try:
+            successor_input = (
+                TournamentDrawInputAuthorityBuilder
+                .build_source_bound_pre_q_promotion(
+                    previous=previous_input,
+                    command_id=command_id,
+                    withdrawn_player_id=source.withdrawn_player_id,
+                    promoted_player_id=selected,
+                    replacement_source_authority_fingerprint=source.fingerprint,
+                    qualification_backfill_player_id=q_backfill,
+                    main_vacated_seed_number=target.seed_number,
+                    qualification_vacated_seed_number=(
+                        q_slot.seed_number if q_slot is not None else None
+                    ),
+                    qualification_full_redraw_reseed=(
+                        selected_from_q
+                        and process.phase_for(
+                            draw_type="qualification",
+                            process_window_ordinal=(
+                                qualification_process_window_ordinal
+                            ),
+                        )
+                        == "full_redraw"
+                    ),
+                )
+            )
+            revision = (
+                TournamentDrawRevisionBuilder
+                .build_source_bound_pre_q_promotion(
+                    predecessor=predecessor,
+                    successor_field=previous_field,
+                    successor_draw_input=successor_input,
+                    process_authority=process,
+                    main_process_window_ordinal=main_process_window_ordinal,
+                    qualification_process_window_ordinal=(
+                        qualification_process_window_ordinal
+                        if selected_from_q
+                        else None
+                    ),
+                    sequence=len(history) + 1,
+                    command_id=command_id,
+                    repair_draw_seed=repair_draw_seed,
+                    replacement_source_authority=source,
+                )
+            )
+        except ValueError as exc:
+            raise TournamentDrawRevisionConflict(str(exc)) from exc
+
+        request = {
+            "repair_kind": "source_bound_pre_q_promotion",
+            "predecessor_draw_fingerprint": predecessor.fingerprint,
+            "replacement_source_authority_fingerprint": source.fingerprint,
+            "main_process_window_ordinal": main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                qualification_process_window_ordinal
+                if selected_from_q
+                else None
+            ),
+            "repair_draw_seed": repair_draw_seed,
+            "qualification_backfill_player_id": q_backfill,
         }
         self.session.add(
             TournamentDrawRevisionModel(

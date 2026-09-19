@@ -46,6 +46,7 @@ TournamentDrawRevisionRepairKind = Literal[
     "lucky_loser_vacancy",
     "lucky_loser_fill",
     "frozen_ordinary_fallback",
+    "source_bound_pre_q_promotion",
 ]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
@@ -75,6 +76,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v11",
         "tournament_draw_revision.v12",
         "tournament_draw_revision.v13",
+        "tournament_draw_revision.v14",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -171,6 +173,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v11",
             "tournament_draw_revision.v12",
             "tournament_draw_revision.v13",
+            "tournament_draw_revision.v14",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -217,6 +220,7 @@ class TournamentDrawRevision(FrozenInput):
             self.repair_kind not in {
                 "frozen_ordinary_fallback",
                 "lucky_loser_vacancy",
+                "source_bound_pre_q_promotion",
             }
             and self.replacement_source_authority is not None
         ):
@@ -407,6 +411,103 @@ class TournamentDrawRevision(FrozenInput):
                 authority.replacement_cutoff_authority,
             ):
                 raise ValueError("Frozen WC repair cutoff evidence mismatch")
+        elif self.repair_kind == "source_bound_pre_q_promotion":
+            source = self.replacement_source_authority
+            if self.schema_version != "tournament_draw_revision.v14":
+                raise ValueError(
+                    "Source-bound pre-Q promotion requires revision schema v14"
+                )
+            if source is None or source.source != "qualification_promotion":
+                raise ValueError(
+                    "Source-bound pre-Q promotion requires Q-promotion source authority"
+                )
+            if self.affected_draw_types not in {
+                ("main",),
+                ("main", "qualification"),
+            }:
+                raise ValueError(
+                    "Source-bound pre-Q promotion must affect Main and optionally Q"
+                )
+            if self.main_repair_action != "frozen_slot_fill":
+                raise ValueError(
+                    "Source-bound pre-Q promotion requires exact frozen Main-slot fill"
+                )
+            if "qualification" in self.affected_draw_types:
+                if self.qualification_repair_action not in {
+                    "full_redraw",
+                    "seed_cascade",
+                    "frozen_slot_fill",
+                }:
+                    raise ValueError(
+                        "Source-bound pre-Q promotion has invalid Q repair action"
+                    )
+                if (
+                    self.qualification_repair_action == "full_redraw"
+                ) != (self.repair_draw_seed is not None):
+                    raise ValueError(
+                        "Q full redraw requires exactly one repair draw seed"
+                    )
+            else:
+                if self.qualification_repair_action is not None:
+                    raise ValueError(
+                        "Main-only pre-Q promotion cannot mutate Qualification"
+                    )
+                if self.repair_draw_seed is not None:
+                    raise ValueError(
+                        "Main-only pre-Q promotion cannot introduce draw seed"
+                    )
+            if (
+                source.run_id,
+                source.branch_id,
+                source.event_id,
+                source.withdrawn_player_id,
+                source.predecessor_draw_fingerprint,
+            ) != (
+                self.run_id,
+                self.branch_id,
+                self.event_id,
+                self.withdrawn_player_ids[0]
+                if len(self.withdrawn_player_ids) == 1
+                else None,
+                self.predecessor_draw_fingerprint,
+            ):
+                raise ValueError(
+                    "Source-bound pre-Q promotion source scope mismatch"
+                )
+            if self.withdrawn_player_ids != (source.withdrawn_player_id,):
+                raise ValueError(
+                    "Source-bound pre-Q promotion withdrawal identity mismatch"
+                )
+            if self.replacement_cutoff_authorities != (
+                source.replacement_cutoff_authority,
+            ):
+                raise ValueError(
+                    "Source-bound pre-Q promotion cutoff evidence mismatch"
+                )
+            if source.selected_player_id is None:
+                raise ValueError(
+                    "Source-bound pre-Q promotion lacks selected player"
+                )
+            if source.selected_player_id not in set(
+                self.successor_draw_input.direct_main_player_ids
+            ):
+                raise ValueError(
+                    "Source-bound pre-Q promoted player is not ordinary Main"
+                )
+            if source.selected_player_id in set(
+                self.successor_draw_input.wild_card_player_ids
+            ):
+                raise ValueError(
+                    "Source-bound pre-Q promoted player cannot inherit WC status"
+                )
+            if (
+                not self.successor_draw_input.replacement_source_authority_fingerprints
+                or self.successor_draw_input.replacement_source_authority_fingerprints[-1]
+                != source.fingerprint
+            ):
+                raise ValueError(
+                    "Source-bound pre-Q promotion lacks source lineage"
+                )
         elif self.repair_kind == "lucky_loser_vacancy":
             authority = self.lucky_loser_vacancy_authority
             if self.schema_version not in {
@@ -1079,6 +1180,116 @@ class TournamentDrawRevisionBuilder:
             successor_draw=successor,
         )
 
+
+    @staticmethod
+    def build_source_bound_pre_q_promotion(
+        *,
+        predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
+        successor_draw_input: TournamentDrawInputAuthority,
+        process_authority: TournamentDrawProcessAuthority,
+        main_process_window_ordinal: int,
+        qualification_process_window_ordinal: int | None,
+        sequence: int,
+        command_id: str,
+        repair_draw_seed: int | None,
+        replacement_source_authority: TournamentReplacementSourceAuthority,
+    ) -> TournamentDrawRevision:
+        source = replacement_source_authority
+        if source.source != "qualification_promotion":
+            raise ValueError(
+                "Source-bound pre-Q repair requires Q-promotion source"
+            )
+        if source.selected_player_id is None:
+            raise ValueError("Q-promotion source lacks selected player")
+        if (
+            source.predecessor_draw_fingerprint != predecessor.fingerprint
+            or source.predecessor_draw_input_fingerprint
+            != predecessor.draw_input_fingerprint
+        ):
+            raise ValueError(
+                "Source-bound pre-Q promotion predecessor binding mismatch"
+            )
+        target = predecessor.main.slots[source.physical_slot_index - 1]
+        if target.player_id != source.withdrawn_player_id:
+            raise ValueError(
+                "Source-bound pre-Q promotion physical Main slot mismatch"
+            )
+
+        selected_from_q = any(
+            slot.player_id == source.selected_player_id
+            for bracket in predecessor.qualification_brackets
+            for slot in bracket.slots
+        )
+        affected_draw_types: tuple[TournamentDrawType, ...] = (
+            ("main", "qualification") if selected_from_q else ("main",)
+        )
+        if selected_from_q and qualification_process_window_ordinal is None:
+            raise ValueError(
+                "Q-list promotion requires Qualification process-window evidence"
+            )
+        if not selected_from_q and qualification_process_window_ordinal is not None:
+            raise ValueError(
+                "External pre-Q Main promotion cannot carry Q process-window evidence"
+            )
+
+        base = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+            predecessor=predecessor,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            process_authority=process_authority,
+            affected_draw_types=affected_draw_types,
+            main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                qualification_process_window_ordinal
+                if selected_from_q
+                else None
+            ),
+            withdrawn_player_ids=(source.withdrawn_player_id,),
+            sequence=sequence,
+            command_id=command_id,
+            repair_draw_seed=repair_draw_seed,
+            replacement_cutoff_authorities=(
+                source.replacement_cutoff_authority,
+            ),
+        )
+        promoted_slot = base.successor_draw.main.slots[
+            source.physical_slot_index - 1
+        ]
+        if (
+            promoted_slot.player_id != source.selected_player_id
+            or promoted_slot.entry_status is not None
+            or promoted_slot.seed_number is not None
+        ):
+            raise ValueError(
+                "Source-bound pre-Q promotion did not fill exact Main slot ordinarily"
+            )
+
+        return TournamentDrawRevision(
+            schema_version="tournament_draw_revision.v14",
+            run_id=base.run_id,
+            branch_id=base.branch_id,
+            event_id=base.event_id,
+            sequence=base.sequence,
+            command_id=base.command_id,
+            repair_kind="source_bound_pre_q_promotion",
+            affected_draw_types=base.affected_draw_types,
+            main_process_window_ordinal=base.main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                base.qualification_process_window_ordinal
+            ),
+            repair_draw_seed=base.repair_draw_seed,
+            main_repair_action=base.main_repair_action,
+            qualification_repair_action=base.qualification_repair_action,
+            withdrawn_player_ids=base.withdrawn_player_ids,
+            replacement_cutoff_authorities=base.replacement_cutoff_authorities,
+            replacement_source_authority=source,
+            predecessor_draw_fingerprint=base.predecessor_draw_fingerprint,
+            process_authority_fingerprint=base.process_authority_fingerprint,
+            successor_field=base.successor_field,
+            successor_draw_input=base.successor_draw_input,
+            successor_draw=base.successor_draw,
+        )
 
     @staticmethod
     def build_frozen_wild_card_repair(

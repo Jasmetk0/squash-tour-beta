@@ -79,7 +79,7 @@ class AuthoritativeFrozenMainReplacement:
         if q is not None:
             return AuthoritativeFrozenMainReplacementResult(
                 source="qualification_promotion",
-                source_authority=None,
+                source_authority=q.replacement_source_authority,
                 draw_revisions=(q,),
             )
         fallback = by_command.get(_child_command_id(command_id, "fallback"))
@@ -229,36 +229,41 @@ class AuthoritativeFrozenMainReplacement:
                 draw_revisions=(revision,),
             )
 
-        if (
-            target.entry_status == "wild_card"
-            and source.source == "qualification_promotion"
-        ):
-            raise AuthoritativeFrozenMainReplacementConflict(
-                "WC-slot Qualification fallback after RWC exhaustion is not canonical yet"
-            )
-
         if source.source == "qualification_promotion":
-            if unavailable_player_ids:
+            selected = source.selected_player_id
+            if selected is None:
                 raise AuthoritativeFrozenMainReplacementConflict(
-                    "Source-aware unavailable Q-list skips require the later "
-                    "pre-Q promotion slice"
+                    "Q-promotion source lacks selected player"
                 )
-            revision = revisions.draw_frozen_phase_withdrawal(
+            q_players = {
+                slot.player_id
+                for bracket in draw.qualification_brackets
+                for slot in bracket.slots
+                if slot.player_id is not None
+            }
+            selected_from_q = selected in q_players
+            revision = revisions.apply_source_bound_pre_q_promotion(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
                 command_id=_child_command_id(command_id, "q"),
-                withdrawn_player_ids=(withdrawn_player_id,),
                 main_process_window_ordinal=main_process_window_ordinal,
                 qualification_process_window_ordinal=(
                     qualification_process_window_ordinal
+                    if selected_from_q
+                    else None
                 ),
-                repair_draw_seed=repair_draw_seed,
+                repair_draw_seed=(
+                    repair_draw_seed if selected_from_q else None
+                ),
+                replacement_source_authority=source,
             )
-            selected = source.selected_player_id
-            if selected is None or all(
-                slot.player_id != selected
-                for slot in revision.successor_draw.main.slots
+            promoted = revision.successor_draw.main.slots[
+                source.physical_slot_index - 1
+            ]
+            if (
+                promoted.player_id != selected
+                or promoted.entry_status is not None
             ):
                 raise AuthoritativeFrozenMainReplacementConflict(
                     "Q-promotion mutation selected a different source player"

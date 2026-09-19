@@ -4225,8 +4225,19 @@ def test_frozen_main_replacement_orchestrator_dispatches_pre_q_promotion(databas
             qualification_process_window_ordinal=3,
         )
         assert result.source == "qualification_promotion"
+        assert result.source_authority is not None
         assert len(result.draw_revisions) == 1
         revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v14"
+        assert revision.repair_kind == "source_bound_pre_q_promotion"
+        assert revision.replacement_source_authority == result.source_authority
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v8"
+        )
+        assert (
+            revision.successor_draw_input.replacement_source_authority_fingerprints[-1]
+            == result.source_authority.fingerprint
+        )
         promoted = next(
             slot for slot in revision.successor_draw.main.slots
             if slot.player_id == "B"
@@ -4251,7 +4262,192 @@ def test_frozen_main_replacement_orchestrator_dispatches_pre_q_promotion(databas
             qualification_process_window_ordinal=3,
         )
         assert retry.source == "qualification_promotion"
+        assert retry.source_authority == result.source_authority
         assert retry.draw_revisions == result.draw_revisions
+
+
+@pytest.mark.pr_critical
+def test_pre_q_promotion_skips_unavailable_q_source_without_re_resolving(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-aware-q-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-aware-q-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        original_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "C"
+        )
+
+        result = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-aware-q",
+            withdrawn_player_id="C",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+            unavailable_player_ids=("B",),
+        )
+
+        assert result.source == "qualification_promotion"
+        source = result.source_authority
+        assert source is not None
+        assert source.selected_player_id == "E"
+        assert source.source_ordinal == 2
+        assert source.unavailable_player_ids == ("B",)
+
+        revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v14"
+        promoted = revision.successor_draw.main.slots[
+            original_slot.slot_index - 1
+        ]
+        assert promoted.player_id == "E"
+        assert promoted.entry_status is None
+        assert promoted.seed_number is None
+        q_players = {
+            slot.player_id
+            for bracket in revision.successor_draw.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        assert q_players == {"B", "F"}
+        assert revision.replacement_source_authority == source
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_exhausted_wc_pre_q_promotion_releases_wc_and_skips_unavailable_rwc(
+    database,
+):
+    with database.begin() as session:
+        install_ranking_authority(session)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=standard_applications(),
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=2,
+                qualifier_spots=1,
+                wild_card_slots=1,
+            ),
+            command_id="wc-pre-q-field",
+        )
+        wc = TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-resolve",
+            original_wild_card_player_ids=("A",),
+            reserve_wild_card_player_ids=("B", "E", "F"),
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-input",
+            draw_seed=424242,
+        )
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        assert draw_input.wild_card_player_ids == ("B",)
+        assert draw_input.qualification_player_ids == ("D", "E")
+        assert wc.adjusted_below_qualification_cut_player_ids == ("F", "G")
+
+        original_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
+        )
+        result = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-promote",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+            unavailable_player_ids=("F", "E"),
+        )
+
+        assert result.source == "qualification_promotion"
+        source = result.source_authority
+        assert source is not None
+        assert source.selected_player_id == "D"
+        assert source.unavailable_player_ids == ("E", "F")
+        assert source.base_wild_card_authority_fingerprint == wc.fingerprint
+
+        revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v14"
+        assert revision.repair_kind == "source_bound_pre_q_promotion"
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v9"
+        )
+        assert revision.successor_draw_input.wild_card_player_ids == ()
+        assert revision.successor_draw_input.released_wild_card_slot_ordinals == (1,)
+        assert revision.successor_draw_input.direct_main_player_ids[-1] == "D"
+        assert revision.successor_draw_input.replacement_source_authority_fingerprints[-1] == (
+            source.fingerprint
+        )
+
+        promoted = revision.successor_draw.main.slots[
+            original_slot.slot_index - 1
+        ]
+        assert promoted.player_id == "D"
+        assert promoted.entry_status is None
+        assert promoted.seed_number is None
+        q_players = {
+            slot.player_id
+            for bracket in revision.successor_draw.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        assert q_players == {"E", "G"}
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+        retry = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-pre-q-promote",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+            unavailable_player_ids=("E", "F"),
+        )
+        assert retry.source == "qualification_promotion"
+        assert retry.source_authority == source
+        assert retry.draw_revisions == (revision,)
 
 
 @pytest.mark.pr_critical

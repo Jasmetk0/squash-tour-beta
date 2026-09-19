@@ -584,6 +584,187 @@ class TournamentDrawInputAuthorityBuilder:
         )
 
     @staticmethod
+    def build_source_bound_pre_q_promotion(
+        *,
+        previous: TournamentDrawInputAuthority,
+        command_id: str,
+        withdrawn_player_id: str,
+        promoted_player_id: str,
+        replacement_source_authority_fingerprint: str,
+        qualification_backfill_player_id: str | None,
+        main_vacated_seed_number: int | None,
+        qualification_vacated_seed_number: int | None,
+        qualification_full_redraw_reseed: bool,
+    ) -> TournamentDrawInputAuthority:
+        if previous.schema_version not in {
+            "tournament_draw_input_authority.v2",
+            "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v4",
+            "tournament_draw_input_authority.v5",
+            "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
+            "tournament_draw_input_authority.v8",
+            "tournament_draw_input_authority.v9",
+        }:
+            raise ValueError(
+                "Source-bound pre-Q promotion requires canonical Draw Input"
+            )
+        direct_count = previous.direct_main_player_ids.count(withdrawn_player_id)
+        wild_card_count = previous.wild_card_player_ids.count(withdrawn_player_id)
+        if direct_count + wild_card_count != 1:
+            raise ValueError(
+                "Pre-Q promotion requires one active Direct Main or WC withdrawal"
+            )
+
+        active_main = (
+            set(previous.direct_main_player_ids)
+            | set(previous.wild_card_player_ids)
+            | set(previous.lucky_loser_player_ids)
+        )
+        if promoted_player_id in active_main:
+            raise ValueError("Pre-Q promoted player is already active in Main")
+
+        promoted_from_q = promoted_player_id in set(
+            previous.qualification_player_ids
+        )
+        if not promoted_from_q and qualification_backfill_player_id is not None:
+            raise ValueError(
+                "External pre-Q Main promotion cannot carry Q backfill identity"
+            )
+        if promoted_from_q and qualification_backfill_player_id == promoted_player_id:
+            raise ValueError("Pre-Q promotion cannot backfill Q with promoted player")
+
+        direct = list(previous.direct_main_player_ids)
+        wild_cards = list(previous.wild_card_player_ids)
+        released_ordinals = list(previous.released_wild_card_slot_ordinals)
+        if wild_card_count:
+            compact_index = wild_cards.index(withdrawn_player_id)
+            already_released = set(released_ordinals)
+            active_wc_ordinals = tuple(
+                ordinal
+                for ordinal in range(1, previous.capacity.wild_card_slots + 1)
+                if ordinal not in already_released
+            )
+            if len(active_wc_ordinals) != len(wild_cards):
+                raise ValueError(
+                    "Active WC identities do not map to WC-slot ordinals"
+                )
+            released_ordinals.append(active_wc_ordinals[compact_index])
+            released_ordinals.sort()
+            wild_cards.remove(withdrawn_player_id)
+        else:
+            direct.remove(withdrawn_player_id)
+        direct.append(promoted_player_id)
+
+        main_seed_players = list(previous.main_seed_player_ids)
+        main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
+        withdrawn_was_seeded = withdrawn_player_id in main_seed_players
+        if withdrawn_was_seeded != (main_vacated_seed_number is not None):
+            raise ValueError("Pre-Q Main seed-vacancy evidence mismatch")
+        if withdrawn_was_seeded:
+            main_seed_players.remove(withdrawn_player_id)
+            main_seed_vacancies.add(main_vacated_seed_number)
+
+        qualification_players = list(previous.qualification_player_ids)
+        qualification_seed_players = list(previous.qualification_seed_player_ids)
+        qualification_seed_vacancies = set(
+            previous.qualification_seed_vacancy_numbers
+        )
+        if promoted_from_q:
+            promoted_was_seeded = (
+                promoted_player_id in previous.qualification_seed_player_ids
+            )
+            if promoted_was_seeded != (
+                qualification_vacated_seed_number is not None
+            ):
+                raise ValueError(
+                    "Pre-Q Qualification seed-vacancy evidence mismatch"
+                )
+            qualification_players.remove(promoted_player_id)
+            if qualification_backfill_player_id is not None:
+                active = (
+                    active_main
+                    | set(previous.qualification_player_ids)
+                )
+                if qualification_backfill_player_id in active:
+                    raise ValueError(
+                        "Pre-Q Qualification backfill player is already active"
+                    )
+                qualification_players.append(qualification_backfill_player_id)
+
+            if qualification_full_redraw_reseed:
+                if previous.qualification_seed_vacancy_numbers:
+                    raise ValueError(
+                        "Q full redraw cannot start from frozen Q seed vacancies"
+                    )
+                qualification_seed_players = list(
+                    qualification_players[: previous.qualification_seed_count]
+                )
+                qualification_seed_vacancies.clear()
+            elif promoted_was_seeded:
+                qualification_seed_players.remove(promoted_player_id)
+                qualification_seed_vacancies.add(
+                    qualification_vacated_seed_number
+                )
+        elif qualification_vacated_seed_number is not None:
+            raise ValueError(
+                "External pre-Q Main promotion cannot vacate Q seed"
+            )
+        elif qualification_full_redraw_reseed:
+            raise ValueError(
+                "Q full redraw reseed requires promotion from Qualification"
+            )
+
+        lineage = (
+            *previous.replacement_source_authority_fingerprints,
+            replacement_source_authority_fingerprint,
+        )
+        released_ordinals = tuple(released_ordinals)
+        return TournamentDrawInputAuthority(
+            schema_version=(
+                "tournament_draw_input_authority.v9"
+                if released_ordinals
+                else "tournament_draw_input_authority.v8"
+            ),
+            run_id=previous.run_id,
+            branch_id=previous.branch_id,
+            event_id=previous.event_id,
+            committed_by_command_id=command_id,
+            draw_seed=previous.draw_seed,
+            main_seed_count=previous.main_seed_count,
+            qualification_seed_count=previous.qualification_seed_count,
+            field_sequence=previous.field_sequence,
+            capacity=previous.capacity,
+            tournament_ranking_authority_fingerprint=(
+                previous.tournament_ranking_authority_fingerprint
+            ),
+            ranking_snapshot_fingerprint=previous.ranking_snapshot_fingerprint,
+            entry_field_fingerprint=previous.entry_field_fingerprint,
+            wild_card_authority_fingerprint=previous.wild_card_authority_fingerprint,
+            post_draw_wild_card_repair_fingerprints=(
+                previous.post_draw_wild_card_repair_fingerprints
+            ),
+            direct_main_player_ids=tuple(direct),
+            wild_card_player_ids=tuple(wild_cards),
+            qualification_player_ids=tuple(qualification_players),
+            qualifier_placeholder_ids=previous.qualifier_placeholder_ids,
+            lucky_loser_placeholder_ids=previous.lucky_loser_placeholder_ids,
+            lucky_loser_player_ids=previous.lucky_loser_player_ids,
+            replacement_source_authority_fingerprints=lineage,
+            late_bye_count=previous.late_bye_count,
+            released_wild_card_slot_ordinals=released_ordinals,
+            withdrawn_player_ids=tuple(
+                sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+            ),
+            main_seed_player_ids=tuple(main_seed_players),
+            qualification_seed_player_ids=tuple(qualification_seed_players),
+            main_seed_vacancy_numbers=tuple(sorted(main_seed_vacancies)),
+            qualification_seed_vacancy_numbers=tuple(
+                sorted(qualification_seed_vacancies)
+            ),
+        )
+
+    @staticmethod
     def build_lucky_loser_vacancy(
         *,
         previous: TournamentDrawInputAuthority,

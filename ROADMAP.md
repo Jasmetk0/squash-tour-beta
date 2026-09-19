@@ -274,8 +274,18 @@ and execute explicit Next Match / whole Next Slot commands; finally Save through
 simulation-draft fingerprint/version CAS boundary. This does not reinterpret the
 legacy branch wrapper. Higher-level Next Round / Next Week / Next Tournament / Full
 Season controls remain clearly marked compatibility actions until equivalent
-canonical orchestration is implemented. Week transition/ranking-authority preparation
-also remains a separate Gate 3 workflow.
+canonical orchestration is implemented.
+
+The next canonical boundary is now partially integrated rather than client-authored:
+once Position reports `week_ready_for_transition`, a new server-derived Week
+Transition preview builds the exact command from the current Saved Revision head,
+persisted Ranking Transition Authority and Owned Tournament bindings. Admin reviews
+that frozen request, confirms it through the existing request/ranking fingerprint
+guards, then saves the transitioned ranking/world draft through the ranking Save CAS.
+This removes manual Week Transition command assembly from the UI while preserving
+exact retry of the reviewed command. **Ranking Transition Authority creation remains
+the prerequisite gap**; this slice deliberately does not infer a later-week roster or
+policy where the existing product contract still requires explicit authority.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

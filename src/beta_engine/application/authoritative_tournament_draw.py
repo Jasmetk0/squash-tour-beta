@@ -13,6 +13,7 @@ from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.tournaments.bracket_diagnostics import (
     TournamentBracketDiagnostic,
 )
+from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
@@ -103,6 +104,21 @@ class CanonicalTournamentDrawService:
                 branch_id=branch_id,
                 event_id=event_id,
             )
+
+    def inspect_initial_authority(
+        self, *, run_id: str, branch_id: str, event_id: str
+    ) -> TournamentDrawAuthority:
+        with self.factory() as session:
+            authority = TournamentDrawAuthorityStore(session).get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if authority is None:
+                raise KeyError(
+                    f"Initial Tournament Draw authority does not exist for event '{event_id}'"
+                )
+            return authority
 
     def commit_input(
         self, command: CanonicalDrawInputCommitCommand

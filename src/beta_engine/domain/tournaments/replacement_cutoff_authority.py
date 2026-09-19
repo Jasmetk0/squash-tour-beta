@@ -40,18 +40,29 @@ class TournamentPlayerReplacementCutoffAuthority(FrozenInput):
     first real match has started.
     """
 
-    schema_version: Literal["tournament_player_replacement_cutoff.v1"] = (
-        "tournament_player_replacement_cutoff.v1"
-    )
+    schema_version: Literal[
+        "tournament_player_replacement_cutoff.v1",
+        "tournament_player_replacement_cutoff.v2",
+    ] = "tournament_player_replacement_cutoff.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     player_id: str = Field(min_length=1)
+    draw_type: Literal["qualification", "main"] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     status: TournamentReplacementCutoffStatus
     played_matches: tuple[TournamentPlayedMatchCutoffEvidence, ...] = ()
 
     @model_validator(mode="after")
     def validate_cutoff(self):
+        if self.schema_version == "tournament_player_replacement_cutoff.v1":
+            if self.draw_type is not None:
+                raise ValueError("Historical cutoff v1 cannot carry draw-component scope")
+        elif self.draw_type is None:
+            raise ValueError("Draw-component cutoff v2 requires draw_type")
+
         keys = tuple(
             (item.week_ordinal, item.slot_ordinal, item.group_id, item.match_id)
             for item in self.played_matches
@@ -103,6 +114,7 @@ class TournamentPlayerReplacementCutoffAuthorityBuilder:
         event_id: str,
         player_id: str,
         played_matches: Iterable[TournamentPlayedMatchCutoffEvidence],
+        draw_type: Literal["qualification", "main"] | None = None,
     ) -> TournamentPlayerReplacementCutoffAuthority:
         ordered = tuple(
             sorted(
@@ -123,10 +135,16 @@ class TournamentPlayerReplacementCutoffAuthorityBuilder:
         else:
             status = "already_eliminated"
         return TournamentPlayerReplacementCutoffAuthority(
+            schema_version=(
+                "tournament_player_replacement_cutoff.v2"
+                if draw_type is not None
+                else "tournament_player_replacement_cutoff.v1"
+            ),
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
             player_id=player_id,
+            draw_type=draw_type,
             status=status,
             played_matches=ordered,
         )

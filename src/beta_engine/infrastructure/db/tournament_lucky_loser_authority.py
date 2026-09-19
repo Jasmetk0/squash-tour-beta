@@ -12,6 +12,7 @@ from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserOrderAuthority,
     TournamentLuckyLoserOrderAuthorityBuilder,
     TournamentLuckyLoserQualificationMatchEvidence,
+    TournamentLuckyLoserQualificationWinnerEvidence,
 )
 from beta_engine.infrastructure.db.models import SimulationEventGroupModel
 from beta_engine.infrastructure.db.tournament_draw_authority import (
@@ -107,6 +108,76 @@ class TournamentLuckyLoserOrderAuthorityStore:
 
     def __init__(self, session):
         self.session = session
+
+    def resolve_qualification_winner_evidence(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        draw,
+        player_id: str,
+    ) -> TournamentLuckyLoserQualificationWinnerEvidence:
+        """Resolve exact Q-section terminal proof for one qualified Main occupant."""
+
+        rows = self.session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == run_id,
+                SimulationEventGroupModel.branch_id == branch_id,
+            )
+        ).all()
+        rows_by_match = {}
+        for row in rows:
+            if row.match_id in rows_by_match:
+                raise ValueError("Qualification winner evidence found duplicate match receipt")
+            rows_by_match[row.match_id] = row
+
+        matches = []
+        for index, bracket in enumerate(draw.qualification_brackets, start=1):
+            section_id = bracket.section_id or f"Q{index}"
+            terminal = max(
+                bracket.nodes,
+                key=lambda item: (item.round_number, item.round_sequence),
+            )
+            auto = _auto_bye_terminal_evidence(bracket, section_id=section_id)
+            if auto is not None:
+                if auto.winner_player_id == player_id:
+                    matches.append(
+                        TournamentLuckyLoserQualificationWinnerEvidence(
+                            section_id=section_id,
+                            terminal_match_id=terminal.node_id,
+                            winner_player_id=player_id,
+                            evidence_kind="auto_bye_terminal",
+                            evidence_fingerprint=bracket.fingerprint,
+                        )
+                    )
+                continue
+
+            row = rows_by_match.get(terminal.node_id)
+            if row is None:
+                continue
+            loaded = AuthoritativeSlotMatchExecutor._load_group(row)
+            if loaded.authoritative_input.event_id != event_id:
+                continue
+            result = loaded.result
+            if result.match_id != terminal.node_id:
+                raise ValueError("Qualification terminal receipt/result identity mismatch")
+            if result.winner_player_id == player_id:
+                matches.append(
+                    TournamentLuckyLoserQualificationWinnerEvidence(
+                        section_id=section_id,
+                        terminal_match_id=terminal.node_id,
+                        winner_player_id=player_id,
+                        evidence_kind="played_terminal",
+                        evidence_fingerprint=row.result_fingerprint,
+                    )
+                )
+
+        if len(matches) != 1:
+            raise TournamentLuckyLoserOrderUnavailable(
+                "Player is not one uniquely resolved Qualification section winner"
+            )
+        return matches[0]
 
     def resolve(
         self,

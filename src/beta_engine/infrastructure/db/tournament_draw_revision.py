@@ -508,6 +508,9 @@ class TournamentDrawRevisionStore:
                         replacement_source_authority=(
                             revision.replacement_source_authority
                         ),
+                        qualification_winner_evidence=(
+                            authority.qualification_winner_evidence
+                        ),
                     )
                 )
                 if rebuilt_authority != authority:
@@ -524,6 +527,11 @@ class TournamentDrawRevisionStore:
                         replacement_source_authority_fingerprint=(
                             revision.replacement_source_authority.fingerprint
                             if revision.replacement_source_authority is not None
+                            else None
+                        ),
+                        vacated_qualifier_placeholder_id=(
+                            authority.qualification_winner_evidence.section_id
+                            if authority.qualification_winner_evidence is not None
                             else None
                         ),
                     )
@@ -1689,12 +1697,38 @@ class TournamentDrawRevisionStore:
             history[-1].successor_field if history else persisted_field
         )
 
-        withdrawn_cutoff = self._replacement_cutoff_authorities(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-            withdrawn_player_ids=(withdrawn_player_id,),
-        )[0]
+        qualification_winner_evidence = None
+        if withdrawn_player_id in set(original_input.qualification_player_ids):
+            try:
+                qualification_winner_evidence = (
+                    TournamentLuckyLoserOrderAuthorityStore(self.session)
+                    .resolve_qualification_winner_evidence(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        draw=predecessor,
+                        player_id=withdrawn_player_id,
+                    )
+                )
+                withdrawn_cutoff = (
+                    TournamentPlayerReplacementCutoffAuthorityStore(self.session)
+                    .resolve(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        player_id=withdrawn_player_id,
+                        draw_type="main",
+                    )
+                )
+            except ValueError as exc:
+                raise TournamentDrawRevisionConflict(str(exc)) from exc
+        else:
+            withdrawn_cutoff = self._replacement_cutoff_authorities(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                withdrawn_player_ids=(withdrawn_player_id,),
+            )[0]
         q_start = self._qualification_start_authority(
             run_id=run_id,
             branch_id=branch_id,
@@ -1719,6 +1753,7 @@ class TournamentDrawRevisionStore:
                     original_input.qualification_player_ids
                 ),
                 replacement_source_authority=replacement_source_authority,
+                qualification_winner_evidence=qualification_winner_evidence,
             )
             successor_input = (
                 TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
@@ -1730,6 +1765,11 @@ class TournamentDrawRevisionStore:
                     replacement_source_authority_fingerprint=(
                         replacement_source_authority.fingerprint
                         if replacement_source_authority is not None
+                        else None
+                    ),
+                    vacated_qualifier_placeholder_id=(
+                        qualification_winner_evidence.section_id
+                        if qualification_winner_evidence is not None
                         else None
                     ),
                 )
@@ -1762,6 +1802,11 @@ class TournamentDrawRevisionStore:
             "replacement_source_authority_fingerprint": (
                 replacement_source_authority.fingerprint
                 if replacement_source_authority is not None
+                else None
+            ),
+            "qualification_winner_evidence": (
+                qualification_winner_evidence.model_dump(mode="json")
+                if qualification_winner_evidence is not None
                 else None
             ),
         }

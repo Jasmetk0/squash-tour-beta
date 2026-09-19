@@ -1653,15 +1653,28 @@ class TournamentDrawRevisionBuilder:
         if index < 0 or index >= len(slots):
             raise ValueError("Lucky Loser physical slot is outside Main Draw")
         template = slots[index]
-        if template.player_id != authority.withdrawn_player_id:
-            raise ValueError(
-                "Lucky Loser physical slot no longer contains withdrawn player"
-            )
-        if template.entry_status not in {None, "wild_card"}:
-            raise ValueError(
-                "Lucky Loser vacancy requires Direct Main or WC physical slot"
-            )
-        released_wild_card_slot = template.entry_status == "wild_card"
+        q_winner_evidence = authority.qualification_winner_evidence
+        if q_winner_evidence is not None:
+            if (
+                template.entrant_kind != "qualifier_placeholder"
+                or template.placeholder_id != q_winner_evidence.section_id
+            ):
+                raise ValueError(
+                    "Q-winner Lucky Loser vacancy no longer owns linked Main Q slot"
+                )
+            if template.player_id is not None or template.seed_number is not None:
+                raise ValueError("Q-winner Main placeholder cannot carry player or seed")
+            released_wild_card_slot = False
+        else:
+            if template.player_id != authority.withdrawn_player_id:
+                raise ValueError(
+                    "Lucky Loser physical slot no longer contains withdrawn player"
+                )
+            if template.entry_status not in {None, "wild_card"}:
+                raise ValueError(
+                    "Lucky Loser vacancy requires Direct Main or WC physical slot"
+                )
+            released_wild_card_slot = template.entry_status == "wild_card"
         if released_wild_card_slot:
             source = replacement_source_authority
             if source is None:
@@ -1696,7 +1709,7 @@ class TournamentDrawRevisionBuilder:
                 )
         elif replacement_source_authority is not None:
             raise ValueError(
-                "Direct Main Lucky Loser vacancy cannot carry WC source authority"
+                "Non-WC Lucky Loser vacancy cannot carry WC source authority"
             )
         if template.seed_number != authority.vacated_main_seed_number:
             raise ValueError("Lucky Loser seed-vacancy evidence differs from slot")
@@ -1721,7 +1734,12 @@ class TournamentDrawRevisionBuilder:
             slots=tuple(slots),
             nodes=predecessor.main.nodes,
             bye_slot_indexes=predecessor.main.bye_slot_indexes,
-            qualifier_placeholder_slots=predecessor.main.qualifier_placeholder_slots,
+            qualifier_placeholder_slots=tuple(
+                (item.placeholder_id, item.slot_index)
+                for item in slots
+                if item.entrant_kind == "qualifier_placeholder"
+                and item.placeholder_id is not None
+            ),
             lucky_loser_placeholder_slots=tuple(
                 (item.placeholder_id, item.slot_index)
                 for item in slots

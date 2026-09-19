@@ -62,7 +62,7 @@ remain valid; their numbering is not a mandate to implement them in that order.
 |---|---|---|
 | 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
 | 1 — source bridge (implemented slice) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite covers preview, rollback, retry, reopen and recovery; broader source types remain guarded |
-| 2 — one true week boundary (implemented expanded slice) | One SQLite owner resolves an explicit owned completed-tournament manifest, develops canonical sporting state, performs provisional between-week updates, derives lifecycle roster, then atomically publishes/advances/audits | Missing/empty sporting evidence fails closed; match-derived state beyond counts and health remain boundaries; matching Run prospects fail closed |
+| 2 — one true week boundary (implemented expanded slice) | One SQLite owner resolves an explicit owned completed-tournament manifest, develops canonical sporting state, performs provisional between-week updates, derives lifecycle roster, freezes target-week 15-year-old prospect arrivals, then atomically publishes/advances/audits | Missing/empty sporting evidence fails closed; match-derived state beyond counts and health remain boundaries; later pre-Tour→Tour entry AI is separate from prospect arrival |
 | 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
 | 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
 | 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |
@@ -140,7 +140,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
 - **Implemented initial slice:** explicitly adopt the complete production initial pool and an explicit first-season policy into an independent Run/Branch snapshot; derive the initial ranking candidate server-side and preserve both through Save/reopen/restore. See `docs/INITIAL_WORLD_RANKING_INTEGRATION_V1.md`.
-- The supported ordinary transition bootstraps Week 1 lifecycle and canonical sporting state from owned initial-world players, runs provisional historical development and between-week state, advances birthdays/retirement, and derives ranking identity server-side. Match-derived state/health remain open and prospect intake still fails closed. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md` and `docs/AUTHORITATIVE_PLAYER_SPORTING_WEEK_STATE_V1.md`.
+- The supported ordinary transition bootstraps Week 1 lifecycle and canonical sporting state from owned initial-world players, runs provisional historical development and between-week state, advances birthdays/retirement, derives ranking identity server-side, and now freezes any target-week 15-year-old Run prospects as branch-owned pre-Tour arrivals in the Week Transition World Event. They are not inserted into the Official Ranking lifecycle until a later valid Tour-entry trigger. Match-derived state/health remain open. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md` and `docs/AUTHORITATIVE_PLAYER_SPORTING_WEEK_STATE_V1.md`.
 
 ## 8. Match Reconstruction v1
 
@@ -293,8 +293,7 @@ Official Ranking policy. Preview is read-only, confirm is bound to the reviewed
 authority fingerprint, and the authority is then Saved through the ranking revision
 CAS before Week Transition becomes ready. The manual authority endpoint remains a
 compatibility/advanced boundary, not the default canonical UI path. Week 61 continues
-to require Season Transition, and unbridged target-week prospects continue to block
-derivation rather than being silently omitted.
+to require Season Transition. Target-week prospects no longer block ordinary authority derivation: they stay pre-Tour, while their exact source snapshot is separately frozen into the derived Week Transition request and branch-owned World Event.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

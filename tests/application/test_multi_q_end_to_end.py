@@ -236,7 +236,13 @@ def test_four_q_sections_execute_into_main_and_close_with_additive_points(tmp_pa
     )
 
     driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
-    package = driver._packages(week)[0]
+    with factory() as db:
+        package = driver._packages(
+            week,
+            session=db,
+            run_id="run",
+            branch_id="branch",
+        )[0]
     assert len(package.frozen_qualifier_promotions) == 4
     assert not package.frozen_bye_match_ids
 

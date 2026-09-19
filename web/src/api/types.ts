@@ -2103,6 +2103,8 @@ export type TournamentTemplateRecord = {
   preferred_week_type: string | null
   seasonal_grouping: string | null
   prize_money: number
+  prize_money_currency?: string | null
+  prize_money_table?: Record<string, number | null>
   prestige: number
   duration_in_season_weeks: number
   host_requirements: Record<string, unknown>
@@ -2734,6 +2736,8 @@ export type SeasonCalendarEvent = {
   missing_required_point_stages: string[]
   points_table_complete: boolean
   prize_money: number
+  prize_money_currency?: string | null
+  prize_money_table?: Record<string, number | null>
   prestige: number
   event_level_overrides: Record<string, unknown>
   source_template_fingerprint: string | null

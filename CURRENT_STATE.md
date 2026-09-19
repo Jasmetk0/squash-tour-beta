@@ -380,9 +380,20 @@ their own seed numbers, unseeded players can move into the vacated physical tier
 without inheriting a seed, and Draw Input v5 records any resulting seed vacancy.
 After Q Freeze, the existing v7 frozen-vacancy repair remains authoritative.
 
-The WC/RWC workflow now fails closed mainly for RWC exhaustion / fallback to the
-ordinary replacement source. The generic middle seed-cascade phase still intentionally
-requires replacement-backed player-count parity. Lucky Loser ordering and group
-Qualification remain Gate 3 work. See
+RWC exhaustion is phase-dependent under Master §15.1/§15.8: before Qualification
+starts the ordinary Q-list source applies; after Qualification starts the ordinary
+source is Lucky Loser priority. The first LL authority is now canonical for the
+post-Q-start vacancy boundary. A frozen Direct Main withdrawal with replacement-open
+cutoff becomes the next chronological `LLx` placeholder in its exact physical slot.
+`tournament_lucky_loser_vacancy.v1` freezes one first-real-Q-match proof plus the
+withdrawn-player cutoff and physical/seed provenance. Draw Input v6 stores
+`LL1..LLn` chronology, Draw revision v9 stores the frozen slot mutation, and
+unresolved LL placeholders remain blocked from executable topology.
+
+Candidate ranking/filling is not yet claimed: bracket-Q LL candidates still need to
+be ordered by reached Qualification round and then Tournament Ranking Snapshot, and
+RWC exhaustion still needs to route into that shared source resolver. The generic
+middle seed-cascade phase still intentionally requires replacement-backed
+player-count parity. Group Qualification LL ordering remains Gate 3 work. See
 `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

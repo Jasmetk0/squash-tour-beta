@@ -325,6 +325,76 @@ def adopt_transition_authority(
         ) from exc
 
 
+class DerivedRankingTransitionAuthorityRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+    audit: RankingCommandAudit
+
+
+@router.post("/transition-authorities/derived/preview")
+def preview_derived_transition_authority(
+    run_id: str,
+    branch_id: str,
+    payload: DerivedRankingTransitionAuthorityRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        authority = runtime.repository.preview_derived_ranking_transition_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=payload.command_id,
+            audit=payload.audit,
+        )
+        return {
+            "authority": authority,
+            "authority_fingerprint": authority.fingerprint,
+        }
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "derived_ranking_authority_unavailable",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/transition-authorities/derived",
+    response_model=RankingTransitionAuthority,
+    status_code=201,
+)
+def adopt_derived_transition_authority(
+    run_id: str,
+    branch_id: str,
+    payload: DerivedRankingTransitionAuthorityRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    expected: Annotated[
+        str,
+        Header(
+            alias="X-Ranking-Transition-Authority-Fingerprint",
+            pattern=r"^[0-9a-f]{64}$",
+        ),
+    ],
+):
+    try:
+        return runtime.repository.adopt_derived_ranking_transition_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=payload.command_id,
+            audit=payload.audit,
+            expected_fingerprint=expected,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "derived_ranking_authority_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 class AuthoritativeWeekPreparation(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
     command_id: str = Field(min_length=1, max_length=128)

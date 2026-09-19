@@ -103,6 +103,13 @@ export function AuthoritativeSimulationPanel({
     onSuccess: (value) => {
       setProposal(value)
       setProposalRequestId(newCommandId())
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setProposal(null)
+        setProposalRequestId('')
+        await refreshCanonicalSimulation()
+      }
     }
   })
 
@@ -122,10 +129,11 @@ export function AuthoritativeSimulationPanel({
       setConfirmed(false)
       await refreshCanonicalSimulation()
     },
-    onError: (error) => {
+    onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
         setProposal(null)
         setProposalRequestId('')
+        await refreshCanonicalSimulation()
       }
     }
   })

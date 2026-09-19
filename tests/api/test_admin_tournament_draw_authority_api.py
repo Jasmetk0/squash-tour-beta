@@ -161,7 +161,7 @@ def test_canonical_draw_input_commit_and_initial_generation_over_http(tmp_path):
         assert len(authority["main"]["nodes"]) == 3
         assert authority["main"]["seed_positions"] == [[1, 1]]
         assert authority["main"]["bye_slot_indexes"] == []
-        assert authority["main"]["qualification_placeholder_slots"][0][0] == "Q1"
+        assert authority["main"]["qualifier_placeholder_slots"][0][0] == "Q1"
         assert authority["qualification"]["bracket_size"] == 2
         assert len(authority["qualification"]["nodes"]) == 1
 

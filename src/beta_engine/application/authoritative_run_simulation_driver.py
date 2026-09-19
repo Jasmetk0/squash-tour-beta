@@ -49,6 +49,7 @@ from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
+    WeekSimulationScheduleSlot,
     fingerprint,
 )
 from beta_engine.infrastructure.db.models import (
@@ -1332,6 +1333,119 @@ class AuthoritativeRunSimulationDriver:
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
+            }
+
+    def propose_topological_schedule(self, *, run_id: str, branch_id: str):
+        """Propose earliest dependency-safe Simulation Slots from canonical topology."""
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            if self._schedule(session, run_id, branch_id, week) is not None:
+                raise ValueError("week schedule is already adopted and immutable")
+
+            current = self._position(
+                session, run_id, branch_id, allow_missing_schedule=True
+            )
+            packages = self._packages(
+                week,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+            plans = self._topology_for_session(
+                session, run_id, branch_id, packages, week=week
+            )
+            if not plans:
+                raise ValueError(
+                    "week has no authoritative tournament groups to schedule"
+                )
+
+            depth_cache: dict[str, int] = {}
+            visiting: set[str] = set()
+
+            def depth(group_id: str) -> int:
+                if group_id in depth_cache:
+                    return depth_cache[group_id]
+                if group_id in visiting:
+                    raise ValueError("week topology contains a feeder cycle")
+                if group_id not in plans:
+                    raise ValueError("week topology references a missing feeder group")
+                visiting.add(group_id)
+                feeders = self._plan_feeders(plans[group_id])
+                if any(feeder not in plans for feeder in feeders):
+                    raise ValueError(
+                        "week topology references a feeder outside the authoritative graph"
+                    )
+                value = (
+                    1
+                    if not feeders
+                    else 1 + max(depth(feeder) for feeder in feeders)
+                )
+                visiting.remove(group_id)
+                depth_cache[group_id] = value
+                return value
+
+            for group_id in sorted(plans):
+                depth(group_id)
+
+            grouped: dict[int, list[str]] = {}
+            for group_id, ordinal in depth_cache.items():
+                grouped.setdefault(ordinal, []).append(group_id)
+
+            slots: list[WeekSimulationScheduleSlot] = []
+            for ordinal in sorted(grouped):
+                group_ids = tuple(sorted(grouped[ordinal]))
+                known_players: dict[str, str] = {}
+                for group_id in group_ids:
+                    plan = plans[group_id]
+                    direct_ids = (
+                        tuple(plan.direct_player_ids or ())
+                        if plan.participant_sources is None
+                        else tuple(
+                            source.removeprefix("player:")
+                            for source in plan.participant_sources
+                            if source.startswith("player:")
+                        )
+                    )
+                    for player_id in direct_ids:
+                        prior_group = known_players.get(player_id)
+                        if prior_group is not None:
+                            raise ValueError(
+                                "topological schedule proposal found one directly known "
+                                "player in multiple independent groups of the same slot; "
+                                "commitment/Week Tournament Lock authority must resolve "
+                                f"the conflict before chronology ({player_id}: "
+                                f"{prior_group}, {group_id})"
+                            )
+                        known_players[player_id] = group_id
+                slots.append(
+                    WeekSimulationScheduleSlot(
+                        ordinal=ordinal,
+                        group_ids=group_ids,
+                    )
+                )
+
+            schedule = WeekSimulationSchedule(
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                slots=tuple(slots),
+            )
+            self._validate_schedule(session, schedule, packages)
+            return {
+                "schedule": schedule.model_dump(mode="json"),
+                "schedule_fingerprint": schedule.fingerprint,
+                "position_fingerprint": fingerprint(
+                    {
+                        "position": current.position_fingerprint,
+                        "schedule": schedule.fingerprint,
+                    }
+                ),
+                "provenance": (
+                    "earliest_dependency_safe_topological_proposal_v1; "
+                    "not Match Day timing or Final Commitment authority"
+                ),
+                "persisted": False,
             }
 
     def adopt_schedule(

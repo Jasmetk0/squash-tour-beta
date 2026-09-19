@@ -401,6 +401,75 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     )
 
 
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_over_http_adopts_exact_payload(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(
+        tmp_path / "proposal-http-source"
+    )
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'proposal-http.sqlite'}"
+    )
+    server.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    server.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server,
+            display_name="HTTP topological proposal",
+        )
+        _install_owned_state(
+            server,
+            first,
+            run_id,
+            branch_id,
+            additional_packages=(second,),
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "authoritative-simulation"
+        )
+
+        status, proposed = _request(
+            "GET",
+            root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed
+        assert proposed["persisted"] is False
+        assert len(proposed["schedule"]["slots"]) == 2
+
+        status, adopted = _request(
+            "POST",
+            root + "/week-schedule",
+            {
+                "schedule": proposed["schedule"],
+                "request_id": "adopt-topological-proposal",
+                "expected_position_fingerprint": proposed[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted
+        assert (
+            adopted["schedule_fingerprint"]
+            == proposed["schedule_fingerprint"]
+        )
+
+        status, conflict = _request(
+            "GET",
+            root + "/week-schedule/proposal",
+        )
+        assert status == 409
+        assert (
+            conflict["detail"]["code"]
+            == "topological_schedule_proposal_conflict"
+        )
+        assert "already adopted" in conflict["detail"]["message"]
+
+
 @pytest.mark.smoke
 def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(tmp_path / "multi-source")

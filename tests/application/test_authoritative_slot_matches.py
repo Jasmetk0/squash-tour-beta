@@ -923,6 +923,98 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
         )
 
 
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(
+        tmp_path / "proposal-multi"
+    )
+
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+
+    assert proposed["persisted"] is False
+    assert "not Match Day timing" in proposed["provenance"]
+    assert schedule.week == week
+    assert len(schedule.slots) == 2
+
+    first_roots = {
+        match.match_id
+        for match in first.main_draw_matches
+        if match.round_number == 1
+    }
+    second_roots = {
+        match.match_id
+        for match in second.main_draw_matches
+        if match.round_number == 1
+    }
+    assert set(schedule.slots[0].group_ids) == first_roots | second_roots
+    assert set(schedule.slots[1].group_ids) == {
+        match.match_id
+        for match in (*first.main_draw_matches, *second.main_draw_matches)
+        if match.round_number == 2
+    }
+
+    preview = driver.preview_schedule(schedule)
+    assert preview["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+    assert preview["position_fingerprint"] == proposed["position_fingerprint"]
+
+    registry = driver.match_service._load_registry()
+    registry.matches_by_event_id = dict(
+        reversed(tuple(registry.matches_by_event_id.items()))
+    )
+    driver.match_service._save_registry(registry)
+    repeated = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert repeated["schedule"] == proposed["schedule"]
+    assert repeated["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+    assert repeated["position_fingerprint"] == proposed["position_fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
+    tmp_path,
+    monkeypatch,
+):
+    driver, _, _, first, _ = _multi_driver_fixture(
+        tmp_path / "proposal-conflict"
+    )
+    plans = {
+        "conflict-a": SimulationMatchEventPlan(
+            group_id="conflict-a",
+            event_id=first.event_id,
+            match_id="conflict-a",
+            participant_sources=("player:shared", "player:left"),
+        ),
+        "conflict-b": SimulationMatchEventPlan(
+            group_id="conflict-b",
+            event_id=first.event_id,
+            match_id="conflict-b",
+            participant_sources=("player:shared", "player:right"),
+        ),
+    }
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_topology_for_session",
+        lambda self, *args, **kwargs: plans,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="commitment/Week Tournament Lock authority must resolve",
+    ):
+        driver.propose_topological_schedule(
+            run_id="run",
+            branch_id="branch",
+        )
+
+
 def test_explicit_multi_event_schedule_adopts_and_executes_independent_sources(
     tmp_path,
 ):
@@ -1348,22 +1440,16 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     factory = sessionmaker(bind=session.get_bind())
     session.close()
     driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
-    by_round = {}
-    for match in package.main_draw_matches:
-        by_round.setdefault(match.round_number, []).append(match.match_id)
-    schedule = WeekSimulationSchedule(
+    proposed = driver.propose_topological_schedule(
         run_id="run",
         branch_id="branch",
-        week=week,
-        slots=tuple(
-            WeekSimulationScheduleSlot(
-                ordinal=index,
-                group_ids=tuple(by_round[round_number]),
-            )
-            for index, round_number in enumerate(sorted(by_round), 1)
-        ),
     )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    assert [len(slot.group_ids) for slot in schedule.slots] == [4, 2, 1]
     preview = driver.preview_schedule(schedule)
+    assert preview["position_fingerprint"] == proposed["position_fingerprint"]
     driver.adopt_schedule(
         schedule,
         request_id="real-eight-schedule",

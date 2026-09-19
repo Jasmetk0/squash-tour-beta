@@ -443,6 +443,7 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
 
         adoption = {
             "request_id": "adopt-topological-proposal",
+            "expected_week": proposed["schedule"]["week"],
             "expected_schedule_fingerprint": proposed[
                 "schedule_fingerprint"
             ],

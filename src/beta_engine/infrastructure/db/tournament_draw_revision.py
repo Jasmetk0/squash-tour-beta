@@ -508,6 +508,9 @@ class TournamentDrawRevisionStore:
                         replacement_source_authority=(
                             revision.replacement_source_authority
                         ),
+                        qualification_winner_evidence=(
+                            authority.qualification_winner_evidence
+                        ),
                     )
                 )
                 if rebuilt_authority != authority:
@@ -524,6 +527,11 @@ class TournamentDrawRevisionStore:
                         replacement_source_authority_fingerprint=(
                             revision.replacement_source_authority.fingerprint
                             if revision.replacement_source_authority is not None
+                            else None
+                        ),
+                        vacated_qualifier_placeholder_id=(
+                            authority.qualification_winner_evidence.section_id
+                            if authority.qualification_winner_evidence is not None
                             else None
                         ),
                     )

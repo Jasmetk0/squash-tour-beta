@@ -923,6 +923,74 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
         )
 
 
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(
+        tmp_path / "proposal-multi"
+    )
+
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate(proposed["schedule"])
+
+    assert proposed["persisted"] is False
+    assert "not Match Day timing" in proposed["provenance"]
+    assert schedule.week == week
+    assert len(schedule.slots) == 2
+
+    first_roots = {
+        match.match_id
+        for match in first.main_draw_matches
+        if match.round_number == 1
+    }
+    second_roots = {
+        match.match_id
+        for match in second.main_draw_matches
+        if match.round_number == 1
+    }
+    assert set(schedule.slots[0].group_ids) == first_roots | second_roots
+    assert set(schedule.slots[1].group_ids) == {
+        match.match_id
+        for match in (*first.main_draw_matches, *second.main_draw_matches)
+        if match.round_number == 2
+    }
+
+    preview = driver.preview_schedule(schedule)
+    assert preview["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+    assert preview["position_fingerprint"] == proposed["position_fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
+    tmp_path,
+):
+    driver, _, _, first, second = _multi_driver_fixture(
+        tmp_path / "proposal-conflict"
+    )
+    registry = driver.match_service._load_registry()
+    first_root = next(
+        match for match in first.main_draw_matches if match.round_number == 1
+    )
+    second_root = next(
+        match
+        for match in registry.matches_by_event_id[second.event_id].main_draw_matches
+        if match.round_number == 1
+    )
+    second_root.top_player_id = first_root.top_player_id
+    driver.match_service._save_registry(registry)
+
+    with pytest.raises(
+        ValueError,
+        match="commitment/Week Tournament Lock authority must resolve",
+    ):
+        driver.propose_topological_schedule(
+            run_id="run",
+            branch_id="branch",
+        )
+
+
 def test_explicit_multi_event_schedule_adopts_and_executes_independent_sources(
     tmp_path,
 ):
@@ -1348,22 +1416,14 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     factory = sessionmaker(bind=session.get_bind())
     session.close()
     driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
-    by_round = {}
-    for match in package.main_draw_matches:
-        by_round.setdefault(match.round_number, []).append(match.match_id)
-    schedule = WeekSimulationSchedule(
+    proposed = driver.propose_topological_schedule(
         run_id="run",
         branch_id="branch",
-        week=week,
-        slots=tuple(
-            WeekSimulationScheduleSlot(
-                ordinal=index,
-                group_ids=tuple(by_round[round_number]),
-            )
-            for index, round_number in enumerate(sorted(by_round), 1)
-        ),
     )
+    schedule = WeekSimulationSchedule.model_validate(proposed["schedule"])
+    assert [len(slot.group_ids) for slot in schedule.slots] == [4, 2, 1]
     preview = driver.preview_schedule(schedule)
+    assert preview["position_fingerprint"] == proposed["position_fingerprint"]
     driver.adopt_schedule(
         schedule,
         request_id="real-eight-schedule",

@@ -2398,7 +2398,8 @@ def test_frozen_wc_withdrawal_uses_next_external_rwc_in_exact_physical_slot(data
         ) == (first, second)
 
 
-def test_frozen_wc_repair_fails_closed_when_priority_rwc_is_in_qualification(database):
+@pytest.mark.pr_critical
+def test_frozen_wc_promotes_priority_rwc_from_q_and_backfills_exact_q_slot(database):
     with database.begin() as session:
         install_ranking_authority(session)
         TournamentEntryFieldStore(session).stage_initial(
@@ -2414,7 +2415,7 @@ def test_frozen_wc_repair_fails_closed_when_priority_rwc_is_in_qualification(dat
             ),
             command_id="wc-q-field",
         )
-        TournamentWildCardAuthorityStore(session).resolve(
+        wc = TournamentWildCardAuthorityStore(session).resolve(
             run_id="run",
             branch_id="branch",
             event_id="event",
@@ -2444,21 +2445,127 @@ def test_frozen_wc_repair_fails_closed_when_priority_rwc_is_in_qualification(dat
             qualification_process_window_count=3,
         )
         assert draw_input.wild_card_player_ids == ("B",)
-        assert any(
-            slot.player_id == "E"
-            for bracket in initial.qualification_brackets
-            for slot in bracket.slots
+        assert draw_input.qualification_player_ids == ("D", "E")
+        assert wc.adjusted_below_qualification_cut_player_ids == ("F", "G")
+
+        original_wc_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
         )
+        original_q_section = next(
+            bracket
+            for bracket in initial.qualification_brackets
+            if any(slot.player_id == "E" for slot in bracket.slots)
+        )
+        original_q_slot = next(
+            slot for slot in original_q_section.slots if slot.player_id == "E"
+        )
+        assert original_q_slot.seed_number is None
 
         with pytest.raises(
-            TournamentDrawRevisionConflict,
-            match="cross-draw atomic RWC promotion",
+            ValueError,
+            match="requires Q process-window evidence",
         ):
             TournamentDrawRevisionStore(session).draw_frozen_wild_card_withdrawal(
                 run_id="run",
                 branch_id="branch",
                 event_id="event",
-                command_id="wc-q-needs-cross-draw",
+                command_id="wc-q-missing-window",
                 withdrawn_player_id="B",
                 main_process_window_ordinal=3,
             )
+
+        saved_before = capture(session)
+        store = TournamentDrawRevisionStore(session)
+        revision = store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-q-promote",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+        )
+
+        authority = revision.wild_card_repair_authority
+        assert authority is not None
+        assert authority.schema_version == "tournament_post_draw_wild_card_repair.v2"
+        assert authority.replacement_source == "qualification"
+        assert authority.reserve_ordinal == 2
+        assert authority.replacement_player_id == "E"
+        assert authority.qualification_section_id == original_q_section.section_id
+        assert authority.qualification_physical_slot_index == original_q_slot.slot_index
+        assert authority.qualification_backfill_player_id == "F"
+        assert authority.qualification_backfill_ordinal == 1
+
+        assert revision.schema_version == "tournament_draw_revision.v7"
+        assert revision.affected_draw_types == ("main", "qualification")
+        assert revision.main_repair_action == "frozen_wild_card_fill"
+        assert revision.qualification_repair_action == "frozen_rwc_q_backfill"
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v4"
+        )
+        assert revision.successor_draw_input.wild_card_player_ids == ("E",)
+        assert revision.successor_draw_input.qualification_player_ids == ("D", "F")
+        assert revision.successor_draw_input.withdrawn_player_ids == ("B",)
+
+        promoted_slot = next(
+            slot for slot in revision.successor_draw.main.slots
+            if slot.player_id == "E"
+        )
+        assert promoted_slot.slot_index == original_wc_slot.slot_index
+        assert promoted_slot.entry_status == "wild_card"
+        assert promoted_slot.seed_number is None
+
+        backfill_section = next(
+            bracket
+            for bracket in revision.successor_draw.qualification_brackets
+            if bracket.section_id == original_q_section.section_id
+        )
+        backfill_slot = backfill_section.slots[original_q_slot.slot_index - 1]
+        assert backfill_slot.player_id == "F"
+        assert backfill_slot.seed_number is None
+        assert backfill_slot.slot_index == original_q_slot.slot_index
+
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+        assert store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-q-promote",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+        ) == revision
+
+        saved_after = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == ()
+
+        recaptured = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+

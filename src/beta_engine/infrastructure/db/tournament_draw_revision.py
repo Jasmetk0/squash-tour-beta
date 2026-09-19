@@ -136,7 +136,7 @@ class TournamentDrawRevisionStore:
                     != previous_draw_input.draw_seed
                 ):
                     raise ValueError(
-                        "Seed-cascade phase repair unexpectedly changed Draw seed"
+                        "Phase-aware Draw repair unexpectedly changed Draw seed"
                     )
                 replay_draw_seed = previous_draw_input.draw_seed
 
@@ -173,9 +173,29 @@ class TournamentDrawRevisionStore:
                     sequence=revision.sequence,
                     command_id=revision.command_id,
                 )
-            else:
+            elif revision.repair_kind == "seed_cascade_phase":
                 rebuilt_revision = (
                     TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+                        predecessor=predecessor,
+                        successor_field=rebuilt_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        affected_draw_types=revision.affected_draw_types,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        qualification_process_window_ordinal=(
+                            revision.qualification_process_window_ordinal
+                        ),
+                        withdrawn_player_ids=revision.withdrawn_player_ids,
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        repair_draw_seed=revision.repair_draw_seed,
+                    )
+                )
+            else:
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder.build_draw_frozen_phase(
                         predecessor=predecessor,
                         successor_field=rebuilt_field,
                         successor_draw_input=rebuilt_input,
@@ -580,3 +600,201 @@ class TournamentDrawRevisionStore:
         self.session.flush()
         return revision
 
+
+
+    def draw_frozen_phase_withdrawal(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        withdrawn_player_ids: tuple[str, ...],
+        main_process_window_ordinal: int | None = None,
+        qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
+    ) -> TournamentDrawRevision:
+        requested = tuple(sorted(set(withdrawn_player_ids)))
+        if not requested:
+            raise ValueError(
+                "Draw-Freeze phase withdrawal requires at least one player"
+            )
+
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        history = self.history(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if retry is not None:
+            revision = next(
+                (
+                    item
+                    for item in history
+                    if item.command_id == command_id
+                ),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Tournament Draw revision command exists outside validated history"
+                )
+            if (
+                retry.event_id != event_id
+                or revision.repair_kind != "draw_frozen_phase"
+                or revision.withdrawn_player_ids != requested
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or revision.qualification_process_window_ordinal
+                != qualification_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Tournament Draw revision command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise ValueError(
+                "Draw-Freeze phase repair requires canonical Draw authority"
+            )
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if original_input is None or process is None or ranking is None:
+            raise ValueError(
+                "Draw-Freeze phase repair requires Draw Input, Draw process "
+                "and ranking authority"
+            )
+        if original_input.capacity.wild_card_slots:
+            raise ValueError(
+                "Draw-Freeze phase repair with WC/RWC requires "
+                "dedicated WC repair authority"
+            )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        rows = field_store._rows(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if not rows:
+            raise ValueError(
+                "Draw-Freeze phase repair requires canonical Tournament Entry Field"
+            )
+        persisted_field, applications = field_store._load_row(rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+        successor_field = TournamentEntryFieldResolver.repair_pre_draw(
+            authority=ranking,
+            applications=applications,
+            previous=previous_field,
+            withdrawn_player_ids=requested,
+        )
+        if successor_field == previous_field:
+            raise TournamentDrawRevisionConflict(
+                "Draw-Freeze phase withdrawal contains no new active-field change"
+            )
+
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+        sequence = len(history) + 1
+        successor_input = TournamentDrawInputAuthorityBuilder.build(
+            authority=ranking,
+            field=successor_field,
+            field_sequence=original_input.field_sequence + sequence,
+            command_id=command_id,
+            draw_seed=previous_input.draw_seed,
+            main_seed_count=None,
+            qualification_seed_count=None,
+            schema_version="tournament_draw_input_authority.v2",
+        )
+
+        affected = []
+        if (
+            previous_input.direct_main_player_ids
+            != successor_input.direct_main_player_ids
+            or previous_input.wild_card_player_ids
+            != successor_input.wild_card_player_ids
+        ):
+            affected.append("main")
+        if (
+            previous_input.qualification_player_ids
+            != successor_input.qualification_player_ids
+        ):
+            affected.append("qualification")
+        affected_draw_types = tuple(affected)
+        if not affected_draw_types:
+            raise TournamentDrawRevisionConflict(
+                "Withdrawal did not change active Main or Qualification field"
+            )
+
+        request = {
+            "repair_kind": "draw_frozen_phase",
+            "predecessor_draw_fingerprint": predecessor.fingerprint,
+            "process_authority_fingerprint": process.fingerprint,
+            "withdrawn_player_ids": list(requested),
+            "main_process_window_ordinal": main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                qualification_process_window_ordinal
+            ),
+            "repair_draw_seed": repair_draw_seed,
+            "affected_draw_types": list(affected_draw_types),
+            "successor_field_fingerprint": successor_field.fingerprint,
+        }
+        revision = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+            predecessor=predecessor,
+            successor_field=successor_field,
+            successor_draw_input=successor_input,
+            process_authority=process,
+            affected_draw_types=affected_draw_types,
+            main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                qualification_process_window_ordinal
+            ),
+            withdrawn_player_ids=requested,
+            sequence=sequence,
+            command_id=command_id,
+            repair_draw_seed=repair_draw_seed,
+        )
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=_fp(request),
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=(
+                    revision.predecessor_draw_fingerprint
+                ),
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision

@@ -1728,3 +1728,71 @@ def test_seed_cascade_supports_main_cascade_with_q_full_redraw(database):
             event_id="event",
         ) == (revision,)
 
+
+def test_seed_cascade_repairs_main_and_q_together_when_both_are_cascade(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        before_main = draw_player_slots(initial.main)
+        before_q = {
+            slot.player_id: (section.section_id, slot)
+            for section in initial.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+        q1 = initial.qualification_brackets[0]
+        q1_second_seed = next(
+            slot
+            for slot in q1.slots
+            if slot.seed_number is not None and slot.seed_number != 1
+        )
+        assert q1_second_seed.player_id is not None
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="main-and-q-both-cascade",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=2,
+            qualification_process_window_ordinal=2,
+        )
+
+        assert revision.main_repair_action == "seed_cascade"
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert revision.repair_draw_seed is None
+
+        after_main = draw_player_slots(revision.successor_draw.main)
+        assert after_main["M02"] == before_main["M02"]
+        assert after_main["M03"].slot_index == before_main["M01"].slot_index
+        assert after_main["M03"].seed_number is None
+        assert after_main["Q01"].slot_index == before_main["M03"].slot_index
+
+        after_q = {
+            slot.player_id: (section.section_id, slot)
+            for section in revision.successor_draw.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+        _, q01_before = before_q["Q01"]
+        moved_section, moved_seed = after_q[q1_second_seed.player_id]
+        assert moved_section == "Q1"
+        assert moved_seed.slot_index == q01_before.slot_index
+        assert moved_seed.seed_number == q1_second_seed.seed_number
+
+        q07_before_section, q07_before = before_q["Q07"]
+        q07_after_section, q07_after = after_q["Q07"]
+        assert q07_after_section == "Q1"
+        assert q07_after.slot_index == q1_second_seed.slot_index
+        assert q07_after.seed_number is None
+        q25_section, q25_after = after_q["Q25"]
+        assert q25_section == q07_before_section
+        assert q25_after.slot_index == q07_before.slot_index
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+

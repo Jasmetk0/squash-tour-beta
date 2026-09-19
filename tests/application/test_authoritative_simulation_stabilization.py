@@ -7,10 +7,14 @@ from sqlalchemy import select
 
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeSimulationCommand,
+    AuthoritativeWalkoverCommand,
 )
 from beta_engine.application.season_match_service import (
     MatchPackageGenerateRequest,
     MatchSimulateRequest,
+)
+from beta_engine.application.authoritative_slot_matches import (
+    AuthoritativeSlotMatchExecutor,
 )
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import MatchEngine, MatchInputSnapshot
@@ -89,6 +93,212 @@ def test_simulation_rejects_non_writable_scope_before_any_write(tmp_path, scope)
         assert session.scalars(select(SimulationEventGroupModel)).all() == []
         assert session.scalars(select(AuthoritativeSimulationCommandModel)).all() == []
         assert session.scalars(select(OwnedTournamentRankingSourceModel)).all() == []
+
+
+@pytest.mark.pr_critical
+def test_terminal_walkover_closes_canonical_tournament_with_stage_points(
+    tmp_path,
+    monkeypatch,
+):
+    driver, factory, week = _driver_fixture(tmp_path / "walkover-close")
+
+    from beta_engine.application import authoritative_run_simulation_driver as driver_module
+    from beta_engine.domain.tournaments.draw_authority import (
+        TournamentDrawAuthority,
+        TournamentDrawBracket,
+        TournamentDrawNode,
+        TournamentDrawSlot,
+    )
+    from beta_engine.infrastructure.db import tournament_walkover_authority as walkover_module
+    from beta_engine.infrastructure.db.models import TournamentDrawAuthorityModel
+
+    legacy_package = next(
+        iter(driver.match_service._load_registry().matches_by_event_id.values())
+    )
+    opening = sorted(
+        (
+            match
+            for match in legacy_package.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
+    final = max(
+        legacy_package.main_draw_matches,
+        key=lambda match: (match.round_number, match.bracket_position),
+    )
+    assert len(opening) == 2
+    direct_players = tuple(
+        player_id
+        for match in opening
+        for player_id in (match.top_player_id, match.bottom_player_id)
+    )
+    assert all(player_id is not None for player_id in direct_players)
+
+    draw = TournamentDrawAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id=legacy_package.event_id,
+        generated_by_command_id="walkover-canonical-draw",
+        draw_input_fingerprint="d" * 64,
+        main=TournamentDrawBracket(
+            draw_type="main",
+            bracket_size=4,
+            seed_positions=(),
+            slots=tuple(
+                TournamentDrawSlot(
+                    slot_index=index,
+                    entrant_kind="player",
+                    player_id=player_id,
+                )
+                for index, player_id in enumerate(direct_players, start=1)
+            ),
+            nodes=(
+                TournamentDrawNode(
+                    node_id=opening[0].match_id,
+                    round_number=1,
+                    round_sequence=1,
+                    source_top="slot:1",
+                    source_bottom="slot:2",
+                ),
+                TournamentDrawNode(
+                    node_id=opening[1].match_id,
+                    round_number=1,
+                    round_sequence=2,
+                    source_top="slot:3",
+                    source_bottom="slot:4",
+                ),
+                TournamentDrawNode(
+                    node_id=final.match_id,
+                    round_number=2,
+                    round_sequence=1,
+                    source_top=f"winner:{opening[0].match_id}",
+                    source_bottom=f"winner:{opening[1].match_id}",
+                ),
+            ),
+        ),
+    )
+
+    class CanonicalDrawStore:
+        def __init__(self, session):
+            self.session = session
+
+        def get(self, *, run_id, branch_id, event_id):
+            if (run_id, branch_id, event_id) != (
+                "run",
+                "branch",
+                draw.event_id,
+            ):
+                return None
+            return draw
+
+    monkeypatch.setattr(
+        driver_module,
+        "TournamentDrawAuthorityStore",
+        CanonicalDrawStore,
+    )
+    monkeypatch.setattr(
+        walkover_module,
+        "TournamentDrawAuthorityStore",
+        CanonicalDrawStore,
+    )
+    with factory.begin() as session:
+        session.add(
+            TournamentDrawAuthorityModel(
+                run_id="run",
+                branch_id="branch",
+                event_id=draw.event_id,
+                command_id=draw.generated_by_command_id,
+                request_fingerprint="e" * 64,
+                authority_fingerprint=draw.fingerprint,
+                draw_input_fingerprint=draw.draw_input_fingerprint,
+                payload_json=draw.model_dump_json(),
+            )
+        )
+
+    semifinals, _ = _driver_command(driver, week, "walkover-semifinals")
+    driver.simulate_next_slot(semifinals)
+
+    position = driver.position(run_id="run", branch_id="branch")
+    assert len(position.eligible_match_ids) == 1
+    final_match_id = position.eligible_match_ids[0]
+
+    with factory() as session:
+        semifinal_rows = session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+        ).all()
+        semifinal_groups = [
+            AuthoritativeSlotMatchExecutor._load_group(row)
+            for row in semifinal_rows
+            if row.match_id != final_match_id
+        ]
+        assert len(semifinal_groups) == 2
+        withdrawn = semifinal_groups[0].result.winner_player_id
+
+    payload = driver.commit_post_cutoff_walkover(
+        AuthoritativeWalkoverCommand(
+            command_id="walkover-final-close",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=final_match_id,
+            withdrawn_player_id=withdrawn,
+        )
+    )
+
+    assert payload["walkover"]["scoreline"] == "W/O"
+    assert payload["walkover"]["withdrawn_player_id"] == withdrawn
+    assert payload["position"]["supported_tournament_complete"] is True
+
+    with factory() as session:
+        sources = OwnedTournamentRankingSourceStore(session).history(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert len(sources) == 1
+        source = sources[0]
+        assert source.schema_version == "owned_tournament_ranking_source.v4"
+        assert source.canonical_result is not None
+        assert source.canonical_awards is not None
+
+        result = source.canonical_result
+        awards = {
+            award.player_id: award
+            for award in source.canonical_awards.awards
+        }
+        walkover_match = next(
+            match for match in result.matches if match.match_id == final_match_id
+        )
+        assert walkover_match.scoreline == "W/O"
+
+        winner = next(
+            player
+            for player in result.players
+            if player.player_id == walkover_match.winner_player_id
+        )
+        loser = next(
+            player
+            for player in result.players
+            if player.player_id == walkover_match.loser_player_id
+        )
+        assert winner.reached_stage == "champion"
+        assert winner.walkovers_received == 1
+        assert winner.wins == 1
+        assert loser.reached_stage == "finalist"
+        assert loser.retired_or_walkover_loss is True
+        assert loser.losses == 0
+
+        assert awards[winner.player_id].reached_stage == "champion"
+        assert awards[loser.player_id].reached_stage == "finalist"
+        assert awards[winner.player_id].ranking_points_awarded > (
+            awards[loser.player_id].ranking_points_awarded
+        )
 
 
 def test_pending_next_slot_accepts_matching_close_by_other_commands(tmp_path):

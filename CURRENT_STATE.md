@@ -333,13 +333,17 @@ completes the planned group and feeds its winner forward. Saved Revision
 capture/restore validates the same immutable W/O receipt, and the Run driver plus
 Admin endpoint expose the operation as an idempotent command.
 
-Canonical Tournament Result now records `walkovers_received` and
+Canonical Tournament Result records `walkovers_received` and
 `retired_or_walkover_loss` separately: W/O advances reached-stage progression but
 does not increment played wins or losses. Sporting week transition likewise counts
 only competitive match effects, so W/O contributes zero competitive matches.
-Canonical ranking/point/prize handling for W/O is intentionally **not** claimed:
-point-award construction fails closed until its dedicated Master semantics are
-implemented.
+Canonical point/ranking handling now follows Master §16.3: stage progression from
+W/O is eligible for the same authored ranking-point value as that finishing stage,
+while the point builder independently verifies that BYE/W/O evidence did not leak
+into played win/loss counters. A terminal post-cutoff W/O now runs the normal
+canonical tournament close in the same command and can persist an
+`OwnedTournamentRankingSource v4`. Dedicated canonical prize-money authority is
+still outside the current narrow close path.
 
 Frozen external RWC repair is now canonical for the bounded case where an
 unseeded active WC holder withdraws after Main Draw Freeze and the next available

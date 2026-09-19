@@ -165,9 +165,9 @@ class AuthoritativeRunSimulationDriver:
     def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
         """Commit one Master §15.9 W/O without simulating a competitive match.
 
-        This command advances tournament progression only. It intentionally does not
-        call tournament close because W/O point/prize handling remains a separate
-        fail-closed authority boundary.
+        W/O remains noncompetitive sporting evidence, but if it resolves the final
+        outstanding tournament node the normal canonical close now freezes result
+        and point authorities from the reached-stage progression.
         """
 
         request_fp = fingerprint(
@@ -239,6 +239,7 @@ class AuthoritativeRunSimulationDriver:
                 slot_id=slot.slot_id,
                 group_id=command.group_id,
             )
+            self._advance_or_close(session, command, packages)
             after = self._position(session, command.run_id, command.branch_id)
             payload = {
                 "walkover": {

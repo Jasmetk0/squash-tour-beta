@@ -43,12 +43,31 @@ class TournamentLuckyLoserOrderAuthorityStore:
             branch_id=branch_id,
             event_id=event_id,
         )
+        if draw is None:
+            raise TournamentLuckyLoserOrderUnavailable(
+                "Lucky Loser order requires Draw and Tournament Ranking Snapshot"
+            )
+        return self.resolve_for_draw(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            draw=draw,
+        )
+
+    def resolve_for_draw(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        draw,
+    ) -> TournamentLuckyLoserOrderAuthority:
         ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
         )
-        if draw is None or ranking is None:
+        if ranking is None:
             raise TournamentLuckyLoserOrderUnavailable(
                 "Lucky Loser order requires Draw and Tournament Ranking Snapshot"
             )

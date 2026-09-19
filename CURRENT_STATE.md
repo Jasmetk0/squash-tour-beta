@@ -129,7 +129,7 @@ commits independent same-slot groups over one frozen snapshot, resumes partial
 commands, runs the sporting-context preflight consumed by Week Transition,
 materializes the dependent Final and closes exactly once into
 `OwnedTournamentRankingSource`. Match-derived Form/Sharpness/Fatigue and the
-tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week events without an adopted explicit schedule, Qualification, non-four-player draws and ambiguous scheduling continue to fail closed.
+tournament-to-ranking bridge are implemented, not future gaps. Multiple same-week events without an adopted schedule still fail closed before mutation, but a dependency-safe schedule can now be proposed automatically from canonical topology instead of authored manually. Ambiguous player commitments still fail closed and are never resolved by schedule ordering. Match Day timing, courts, travel/rest optimization and Final Commitment remain outside this technical proposal.
 
 The narrow repeated-flow acceptance drives two persisted four-player weeks through
 production authoritative HTTP commands and real Week Transition preview/confirm

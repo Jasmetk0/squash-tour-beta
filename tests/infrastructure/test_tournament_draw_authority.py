@@ -4095,6 +4095,66 @@ def test_withdrawn_q_winner_turns_exact_linked_main_slot_into_next_lucky_loser(
         assert filled.lucky_loser_placeholder_id == "LL1"
         assert filled.seed_number is None
 
+        event = CalendarEvent(
+            event_id="event",
+            season="2000/2001",
+            season_week=1,
+            calendar_year=2000,
+            year_week=1,
+            template_id="template",
+            event_name="Q Winner LL Repair Open",
+            category="TEST",
+            tour_level="WORLD_TOUR",
+            host_country="CZE",
+            region="Europe",
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=2,
+        )
+        package = build_run_owned_match_package(
+            draw=fill.successor_draw,
+            event=event,
+            week=RankingWeek(season_index=0, week=1),
+        )
+        topology = project_canonical_draw_to_match_topology(
+            draw=fill.successor_draw,
+            package=package,
+        )
+
+        main_player_ids = {
+            player_id
+            for match in package.main_draw_matches
+            for player_id in (match.top_player_id, match.bottom_player_id)
+            if player_id is not None
+        }
+        assert q_loser in main_player_ids
+
+        # The withdrawn Q winner's linked Main Q placeholder was consumed by the
+        # chronological LL vacancy/fill. It must no longer create a Q->Main
+        # promotion edge for that physical slot.
+        assert all(
+            promotion.target_slot_id
+            != f"event:main:S{original_q_slot.slot_index}"
+            for promotion in topology.qualifier_promotions
+        )
+
+        executable_ids = {plan.group_id for plan in topology.plans}
+        assert topology.terminal_group_id in executable_ids
+        for plan in topology.plans:
+            for participant_source in plan.participant_sources or ():
+                if participant_source.startswith("winner:"):
+                    assert (
+                        participant_source.removeprefix("winner:")
+                        in executable_ids
+                    )
+
+        # The other Q section remains linked to Main exactly once.
+        assert len(topology.qualifier_promotions) == 1
+        remaining_promotion = topology.qualifier_promotions[0]
+        assert remaining_promotion.target_slot_id != (
+            f"event:main:S{original_q_slot.slot_index}"
+        )
+
 
 def _prepare_orchestrated_q_winner_replacement(
     session,

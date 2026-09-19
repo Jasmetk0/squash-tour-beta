@@ -1487,8 +1487,11 @@ def test_seed_cascade_main_preserves_seed_numbers_and_physical_history(database)
         )
 
         after = draw_player_slots(revision.successor_draw.main)
-        assert revision.schema_version == "tournament_draw_revision.v3"
+        assert revision.schema_version == "tournament_draw_revision.v5"
         assert revision.repair_kind == "seed_cascade_phase"
+        assert tuple(
+            authority.status for authority in revision.replacement_cutoff_authorities
+        ) == ("replacement_open",)
         assert revision.main_repair_action == "seed_cascade"
         assert revision.repair_draw_seed is None
         assert revision.successor_draw_input.draw_seed == 12345
@@ -1876,8 +1879,11 @@ def test_draw_freeze_seeded_withdrawal_fills_exact_slot_without_cascade(database
         )
 
         assert retry == revision
-        assert revision.schema_version == "tournament_draw_revision.v4"
+        assert revision.schema_version == "tournament_draw_revision.v5"
         assert revision.repair_kind == "draw_frozen_phase"
+        assert tuple(
+            authority.status for authority in revision.replacement_cutoff_authorities
+        ) == ("replacement_open",)
         assert revision.main_repair_action == "frozen_slot_fill"
         assert revision.repair_draw_seed is None
         assert revision.successor_draw_input.draw_seed == 12345

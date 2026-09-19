@@ -43,8 +43,13 @@ from beta_engine.application.season_point_awards_service import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPointAwardAuthority,
+)
+from beta_engine.domain.tournaments.prize_money_award_authority import (
+    TournamentPrizeMoneyAwardAuthority,
+    build_tournament_prize_money_award_authority,
 )
 from beta_engine.domain.tournaments.walkover_authority import (
     TournamentWalkoverAuthority,
@@ -443,12 +448,14 @@ def build_run_owned_tournament_authorities(
     run_id: str,
     branch_id: str,
     week: RankingWeek,
+    calendar_event: CalendarEvent,
     award_seed: int,
     frozen_point_authority: FrozenPointAwardAuthority | None = None,
 ) -> tuple[
     SeasonEventMatchPackage,
     TournamentResultAuthority,
     TournamentPointAwardAuthority,
+    TournamentPrizeMoneyAwardAuthority,
 ]:
     """Close a canonical tournament into Run-owned authorities only."""
 
@@ -472,7 +479,16 @@ def build_run_owned_tournament_authorities(
         point_authority=frozen_point_authority,
         seed=award_seed,
     )
-    return projected, canonical_result, canonical_awards
+    canonical_prize_awards = build_tournament_prize_money_award_authority(
+        result=canonical_result,
+        event=calendar_event,
+    )
+    return (
+        projected,
+        canonical_result,
+        canonical_awards,
+        canonical_prize_awards,
+    )
 
 
 def build_authoritative_tournament_ranking_packages(

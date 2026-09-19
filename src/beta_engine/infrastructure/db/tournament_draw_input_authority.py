@@ -21,6 +21,9 @@ from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntry
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+    TournamentWildCardAuthorityStore,
+)
 
 
 class TournamentDrawInputAuthorityConflict(ValueError):
@@ -64,6 +67,7 @@ class TournamentDrawInputAuthorityStore:
         ranking_authority,
         field,
         field_sequence: int,
+        wild_card_authority=None,
     ) -> TournamentDrawInputAuthority:
         """Validate one frozen row against already-resolved target dependencies."""
 
@@ -110,6 +114,7 @@ class TournamentDrawInputAuthorityStore:
             main_seed_count=committed.main_seed_count,
             qualification_seed_count=committed.qualification_seed_count,
             schema_version=committed.schema_version,
+            wild_card_authority=wild_card_authority,
         )
         if rebuilt != committed:
             raise ValueError(
@@ -122,6 +127,7 @@ class TournamentDrawInputAuthorityStore:
             draw_seed=committed.draw_seed,
             main_seed_count=committed.main_seed_count,
             qualification_seed_count=committed.qualification_seed_count,
+            wild_card_authority_fingerprint=committed.wild_card_authority_fingerprint,
         )
         if row.request_fingerprint != _request_fingerprint(expected_request):
             raise ValueError(
@@ -150,11 +156,21 @@ class TournamentDrawInputAuthorityStore:
             raise ValueError(
                 "Tournament Draw Input authority references missing Entry Field history"
             )
+        wild_card_authority = (
+            TournamentWildCardAuthorityStore(self.session).get(
+                run_id=row.run_id,
+                branch_id=row.branch_id,
+                event_id=row.event_id,
+            )
+            if history[-1].capacity.wild_card_slots
+            else None
+        )
         return self.validate_row(
             row,
             ranking_authority=ranking_authority,
             field=history[-1],
             field_sequence=len(history),
+            wild_card_authority=wild_card_authority,
         )
 
     @staticmethod
@@ -166,6 +182,7 @@ class TournamentDrawInputAuthorityStore:
         draw_seed: int,
         main_seed_count: int,
         qualification_seed_count: int,
+        wild_card_authority_fingerprint: str | None = None,
     ) -> dict:
         return {
             "ranking_authority_fingerprint": ranking_authority_fingerprint,
@@ -174,6 +191,7 @@ class TournamentDrawInputAuthorityStore:
             "draw_seed": draw_seed,
             "main_seed_count": main_seed_count,
             "qualification_seed_count": qualification_seed_count,
+            "wild_card_authority_fingerprint": wild_card_authority_fingerprint,
         }
 
     def get(
@@ -221,8 +239,18 @@ class TournamentDrawInputAuthorityStore:
             )
         field = history[-1]
         field_sequence = len(history)
+        wild_card_authority = (
+            TournamentWildCardAuthorityStore(self.session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if field.capacity.wild_card_slots
+            else None
+        )
 
-        # All new commitments use the Master-aligned v2 contract. Explicit seed
+        # New commitments use v3 when canonical WC authority is required,
+        # otherwise they retain the Master-aligned v2 contract.
         # counts are accepted only as a validation assertion; the canonical counts
         # are derived from bracket capacity and actual player count.
         proposed = TournamentDrawInputAuthorityBuilder.build(
@@ -233,7 +261,12 @@ class TournamentDrawInputAuthorityStore:
             draw_seed=draw_seed,
             main_seed_count=main_seed_count,
             qualification_seed_count=qualification_seed_count,
-            schema_version="tournament_draw_input_authority.v2",
+            schema_version=(
+                "tournament_draw_input_authority.v3"
+                if field.capacity.wild_card_slots
+                else "tournament_draw_input_authority.v2"
+            ),
+            wild_card_authority=wild_card_authority,
         )
         request = self._request(
             ranking_authority_fingerprint=ranking_authority.fingerprint,
@@ -242,6 +275,7 @@ class TournamentDrawInputAuthorityStore:
             draw_seed=draw_seed,
             main_seed_count=proposed.main_seed_count,
             qualification_seed_count=proposed.qualification_seed_count,
+            wild_card_authority_fingerprint=proposed.wild_card_authority_fingerprint,
         )
         request_fp = _request_fingerprint(request)
 

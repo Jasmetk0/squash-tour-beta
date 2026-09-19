@@ -15,6 +15,9 @@ from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )
+from beta_engine.domain.tournaments.draw_authority import (
+    TournamentDrawAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -37,6 +40,10 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 )
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+    TournamentWildCardAuthorityConflict,
+    TournamentWildCardAuthorityStore,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -342,6 +349,107 @@ def test_unresolved_wild_card_capacity_fails_closed_before_commit(database):
             TournamentDrawInputAuthorityModel,
             ("run", "branch", "event"),
         ) is None
+
+
+def test_resolved_wc_rwc_authority_commits_draw_input_v3_and_backfills_q(database):
+    with database.begin() as session:
+        field = stage_initial_field(session, wild_cards=1)
+        assert field.direct_main_player_ids == ("A", "C")
+        assert field.qualification_player_ids == ("B", "D")
+        assert field.below_qualification_cut_player_ids == ("E", "F", "G")
+
+        wc = TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="resolve-wc",
+            original_wild_card_player_ids=("A",),
+            reserve_wild_card_player_ids=("B", "E"),
+        )
+        assert wc.slots[0].released_because_direct_acceptance is True
+        assert wc.slots[0].source == "reserve_wc"
+        assert wc.slots[0].active_player_id == "B"
+        assert wc.slots[0].reserve_ordinal == 1
+        assert wc.adjusted_qualification_player_ids == ("D", "E")
+        assert wc.adjusted_below_qualification_cut_player_ids == ("F", "G")
+
+        committed = commit_draw_input(session)
+        assert committed.schema_version == "tournament_draw_input_authority.v3"
+        assert committed.wild_card_player_ids == ("B",)
+        assert committed.wild_card_authority_fingerprint == wc.fingerprint
+        assert committed.direct_main_player_ids == ("A", "C")
+        assert committed.qualification_player_ids == ("D", "E")
+        assert committed.main_seed_player_ids == ("A",)
+        assert committed.qualification_seed_player_ids == ("D",)
+
+        draw = TournamentDrawAuthorityBuilder.build(
+            draw_input=committed,
+            command_id="generate-draw",
+        )
+        wc_slots = [
+            slot
+            for slot in draw.main.slots
+            if slot.entry_status == "wild_card"
+        ]
+        assert len(wc_slots) == 1
+        assert wc_slots[0].player_id == "B"
+        assert wc_slots[0].seed_number is None
+
+        with pytest.raises(
+            TournamentWildCardAuthorityConflict,
+            match="locked after Draw Input",
+        ):
+            TournamentWildCardAuthorityStore(session).resolve(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="too-late-wc",
+                original_wild_card_player_ids=("E",),
+            )
+
+
+def test_wc_holder_in_qualification_moves_to_wc_and_q_backfills(database):
+    with database.begin() as session:
+        field = stage_initial_field(session, wild_cards=1)
+        wc = TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="resolve-wc",
+            original_wild_card_player_ids=("B",),
+            reserve_wild_card_player_ids=("F",),
+        )
+
+        assert wc.slots[0].source == "original_wc"
+        assert wc.slots[0].active_player_id == "B"
+        assert wc.adjusted_qualification_player_ids == ("D", "E")
+        assert wc.adjusted_below_qualification_cut_player_ids == ("F", "G")
+        assert (
+            TournamentWildCardAuthorityStore(session).get(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+            )
+            == wc
+        )
+
+
+def test_wc_resolution_skips_unavailable_and_direct_reserves_deterministically(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        wc = TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="resolve-wc",
+            original_wild_card_player_ids=("A",),
+            reserve_wild_card_player_ids=("C", "E", "F"),
+            unavailable_player_ids=("E",),
+        )
+
+        assert wc.slots[0].active_player_id == "F"
+        assert wc.slots[0].source == "reserve_wc"
+        assert wc.slots[0].reserve_ordinal == 3
 
 
 def test_corrupt_payload_and_read_only_scope_fail_closed(database):

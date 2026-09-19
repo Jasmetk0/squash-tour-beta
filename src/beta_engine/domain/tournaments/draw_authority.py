@@ -37,6 +37,10 @@ class TournamentDrawSlot(FrozenInput):
     placeholder_id: str | None = None
     seed_number: int | None = Field(default=None, ge=1)
     is_seed_protected: bool = False
+    entry_status: Literal["wild_card"] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
 
     @model_validator(mode="after")
     def validate_identity(self) -> "TournamentDrawSlot":
@@ -213,10 +217,6 @@ class TournamentDrawAuthorityBuilder:
         algorithm_version: TournamentDrawAlgorithmVersion = "idealized_seed_tiers.v2",
     ) -> TournamentDrawAuthority:
         capacity = draw_input.capacity
-        if capacity.wild_card_slots:
-            raise ValueError(
-                "Tournament Draw authority requires Wild Card resolution before generation"
-            )
         if capacity.main_draw_size < 2 or not _is_power_of_two(capacity.main_draw_size):
             raise ValueError(
                 "Canonical Run-owned Main Draw currently supports complete binary brackets"
@@ -258,7 +258,10 @@ class TournamentDrawAuthorityBuilder:
         if algorithm_version == "idealized_seed_tiers.v2":
             expected_main_seed_count = _master_seed_count(
                 bracket_size=capacity.main_draw_size,
-                actual_player_count=len(draw_input.direct_main_player_ids),
+                actual_player_count=(
+                    len(draw_input.direct_main_player_ids)
+                    + len(draw_input.wild_card_player_ids)
+                ),
             )
             if draw_input.main_seed_count != expected_main_seed_count:
                 raise ValueError(
@@ -276,6 +279,7 @@ class TournamentDrawAuthorityBuilder:
 
         expected_main_occupants = (
             len(draw_input.direct_main_player_ids)
+            + len(draw_input.wild_card_player_ids)
             + len(draw_input.qualifier_placeholder_ids)
             + capacity.bye_slots
         )
@@ -312,15 +316,25 @@ class TournamentDrawAuthorityBuilder:
                     algorithm_version=algorithm_version,
                 )
 
+        main_pool = (
+            *draw_input.direct_main_player_ids,
+            *draw_input.wild_card_player_ids,
+        )
+        main_seed_set = set(draw_input.main_seed_player_ids)
+        main_player_ids = (
+            *draw_input.main_seed_player_ids,
+            *(player_id for player_id in main_pool if player_id not in main_seed_set),
+        )
         main = cls._build_bracket(
             draw_input=draw_input,
             draw_type="main",
             bracket_size=capacity.main_draw_size,
-            player_ids=draw_input.direct_main_player_ids,
+            player_ids=main_player_ids,
             seed_player_ids=draw_input.main_seed_player_ids,
             placeholder_ids=draw_input.qualifier_placeholder_ids,
             explicit_byes=capacity.bye_slots,
             algorithm_version=algorithm_version,
+            wild_card_player_ids=set(draw_input.wild_card_player_ids),
         )
         return TournamentDrawAuthority(
             schema_version=(
@@ -471,7 +485,11 @@ class TournamentDrawAuthorityBuilder:
         section_ordinal: int = 0,
         section_count: int = 1,
         algorithm_version: TournamentDrawAlgorithmVersion,
+        wild_card_player_ids: set[str] | None = None,
     ) -> TournamentDrawBracket:
+        wild_card_player_ids = wild_card_player_ids or set()
+        if not wild_card_player_ids.issubset(set(player_ids)):
+            raise ValueError("WC provenance references player outside bracket field")
         if len(set(player_ids)) != len(player_ids):
             raise ValueError("Tournament draw contains duplicate player identities")
         if tuple(player_ids[: len(seed_player_ids)]) != seed_player_ids:
@@ -528,6 +546,9 @@ class TournamentDrawAuthorityBuilder:
                 player_id=player_id,
                 seed_number=seed_number,
                 is_seed_protected=True,
+                entry_status=(
+                    "wild_card" if player_id in wild_card_player_ids else None
+                ),
             )
 
         bye_positions = (
@@ -593,6 +614,9 @@ class TournamentDrawAuthorityBuilder:
                     ),
                     entrant_kind="player",
                     player_id=identity,
+                    entry_status=(
+                        "wild_card" if identity in wild_card_player_ids else None
+                    ),
                 )
             else:
                 slots[position] = TournamentDrawSlot(

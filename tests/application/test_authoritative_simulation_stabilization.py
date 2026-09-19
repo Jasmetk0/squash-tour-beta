@@ -110,6 +110,9 @@ def test_terminal_walkover_closes_canonical_tournament_with_stage_points(
         TournamentDrawSlot,
     )
     from beta_engine.infrastructure.db import tournament_walkover_authority as walkover_module
+    from beta_engine.infrastructure.db import (
+        tournament_replacement_cutoff_authority as cutoff_module,
+    )
     from beta_engine.infrastructure.db.models import TournamentDrawAuthorityModel
 
     legacy_package = next(
@@ -199,6 +202,11 @@ def test_terminal_walkover_closes_canonical_tournament_with_stage_points(
     )
     monkeypatch.setattr(
         walkover_module,
+        "TournamentDrawAuthorityStore",
+        CanonicalDrawStore,
+    )
+    monkeypatch.setattr(
+        cutoff_module,
         "TournamentDrawAuthorityStore",
         CanonicalDrawStore,
     )

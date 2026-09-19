@@ -2986,10 +2986,21 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
     )
     start = executor._load_slot_start(slot)
 
+    canonical_draw = SimpleNamespace(
+        fingerprint="d" * 64,
+        main=SimpleNamespace(
+            nodes=(
+                SimpleNamespace(node_id="sf-1"),
+                SimpleNamespace(node_id="sf-2"),
+                SimpleNamespace(node_id="final"),
+            )
+        ),
+        qualification_brackets=(),
+    )
     monkeypatch.setattr(
         TournamentDrawAuthorityStore,
         "get",
-        lambda self, **kwargs: SimpleNamespace(fingerprint="d" * 64),
+        lambda self, **kwargs: canonical_draw,
     )
     store = TournamentWalkoverAuthorityStore(session)
     walkover = store.commit(
@@ -3010,6 +3021,10 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
     assert walkover.authoritative_input.replacement_cutoff_authority.status == (
         "walkover_required"
     )
+    assert walkover.authoritative_input.replacement_cutoff_authority.schema_version == (
+        "tournament_player_replacement_cutoff.v2"
+    )
+    assert walkover.authoritative_input.replacement_cutoff_authority.draw_type == "main"
     assert walkover.authoritative_input.source_real_match_id == "sf-1"
     assert slot.status == "complete"
 
@@ -3105,10 +3120,21 @@ def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
         session, before, run_id="run", branch_id="branch"
     )
 
+    restore_draw = SimpleNamespace(
+        fingerprint="e" * 64,
+        main=SimpleNamespace(
+            nodes=(
+                SimpleNamespace(node_id="sf-1"),
+                SimpleNamespace(node_id="sf-2"),
+                SimpleNamespace(node_id="final"),
+            )
+        ),
+        qualification_brackets=(),
+    )
     monkeypatch.setattr(
         TournamentDrawAuthorityStore,
         "get",
-        lambda self, **kwargs: SimpleNamespace(fingerprint="e" * 64),
+        lambda self, **kwargs: restore_draw,
     )
     committed = TournamentWalkoverAuthorityStore(session).commit(
         run_id="run",

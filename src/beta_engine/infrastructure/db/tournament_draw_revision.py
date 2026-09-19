@@ -213,6 +213,10 @@ class TournamentDrawRevisionStore:
                             if authority.replacement_source == "qualification"
                             else None
                         ),
+                        main_vacated_seed_number=authority.vacated_main_seed_number,
+                        qualification_vacated_seed_number=(
+                            authority.vacated_qualification_seed_number
+                        ),
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
@@ -901,6 +905,10 @@ class TournamentDrawRevisionStore:
                     wc_repair.qualification_backfill_player_id
                     if wc_repair.replacement_source == "qualification"
                     else None
+                ),
+                main_vacated_seed_number=wc_repair.vacated_main_seed_number,
+                qualification_vacated_seed_number=(
+                    wc_repair.vacated_qualification_seed_number
                 ),
             )
         )

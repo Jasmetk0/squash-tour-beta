@@ -97,6 +97,110 @@ class TournamentResultAuthority(FrozenInput):
         return _hash(self.model_dump(mode="json"))
 
 
+def _resolve_canonical_bye_results(
+    *,
+    draw: TournamentDrawAuthority,
+    package: SeasonEventMatchPackage,
+) -> SeasonEventMatchPackage:
+    """Complete canonical BYE nodes whose live participant resolves from a feeder.
+
+    Static BYEs are usually frozen earlier by the simulation driver. A repaired Main
+    BYE can instead face a Qualification placeholder or another feeder whose winner is
+    known only after play. Such a BYE remains non-executable, then becomes historical
+    result evidence once that feeder has completed.
+    """
+
+    projected = package.model_copy(deep=True)
+    records = {
+        match.match_id: match
+        for match in projected.qualification_matches + projected.main_draw_matches
+    }
+
+    qualification_terminal_ids: dict[str, str] = {}
+    for index, bracket in enumerate(draw.qualification_brackets, start=1):
+        section_id = bracket.section_id or f"Q{index}"
+        terminal = max(
+            bracket.nodes,
+            key=lambda node: (node.round_number, node.round_sequence),
+        )
+        qualification_terminal_ids[section_id] = terminal.node_id
+
+    def source_player(bracket, source: str) -> tuple[str | None, bool]:
+        if source.startswith("winner:"):
+            feeder = records.get(source.removeprefix("winner:"))
+            return (
+                feeder.winner_player_id
+                if feeder is not None and feeder.status == "completed"
+                else None,
+                False,
+            )
+        if not source.startswith("slot:"):
+            raise ValueError("canonical Draw source identity is unsupported")
+        slot_index = int(source.removeprefix("slot:"))
+        slot = next(
+            (item for item in bracket.slots if item.slot_index == slot_index),
+            None,
+        )
+        if slot is None:
+            raise ValueError("canonical Draw source references a missing slot")
+        if slot.entrant_kind == "bye":
+            return None, True
+        if slot.entrant_kind == "player":
+            return slot.player_id, False
+        if slot.entrant_kind == "qualifier_placeholder":
+            terminal_id = qualification_terminal_ids.get(slot.placeholder_id)
+            feeder = records.get(terminal_id) if terminal_id is not None else None
+            return (
+                feeder.winner_player_id
+                if feeder is not None and feeder.status == "completed"
+                else None,
+                False,
+            )
+        if slot.entrant_kind == "lucky_loser_placeholder":
+            raise ValueError("canonical Draw contains unresolved Lucky Loser placeholder")
+        raise ValueError("canonical Draw slot entrant type is unsupported")
+
+    for bracket in (*draw.qualification_brackets, draw.main):
+        for node in sorted(
+            bracket.nodes,
+            key=lambda item: (item.round_number, item.round_sequence),
+        ):
+            match = records[node.node_id]
+            top_player, top_bye = source_player(bracket, node.source_top)
+            bottom_player, bottom_bye = source_player(bracket, node.source_bottom)
+            if top_bye == bottom_bye:
+                continue
+            winner = bottom_player if top_bye else top_player
+            if winner is None:
+                continue
+            if match.status == "completed":
+                if match.winner_player_id != winner or match.scoreline != "BYE":
+                    raise ValueError(
+                        "completed canonical BYE conflicts with resolved feeder winner"
+                    )
+                continue
+            if top_bye:
+                match.bottom_player_id = winner
+            else:
+                match.top_player_id = winner
+            match.winner_player_id = winner
+            match.loser_player_id = None
+            match.scoreline = "BYE"
+            match.status = "completed"
+            match.result_notes = "automatic BYE advance from resolved canonical feeder"
+            match.result_fingerprint = _hash(
+                {
+                    "action": "canonical_dynamic_bye_result.v1",
+                    "draw_authority_fingerprint": draw.fingerprint,
+                    "event_id": draw.event_id,
+                    "match_id": match.match_id,
+                    "winner_player_id": winner,
+                }
+            )
+
+    return projected
+
+
 def build_tournament_result_authority(
     *,
     run_id: str,
@@ -113,6 +217,10 @@ def build_tournament_result_authority(
     if package.validation_errors:
         raise ValueError("completed MatchPackage has validation errors")
 
+    package = _resolve_canonical_bye_results(
+        draw=draw,
+        package=package,
+    )
     all_matches = tuple(package.qualification_matches + package.main_draw_matches)
     if not all_matches or any(
         match.status != "completed"

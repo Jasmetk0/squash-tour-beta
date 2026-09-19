@@ -131,44 +131,6 @@ def project_canonical_draw_to_match_topology(
                 for source in raw_sources
             )
 
-            bye_sides = tuple(index for index, value in enumerate(resolved) if value == "bye")
-            if bye_sides:
-                if len(bye_sides) != 1:
-                    raise ValueError("canonical Draw contains an ambiguous BYE match")
-                live_source = resolved[1 - bye_sides[0]]
-                if live_source == "bye":
-                    raise ValueError("canonical Draw contains a double BYE")
-                auto_sources[node.node_id] = live_source
-                auto_match_sources[record.match_id] = live_source
-                bye_match_ids.append(record.match_id)
-                if live_source.startswith("player:"):
-                    winner = live_source.removeprefix("player:")
-                    bye_winners.append((record.match_id, winner))
-                    known = [p for p in (record.top_player_id, record.bottom_player_id) if p]
-                    if known and known != [winner]:
-                        raise ValueError(
-                            "MatchPackage BYE participant conflicts with canonical Draw"
-                        )
-                else:
-                    raise ValueError(
-                        "canonical BYE currently requires a directly known player winner"
-                    )
-                continue
-
-            participant_sources = tuple(_collapse_auto_source(value, auto_sources) for value in resolved)
-            if any(value == "bye" for value in participant_sources):
-                raise ValueError("canonical BYE source was not collapsed")
-
-            _validate_known_record_participants(record, participant_sources)
-            plans.append(
-                SimulationMatchEventPlan(
-                    group_id=record.match_id,
-                    event_id=package.event_id,
-                    match_id=record.match_id,
-                    participant_sources=participant_sources,
-                )
-            )
-
             for side_index, canonical_source in enumerate(raw_sources):
                 if (
                     bracket.draw_type == "main"
@@ -194,6 +156,44 @@ def project_canonical_draw_to_match_topology(
                                 target_slot_id=f"{package.event_id}:main:S{slot.slot_index}",
                             )
                         )
+
+            bye_sides = tuple(index for index, value in enumerate(resolved) if value == "bye")
+            if bye_sides:
+                if len(bye_sides) != 1:
+                    raise ValueError("canonical Draw contains an ambiguous BYE match")
+                live_source = resolved[1 - bye_sides[0]]
+                if live_source == "bye":
+                    raise ValueError("canonical Draw contains a double BYE")
+                auto_sources[node.node_id] = live_source
+                auto_match_sources[record.match_id] = live_source
+                bye_match_ids.append(record.match_id)
+                if live_source.startswith("player:"):
+                    winner = live_source.removeprefix("player:")
+                    bye_winners.append((record.match_id, winner))
+                    known = [p for p in (record.top_player_id, record.bottom_player_id) if p]
+                    if known and known != [winner]:
+                        raise ValueError(
+                            "MatchPackage BYE participant conflicts with canonical Draw"
+                        )
+                elif not live_source.startswith("winner:"):
+                    raise ValueError(
+                        "canonical BYE live side must resolve from player or feeder"
+                    )
+                continue
+
+            participant_sources = tuple(_collapse_auto_source(value, auto_sources) for value in resolved)
+            if any(value == "bye" for value in participant_sources):
+                raise ValueError("canonical BYE source was not collapsed")
+
+            _validate_known_record_participants(record, participant_sources)
+            plans.append(
+                SimulationMatchEventPlan(
+                    group_id=record.match_id,
+                    event_id=package.event_id,
+                    match_id=record.match_id,
+                    participant_sources=participant_sources,
+                )
+            )
 
     executable_ids = {plan.match_id for plan in plans}
     expected_ids = {record.match_id for record in all_records} - set(bye_match_ids)

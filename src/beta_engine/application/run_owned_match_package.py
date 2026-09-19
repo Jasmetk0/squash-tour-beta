@@ -214,11 +214,9 @@ def _initial_status(
     if "bye" in kinds:
         if kinds.count("bye") != 1:
             raise ValueError("canonical Draw contains a double BYE")
-        live_player = bottom_player if top_kind == "bye" else top_player
-        if live_player is None:
-            raise ValueError(
-                "canonical BYE currently requires a directly known player opponent"
-            )
+        # The live side may be a feeder/qualifier placeholder that resolves later.
+        # The BYE node is still canonical and non-competitive; execution topology
+        # will collapse it onto that feeder rather than simulate the BYE itself.
         return "bye_auto_advance_pending"
     if top_player is not None and bottom_player is not None:
         return "pending"

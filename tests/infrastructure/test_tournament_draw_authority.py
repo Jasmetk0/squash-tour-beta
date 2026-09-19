@@ -1796,3 +1796,55 @@ def test_seed_cascade_repairs_main_and_q_together_when_both_are_cascade(database
             event_id="event",
         ) == (revision,)
 
+
+def test_saved_revision_restores_active_seed_cascade(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        draw_store = TournamentDrawAuthorityStore(session)
+        saved_before = capture(session)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="saved-seed-cascade",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=2,
+        )
+        saved_after = capture(session)
+        component_after = saved_after["content"]["simulation_slot_match_state"]
+        assert len(component_after["draw_revisions"]) == 1
+        assert component_after["draw_revisions"][0]["revision_fingerprint"] == (
+            revision.fingerprint
+        )
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert draw_store.get(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == initial
+
+        recaptured_before = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured_before,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert draw_store.get(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == revision.successor_draw
+        recaptured_after = capture(session)
+        assert (
+            recaptured_after["content"]["simulation_slot_match_state"]["fingerprint"]
+            == component_after["fingerprint"]
+        )
+

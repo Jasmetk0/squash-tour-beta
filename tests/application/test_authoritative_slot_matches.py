@@ -1016,6 +1016,7 @@ def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_pat
         run_id="run",
         branch_id="branch",
         request_id="adopt-proposal",
+        expected_week=week,
         expected_schedule_fingerprint=proposed["schedule_fingerprint"],
         expected_position_fingerprint=proposed["position_fingerprint"],
     )
@@ -1026,6 +1027,7 @@ def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_pat
         run_id="run",
         branch_id="branch",
         request_id="adopt-proposal",
+        expected_week=week,
         expected_schedule_fingerprint=proposed["schedule_fingerprint"],
         expected_position_fingerprint=proposed["position_fingerprint"],
     )

@@ -176,9 +176,10 @@ class TournamentDrawRevisionStore:
         ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
-        previous_draw_input = TournamentDrawInputAuthorityStore(self.session).get(
+        initial_draw_input = TournamentDrawInputAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
+        previous_draw_input = initial_draw_input
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
             run_id=run_id, branch_id=branch_id, event_id=event_id
@@ -231,7 +232,7 @@ class TournamentDrawRevisionStore:
                     branch_id=branch_id,
                     event_id=event_id,
                     qualification_player_ids=(
-                        previous_draw_input.qualification_player_ids
+                        initial_draw_input.qualification_player_ids
                     ),
                 )
                 ordinal = 1 + sum(
@@ -250,6 +251,9 @@ class TournamentDrawRevisionStore:
                             authority.withdrawn_player_cutoff_authority
                         ),
                         qualification_start_authority=q_start,
+                        qualification_origin_player_ids=(
+                            initial_draw_input.qualification_player_ids
+                        ),
                     )
                 )
                 if rebuilt_authority != authority:
@@ -998,7 +1002,7 @@ class TournamentDrawRevisionStore:
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
-            qualification_player_ids=previous_input.qualification_player_ids,
+            qualification_player_ids=original_input.qualification_player_ids,
         )
         ordinal = 1 + sum(
             1
@@ -1014,6 +1018,9 @@ class TournamentDrawRevisionStore:
                 lucky_loser_ordinal=ordinal,
                 withdrawn_player_cutoff_authority=withdrawn_cutoff,
                 qualification_start_authority=q_start,
+                qualification_origin_player_ids=(
+                    original_input.qualification_player_ids
+                ),
             )
             successor_input = (
                 TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(

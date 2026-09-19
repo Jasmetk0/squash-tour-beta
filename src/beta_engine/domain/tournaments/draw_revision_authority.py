@@ -23,6 +23,9 @@ from beta_engine.domain.tournaments.entry_field import TournamentEntryField
 from beta_engine.domain.tournaments.draw_process_authority import (
     TournamentDrawProcessAuthority,
 )
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthority,
+)
 
 
 TournamentDrawRevisionRepairKind = Literal[
@@ -43,6 +46,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v2",
         "tournament_draw_revision.v3",
         "tournament_draw_revision.v4",
+        "tournament_draw_revision.v5",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -63,6 +67,9 @@ class TournamentDrawRevision(FrozenInput):
         default=None, exclude_if=lambda value: value is None
     )
     withdrawn_player_ids: tuple[str, ...]
+    replacement_cutoff_authorities: tuple[
+        TournamentPlayerReplacementCutoffAuthority, ...
+    ] = Field(default=(), exclude_if=lambda value: not value)
     predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     process_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     successor_field: TournamentEntryField
@@ -107,7 +114,42 @@ class TournamentDrawRevision(FrozenInput):
                 "Qualification Draw repair requires Qualification process-window evidence"
             )
 
+        cutoff_ids = tuple(
+            authority.player_id for authority in self.replacement_cutoff_authorities
+        )
+        if self.schema_version == "tournament_draw_revision.v5":
+            if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
+                raise ValueError(
+                    "Cutoff-aware Draw revision must freeze one authority per withdrawal"
+                )
+            if any(
+                (
+                    authority.run_id,
+                    authority.branch_id,
+                    authority.event_id,
+                )
+                != scope
+                for authority in self.replacement_cutoff_authorities
+            ):
+                raise ValueError("Replacement cutoff authority scope mismatch")
+            if any(
+                authority.status != "replacement_open"
+                for authority in self.replacement_cutoff_authorities
+            ):
+                raise ValueError(
+                    "Successful Draw repair requires every replacement cutoff to remain open"
+                )
+        elif self.replacement_cutoff_authorities:
+            raise ValueError(
+                "Historical Draw revision schema cannot carry replacement cutoff authority"
+            )
+
         if self.repair_kind == "full_redraw":
+            if self.schema_version not in {
+                "tournament_draw_revision.v2",
+                "tournament_draw_revision.v5",
+            }:
+                raise ValueError("Full redraw uses revision schema v2 or cutoff-aware v5")
             if self.repair_draw_seed is None:
                 raise ValueError("Full redraw requires a repair draw seed")
             if (
@@ -115,12 +157,15 @@ class TournamentDrawRevision(FrozenInput):
                 or self.qualification_repair_action is not None
             ):
                 raise ValueError(
-                    "Historical full redraw revision cannot carry cascade actions"
+                    "Full redraw revision cannot carry component cascade actions"
                 )
         elif self.repair_kind == "seed_cascade_phase":
-            if self.schema_version != "tournament_draw_revision.v3":
+            if self.schema_version not in {
+                "tournament_draw_revision.v3",
+                "tournament_draw_revision.v5",
+            }:
                 raise ValueError(
-                    "Seed-cascade phase repair requires revision schema v3"
+                    "Seed-cascade phase repair requires revision schema v3 or v5"
                 )
             if "main" in self.affected_draw_types:
                 if self.main_repair_action is None:
@@ -155,9 +200,12 @@ class TournamentDrawRevision(FrozenInput):
                     "Pure seed-cascade phase repair cannot introduce a new draw seed"
                 )
         else:
-            if self.schema_version != "tournament_draw_revision.v4":
+            if self.schema_version not in {
+                "tournament_draw_revision.v4",
+                "tournament_draw_revision.v5",
+            }:
                 raise ValueError(
-                    "Draw-Freeze phase repair requires revision schema v4"
+                    "Draw-Freeze phase repair requires revision schema v4 or v5"
                 )
             if "main" in self.affected_draw_types:
                 if self.main_repair_action is None:
@@ -223,6 +271,9 @@ class TournamentDrawRevisionBuilder:
         withdrawn_player_ids: tuple[str, ...],
         sequence: int,
         command_id: str,
+        replacement_cutoff_authorities: tuple[
+            TournamentPlayerReplacementCutoffAuthority, ...
+        ] = (),
     ) -> TournamentDrawRevision:
         if not affected_draw_types:
             raise ValueError("Full redraw requires at least one affected draw component")
@@ -287,6 +338,11 @@ class TournamentDrawRevisionBuilder:
                 raise ValueError("Main redraw changed Q placeholder identities")
 
         return TournamentDrawRevision(
+            schema_version=(
+                "tournament_draw_revision.v5"
+                if replacement_cutoff_authorities
+                else "tournament_draw_revision.v2"
+            ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
             event_id=predecessor.event_id,
@@ -298,6 +354,7 @@ class TournamentDrawRevisionBuilder:
             qualification_process_window_ordinal=qualification_process_window_ordinal,
             repair_draw_seed=repair_draw_seed,
             withdrawn_player_ids=withdrawn_player_ids,
+            replacement_cutoff_authorities=replacement_cutoff_authorities,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,
@@ -319,6 +376,9 @@ class TournamentDrawRevisionBuilder:
         sequence: int,
         command_id: str,
         repair_draw_seed: int | None = None,
+        replacement_cutoff_authorities: tuple[
+            TournamentPlayerReplacementCutoffAuthority, ...
+        ] = (),
     ) -> TournamentDrawRevision:
         if not affected_draw_types:
             raise ValueError(
@@ -454,7 +514,11 @@ class TournamentDrawRevisionBuilder:
             )
 
         return TournamentDrawRevision(
-            schema_version="tournament_draw_revision.v3",
+            schema_version=(
+                "tournament_draw_revision.v5"
+                if replacement_cutoff_authorities
+                else "tournament_draw_revision.v3"
+            ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
             event_id=predecessor.event_id,
@@ -470,6 +534,7 @@ class TournamentDrawRevisionBuilder:
             main_repair_action=main_action,
             qualification_repair_action=qualification_action,
             withdrawn_player_ids=withdrawn_player_ids,
+            replacement_cutoff_authorities=replacement_cutoff_authorities,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,
@@ -491,6 +556,9 @@ class TournamentDrawRevisionBuilder:
         sequence: int,
         command_id: str,
         repair_draw_seed: int | None = None,
+        replacement_cutoff_authorities: tuple[
+            TournamentPlayerReplacementCutoffAuthority, ...
+        ] = (),
     ) -> TournamentDrawRevision:
         if not affected_draw_types:
             raise ValueError(
@@ -640,7 +708,11 @@ class TournamentDrawRevisionBuilder:
             )
 
         return TournamentDrawRevision(
-            schema_version="tournament_draw_revision.v4",
+            schema_version=(
+                "tournament_draw_revision.v5"
+                if replacement_cutoff_authorities
+                else "tournament_draw_revision.v4"
+            ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
             event_id=predecessor.event_id,
@@ -656,6 +728,7 @@ class TournamentDrawRevisionBuilder:
             main_repair_action=main_action,
             qualification_repair_action=qualification_action,
             withdrawn_player_ids=withdrawn_player_ids,
+            replacement_cutoff_authorities=replacement_cutoff_authorities,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,

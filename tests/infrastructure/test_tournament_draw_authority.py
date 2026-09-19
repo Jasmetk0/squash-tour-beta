@@ -14,6 +14,9 @@ from beta_engine.domain.rankings.official import (
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.draw_revision_authority import (
+    TournamentDrawRevisionBuilder,
+)
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
 )
@@ -1487,8 +1490,11 @@ def test_seed_cascade_main_preserves_seed_numbers_and_physical_history(database)
         )
 
         after = draw_player_slots(revision.successor_draw.main)
-        assert revision.schema_version == "tournament_draw_revision.v3"
+        assert revision.schema_version == "tournament_draw_revision.v5"
         assert revision.repair_kind == "seed_cascade_phase"
+        assert tuple(
+            authority.status for authority in revision.replacement_cutoff_authorities
+        ) == ("replacement_open",)
         assert revision.main_repair_action == "seed_cascade"
         assert revision.repair_draw_seed is None
         assert revision.successor_draw_input.draw_seed == 12345
@@ -1876,8 +1882,11 @@ def test_draw_freeze_seeded_withdrawal_fills_exact_slot_without_cascade(database
         )
 
         assert retry == revision
-        assert revision.schema_version == "tournament_draw_revision.v4"
+        assert revision.schema_version == "tournament_draw_revision.v5"
         assert revision.repair_kind == "draw_frozen_phase"
+        assert tuple(
+            authority.status for authority in revision.replacement_cutoff_authorities
+        ) == ("replacement_open",)
         assert revision.main_repair_action == "frozen_slot_fill"
         assert revision.repair_draw_seed is None
         assert revision.successor_draw_input.draw_seed == 12345
@@ -2129,3 +2138,85 @@ def test_saved_revision_restores_active_draw_freeze_revision(database):
             recaptured_after["content"]["simulation_slot_match_state"]["fingerprint"]
             == component_after["fingerprint"]
         )
+
+
+def test_cutoff_aware_seed_revision_preserves_historical_v3_builder_shape(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        store = TournamentDrawRevisionStore(session)
+        revision = store.seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="cutoff-aware-seed-history",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=2,
+        )
+        process = TournamentDrawProcessAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert process is not None
+
+        historical = TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+            predecessor=initial,
+            successor_field=revision.successor_field,
+            successor_draw_input=revision.successor_draw_input,
+            process_authority=process,
+            affected_draw_types=revision.affected_draw_types,
+            main_process_window_ordinal=revision.main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                revision.qualification_process_window_ordinal
+            ),
+            withdrawn_player_ids=revision.withdrawn_player_ids,
+            sequence=revision.sequence,
+            command_id=revision.command_id,
+            repair_draw_seed=revision.repair_draw_seed,
+        )
+
+        assert revision.schema_version == "tournament_draw_revision.v5"
+        assert historical.schema_version == "tournament_draw_revision.v3"
+        assert historical.replacement_cutoff_authorities == ()
+        assert historical.successor_draw == revision.successor_draw
+
+
+def test_cutoff_aware_frozen_revision_preserves_historical_v4_builder_shape(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        store = TournamentDrawRevisionStore(session)
+        revision = store.draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="cutoff-aware-frozen-history",
+            withdrawn_player_ids=("P20",),
+            main_process_window_ordinal=3,
+        )
+        process = TournamentDrawProcessAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert process is not None
+
+        historical = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+            predecessor=initial,
+            successor_field=revision.successor_field,
+            successor_draw_input=revision.successor_draw_input,
+            process_authority=process,
+            affected_draw_types=revision.affected_draw_types,
+            main_process_window_ordinal=revision.main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                revision.qualification_process_window_ordinal
+            ),
+            withdrawn_player_ids=revision.withdrawn_player_ids,
+            sequence=revision.sequence,
+            command_id=revision.command_id,
+            repair_draw_seed=revision.repair_draw_seed,
+        )
+
+        assert revision.schema_version == "tournament_draw_revision.v5"
+        assert historical.schema_version == "tournament_draw_revision.v4"
+        assert historical.replacement_cutoff_authorities == ()
+        assert historical.successor_draw == revision.successor_draw

@@ -30,6 +30,14 @@ from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayedMatchCutoffEvidence,
     TournamentPlayerReplacementCutoffAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentDrawStartEvidence,
+    TournamentReplacementSourceAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.lucky_loser_authority import (
+    TournamentLuckyLoserOrderAuthorityBuilder,
+    TournamentLuckyLoserQualificationMatchEvidence,
+)
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -76,6 +84,9 @@ from beta_engine.infrastructure.db.tournament_wild_card_authority import (
 from beta_engine.infrastructure.db.tournament_lucky_loser_authority import (
     TournamentLuckyLoserOrderAuthorityStore,
     TournamentLuckyLoserOrderUnavailable,
+)
+from beta_engine.infrastructure.db.tournament_replacement_source_authority import (
+    TournamentReplacementSourceAuthorityStore,
 )
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
@@ -3844,4 +3855,257 @@ def test_lucky_loser_fill_fails_closed_when_candidate_pool_is_exhausted(
                 command_id="ll-exhausted",
                 main_process_window_ordinal=3,
                 unavailable_player_ids=order.ordered_player_ids,
+            )
+
+
+def _source_chain_fixture(session):
+    draw_input = install_draw_input(session)
+    draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="source-chain-draw",
+    )
+    cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id="C",
+        played_matches=(),
+    )
+    ranking = TournamentRankingSnapshotAuthorityStore(session).get(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+    )
+    assert ranking is not None
+    q = draw.qualification_brackets[0]
+    terminal = max(
+        q.nodes,
+        key=lambda node: (node.round_number, node.round_sequence),
+    )
+    ll_order = TournamentLuckyLoserOrderAuthorityBuilder.build(
+        draw=draw,
+        tournament_ranking_authority=ranking,
+        completed_qualification_matches=(
+            TournamentLuckyLoserQualificationMatchEvidence(
+                match_id=terminal.node_id,
+                section_id=q.section_id or "Q1",
+                round_number=terminal.round_number,
+                winner_player_id="B",
+                loser_player_id="E",
+                result_fingerprint="1" * 64,
+            ),
+        ),
+    )
+    q_start = TournamentDrawStartEvidence(
+        match_id=terminal.node_id,
+        result_fingerprint="1" * 64,
+    )
+    return draw_input, draw, cutoff, ll_order, q_start
+
+
+@pytest.mark.pr_critical
+def test_replacement_source_chain_pre_q_uses_q_list_then_post_q_uses_ll_and_reserves(
+    database,
+):
+    with database.begin() as session:
+        draw_input, draw, cutoff, ll_order, q_start = _source_chain_fixture(session)
+
+        pre_q = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=None,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=None,
+            external_reserve_player_ids=("F", "G"),
+        )
+        assert pre_q.source == "qualification_promotion"
+        assert pre_q.selected_player_id == "B"
+        assert pre_q.source_ordinal == 1
+
+        q_running = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=None,
+            external_reserve_player_ids=("F", "G"),
+        )
+        assert q_running.source == "lucky_loser_pending"
+        assert q_running.selected_player_id is None
+
+        post_q = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=ll_order,
+            external_reserve_player_ids=("F", "G"),
+        )
+        assert post_q.source == "lucky_loser"
+        assert post_q.selected_player_id == "E"
+        assert post_q.source_ordinal == 1
+        assert post_q.lucky_loser_order_authority == ll_order
+
+        after_ll_exhaustion = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=ll_order,
+            external_reserve_player_ids=("B", "F", "G"),
+            unavailable_player_ids=("E",),
+        )
+        assert after_ll_exhaustion.source == "external_reserve"
+        assert after_ll_exhaustion.selected_player_id == "F"
+        assert after_ll_exhaustion.source_ordinal == 2
+
+        exhausted_before_main = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=ll_order,
+            external_reserve_player_ids=("F", "G"),
+            unavailable_player_ids=("E", "F", "G"),
+        )
+        assert exhausted_before_main.source == "bye"
+        assert exhausted_before_main.selected_player_id is None
+
+
+@pytest.mark.pr_critical
+def test_replacement_source_chain_wc_rwc_priority_precedes_ordinary_phase_source(
+    database,
+):
+    with database.begin() as session:
+        draw, draw_input, wc = install_frozen_external_rwc_main(session)
+        cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            player_id="E",
+            played_matches=(),
+        )
+        source = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="E",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=None,
+            main_start_evidence=None,
+            base_wild_card_authority=wc,
+            lucky_loser_order_authority=None,
+            external_reserve_player_ids=(),
+        )
+        assert source.source == "reserve_wild_card"
+        assert source.selected_player_id == "F"
+        assert source.source_ordinal == 2
+        assert source.base_wild_card_authority_fingerprint == wc.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_replacement_source_chain_closed_cutoff_wins_over_all_replacement_sources(
+    database,
+):
+    with database.begin() as session:
+        draw_input, draw, _, ll_order, q_start = _source_chain_fixture(session)
+        cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            player_id="C",
+            played_matches=(
+                TournamentPlayedMatchCutoffEvidence(
+                    match_id="main-start",
+                    week_ordinal=5,
+                    slot_id="main-slot",
+                    slot_ordinal=1,
+                    group_id="main-group",
+                    result_fingerprint="2" * 64,
+                    opponent_player_id="A",
+                    outcome="win",
+                ),
+            ),
+        )
+        source = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=TournamentDrawStartEvidence(
+                match_id="main-start",
+                result_fingerprint="2" * 64,
+            ),
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=ll_order,
+            external_reserve_player_ids=("F", "G"),
+        )
+        assert source.source == "walkover"
+        assert source.selected_player_id is None
+
+
+@pytest.mark.pr_critical
+def test_replacement_source_store_resolves_pre_q_promotion_from_persisted_state(
+    database,
+):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-store-draw",
+        )
+        source = TournamentReplacementSourceAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            withdrawn_player_id="C",
+        )
+        assert source.source == "qualification_promotion"
+        assert source.selected_player_id == "B"
+        assert source.external_reserve_player_ids == ("F", "G")
+
+
+@pytest.mark.pr_critical
+def test_replacement_source_chain_fails_closed_after_main_start_if_no_source_remains(
+    database,
+):
+    with database.begin() as session:
+        draw_input, draw, cutoff, ll_order, q_start = _source_chain_fixture(session)
+        with pytest.raises(
+            ValueError,
+            match="policy is not yet explicit",
+        ):
+            TournamentReplacementSourceAuthorityBuilder.build(
+                predecessor=draw,
+                predecessor_draw_input=draw_input,
+                withdrawn_player_id="C",
+                replacement_cutoff_authority=cutoff,
+                qualification_start_evidence=q_start,
+                main_start_evidence=TournamentDrawStartEvidence(
+                    match_id="some-main-match",
+                    result_fingerprint="3" * 64,
+                ),
+                base_wild_card_authority=None,
+                lucky_loser_order_authority=ll_order,
+                external_reserve_player_ids=("F", "G"),
+                unavailable_player_ids=("E", "F", "G"),
             )

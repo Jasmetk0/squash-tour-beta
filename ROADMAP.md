@@ -440,5 +440,4 @@ a source-aware Q repair rather than the older generic field resolver. The undefi
 post-Main-start/all-sources-exhausted policy from Master §15.8 remains unchanged.
 Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
 later Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate
-Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate
 Gate 3 work.

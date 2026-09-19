@@ -115,8 +115,32 @@ class TournamentDrawRevisionStore:
         if not requested:
             raise ValueError("Full redraw withdrawal requires at least one player")
 
-        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = TournamentDrawRevision.model_validate_json(retry.payload_json)
+            if (
+                retry.event_id != event_id
+                or revision.withdrawn_player_ids != requested
+                or revision.repair_draw_seed != repair_draw_seed
+                or revision.main_process_window_ordinal != main_process_window_ordinal
+                or revision.qualification_process_window_ordinal
+                != qualification_process_window_ordinal
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Tournament Draw revision command already has a different request"
+                )
+            return revision
+
+        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         predecessor = (
             history[-1].successor_draw
             if history
@@ -206,20 +230,6 @@ class TournamentDrawRevisionStore:
             "successor_field_fingerprint": successor_field.fingerprint,
         }
         request_fp = _fp(request)
-        retry = self.session.scalar(
-            select(TournamentDrawRevisionModel).where(
-                TournamentDrawRevisionModel.run_id == run_id,
-                TournamentDrawRevisionModel.branch_id == branch_id,
-                TournamentDrawRevisionModel.command_id == command_id,
-            )
-        )
-        if retry is not None:
-            if retry.request_fingerprint != request_fp or retry.event_id != event_id:
-                raise TournamentDrawRevisionConflict(
-                    "Tournament Draw revision command already has a different request"
-                )
-            return TournamentDrawRevision.model_validate_json(retry.payload_json)
-
         revision = TournamentDrawRevisionBuilder.build_full_redraw(
             predecessor=predecessor,
             successor_field=successor_field,

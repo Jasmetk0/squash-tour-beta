@@ -12,6 +12,10 @@ import {
   getEventPreDrawWithdrawalActions,
   getEventPreDrawWithdrawalState,
   getCanonicalTournamentEntryFieldState,
+  getCanonicalTournamentDrawState,
+  getCanonicalTournamentDrawAuthority,
+  commitCanonicalTournamentDrawInput,
+  generateCanonicalTournamentDraw,
   getEventWildcardActions,
   getEventWildcardCandidates,
   getEventWildcards,
@@ -39,6 +43,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
   const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
   const [lateReplacementWithdrawnPlayerId, setLateReplacementWithdrawnPlayerId] = useState('')
+  const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
   const commissionerQueryKeys = [
     ['wildcards', runId, eventId],
     ['wildcard-candidates', runId, eventId],
@@ -109,6 +114,27 @@ export function PlannedEventDetailPage(): JSX.Element {
       'status' in canonicalEntryFieldQuery.error &&
       canonicalEntryFieldQuery.error.status === 404
   )
+  const canonicalDrawStateQuery = useQuery({
+    queryKey: ['canonical-tournament-draw-state', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentDrawState(runId, activeBranchId, eventId),
+    enabled: Boolean(runId && activeBranchId && eventId) && !viewed.historical,
+    retry: false
+  })
+  const canonicalDrawStateUnavailable = Boolean(
+    canonicalDrawStateQuery.error &&
+      typeof canonicalDrawStateQuery.error === 'object' &&
+      'status' in canonicalDrawStateQuery.error &&
+      canonicalDrawStateQuery.error.status === 404
+  )
+  const canonicalDrawAuthorityQuery = useQuery({
+    queryKey: ['canonical-tournament-draw-authority', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentDrawAuthority(runId, activeBranchId, eventId),
+    enabled:
+      Boolean(runId && activeBranchId && eventId) &&
+      !viewed.historical &&
+      canonicalDrawStateQuery.data?.initial_draw_generated === true,
+    retry: false
+  })
   const preDrawWithdrawalActionsQuery = useQuery({
     queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
     queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
@@ -150,6 +176,51 @@ export function PlannedEventDetailPage(): JSX.Element {
       applyEventLateReplacement(runId, eventId, { withdrawn_player_id: values.withdrawnPlayerId }),
     onSuccess: invalidateCommissionerQueries
   })
+  async function invalidateCanonicalDrawQueries(): Promise<void> {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-state', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-authority', runId, activeBranchId, eventId] })
+    ])
+  }
+
+  const canonicalDrawInputMutation = useMutation({
+    mutationFn: () => {
+      const field = canonicalEntryFieldQuery.data
+      if (!field) throw new Error('Canonical Tournament Entry Field is required before Draw Input commitment.')
+      if (!Number.isSafeInteger(canonicalDrawSeed)) throw new Error('Draw seed must be an integer.')
+      const commandId = `admin-ui-draw-input-${field.field_fingerprint.slice(0, 16)}-${canonicalDrawSeed}`
+      return commitCanonicalTournamentDrawInput(runId, activeBranchId, eventId, {
+        schema_version: 'canonical_tournament_draw_input_commit_command.v1',
+        command_id: commandId.slice(0, 128),
+        run_id: runId,
+        branch_id: activeBranchId,
+        event_id: eventId,
+        expected_field_fingerprint: field.field_fingerprint,
+        draw_seed: canonicalDrawSeed
+      })
+    },
+    onSuccess: invalidateCanonicalDrawQueries
+  })
+
+  const canonicalDrawGenerateMutation = useMutation({
+    mutationFn: () => {
+      const drawState = canonicalDrawStateQuery.data
+      if (!drawState?.draw_input_fingerprint) {
+        throw new Error('Committed canonical Draw Input is required before Draw generation.')
+      }
+      const commandId = `admin-ui-draw-generate-${drawState.draw_input_fingerprint.slice(0, 24)}`
+      return generateCanonicalTournamentDraw(runId, activeBranchId, eventId, {
+        schema_version: 'canonical_tournament_draw_generate_command.v1',
+        command_id: commandId,
+        run_id: runId,
+        branch_id: activeBranchId,
+        event_id: eventId,
+        expected_draw_input_fingerprint: drawState.draw_input_fingerprint
+      })
+    },
+    onSuccess: invalidateCanonicalDrawQueries
+  })
 
   const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
   const orderedEvents = seasonState?.ordered_events ?? []
@@ -172,6 +243,13 @@ export function PlannedEventDetailPage(): JSX.Element {
     : null
 
   const hasPersistedHistory = plannedEvent ? persistedEventIds.has(plannedEvent.event_id) : false
+  const canonicalQualificationBrackets = canonicalDrawAuthorityQuery.data
+    ? canonicalDrawAuthorityQuery.data.qualification_sections?.length
+      ? canonicalDrawAuthorityQuery.data.qualification_sections
+      : canonicalDrawAuthorityQuery.data.qualification
+        ? [canonicalDrawAuthorityQuery.data.qualification]
+        : []
+    : []
 
   useEffect(() => {
     const firstCandidateId = wildcardCandidatesQuery.data?.candidates[0]?.player_id ?? ''
@@ -360,6 +438,134 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : (
                 <p className="status">No Main Draw geometry warnings.</p>
               )}
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <SectionCard title="Canonical Tournament Draw authority">
+          {canonicalDrawStateQuery.isLoading ? <p className="status">Loading canonical Draw authority state...</p> : null}
+          {canonicalDrawStateUnavailable ? (
+            <p className="status">Canonical Tournament Entry Field is not available for this event yet.</p>
+          ) : null}
+          {canonicalDrawStateQuery.error && !canonicalDrawStateUnavailable ? (
+            <p className="error">Failed to load canonical Draw state: {formatApiError(canonicalDrawStateQuery.error)}</p>
+          ) : null}
+          {canonicalDrawStateQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Draw Input', value: canonicalDrawStateQuery.data.draw_input_committed ? 'Committed' : 'Not committed' },
+                  { label: 'Initial Draw', value: canonicalDrawStateQuery.data.initial_draw_generated ? 'Generated / immutable' : 'Not generated' },
+                  { label: 'Main seed count', value: canonicalDrawStateQuery.data.main_seed_count ?? 'Derived on commit' },
+                  { label: 'Qualification seed count', value: canonicalDrawStateQuery.data.qualification_seed_count ?? 'Derived on commit' },
+                  { label: 'Frozen draw seed', value: canonicalDrawStateQuery.data.draw_seed ?? '—' },
+                  { label: 'Algorithm', value: canonicalDrawStateQuery.data.draw_algorithm_version ?? '—' }
+                ]}
+              />
+              {!canonicalDrawStateQuery.data.draw_input_committed ? (
+                <div className="grid">
+                  <label>
+                    Technical draw seed
+                    <input
+                      aria-label="Technical draw seed"
+                      type="number"
+                      value={canonicalDrawSeed}
+                      onChange={(event) => setCanonicalDrawSeed(Number(event.target.value))}
+                    />
+                  </label>
+                  <p className="status">
+                    The seed freezes deterministic replay only. Bracket capacity, BYEs and seed counts remain Master-derived.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => canonicalDrawInputMutation.mutate()}
+                    disabled={
+                      canonicalDrawInputMutation.isPending ||
+                      !canonicalEntryFieldQuery.data ||
+                      !Number.isSafeInteger(canonicalDrawSeed)
+                    }
+                  >
+                    Commit canonical Draw Input
+                  </button>
+                </div>
+              ) : null}
+              {canonicalDrawStateQuery.data.draw_input_committed && !canonicalDrawStateQuery.data.initial_draw_generated ? (
+                <button
+                  type="button"
+                  onClick={() => canonicalDrawGenerateMutation.mutate()}
+                  disabled={canonicalDrawGenerateMutation.isPending || !canonicalDrawStateQuery.data.draw_input_fingerprint}
+                >
+                  Generate canonical initial Draw
+                </button>
+              ) : null}
+              {canonicalDrawStateQuery.data.initial_draw_generated ? (
+                <p className="status">Initial canonical Draw is frozen. Later changes use append-only Draw revision authorities.</p>
+              ) : null}
+              {canonicalDrawInputMutation.error ? (
+                <p className="error">Draw Input commitment failed: {formatApiError(canonicalDrawInputMutation.error)}</p>
+              ) : null}
+              {canonicalDrawGenerateMutation.error ? (
+                <p className="error">Draw generation failed: {formatApiError(canonicalDrawGenerateMutation.error)}</p>
+              ) : null}
+            </>
+          ) : null}
+
+          {canonicalDrawAuthorityQuery.isLoading ? <p className="status">Loading immutable canonical bracket...</p> : null}
+          {canonicalDrawAuthorityQuery.error ? (
+            <p className="error">Failed to load canonical Draw authority: {formatApiError(canonicalDrawAuthorityQuery.error)}</p>
+          ) : null}
+          {canonicalDrawAuthorityQuery.data ? (
+            <>
+              <SummaryPills
+                items={[
+                  { label: 'Main slots', value: canonicalDrawAuthorityQuery.data.main.bracket_size },
+                  { label: 'Main BYEs', value: canonicalDrawAuthorityQuery.data.main.bye_slot_indexes.length },
+                  { label: 'Q sections', value: canonicalQualificationBrackets.length },
+                  { label: 'Algorithm', value: canonicalDrawAuthorityQuery.data.algorithm_version }
+                ]}
+              />
+              <div className="table-wrap">
+                <table aria-label="Canonical Main Draw slots">
+                  <thead>
+                    <tr><th>Slot</th><th>Idealized</th><th>Entrant</th><th>Seed</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    {canonicalDrawAuthorityQuery.data.main.slots.map((slot) => (
+                      <tr key={slot.slot_index}>
+                        <td>{slot.slot_index}</td>
+                        <td>{slot.idealized_slot_number ?? '—'}</td>
+                        <td>{slot.player_id ?? slot.placeholder_id ?? 'BYE'}</td>
+                        <td>{slot.seed_number ?? '—'}</td>
+                        <td>{slot.entry_status ?? slot.entrant_kind}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {canonicalQualificationBrackets.map((bracket) => (
+                <div key={bracket.section_id ?? 'qualification'}>
+                  <h4>{bracket.section_id ?? 'Qualification'}</h4>
+                  <div className="table-wrap">
+                    <table aria-label={`Canonical ${bracket.section_id ?? 'Qualification'} slots`}>
+                      <thead>
+                        <tr><th>Slot</th><th>Idealized</th><th>Entrant</th><th>Seed</th></tr>
+                      </thead>
+                      <tbody>
+                        {bracket.slots.map((slot) => (
+                          <tr key={slot.slot_index}>
+                            <td>{slot.slot_index}</td>
+                            <td>{slot.idealized_slot_number ?? '—'}</td>
+                            <td>{slot.player_id ?? slot.placeholder_id ?? 'BYE'}</td>
+                            <td>{slot.seed_number ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
             </>
           ) : null}
         </SectionCard>

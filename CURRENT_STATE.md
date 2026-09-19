@@ -350,11 +350,18 @@ does not inherit seed status, leaves Qualification untouched, and chains Draw In
 v4 post-draw WC repair fingerprints. Repeated RWC use and Saved Revision
 backward/forward replay are deterministic.
 
-The workflow deliberately fails closed instead of skipping priority when the next
-available RWC is still in Qualification; that case needs an atomic Main+Q promotion
-and Q backfill. Seeded WC withdrawals and RWC exhaustion likewise remain for the
-next WC slice. The middle seed-cascade phase still intentionally requires
-replacement-backed player-count parity. Lucky Loser ordering and group
-Qualification remain Gate 3 work. See
+Frozen cross-draw RWC promotion is now canonical when the next RWC is an unseeded
+Qualification player and both affected draws are after Draw Freeze. The v2 RWC
+repair authority freezes the exact Q section/slot plus the ranking-ordered below-cut
+backfill. Draw revision v7 atomically moves that RWC into the exact `[WC]` Main
+slot and inserts the backfill into the exact vacated Q slot without seed
+inheritance; Draw Input v4 updates both active WC and Qualification identities.
+Saved Revision backward/forward replay validates the same cross-draw evidence.
+
+The workflow still fails closed for seeded WC holders, seeded Qualification RWC
+candidates, Qualification phases that require redraw/cascade rather than frozen
+exact-slot fill, and RWC exhaustion. The middle seed-cascade phase still
+intentionally requires replacement-backed player-count parity. Lucky Loser ordering
+and group Qualification remain Gate 3 work. See
 `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

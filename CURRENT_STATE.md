@@ -82,9 +82,19 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   eligible group, executes Next Slot without a hidden group override, and Saves only
   against the exact simulation draft fingerprint/version. Every execution command is
   CAS-guarded by the current authoritative position fingerprint plus the Branch Saved
-  Revision head. The legacy branch-simulation controls remain explicitly labeled
-  compatibility actions for higher-level Next Round/Week/Tournament/Season commands;
-  those are not claimed to be canonical equivalents yet.
+  Revision head. When Position reaches the existing `week_ready_for_transition`
+  boundary, Admin can now request a **server-derived** Week Transition preview: the
+  backend freezes the current Saved Revision head, persisted Ranking Transition
+  Authority and all Owned Tournament bindings into the exact canonical command.
+  The UI confirms only that reviewed request through the existing request/ranking
+  fingerprint guards, then reuses the ranking Save CAS to persist the transitioned
+  ranking/world draft as a new recoverable Saved Revision. The client never authors
+  tournament bindings or an authority fingerprint. Ranking Transition Authority
+  creation itself remains a separate prerequisite; a missing/stale authority stays
+  an explicit transition blocker.
+  The legacy branch-simulation controls remain explicitly labeled compatibility
+  actions for higher-level Next Round/Week/Tournament/Season commands; those are not
+  claimed to be canonical equivalents yet.
   The legacy simulation-run endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
   priority and the first-real-match replacement cutoff are still required before
   those later producer paths may be re-enabled.

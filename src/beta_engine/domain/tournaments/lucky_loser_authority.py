@@ -212,6 +212,25 @@ class TournamentLuckyLoserQualificationMatchEvidence(FrozenInput):
     result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class TournamentLuckyLoserAutoByeTerminalEvidence(FrozenInput):
+    """One Qualification terminal resolved structurally without a played match."""
+
+    match_id: str = Field(min_length=1)
+    section_id: str = Field(min_length=1)
+    winner_player_id: str = Field(min_length=1)
+    qualification_bracket_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return hashlib.sha256(
+            json.dumps(
+                self.model_dump(mode="json"),
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+
+
 class TournamentLuckyLoserCandidate(FrozenInput):
     """One bracket-Q loser frozen into canonical LL priority."""
 
@@ -226,9 +245,10 @@ class TournamentLuckyLoserCandidate(FrozenInput):
 class TournamentLuckyLoserOrderAuthority(FrozenInput):
     """Completed bracket-Qualification LL order from Master §15.8."""
 
-    schema_version: Literal["tournament_lucky_loser_order.v1"] = (
-        "tournament_lucky_loser_order.v1"
-    )
+    schema_version: Literal[
+        "tournament_lucky_loser_order.v1",
+        "tournament_lucky_loser_order.v2",
+    ] = "tournament_lucky_loser_order.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -236,6 +256,9 @@ class TournamentLuckyLoserOrderAuthority(FrozenInput):
     tournament_ranking_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     qualification_terminal_match_ids: tuple[str, ...]
     qualification_terminal_result_fingerprints: tuple[str, ...]
+    qualification_auto_bye_terminals: tuple[
+        TournamentLuckyLoserAutoByeTerminalEvidence, ...
+    ] = Field(default=(), exclude_if=lambda value: not value)
     candidates: tuple[TournamentLuckyLoserCandidate, ...]
 
     @model_validator(mode="after")
@@ -250,6 +273,18 @@ class TournamentLuckyLoserOrderAuthority(FrozenInput):
             self.qualification_terminal_match_ids
         ):
             raise ValueError("LL order contains duplicate Q terminal identity")
+        auto_ids = tuple(
+            item.match_id for item in self.qualification_auto_bye_terminals
+        )
+        if len(set(auto_ids)) != len(auto_ids):
+            raise ValueError("LL order contains duplicate auto-BYE terminal evidence")
+        if not set(auto_ids).issubset(set(self.qualification_terminal_match_ids)):
+            raise ValueError("LL auto-BYE evidence is outside Q terminal identities")
+        if self.schema_version == "tournament_lucky_loser_order.v1":
+            if self.qualification_auto_bye_terminals:
+                raise ValueError("Historical LL order v1 cannot carry auto-BYE evidence")
+        elif not self.qualification_auto_bye_terminals:
+            raise ValueError("LL order v2 requires auto-BYE terminal evidence")
         expected_ordinals = tuple(range(1, len(self.candidates) + 1))
         if tuple(item.priority_ordinal for item in self.candidates) != expected_ordinals:
             raise ValueError("LL candidate priority ordinals are not canonical")
@@ -294,6 +329,9 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
         completed_qualification_matches: tuple[
             TournamentLuckyLoserQualificationMatchEvidence, ...
         ],
+        auto_bye_terminal_evidence: tuple[
+            TournamentLuckyLoserAutoByeTerminalEvidence, ...
+        ] = (),
     ) -> TournamentLuckyLoserOrderAuthority:
         scope = (draw.run_id, draw.branch_id, draw.event_id)
         if (
@@ -306,9 +344,11 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
             raise ValueError("LL order requires bracket Qualification")
 
         node_to_section: dict[str, str] = {}
+        bracket_by_section = {}
         terminal_ids: list[str] = []
         for index, bracket in enumerate(draw.qualification_brackets, start=1):
             section_id = bracket.section_id or f"Q{index}"
+            bracket_by_section[section_id] = bracket
             for node in bracket.nodes:
                 if node.node_id in node_to_section:
                     raise ValueError("Qualification node identity is not unique")
@@ -328,7 +368,42 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
             if node_to_section[match.match_id] != match.section_id:
                 raise ValueError("LL Q match section differs from canonical Draw")
 
-        missing_terminals = set(terminal_ids) - set(by_match)
+        auto_by_match = {
+            item.match_id: item for item in auto_bye_terminal_evidence
+        }
+        if len(auto_by_match) != len(auto_bye_terminal_evidence):
+            raise ValueError("LL order contains duplicate auto-BYE terminal evidence")
+        if set(auto_by_match) & set(by_match):
+            raise ValueError("Q terminal cannot be both played and auto-BYE")
+        if not set(auto_by_match).issubset(set(terminal_ids)):
+            raise ValueError("LL auto-BYE evidence is outside Q terminals")
+        for item in auto_bye_terminal_evidence:
+            if node_to_section[item.match_id] != item.section_id:
+                raise ValueError("LL auto-BYE section differs from canonical Draw")
+            bracket = bracket_by_section.get(item.section_id)
+            if (
+                bracket is None
+                or bracket.fingerprint != item.qualification_bracket_fingerprint
+            ):
+                raise ValueError(
+                    "LL auto-BYE evidence is stale for Qualification bracket"
+                )
+            section_players = tuple(
+                slot.player_id
+                for slot in bracket.slots
+                if slot.player_id is not None
+            )
+            if len(section_players) != 1:
+                raise ValueError(
+                    "LL auto-BYE evidence requires exactly one live Q player"
+                )
+            if item.winner_player_id != section_players[0]:
+                raise ValueError(
+                    "LL auto-BYE winner differs from sole canonical Q player"
+                )
+
+        resolved_terminal_ids = set(by_match) | set(auto_by_match)
+        missing_terminals = set(terminal_ids) - resolved_terminal_ids
         if missing_terminals:
             raise ValueError(
                 "Lucky Loser order is unavailable until Qualification is complete"
@@ -377,8 +452,20 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
             )
             for index, (player_id, match) in enumerate(ordered, start=1)
         )
-        terminal_results = tuple(by_match[match_id] for match_id in terminal_ids)
+        terminal_fingerprints = tuple(
+            (
+                by_match[match_id].result_fingerprint
+                if match_id in by_match
+                else auto_by_match[match_id].fingerprint
+            )
+            for match_id in terminal_ids
+        )
         return TournamentLuckyLoserOrderAuthority(
+            schema_version=(
+                "tournament_lucky_loser_order.v2"
+                if auto_bye_terminal_evidence
+                else "tournament_lucky_loser_order.v1"
+            ),
             run_id=scope[0],
             branch_id=scope[1],
             event_id=scope[2],
@@ -387,8 +474,12 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
                 tournament_ranking_authority.fingerprint
             ),
             qualification_terminal_match_ids=tuple(terminal_ids),
-            qualification_terminal_result_fingerprints=tuple(
-                item.result_fingerprint for item in terminal_results
+            qualification_terminal_result_fingerprints=terminal_fingerprints,
+            qualification_auto_bye_terminals=tuple(
+                sorted(
+                    auto_bye_terminal_evidence,
+                    key=lambda item: (item.section_id, item.match_id),
+                )
             ),
             candidates=candidates,
         )

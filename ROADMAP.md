@@ -380,14 +380,15 @@ cutoff, the exact Main slot and any vacated seed number. Draw Input v6 stores th
 chronological LL placeholder lineage and Draw revision v9 stores the exact frozen
 slot mutation. Unresolved LL placeholders deliberately block executable topology.
 
-Bracket-Qualification **Lucky Loser candidate order** is now canonical as well.
-`tournament_lucky_loser_order.v1` is derived only after every real Qualification
-terminal has an authoritative result receipt. It freezes the current canonical Draw,
-Tournament Ranking Snapshot authority, terminal-result fingerprints and each
-eliminated candidate's elimination round/result. Candidates sort exactly by Master
-§15.8: highest reached Q round first, then the frozen Tournament Ranking Snapshot.
-The resolver deliberately refuses to publish an order while Qualification is still
-incomplete; unresolved auto-BYE-only Q terminals remain an explicit later edge case.
+Bracket-Qualification **Lucky Loser candidate order** is canonical across both played
+and auto-BYE terminals. Historical `tournament_lucky_loser_order.v1` remains valid
+for all-played Qualification. New v2 freezes one-player auto-BYE terminal evidence
+against the exact Q bracket while real terminals still require authoritative result
+receipts. Auto-BYE winners add no LL candidate because no player was eliminated in
+that section. Candidates from played Q matches still sort exactly by Master §15.8:
+highest reached Q round first, then the frozen Tournament Ranking Snapshot. Mixed
+multi-Q completion therefore waits only for unresolved real terminals rather than
+failing on an already-complete one-player BYE section.
 
 Lucky Loser placeholders can now be **filled canonically** from the frozen bracket-Q
 candidate order. The fill authority always resolves the earliest still-unfilled

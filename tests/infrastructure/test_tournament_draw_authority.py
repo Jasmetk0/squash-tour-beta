@@ -3683,6 +3683,231 @@ def _fake_q_receipts(session, monkeypatch, draw, *, include_final):
     return results, final
 
 
+def _install_mixed_auto_bye_q_for_ll_order(session):
+    players = ("A", "B", "C", "D", "E")
+    install_ranking_authority(session, players)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=(
+            app("A", "main"),
+            app("C", "main"),
+            app("B", "qualification"),
+            app("D", "qualification"),
+            app("E", "qualification"),
+        ),
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=2,
+        ),
+        command_id="ll-auto-bye-field",
+    )
+    draw_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-auto-bye-input",
+        draw_seed=818181,
+    )
+    draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-auto-bye-draw",
+    )
+    counts = tuple(
+        sum(slot.player_id is not None for slot in bracket.slots)
+        for bracket in draw.qualification_brackets
+    )
+    assert sorted(counts) == [1, 2]
+    return draw_input, draw
+
+
+def _fake_single_real_q_terminal(session, monkeypatch, draw):
+    real_bracket = next(
+        bracket
+        for bracket in draw.qualification_brackets
+        if sum(slot.player_id is not None for slot in bracket.slots) == 2
+    )
+    terminal = max(
+        real_bracket.nodes,
+        key=lambda node: (node.round_number, node.round_sequence),
+    )
+    players = [
+        slot.player_id
+        for slot in real_bracket.slots
+        if slot.player_id is not None
+    ]
+    assert len(players) == 2
+    winner, loser = players
+
+    session.add(
+        SimulationEventGroupModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=0,
+            slot_id="ll-auto-bye-slot",
+            group_id="ll-auto-bye-real-terminal",
+            command_fingerprint="a" * 64,
+            match_id=terminal.node_id,
+            match_input_fingerprint="b" * 64,
+            result_fingerprint="c" * 64,
+            payload_json="{}",
+        )
+    )
+    session.flush()
+
+    def fake_load(row):
+        assert row.match_id == terminal.node_id
+        return SimpleNamespace(
+            authoritative_input=SimpleNamespace(event_id="event"),
+            result=SimpleNamespace(
+                match_id=row.match_id,
+                winner_player_id=winner,
+                loser_player_id=loser,
+            ),
+        )
+
+    monkeypatch.setattr(
+        AuthoritativeSlotMatchExecutor,
+        "_load_group",
+        staticmethod(fake_load),
+    )
+    return real_bracket, terminal, winner, loser
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_accepts_mixed_auto_bye_terminal(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        _, draw = _install_mixed_auto_bye_q_for_ll_order(session)
+        real_bracket, terminal, _, loser = _fake_single_real_q_terminal(
+            session,
+            monkeypatch,
+            draw,
+        )
+
+        authority = TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+
+        auto_bracket = next(
+            bracket
+            for bracket in draw.qualification_brackets
+            if bracket is not real_bracket
+            and sum(slot.player_id is not None for slot in bracket.slots) == 1
+        )
+        auto_terminal = max(
+            auto_bracket.nodes,
+            key=lambda node: (node.round_number, node.round_sequence),
+        )
+        auto_winner = next(
+            slot.player_id
+            for slot in auto_bracket.slots
+            if slot.player_id is not None
+        )
+
+        assert authority.schema_version == "tournament_lucky_loser_order.v2"
+        assert set(authority.qualification_terminal_match_ids) == {
+            terminal.node_id,
+            auto_terminal.node_id,
+        }
+        assert len(authority.qualification_terminal_result_fingerprints) == 2
+        assert len(authority.qualification_auto_bye_terminals) == 1
+        auto = authority.qualification_auto_bye_terminals[0]
+        assert auto.match_id == auto_terminal.node_id
+        assert auto.section_id == auto_bracket.section_id
+        assert auto.winner_player_id == auto_winner
+        assert auto.qualification_bracket_fingerprint == auto_bracket.fingerprint
+        assert authority.ordered_player_ids == (loser,)
+        assert authority.candidates[0].elimination_match_id == terminal.node_id
+        assert authority.candidates[0].qualification_round_reached == 1
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_auto_bye_does_not_mask_unresolved_real_terminal(
+    database,
+):
+    with database.begin() as session:
+        _, draw = _install_mixed_auto_bye_q_for_ll_order(session)
+        assert any(
+            sum(slot.player_id is not None for slot in bracket.slots) == 1
+            for bracket in draw.qualification_brackets
+        )
+
+        with pytest.raises(
+            TournamentLuckyLoserOrderUnavailable,
+            match="until Qualification is complete",
+        ):
+            TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+            )
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_all_auto_bye_sections_can_complete_without_candidates(
+    database,
+):
+    with database.begin() as session:
+        players = ("A", "B", "C", "D")
+        install_ranking_authority(session, players)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=(
+                app("A", "main"),
+                app("C", "main"),
+                app("B", "qualification"),
+                app("D", "qualification"),
+            ),
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=4,
+                qualifier_spots=2,
+            ),
+            command_id="ll-all-auto-bye-field",
+        )
+        TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-all-auto-bye-input",
+            draw_seed=828282,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="ll-all-auto-bye-draw",
+        )
+        assert all(
+            sum(slot.player_id is not None for slot in bracket.slots) == 1
+            for bracket in draw.qualification_brackets
+        )
+
+        authority = TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+
+        assert authority.schema_version == "tournament_lucky_loser_order.v2"
+        assert len(authority.qualification_auto_bye_terminals) == 2
+        assert authority.candidates == ()
+        assert authority.ordered_player_ids == ()
+        assert len(authority.qualification_terminal_match_ids) == 2
+        assert len(authority.qualification_terminal_result_fingerprints) == 2
+
+
 @pytest.mark.pr_critical
 def test_lucky_loser_order_prefers_q_round_then_frozen_tournament_ranking(
     database,

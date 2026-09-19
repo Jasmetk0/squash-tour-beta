@@ -4828,6 +4828,120 @@ def test_replacement_source_chain_fails_closed_after_main_start_if_no_source_rem
 
 
 @pytest.mark.pr_critical
+def test_frozen_ordinary_fallback_late_bye_reprojects_without_dangling_feeder(
+    database,
+):
+    with database.begin() as session:
+        draw_input, draw, cutoff, ll_order, q_start = _source_chain_fixture(session)
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="late-bye-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+
+        original_slot = next(
+            slot for slot in draw.main.slots if slot.player_id == "C"
+        )
+        source = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=draw,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="C",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=q_start,
+            main_start_evidence=None,
+            base_wild_card_authority=None,
+            lucky_loser_order_authority=ll_order,
+            external_reserve_player_ids=("F", "G"),
+            unavailable_player_ids=("E", "F", "G"),
+        )
+        assert source.source == "bye"
+        assert source.selected_player_id is None
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).apply_frozen_ordinary_fallback(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="late-bye-fallback",
+            main_process_window_ordinal=3,
+            replacement_source_authority=source,
+        )
+
+        assert revision.schema_version == "tournament_draw_revision.v11"
+        assert revision.repair_kind == "frozen_ordinary_fallback"
+        assert revision.main_repair_action == "frozen_late_bye"
+
+        late_bye_slot = revision.successor_draw.main.slots[
+            original_slot.slot_index - 1
+        ]
+        assert late_bye_slot.slot_index == original_slot.slot_index
+        assert late_bye_slot.entrant_kind == "bye"
+        assert late_bye_slot.player_id is None
+        assert late_bye_slot.seed_number is None
+
+        event = CalendarEvent(
+            event_id="event",
+            season="2000/2001",
+            season_week=1,
+            calendar_year=2000,
+            year_week=1,
+            template_id="template",
+            event_name="Late BYE Open",
+            category="TEST",
+            tour_level="WORLD_TOUR",
+            host_country="CZE",
+            region="Europe",
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=1,
+        )
+        package = build_run_owned_match_package(
+            draw=revision.successor_draw,
+            event=event,
+            week=RankingWeek(season_index=0, week=1),
+        )
+        topology = project_canonical_draw_to_match_topology(
+            draw=revision.successor_draw,
+            package=package,
+        )
+
+        # 3 Q nodes + 3 Main nodes exist canonically, but the repaired Main BYE
+        # node is already resolved and must not remain executable.
+        assert len(package.qualification_matches) == 3
+        assert len(package.main_draw_matches) == 3
+        assert len(topology.bye_match_ids) == 1
+        assert len(topology.plans) == 5
+
+        bye_match_id = topology.bye_match_ids[0]
+        executable_ids = {plan.group_id for plan in topology.plans}
+        assert bye_match_id not in executable_ids
+        assert topology.terminal_group_id in executable_ids
+        assert len(topology.qualifier_promotions) == 1
+
+        for plan in topology.plans:
+            for participant_source in plan.participant_sources or ():
+                assert participant_source != f"winner:{bye_match_id}"
+                if participant_source.startswith("winner:"):
+                    assert (
+                        participant_source.removeprefix("winner:")
+                        in executable_ids
+                    )
+
+        # Canonical result history still owns the BYE node even though the
+        # schedule universe correctly omits it.
+        projected_bye = next(
+            match
+            for match in package.main_draw_matches
+            if match.match_id == bye_match_id
+        )
+        assert projected_bye.status == "bye_auto_advance_pending"
+
+
+@pytest.mark.pr_critical
 def test_frozen_ordinary_fallback_external_reserve_fills_exact_main_slot(database):
     with database.begin() as session:
         draw_input, draw, cutoff, ll_order, q_start = _source_chain_fixture(session)

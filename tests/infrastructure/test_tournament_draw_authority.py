@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from beta_engine.domain.rankings.official import (
@@ -40,6 +42,7 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     TournamentDrawAuthorityModel,
     TournamentDrawProcessAuthorityModel,
+    SimulationEventGroupModel,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -69,6 +72,13 @@ from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority impor
 )
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_lucky_loser_authority import (
+    TournamentLuckyLoserOrderAuthorityStore,
+    TournamentLuckyLoserOrderUnavailable,
+)
+from beta_engine.application.authoritative_slot_matches import (
+    AuthoritativeSlotMatchExecutor,
 )
 
 
@@ -3427,4 +3437,183 @@ def test_lucky_loser_vacancy_does_not_exist_before_qualification_starts(
                 command_id="too-early-ll",
                 withdrawn_player_id="C",
                 main_process_window_ordinal=3,
+            )
+
+
+def _install_four_player_q_for_ll_order(session):
+    install_ranking_authority(session)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=standard_applications(),
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=1,
+        ),
+        command_id="ll-order-field",
+    )
+    draw_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-order-input",
+        draw_seed=919191,
+    )
+    draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-order-draw",
+    )
+    return draw_input, draw
+
+
+def _fake_q_receipts(session, monkeypatch, draw, *, include_final):
+    bracket = draw.qualification_brackets[0]
+    slots = {slot.slot_index: slot.player_id for slot in bracket.slots}
+    round_one = sorted(
+        [node for node in bracket.nodes if node.round_number == 1],
+        key=lambda node: node.round_sequence,
+    )
+    final = max(
+        bracket.nodes,
+        key=lambda node: (node.round_number, node.round_sequence),
+    )
+
+    results = {}
+    semifinal_winners = []
+    for index, node in enumerate(round_one, start=1):
+        top = slots[int(node.source_top.removeprefix("slot:"))]
+        bottom = slots[int(node.source_bottom.removeprefix("slot:"))]
+        assert top is not None and bottom is not None
+        # Alternate winner side so the fixture does not accidentally encode ranking.
+        winner, loser = (top, bottom) if index == 1 else (bottom, top)
+        semifinal_winners.append(winner)
+        results[node.node_id] = (winner, loser)
+
+    final_winner, final_loser = semifinal_winners
+    results[final.node_id] = (final_winner, final_loser)
+
+    selected_ids = {
+        node.node_id for node in round_one
+    }
+    if include_final:
+        selected_ids.add(final.node_id)
+
+    for ordinal, match_id in enumerate(sorted(selected_ids), start=1):
+        session.add(
+            SimulationEventGroupModel(
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=0,
+                slot_id="ll-order-slot",
+                group_id=f"ll-order-group-{ordinal}",
+                command_fingerprint=(f"{ordinal:x}" * 64)[:64],
+                match_id=match_id,
+                match_input_fingerprint=(f"{ordinal + 8:x}" * 64)[:64],
+                result_fingerprint=(f"{ordinal + 4:x}" * 64)[:64],
+                payload_json="{}",
+            )
+        )
+    session.flush()
+
+    def fake_load(row):
+        winner, loser = results[row.match_id]
+        return SimpleNamespace(
+            authoritative_input=SimpleNamespace(event_id="event"),
+            result=SimpleNamespace(
+                match_id=row.match_id,
+                winner_player_id=winner,
+                loser_player_id=loser,
+            ),
+        )
+
+    monkeypatch.setattr(
+        AuthoritativeSlotMatchExecutor,
+        "_load_group",
+        staticmethod(fake_load),
+    )
+    return results, final
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_prefers_q_round_then_frozen_tournament_ranking(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        _, draw = _install_four_player_q_for_ll_order(session)
+        results, final = _fake_q_receipts(
+            session,
+            monkeypatch,
+            draw,
+            include_final=True,
+        )
+        authority = TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+
+        final_loser = results[final.node_id][1]
+        semifinal_losers = [
+            results[node.node_id][1]
+            for node in draw.qualification_brackets[0].nodes
+            if node.round_number == 1
+        ]
+        ranking = TournamentRankingSnapshotAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert ranking is not None
+        rank_by_player = {
+            row.player_id: row.rank for row in ranking.ranking_snapshot.rows
+        }
+        expected_semifinal_order = sorted(
+            semifinal_losers,
+            key=lambda player_id: rank_by_player[player_id],
+        )
+
+        assert authority.schema_version == "tournament_lucky_loser_order.v1"
+        assert authority.ordered_player_ids == (
+            final_loser,
+            *expected_semifinal_order,
+        )
+        assert authority.candidates[0].qualification_round_reached == 2
+        assert tuple(
+            candidate.qualification_round_reached
+            for candidate in authority.candidates[1:]
+        ) == (1, 1)
+        assert tuple(
+            candidate.tournament_ranking for candidate in authority.candidates[1:]
+        ) == tuple(
+            sorted(rank_by_player[player_id] for player_id in semifinal_losers)
+        )
+        assert authority.qualification_terminal_match_ids == (final.node_id,)
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_waits_for_completed_qualification_terminal(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        _, draw = _install_four_player_q_for_ll_order(session)
+        _fake_q_receipts(
+            session,
+            monkeypatch,
+            draw,
+            include_final=False,
+        )
+        with pytest.raises(
+            TournamentLuckyLoserOrderUnavailable,
+            match="until Qualification is complete",
+        ):
+            TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
             )

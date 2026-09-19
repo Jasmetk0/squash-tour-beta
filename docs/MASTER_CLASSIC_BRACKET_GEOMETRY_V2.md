@@ -12,7 +12,15 @@ For one classic bracket:
 
 `seed_count = min(actual_player_count, max(1, bracket_capacity / 4))`
 
-The capacity must be a power of two. The resulting examples are therefore:
+The persisted bracket capacity must be a power of two. The requested Main entrant
+count does not have to be. New callers may derive the canonical capacity with
+`TournamentEntryFieldCapacity.for_main_entrant_count(...)`: it rounds the entrant
+count up to the next power of two and records the difference as explicit initial BYEs.
+For example, 13 entrants become a 16-position bracket with three BYEs, while 28
+entrants become a 32-position bracket with four BYEs. This preserves one canonical
+binary DAG instead of introducing irregular match-node geometry.
+
+The resulting seed examples are therefore:
 
 - 2 -> 1 seed
 - 4 -> 1 seed

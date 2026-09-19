@@ -1625,7 +1625,7 @@ class TournamentDrawRevisionBuilder:
             if (
                 successor_draw_input.schema_version
                 != "tournament_draw_input_authority.v9"
-                or successor_draw_input.released_wild_card_slot_ordinals < 1
+                or not successor_draw_input.released_wild_card_slot_ordinals
                 or authority.withdrawn_player_id
                 in successor_draw_input.wild_card_player_ids
             ):

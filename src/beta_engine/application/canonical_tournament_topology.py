@@ -149,9 +149,9 @@ def project_canonical_draw_to_match_topology(
                         raise ValueError(
                             "MatchPackage BYE participant conflicts with canonical Draw"
                         )
-                else:
+                elif not live_source.startswith("winner:"):
                     raise ValueError(
-                        "canonical BYE currently requires a directly known player winner"
+                        "canonical BYE live side must resolve from player or feeder"
                     )
                 continue
 

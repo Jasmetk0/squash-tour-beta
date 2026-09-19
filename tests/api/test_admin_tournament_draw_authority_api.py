@@ -89,6 +89,7 @@ def test_canonical_draw_input_commit_and_initial_generation_over_http(tmp_path):
         assert before["initial_draw_generated"] is False
         assert before["draw_authority_fingerprint"] is None
         assert before["main_diagnostics"] == []
+        assert _request("GET", root + "/authority")[0] == 404
 
         commit = _commit_payload(
             run_id=run_id,
@@ -150,6 +151,19 @@ def test_canonical_draw_input_commit_and_initial_generation_over_http(tmp_path):
         assert generated["qualification_section_count"] == 1
         assert generated["qualification_section_sizes"] == [2]
         assert generated["main_diagnostics"] == []
+
+        status, authority = _request("GET", root + "/authority")
+        assert status == 200
+        assert authority["schema_version"] == "tournament_draw_authority.v1"
+        assert authority["algorithm_version"] == "idealized_seed_tiers.v2"
+        assert authority["main"]["bracket_size"] == 4
+        assert len(authority["main"]["slots"]) == 4
+        assert len(authority["main"]["nodes"]) == 3
+        assert authority["main"]["seed_positions"] == [[1, 1]]
+        assert authority["main"]["bye_slot_indexes"] == []
+        assert authority["main"]["qualification_placeholder_slots"][0][0] == "Q1"
+        assert authority["qualification"]["bracket_size"] == 2
+        assert len(authority["qualification"]["nodes"]) == 1
 
         # Initial Draw generation retries exactly against the frozen Draw Input.
         assert _request("POST", root + "/generate", generate) == (200, generated)

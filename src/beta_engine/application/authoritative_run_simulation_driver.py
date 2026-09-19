@@ -71,6 +71,9 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_walkover_authority import (
+    TournamentWalkoverAuthorityStore,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
@@ -89,6 +92,21 @@ class AuthoritativeSimulationCommand(FrozenInput):
     expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_revision_id: str = Field(min_length=1)
     group_id: str | None = None
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeWalkoverCommand(FrozenInput):
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    withdrawn_player_id: str = Field(min_length=1)
 
     @property
     def fingerprint(self) -> str:
@@ -143,6 +161,112 @@ class AuthoritativeRunSimulationDriver:
         self, command: AuthoritativeSimulationCommand, *, fault_at: str | None = None
     ):
         return self._mutate(command, mode="slot", fault_at=fault_at)
+
+    def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
+        """Commit one Master §15.9 W/O without simulating a competitive match.
+
+        This command advances tournament progression only. It intentionally does not
+        call tournament close because W/O point/prize handling remains a separate
+        fail-closed authority boundary.
+        """
+
+        request_fp = fingerprint(
+            {"mode": "walkover", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "simulation command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("walkover command receipt is incomplete")
+                return json.loads(receipt.result_json)
+
+            before = self._position(session, command.run_id, command.branch_id)
+            self._validate_expected(session, command, before)
+            packages, authority_fp = self._authority_package(
+                session,
+                command.run_id,
+                command.branch_id,
+                before.current_week,
+                adopt=True,
+            )
+            self._ensure_current_slot(session, command, packages)
+            current = self._position(session, command.run_id, command.branch_id)
+            if current.current_slot_id is None:
+                raise ValueError("walkover target has no current Simulation Slot")
+            eligible_groups = self._eligible_groups(
+                session, current, packages
+            )
+            if command.group_id not in eligible_groups:
+                raise ValueError(
+                    "walkover target is completed, blocked, or outside the current slot"
+                )
+
+            slot = session.get(
+                SimulationSlotModel,
+                (
+                    command.run_id,
+                    command.branch_id,
+                    command.expected_week.ordinal,
+                    current.current_slot_id,
+                ),
+            )
+            if slot is None:
+                raise ValueError("walkover current Simulation Slot disappeared")
+            plan = AuthoritativeSlotMatchExecutor._load_plan(slot)
+            try:
+                event_plan = next(
+                    item
+                    for item in plan.match_events
+                    if item.group_id == command.group_id
+                )
+            except StopIteration as exc:
+                raise ValueError("walkover target group is not planned") from exc
+
+            result = TournamentWalkoverAuthorityStore(session).commit(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                event_id=event_plan.event_id,
+                command_id=command.command_id,
+                withdrawn_player_id=command.withdrawn_player_id,
+                slot_id=slot.slot_id,
+                group_id=command.group_id,
+            )
+            after = self._position(session, command.run_id, command.branch_id)
+            payload = {
+                "walkover": {
+                    "authority_fingerprint": result.authoritative_input.fingerprint,
+                    "result_fingerprint": result.result_fingerprint,
+                    "event_id": result.authoritative_input.event_id,
+                    "match_id": result.result.match_id,
+                    "winner_player_id": result.result.winner_player_id,
+                    "withdrawn_player_id": result.result.loser_player_id,
+                    "scoreline": result.result.scoreline,
+                },
+                "position": after.model_dump(mode="json"),
+                "authority_fingerprint": authority_fp,
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
 
     def _mutate(self, command, *, mode: Literal["match", "slot"], fault_at=None):
         request_fp = fingerprint(

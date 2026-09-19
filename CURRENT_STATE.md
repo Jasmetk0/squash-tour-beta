@@ -392,14 +392,20 @@ withdrawn-player cutoff and physical/seed provenance. Draw Input v6 stores
 `LL1..LLn` chronology, Draw revision v9 stores the frozen slot mutation, and
 unresolved LL placeholders remain blocked from executable topology.
 
-Bracket-Q candidate ranking is now canonical. The
-`tournament_lucky_loser_order.v1` resolver reads the current canonical Q Draw,
+Bracket-Q candidate ranking is now canonical. Historical
+`tournament_lucky_loser_order.v1` remains the played-terminal contract; new
+`tournament_lucky_loser_order.v2` additionally freezes structurally resolved
+auto-BYE Qualification terminals. The resolver reads the current canonical Q Draw,
 validated authoritative Q match receipts and the frozen Tournament Ranking Snapshot.
-It waits until every real Q terminal is resolved, then orders eliminated players by
+A one-player Q section counts as complete only when its terminal winner can be
+derived unambiguously through BYE sources with no real match required. Such a section
+adds no LL candidate, because nobody lost; mixed Q tournaments can therefore combine
+played terminal receipts with auto-BYE terminal evidence. The resolver still waits
+for every non-BYE terminal to have a real result, then orders eliminated players by
 highest reached Q round and uses Tournament Ranking rank only inside the same
-elimination round. The authority freezes terminal result fingerprints plus every
-candidate's elimination result, so a later fill does not recalculate historical LL
-priority from mutable state.
+elimination round. The authority freezes one terminal fingerprint per Q section plus
+every candidate's elimination result, so later fills do not recalculate historical
+LL priority from mutable state.
 
 Bracket-Q LL placeholder filling is now canonical. `tournament_lucky_loser_fill.v1`
 freezes the original LL order authority, the next chronological `LLx` slot, selected

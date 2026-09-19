@@ -4921,6 +4921,15 @@ def test_frozen_ordinary_fallback_late_bye_reprojects_without_dangling_feeder(
         assert bye_match_id not in executable_ids
         assert topology.terminal_group_id in executable_ids
         assert len(topology.qualifier_promotions) == 1
+        promotion = topology.qualifier_promotions[0]
+        assert promotion.target_match_id == bye_match_id
+
+        # The repaired BYE target itself is non-executable. Its downstream path must
+        # depend on the Qualification feeder directly, never on winner:<bye-match>.
+        assert any(
+            f"winner:{promotion.source_match_id}" in (plan.participant_sources or ())
+            for plan in topology.plans
+        )
 
         for plan in topology.plans:
             for participant_source in plan.participant_sources or ():

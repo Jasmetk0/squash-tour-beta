@@ -21,6 +21,9 @@ from beta_engine.domain.tournaments.result_authority import (
 )
 
 
+pytestmark = pytest.mark.pr_critical
+
+
 def _points(**values: int) -> FrozenPointAwardAuthority:
     return FrozenPointAwardAuthority(
         ranking_status="ranked",

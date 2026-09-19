@@ -990,10 +990,8 @@ def test_main_withdrawal_full_redraw_atomically_repairs_main_and_qualification(d
         assert draw_store.get(
             run_id="run", branch_id="branch", event_id="event"
         ) == revision.successor_draw
-        assert tuple(
-            section.section_id
-            for section in revision.successor_draw.qualification_brackets
-        ) == ("Q1",)
+        assert len(revision.successor_draw.qualification_brackets) == 1
+        assert revision.successor_draw.qualification_brackets[0].section_id is None
         assert {
             placeholder_id
             for placeholder_id, _ in revision.successor_draw.main.qualifier_placeholder_slots
@@ -1036,10 +1034,8 @@ def test_qualification_only_withdrawal_redraw_preserves_main(database):
         assert revision.successor_draw.main.qualifier_placeholder_slots == (
             initial.main.qualifier_placeholder_slots
         )
-        assert tuple(
-            section.section_id
-            for section in revision.successor_draw.qualification_brackets
-        ) == ("Q1",)
+        assert len(revision.successor_draw.qualification_brackets) == 1
+        assert revision.successor_draw.qualification_brackets[0].section_id is None
 
 
 def test_full_redraw_checks_each_affected_component_phase(database):

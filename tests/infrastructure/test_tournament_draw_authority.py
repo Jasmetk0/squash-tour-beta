@@ -3951,6 +3951,143 @@ def _fake_single_real_q_terminal(session, monkeypatch, draw):
 
 
 @pytest.mark.pr_critical
+def test_withdrawn_q_winner_turns_exact_linked_main_slot_into_next_lucky_loser(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        draw_input, initial = _install_mixed_auto_bye_q_for_ll_order(session)
+        real_bracket, terminal, q_winner, q_loser = _fake_single_real_q_terminal(
+            session,
+            monkeypatch,
+            initial,
+        )
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+
+        original_resolve = TournamentPlayerReplacementCutoffAuthorityStore.resolve
+
+        def component_resolve(
+            self,
+            *,
+            run_id,
+            branch_id,
+            event_id,
+            player_id,
+            draw_type=None,
+        ):
+            if player_id == q_winner and draw_type == "main":
+                return TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                    player_id=player_id,
+                    played_matches=(),
+                    draw_type="main",
+                )
+            return original_resolve(
+                self,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                player_id=player_id,
+                draw_type=draw_type,
+            )
+
+        monkeypatch.setattr(
+            TournamentPlayerReplacementCutoffAuthorityStore,
+            "resolve",
+            component_resolve,
+        )
+
+        section_id = real_bracket.section_id
+        assert section_id is not None
+        original_q_slot = next(
+            slot
+            for slot in initial.main.slots
+            if slot.entrant_kind == "qualifier_placeholder"
+            and slot.placeholder_id == section_id
+        )
+        untouched_q_slots = {
+            slot.placeholder_id: slot.slot_index
+            for slot in initial.main.slots
+            if slot.entrant_kind == "qualifier_placeholder"
+            and slot.placeholder_id != section_id
+        }
+
+        store = TournamentDrawRevisionStore(session)
+        vacancy = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="q-winner-to-ll1",
+            withdrawn_player_id=q_winner,
+            main_process_window_ordinal=3,
+        )
+
+        authority = vacancy.lucky_loser_vacancy_authority
+        assert authority is not None
+        assert authority.schema_version == "tournament_lucky_loser_vacancy.v2"
+        assert authority.placeholder_id == "LL1"
+        assert authority.physical_slot_index == original_q_slot.slot_index
+        assert authority.vacated_main_seed_number is None
+        assert authority.withdrawn_player_cutoff_authority.schema_version == (
+            "tournament_player_replacement_cutoff.v2"
+        )
+        assert authority.withdrawn_player_cutoff_authority.draw_type == "main"
+        assert authority.withdrawn_player_cutoff_authority.status == "replacement_open"
+
+        evidence = authority.qualification_winner_evidence
+        assert evidence is not None
+        assert evidence.section_id == section_id
+        assert evidence.terminal_match_id == terminal.node_id
+        assert evidence.winner_player_id == q_winner
+        assert evidence.evidence_kind == "played_terminal"
+
+        repaired = vacancy.successor_draw.main.slots[original_q_slot.slot_index - 1]
+        assert repaired.entrant_kind == "lucky_loser_placeholder"
+        assert repaired.placeholder_id == "LL1"
+        assert repaired.player_id is None
+        assert repaired.seed_number is None
+        assert section_id not in dict(
+            vacancy.successor_draw.main.qualifier_placeholder_slots
+        )
+        assert untouched_q_slots.items() <= dict(
+            vacancy.successor_draw.main.qualifier_placeholder_slots
+        ).items()
+        assert dict(vacancy.successor_draw.main.lucky_loser_placeholder_slots) == {
+            "LL1": original_q_slot.slot_index
+        }
+
+        # Historical Q field remains frozen; only its linked active Main Q slot
+        # has become the chronological LL vacancy.
+        assert vacancy.successor_draw_input.qualification_player_ids == (
+            draw_input.qualification_player_ids
+        )
+        assert vacancy.successor_draw_input.qualifier_placeholder_ids == (
+            draw_input.qualifier_placeholder_ids
+        )
+        assert q_winner not in vacancy.successor_draw_input.withdrawn_player_ids
+
+        fill = store.fill_next_frozen_lucky_loser(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="fill-q-winner-ll1",
+            main_process_window_ordinal=3,
+        )
+        filled = fill.successor_draw.main.slots[original_q_slot.slot_index - 1]
+        assert filled.entrant_kind == "player"
+        assert filled.player_id == q_loser
+        assert filled.entry_status == "lucky_loser"
+        assert filled.lucky_loser_placeholder_id == "LL1"
+        assert filled.seed_number is None
+
+
+@pytest.mark.pr_critical
 def test_lucky_loser_order_accepts_mixed_auto_bye_terminal(
     database,
     monkeypatch,

@@ -1440,6 +1440,63 @@ export type CanonicalDrawGeneratePayload = {
   expected_draw_input_fingerprint: string
 }
 
+export type CanonicalDrawProcessWindowPolicy = {
+  process_window_count: number
+  redraw_cutoff_window_ordinal: number
+  draw_freeze_window_ordinal: number
+}
+
+export type CanonicalTournamentDrawProcessState = {
+  schema_version: 'canonical_tournament_draw_process_state.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  draw_authority_fingerprint: string
+  has_qualification: boolean
+  configured: boolean
+  authority_fingerprint: string | null
+  main: CanonicalDrawProcessWindowPolicy | null
+  qualification: CanonicalDrawProcessWindowPolicy | null
+}
+
+export type CanonicalDrawProcessConfigurePayload = {
+  schema_version: 'canonical_tournament_draw_process_configure_command.v1'
+  command_id: string
+  run_id: string
+  branch_id: string
+  event_id: string
+  expected_draw_authority_fingerprint: string
+  main_process_window_count: number
+  qualification_process_window_count: number | null
+}
+
+export type CanonicalTournamentDrawRevisionSummary = {
+  sequence: number
+  schema_version: string
+  command_id: string
+  repair_kind: string
+  affected_draw_types: string[]
+  withdrawn_player_ids: string[]
+  main_process_window_ordinal: number | null
+  qualification_process_window_ordinal: number | null
+  main_repair_action: string | null
+  qualification_repair_action: string | null
+  repair_draw_seed: number | null
+  predecessor_draw_fingerprint: string
+  successor_draw_input_fingerprint: string
+  successor_draw_fingerprint: string
+}
+
+export type CanonicalTournamentDrawRevisionHistoryState = {
+  schema_version: 'canonical_tournament_draw_revision_history.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  initial_draw_fingerprint: string
+  effective_draw_fingerprint: string
+  revisions: CanonicalTournamentDrawRevisionSummary[]
+}
+
 export type ApplyPreDrawWithdrawalPayload = {
   withdrawn_player_id: string
 }

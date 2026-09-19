@@ -2135,10 +2135,6 @@ class AuthoritativeRunSimulationDriver:
             result = None
             awards = None
             if draw_fp is not None:
-                if evidence.calendar_event is None:
-                    raise ValueError(
-                        "canonical tournament close lacks frozen Calendar Event evidence"
-                    )
                 (
                     _,
                     canonical_result,
@@ -2188,26 +2184,34 @@ class AuthoritativeRunSimulationDriver:
                 ),
             )
             if canonical_result is not None and canonical_awards is not None:
-                if canonical_prize_awards is None:
-                    raise ValueError(
-                        "Canonical tournament close produced no prize-money authority"
-                    )
                 prepare_canonical_tournament_ranking_sources(
                     binding,
                     canonical_result,
                     canonical_awards,
                 )
-                source = OwnedTournamentRankingSource(
-                    schema_version="owned_tournament_ranking_source.v5",
-                    binding=binding,
-                    canonical_result=canonical_result,
-                    canonical_awards=canonical_awards,
-                    canonical_prize_awards=canonical_prize_awards,
-                    adopted_by_command_id=command.command_id,
-                    provenance_kind=(
-                        "canonical_run_owned_tournament_authorities_and_prize_money"
-                    ),
-                )
+                if canonical_prize_awards is not None:
+                    source = OwnedTournamentRankingSource(
+                        schema_version="owned_tournament_ranking_source.v5",
+                        binding=binding,
+                        canonical_result=canonical_result,
+                        canonical_awards=canonical_awards,
+                        canonical_prize_awards=canonical_prize_awards,
+                        adopted_by_command_id=command.command_id,
+                        provenance_kind=(
+                            "canonical_run_owned_tournament_authorities_and_prize_money"
+                        ),
+                    )
+                else:
+                    # Historical adopted authorities before Calendar Event snapshot
+                    # freezing cannot reconstruct prize configuration safely.
+                    source = OwnedTournamentRankingSource(
+                        schema_version="owned_tournament_ranking_source.v4",
+                        binding=binding,
+                        canonical_result=canonical_result,
+                        canonical_awards=canonical_awards,
+                        adopted_by_command_id=command.command_id,
+                        provenance_kind="canonical_run_owned_tournament_authorities",
+                    )
             else:
                 if result is None or awards is None:
                     raise ValueError("Legacy tournament close produced no packages")

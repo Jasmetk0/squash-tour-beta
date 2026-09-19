@@ -82,7 +82,11 @@ class TournamentEntryFieldCapacity(FrozenInput):
         )
 
     @model_validator(mode="after")
-    def validate_reserved_main_slots(self) -> "TournamentEntryFieldCapacity":
+    def validate_classic_main_capacity(self) -> "TournamentEntryFieldCapacity":
+        if self.main_draw_size < 2 or self.main_draw_size & (self.main_draw_size - 1):
+            raise ValueError(
+                "Classic Main Draw capacity must be one of 2, 4, 8, 16, 32, 64, 128"
+            )
         reserved = self.qualifier_spots + self.wild_card_slots + self.bye_slots
         if reserved > self.main_draw_size:
             raise ValueError("Reserved Main Draw slots exceed Main Draw capacity")

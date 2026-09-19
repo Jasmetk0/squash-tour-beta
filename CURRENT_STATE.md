@@ -341,14 +341,17 @@ Canonical point/ranking handling now follows Master §16.3: stage progression fr
 W/O is eligible for the same authored ranking-point value as that finishing stage,
 while the point builder independently verifies that BYE/W/O evidence did not leak
 into played win/loss counters. A terminal post-cutoff W/O now runs the normal
-canonical tournament close in the same command and can persist an
-`OwnedTournamentRankingSource v4`. The first canonical prize-money configuration
-boundary now exists on Tournament Template / Edition: an optional original 3-letter
-currency plus a partial-capable finishing-stage payout table. Missing stages remain
-Unknown rather than becoming zero, known payouts must strictly increase with later
-finishing stages, and the historical aggregate `prize_money` field is retained only
-for compatibility instead of being reverse-engineered into stage payouts. Dedicated
-run-owned payout calculation/history authority remains separate follow-up work.
+canonical tournament close in the same command. New canonical closes persist
+`OwnedTournamentRankingSource v5`, adding immutable
+`TournamentPrizeMoneyAwardAuthority v1` beside the existing Result and Point Award
+authorities. Prize awards use only the player's canonical finishing stage plus the
+Edition's frozen original-currency stage table: W/O therefore unlocks the payout of
+the actually reached stage without becoming a played win, successful Q/LL entrants
+receive only their final Main payout, and missing payout stages remain Unknown rather
+than zero. Partial tables persist a known awarded subtotal but keep total prize pool
+status Incomplete/Unknown; events with no payout table are explicitly
+`not_configured`. Historical v1-v4 owned tournament sources remain readable and
+retain their old fingerprint contracts.
 
 Frozen external RWC repair is now canonical for the bounded case where an
 unseeded active WC holder withdraws after Main Draw Freeze and the next available

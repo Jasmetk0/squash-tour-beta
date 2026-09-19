@@ -135,10 +135,9 @@ class TournamentDrawInputAuthority(FrozenInput):
         ge=0,
         exclude_if=lambda value: value == 0,
     )
-    released_wild_card_slot_count: int = Field(
-        default=0,
-        ge=0,
-        exclude_if=lambda value: value == 0,
+    released_wild_card_slot_ordinals: tuple[int, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
     )
     withdrawn_player_ids: tuple[str, ...]
     main_seed_player_ids: tuple[str, ...]
@@ -320,14 +319,28 @@ class TournamentDrawInputAuthority(FrozenInput):
                 )
             if (
                 self.schema_version == "tournament_draw_input_authority.v8"
-                and self.released_wild_card_slot_count
+                and self.released_wild_card_slot_ordinals
             ):
                 raise ValueError("Draw Input v8 cannot carry released WC slots")
             if (
                 self.schema_version == "tournament_draw_input_authority.v9"
-                and not self.released_wild_card_slot_count
+                and not self.released_wild_card_slot_ordinals
             ):
                 raise ValueError("Draw Input v9 requires released WC-slot lineage")
+            if self.schema_version == "tournament_draw_input_authority.v9":
+                if tuple(
+                    sorted(set(self.released_wild_card_slot_ordinals))
+                ) != self.released_wild_card_slot_ordinals:
+                    raise ValueError(
+                        "Released WC-slot ordinals must be sorted and unique"
+                    )
+                if any(
+                    ordinal < 1 or ordinal > self.capacity.wild_card_slots
+                    for ordinal in self.released_wild_card_slot_ordinals
+                ):
+                    raise ValueError(
+                        "Released WC-slot ordinal is outside reserved WC capacity"
+                    )
             expected_main_occupants = (
                 len(self.direct_main_player_ids)
                 + len(self.wild_card_player_ids)
@@ -342,7 +355,7 @@ class TournamentDrawInputAuthority(FrozenInput):
         elif (
             self.replacement_source_authority_fingerprints
             or self.late_bye_count
-            or self.released_wild_card_slot_count
+            or self.released_wild_card_slot_ordinals
         ):
             raise ValueError(
                 "Historical Draw Input cannot carry replacement-source fallback lineage"
@@ -390,7 +403,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             if self.schema_version == "tournament_draw_input_authority.v9":
                 if (
                     len(self.wild_card_player_ids)
-                    + self.released_wild_card_slot_count
+                    + len(self.released_wild_card_slot_ordinals)
                     != self.capacity.wild_card_slots
                 ):
                     raise ValueError(
@@ -421,7 +434,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             self.wild_card_player_ids
             or self.wild_card_authority_fingerprint is not None
             or self.post_draw_wild_card_repair_fingerprints
-            or self.released_wild_card_slot_count
+            or self.released_wild_card_slot_ordinals
         ):
             raise ValueError("Historical Draw Input cannot carry canonical WC authority")
         return self
@@ -485,7 +498,23 @@ class TournamentDrawInputAuthorityBuilder:
         direct = list(previous.direct_main_player_ids)
         wild_cards = list(previous.wild_card_player_ids)
         released_wild_card_slot = wild_card_count == 1
+        released_wild_card_slot_ordinals = list(
+            previous.released_wild_card_slot_ordinals
+        )
         if released_wild_card_slot:
+            compact_index = wild_cards.index(withdrawn_player_id)
+            already_released = set(released_wild_card_slot_ordinals)
+            active_wc_ordinals = tuple(
+                ordinal
+                for ordinal in range(1, previous.capacity.wild_card_slots + 1)
+                if ordinal not in already_released
+            )
+            if len(active_wc_ordinals) != len(wild_cards):
+                raise ValueError("Active WC identities do not map to WC-slot ordinals")
+            released_wild_card_slot_ordinals.append(
+                active_wc_ordinals[compact_index]
+            )
+            released_wild_card_slot_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
         else:
             direct.remove(withdrawn_player_id)
@@ -507,14 +536,13 @@ class TournamentDrawInputAuthorityBuilder:
             *previous.replacement_source_authority_fingerprints,
             replacement_source_authority_fingerprint,
         )
-        released_wild_card_slot_count = (
-            previous.released_wild_card_slot_count
-            + (1 if released_wild_card_slot else 0)
+        released_wild_card_slot_ordinals = tuple(
+            released_wild_card_slot_ordinals
         )
         return TournamentDrawInputAuthority(
             schema_version=(
                 "tournament_draw_input_authority.v9"
-                if released_wild_card_slot_count
+                if released_wild_card_slot_ordinals
                 else "tournament_draw_input_authority.v8"
             ),
             run_id=previous.run_id,
@@ -543,7 +571,7 @@ class TournamentDrawInputAuthorityBuilder:
             lucky_loser_player_ids=previous.lucky_loser_player_ids,
             replacement_source_authority_fingerprints=lineage,
             late_bye_count=previous.late_bye_count + (1 if create_bye else 0),
-            released_wild_card_slot_count=released_wild_card_slot_count,
+            released_wild_card_slot_ordinals=released_wild_card_slot_ordinals,
             withdrawn_player_ids=tuple(
                 sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
             ),
@@ -639,7 +667,7 @@ class TournamentDrawInputAuthorityBuilder:
                 previous.replacement_source_authority_fingerprints
             ),
             late_bye_count=previous.late_bye_count,
-            released_wild_card_slot_count=previous.released_wild_card_slot_count,
+            released_wild_card_slot_ordinals=previous.released_wild_card_slot_ordinals,
             withdrawn_player_ids=tuple(
                 sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
             ),
@@ -719,7 +747,7 @@ class TournamentDrawInputAuthorityBuilder:
                 previous.replacement_source_authority_fingerprints
             ),
             late_bye_count=previous.late_bye_count,
-            released_wild_card_slot_count=previous.released_wild_card_slot_count,
+            released_wild_card_slot_ordinals=previous.released_wild_card_slot_ordinals,
             withdrawn_player_ids=previous.withdrawn_player_ids,
             main_seed_player_ids=previous.main_seed_player_ids,
             qualification_seed_player_ids=previous.qualification_seed_player_ids,
@@ -893,7 +921,7 @@ class TournamentDrawInputAuthorityBuilder:
                 previous.replacement_source_authority_fingerprints
             ),
             late_bye_count=previous.late_bye_count,
-            released_wild_card_slot_count=previous.released_wild_card_slot_count,
+            released_wild_card_slot_ordinals=previous.released_wild_card_slot_ordinals,
             withdrawn_player_ids=withdrawn,
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=tuple(qualification_seed_players),

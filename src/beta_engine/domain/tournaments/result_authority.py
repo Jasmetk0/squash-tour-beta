@@ -365,6 +365,13 @@ def build_tournament_result_authority(
     for player_id in qualification_winners:
         if player_id not in stats:
             raise ValueError("Qualification winner has no completed result history")
+        # A Qualification winner can withdraw before their first real Main match.
+        # In that case the linked Main Q slot may be repaired to LL/reserve/BYE,
+        # but the completed Qualification win remains historical sporting truth.
+        # Preserve a Qualification stage so canonical close/points do not turn
+        # that player into an unknown Main-stage result.
+        if stats[player_id]["draws"] == {"qualification"}:
+            stats[player_id]["stage"] = "qualification_winner"
     if champion_id not in stats or finalist_id not in stats:
         raise ValueError("Main terminal players are absent from result history")
     stats[champion_id]["stage"] = "champion"

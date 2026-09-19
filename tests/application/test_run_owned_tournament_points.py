@@ -40,6 +40,8 @@ from beta_engine.domain.tournaments.prize_money_award_authority import (
     build_tournament_prize_money_award_authority,
 )
 from beta_engine.domain.tournaments.result_authority import (
+    TournamentPlayerResultAuthority,
+    TournamentResultAuthority,
     build_tournament_result_authority,
     project_tournament_result_legacy_dto,
 )
@@ -469,6 +471,70 @@ def test_owned_source_v5_freezes_prize_money_and_ranking_remains_point_bound(dat
         for award in point_authority.awards
     }
     assert {row.player_id: row.points for row in snapshot.rows} == expected
+
+
+@pytest.mark.pr_critical
+def test_prize_money_required_q_stages_use_each_section_capacity():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="A",
+        finalist_player_id="B",
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="champion",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="finalist",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="QX",
+                draw_type="qualification",
+                reached_stage="qualification_semifinal",
+            ),
+        ),
+        matches=(),
+    )
+    event = _event().model_copy(
+        update={
+            "main_draw_size": 2,
+            "qualification_draw_size": 16,
+            "qualifier_spots": 4,
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "qualification_semifinal": 500,
+                "qualification_final": 1000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+
+    assert authority.required_stage_ids == (
+        "qualification_semifinal",
+        "qualification_final",
+        "finalist",
+        "champion",
+    )
+    assert "qualification_round" not in authority.required_stage_ids
+    assert authority.configuration_status == "complete"
+    q_award = next(
+        award for award in authority.awards if award.player_id == "QX"
+    )
+    assert q_award.amount == 500
 
 
 @pytest.mark.pr_critical

@@ -66,7 +66,7 @@ class AcceptanceList(BaseModel):
     template_id: str
     season: int = Field(ge=1900)
     week: int = Field(ge=1, le=61)
-    main_draw_size: int = Field(gt=0)
+    main_draw_size: int = Field(gt=0, le=128)
     qualification_draw_size: int = Field(ge=0)
     qualifier_spots: int = Field(ge=0)
     wild_card_slots: int = Field(ge=0)

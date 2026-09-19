@@ -400,9 +400,28 @@ players while preserving their original Qualification membership, and Draw revis
 v10 records the exact fill. All later LL fills reuse the same frozen order authority
 instead of recalculating priority after the Draw changes.
 
-If every LL candidate is unavailable/used, the fill fails closed with an explicit
-**external reserve fallback required** boundary. The next work is therefore to wire
-RWC exhaustion and LL exhaustion into the shared replacement-source chain, then add
-external reserve / late BYE behavior. Auto-BYE-only Qualification terminals and
-group-Qualification LL ordering remain later Gate 3 work. Legacy simulation-run
-UI/endpoint retirement remains separate Gate 3 work.
+A shared **Main Draw replacement-source authority** now owns the source-priority
+chain instead of leaving RWC, LL and reserve rules as disconnected mechanisms.
+`tournament_replacement_source.v1` freezes the current Draw/Input, exact physical
+slot, player-specific replacement cutoff, Q/Main start evidence, unavailable set,
+prior LL assignments, external-reserve ordering and any WC/LL authority used by the
+decision. Its priority is Master-driven: closed player cutoff → `W/O`; WC slot →
+available `RWC`; before Qualification starts → highest eligible Q-list player; after
+Qualification starts but before Q completes → pending `LLx`; after Q completes →
+frozen LL order; after LL exhaustion → external reserves in frozen ranking order;
+if nobody remains and Main has not started → late `BYE`. Active Main and active
+Qualification players are excluded from external-reserve reuse.
+
+The resolver derives Q/Main start evidence from authoritative match receipts and
+reads the effective Draw Input / Entry Field from the latest revision chain, so it
+cannot accidentally fall back to stale pre-revision state. One deliberately
+fail-closed edge remains: if Main has already started elsewhere, this player's own
+replacement cutoff is still open, and every candidate source is exhausted, Master
+§15.8 does not yet state an explicit action for that intermediate state. The engine
+therefore refuses to invent one.
+
+Next work is to make one **orchestrator command consume this source authority** and
+route into the already-canonical RWC, LL, external-reserve, BYE and W/O mutations.
+Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
+later Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate
+Gate 3 work.

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from math import ceil, log2
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -213,16 +214,7 @@ def build_tournament_prize_money_award_authority(
             key=lambda stage: stage_order[stage],
         )
     )
-    required_stage_ids = tuple(
-        sorted(
-            (
-                stage
-                for stage in event.required_ranking_point_stages
-                if stage != "qualification_winner"
-            ),
-            key=lambda stage: stage_order[stage],
-        )
-    )
+    required_stage_ids = _required_prize_money_stages(event)
     config_payload = {
         "event_id": event.event_id,
         "original_currency": event.prize_money_currency,
@@ -302,6 +294,48 @@ def build_tournament_prize_money_award_authority(
         unknown_award_count=unknown_count,
         total_prize_pool_status=total_status,
         total_prize_pool_amount=total_amount,
+    )
+
+
+def _required_prize_money_stages(event: CalendarEvent) -> tuple[str, ...]:
+    """Return physical finishing stages for the Edition's actual draw geometry."""
+
+    main: list[str] = ["champion"]
+    if event.main_draw_size >= 2:
+        main.append("finalist")
+    if event.main_draw_size >= 4:
+        main.append("semifinal")
+    if event.main_draw_size >= 8:
+        main.append("quarterfinal")
+    for size, stage in (
+        (16, "round_of_16"),
+        (32, "round_of_32"),
+        (64, "round_of_64"),
+        (128, "round_of_128"),
+    ):
+        if event.main_draw_size >= size:
+            main.append(stage)
+
+    qualification: list[str] = []
+    if event.qualification_draw_size > 0:
+        section_count = max(1, event.qualifier_spots)
+        section_capacity = max(
+            1,
+            ceil(event.qualification_draw_size / section_count),
+        )
+        rounds = max(1, ceil(log2(section_capacity)))
+        qualification.append("qualification_final")
+        if rounds >= 2:
+            qualification.append("qualification_semifinal")
+        if rounds >= 3:
+            qualification.append("qualification_round")
+
+    order = {stage: index for index, stage in enumerate(PRIZE_MONEY_STAGE_ORDER)}
+    return tuple(
+        sorted(
+            {*qualification, *main},
+            key=lambda stage: order[stage],
+        )
     )
 
 

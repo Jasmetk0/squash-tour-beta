@@ -801,7 +801,7 @@ def test_qualification_winner_walkover_unlocks_main_stage_and_keeps_additive_q_p
                 reached_stage="champion",
                 final_round_number=3,
                 last_match_id="final",
-                wins=2,
+                wins=1,
                 losses=0,
             ),
             TournamentPlayerResultAuthority(

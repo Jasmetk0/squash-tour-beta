@@ -4095,6 +4095,56 @@ def test_withdrawn_q_winner_turns_exact_linked_main_slot_into_next_lucky_loser(
         assert filled.lucky_loser_placeholder_id == "LL1"
         assert filled.seed_number is None
 
+        event = CalendarEvent(
+            event_id="event",
+            season="2000/2001",
+            season_week=1,
+            calendar_year=2000,
+            year_week=1,
+            template_id="template",
+            event_name="Q Winner LL Repair Open",
+            category="TEST",
+            tour_level="WORLD_TOUR",
+            host_country="CZE",
+            region="Europe",
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=2,
+        )
+        package = build_run_owned_match_package(
+            draw=fill.successor_draw,
+            event=event,
+            week=RankingWeek(season_index=0, week=1),
+        )
+        topology = project_canonical_draw_to_match_topology(
+            draw=fill.successor_draw,
+            package=package,
+        )
+
+        # The filled LL slot is now an ordinary known Main participant. The Q
+        # section that produced the withdrawn winner remains historical, but no
+        # longer owns a Main promotion target.
+        assert any(
+            q_loser in (match.top_player_id, match.bottom_player_id)
+            for match in package.main_draw_matches
+        )
+        assert any(
+            f"player:{q_loser}" in (plan.participant_sources or ())
+            for plan in topology.plans
+        )
+        assert len(topology.qualifier_promotions) == 1
+        assert all(
+            promotion.source_match_id != terminal.node_id
+            for promotion in topology.qualifier_promotions
+        )
+
+        executable_ids = {plan.group_id for plan in topology.plans}
+        assert topology.terminal_group_id in executable_ids
+        for plan in topology.plans:
+            for source in plan.participant_sources or ():
+                if source.startswith("winner:"):
+                    assert source.removeprefix("winner:") in executable_ids
+
 
 def _prepare_orchestrated_q_winner_replacement(
     session,

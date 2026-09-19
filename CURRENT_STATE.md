@@ -372,8 +372,17 @@ promoted RWC is unseeded, the exact vacated Q slot is filled directly and seed
 structure remains unchanged. After Q Freeze, revision v7 keeps the existing exact
 frozen-slot behavior. Saved Revision replay validates the same phase and redraw seed.
 
-The workflow still fails closed for seeded Q-RWC promotion before Q Freeze and for
-RWC exhaustion. The generic middle seed-cascade phase still intentionally requires
-replacement-backed player-count parity. Lucky Loser ordering and group Qualification
-remain Gate 3 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Seeded Q-RWC promotion now follows the Q phase too. Before Q Redraw Cutoff,
+successor Draw Input is re-seeded from the new ranking-ordered Q field and revision
+v8 fully redraws Qualification with the persisted repair seed. In the middle Q phase,
+the generic seed-cascade engine consumes the seeded departure: surviving seeds retain
+their own seed numbers, unseeded players can move into the vacated physical tier
+without inheriting a seed, and Draw Input v5 records any resulting seed vacancy.
+After Q Freeze, the existing v7 frozen-vacancy repair remains authoritative.
+
+The WC/RWC workflow now fails closed mainly for RWC exhaustion / fallback to the
+ordinary replacement source. The generic middle seed-cascade phase still intentionally
+requires replacement-backed player-count parity. Lucky Loser ordering and group
+Qualification remain Gate 3 work. See
+`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

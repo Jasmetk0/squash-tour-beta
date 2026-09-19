@@ -420,24 +420,28 @@ players now active in Main or Qualification, even when they came from an older
 below-cut list. The resolver reads the latest revision successor field/input rather
 than stale persisted base state.
 
-The first unified execution layer is now canonical for **frozen Main Draw**
-vacancies. `AuthoritativeFrozenMainReplacement` resolves
+The unified execution layer is canonical for **frozen Main Draw** vacancies.
+`AuthoritativeFrozenMainReplacement` resolves
 `tournament_replacement_source.v1` and dispatches deterministic child commands into
-the already-canonical RWC, pre-Q Q-promotion, LL vacancy/fill and W/O paths. New
-Draw Input v8 plus Draw revision v11 cover the two previously missing exact-slot
-mutations: post-Q external reserve and source-aware late BYE. Both embed/freeze the
-replacement-source authority lineage; external reserves enter without inherited seed
-or special badge, and BYE remains in the exact vacated physical slot. Revision
-history rebuilds v8/v11 from the frozen source authority rather than recalculating
-today's candidate state.
+the canonical RWC, pre-Q Q-promotion, LL vacancy/fill, reserve/BYE and W/O paths.
+Draw Input v8 plus Draw revision v11 cover ordinary Direct-Main external reserve and
+late BYE. Exhausted WC slots can now enter the same ordinary reserve/BYE fallback:
+Draw Input v9 freezes how many former WC slots have been released, Draw revision v12
+preserves the exact physical slot, and the incoming ordinary reserve does **not**
+inherit WC status. The original Wild Card authority remains immutable provenance;
+active WC identities plus released-WC lineage continue to account for the reserved
+WC capacity. Revision history rebuilds these transitions from frozen source authority
+rather than recalculating today's candidate state.
 
-This unified slice deliberately stops at Main Draw Freeze. Ordinary fallback from a
-WC slot after all RWC are exhausted still needs a schema that can release the WC
-status before routing into LL/reserve/BYE, and pre-Q promotion with explicit
-unavailable-player skips still fails closed until the Q field repair itself consumes
-source authority. The intermediate state where Main has already started, player
-cutoff remains open and all sources are exhausted also remains fail-closed because
-Master §15.8 does not explicitly define it. Auto-BYE-only Q terminals and group-
-Qualification LL ordering remain later edges. See
+This unified slice deliberately stops at Main Draw Freeze. After RWC exhaustion, a
+WC slot can currently fall through canonically to **external reserve or BYE**.
+WC-to-pre-Q Qualification promotion and WC-to-Lucky-Loser fallback remain
+fail-closed until those mutation paths themselves can release WC status without
+re-ranking or losing source lineage. Pre-Q promotion with explicit unavailable-player
+skips also remains fail-closed until Q-field repair consumes source authority. The
+intermediate state where Main has already started, player cutoff remains open and all
+sources are exhausted remains fail-closed because Master §15.8 does not explicitly
+define it. Auto-BYE-only Q terminals and group-Qualification LL ordering remain
+later edges. See
 `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

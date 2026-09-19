@@ -17,8 +17,17 @@ count does not have to be. New callers may derive the canonical capacity with
 `TournamentEntryFieldCapacity.for_main_entrant_count(...)`: it rounds the entrant
 count up to the next power of two and records the difference as explicit initial BYEs.
 For example, 13 entrants become a 16-position bracket with three BYEs, while 28
-entrants become a 32-position bracket with four BYEs. This preserves one canonical
-binary DAG instead of introducing irregular match-node geometry.
+entrants become a 32-position bracket with four BYEs. This is a creation-time
+derivation: once a Tournament Edition owns its capacity, later withdrawals or an
+underfilled field preserve that capacity and become explicit BYEs instead of resizing
+the existing bracket. This preserves one canonical binary DAG instead of introducing
+irregular match-node geometry.
+
+Pre-alpha also exposes derived, non-authoritative Main-bracket diagnostics. They do
+not alter Draw identity or block a technically valid bracket. The first policy set
+warns for every odd entrant count, when more than half of first-round matches contain
+a BYE, and when the Main Draw has more than 64 entrants. Seed-band and section
+asymmetry diagnostics are intentionally deferred for later refinement.
 
 The resulting seed examples are therefore:
 

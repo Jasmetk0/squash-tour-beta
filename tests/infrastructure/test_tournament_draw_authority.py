@@ -254,6 +254,71 @@ def capture(session):
     return payload
 
 
+@pytest.mark.parametrize(
+    ("entrant_count", "expected_capacity", "expected_byes"),
+    (
+        (2, 2, 0),
+        (3, 4, 1),
+        (5, 8, 3),
+        (13, 16, 3),
+        (28, 32, 4),
+        (33, 64, 31),
+    ),
+)
+def test_main_entrant_count_derives_classic_capacity(
+    entrant_count,
+    expected_capacity,
+    expected_byes,
+):
+    capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+        main_entrant_count=entrant_count,
+    )
+
+    assert capacity.main_draw_size == expected_capacity
+    assert capacity.bye_slots == expected_byes
+    assert capacity.direct_main_slots == entrant_count
+
+
+def test_thirteen_player_main_draw_generates_with_three_byes(database):
+    player_ids = tuple(f"P{index:02d}" for index in range(1, 14))
+    applications = tuple(app(player_id, "main") for player_id in player_ids)
+
+    with database.begin() as session:
+        install_ranking_authority(session, player_ids)
+        capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+            main_entrant_count=len(player_ids),
+        )
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications,
+            capacity=capacity,
+            command_id="initial-arbitrary-field",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="commit-arbitrary-draw-input",
+            draw_seed=13013,
+            main_seed_count=4,
+            qualification_seed_count=0,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-arbitrary-draw",
+        )
+
+    assert draw.draw_input_fingerprint == draw_input.fingerprint
+    assert draw.main.bracket_size == 16
+    assert len(draw.main.nodes) == 15
+    assert len(draw.main.bye_slot_indexes) == 3
+    assert sum(slot.entrant_kind == "player" for slot in draw.main.slots) == 13
+
+
 def test_builder_generates_complete_main_and_qualification_brackets(database):
     with database.begin() as session:
         draw_input = install_draw_input(session)

@@ -120,6 +120,23 @@ class CanonicalTournamentDrawService:
                 )
             return authority
 
+    def inspect_effective_authority(
+        self, *, run_id: str, branch_id: str, event_id: str
+    ) -> TournamentDrawAuthority:
+        """Return the current canonical Draw projection after append-only revisions."""
+
+        with self.factory() as session:
+            authority = TournamentDrawAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if authority is None:
+                raise KeyError(
+                    f"Effective Tournament Draw authority does not exist for event '{event_id}'"
+                )
+            return authority
+
     def commit_input(
         self, command: CanonicalDrawInputCommitCommand
     ) -> CanonicalTournamentDrawState:

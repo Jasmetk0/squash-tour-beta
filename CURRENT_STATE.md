@@ -426,7 +426,7 @@ The unified execution layer is canonical for **frozen Main Draw** vacancies.
 the canonical RWC, pre-Q Q-promotion, LL vacancy/fill, reserve/BYE and W/O paths.
 Draw Input v8 plus Draw revision v11 cover ordinary Direct-Main external reserve and
 late BYE. Exhausted WC slots can now enter the same ordinary reserve/BYE fallback:
-Draw Input v9 freezes how many former WC slots have been released, Draw revision v12
+Draw Input v9 freezes the original ordinals of former WC slots that were released, Draw revision v12
 preserves the exact physical slot, and the incoming ordinary reserve does **not**
 inherit WC status. The original Wild Card authority remains immutable provenance;
 active WC identities plus released-WC lineage continue to account for the reserved

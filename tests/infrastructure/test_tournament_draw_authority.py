@@ -1454,9 +1454,11 @@ def install_seed_cascade_main(session, *, player_count=34):
     return initial
 
 
-def install_seed_cascade_multi_q(session):
+def install_seed_cascade_multi_q(session, *, q_player_count=25):
     main_ids = tuple(f"M{index:02d}" for index in range(1, 6))
-    q_ids = tuple(f"Q{index:02d}" for index in range(1, 26))
+    q_ids = tuple(
+        f"Q{index:02d}" for index in range(1, q_player_count + 1)
+    )
     player_ids = (*main_ids, *q_ids)
     install_ranking_authority(session, player_ids)
     TournamentEntryFieldStore(session).stage_initial(
@@ -1638,6 +1640,134 @@ def test_seed_cascade_main_preserves_seed_numbers_and_physical_history(database)
         assert after["P33"].slot_index == before["P09"].slot_index
         assert after["P33"].seed_number is None
         assert after["P02"] == before["P02"]
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_seed_cascade_seeded_q_without_backfill_terminates_in_bye(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(
+            session,
+            q_player_count=24,
+        )
+        before = {
+            slot.player_id: (bracket.section_id, slot)
+            for bracket in initial.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        withdrawn_section_id, withdrawn_slot = before["Q01"]
+        assert withdrawn_slot.seed_number is not None
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="q-seed-cascade-no-backfill",
+            withdrawn_player_ids=("Q01",),
+            qualification_process_window_ordinal=2,
+        )
+
+        assert revision.repair_kind == "seed_cascade_phase"
+        assert revision.affected_draw_types == ("qualification",)
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert revision.main_repair_action is None
+        assert revision.successor_draw.main == initial.main
+        assert len(revision.successor_draw_input.qualification_player_ids) == 23
+        assert "Q01" not in revision.successor_draw_input.qualification_player_ids
+
+        after_players = {
+            slot.player_id
+            for bracket in revision.successor_draw.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        assert after_players == set(
+            revision.successor_draw_input.qualification_player_ids
+        )
+
+        before_byes = sum(
+            len(bracket.bye_slot_indexes)
+            for bracket in initial.qualification_brackets
+        )
+        after_byes = sum(
+            len(bracket.bye_slot_indexes)
+            for bracket in revision.successor_draw.qualification_brackets
+        )
+        assert after_byes == before_byes + 1
+
+        repaired_section = next(
+            bracket
+            for bracket in revision.successor_draw.qualification_brackets
+            if bracket.section_id == withdrawn_section_id
+        )
+        repaired_original_seed_slot = repaired_section.slots[
+            withdrawn_slot.slot_index - 1
+        ]
+        assert repaired_original_seed_slot.entrant_kind == "player"
+        assert repaired_original_seed_slot.player_id is not None
+
+        new_bye_refs = {
+            (bracket.section_id, slot_index)
+            for bracket in revision.successor_draw.qualification_brackets
+            for slot_index in bracket.bye_slot_indexes
+        } - {
+            (bracket.section_id, slot_index)
+            for bracket in initial.qualification_brackets
+            for slot_index in bracket.bye_slot_indexes
+        }
+        assert len(new_bye_refs) == 1
+        assert (
+            withdrawn_section_id,
+            withdrawn_slot.slot_index,
+        ) not in new_bye_refs
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_seed_cascade_unseeded_main_without_backfill_keeps_bye_in_vacated_slot(
+    database,
+):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session, player_count=32)
+        before = draw_player_slots(initial.main)
+        withdrawn = before["P20"]
+        assert withdrawn.seed_number is None
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="main-unseeded-no-backfill",
+            withdrawn_player_ids=("P20",),
+            main_process_window_ordinal=2,
+        )
+
+        assert revision.main_repair_action == "direct_slot_fill"
+        slot = revision.successor_draw.main.slots[
+            withdrawn.slot_index - 1
+        ]
+        assert slot.entrant_kind == "bye"
+        assert slot.player_id is None
+        assert slot.seed_number is None
+        assert withdrawn.slot_index in (
+            revision.successor_draw.main.bye_slot_indexes
+        )
+        assert len(revision.successor_draw_input.direct_main_player_ids) == 31
 
         assert TournamentDrawRevisionStore(session).history(
             run_id="run",

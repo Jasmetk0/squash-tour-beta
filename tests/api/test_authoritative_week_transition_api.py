@@ -481,10 +481,10 @@ def test_failure_at_each_write_boundary_rolls_back_everything(
         assert dump(path) == before and counts(path) == (0, 0, 0, 0)
 
 
-def test_target_week_unowned_run_prospect_blocks_preview_and_confirm(tmp_path):
-    path = tmp_path / "prospect-blocker.db"
+def test_target_week_prospect_is_frozen_as_branch_owned_pre_tour_arrival(tmp_path):
+    path = tmp_path / "prospect-arrival.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        run_id, branch_id, command = prepared_transition(server, "prospect blocker")
+        run_id, branch_id, manual = prepared_transition(server, "prospect arrival")
         with server.app.state.runtime.repository._session_factory.begin() as session:
             session.add(
                 RunProspectModel(
@@ -510,38 +510,90 @@ def test_target_week_unowned_run_prospect_blocks_preview_and_confirm(tmp_path):
                     development_seed="d",
                     potential_seed="x",
                     trait_seed="t",
-                    profile_json="{}",
+                    profile_json='{"ability":"pre-tour"}',
                     development_json="{}",
                     potential_json="{}",
                     trait_json="{}",
                 )
             )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+
+        # A manually assembled transition that ignores the newly materialized
+        # target-week prospect source remains fail-closed.
+        status, blocked = _request("POST", root + "/preview", manual)
+        assert status == 409
+        assert "prospect source fingerprint" in str(blocked)
+
         before = dump(path)
-        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
-        status, blocked = _request("POST", root + "/preview", command)
+        status, preview = _request(
+            "POST",
+            root + "/derived/preview",
+            {"command_id": "derived-prospect-transition"},
+        )
+        assert status == 200, preview
+        assert dump(path) == before
+        command = preview["command"]
+        assert len(command["prospect_source_fingerprint"]) == 64
+        assert preview["result"]["prospect_arrival_count"] == 1
         assert (
-            status == 409
-            and "no authoritative Run/Branch-owned player source bridge" in str(blocked)
+            preview["result"]["prospect_arrival_fingerprint"]
+            == command["prospect_source_fingerprint"]
         )
-        frozen = (
-            transition_module.AuthoritativeWeekTransitionCommand.model_validate_json(
-                json.dumps(command)
+
+        # Changing the Run-global source after review invalidates confirmation.
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE run_prospects SET display_name='Changed after preview' "
+                "WHERE prospect_id='prospect-w2'"
             )
-        )
-        req = request.Request(
-            root,
-            data=json.dumps(command).encode(),
-            method="POST",
-            headers={
-                "Content-Type": "application/json",
-                "X-Week-Transition-Request-Fingerprint": frozen.fingerprint,
-                "X-Week-Transition-Ranking-Fingerprint": "0" * 64,
-            },
-        )
-        with pytest.raises(error.HTTPError) as exc:
-            request.urlopen(req)
-        assert exc.value.code == 409
-        assert dump(path) == before and counts(path) == (0, 0, 0, 0)
+        assert confirm(root, command, preview)[0] == 409
+
+        # Restore the reviewed source bytes and confirm the exact transition.
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE run_prospects SET display_name='Prospect' "
+                "WHERE prospect_id='prospect-w2'"
+            )
+        status, confirmed = confirm(root, command, preview)
+        assert status == 201
+        assert confirmed["result"] == preview["result"]
+
+        with sqlite3.connect(path) as connection:
+            event = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM authoritative_world_events "
+                    "WHERE command_id='derived-prospect-transition'"
+                ).fetchone()[0]
+            )
+            ranking = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM published_official_rankings "
+                    "WHERE week_ordinal=1"
+                ).fetchone()[0]
+            )
+        assert event["prospect_arrival_count"] == 1
+        assert event["prospect_arrival_fingerprint"] == command[
+            "prospect_source_fingerprint"
+        ]
+        assert event["prospect_arrivals"][0]["prospect_id"] == "prospect-w2"
+        assert event["prospect_arrivals"][0]["status"] == "prospect"
+        assert event["prospect_arrivals"][0]["profile"] == {"ability": "pre-tour"}
+        assert "prospect-w2" not in {row["player_id"] for row in ranking["rows"]}
+
+        # Exact retry uses the branch-owned World Event evidence, not mutable
+        # Run-global prospect rows.
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE run_prospects SET display_name='Changed after commit' "
+                "WHERE prospect_id='prospect-w2'"
+            )
+        assert confirm(root, command, preview) == (201, confirmed)
+
+
 
 
 @pytest.mark.pr_critical

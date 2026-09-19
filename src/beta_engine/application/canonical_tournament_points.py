@@ -172,7 +172,11 @@ def build_tournament_point_award_authority(
         points = max(0, int(distribution[point_stage]))
         player_fp = _hash(player.model_dump(mode="json"))
         award_fp_payload = {
-            "schema_version": "tournament_player_point_award_authority.v1",
+            "schema_version": (
+                "tournament_player_point_award_authority.v2"
+                if stored_point_stage is not None
+                else "tournament_player_point_award_authority.v1"
+            ),
             "event_id": result.event_id,
             "seed": seed,
             "player_id": player.player_id,
@@ -204,7 +208,13 @@ def build_tournament_point_award_authority(
             )
         )
 
+    schema_version = (
+        "tournament_point_award_authority.v2"
+        if any(award.point_stage is not None for award in awards)
+        else "tournament_point_award_authority.v1"
+    )
     return TournamentPointAwardAuthority(
+        schema_version=schema_version,
         run_id=result.run_id,
         branch_id=result.branch_id,
         event_id=result.event_id,

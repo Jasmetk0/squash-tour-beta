@@ -1763,7 +1763,7 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
         assert len(sources) == 1
         source = sources[0]
         assert source.canonical_result is not None
-        assert len(source.canonical_result.match_results) == 15
+        assert len(source.canonical_result.matches) == 15
         assert len(source.canonical_result.players) == 16
 
         stages = [

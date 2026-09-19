@@ -30,9 +30,10 @@ class TournamentPlayerPointAwardAuthority(FrozenInput):
 class TournamentPointAwardAuthority(FrozenInput):
     """Canonical event-level ranking/race point awards for one tournament."""
 
-    schema_version: Literal["tournament_point_award_authority.v1"] = (
-        "tournament_point_award_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_point_award_authority.v1",
+        "tournament_point_award_authority.v2",
+    ] = "tournament_point_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -62,6 +63,16 @@ class TournamentPointAwardAuthority(FrozenInput):
             raise ValueError(
                 "Canonical ranked Point Award authority cannot use unranked distribution"
             )
+        if self.schema_version == "tournament_point_award_authority.v1":
+            if any(award.point_stage is not None for award in self.awards):
+                raise ValueError(
+                    "Historical Point Award v1 cannot carry point-stage override"
+                )
+        elif not any(award.point_stage is not None for award in self.awards):
+            raise ValueError(
+                "Point Award v2 requires at least one point-stage override"
+            )
+
         distribution = dict(self.point_distribution)
         if (
             not self.point_distribution
@@ -86,7 +97,11 @@ class TournamentPointAwardAuthority(FrozenInput):
                     "Tournament Point Award amount differs from frozen distribution"
                 )
             award_fingerprint_payload = {
-                "schema_version": "tournament_player_point_award_authority.v1",
+                "schema_version": (
+                    "tournament_player_point_award_authority.v2"
+                    if award.point_stage is not None
+                    else "tournament_player_point_award_authority.v1"
+                ),
                 "event_id": self.event_id,
                 "seed": self.seed,
                 "player_id": award.player_id,

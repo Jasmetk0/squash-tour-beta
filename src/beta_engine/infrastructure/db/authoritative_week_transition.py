@@ -104,6 +104,8 @@ def _target_week_prospect_snapshot(session, *, run_id: str, target_week: Ranking
         }
         for row in rows
     )
+    if not arrivals:
+        return arrivals, None
     payload = json.dumps(arrivals, sort_keys=True, separators=(",", ":"))
     return arrivals, hashlib.sha256(payload.encode()).hexdigest()
 
@@ -327,7 +329,7 @@ def _world_event_payload(
     lifecycle_fingerprint: str,
     sporting_fingerprint: str,
     prospect_arrivals,
-    prospect_arrival_fingerprint: str,
+    prospect_arrival_fingerprint: str | None,
 ) -> str:
     return json.dumps(
         {
@@ -351,7 +353,9 @@ def _world_event_matches_result(payload_json: str, command, result) -> bool:
         payload = json.loads(payload_json)
         arrivals = payload.get("prospect_arrivals", [])
         encoded = json.dumps(arrivals, sort_keys=True, separators=(",", ":"))
-        arrival_fingerprint = hashlib.sha256(encoded.encode()).hexdigest()
+        arrival_fingerprint = (
+            hashlib.sha256(encoded.encode()).hexdigest() if arrivals else None
+        )
         return (
             payload.get("audit") == command.audit.model_dump(mode="json")
             and payload.get("completed_week")

@@ -4328,7 +4328,7 @@ def test_frozen_wc_fallback_releases_wc_status_for_external_reserve(database):
         assert revision.successor_draw_input.schema_version == (
             "tournament_draw_input_authority.v9"
         )
-        assert revision.successor_draw_input.released_wild_card_slot_count == 1
+        assert revision.successor_draw_input.released_wild_card_slot_ordinals == (1,)
         assert revision.successor_draw_input.wild_card_player_ids == ()
         assert "F" in revision.successor_draw_input.direct_main_player_ids
         assert "E" in revision.successor_draw_input.withdrawn_player_ids
@@ -4375,7 +4375,7 @@ def test_frozen_main_replacement_orchestrates_exhausted_wc_to_bye(database):
             "tournament_draw_input_authority.v9"
         )
         assert revision.successor_draw_input.wild_card_player_ids == ()
-        assert revision.successor_draw_input.released_wild_card_slot_count == 1
+        assert revision.successor_draw_input.released_wild_card_slot_ordinals == (1,)
         assert revision.successor_draw_input.late_bye_count == 1
 
         slot = revision.successor_draw.main.slots[original_slot.slot_index - 1]

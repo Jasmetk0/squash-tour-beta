@@ -13,6 +13,7 @@ from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorit
 from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
 from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserOrderAuthority,
+    TournamentLuckyLoserQualificationWinnerEvidence,
 )
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthority,
@@ -39,9 +40,10 @@ class TournamentDrawStartEvidence(FrozenInput):
 class TournamentReplacementSourceAuthority(FrozenInput):
     """One immutable answer to 'where does this Main vacancy get filled from?'"""
 
-    schema_version: Literal["tournament_replacement_source.v1"] = (
-        "tournament_replacement_source.v1"
-    )
+    schema_version: Literal[
+        "tournament_replacement_source.v1",
+        "tournament_replacement_source.v2",
+    ] = "tournament_replacement_source.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -49,6 +51,10 @@ class TournamentReplacementSourceAuthority(FrozenInput):
     predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     predecessor_draw_input_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     physical_slot_index: int = Field(ge=1)
+    qualification_winner_evidence: TournamentLuckyLoserQualificationWinnerEvidence | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     source: TournamentReplacementSource
     selected_player_id: str | None = Field(
         default=None,
@@ -84,6 +90,14 @@ class TournamentReplacementSourceAuthority(FrozenInput):
 
     @model_validator(mode="after")
     def validate_source(self):
+        if self.schema_version == "tournament_replacement_source.v1":
+            if self.qualification_winner_evidence is not None:
+                raise ValueError("Historical replacement source v1 cannot carry Q-winner evidence")
+        elif self.qualification_winner_evidence is None:
+            raise ValueError("Q-winner replacement source v2 requires terminal evidence")
+        elif self.qualification_winner_evidence.winner_player_id != self.withdrawn_player_id:
+            raise ValueError("Q-winner replacement evidence belongs to another player")
+
         if tuple(sorted(set(self.unavailable_player_ids))) != self.unavailable_player_ids:
             raise ValueError("Replacement-source unavailable identities must be sorted")
         if len(set(self.prior_lucky_loser_player_ids)) != len(
@@ -171,6 +185,7 @@ class TournamentReplacementSourceAuthorityBuilder:
         lucky_loser_order_authority: TournamentLuckyLoserOrderAuthority | None,
         external_reserve_player_ids: tuple[str, ...],
         unavailable_player_ids: tuple[str, ...] = (),
+        qualification_winner_evidence: TournamentLuckyLoserQualificationWinnerEvidence | None = None,
     ) -> TournamentReplacementSourceAuthority:
         scope = (predecessor.run_id, predecessor.branch_id, predecessor.event_id)
         if (
@@ -182,18 +197,57 @@ class TournamentReplacementSourceAuthorityBuilder:
         if predecessor.draw_input_fingerprint != predecessor_draw_input.fingerprint:
             raise ValueError("Replacement-source predecessor Draw/Input mismatch")
 
-        slots = [
-            slot for slot in predecessor.main.slots
-            if slot.player_id == withdrawn_player_id
-        ]
-        if len(slots) != 1:
-            raise ValueError("Replacement-source cannot resolve one active Main slot")
-        slot = slots[0]
+        if qualification_winner_evidence is not None:
+            evidence = qualification_winner_evidence
+            if evidence.winner_player_id != withdrawn_player_id:
+                raise ValueError("Q-winner replacement evidence belongs to another player")
+            bracket = next(
+                (
+                    item
+                    for item in predecessor.qualification_brackets
+                    if (item.section_id or "") == evidence.section_id
+                ),
+                None,
+            )
+            if bracket is None:
+                raise ValueError("Q-winner replacement evidence references missing Q section")
+            terminal = max(
+                bracket.nodes,
+                key=lambda item: (item.round_number, item.round_sequence),
+            )
+            if terminal.node_id != evidence.terminal_match_id:
+                raise ValueError("Q-winner replacement evidence references wrong Q terminal")
+            slots = [
+                slot
+                for slot in predecessor.main.slots
+                if slot.entrant_kind == "qualifier_placeholder"
+                and slot.placeholder_id == evidence.section_id
+            ]
+            if len(slots) != 1:
+                raise ValueError("Replacement-source cannot resolve linked Main Q slot")
+            slot = slots[0]
+            if slot.player_id is not None or slot.seed_number is not None:
+                raise ValueError("Linked Main Q slot must remain an unseeded placeholder")
+        else:
+            slots = [
+                slot for slot in predecessor.main.slots
+                if slot.player_id == withdrawn_player_id
+            ]
+            if len(slots) != 1:
+                raise ValueError("Replacement-source cannot resolve one active Main slot")
+            slot = slots[0]
+
+        authority_schema = (
+            "tournament_replacement_source.v2"
+            if qualification_winner_evidence is not None
+            else "tournament_replacement_source.v1"
+        )
 
         if replacement_cutoff_authority.status == "already_eliminated":
             raise ValueError("Already-eliminated player cannot create a new Main vacancy")
         if replacement_cutoff_authority.status == "walkover_required":
             return TournamentReplacementSourceAuthority(
+                schema_version=authority_schema,
                 run_id=scope[0],
                 branch_id=scope[1],
                 event_id=scope[2],
@@ -201,6 +255,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 predecessor_draw_fingerprint=predecessor.fingerprint,
                 predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                 physical_slot_index=slot.slot_index,
+                qualification_winner_evidence=qualification_winner_evidence,
                 source="walkover",
                 qualification_start_evidence=qualification_start_evidence,
                 main_start_evidence=main_start_evidence,
@@ -367,6 +422,7 @@ class TournamentReplacementSourceAuthorityBuilder:
             if candidate in blocked_external:
                 continue
             return TournamentReplacementSourceAuthority(
+                schema_version=authority_schema,
                 run_id=scope[0],
                 branch_id=scope[1],
                 event_id=scope[2],
@@ -374,6 +430,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 predecessor_draw_fingerprint=predecessor.fingerprint,
                 predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                 physical_slot_index=slot.slot_index,
+                qualification_winner_evidence=qualification_winner_evidence,
                 source="external_reserve",
                 selected_player_id=candidate,
                 source_ordinal=ordinal,
@@ -395,6 +452,7 @@ class TournamentReplacementSourceAuthorityBuilder:
 
         if main_start_evidence is None:
             return TournamentReplacementSourceAuthority(
+                schema_version=authority_schema,
                 run_id=scope[0],
                 branch_id=scope[1],
                 event_id=scope[2],
@@ -402,6 +460,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 predecessor_draw_fingerprint=predecessor.fingerprint,
                 predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                 physical_slot_index=slot.slot_index,
+                qualification_winner_evidence=qualification_winner_evidence,
                 source="bye",
                 qualification_start_evidence=qualification_start_evidence,
                 replacement_cutoff_authority=replacement_cutoff_authority,

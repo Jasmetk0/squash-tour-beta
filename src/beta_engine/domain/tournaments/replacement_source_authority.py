@@ -266,10 +266,15 @@ class TournamentReplacementSourceAuthorityBuilder:
 
         # Before Qualification starts, the active Q list remains the ordinary source.
         if qualification_start_evidence is None:
-            for ordinal, candidate in enumerate(
-                predecessor_draw_input.qualification_player_ids,
-                start=1,
-            ):
+            pre_q_priority = tuple(
+                dict.fromkeys(
+                    (
+                        *predecessor_draw_input.qualification_player_ids,
+                        *external_reserve_player_ids,
+                    )
+                )
+            )
+            for ordinal, candidate in enumerate(pre_q_priority, start=1):
                 if candidate in unavailable or candidate in main_players:
                     continue
                 return TournamentReplacementSourceAuthority(

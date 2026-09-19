@@ -1576,15 +1576,12 @@ def test_seed_cascade_multiple_withdrawals_are_atomic_and_order_independent(data
         }
 
 
-@pytest.mark.parametrize("process_window_ordinal", [1, 3])
-def test_seed_cascade_rejects_pre_cutoff_and_frozen_phase(
-    database, process_window_ordinal
-):
+def test_seed_cascade_rejects_frozen_phase(database):
     with database.begin() as session:
         install_seed_cascade_main(session)
         with pytest.raises(
             ValueError,
-            match="only legal from Redraw Cutoff to Draw Freeze",
+            match="not legal after Draw Freeze",
         ):
             TournamentDrawRevisionStore(
                 session
@@ -1592,9 +1589,9 @@ def test_seed_cascade_rejects_pre_cutoff_and_frozen_phase(
                 run_id="run",
                 branch_id="branch",
                 event_id="event",
-                command_id=f"wrong-cascade-phase-{process_window_ordinal}",
+                command_id="wrong-cascade-frozen-phase",
                 withdrawn_player_ids=("P01",),
-                main_process_window_ordinal=process_window_ordinal,
+                main_process_window_ordinal=3,
             )
 
 
@@ -1659,4 +1656,75 @@ def test_seed_cascade_multi_q_preserves_q_identity_and_global_seed_numbers(datab
         assert q25_after.slot_index == q07_before.slot_index
         assert q25_after.seed_number is None
         assert revision.successor_draw.main == initial.main
+
+
+def test_seed_cascade_supports_main_full_redraw_with_q_cascade(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="mixed-main-redraw-q-cascade",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=2,
+            repair_draw_seed=13579,
+        )
+
+        assert revision.main_repair_action == "full_redraw"
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert revision.repair_draw_seed == 13579
+        assert revision.successor_draw_input.draw_seed == 24680
+        assert revision.successor_draw.main != initial.main
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+def test_seed_cascade_supports_main_cascade_with_q_full_redraw(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        before_main = draw_player_slots(initial.main)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="mixed-main-cascade-q-redraw",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=2,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=97531,
+        )
+
+        assert revision.main_repair_action == "seed_cascade"
+        assert revision.qualification_repair_action == "full_redraw"
+        assert revision.repair_draw_seed == 97531
+        assert revision.successor_draw_input.draw_seed == 24680
+
+        after_main = draw_player_slots(revision.successor_draw.main)
+        assert after_main["M02"] == before_main["M02"]
+        assert after_main["M03"].slot_index == before_main["M01"].slot_index
+        assert after_main["M03"].seed_number is None
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
 

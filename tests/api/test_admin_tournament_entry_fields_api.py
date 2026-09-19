@@ -225,6 +225,11 @@ def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):
         assert before["mode"] == "initial"
         assert before["direct_main_player_ids"] == ["A", "C", "D"]
         assert before["qualification_player_ids"] == ["B", "E"]
+        assert before["schema_version"] == "canonical_tournament_entry_field_state.v2"
+        assert before["main_draw_capacity"] == 4
+        assert before["active_main_entrant_count"] == 4
+        assert before["effective_main_bye_count"] == 0
+        assert before["main_diagnostics"] == []
         assert before["draw_input_committed"] is False
         assert before["pre_draw_repair_locked_by_draw_input"] is False
 
@@ -262,6 +267,81 @@ def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):
         assert after["direct_main_player_ids"] == ["A", "B", "C"]
         assert after["qualification_player_ids"] == ["E", "F"]
         assert after["withdrawn_player_ids"] == ["D"]
+
+
+def test_canonical_entry_field_http_exposes_odd_main_warning(tmp_path):
+    server = ApiServer(database_url=f"sqlite:///{tmp_path / 'entry-field-odd.sqlite'}")
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server, display_name="Odd Main Field Diagnostics"
+        )
+        event_id = "event"
+        snapshot = _ranking_snapshot(run_id=run_id, branch_id=branch_id)
+        player_ids = tuple("ABCDEFG")
+
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                PublishedOfficialRankingModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=snapshot.week.ordinal,
+                    snapshot_fingerprint=snapshot.fingerprint,
+                    payload_json=snapshot.model_dump_json(),
+                )
+            )
+            session.flush()
+            TournamentRankingSnapshotAuthorityStore(session).adopt(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                ranking_week=snapshot.week,
+                command_id="adopt-odd-ranking",
+            )
+            capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+                main_entrant_count=len(player_ids),
+            )
+            assert capacity.main_draw_size == 8
+            assert capacity.bye_slots == 1
+            TournamentEntryFieldStore(session).stage_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                applications=tuple(
+                    _application(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        player_id=player_id,
+                        window="main",
+                    )
+                    for player_id in player_ids
+                ),
+                capacity=capacity,
+                command_id="odd-initial-field",
+            )
+
+        status, state = _request(
+            "GET",
+            _root(server, run_id, branch_id, event_id),
+        )
+        assert status == 200
+        assert state["schema_version"] == "canonical_tournament_entry_field_state.v2"
+        assert state["main_draw_capacity"] == 8
+        assert state["active_main_entrant_count"] == 7
+        assert state["effective_main_bye_count"] == 1
+
+        diagnostics = state["main_diagnostics"]
+        assert len(diagnostics) == 1
+        warning = diagnostics[0]
+        assert warning["severity"] == "warning"
+        assert warning["code"] == "odd_main_entrant_count"
+        assert warning["entrant_count"] == 7
+        assert warning["bracket_capacity"] == 8
+        assert warning["bye_count"] == 1
+        assert warning["first_round_match_count"] == 4
+        assert warning["first_round_bye_match_count"] == 1
+        assert warning["first_round_bye_share"] == 0.25
+        assert warning["message"].startswith("! Main Draw has an odd entrant count (7).")
 
 
 def test_canonical_entry_field_http_rejects_stale_scope_and_post_draw_mutation(tmp_path):

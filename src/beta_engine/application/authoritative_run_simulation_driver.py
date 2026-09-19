@@ -1335,118 +1335,220 @@ class AuthoritativeRunSimulationDriver:
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
             }
 
+    def _build_topological_schedule_proposal(
+        self,
+        session,
+        *,
+        run_id: str,
+        branch_id: str,
+    ) -> tuple[WeekSimulationSchedule, str]:
+        """Build one read-only dependency-safe proposal inside the caller scope."""
+        week = self._current_week(session, run_id, branch_id)
+        if self._schedule(session, run_id, branch_id, week) is not None:
+            raise ValueError("week schedule is already adopted and immutable")
+
+        current = self._position(
+            session, run_id, branch_id, allow_missing_schedule=True
+        )
+        packages = self._packages(
+            week,
+            session=session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        plans = self._topology_for_session(
+            session, run_id, branch_id, packages, week=week
+        )
+        if not plans:
+            raise ValueError(
+                "week has no authoritative tournament groups to schedule"
+            )
+
+        depth_cache: dict[str, int] = {}
+        visiting: set[str] = set()
+
+        def depth(group_id: str) -> int:
+            if group_id in depth_cache:
+                return depth_cache[group_id]
+            if group_id in visiting:
+                raise ValueError("week topology contains a feeder cycle")
+            if group_id not in plans:
+                raise ValueError("week topology references a missing feeder group")
+            visiting.add(group_id)
+            feeders = self._plan_feeders(plans[group_id])
+            if any(feeder not in plans for feeder in feeders):
+                raise ValueError(
+                    "week topology references a feeder outside the authoritative graph"
+                )
+            value = (
+                1
+                if not feeders
+                else 1 + max(depth(feeder) for feeder in feeders)
+            )
+            visiting.remove(group_id)
+            depth_cache[group_id] = value
+            return value
+
+        for group_id in sorted(plans):
+            depth(group_id)
+
+        grouped: dict[int, list[str]] = {}
+        for group_id, ordinal in depth_cache.items():
+            grouped.setdefault(ordinal, []).append(group_id)
+
+        slots: list[WeekSimulationScheduleSlot] = []
+        for ordinal in sorted(grouped):
+            group_ids = tuple(sorted(grouped[ordinal]))
+            known_players: dict[str, str] = {}
+            for group_id in group_ids:
+                plan = plans[group_id]
+                direct_ids = (
+                    tuple(plan.direct_player_ids or ())
+                    if plan.participant_sources is None
+                    else tuple(
+                        source.removeprefix("player:")
+                        for source in plan.participant_sources
+                        if source.startswith("player:")
+                    )
+                )
+                for player_id in direct_ids:
+                    prior_group = known_players.get(player_id)
+                    if prior_group is not None:
+                        raise ValueError(
+                            "topological schedule proposal found one directly known "
+                            "player in multiple independent groups of the same slot; "
+                            "commitment/Week Tournament Lock authority must resolve "
+                            f"the conflict before chronology ({player_id}: "
+                            f"{prior_group}, {group_id})"
+                        )
+                    known_players[player_id] = group_id
+            slots.append(
+                WeekSimulationScheduleSlot(
+                    ordinal=ordinal,
+                    group_ids=group_ids,
+                )
+            )
+
+        schedule = WeekSimulationSchedule(
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+            slots=tuple(slots),
+        )
+        self._validate_schedule(session, schedule, packages)
+        position_fingerprint = fingerprint(
+            {
+                "position": current.position_fingerprint,
+                "schedule": schedule.fingerprint,
+            }
+        )
+        return schedule, position_fingerprint
+
+    @staticmethod
+    def _topological_schedule_proposal_payload(
+        schedule: WeekSimulationSchedule,
+        *,
+        position_fingerprint: str,
+    ) -> dict:
+        return {
+            "schedule": schedule.model_dump(mode="json"),
+            "schedule_fingerprint": schedule.fingerprint,
+            "position_fingerprint": position_fingerprint,
+            "provenance": (
+                "earliest_dependency_safe_topological_proposal_v1; "
+                "not Match Day timing or Final Commitment authority"
+            ),
+            "persisted": False,
+        }
+
     def propose_topological_schedule(self, *, run_id: str, branch_id: str):
         """Propose earliest dependency-safe Simulation Slots from canonical topology."""
         with self.factory() as session:
             self._require_writable_scope(session, run_id, branch_id)
+            schedule, position_fingerprint = (
+                self._build_topological_schedule_proposal(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                )
+            )
+            return self._topological_schedule_proposal_payload(
+                schedule,
+                position_fingerprint=position_fingerprint,
+            )
+
+    def adopt_topological_schedule_proposal(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        request_id: str,
+        expected_schedule_fingerprint: str,
+        expected_position_fingerprint: str,
+    ):
+        """Atomically rebuild and adopt the exact current topological proposal."""
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, run_id, branch_id)
             week = self._current_week(session, run_id, branch_id)
-            if self._schedule(session, run_id, branch_id, week) is not None:
+            row = session.get(
+                WeekSimulationScheduleModel,
+                (run_id, branch_id, week.ordinal),
+            )
+            if row is not None:
+                stored = self._schedule(session, run_id, branch_id, week)
+                assert stored is not None
+                request_fp = fingerprint(
+                    {
+                        "request_id": request_id,
+                        "schedule": stored.model_dump(mode="json"),
+                    }
+                )
+                if (
+                    row.request_id == request_id
+                    and row.request_fingerprint == request_fp
+                    and stored.fingerprint == expected_schedule_fingerprint
+                ):
+                    return {
+                        "schedule": stored.model_dump(mode="json"),
+                        "schedule_fingerprint": stored.fingerprint,
+                        "adoption": "exact_retry",
+                    }
                 raise ValueError("week schedule is already adopted and immutable")
 
-            current = self._position(
-                session, run_id, branch_id, allow_missing_schedule=True
-            )
-            packages = self._packages(
-                week,
-                session=session,
-                run_id=run_id,
-                branch_id=branch_id,
-            )
-            plans = self._topology_for_session(
-                session, run_id, branch_id, packages, week=week
-            )
-            if not plans:
-                raise ValueError(
-                    "week has no authoritative tournament groups to schedule"
+            schedule, position_fingerprint = (
+                self._build_topological_schedule_proposal(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
                 )
-
-            depth_cache: dict[str, int] = {}
-            visiting: set[str] = set()
-
-            def depth(group_id: str) -> int:
-                if group_id in depth_cache:
-                    return depth_cache[group_id]
-                if group_id in visiting:
-                    raise ValueError("week topology contains a feeder cycle")
-                if group_id not in plans:
-                    raise ValueError("week topology references a missing feeder group")
-                visiting.add(group_id)
-                feeders = self._plan_feeders(plans[group_id])
-                if any(feeder not in plans for feeder in feeders):
-                    raise ValueError(
-                        "week topology references a feeder outside the authoritative graph"
-                    )
-                value = (
-                    1
-                    if not feeders
-                    else 1 + max(depth(feeder) for feeder in feeders)
-                )
-                visiting.remove(group_id)
-                depth_cache[group_id] = value
-                return value
-
-            for group_id in sorted(plans):
-                depth(group_id)
-
-            grouped: dict[int, list[str]] = {}
-            for group_id, ordinal in depth_cache.items():
-                grouped.setdefault(ordinal, []).append(group_id)
-
-            slots: list[WeekSimulationScheduleSlot] = []
-            for ordinal in sorted(grouped):
-                group_ids = tuple(sorted(grouped[ordinal]))
-                known_players: dict[str, str] = {}
-                for group_id in group_ids:
-                    plan = plans[group_id]
-                    direct_ids = (
-                        tuple(plan.direct_player_ids or ())
-                        if plan.participant_sources is None
-                        else tuple(
-                            source.removeprefix("player:")
-                            for source in plan.participant_sources
-                            if source.startswith("player:")
-                        )
-                    )
-                    for player_id in direct_ids:
-                        prior_group = known_players.get(player_id)
-                        if prior_group is not None:
-                            raise ValueError(
-                                "topological schedule proposal found one directly known "
-                                "player in multiple independent groups of the same slot; "
-                                "commitment/Week Tournament Lock authority must resolve "
-                                f"the conflict before chronology ({player_id}: "
-                                f"{prior_group}, {group_id})"
-                            )
-                        known_players[player_id] = group_id
-                slots.append(
-                    WeekSimulationScheduleSlot(
-                        ordinal=ordinal,
-                        group_ids=group_ids,
-                    )
-                )
-
-            schedule = WeekSimulationSchedule(
-                run_id=run_id,
-                branch_id=branch_id,
-                week=week,
-                slots=tuple(slots),
             )
-            self._validate_schedule(session, schedule, packages)
-            return {
-                "schedule": schedule.model_dump(mode="json"),
-                "schedule_fingerprint": schedule.fingerprint,
-                "position_fingerprint": fingerprint(
-                    {
-                        "position": current.position_fingerprint,
-                        "schedule": schedule.fingerprint,
-                    }
-                ),
-                "provenance": (
-                    "earliest_dependency_safe_topological_proposal_v1; "
-                    "not Match Day timing or Final Commitment authority"
-                ),
-                "persisted": False,
-            }
+            if schedule.fingerprint != expected_schedule_fingerprint:
+                raise ValueError("topological schedule proposal is stale")
+            if position_fingerprint != expected_position_fingerprint:
+                raise ValueError("simulation position is stale")
+
+            request_fp = fingerprint(
+                {
+                    "request_id": request_id,
+                    "schedule": schedule.model_dump(mode="json"),
+                }
+            )
+            session.add(
+                WeekSimulationScheduleModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=week.ordinal,
+                    request_id=request_id,
+                    request_fingerprint=request_fp,
+                    schedule_fingerprint=schedule.fingerprint,
+                    payload_json=schedule.model_dump_json(),
+                )
+            )
+
+        inspected = self.inspect_schedule(run_id=run_id, branch_id=branch_id)
+        inspected["adoption"] = "adopted_topological_proposal"
+        return inspected
 
     def adopt_schedule(
         self,

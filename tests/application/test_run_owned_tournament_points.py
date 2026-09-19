@@ -231,6 +231,71 @@ def _authorities():
     return result_authority, result, point_authority, awards, binding
 
 
+def _walkover_authorities():
+    week = RankingWeek(season_index=0, week=1)
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_input(),
+        command_id="draw-walkover-points",
+    )
+    package = build_run_owned_match_package(
+        draw=draw,
+        event=_event(),
+        week=week,
+    )
+    package = _complete(draw, package)
+    terminal_round = max(
+        match.round_number for match in package.main_draw_matches
+    )
+    final = next(
+        match
+        for match in package.main_draw_matches
+        if match.round_number == terminal_round
+    )
+    final.scoreline = "W/O"
+    final.result_fingerprint = hashlib.sha256(
+        (
+            f"walkover-points|{final.match_id}|"
+            f"{final.winner_player_id}|{final.loser_player_id}"
+        ).encode()
+    ).hexdigest()
+
+    result = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        draw=draw,
+        package=package,
+    )
+    points = FrozenPointAwardAuthority(
+        ranking_status="ranked",
+        point_distribution={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+            "main_draw_participant": 0,
+        },
+        point_distribution_source="calendar_event.ranking_points_table",
+    )
+    awards = build_tournament_point_award_authority(
+        result=result,
+        point_authority=points,
+        seed=188,
+    )
+    binding = TournamentRankingBinding(
+        run_id="run",
+        branch_id="branch",
+        edition_id="event",
+        event_id="event",
+        completed_week=week,
+        first_publication_week=RankingWeek(season_index=0, week=2),
+        validity_weeks=61,
+        ranking_status="ranked",
+        expected_result_fingerprint=result.fingerprint,
+        expected_award_fingerprint=awards.fingerprint,
+    )
+    return result, awards, binding, final
+
+
 def test_canonical_point_authority_maps_frozen_distribution_without_legacy_service():
     result_authority, _, point_authority, _, _ = _authorities()
 
@@ -550,28 +615,67 @@ def test_ranking_week_ingests_v4_without_legacy_dtos_or_award_service(database):
     assert {row.player_id: row.points for row in snapshot.rows} == expected
 
 
-def test_canonical_point_authority_fails_closed_on_walkover_until_dedicated_rules():
-    result_authority, _, _, _, _ = _authorities()
-    terminal_round = max(match.round_number for match in result_authority.matches)
-    matches = tuple(
-        match.model_copy(update={"scoreline": "W/O"})
-        if match.round_number == terminal_round
-        else match
-        for match in result_authority.matches
-    )
-    walkover_result = result_authority.model_copy(update={"matches": matches})
+@pytest.mark.pr_critical
+def test_canonical_walkover_awards_stage_points_without_played_win_or_loss():
+    result, awards, binding, final = _walkover_authorities()
+    by_player = {player.player_id: player for player in result.players}
+    by_award = {award.player_id: award for award in awards.awards}
 
-    with pytest.raises(ValueError, match="W/O point awards"):
+    winner = by_player[final.winner_player_id]
+    withdrawn = by_player[final.loser_player_id]
+
+    assert winner.reached_stage == "champion"
+    assert winner.walkovers_received == 1
+    assert winner.wins == 1
+    assert winner.losses == 0
+    assert withdrawn.reached_stage == "finalist"
+    assert withdrawn.retired_or_walkover_loss is True
+    assert withdrawn.losses == 0
+
+    assert by_award[winner.player_id].ranking_points_awarded == 1000
+    assert by_award[withdrawn.player_id].ranking_points_awarded == 650
+
+    versions = prepare_canonical_tournament_ranking_sources(
+        binding,
+        result,
+        awards,
+    )
+    ranking_points = {
+        version.result.player_id: version.result.main_points
+        for version in versions
+    }
+    assert ranking_points[winner.player_id] == 1000
+    assert ranking_points[withdrawn.player_id] == 650
+
+
+@pytest.mark.pr_critical
+def test_canonical_walkover_point_builder_rejects_counter_corruption():
+    result, _, _, final = _walkover_authorities()
+    corrupted_players = tuple(
+        player.model_copy(update={"wins": player.wins + 1})
+        if player.player_id == final.winner_player_id
+        else player
+        for player in result.players
+    )
+    corrupted = result.model_copy(update={"players": corrupted_players})
+
+    with pytest.raises(
+        ValueError,
+        match="match counters differ from canonical result",
+    ):
         build_tournament_point_award_authority(
-            result=walkover_result,
+            result=corrupted,
             point_authority=FrozenPointAwardAuthority(
                 ranking_status="ranked",
                 point_distribution={
                     "champion": 1000,
                     "finalist": 650,
                     "semifinal": 400,
+                    "main_draw_participant": 0,
                 },
-                point_distribution_source="calendar_event.ranking_points_table",
+                point_distribution_source=(
+                    "calendar_event.ranking_points_table"
+                ),
             ),
-            seed=88,
+            seed=188,
         )

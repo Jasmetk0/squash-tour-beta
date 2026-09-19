@@ -6,6 +6,7 @@ from beta_engine.api.routers.admin_ranking_candidates import router as admin_ran
 from beta_engine.api.routers.admin_week_transitions import router as admin_week_transitions_router
 from beta_engine.api.routers.admin_authoritative_simulation import router as admin_authoritative_simulation_router
 from beta_engine.api.routers.admin_tournament_entry_fields import router as admin_tournament_entry_fields_router
+from beta_engine.api.routers.admin_player_prize_money import router as admin_player_prize_money_router
 
 from beta_engine.api.routers.admin_draws import router as admin_draws_router
 from beta_engine.api.routers.admin_entries import router as admin_entries_router
@@ -44,6 +45,7 @@ from beta_engine.api.routers.viewer_run_context import router as viewer_run_cont
 router = APIRouter()
 router.include_router(admin_authoritative_simulation_router)
 router.include_router(admin_tournament_entry_fields_router)
+router.include_router(admin_player_prize_money_router)
 router.include_router(admin_ranking_candidates_router)
 router.include_router(admin_week_transitions_router)
 router.include_router(health_router)

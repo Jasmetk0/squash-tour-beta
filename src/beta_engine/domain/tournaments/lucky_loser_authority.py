@@ -388,14 +388,18 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
                 raise ValueError(
                     "LL auto-BYE evidence is stale for Qualification bracket"
                 )
-            section_players = {
+            section_players = tuple(
                 slot.player_id
                 for slot in bracket.slots
                 if slot.player_id is not None
-            }
-            if item.winner_player_id not in section_players:
+            )
+            if len(section_players) != 1:
                 raise ValueError(
-                    "LL auto-BYE winner is outside canonical Q section"
+                    "LL auto-BYE evidence requires exactly one live Q player"
+                )
+            if item.winner_player_id != section_players[0]:
+                raise ValueError(
+                    "LL auto-BYE winner differs from sole canonical Q player"
                 )
 
         resolved_terminal_ids = set(by_match) | set(auto_by_match)

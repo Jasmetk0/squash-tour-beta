@@ -251,8 +251,13 @@ surface with expected-field fingerprint protection. New repairs remain locked af
 Tournament Draw Input commitment.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
-execution/result pipeline preserves all corresponding promotions. The next draw slice
-also aligns new Draw Input/Draw generation with Master §15.2–15.4: seed counts are
+execution/result pipeline preserves all corresponding promotions. A focused
+production-backed acceptance proves four two-player Q sections end-to-end:
+Official Ranking → frozen Entry/Draw authorities → topological Simulation Slots →
+Q1..Q4 promotion into one eight-player Main → canonical close → additive
+Qualification + Main Point Award v3. The 12-player scenario owns exactly 11
+competitive matches and closes into one ranking source. The same draw slice also
+aligns new Draw Input/Draw generation with Master §15.2–15.4: seed counts are
 derived canonically, physical slots carry idealized numbers, later seed tiers shuffle
 only inside their allowed idealized tier, and initial Main Draw BYEs consume the
 highest idealized slots. Historical v1 replay remains intact.

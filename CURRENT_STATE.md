@@ -235,8 +235,14 @@ independent bracket Qualification sections `Q1..Qn`; each section has one termin
 winner permanently bound to the same-named Main Draw placeholder. The first global
 Qualification seed layer is fixed one-per-section, later section allocation remains
 deterministic from frozen Draw Input, all Q sections project into authoritative match
-topology, and Tournament Result authority records every Qualification winner.
-Historical single-Q Draw Authority v1 remains the compatibility representation.
+topology, and Tournament Result authority records every Qualification winner. A
+production-backed acceptance now proves four independent two-player sections
+`Q1..Q4` through authoritative Simulation Slots into one eight-player Main Draw,
+canonical close and `TournamentPointAwardAuthority v3`: all 11 competitive matches
+are Run-owned, all four Q winners become Main participants with additive
+Qualification + Main ranking values, and the four Q losers retain their actual
+Qualification-final value. Historical single-Q Draw Authority v1 remains the
+compatibility representation.
 
 New Draw Input commitments now use the Master-aligned v2 contract: classic seed
 counts are derived from bracket capacity and actual player count, while explicitly

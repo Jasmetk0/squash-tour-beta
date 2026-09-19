@@ -1597,6 +1597,203 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
             )
 
 
+@pytest.mark.pr_critical
+def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
+    """Production Entry -> Draw -> Match evidence drives all fifteen matches."""
+    from test_season_entry_list_service import first_event_id, make_service
+    from beta_engine.application.season_draw_service import (
+        DrawGenerateRequest,
+        SeasonDrawService,
+    )
+    from beta_engine.application.season_entry_list_service import (
+        EntryListGenerateRequest,
+    )
+    from beta_engine.application.season_event_results_service import (
+        SeasonEventResultsService,
+    )
+    from beta_engine.application.season_match_service import (
+        MatchPackageGenerateRequest,
+        SeasonMatchService,
+    )
+    from beta_engine.application.season_point_awards_service import (
+        SeasonPointAwardsService,
+    )
+
+    root = tmp_path / "real-sixteen"
+    entries = make_service(root, main_draw_size=16)
+    event_id = first_event_id(entries)
+    calendars = entries.calendar_service._load_registry()
+    calendar = calendars.calendars_by_season["2000/2001"]
+    event = calendar.events[0].model_copy(
+        update={
+            "qualification_draw_size": 0,
+            "qualifier_spots": 0,
+            "wild_cards": 0,
+            "byes": 0,
+        }
+    )
+    calendar.events[0] = event
+    entries.calendar_service._save_registry(calendars)
+
+    entry_seed = None
+    for seed in range(1601, 1801):
+        preview = entries.generate_entry_list(
+            event_id=event_id,
+            request=EntryListGenerateRequest(seed=seed, dry_run=True),
+        )
+        if preview.summary.main_draw_acceptances == 16:
+            entry_seed = seed
+            break
+    assert entry_seed is not None, "fixture could not produce a full 16-player field"
+    entries.generate_entry_list(
+        event_id=event_id,
+        request=EntryListGenerateRequest(seed=entry_seed, dry_run=False),
+    )
+
+    draws = SeasonDrawService(
+        entry_list_service=entries,
+        calendar_service=entries.calendar_service,
+        draws_path=root / "draws.json",
+    )
+    draw = draws.generate_draw_package(
+        event_id=event_id,
+        request=DrawGenerateRequest(seed=1802, dry_run=False),
+    ).draw_package
+    assert draw is not None and draw.main_draw.draw_size == 16
+
+    matches = SeasonMatchService(
+        draw_service=draws,
+        active_players_service=entries.active_players_service,
+        matches_path=root / "matches.json",
+    )
+    package = matches.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=1803, dry_run=False),
+    ).match_package
+    assert package is not None
+    assert len(package.main_draw_matches) == 15
+    assert not package.qualification_matches
+
+    results = SeasonEventResultsService(
+        match_service=matches,
+        results_path=root / "results.json",
+    )
+    awards = SeasonPointAwardsService(
+        result_service=results,
+        active_players_service=entries.active_players_service,
+        calendar_service=entries.calendar_service,
+        template_service=entries.calendar_service.template_service,
+        awards_path=root / "awards.json",
+        points_config_path=root / "points.json",
+    )
+
+    first_round = [
+        match for match in package.main_draw_matches if match.status == "pending"
+    ]
+    assert len(first_round) == 8
+    player_ids = tuple(
+        player_id
+        for match in first_round
+        for player_id in (match.top_player_id, match.bottom_player_id)
+        if player_id is not None
+    )
+    assert len(player_ids) == 16
+    assert len(set(player_ids)) == 16
+
+    week = RankingWeek(season_index=0, week=package.season_week)
+    session = session_at(root / "run.sqlite", player_ids, week)
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Real sixteen",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
+        RunBranchModel(
+            branch_id="branch",
+            run_id="run",
+            display_name="Timeline 1",
+            saved_head_revision_id="revision",
+        )
+    )
+    session.commit()
+    factory = sessionmaker(bind=session.get_bind())
+    session.close()
+
+    driver = AuthoritativeRunSimulationDriver(factory, matches, awards)
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    assert [len(slot.group_ids) for slot in schedule.slots] == [8, 4, 2, 1]
+
+    adopted = driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="real-sixteen-schedule",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+    assert adopted["adoption"] == "adopted_topological_proposal"
+
+    for ordinal in range(1, len(schedule.slots) + 1):
+        command, _ = _driver_command(
+            driver,
+            week,
+            f"real-sixteen-{ordinal}",
+        )
+        state = driver.simulate_next_slot(command)
+
+    assert state["supported_tournament_complete"] is True
+
+    with factory() as db:
+        groups = db.scalars(select(SimulationEventGroupModel)).all()
+        assert len(groups) == 15
+        assert len({group.group_id for group in groups}) == 15
+
+        sources = OwnedTournamentRankingSourceStore(db).history(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert len(sources) == 1
+        source = sources[0]
+        assert len(source.result.match_result_refs) == 15
+        assert len(source.result.players) == 16
+
+        stages = [player.reached_stage for player in source.result.players]
+        assert stages.count("round_of_16") == 8
+        assert stages.count("quarterfinal") == 4
+        assert stages.count("semifinal") == 2
+        assert stages.count("finalist") == 1
+        assert stages.count("champion") == 1
+
+        slots = db.scalars(
+            select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
+        ).all()
+        assert len(slots) == 4
+        opening_groups = [
+            group for group in groups if group.slot_id == slots[0].slot_id
+        ]
+        assert len(opening_groups) == 8
+        assert (
+            len(
+                {
+                    AuthoritativeSlotMatchExecutor._load_group(
+                        group
+                    ).authoritative_input.slot_start_fingerprint
+                    for group in opening_groups
+                }
+            )
+            == 1
+        )
+
+
 def test_real_eight_player_pre_adoption_entry_draw_match_mutation_fails_closed(
     tmp_path,
 ):

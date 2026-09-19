@@ -354,8 +354,16 @@ existing exact-slot frozen backfill remains authoritative. Draw revision v8 reco
 the mixed Main-frozen/Q-pre-freeze transaction and replay uses the same process
 window and redraw seed.
 
-The WC workflow still fails closed for **seeded Q-RWC before Q Freeze** and for RWC
-exhaustion. Those need the remaining seed-aware/fallback slices rather than silently
-skipping priority. Lucky Loser authority remains the next major Main Draw replacement
-workflow after those bounded WC gaps, followed by group Qualification. Legacy
-simulation-run UI/endpoint retirement remains separate Gate 3 work.
+Seeded Q-RWC promotion now follows the same independent Qualification phases.
+Before Q Redraw Cutoff, full redraw rebuilds the Q seed field from the successor
+ranking-ordered participants, so the next eligible Q player becomes the active seed.
+Between Q Redraw Cutoff and Q Draw Freeze, the existing seed-cascade geometry moves
+surviving players through the vacated seed tier without transferring the departed
+seed number; the final active seed set may therefore shrink and Draw Input v5 records
+the explicit vacancy. After Q Freeze, the already-canonical frozen vacancy behavior
+still applies.
+
+The WC/RWC workflow now fails closed mainly at **RWC exhaustion / ordinary replacement
+fallback**. Once that source-priority fallback is canonical, Lucky Loser authority is
+the next major Main Draw replacement workflow, followed by group Qualification.
+Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.

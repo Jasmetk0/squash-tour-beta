@@ -274,14 +274,15 @@ until their dedicated post-draw repair path exists.
 The middle repair phase from Redraw Cutoff through the window before Draw Freeze
 now performs tier-aware seed cascade for seeded withdrawals and exact physical-slot
 fill for ordinary unseeded withdrawals. Cascade preserves original seed identities,
-moves only the necessary later seed layers, promotes the highest-ranked surviving
-eligible unseeded player into the final seed vacancy and fills that player's old slot
-with the ordinary incoming replacement. Main and Qualification remain independently
+moves only the necessary later seed layers and promotes the highest-ranked surviving
+eligible unseeded player into the final seed vacancy. The ordinary incoming
+replacement fills that player's old slot; when no replacement remains, that final
+physical vacancy becomes a BYE. An unseeded withdrawal likewise leaves a BYE in its
+own exact slot if no replacement exists. Main and Qualification remain independently
 phase-gated, so one atomic v3 repair may fully redraw one affected component while
 cascading the other; the dedicated repair seed affects only the redrawn component.
 Multi-Q identities are preserved and the append-only revision is deterministic Saved
-Revision state. Pure cascade keeps the existing draw seed. The slice currently fails
-closed if replacement-backed player-count parity cannot be maintained.
+Revision state. Pure cascade keeps the existing draw seed.
 
 The Draw Freeze repair phase now uses append-only v4 revisions. Every affected
 component is gated independently: a frozen component changes only the exact vacated

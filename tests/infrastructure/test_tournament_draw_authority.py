@@ -2420,7 +2420,7 @@ def test_frozen_wc_repair_fails_closed_when_priority_rwc_is_in_qualification(dat
             event_id="event",
             command_id="wc-q-resolve",
             original_wild_card_player_ids=("A",),
-            reserve_wild_card_player_ids=("B", "F"),
+            reserve_wild_card_player_ids=("B", "E", "F"),
         )
         draw_input = TournamentDrawInputAuthorityStore(session).commit(
             run_id="run",
@@ -2445,7 +2445,7 @@ def test_frozen_wc_repair_fails_closed_when_priority_rwc_is_in_qualification(dat
         )
         assert draw_input.wild_card_player_ids == ("B",)
         assert any(
-            slot.player_id == "F"
+            slot.player_id == "E"
             for bracket in initial.qualification_brackets
             for slot in bracket.slots
         )

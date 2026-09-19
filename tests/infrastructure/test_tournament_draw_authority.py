@@ -4113,6 +4113,11 @@ def _prepare_orchestrated_q_winner_replacement(
         monkeypatch,
         initial,
     )
+    _mock_cutoff_resolution(
+        monkeypatch,
+        q_player_ids=draw_input.qualification_player_ids,
+        qualification_started=True,
+    )
 
     original_resolve = TournamentPlayerReplacementCutoffAuthorityStore.resolve
 

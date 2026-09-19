@@ -26,6 +26,7 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
     players = {player.player_id: player for player in result.players}
     competitive_wins = {player_id: 0 for player_id in players}
     competitive_losses = {player_id: 0 for player_id in players}
+    byes_received = {player_id: 0 for player_id in players}
     walkovers_received = {player_id: 0 for player_id in players}
     walkover_losses = {player_id: False for player_id in players}
 
@@ -35,6 +36,7 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
         if match.scoreline == "BYE":
             if match.loser_player_id is not None:
                 raise ValueError("Canonical BYE point source cannot contain a loser")
+            byes_received[match.winner_player_id] += 1
             continue
         if match.loser_player_id is None or match.loser_player_id not in players:
             raise ValueError("Tournament point source contains invalid match loser")
@@ -49,6 +51,7 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
         if (
             player.wins != competitive_wins[player_id]
             or player.losses != competitive_losses[player_id]
+            or player.byes_received != byes_received[player_id]
             or player.walkovers_received != walkovers_received[player_id]
             or player.retired_or_walkover_loss != walkover_losses[player_id]
         ):
@@ -92,21 +95,47 @@ def _point_stage(
     result: TournamentResultAuthority,
     player,
 ) -> str:
-    """Apply Master §15.4 first-real-match ranking unlock semantics."""
-
-    if (
-        player.byes_received <= 0
-        or player.wins > 0
-        or player.losses == 0
-        or player.walkovers_received > 0
-    ):
-        return player.reached_stage
+    """Apply Master §15.4 first-real-match ranking unlock semantics per draw."""
 
     draw_type = (
         "qualification"
         if player.reached_stage.startswith("qualification_")
         else "main"
     )
+    matches = [
+        match
+        for match in result.matches
+        if match.draw_type == draw_type
+        and player.player_id
+        in {match.winner_player_id, match.loser_player_id}
+    ]
+    has_bye = any(
+        match.scoreline == "BYE"
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_walkover_advance = any(
+        match.scoreline == "W/O"
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_competitive_win = any(
+        match.scoreline not in {"BYE", "W/O"}
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_competitive_loss = any(
+        match.scoreline not in {"BYE", "W/O"}
+        and match.loser_player_id == player.player_id
+        for match in matches
+    )
+    if (
+        not has_bye
+        or not has_competitive_loss
+        or has_competitive_win
+        or has_walkover_advance
+    ):
+        return player.reached_stage
     return _first_round_point_stage(result, draw_type=draw_type)
 
 

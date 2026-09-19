@@ -358,10 +358,16 @@ slot and inserts the backfill into the exact vacated Q slot without seed
 inheritance; Draw Input v4 updates both active WC and Qualification identities.
 Saved Revision backward/forward replay validates the same cross-draw evidence.
 
-The workflow still fails closed for seeded WC holders, seeded Qualification RWC
-candidates, Qualification phases that require redraw/cascade rather than frozen
-exact-slot fill, and RWC exhaustion. The middle seed-cascade phase still
-intentionally requires replacement-backed player-count parity. Lucky Loser ordering
-and group Qualification remain Gate 3 work. See
+Frozen seeded WC/RWC repair is now supported. Post-draw WC repair authority v3
+freezes vacated Main and/or Qualification seed numbers, while Draw Input v5 keeps
+the original canonical seed count as history and stores active seed identities plus
+explicit frozen seed vacancies. The replacement RWC or Q backfill keeps the exact
+physical slot but receives no seed number, and active `seed_positions` shrink to
+the seeds that still exist. Saved Revision replay rebuilds the same vacancy evidence.
+
+The workflow still fails closed for Qualification phases that require redraw/cascade
+rather than frozen exact-slot fill, and for RWC exhaustion. The middle seed-cascade
+phase still intentionally requires replacement-backed player-count parity. Lucky
+Loser ordering and group Qualification remain Gate 3 work. See
 `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

@@ -337,9 +337,16 @@ Tournament Ranking Snapshot. `tournament_post_draw_wild_card_repair.v2` freezes
 the Q section/slot and backfill ordinal; Draw revision v7 records Main + Q as one
 transaction and Saved Revision replay rebuilds both sides deterministically.
 
-The WC workflow still fails closed for seeded WC holders, seeded Qualification RWC
-candidates, non-frozen Qualification repair phases, and RWC exhaustion. Those need
-the remaining seed/phase-aware WC fallback slices rather than silently skipping
-priority. Lucky Loser authority remains the next major Main Draw replacement
-workflow after those bounded WC gaps, followed by group Qualification. Legacy
-simulation-run UI/endpoint retirement remains separate Gate 3 work.
+Frozen seeded WC/RWC repair is now canonical as well. After Draw Freeze, a
+replacement never inherits the withdrawn or promoted player's seed number. Seeded WC
+withdrawal to an external RWC and promotion of a seeded Q-RWC both preserve the exact
+physical slot while recording the former seed number as an explicit frozen vacancy.
+`tournament_post_draw_wild_card_repair.v3` freezes that evidence and Draw Input v5
+separates the historical configured seed count from currently active seeded players.
+The draw's `seed_positions` therefore contains only still-active seeds.
+
+The WC workflow still fails closed for non-frozen Qualification repair phases and
+RWC exhaustion. Those need the remaining phase-aware WC fallback slices rather than
+silently skipping priority. Lucky Loser authority remains the next major Main Draw
+replacement workflow after those bounded WC gaps, followed by group Qualification.
+Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.

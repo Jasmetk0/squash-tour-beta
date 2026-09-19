@@ -26,6 +26,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v2",
     "tournament_draw_input_authority.v3",
     "tournament_draw_input_authority.v4",
+    "tournament_draw_input_authority.v5",
 ]
 
 
@@ -116,6 +117,14 @@ class TournamentDrawInputAuthority(FrozenInput):
     withdrawn_player_ids: tuple[str, ...]
     main_seed_player_ids: tuple[str, ...]
     qualification_seed_player_ids: tuple[str, ...]
+    main_seed_vacancy_numbers: tuple[int, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
+    qualification_seed_vacancy_numbers: tuple[int, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
 
     @model_validator(mode="after")
     def validate_structure(self) -> "TournamentDrawInputAuthority":
@@ -135,12 +144,64 @@ class TournamentDrawInputAuthority(FrozenInput):
         active = main_players | set(self.qualification_player_ids)
         if active & set(self.withdrawn_player_ids):
             raise ValueError("Withdrawn player remains in committed draw input")
-        if len(self.main_seed_player_ids) != self.main_seed_count:
-            raise ValueError("Main seed payload does not match requested seed count")
-        if len(self.qualification_seed_player_ids) != self.qualification_seed_count:
-            raise ValueError(
-                "Qualification seed payload does not match requested seed count"
-            )
+        if self.schema_version == "tournament_draw_input_authority.v5":
+            if (
+                len(self.main_seed_player_ids)
+                + len(self.main_seed_vacancy_numbers)
+                != self.main_seed_count
+            ):
+                raise ValueError(
+                    "Main active seeds plus frozen vacancies must match seed count"
+                )
+            if (
+                len(self.qualification_seed_player_ids)
+                + len(self.qualification_seed_vacancy_numbers)
+                != self.qualification_seed_count
+            ):
+                raise ValueError(
+                    "Qualification active seeds plus frozen vacancies must match seed count"
+                )
+            if tuple(sorted(set(self.main_seed_vacancy_numbers))) != (
+                self.main_seed_vacancy_numbers
+            ):
+                raise ValueError("Main frozen seed vacancies must be sorted and unique")
+            if tuple(sorted(set(self.qualification_seed_vacancy_numbers))) != (
+                self.qualification_seed_vacancy_numbers
+            ):
+                raise ValueError(
+                    "Qualification frozen seed vacancies must be sorted and unique"
+                )
+            if any(
+                number < 1 or number > self.main_seed_count
+                for number in self.main_seed_vacancy_numbers
+            ):
+                raise ValueError("Main frozen seed vacancy number is outside seed pool")
+            if any(
+                number < 1 or number > self.qualification_seed_count
+                for number in self.qualification_seed_vacancy_numbers
+            ):
+                raise ValueError(
+                    "Qualification frozen seed vacancy number is outside seed pool"
+                )
+            if not (
+                self.main_seed_vacancy_numbers
+                or self.qualification_seed_vacancy_numbers
+            ):
+                raise ValueError("Draw Input v5 requires frozen seed-vacancy evidence")
+        else:
+            if len(self.main_seed_player_ids) != self.main_seed_count:
+                raise ValueError("Main seed payload does not match requested seed count")
+            if len(self.qualification_seed_player_ids) != self.qualification_seed_count:
+                raise ValueError(
+                    "Qualification seed payload does not match requested seed count"
+                )
+            if (
+                self.main_seed_vacancy_numbers
+                or self.qualification_seed_vacancy_numbers
+            ):
+                raise ValueError(
+                    "Historical Draw Input cannot carry frozen seed vacancies"
+                )
         if not set(self.main_seed_player_ids).issubset(
             set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
         ):
@@ -160,6 +221,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v2",
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
+            "tournament_draw_input_authority.v5",
         }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
@@ -183,6 +245,7 @@ class TournamentDrawInputAuthority(FrozenInput):
         if self.schema_version in {
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
+            "tournament_draw_input_authority.v5",
         }:
             if self.capacity.wild_card_slots != len(self.wild_card_player_ids):
                 raise ValueError(
@@ -190,10 +253,13 @@ class TournamentDrawInputAuthority(FrozenInput):
                 )
             if self.capacity.wild_card_slots and self.wild_card_authority_fingerprint is None:
                 raise ValueError("Canonical WC field lacks WC authority fingerprint")
-            if self.schema_version == "tournament_draw_input_authority.v4":
+            if self.schema_version in {
+                "tournament_draw_input_authority.v4",
+                "tournament_draw_input_authority.v5",
+            }:
                 if not self.post_draw_wild_card_repair_fingerprints:
                     raise ValueError(
-                        "Canonical v4 WC Draw Input requires post-draw repair evidence"
+                        "Post-draw WC Draw Input requires repair evidence"
                     )
             elif self.post_draw_wild_card_repair_fingerprints:
                 raise ValueError(
@@ -231,17 +297,21 @@ class TournamentDrawInputAuthorityBuilder:
         repair_authority_fingerprint: str,
         qualification_replacement_player_id: str | None = None,
         qualification_backfill_player_id: str | None = None,
+        main_vacated_seed_number: int | None = None,
+        qualification_vacated_seed_number: int | None = None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
+            "tournament_draw_input_authority.v5",
         }:
             raise ValueError("Post-draw WC repair requires canonical WC Draw Input")
         if previous.wild_card_player_ids.count(withdrawn_player_id) != 1:
             raise ValueError("Post-draw WC repair withdrawal is not active in WC field")
-        if withdrawn_player_id in previous.main_seed_player_ids:
+        withdrawn_was_seeded = withdrawn_player_id in previous.main_seed_player_ids
+        if withdrawn_was_seeded != (main_vacated_seed_number is not None):
             raise ValueError(
-                "Seeded WC replacement requires seed-aware post-draw WC repair"
+                "Main frozen seed-vacancy evidence does not match withdrawn WC seed status"
             )
         active_main = (
             set(previous.direct_main_player_ids)
@@ -261,9 +331,14 @@ class TournamentDrawInputAuthorityBuilder:
                 raise ValueError(
                     "Qualification RWC promotion requires Q backfill identity"
                 )
-            if replacement_player_id in previous.qualification_seed_player_ids:
+            q_replacement_was_seeded = (
+                replacement_player_id in previous.qualification_seed_player_ids
+            )
+            if q_replacement_was_seeded != (
+                qualification_vacated_seed_number is not None
+            ):
                 raise ValueError(
-                    "Seeded Qualification RWC requires seed-aware Q repair"
+                    "Qualification frozen seed-vacancy evidence does not match RWC seed status"
                 )
         elif (
             qualification_replacement_player_id is not None
@@ -271,6 +346,21 @@ class TournamentDrawInputAuthorityBuilder:
         ):
             raise ValueError(
                 "External RWC repair cannot carry Qualification replacement evidence"
+            )
+
+        main_seed_players = list(previous.main_seed_player_ids)
+        qualification_seed_players = list(previous.qualification_seed_player_ids)
+        main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
+        qualification_seed_vacancies = set(
+            previous.qualification_seed_vacancy_numbers
+        )
+        if withdrawn_was_seeded:
+            main_seed_players.remove(withdrawn_player_id)
+            main_seed_vacancies.add(main_vacated_seed_number)
+        if replacement_in_q and qualification_vacated_seed_number is not None:
+            qualification_seed_players.remove(replacement_player_id)
+            qualification_seed_vacancies.add(
+                qualification_vacated_seed_number
             )
 
         qualification_players = list(previous.qualification_player_ids)
@@ -281,8 +371,8 @@ class TournamentDrawInputAuthorityBuilder:
                 | set(previous.qualification_player_ids)
             ):
                 raise ValueError("Qualification RWC backfill player is already active")
-            q_index = qualification_players.index(replacement_player_id)
-            qualification_players[q_index] = qualification_backfill_player_id
+            qualification_players.remove(replacement_player_id)
+            qualification_players.append(qualification_backfill_player_id)
 
         wc_players = list(previous.wild_card_player_ids)
         wc_players[wc_players.index(withdrawn_player_id)] = replacement_player_id
@@ -293,8 +383,15 @@ class TournamentDrawInputAuthorityBuilder:
         withdrawn = tuple(
             sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
         )
+        has_seed_vacancy = bool(
+            main_seed_vacancies or qualification_seed_vacancies
+        )
         return TournamentDrawInputAuthority(
-            schema_version="tournament_draw_input_authority.v4",
+            schema_version=(
+                "tournament_draw_input_authority.v5"
+                if has_seed_vacancy
+                else "tournament_draw_input_authority.v4"
+            ),
             run_id=previous.run_id,
             branch_id=previous.branch_id,
             event_id=previous.event_id,
@@ -316,8 +413,12 @@ class TournamentDrawInputAuthorityBuilder:
             qualification_player_ids=tuple(qualification_players),
             qualifier_placeholder_ids=previous.qualifier_placeholder_ids,
             withdrawn_player_ids=withdrawn,
-            main_seed_player_ids=previous.main_seed_player_ids,
-            qualification_seed_player_ids=previous.qualification_seed_player_ids,
+            main_seed_player_ids=tuple(main_seed_players),
+            qualification_seed_player_ids=tuple(qualification_seed_players),
+            main_seed_vacancy_numbers=tuple(sorted(main_seed_vacancies)),
+            qualification_seed_vacancy_numbers=tuple(
+                sorted(qualification_seed_vacancies)
+            ),
         )
 
     @staticmethod

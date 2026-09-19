@@ -12,16 +12,18 @@ For one classic bracket:
 
 `seed_count = min(actual_player_count, max(1, bracket_capacity / 4))`
 
-The persisted bracket capacity must be a power of two. The requested Main entrant
-count does not have to be. New callers may derive the canonical capacity with
-`TournamentEntryFieldCapacity.for_main_entrant_count(...)`: it rounds the entrant
-count up to the next power of two and records the difference as explicit initial BYEs.
+The persisted bracket capacity must be a power of two and the current supported
+maximum is 128 positions. The requested Main entrant count does not have to be a
+power of two. New callers may derive the canonical capacity with
+`TournamentEntryFieldCapacity.for_main_entrant_count(...)`: it rounds entrant count
+up to the next power of two and records the difference as explicit initial BYEs.
 For example, 13 entrants become a 16-position bracket with three BYEs, while 28
-entrants become a 32-position bracket with four BYEs. This helper is a creation-time
-capacity proposal only; once a Tournament Edition already owns its bracket capacity,
-later withdrawals or an underfilled field add/preserve BYEs and never auto-resize the
-existing bracket. This preserves one canonical binary DAG instead of introducing
-irregular match-node geometry.
+entrants become a 32-position bracket with four BYEs. A request above 128 entrants is
+rejected in the current version rather than deriving a 256-position bracket. This
+helper is a creation-time capacity proposal only; once a Tournament Edition already
+owns its bracket capacity, later withdrawals or an underfilled field add/preserve BYEs
+and never auto-resize the existing bracket. This preserves one canonical binary DAG
+instead of introducing irregular match-node geometry.
 
 Pre-alpha also exposes derived, non-authoritative Main-bracket diagnostics. They do
 not alter Draw identity or block a technically valid bracket. The first policy set

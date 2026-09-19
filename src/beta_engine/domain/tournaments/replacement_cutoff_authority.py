@@ -21,7 +21,8 @@ TournamentPlayedMatchOutcome = Literal["win", "loss"]
 
 class TournamentPlayedMatchCutoffEvidence(FrozenInput):
     match_id: str = Field(min_length=1)
-    week_ordinal: int = Field(ge=1)
+    # RankingWeek.ordinal is zero-based: season 0 / week 1 is ordinal 0.
+    week_ordinal: int = Field(ge=0)
     slot_id: str = Field(min_length=1)
     slot_ordinal: int = Field(ge=1)
     group_id: str = Field(min_length=1)

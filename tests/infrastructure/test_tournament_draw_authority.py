@@ -3966,12 +3966,12 @@ def test_replacement_source_chain_pre_q_uses_q_list_then_post_q_uses_ll_and_rese
             main_start_evidence=None,
             base_wild_card_authority=None,
             lucky_loser_order_authority=ll_order,
-            external_reserve_player_ids=("F", "G"),
+            external_reserve_player_ids=("B", "F", "G"),
             unavailable_player_ids=("E",),
         )
         assert after_ll_exhaustion.source == "external_reserve"
         assert after_ll_exhaustion.selected_player_id == "F"
-        assert after_ll_exhaustion.source_ordinal == 1
+        assert after_ll_exhaustion.source_ordinal == 2
 
         exhausted_before_main = TournamentReplacementSourceAuthorityBuilder.build(
             predecessor=draw,

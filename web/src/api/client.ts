@@ -47,6 +47,10 @@ import type {
   PreDrawWithdrawalResultResponse,
   PreDrawWithdrawalStateResponse,
   CanonicalTournamentEntryFieldState,
+  CanonicalTournamentDrawState,
+  CanonicalTournamentDrawAuthority,
+  CanonicalDrawInputCommitPayload,
+  CanonicalDrawGeneratePayload,
   RunLineageApiResponse,
   RunStatusSummary,
   RunWorldStatus,
@@ -1217,6 +1221,76 @@ export async function getCanonicalTournamentEntryFieldState(
   ) {
     throw new Error('Canonical Tournament Entry Field response does not match the requested scope.')
   }
+  return data
+}
+
+function canonicalTournamentDrawRoot(runId: string, branchId: string, eventId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/draw`
+}
+
+function verifyCanonicalTournamentDrawScope(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  data: { run_id: string; branch_id: string; event_id: string }
+): void {
+  if (data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId) {
+    throw new Error('Canonical Tournament Draw response does not match the requested scope.')
+  }
+}
+
+export async function getCanonicalTournamentDrawState(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentDrawState> {
+  const data = await request<CanonicalTournamentDrawState>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId)
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  if (data.schema_version !== 'canonical_tournament_draw_state.v1') {
+    throw new Error('Canonical Tournament Draw state has an unsupported schema.')
+  }
+  return data
+}
+
+export async function commitCanonicalTournamentDrawInput(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalDrawInputCommitPayload
+): Promise<CanonicalTournamentDrawState> {
+  const data = await request<CanonicalTournamentDrawState>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/commit-input',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  return data
+}
+
+export async function generateCanonicalTournamentDraw(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalDrawGeneratePayload
+): Promise<CanonicalTournamentDrawState> {
+  const data = await request<CanonicalTournamentDrawState>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/generate',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  return data
+}
+
+export async function getCanonicalTournamentDrawAuthority(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentDrawAuthority> {
+  const data = await request<CanonicalTournamentDrawAuthority>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/authority'
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
   return data
 }
 

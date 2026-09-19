@@ -1350,6 +1350,96 @@ export type CanonicalTournamentEntryFieldState = {
   pre_draw_repair_locked_by_draw_input: boolean
 }
 
+export type CanonicalTournamentDrawState = {
+  schema_version: 'canonical_tournament_draw_state.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  field_sequence: number
+  field_fingerprint: string
+  main_draw_capacity: number
+  active_main_entrant_count: number
+  effective_main_bye_count: number
+  draw_input_committed: boolean
+  draw_input_fingerprint: string | null
+  draw_seed: number | null
+  main_seed_count: number | null
+  qualification_seed_count: number | null
+  initial_draw_generated: boolean
+  draw_authority_fingerprint: string | null
+  draw_algorithm_version: string | null
+  main_slot_count: number | null
+  main_node_count: number | null
+  main_bye_count: number | null
+  qualification_section_count: number | null
+  qualification_section_sizes: number[]
+  main_diagnostics: MainBracketDiagnostic[]
+}
+
+export type CanonicalDrawSlot = {
+  slot_index: number
+  idealized_slot_number?: number
+  entrant_kind: 'player' | 'bye' | 'qualifier_placeholder' | 'lucky_loser_placeholder'
+  player_id: string | null
+  placeholder_id: string | null
+  seed_number: number | null
+  is_seed_protected: boolean
+  entry_status?: 'wild_card' | 'lucky_loser'
+  lucky_loser_placeholder_id?: string
+}
+
+export type CanonicalDrawNode = {
+  node_id: string
+  round_number: number
+  round_sequence: number
+  source_top: string
+  source_bottom: string
+}
+
+export type CanonicalDrawBracket = {
+  draw_type: 'qualification' | 'main'
+  section_id?: string
+  bracket_size: number
+  seed_positions: Array<[number, number]>
+  slots: CanonicalDrawSlot[]
+  nodes: CanonicalDrawNode[]
+  bye_slot_indexes: number[]
+  qualifier_placeholder_slots: Array<[string, number]>
+  lucky_loser_placeholder_slots?: Array<[string, number]>
+}
+
+export type CanonicalTournamentDrawAuthority = {
+  schema_version: 'tournament_draw_authority.v1' | 'tournament_draw_authority.v2'
+  algorithm_version: 'protected_seed_shuffle.v1' | 'idealized_seed_tiers.v2'
+  run_id: string
+  branch_id: string
+  event_id: string
+  generated_by_command_id: string
+  draw_input_fingerprint: string
+  qualification: CanonicalDrawBracket | null
+  qualification_sections?: CanonicalDrawBracket[]
+  main: CanonicalDrawBracket
+}
+
+export type CanonicalDrawInputCommitPayload = {
+  schema_version: 'canonical_tournament_draw_input_commit_command.v1'
+  command_id: string
+  run_id: string
+  branch_id: string
+  event_id: string
+  expected_field_fingerprint: string
+  draw_seed: number
+}
+
+export type CanonicalDrawGeneratePayload = {
+  schema_version: 'canonical_tournament_draw_generate_command.v1'
+  command_id: string
+  run_id: string
+  branch_id: string
+  event_id: string
+  expected_draw_input_fingerprint: string
+}
+
 export type ApplyPreDrawWithdrawalPayload = {
   withdrawn_player_id: string
 }

@@ -250,6 +250,18 @@ follow-up exposes this state and command through a dedicated Run/Branch Admin HT
 surface with expected-field fingerprint protection. New repairs remain locked after
 Tournament Draw Input commitment.
 
+The canonical pre-draw surface now continues through the initial Draw boundary.
+Run/Branch Admin can inspect Draw state, commit immutable Draw Input against the
+expected terminal Entry Field fingerprint, generate the immutable initial Draw
+against the expected Draw Input fingerprint, and read the exact canonical bracket
+payload. Seed counts remain server-derived from Master rules; the client supplies
+only a technical deterministic replay seed. Planned Event Detail consumes this
+authority directly and renders Main/Q slot state without reusing the legacy
+SeasonDrawService. Classic Main capacity is fail-closed at 2/4/8/16/32/64/128 and
+production Draw geometry now has direct canonical generation coverage at every
+supported size. This closes the initial Draw Admin exposure slice; post-draw
+revisions and execution remain separate authority workflows.
+
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused
 production-backed acceptance proves four two-player Q sections end-to-end:

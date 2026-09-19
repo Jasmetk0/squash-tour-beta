@@ -8,13 +8,15 @@ import json
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from beta_engine.domain.tournaments.draw_input_authority import (
+    TournamentDrawInputAuthorityBuilder,
+)
 from beta_engine.domain.tournaments.draw_revision_authority import (
     TournamentDrawRevision,
     TournamentDrawRevisionBuilder,
 )
-from beta_engine.infrastructure.db.models import (
-    TournamentDrawRevisionModel,
-)
+from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldResolver
+from beta_engine.infrastructure.db.models import TournamentDrawRevisionModel
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
@@ -23,6 +25,12 @@ from beta_engine.infrastructure.db.tournament_draw_input_authority import (
 )
 from beta_engine.infrastructure.db.tournament_draw_process_authority import (
     TournamentDrawProcessAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
+from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthorityStore,
 )
 
 
@@ -74,7 +82,10 @@ class TournamentDrawRevisionStore:
                 row.revision_fingerprint,
             ):
                 raise ValueError("Stored Tournament Draw revision is corrupt")
-            if predecessor is None or revision.predecessor_draw_fingerprint != predecessor.fingerprint:
+            if (
+                predecessor is None
+                or revision.predecessor_draw_fingerprint != predecessor.fingerprint
+            ):
                 raise ValueError("Tournament Draw revision predecessor chain is corrupt")
             out.append(revision)
             predecessor = revision.successor_draw
@@ -88,42 +99,111 @@ class TournamentDrawRevisionStore:
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
 
-    def full_redraw(
+    def full_redraw_withdrawal(
         self,
         *,
         run_id: str,
         branch_id: str,
         event_id: str,
         command_id: str,
-        draw_type: str,
-        process_window_ordinal: int,
+        withdrawn_player_ids: tuple[str, ...],
         repair_draw_seed: int,
+        main_process_window_ordinal: int | None = None,
+        qualification_process_window_ordinal: int | None = None,
     ) -> TournamentDrawRevision:
+        requested = tuple(sorted(set(withdrawn_player_ids)))
+        if not requested:
+            raise ValueError("Full redraw withdrawal requires at least one player")
+
         history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        draw_store = TournamentDrawAuthorityStore(self.session)
         predecessor = (
             history[-1].successor_draw
             if history
-            else TournamentDrawAuthorityStore(self.session).get_initial(
+            else draw_store.get_initial(
                 run_id=run_id, branch_id=branch_id, event_id=event_id
             )
         )
         if predecessor is None:
             raise ValueError("Full redraw requires canonical Draw authority")
-        draw_input = TournamentDrawInputAuthorityStore(self.session).get(
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
         process = TournamentDrawProcessAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
-        if draw_input is None or process is None:
-            raise ValueError("Full redraw requires Draw Input and Draw process authority")
+        ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if original_input is None or process is None or ranking is None:
+            raise ValueError(
+                "Full redraw requires Draw Input, Draw process and ranking authority"
+            )
+        if original_input.capacity.wild_card_slots:
+            raise ValueError(
+                "Full redraw with WC/RWC requires the dedicated post-draw WC repair slice"
+            )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        rows = field_store._rows(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if not rows:
+            raise ValueError("Full redraw requires canonical Tournament Entry Field")
+        persisted_field, applications = field_store._load_row(rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+        successor_field = TournamentEntryFieldResolver.repair_pre_draw(
+            authority=ranking,
+            applications=applications,
+            previous=previous_field,
+            withdrawn_player_ids=requested,
+        )
+        if successor_field == previous_field:
+            raise TournamentDrawRevisionConflict(
+                "Full redraw withdrawal contains no new active-field change"
+            )
+
+        sequence = len(history) + 1
+        successor_input = TournamentDrawInputAuthorityBuilder.build(
+            authority=ranking,
+            field=successor_field,
+            field_sequence=original_input.field_sequence + sequence,
+            command_id=command_id,
+            draw_seed=repair_draw_seed,
+            main_seed_count=None,
+            qualification_seed_count=None,
+            schema_version="tournament_draw_input_authority.v2",
+        )
+
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+        affected = []
+        if previous_input.direct_main_player_ids != successor_input.direct_main_player_ids:
+            affected.append("main")
+        if (
+            previous_input.qualification_player_ids
+            != successor_input.qualification_player_ids
+        ):
+            affected.append("qualification")
+        affected_draw_types = tuple(affected)
+        if not affected_draw_types:
+            raise TournamentDrawRevisionConflict(
+                "Withdrawal did not change active Main or Qualification field"
+            )
 
         request = {
             "predecessor_draw_fingerprint": predecessor.fingerprint,
             "process_authority_fingerprint": process.fingerprint,
-            "draw_type": draw_type,
-            "process_window_ordinal": process_window_ordinal,
+            "withdrawn_player_ids": list(requested),
             "repair_draw_seed": repair_draw_seed,
+            "main_process_window_ordinal": main_process_window_ordinal,
+            "qualification_process_window_ordinal": qualification_process_window_ordinal,
+            "affected_draw_types": list(affected_draw_types),
+            "successor_field_fingerprint": successor_field.fingerprint,
         }
         request_fp = _fp(request)
         retry = self.session.scalar(
@@ -142,12 +222,15 @@ class TournamentDrawRevisionStore:
 
         revision = TournamentDrawRevisionBuilder.build_full_redraw(
             predecessor=predecessor,
-            draw_input=draw_input,
+            successor_field=successor_field,
+            successor_draw_input=successor_input,
             process_authority=process,
-            draw_type=draw_type,
-            process_window_ordinal=process_window_ordinal,
+            affected_draw_types=affected_draw_types,
+            main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=qualification_process_window_ordinal,
             repair_draw_seed=repair_draw_seed,
-            sequence=len(history) + 1,
+            withdrawn_player_ids=requested,
+            sequence=sequence,
             command_id=command_id,
         )
         self.session.add(

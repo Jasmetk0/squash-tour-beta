@@ -617,7 +617,9 @@ def test_prize_money_authority_rejects_corrupt_reopen():
     payload["known_awarded_amount"] += 1
 
     with pytest.raises(ValueError, match="known awarded amount mismatch"):
-        TournamentPrizeMoneyAwardAuthority.model_validate(payload)
+        TournamentPrizeMoneyAwardAuthority.model_validate_json(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        )
 
 
 def test_canonical_point_authority_maps_frozen_distribution_without_legacy_service():

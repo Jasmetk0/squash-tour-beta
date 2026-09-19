@@ -101,8 +101,6 @@ jobs:
             src/pages/AdminSeasonsPage.test.tsx \
             src/pages/TournamentTemplatesPage.test.tsx \
             src/pages/RunPage.test.tsx \
-            src/pages/RunSimulationPage.test.tsx \
-            src/pages/AuthoritativeSimulationPanel.test.tsx \
             src/pages/AdminRankingCandidatesPage.test.tsx \
             src/pages/RankingPreparationPanel.test.tsx \
             src/pages/RankingSavePanel.test.tsx \

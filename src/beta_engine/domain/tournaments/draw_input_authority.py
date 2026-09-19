@@ -25,6 +25,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v1",
     "tournament_draw_input_authority.v2",
     "tournament_draw_input_authority.v3",
+    "tournament_draw_input_authority.v4",
 ]
 
 
@@ -101,6 +102,10 @@ class TournamentDrawInputAuthority(FrozenInput):
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
     )
+    post_draw_wild_card_repair_fingerprints: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     direct_main_player_ids: tuple[str, ...]
     wild_card_player_ids: tuple[str, ...] = Field(
         default=(),
@@ -154,6 +159,7 @@ class TournamentDrawInputAuthority(FrozenInput):
         if self.schema_version in {
             "tournament_draw_input_authority.v2",
             "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v4",
         }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
@@ -174,14 +180,30 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Canonical v2/v3 Qualification seed count differs from Master §15.2/15.6"
                 )
-        if self.schema_version == "tournament_draw_input_authority.v3":
+        if self.schema_version in {
+            "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v4",
+        }:
             if self.capacity.wild_card_slots != len(self.wild_card_player_ids):
                 raise ValueError(
-                    "Canonical v3 Draw Input requires every WC slot to be resolved"
+                    "Canonical WC Draw Input requires every WC slot to be resolved"
                 )
             if self.capacity.wild_card_slots and self.wild_card_authority_fingerprint is None:
-                raise ValueError("Canonical v3 WC field lacks WC authority fingerprint")
-        elif self.wild_card_player_ids or self.wild_card_authority_fingerprint is not None:
+                raise ValueError("Canonical WC field lacks WC authority fingerprint")
+            if self.schema_version == "tournament_draw_input_authority.v4":
+                if not self.post_draw_wild_card_repair_fingerprints:
+                    raise ValueError(
+                        "Canonical v4 WC Draw Input requires post-draw repair evidence"
+                    )
+            elif self.post_draw_wild_card_repair_fingerprints:
+                raise ValueError(
+                    "Pre-repair WC Draw Input cannot carry post-draw repair evidence"
+                )
+        elif (
+            self.wild_card_player_ids
+            or self.wild_card_authority_fingerprint is not None
+            or self.post_draw_wild_card_repair_fingerprints
+        ):
             raise ValueError("Historical Draw Input cannot carry canonical WC authority")
         return self
 
@@ -198,6 +220,68 @@ class TournamentDrawInputAuthority(FrozenInput):
 
 class TournamentDrawInputAuthorityBuilder:
     """Build draw commitment inputs only from already-owned tournament authority."""
+
+    @staticmethod
+    def build_post_draw_wild_card_repair(
+        *,
+        previous: TournamentDrawInputAuthority,
+        command_id: str,
+        withdrawn_player_id: str,
+        replacement_player_id: str,
+        repair_authority_fingerprint: str,
+    ) -> TournamentDrawInputAuthority:
+        if previous.schema_version not in {
+            "tournament_draw_input_authority.v3",
+            "tournament_draw_input_authority.v4",
+        }:
+            raise ValueError("Post-draw WC repair requires canonical WC Draw Input")
+        if previous.wild_card_player_ids.count(withdrawn_player_id) != 1:
+            raise ValueError("Post-draw WC repair withdrawal is not active in WC field")
+        if withdrawn_player_id in previous.main_seed_player_ids:
+            raise ValueError(
+                "Seeded WC replacement requires seed-aware post-draw WC repair"
+            )
+        if replacement_player_id in (
+            set(previous.direct_main_player_ids)
+            | set(previous.wild_card_player_ids)
+            | set(previous.qualification_player_ids)
+        ):
+            raise ValueError("Post-draw WC replacement player is already active")
+        wc_players = list(previous.wild_card_player_ids)
+        wc_players[wc_players.index(withdrawn_player_id)] = replacement_player_id
+        repairs = (
+            *previous.post_draw_wild_card_repair_fingerprints,
+            repair_authority_fingerprint,
+        )
+        withdrawn = tuple(
+            sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+        )
+        return TournamentDrawInputAuthority(
+            schema_version="tournament_draw_input_authority.v4",
+            run_id=previous.run_id,
+            branch_id=previous.branch_id,
+            event_id=previous.event_id,
+            committed_by_command_id=command_id,
+            draw_seed=previous.draw_seed,
+            main_seed_count=previous.main_seed_count,
+            qualification_seed_count=previous.qualification_seed_count,
+            field_sequence=previous.field_sequence,
+            capacity=previous.capacity,
+            tournament_ranking_authority_fingerprint=(
+                previous.tournament_ranking_authority_fingerprint
+            ),
+            ranking_snapshot_fingerprint=previous.ranking_snapshot_fingerprint,
+            entry_field_fingerprint=previous.entry_field_fingerprint,
+            wild_card_authority_fingerprint=previous.wild_card_authority_fingerprint,
+            post_draw_wild_card_repair_fingerprints=repairs,
+            direct_main_player_ids=previous.direct_main_player_ids,
+            wild_card_player_ids=tuple(wc_players),
+            qualification_player_ids=previous.qualification_player_ids,
+            qualifier_placeholder_ids=previous.qualifier_placeholder_ids,
+            withdrawn_player_ids=withdrawn,
+            main_seed_player_ids=previous.main_seed_player_ids,
+            qualification_seed_player_ids=previous.qualification_seed_player_ids,
+        )
 
     @staticmethod
     def build(

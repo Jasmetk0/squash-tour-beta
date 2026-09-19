@@ -1407,7 +1407,6 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         driver._topology((cyclic,))
 
 
-@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     """Production Entry -> Draw -> Match evidence drives all seven matches."""
@@ -1763,10 +1762,13 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
         )
         assert len(sources) == 1
         source = sources[0]
-        assert len(source.result.match_result_refs) == 15
-        assert len(source.result.players) == 16
+        assert source.canonical_result is not None
+        assert len(source.canonical_result.match_results) == 15
+        assert len(source.canonical_result.players) == 16
 
-        stages = [player.reached_stage for player in source.result.players]
+        stages = [
+            player.reached_stage for player in source.canonical_result.players
+        ]
         assert stages.count("round_of_16") == 8
         assert stages.count("quarterfinal") == 4
         assert stages.count("semifinal") == 2

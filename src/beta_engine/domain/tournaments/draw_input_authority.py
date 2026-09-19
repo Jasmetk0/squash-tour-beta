@@ -334,6 +334,7 @@ class TournamentDrawInputAuthorityBuilder:
         vacated_main_seed_number: int | None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
+            "tournament_draw_input_authority.v2",
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",

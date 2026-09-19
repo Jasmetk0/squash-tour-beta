@@ -1465,6 +1465,8 @@ class AuthoritativeRunSimulationDriver:
         """Propose earliest dependency-safe Simulation Slots from canonical topology."""
         with self.factory() as session:
             self._require_writable_scope(session, run_id, branch_id)
+            if current_week != expected_week:
+                raise ValueError("schedule week is stale")
             schedule, position_fingerprint = (
                 self._build_topological_schedule_proposal(
                     session,
@@ -1483,6 +1485,7 @@ class AuthoritativeRunSimulationDriver:
         run_id: str,
         branch_id: str,
         request_id: str,
+        expected_week: RankingWeek,
         expected_schedule_fingerprint: str,
         expected_position_fingerprint: str,
     ):
@@ -1490,13 +1493,15 @@ class AuthoritativeRunSimulationDriver:
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, run_id, branch_id)
-            week = self._current_week(session, run_id, branch_id)
+            current_week = self._current_week(session, run_id, branch_id)
             row = session.get(
                 WeekSimulationScheduleModel,
-                (run_id, branch_id, week.ordinal),
+                (run_id, branch_id, expected_week.ordinal),
             )
             if row is not None:
-                stored = self._schedule(session, run_id, branch_id, week)
+                stored = self._schedule(
+                    session, run_id, branch_id, expected_week
+                )
                 assert stored is not None
                 request_fp = fingerprint(
                     {
@@ -1538,7 +1543,7 @@ class AuthoritativeRunSimulationDriver:
                 WeekSimulationScheduleModel(
                     run_id=run_id,
                     branch_id=branch_id,
-                    week_ordinal=week.ordinal,
+                    week_ordinal=expected_week.ordinal,
                     request_id=request_id,
                     request_fingerprint=request_fp,
                     schedule_fingerprint=schedule.fingerprint,

@@ -961,6 +961,19 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     assert preview["schedule_fingerprint"] == proposed["schedule_fingerprint"]
     assert preview["position_fingerprint"] == proposed["position_fingerprint"]
 
+    registry = driver.match_service._load_registry()
+    registry.matches_by_event_id = dict(
+        reversed(tuple(registry.matches_by_event_id.items()))
+    )
+    driver.match_service._save_registry(registry)
+    repeated = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert repeated["schedule"] == proposed["schedule"]
+    assert repeated["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+    assert repeated["position_fingerprint"] == proposed["position_fingerprint"]
+
 
 @pytest.mark.pr_critical
 def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(

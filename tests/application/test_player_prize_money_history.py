@@ -203,14 +203,14 @@ def test_player_prize_money_history_preserves_currencies_and_unknowns(database):
         store = OwnedTournamentRankingSourceStore(session)
         store.append(
             _source(
-                event_id="A1",
+                event_id="EVT-A1",
                 week=RankingWeek(season_index=0, week=1),
                 schema_version="owned_tournament_ranking_source.v4",
             )
         )
         store.append(
             _source(
-                event_id="B2",
+                event_id="EVT-B2",
                 week=RankingWeek(season_index=0, week=2),
                 currency="EUR",
                 table={"finalist": 6000, "champion": 10000},
@@ -218,7 +218,7 @@ def test_player_prize_money_history_preserves_currencies_and_unknowns(database):
         )
         store.append(
             _source(
-                event_id="C3",
+                event_id="EVT-C3",
                 week=RankingWeek(season_index=1, week=1),
                 currency="USD",
                 table={"finalist": 7000, "champion": 12000},
@@ -226,7 +226,7 @@ def test_player_prize_money_history_preserves_currencies_and_unknowns(database):
         )
         store.append(
             _source(
-                event_id="D4",
+                event_id="EVT-D4",
                 week=RankingWeek(season_index=1, week=2),
                 currency="GBP",
                 table={"finalist": 5000, "champion": None},
@@ -234,7 +234,7 @@ def test_player_prize_money_history_preserves_currencies_and_unknowns(database):
         )
         store.append(
             _source(
-                event_id="E5",
+                event_id="EVT-E5",
                 week=RankingWeek(season_index=1, week=3),
             )
         )
@@ -246,11 +246,11 @@ def test_player_prize_money_history_preserves_currencies_and_unknowns(database):
     )
 
     assert [entry.event_id for entry in history.entries] == [
-        "A1",
-        "B2",
-        "C3",
-        "D4",
-        "E5",
+        "EVT-A1",
+        "EVT-B2",
+        "EVT-C3",
+        "EVT-D4",
+        "EVT-E5",
     ]
     assert [entry.payout_status for entry in history.entries] == [
         "historical_unavailable",

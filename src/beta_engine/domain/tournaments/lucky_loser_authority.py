@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from pydantic import Field, model_validator
 
@@ -14,9 +14,11 @@ from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawIn
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthority,
 )
-from beta_engine.domain.tournaments.replacement_source_authority import (
-    TournamentReplacementSourceAuthority,
-)
+
+if TYPE_CHECKING:
+    from beta_engine.domain.tournaments.replacement_source_authority import (
+        TournamentReplacementSourceAuthority,
+    )
 
 
 class TournamentLuckyLoserVacancyAuthority(FrozenInput):

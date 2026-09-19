@@ -44,7 +44,7 @@ class TournamentEntryApplication(FrozenInput):
 
 
 class TournamentEntryFieldCapacity(FrozenInput):
-    main_draw_size: int = Field(ge=1)
+    main_draw_size: int = Field(ge=1, le=128)
     qualification_draw_size: int = Field(default=0, ge=0)
     qualifier_spots: int = Field(default=0, ge=0)
     wild_card_slots: int = Field(default=0, ge=0)
@@ -63,6 +63,10 @@ class TournamentEntryFieldCapacity(FrozenInput):
 
         if main_entrant_count < 2:
             raise ValueError("Classic Main Draw requires at least two entrants")
+        if main_entrant_count > 128:
+            raise ValueError(
+                "Classic Main Draw supports at most 128 entrants in the current version"
+            )
         reserved_non_bye = qualifier_spots + wild_card_slots
         if reserved_non_bye > main_entrant_count:
             raise ValueError(

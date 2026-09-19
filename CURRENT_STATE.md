@@ -399,9 +399,20 @@ elimination round. The authority freezes terminal result fingerprints plus every
 candidate's elimination result, so a later fill does not recalculate historical LL
 priority from mutable state.
 
-Actual LL placeholder filling is still the next boundary, including availability /
-eligibility skips and RWC-exhaustion routing into the shared LL source. Auto-BYE-only
-Q terminals and group-Qualification LL ordering remain explicit later edges. The
-generic middle seed-cascade phase still intentionally requires replacement-backed
-player-count parity. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Bracket-Q LL placeholder filling is now canonical. `tournament_lucky_loser_fill.v1`
+freezes the original LL order authority, the next chronological `LLx` slot, selected
+candidate, prior assignments, explicit unavailable identities and every higher-
+priority candidate skipped for those reasons. Draw Input v7 allows the selected LL
+player to remain part of historical Qualification while becoming active Main, and
+Draw revision v10 replaces the unresolved placeholder in the exact physical slot
+with a player carrying `entry_status=lucky_loser` plus the retained `LLx` identity.
+No Lucky Loser ever inherits a seed. Successive fills reuse the first frozen LL order
+rather than recalculating priority from the changed Draw.
+
+LL exhaustion now fails closed at an explicit external-reserve boundary. RWC
+exhaustion still needs to route into the same shared LL source chain, followed by
+external reserves / late BYE behavior. Auto-BYE-only Q terminals and group-
+Qualification LL ordering remain explicit later edges. The generic middle seed-
+cascade phase still intentionally requires replacement-backed player-count parity.
+See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

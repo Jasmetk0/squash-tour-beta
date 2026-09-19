@@ -21,6 +21,7 @@ from beta_engine.domain.tournaments.draw_revision_authority import (
 )
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
+    canonical_classic_seed_count,
 )
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
@@ -285,6 +286,80 @@ def test_main_entrant_count_derives_classic_capacity(
     assert capacity.main_draw_size == expected_capacity
     assert capacity.bye_slots == expected_byes
     assert capacity.direct_main_slots == entrant_count
+
+
+@pytest.mark.pr_critical
+def test_max_supported_128_player_draw_has_complete_canonical_geometry():
+    player_ids = tuple(f"P{index:03d}" for index in range(1, 129))
+    capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+        main_entrant_count=len(player_ids),
+    )
+    seed_count = canonical_classic_seed_count(
+        bracket_capacity=capacity.main_draw_size,
+        actual_player_count=len(player_ids),
+    )
+
+    assert capacity.main_draw_size == 128
+    assert capacity.bye_slots == 0
+    assert seed_count == 32
+
+    draw_input = TournamentDrawInputAuthority(
+        schema_version="tournament_draw_input_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="max-128",
+        committed_by_command_id="commit-max-128",
+        draw_seed=128032,
+        main_seed_count=seed_count,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=capacity,
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=player_ids,
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=player_ids[:seed_count],
+        qualification_seed_player_ids=(),
+    )
+
+    first = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="generate-max-128",
+    )
+    replay = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="generate-max-128",
+    )
+
+    assert replay == first
+    assert replay.fingerprint == first.fingerprint
+    assert first.algorithm_version == "idealized_seed_tiers.v2"
+    assert first.main.bracket_size == 128
+    assert len(first.main.slots) == 128
+    assert len(first.main.nodes) == 127
+    assert first.main.bye_slot_indexes == ()
+    assert {
+        slot.idealized_slot_number for slot in first.main.slots
+    } == set(range(1, 129))
+
+    seeded = {
+        slot.seed_number: slot
+        for slot in first.main.slots
+        if slot.seed_number is not None
+    }
+    assert set(seeded) == set(range(1, 33))
+    assert seeded[1].player_id == "P001"
+    assert seeded[1].idealized_slot_number == 1
+    assert seeded[2].player_id == "P002"
+    assert seeded[2].idealized_slot_number == 2
+
+    assert {item.code for item in first.main_bracket_diagnostics} == {
+        "large_main_draw_over_64"
+    }
+    assert "main_bracket_diagnostics" not in first.model_dump(mode="json")
 
 
 def test_thirteen_player_main_draw_generates_with_three_byes(database):

@@ -73,6 +73,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v9",
         "tournament_draw_revision.v10",
         "tournament_draw_revision.v11",
+        "tournament_draw_revision.v12",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -1598,10 +1599,22 @@ class TournamentDrawRevisionBuilder:
         template = slots[index]
         if template.player_id != authority.withdrawn_player_id:
             raise ValueError("Frozen ordinary fallback slot no longer matches withdrawal")
-        if template.entry_status is not None:
+        if template.entry_status not in {None, "wild_card"}:
             raise ValueError(
-                "Frozen ordinary fallback currently supports Direct Main slots only"
+                "Frozen ordinary fallback supports Direct Main or exhausted WC slots only"
             )
+        released_wild_card_slot = template.entry_status == "wild_card"
+        if released_wild_card_slot:
+            if (
+                successor_draw_input.schema_version
+                != "tournament_draw_input_authority.v9"
+                or successor_draw_input.released_wild_card_slot_count < 1
+                or authority.withdrawn_player_id
+                in successor_draw_input.wild_card_player_ids
+            ):
+                raise ValueError(
+                    "WC ordinary fallback must release the frozen WC slot in Draw Input"
+                )
         if authority.source == "external_reserve":
             if authority.selected_player_id is None:
                 raise ValueError("External reserve source lacks selected player")
@@ -1652,7 +1665,11 @@ class TournamentDrawRevisionBuilder:
             main=main,
         )
         return TournamentDrawRevision(
-            schema_version="tournament_draw_revision.v11",
+            schema_version=(
+                "tournament_draw_revision.v12"
+                if released_wild_card_slot
+                else "tournament_draw_revision.v11"
+            ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
             event_id=predecessor.event_id,

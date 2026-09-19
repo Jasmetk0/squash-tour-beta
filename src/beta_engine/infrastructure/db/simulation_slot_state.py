@@ -936,6 +936,44 @@ def _validate_saved_draw_authorities_against_target_inputs(
         )
 
 
+def _validate_saved_draw_revisions_against_target_draw(component) -> None:
+    revision_values = (component or {}).get("draw_revisions", [])
+    if not revision_values:
+        return
+
+    draw_values = (component or {}).get("draw_authorities", [])
+    if not draw_values:
+        raise ValueError("Saved Draw revisions require saved initial Draw authority")
+
+    from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
+    from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
+
+    initial_by_event = {
+        value["event_id"]: TournamentDrawAuthority.model_validate_json(
+            value["payload_json"]
+        )
+        for value in draw_values
+    }
+    by_event = {}
+    for value in revision_values:
+        by_event.setdefault(value["event_id"], []).append(value)
+
+    for event_id, values in by_event.items():
+        predecessor = initial_by_event.get(event_id)
+        if predecessor is None:
+            raise ValueError("Saved Draw revision references missing initial Draw")
+        for expected, value in enumerate(
+            sorted(values, key=lambda item: item["sequence"]),
+            start=1,
+        ):
+            revision = TournamentDrawRevision.model_validate_json(value["payload_json"])
+            if revision.sequence != expected:
+                raise ValueError("Saved Draw revision sequence has a gap")
+            if revision.predecessor_draw_fingerprint != predecessor.fingerprint:
+                raise ValueError("Saved Draw revision predecessor chain is corrupt")
+            predecessor = revision.successor_draw
+
+
 def _validate_saved_draw_process_against_target_draw(
     component,
 ) -> None:
@@ -988,6 +1026,7 @@ def restore_saved_simulation_slots(
         branch_id=branch_id,
     )
     _validate_saved_draw_authorities_against_target_inputs(target)
+    _validate_saved_draw_revisions_against_target_draw(target)
     _validate_saved_draw_process_against_target_draw(target)
     live_slots = session.scalars(
         select(SimulationSlotModel)

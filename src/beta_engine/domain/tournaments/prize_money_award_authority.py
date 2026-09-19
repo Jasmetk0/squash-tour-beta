@@ -18,7 +18,8 @@ from beta_engine.domain.tournaments.result_authority import TournamentResultAuth
 
 
 PrizeMoneyConfigurationStatus = Literal["not_configured", "partial", "complete"]
-PrizeMoneyPayoutStatus = Literal["not_configured", "unknown", "known"]
+PrizeMoneyPayoutStatus = Literal["not_configured", "unknown", "known", "zero"]
+PrizeMoneyZeroReason = Literal["replaced_before_first_real_match"]
 PrizeMoneyTotalStatus = Literal["not_configured", "incomplete", "complete"]
 
 
@@ -28,6 +29,10 @@ class TournamentPlayerPrizeMoneyAwardAuthority(FrozenInput):
     payout_status: PrizeMoneyPayoutStatus
     amount: int | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, min_length=3, max_length=3)
+    zero_reason: PrizeMoneyZeroReason | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     source_player_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -35,9 +40,10 @@ class TournamentPlayerPrizeMoneyAwardAuthority(FrozenInput):
 class TournamentPrizeMoneyAwardAuthority(FrozenInput):
     """Canonical per-player tournament payouts in the Edition's original currency."""
 
-    schema_version: Literal["tournament_prize_money_award_authority.v1"] = (
-        "tournament_prize_money_award_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_prize_money_award_authority.v1",
+        "tournament_prize_money_award_authority.v2",
+    ] = "tournament_prize_money_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -132,16 +138,37 @@ class TournamentPrizeMoneyAwardAuthority(FrozenInput):
             if not table:
                 expected_status: PrizeMoneyPayoutStatus = "not_configured"
                 expected_amount = None
+                expected_zero_reason = None
+            elif (
+                self.schema_version == "tournament_prize_money_award_authority.v2"
+                and award.reached_stage == "qualification_winner"
+            ):
+                # A Qualification winner who is absent from Main at completed
+                # tournament close is the canonical "replaced before first real
+                # Main match" case. Master §19.1 makes that a known zero payout,
+                # not an unknown stage-table value.
+                expected_status = "zero"
+                expected_amount = 0
+                expected_zero_reason = "replaced_before_first_real_match"
             elif configured is None:
                 expected_status = "unknown"
                 expected_amount = None
+                expected_zero_reason = None
             else:
                 expected_status = "known"
                 expected_amount = configured
+                expected_zero_reason = None
+
+            if self.schema_version == "tournament_prize_money_award_authority.v1":
+                if award.payout_status == "zero" or award.zero_reason is not None:
+                    raise ValueError(
+                        "Historical prize-money authority v1 cannot carry zero-payout provenance"
+                    )
 
             if (
                 award.payout_status != expected_status
                 or award.amount != expected_amount
+                or award.zero_reason != expected_zero_reason
                 or award.currency != self.original_currency
             ):
                 raise ValueError("Prize-money player award differs from frozen stage table")
@@ -150,20 +177,26 @@ class TournamentPrizeMoneyAwardAuthority(FrozenInput):
             else:
                 unknown_count += 1
 
-            expected_award_fp = _hash(
-                {
-                    "schema_version": "tournament_player_prize_money_award_authority.v1",
-                    "event_id": self.event_id,
-                    "player_id": award.player_id,
-                    "reached_stage": award.reached_stage,
-                    "payout_status": award.payout_status,
-                    "amount": award.amount,
-                    "currency": award.currency,
-                    "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
-                    "source_player_result_fingerprint": award.source_player_result_fingerprint,
-                    "edition_prize_money_config_fingerprint": self.edition_prize_money_config_fingerprint,
-                }
+            award_schema_version = (
+                "tournament_player_prize_money_award_authority.v2"
+                if award.zero_reason is not None
+                else "tournament_player_prize_money_award_authority.v1"
             )
+            expected_award_payload = {
+                "schema_version": award_schema_version,
+                "event_id": self.event_id,
+                "player_id": award.player_id,
+                "reached_stage": award.reached_stage,
+                "payout_status": award.payout_status,
+                "amount": award.amount,
+                "currency": award.currency,
+                "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
+                "source_player_result_fingerprint": award.source_player_result_fingerprint,
+                "edition_prize_money_config_fingerprint": self.edition_prize_money_config_fingerprint,
+            }
+            if award.zero_reason is not None:
+                expected_award_payload["zero_reason"] = award.zero_reason
+            expected_award_fp = _hash(expected_award_payload)
             if award.award_fingerprint != expected_award_fp:
                 raise ValueError("Prize-money player award fingerprint mismatch")
 
@@ -229,31 +262,48 @@ def build_tournament_prize_money_award_authority(
     )
 
     awards: list[TournamentPlayerPrizeMoneyAwardAuthority] = []
+    qualification_winner_ids = set(result.qualification_winner_ids)
     for player in sorted(result.players, key=lambda item: item.player_id):
         amount = table.get(player.reached_stage)
+        zero_reason: PrizeMoneyZeroReason | None = None
+        replaced_before_first_real_match = (
+            player.player_id in qualification_winner_ids
+            and player.draw_type == "qualification"
+            and player.reached_stage == "qualification_winner"
+        )
         if not table:
             payout_status: PrizeMoneyPayoutStatus = "not_configured"
             amount = None
+        elif replaced_before_first_real_match:
+            payout_status = "zero"
+            amount = 0
+            zero_reason = "replaced_before_first_real_match"
         elif amount is None:
             payout_status = "unknown"
         else:
             payout_status = "known"
 
         player_fp = _hash(player.model_dump(mode="json"))
-        award_fp = _hash(
-            {
-                "schema_version": "tournament_player_prize_money_award_authority.v1",
-                "event_id": result.event_id,
-                "player_id": player.player_id,
-                "reached_stage": player.reached_stage,
-                "payout_status": payout_status,
-                "amount": amount,
-                "currency": event.prize_money_currency,
-                "source_tournament_result_fingerprint": result.fingerprint,
-                "source_player_result_fingerprint": player_fp,
-                "edition_prize_money_config_fingerprint": config_fp,
-            }
+        award_schema_version = (
+            "tournament_player_prize_money_award_authority.v2"
+            if zero_reason is not None
+            else "tournament_player_prize_money_award_authority.v1"
         )
+        award_payload = {
+            "schema_version": award_schema_version,
+            "event_id": result.event_id,
+            "player_id": player.player_id,
+            "reached_stage": player.reached_stage,
+            "payout_status": payout_status,
+            "amount": amount,
+            "currency": event.prize_money_currency,
+            "source_tournament_result_fingerprint": result.fingerprint,
+            "source_player_result_fingerprint": player_fp,
+            "edition_prize_money_config_fingerprint": config_fp,
+        }
+        if zero_reason is not None:
+            award_payload["zero_reason"] = zero_reason
+        award_fp = _hash(award_payload)
         awards.append(
             TournamentPlayerPrizeMoneyAwardAuthority(
                 player_id=player.player_id,
@@ -261,6 +311,7 @@ def build_tournament_prize_money_award_authority(
                 payout_status=payout_status,
                 amount=amount,
                 currency=event.prize_money_currency,
+                zero_reason=zero_reason,
                 source_player_result_fingerprint=player_fp,
                 award_fingerprint=award_fp,
             )
@@ -279,6 +330,7 @@ def build_tournament_prize_money_award_authority(
         total_amount = known_sum
 
     return TournamentPrizeMoneyAwardAuthority(
+        schema_version="tournament_prize_money_award_authority.v2",
         run_id=result.run_id,
         branch_id=result.branch_id,
         event_id=result.event_id,

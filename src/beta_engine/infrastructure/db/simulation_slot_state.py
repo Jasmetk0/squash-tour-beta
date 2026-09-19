@@ -1029,17 +1029,6 @@ def restore_saved_simulation_slots(
         draw_store = TournamentDrawAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_draw_authorities}):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_draw_process = (target or {}).get("draw_process_authorities", [])
-    if target_draw_process:
-        from beta_engine.infrastructure.db.tournament_draw_process_authority import (
-            TournamentDrawProcessAuthorityStore,
-        )
-
-        process_store = TournamentDrawProcessAuthorityStore(session)
-        for event_id in sorted(
-            {value["event_id"] for value in target_draw_process}
-        ):
-            process_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_draw_process_authorities = session.scalars(
         select(TournamentDrawProcessAuthorityModel)
         .where(
@@ -1234,3 +1223,14 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_draw_authorities}
         ):
             draw_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_draw_process = (target or {}).get("draw_process_authorities", [])
+    if target_draw_process:
+        from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+            TournamentDrawProcessAuthorityStore,
+        )
+
+        process_store = TournamentDrawProcessAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_draw_process}
+        ):
+            process_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)

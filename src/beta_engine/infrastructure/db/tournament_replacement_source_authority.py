@@ -163,14 +163,50 @@ class TournamentReplacementSourceAuthorityStore:
                 "Replacement source requires canonical Draw and Draw Input"
             )
 
-        cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
-            self.session
-        ).resolve(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-            player_id=withdrawn_player_id,
-        )
+        active_main_slots = [
+            slot for slot in draw.main.slots if slot.player_id == withdrawn_player_id
+        ]
+        qualification_winner_evidence = None
+        if active_main_slots:
+            if len(active_main_slots) != 1:
+                raise TournamentReplacementSourceUnavailable(
+                    "Replacement source found duplicate active Main player slots"
+                )
+            cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
+                self.session
+            ).resolve(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                player_id=withdrawn_player_id,
+            )
+        elif withdrawn_player_id in set(draw_input.qualification_player_ids):
+            try:
+                qualification_winner_evidence = (
+                    TournamentLuckyLoserOrderAuthorityStore(self.session)
+                    .resolve_qualification_winner_evidence(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        draw=draw,
+                        player_id=withdrawn_player_id,
+                    )
+                )
+            except TournamentLuckyLoserOrderUnavailable as exc:
+                raise TournamentReplacementSourceUnavailable(str(exc)) from exc
+            cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
+                self.session
+            ).resolve(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                player_id=withdrawn_player_id,
+                draw_type="main",
+            )
+        else:
+            raise TournamentReplacementSourceUnavailable(
+                "Replacement source cannot resolve active Main player or Q-winner slot"
+            )
 
         q_node_ids = {
             node.node_id
@@ -241,6 +277,7 @@ class TournamentReplacementSourceAuthorityStore:
                 unavailable_player_ids=tuple(
                     sorted(set(unavailable_player_ids))
                 ),
+                qualification_winner_evidence=qualification_winner_evidence,
             )
         except ValueError as exc:
             raise TournamentReplacementSourceUnavailable(str(exc)) from exc

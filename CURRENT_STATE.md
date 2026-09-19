@@ -62,8 +62,16 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   application command that reuses the frozen Tournament Ranking Snapshot and
   frozen Tournament Entry/Application payload. The current follow-up exposes that
   authority through a separate Run/Branch-scoped Admin HTTP boundary with field
-  fingerprint inspection and optimistic mutation guards. The legacy simulation-run
-  endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
+  fingerprint inspection and optimistic mutation guards. The canonical initial Draw
+  pipeline is now exposed through a separate Run/Branch Admin authority boundary:
+  terminal Entry Field -> CAS-guarded Draw Input commit -> immutable initial Draw
+  generation -> read-only Draw Authority payload. Main classic capacity now fails
+  closed outside 2/4/8/16/32/64/128; real canonical generation is directly covered
+  at every supported capacity, including 128. Planned Event Detail consumes the
+  canonical field/draw surfaces, renders the existing geometry warnings, allows the
+  technical deterministic draw seed to be frozen, generates the initial authority
+  without client-supplied seed counts, and renders immutable Main/Q slot tables.
+  The legacy simulation-run endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
   priority and the first-real-match replacement cutoff are still required before
   those later producer paths may be re-enabled.
 - #689 (including #690) and #691–720 are in the fetched ancestry; the v64 Master

@@ -308,10 +308,24 @@ full redraw in the other component. Multi-Q section/Q identities stay fixed, pur
 frozen repair keeps the existing draw seed, replay is deterministic from frozen
 authority, and Saved Revision restore covers the v4 successor.
 
-This still does **not** claim the complete Master draw contract. The middle
-seed-cascade phase still intentionally fails closed when replacement-backed
-player-count parity cannot be maintained. Post-draw WC/RWC repair, Lucky Loser
-ordering, group Qualification and the per-player first-real-match replacement cutoff
-remain Gate 3 work; W/O after that player-specific cutoff is therefore not inferred
-from Draw Freeze alone. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+The Master player-specific replacement cutoff is now an explicit authority.
+New successful Draw repairs use revision v5 and freeze one cutoff snapshot for every
+withdrawn player. The snapshot is derived from validated Run/Branch competitive
+match receipts: no real-match receipt means the slot is still replaceable; if the
+latest real match was won, replacement is rejected with an explicit
+`walkover_required` state; if it was lost, the tournament path is already
+eliminated and cannot be repaired. Canonical BYEs do not create competitive group
+receipts, so one or more BYEs do not prematurely close replacement. Because the
+current Match Engine command is atomic, the first committed competitive group is the
+current durable evidence for first-real-match start. Historical Draw revisions v2-v4
+continue replaying from their stored payload and are not reinterpreted using newer
+match history.
+
+This still does **not** claim the complete Master draw contract. The next missing
+piece is execution of the post-cutoff W/O itself: the Draw must remain unchanged and
+the following opponent must advance without Match Engine play when resolvable.
+The middle seed-cascade phase still intentionally requires replacement-backed
+player-count parity. Post-draw WC/RWC repair, Lucky Loser ordering and group
+Qualification also remain Gate 3 work. See
+`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

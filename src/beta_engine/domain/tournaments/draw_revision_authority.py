@@ -112,10 +112,15 @@ class TournamentDrawRevisionBuilder:
             if before_ids != after_ids:
                 raise ValueError("Qualification redraw changed Q1..Qn linkage identities")
         else:
-            if (
-                predecessor.main.qualifier_placeholder_slots
-                != successor.main.qualifier_placeholder_slots
-            ):
+            before_q_ids = {
+                placeholder_id
+                for placeholder_id, _ in predecessor.main.qualifier_placeholder_slots
+            }
+            after_q_ids = {
+                placeholder_id
+                for placeholder_id, _ in successor.main.qualifier_placeholder_slots
+            }
+            if before_q_ids != after_q_ids:
                 raise ValueError("Main redraw changed Q placeholder identities")
 
         return TournamentDrawRevision(

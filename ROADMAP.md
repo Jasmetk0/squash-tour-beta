@@ -426,7 +426,7 @@ vacancies to pre-Q Qualification promotion, pending/immediate Lucky Loser creati
 and fill, source-aware post-Q external reserve, late BYE, and W/O; WC slots still
 consume the dedicated RWC path first. Direct-Main reserve/BYE uses Draw Input v8 /
 Draw revision v11. When every RWC is exhausted, WC slots may now fall through to an
-ordinary external reserve or BYE: Draw Input v9 freezes released-WC-slot lineage and
+ordinary external reserve or BYE: Draw Input v9 freezes exact released-WC ordinals and
 Draw revision v12 changes the exact frozen physical slot without transferring WC
 status. Deterministic child command IDs keep all of these mutation routes
 replayable/idempotent across retries.

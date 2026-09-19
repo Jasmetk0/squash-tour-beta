@@ -26,7 +26,11 @@ from beta_engine.domain.tournaments.draw_process_authority import (
 
 
 TournamentDrawRevisionRepairKind = Literal["full_redraw", "seed_cascade_phase"]
-TournamentDrawComponentRepairAction = Literal[\n    "full_redraw", "seed_cascade", "direct_slot_fill"\n]
+TournamentDrawComponentRepairAction = Literal[
+    "full_redraw",
+    "seed_cascade",
+    "direct_slot_fill",
+]
 
 
 class TournamentDrawRevision(FrozenInput):

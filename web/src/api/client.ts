@@ -116,6 +116,8 @@ import type {
   AuthoritativeSimulationSavePreview,
   AuthoritativeSimulationSavePayload,
   AuthoritativeSimulationSaveResponse,
+  DerivedAuthoritativeWeekTransitionPreview,
+  AuthoritativeWeekTransitionCommand,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -1125,6 +1127,93 @@ export async function saveAuthoritativeSimulation(
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   return data
+}
+
+function authoritativeWeekTransitionRoot(runId: string, branchId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/week-transitions`
+}
+
+function verifyWeekTransitionCommandScope(
+  runId: string,
+  branchId: string,
+  command: AuthoritativeWeekTransitionCommand
+): void {
+  if (command.run_id !== runId || command.branch_id !== branchId) {
+    throw new Error('Week Transition command does not match the requested Run/Branch.')
+  }
+  if (
+    command.target_week.season_index !== command.completed_week.season_index ||
+    command.target_week.week !== command.completed_week.week + 1
+  ) {
+    throw new Error('Week Transition command has an invalid week boundary.')
+  }
+}
+
+export async function previewDerivedAuthoritativeWeekTransition(
+  runId: string,
+  branchId: string,
+  commandId: string
+): Promise<DerivedAuthoritativeWeekTransitionPreview> {
+  const data = await request<DerivedAuthoritativeWeekTransitionPreview>(
+    authoritativeWeekTransitionRoot(runId, branchId) + '/derived/preview',
+    {
+      method: 'POST',
+      body: JSON.stringify({ command_id: commandId })
+    }
+  )
+  verifyWeekTransitionCommandScope(runId, branchId, data.command)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.result)
+  if (data.result.command_id !== data.command.command_id) {
+    throw new Error('Week Transition preview command/result identity mismatch.')
+  }
+  if (
+    data.result.completed_week.season_index !== data.command.completed_week.season_index ||
+    data.result.completed_week.week !== data.command.completed_week.week ||
+    data.result.target_week.season_index !== data.command.target_week.season_index ||
+    data.result.target_week.week !== data.command.target_week.week
+  ) {
+    throw new Error('Week Transition preview result has a different week boundary.')
+  }
+  if (!/^[0-9a-f]{64}$/.test(data.request_fingerprint)) {
+    throw new Error('Week Transition preview request fingerprint is invalid.')
+  }
+  return data
+}
+
+export async function confirmAuthoritativeWeekTransition(
+  runId: string,
+  branchId: string,
+  preview: DerivedAuthoritativeWeekTransitionPreview
+): Promise<DerivedAuthoritativeWeekTransitionPreview> {
+  verifyWeekTransitionCommandScope(runId, branchId, preview.command)
+  const data = await request<{
+    request_fingerprint: string
+    result: DerivedAuthoritativeWeekTransitionPreview['result']
+  }>(
+    authoritativeWeekTransitionRoot(runId, branchId),
+    {
+      method: 'POST',
+      body: JSON.stringify(preview.command),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Week-Transition-Ranking-Fingerprint': preview.result.official_ranking_fingerprint,
+        'X-Week-Transition-Request-Fingerprint': preview.request_fingerprint
+      }
+    }
+  )
+  if (data.request_fingerprint !== preview.request_fingerprint) {
+    throw new Error('Confirmed Week Transition differs from the reviewed request.')
+  }
+  verifyAuthoritativeSimulationScope(runId, branchId, data.result)
+  if (
+    data.result.command_id !== preview.result.command_id ||
+    data.result.official_ranking_fingerprint !== preview.result.official_ranking_fingerprint ||
+    data.result.player_lifecycle_fingerprint !== preview.result.player_lifecycle_fingerprint ||
+    data.result.player_sporting_fingerprint !== preview.result.player_sporting_fingerprint
+  ) {
+    throw new Error('Confirmed Week Transition differs from the reviewed preview.')
+  }
+  return { ...preview, result: data.result }
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

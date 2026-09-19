@@ -26,7 +26,7 @@ from beta_engine.domain.tournaments.draw_process_authority import (
 
 
 TournamentDrawRevisionRepairKind = Literal["full_redraw", "seed_cascade_phase"]
-TournamentDrawComponentRepairAction = Literal["seed_cascade", "direct_slot_fill"]
+TournamentDrawComponentRepairAction = Literal[\n    "full_redraw", "seed_cascade", "direct_slot_fill"\n]
 
 
 class TournamentDrawRevision(FrozenInput):
@@ -112,10 +112,6 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Seed-cascade phase repair requires revision schema v3"
                 )
-            if self.repair_draw_seed is not None:
-                raise ValueError(
-                    "Seed-cascade phase repair cannot introduce a new draw seed"
-                )
             if "main" in self.affected_draw_types:
                 if self.main_repair_action is None:
                     raise ValueError(
@@ -131,6 +127,22 @@ class TournamentDrawRevision(FrozenInput):
             elif self.qualification_repair_action is not None:
                 raise ValueError(
                     "Unchanged Qualification Draw cannot carry a repair action"
+                )
+            actions = {
+                action
+                for action in (
+                    self.main_repair_action,
+                    self.qualification_repair_action,
+                )
+                if action is not None
+            }
+            if "full_redraw" in actions and self.repair_draw_seed is None:
+                raise ValueError(
+                    "Mixed pre-freeze repair with full redraw requires repair seed"
+                )
+            if "full_redraw" not in actions and self.repair_draw_seed is not None:
+                raise ValueError(
+                    "Pure seed-cascade phase repair cannot introduce a new draw seed"
                 )
         return self
 
@@ -255,71 +267,106 @@ class TournamentDrawRevisionBuilder:
         withdrawn_player_ids: tuple[str, ...],
         sequence: int,
         command_id: str,
+        repair_draw_seed: int | None = None,
     ) -> TournamentDrawRevision:
         if not affected_draw_types:
             raise ValueError(
                 "Seed-cascade phase repair requires at least one affected draw component"
             )
+
+        phases = {}
         if "main" in affected_draw_types:
             if main_process_window_ordinal is None:
                 raise ValueError("Main repair requires Main process-window evidence")
-            if process_authority.phase_for(
+            phases["main"] = process_authority.phase_for(
                 draw_type="main",
                 process_window_ordinal=main_process_window_ordinal,
-            ) != "seed_cascade":
-                raise ValueError(
-                    "Main seed-cascade phase repair is only legal from "
-                    "Redraw Cutoff to Draw Freeze"
-                )
+            )
         if "qualification" in affected_draw_types:
             if qualification_process_window_ordinal is None:
                 raise ValueError(
                     "Qualification repair requires Qualification process-window evidence"
                 )
-            if process_authority.phase_for(
+            phases["qualification"] = process_authority.phase_for(
                 draw_type="qualification",
                 process_window_ordinal=qualification_process_window_ordinal,
-            ) != "seed_cascade":
-                raise ValueError(
-                    "Qualification seed-cascade phase repair is only legal from "
-                    "Redraw Cutoff to Draw Freeze"
-                )
+            )
+
+        if "draw_frozen" in phases.values():
+            raise ValueError(
+                "Seed-cascade phase repair is not legal after Draw Freeze"
+            )
+        if "seed_cascade" not in phases.values():
+            raise ValueError(
+                "This repair path requires at least one affected component "
+                "between Redraw Cutoff and Draw Freeze"
+            )
+
+        needs_full_redraw = "full_redraw" in phases.values()
+        if needs_full_redraw and repair_draw_seed is None:
+            raise ValueError(
+                "Mixed pre-freeze repair requires a seed for full-redraw components"
+            )
+        if not needs_full_redraw and repair_draw_seed is not None:
+            raise ValueError(
+                "Pure seed-cascade phase repair cannot introduce a new draw seed"
+            )
+
+        regenerated = None
+        if needs_full_redraw:
+            regenerated = TournamentDrawAuthorityBuilder.build(
+                draw_input=successor_draw_input,
+                command_id=command_id,
+                algorithm_version=predecessor.algorithm_version,
+                draw_seed_override=repair_draw_seed,
+            )
 
         main = predecessor.main
         main_action = None
         if "main" in affected_draw_types:
-            repaired, main_action = _repair_bracket_family(
-                brackets=(predecessor.main,),
-                target_player_ids=(
-                    *successor_draw_input.direct_main_player_ids,
-                    *successor_draw_input.wild_card_player_ids,
-                ),
-                draw_type="main",
-                qualification_section_count=1,
-            )
-            main = repaired[0]
+            if phases["main"] == "full_redraw":
+                assert regenerated is not None
+                main = regenerated.main
+                main_action = "full_redraw"
+            else:
+                repaired, main_action = _repair_bracket_family(
+                    brackets=(predecessor.main,),
+                    target_player_ids=(
+                        *successor_draw_input.direct_main_player_ids,
+                        *successor_draw_input.wild_card_player_ids,
+                    ),
+                    draw_type="main",
+                    qualification_section_count=1,
+                )
+                main = repaired[0]
 
         qualification = predecessor.qualification
         qualification_sections = predecessor.qualification_sections
         qualification_action = None
         if "qualification" in affected_draw_types:
-            original_q = predecessor.qualification_brackets
-            if not original_q:
-                raise ValueError(
-                    "Qualification repair requested for tournament without Q Draw"
-                )
-            repaired_q, qualification_action = _repair_bracket_family(
-                brackets=original_q,
-                target_player_ids=successor_draw_input.qualification_player_ids,
-                draw_type="qualification",
-                qualification_section_count=len(original_q),
-            )
-            if predecessor.qualification_sections:
-                qualification = None
-                qualification_sections = repaired_q
+            if phases["qualification"] == "full_redraw":
+                assert regenerated is not None
+                qualification = regenerated.qualification
+                qualification_sections = regenerated.qualification_sections
+                qualification_action = "full_redraw"
             else:
-                qualification = repaired_q[0]
-                qualification_sections = ()
+                original_q = predecessor.qualification_brackets
+                if not original_q:
+                    raise ValueError(
+                        "Qualification repair requested for tournament without Q Draw"
+                    )
+                repaired_q, qualification_action = _repair_bracket_family(
+                    brackets=original_q,
+                    target_player_ids=successor_draw_input.qualification_player_ids,
+                    draw_type="qualification",
+                    qualification_section_count=len(original_q),
+                )
+                if predecessor.qualification_sections:
+                    qualification = None
+                    qualification_sections = repaired_q
+                else:
+                    qualification = repaired_q[0]
+                    qualification_sections = ()
 
         successor = TournamentDrawAuthority(
             schema_version=predecessor.schema_version,
@@ -368,6 +415,7 @@ class TournamentDrawRevisionBuilder:
             qualification_process_window_ordinal=(
                 qualification_process_window_ordinal
             ),
+            repair_draw_seed=repair_draw_seed,
             main_repair_action=main_action,
             qualification_repair_action=qualification_action,
             withdrawn_player_ids=withdrawn_player_ids,
@@ -377,7 +425,6 @@ class TournamentDrawRevisionBuilder:
             successor_draw_input=successor_draw_input,
             successor_draw=successor,
         )
-
 
 def _repair_bracket_family(
     *,

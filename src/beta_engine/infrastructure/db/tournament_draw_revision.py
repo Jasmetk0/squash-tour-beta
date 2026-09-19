@@ -360,7 +360,17 @@ class TournamentDrawRevisionStore:
                         "Frozen ordinary fallback source Draw Input does not replay"
                     )
                 slot = predecessor.main.slots[authority.physical_slot_index - 1]
-                if slot.player_id != authority.withdrawn_player_id:
+                q_winner_evidence = authority.qualification_winner_evidence
+                if q_winner_evidence is not None:
+                    if (
+                        slot.entrant_kind != "qualifier_placeholder"
+                        or slot.placeholder_id != q_winner_evidence.section_id
+                        or slot.player_id is not None
+                    ):
+                        raise ValueError(
+                            "Frozen ordinary fallback linked Q slot does not replay"
+                        )
+                elif slot.player_id != authority.withdrawn_player_id:
                     raise ValueError(
                         "Frozen ordinary fallback source physical slot does not replay"
                     )
@@ -377,6 +387,11 @@ class TournamentDrawRevisionStore:
                         ),
                         vacated_main_seed_number=slot.seed_number,
                         create_bye=authority.source == "bye",
+                        vacated_qualifier_placeholder_id=(
+                            q_winner_evidence.section_id
+                            if q_winner_evidence is not None
+                            else None
+                        ),
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
@@ -1286,7 +1301,17 @@ class TournamentDrawRevisionStore:
                 "Frozen ordinary fallback source authority is stale"
             )
         slot = predecessor.main.slots[authority.physical_slot_index - 1]
-        if slot.player_id != authority.withdrawn_player_id:
+        q_winner_evidence = authority.qualification_winner_evidence
+        if q_winner_evidence is not None:
+            if (
+                slot.entrant_kind != "qualifier_placeholder"
+                or slot.placeholder_id != q_winner_evidence.section_id
+                or slot.player_id is not None
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Frozen ordinary fallback linked Q slot is stale"
+                )
+        elif slot.player_id != authority.withdrawn_player_id:
             raise TournamentDrawRevisionConflict(
                 "Frozen ordinary fallback physical slot is stale"
             )
@@ -1305,6 +1330,11 @@ class TournamentDrawRevisionStore:
                     ),
                     vacated_main_seed_number=slot.seed_number,
                     create_bye=authority.source == "bye",
+                    vacated_qualifier_placeholder_id=(
+                        q_winner_evidence.section_id
+                        if q_winner_evidence is not None
+                        else None
+                    ),
                 )
             )
             revision = (

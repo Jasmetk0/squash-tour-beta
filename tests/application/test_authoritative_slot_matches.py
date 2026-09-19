@@ -979,20 +979,24 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
 def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
     tmp_path,
 ):
-    driver, _, _, first, second = _multi_driver_fixture(
+    driver, _, _, first, _ = _multi_driver_fixture(
         tmp_path / "proposal-conflict"
     )
-    registry = driver.match_service._load_registry()
-    first_root = next(
-        match for match in first.main_draw_matches if match.round_number == 1
-    )
-    second_root = next(
-        match
-        for match in registry.matches_by_event_id[second.event_id].main_draw_matches
-        if match.round_number == 1
-    )
-    second_root.top_player_id = first_root.top_player_id
-    driver.match_service._save_registry(registry)
+    plans = {
+        "conflict-a": SimulationMatchEventPlan(
+            group_id="conflict-a",
+            event_id=first.event_id,
+            match_id="conflict-a",
+            participant_sources=("player:shared", "player:left"),
+        ),
+        "conflict-b": SimulationMatchEventPlan(
+            group_id="conflict-b",
+            event_id=first.event_id,
+            match_id="conflict-b",
+            participant_sources=("player:shared", "player:right"),
+        ),
+    }
+    driver._topology_for_session = lambda *args, **kwargs: plans
 
     with pytest.raises(
         ValueError,

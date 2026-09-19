@@ -9,6 +9,7 @@ from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthority,
     TournamentPlayerReplacementCutoffAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.walkover_authority import TournamentWalkoverResult
 from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -57,6 +58,10 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
             protected = loaded.authoritative_input
             result = loaded.result
             if protected.event_id != event_id:
+                continue
+            if isinstance(result, TournamentWalkoverResult):
+                # W/O is progression evidence, not another real match. It must not
+                # move the first-real-match replacement cutoff.
                 continue
             participants = (result.player_a_id, result.player_b_id)
             if player_id not in participants:

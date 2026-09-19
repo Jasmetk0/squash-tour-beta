@@ -1318,6 +1318,38 @@ export type PreDrawWithdrawalStateResponse = {
   withdrawable_main_draw_players: PreDrawWithdrawablePlayer[]
 }
 
+export type MainBracketDiagnostic = {
+  severity: 'warning'
+  code: 'odd_main_entrant_count' | 'majority_first_round_byes' | 'large_main_draw_over_64'
+  message: string
+  entrant_count: number
+  bracket_capacity: number
+  bye_count: number
+  first_round_match_count: number
+  first_round_bye_match_count: number
+  first_round_bye_share: number
+}
+
+export type CanonicalTournamentEntryFieldState = {
+  schema_version: 'canonical_tournament_entry_field_state.v2'
+  run_id: string
+  branch_id: string
+  event_id: string
+  field_sequence: number
+  field_fingerprint: string
+  mode: 'initial' | 'pre_draw_repair'
+  direct_main_player_ids: string[]
+  qualification_player_ids: string[]
+  below_qualification_cut_player_ids: string[]
+  withdrawn_player_ids: string[]
+  main_draw_capacity: number
+  active_main_entrant_count: number
+  effective_main_bye_count: number
+  main_diagnostics: MainBracketDiagnostic[]
+  draw_input_committed: boolean
+  pre_draw_repair_locked_by_draw_input: boolean
+}
+
 export type ApplyPreDrawWithdrawalPayload = {
   withdrawn_player_id: string
 }

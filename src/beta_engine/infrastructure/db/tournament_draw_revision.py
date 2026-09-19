@@ -32,6 +32,9 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityStore,
+)
 
 
 class TournamentDrawRevisionConflict(ValueError):
@@ -47,6 +50,46 @@ def _fp(value: object) -> str:
 class TournamentDrawRevisionStore:
     def __init__(self, session: Session):
         self.session = session
+
+    def _replacement_cutoff_authorities(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        withdrawn_player_ids: tuple[str, ...],
+    ):
+        authorities = TournamentPlayerReplacementCutoffAuthorityStore(
+            self.session
+        ).resolve_many(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            player_ids=withdrawn_player_ids,
+        )
+        walkover = [
+            authority
+            for authority in authorities
+            if authority.status == "walkover_required"
+        ]
+        if walkover:
+            players = ", ".join(authority.player_id for authority in walkover)
+            raise TournamentDrawRevisionConflict(
+                "Replacement cutoff has passed; W/O authority is required for: "
+                + players
+            )
+        eliminated = [
+            authority
+            for authority in authorities
+            if authority.status == "already_eliminated"
+        ]
+        if eliminated:
+            players = ", ".join(authority.player_id for authority in eliminated)
+            raise TournamentDrawRevisionConflict(
+                "Withdrawal cannot repair an already eliminated tournament path: "
+                + players
+            )
+        return authorities
 
     def history(self, *, run_id: str, branch_id: str, event_id: str):
         rows = self.session.scalars(
@@ -172,6 +215,9 @@ class TournamentDrawRevisionStore:
                     withdrawn_player_ids=revision.withdrawn_player_ids,
                     sequence=revision.sequence,
                     command_id=revision.command_id,
+                    replacement_cutoff_authorities=(
+                        revision.replacement_cutoff_authorities
+                    ),
                 )
             elif revision.repair_kind == "seed_cascade_phase":
                 rebuilt_revision = (
@@ -191,6 +237,9 @@ class TournamentDrawRevisionStore:
                         sequence=revision.sequence,
                         command_id=revision.command_id,
                         repair_draw_seed=revision.repair_draw_seed,
+                        replacement_cutoff_authorities=(
+                            revision.replacement_cutoff_authorities
+                        ),
                     )
                 )
             else:
@@ -211,6 +260,9 @@ class TournamentDrawRevisionStore:
                         sequence=revision.sequence,
                         command_id=revision.command_id,
                         repair_draw_seed=revision.repair_draw_seed,
+                        replacement_cutoff_authorities=(
+                            revision.replacement_cutoff_authorities
+                        ),
                     )
                 )
             if rebuilt_revision != revision:
@@ -322,6 +374,12 @@ class TournamentDrawRevisionStore:
         previous_field = (
             history[-1].successor_field if history else persisted_field
         )
+        cutoff_authorities = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=requested,
+        )
         successor_field = TournamentEntryFieldResolver.repair_pre_draw(
             authority=ranking,
             applications=applications,
@@ -371,6 +429,9 @@ class TournamentDrawRevisionStore:
             "qualification_process_window_ordinal": qualification_process_window_ordinal,
             "affected_draw_types": list(affected_draw_types),
             "successor_field_fingerprint": successor_field.fingerprint,
+            "replacement_cutoff_authority_fingerprints": [
+                authority.fingerprint for authority in cutoff_authorities
+            ],
         }
         request_fp = _fp(request)
         revision = TournamentDrawRevisionBuilder.build_full_redraw(
@@ -385,6 +446,7 @@ class TournamentDrawRevisionStore:
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
+            replacement_cutoff_authorities=cutoff_authorities,
         )
         self.session.add(
             TournamentDrawRevisionModel(
@@ -509,6 +571,12 @@ class TournamentDrawRevisionStore:
         previous_field = (
             history[-1].successor_field if history else persisted_field
         )
+        cutoff_authorities = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=requested,
+        )
         successor_field = TournamentEntryFieldResolver.repair_pre_draw(
             authority=ranking,
             applications=applications,
@@ -565,6 +633,9 @@ class TournamentDrawRevisionStore:
             "repair_draw_seed": repair_draw_seed,
             "affected_draw_types": list(affected_draw_types),
             "successor_field_fingerprint": successor_field.fingerprint,
+            "replacement_cutoff_authority_fingerprints": [
+                authority.fingerprint for authority in cutoff_authorities
+            ],
         }
         revision = TournamentDrawRevisionBuilder.build_seed_cascade_phase(
             predecessor=predecessor,
@@ -580,6 +651,7 @@ class TournamentDrawRevisionStore:
             sequence=sequence,
             command_id=command_id,
             repair_draw_seed=repair_draw_seed,
+            replacement_cutoff_authorities=cutoff_authorities,
         )
         self.session.add(
             TournamentDrawRevisionModel(
@@ -707,6 +779,12 @@ class TournamentDrawRevisionStore:
         previous_field = (
             history[-1].successor_field if history else persisted_field
         )
+        cutoff_authorities = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=requested,
+        )
         successor_field = TournamentEntryFieldResolver.repair_pre_draw(
             authority=ranking,
             applications=applications,
@@ -764,6 +842,9 @@ class TournamentDrawRevisionStore:
             "repair_draw_seed": repair_draw_seed,
             "affected_draw_types": list(affected_draw_types),
             "successor_field_fingerprint": successor_field.fingerprint,
+            "replacement_cutoff_authority_fingerprints": [
+                authority.fingerprint for authority in cutoff_authorities
+            ],
         }
         revision = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
             predecessor=predecessor,
@@ -779,6 +860,7 @@ class TournamentDrawRevisionStore:
             sequence=sequence,
             command_id=command_id,
             repair_draw_seed=repair_draw_seed,
+            replacement_cutoff_authorities=cutoff_authorities,
         )
         self.session.add(
             TournamentDrawRevisionModel(

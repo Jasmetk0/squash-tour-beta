@@ -2511,11 +2511,7 @@ Minimální diagnostika první pre-alpha verze:
 
 **[ROZHODNUTO, DETAIL ODLOŽEN]** Pozdější promakaná verze diagnostiky má navíc vyhodnocovat asymetrii prvního kola, rozdělení BYE mezi idealizované seed bands a jednotlivé části pavouku, případně další nezvyklé kombinace. Přesné metriky, hranice a více úrovní závažnosti těchto rozšířených warningů se doladí podle modelových pavouků a zkušeností z pre-alphy; nesmí se doplnit jako skrytý blokující zákaz.
 
-**[ROZHODNUTO]** Počet nasazených v klasickém pavouku se vypočítá:
-
-> `seed_count = min(počet skutečných hráčů, max(1, kapacita pavouku ÷ 4))`
-
-Příklady:
+Referenční hodnoty automatického výpočtu nasazení před omezením skutečným počtem hráčů:
 
 | Kapacita pavouku | Počet nasazených před omezením počtem hráčů |
 |---:|---:|

@@ -27,6 +27,9 @@ class AuthoritativeWeekTransitionCommand(FrozenInput):
     completed_week: RankingWeek
     target_week: RankingWeek
     authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    prospect_source_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     tournaments: tuple[TournamentRankingBinding, ...] = ()
     corrections: tuple[RankingResultVersion, ...] = ()
     zero_versions: tuple[RankingZeroVersion, ...] = ()
@@ -64,4 +67,8 @@ class AuthoritativeWeekTransitionResult(FrozenInput):
     official_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_sporting_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    prospect_arrival_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    prospect_arrival_count: int = Field(default=0, ge=0)
     world_event_kind: str = "week_transition_completed"

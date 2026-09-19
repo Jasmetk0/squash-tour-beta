@@ -63,6 +63,30 @@ def _fp(value: object) -> str:
     ).hexdigest()
 
 
+def _source_bound_pre_q_backfill(
+    *,
+    previous_draw_input,
+    replacement_source_authority,
+) -> str | None:
+    selected = replacement_source_authority.selected_player_id
+    if selected is None:
+        raise ValueError("Q-promotion source lacks selected player")
+    if selected not in set(previous_draw_input.qualification_player_ids):
+        return None
+
+    blocked = (
+        set(replacement_source_authority.unavailable_player_ids)
+        | set(previous_draw_input.direct_main_player_ids)
+        | set(previous_draw_input.wild_card_player_ids)
+        | set(previous_draw_input.qualification_player_ids)
+        | set(previous_draw_input.lucky_loser_player_ids)
+    )
+    for candidate in replacement_source_authority.external_reserve_player_ids:
+        if candidate not in blocked:
+            return candidate
+    return None
+
+
 class TournamentDrawRevisionStore:
     def __init__(self, session: Session):
         self.session = session

@@ -1937,13 +1937,26 @@ class TournamentDrawRevisionBuilder:
         if index < 0 or index >= len(slots):
             raise ValueError("Frozen ordinary fallback slot is outside Main Draw")
         template = slots[index]
-        if template.player_id != authority.withdrawn_player_id:
-            raise ValueError("Frozen ordinary fallback slot no longer matches withdrawal")
-        if template.entry_status not in {None, "wild_card"}:
-            raise ValueError(
-                "Frozen ordinary fallback supports Direct Main or exhausted WC slots only"
-            )
-        released_wild_card_slot = template.entry_status == "wild_card"
+        q_winner_evidence = authority.qualification_winner_evidence
+        if q_winner_evidence is not None:
+            if (
+                template.entrant_kind != "qualifier_placeholder"
+                or template.placeholder_id != q_winner_evidence.section_id
+                or template.player_id is not None
+                or template.seed_number is not None
+            ):
+                raise ValueError(
+                    "Frozen ordinary fallback no longer matches linked Main Q slot"
+                )
+            released_wild_card_slot = False
+        else:
+            if template.player_id != authority.withdrawn_player_id:
+                raise ValueError("Frozen ordinary fallback slot no longer matches withdrawal")
+            if template.entry_status not in {None, "wild_card"}:
+                raise ValueError(
+                    "Frozen ordinary fallback supports Direct Main or exhausted WC slots only"
+                )
+            released_wild_card_slot = template.entry_status == "wild_card"
         if released_wild_card_slot:
             if (
                 successor_draw_input.schema_version
@@ -1989,7 +2002,12 @@ class TournamentDrawRevisionBuilder:
             bye_slot_indexes=tuple(
                 item.slot_index for item in slots if item.entrant_kind == "bye"
             ),
-            qualifier_placeholder_slots=predecessor.main.qualifier_placeholder_slots,
+            qualifier_placeholder_slots=tuple(
+                (item.placeholder_id, item.slot_index)
+                for item in slots
+                if item.entrant_kind == "qualifier_placeholder"
+                and item.placeholder_id is not None
+            ),
             lucky_loser_placeholder_slots=predecessor.main.lucky_loser_placeholder_slots,
         )
         successor = TournamentDrawAuthority(

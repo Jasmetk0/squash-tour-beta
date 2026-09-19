@@ -159,7 +159,17 @@ class AuthoritativeFrozenMainReplacement:
                 "Replacement orchestration requires canonical active Draw"
             )
         target = draw.main.slots[source.physical_slot_index - 1]
-        if target.player_id != withdrawn_player_id:
+        q_winner_evidence = source.qualification_winner_evidence
+        if q_winner_evidence is not None:
+            if (
+                target.entrant_kind != "qualifier_placeholder"
+                or target.placeholder_id != q_winner_evidence.section_id
+                or target.player_id is not None
+            ):
+                raise AuthoritativeFrozenMainReplacementConflict(
+                    "Replacement source target no longer matches linked Main Q slot"
+                )
+        elif target.player_id != withdrawn_player_id:
             raise AuthoritativeFrozenMainReplacementConflict(
                 "Replacement source target no longer matches active Main slot"
             )

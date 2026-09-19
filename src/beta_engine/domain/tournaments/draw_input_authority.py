@@ -139,6 +139,10 @@ class TournamentDrawInputAuthority(FrozenInput):
         default=(),
         exclude_if=lambda value: not value,
     )
+    released_qualifier_placeholder_ids: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     withdrawn_player_ids: tuple[str, ...]
     main_seed_player_ids: tuple[str, ...]
     qualification_seed_player_ids: tuple[str, ...]
@@ -341,10 +345,23 @@ class TournamentDrawInputAuthority(FrozenInput):
                     raise ValueError(
                         "Released WC-slot ordinal is outside reserved WC capacity"
                     )
+            if len(set(self.released_qualifier_placeholder_ids)) != len(
+                self.released_qualifier_placeholder_ids
+            ):
+                raise ValueError(
+                    "Released Q-placeholder identities must be unique"
+                )
+            if not set(self.released_qualifier_placeholder_ids).issubset(
+                set(self.qualifier_placeholder_ids)
+            ):
+                raise ValueError(
+                    "Released Q-placeholder identity is outside frozen Q links"
+                )
             expected_main_occupants = (
                 len(self.direct_main_player_ids)
                 + len(self.wild_card_player_ids)
                 + len(self.qualifier_placeholder_ids)
+                - len(self.released_qualifier_placeholder_ids)
                 + len(self.lucky_loser_placeholder_ids)
                 + self.late_bye_count
             )
@@ -356,6 +373,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             self.replacement_source_authority_fingerprints
             or self.late_bye_count
             or self.released_wild_card_slot_ordinals
+            or self.released_qualifier_placeholder_ids
         ):
             raise ValueError(
                 "Historical Draw Input cannot carry replacement-source fallback lineage"
@@ -463,6 +481,7 @@ class TournamentDrawInputAuthorityBuilder:
         replacement_player_id: str | None,
         vacated_main_seed_number: int | None,
         create_bye: bool,
+        vacated_qualifier_placeholder_id: str | None = None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v2",
@@ -477,7 +496,21 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError("Frozen ordinary fallback requires canonical Draw Input")
         direct_count = previous.direct_main_player_ids.count(withdrawn_player_id)
         wild_card_count = previous.wild_card_player_ids.count(withdrawn_player_id)
-        if direct_count + wild_card_count != 1:
+        q_winner_vacancy = vacated_qualifier_placeholder_id is not None
+        if q_winner_vacancy:
+            if direct_count or wild_card_count:
+                raise ValueError(
+                    "Q-winner fallback cannot also be Direct Main or WC"
+                )
+            if withdrawn_player_id not in set(previous.qualification_player_ids):
+                raise ValueError("Q-winner fallback player is outside frozen Q field")
+            if vacated_qualifier_placeholder_id not in set(
+                previous.qualifier_placeholder_ids
+            ):
+                raise ValueError("Q-winner fallback references unknown Q placeholder")
+            if vacated_main_seed_number is not None:
+                raise ValueError("Q-winner fallback cannot vacate a Main seed")
+        elif direct_count + wild_card_count != 1:
             raise ValueError(
                 "Frozen ordinary fallback requires one active Direct Main or WC withdrawal"
             )
@@ -501,6 +534,15 @@ class TournamentDrawInputAuthorityBuilder:
         released_wild_card_slot_ordinals = list(
             previous.released_wild_card_slot_ordinals
         )
+        released_qualifier_placeholder_ids = list(
+            previous.released_qualifier_placeholder_ids
+        )
+        if q_winner_vacancy:
+            if vacated_qualifier_placeholder_id in released_qualifier_placeholder_ids:
+                raise ValueError("Q placeholder was already released from active Main")
+            released_qualifier_placeholder_ids.append(
+                vacated_qualifier_placeholder_id
+            )
         if released_wild_card_slot:
             compact_index = wild_cards.index(withdrawn_player_id)
             already_released = set(released_wild_card_slot_ordinals)
@@ -517,7 +559,8 @@ class TournamentDrawInputAuthorityBuilder:
             released_wild_card_slot_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
         else:
-            direct.remove(withdrawn_player_id)
+            if not q_winner_vacancy:
+                direct.remove(withdrawn_player_id)
         if replacement_player_id is not None:
             # Once RWC priority is exhausted, an ordinary replacement entering a
             # former WC slot no longer carries WC status.
@@ -526,11 +569,15 @@ class TournamentDrawInputAuthorityBuilder:
         main_seed_players = list(previous.main_seed_player_ids)
         main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
         withdrawn_was_seeded = withdrawn_player_id in main_seed_players
-        if withdrawn_was_seeded != (vacated_main_seed_number is not None):
-            raise ValueError("Fallback Main seed-vacancy evidence mismatch")
-        if withdrawn_was_seeded:
-            main_seed_players.remove(withdrawn_player_id)
-            main_seed_vacancies.add(vacated_main_seed_number)
+        if q_winner_vacancy:
+            if withdrawn_was_seeded:
+                raise ValueError("Q winner cannot own Direct Main seed identity")
+        else:
+            if withdrawn_was_seeded != (vacated_main_seed_number is not None):
+                raise ValueError("Fallback Main seed-vacancy evidence mismatch")
+            if withdrawn_was_seeded:
+                main_seed_players.remove(withdrawn_player_id)
+                main_seed_vacancies.add(vacated_main_seed_number)
 
         lineage = (
             *previous.replacement_source_authority_fingerprints,
@@ -572,8 +619,15 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=lineage,
             late_bye_count=previous.late_bye_count + (1 if create_bye else 0),
             released_wild_card_slot_ordinals=released_wild_card_slot_ordinals,
-            withdrawn_player_ids=tuple(
-                sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+            released_qualifier_placeholder_ids=tuple(
+                released_qualifier_placeholder_ids
+            ),
+            withdrawn_player_ids=(
+                previous.withdrawn_player_ids
+                if q_winner_vacancy
+                else tuple(
+                    sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+                )
             ),
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=previous.qualification_seed_player_ids,
@@ -753,6 +807,9 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=lineage,
             late_bye_count=previous.late_bye_count,
             released_wild_card_slot_ordinals=released_ordinals,
+            released_qualifier_placeholder_ids=(
+                previous.released_qualifier_placeholder_ids
+            ),
             withdrawn_player_ids=tuple(
                 sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
             ),
@@ -912,6 +969,9 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=tuple(source_lineage),
             late_bye_count=previous.late_bye_count,
             released_wild_card_slot_ordinals=released_ordinals,
+            released_qualifier_placeholder_ids=(
+                previous.released_qualifier_placeholder_ids
+            ),
             withdrawn_player_ids=(
                 previous.withdrawn_player_ids
                 if q_winner_vacancy
@@ -996,6 +1056,9 @@ class TournamentDrawInputAuthorityBuilder:
             ),
             late_bye_count=previous.late_bye_count,
             released_wild_card_slot_ordinals=previous.released_wild_card_slot_ordinals,
+            released_qualifier_placeholder_ids=(
+                previous.released_qualifier_placeholder_ids
+            ),
             withdrawn_player_ids=previous.withdrawn_player_ids,
             main_seed_player_ids=previous.main_seed_player_ids,
             qualification_seed_player_ids=previous.qualification_seed_player_ids,
@@ -1170,6 +1233,9 @@ class TournamentDrawInputAuthorityBuilder:
             ),
             late_bye_count=previous.late_bye_count,
             released_wild_card_slot_ordinals=previous.released_wild_card_slot_ordinals,
+            released_qualifier_placeholder_ids=(
+                previous.released_qualifier_placeholder_ids
+            ),
             withdrawn_player_ids=withdrawn,
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=tuple(qualification_seed_players),

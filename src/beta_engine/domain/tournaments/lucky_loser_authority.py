@@ -14,6 +14,9 @@ from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawIn
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthority,
 )
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentReplacementSourceAuthority,
+)
 
 
 class TournamentLuckyLoserVacancyAuthority(FrozenInput):
@@ -90,6 +93,7 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         withdrawn_player_cutoff_authority: TournamentPlayerReplacementCutoffAuthority,
         qualification_start_authority: TournamentPlayerReplacementCutoffAuthority,
         qualification_origin_player_ids: tuple[str, ...],
+        replacement_source_authority: TournamentReplacementSourceAuthority | None = None,
     ) -> TournamentLuckyLoserVacancyAuthority:
         scope = (predecessor.run_id, predecessor.branch_id, predecessor.event_id)
         if (
@@ -118,13 +122,64 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         if len(matching) != 1:
             raise ValueError("LL vacancy cannot resolve one active Main player slot")
         slot = matching[0]
-        if slot.entry_status == "wild_card":
+        in_direct = (
+            withdrawn_player_id in set(predecessor_draw_input.direct_main_player_ids)
+        )
+        in_wild_card = (
+            withdrawn_player_id in set(predecessor_draw_input.wild_card_player_ids)
+        )
+        if in_direct == in_wild_card:
             raise ValueError(
-                "WC slot must exhaust Reserve Wild Card priority before LL fallback"
+                "LL vacancy withdrawal must belong to exactly one Main entry class"
             )
-        if withdrawn_player_id not in set(predecessor_draw_input.direct_main_player_ids):
+        if in_wild_card:
+            source = replacement_source_authority
+            if source is None:
+                raise ValueError(
+                    "WC Lucky Loser fallback requires frozen replacement-source authority"
+                )
+            if source.source not in {"lucky_loser_pending", "lucky_loser"}:
+                raise ValueError(
+                    "WC Lucky Loser fallback source is not an LL source"
+                )
+            if (
+                source.run_id,
+                source.branch_id,
+                source.event_id,
+                source.withdrawn_player_id,
+                source.predecessor_draw_fingerprint,
+                source.predecessor_draw_input_fingerprint,
+                source.physical_slot_index,
+            ) != (
+                scope[0],
+                scope[1],
+                scope[2],
+                withdrawn_player_id,
+                predecessor.fingerprint,
+                predecessor_draw_input.fingerprint,
+                slot.slot_index,
+            ):
+                raise ValueError(
+                    "WC Lucky Loser replacement-source authority does not bind to vacancy"
+                )
+            if (
+                source.base_wild_card_authority_fingerprint
+                != predecessor_draw_input.wild_card_authority_fingerprint
+            ):
+                raise ValueError(
+                    "WC Lucky Loser source references a different Wild Card authority"
+                )
+            if source.replacement_cutoff_authority != withdrawn_player_cutoff_authority:
+                raise ValueError(
+                    "WC Lucky Loser source/cutoff authority mismatch"
+                )
+            if source.qualification_start_evidence is None:
+                raise ValueError(
+                    "WC Lucky Loser source lacks Qualification-start evidence"
+                )
+        elif replacement_source_authority is not None:
             raise ValueError(
-                "First LL vacancy slice supports direct Main withdrawals only"
+                "Direct Main LL vacancy cannot carry WC release source authority"
             )
 
         return TournamentLuckyLoserVacancyAuthority(

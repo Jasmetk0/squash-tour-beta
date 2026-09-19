@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 
 from sqlalchemy import select, text
@@ -52,6 +53,59 @@ from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_pos
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
+
+
+def _target_week_prospect_snapshot(session, *, run_id: str, target_week: RankingWeek):
+    position = season_week_to_calendar_position(
+        2000 + target_week.season_index, target_week.week
+    )
+    rows = session.scalars(
+        select(RunProspectModel)
+        .where(
+            RunProspectModel.run_id == run_id,
+            RunProspectModel.season_start_year == 2000 + target_week.season_index,
+            RunProspectModel.season_week == target_week.week,
+            RunProspectModel.calendar_year == position.calendar_year,
+            RunProspectModel.year_week == position.year_week,
+        )
+        .order_by(RunProspectModel.prospect_id)
+    ).all()
+    arrivals = tuple(
+        {
+            "prospect_id": row.prospect_id,
+            "world_id": row.world_id,
+            "season_start_year": row.season_start_year,
+            "season_label": row.season_label,
+            "season_week": row.season_week,
+            "calendar_year": row.calendar_year,
+            "year_week": row.year_week,
+            "birth_year": row.birth_year,
+            "birth_year_week": row.birth_year_week,
+            "age": row.age,
+            "country_code": row.country_code,
+            "country_name": row.country_name,
+            "status": row.status,
+            "source_type": row.source_type,
+            "cohort_policy_version": row.cohort_policy_version,
+            "profile_version": row.profile_version,
+            "first_name": row.first_name,
+            "last_name": row.last_name,
+            "display_name": row.display_name,
+            "short_name": row.short_name,
+            "identity_seed": row.identity_seed,
+            "profile_seed": row.profile_seed,
+            "development_seed": row.development_seed,
+            "potential_seed": row.potential_seed,
+            "trait_seed": row.trait_seed,
+            "profile": json.loads(row.profile_json or "{}"),
+            "development": json.loads(row.development_json or "{}"),
+            "potential": json.loads(row.potential_json or "{}"),
+            "traits": json.loads(row.trait_json or "{}"),
+        }
+        for row in rows
+    )
+    payload = json.dumps(arrivals, sort_keys=True, separators=(",", ":"))
+    return arrivals, hashlib.sha256(payload.encode()).hexdigest()
 
 
 def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_week):
@@ -117,20 +171,6 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
         )
         if lifecycle_identity != authority_identity:
             blockers.append("ranking_transition_roster_mismatch")
-    position = season_week_to_calendar_position(2000 + target.season_index, target.week)
-    pending = session.scalar(
-        select(RunProspectModel.prospect_id)
-        .where(
-            RunProspectModel.run_id == run_id,
-            RunProspectModel.season_start_year == 2000 + target.season_index,
-            RunProspectModel.season_week == target.week,
-            RunProspectModel.calendar_year == position.calendar_year,
-            RunProspectModel.year_week == position.year_week,
-        )
-        .limit(1)
-    )
-    if pending is not None:
-        blockers.append("prospect_bridge_missing")
     return tuple(blockers)
 
 
@@ -200,6 +240,9 @@ def derive_persisted_week_transition_command(
         if source is not None and source.binding.completed_week == completed_week
     )
 
+    _, prospect_source_fingerprint = _target_week_prospect_snapshot(
+        session, run_id=run_id, target_week=target_week
+    )
     return AuthoritativeWeekTransitionCommand(
         command_id=command_id,
         run_id=run_id,
@@ -208,6 +251,7 @@ def derive_persisted_week_transition_command(
         completed_week=completed_week,
         target_week=target_week,
         authority_fingerprint=authority.fingerprint,
+        prospect_source_fingerprint=prospect_source_fingerprint,
         tournaments=bindings,
         audit=authority.audit,
     )
@@ -236,6 +280,9 @@ def preview_persisted_week_transition(
         for source in sources
         if source is not None and source.binding.completed_week == completed_week
     )
+    _, prospect_source_fingerprint = _target_week_prospect_snapshot(
+        session, run_id=run_id, target_week=authority.target_week
+    )
     command = AuthoritativeWeekTransitionCommand(
         command_id=f"readiness:{completed_week.ordinal}",
         run_id=run_id,
@@ -244,6 +291,7 @@ def preview_persisted_week_transition(
         completed_week=completed_week,
         target_week=authority.target_week,
         authority_fingerprint=authority.fingerprint,
+        prospect_source_fingerprint=prospect_source_fingerprint,
         tournaments=bindings,
         audit=authority.audit,
     )
@@ -278,6 +326,8 @@ def _world_event_payload(
     ranking_fingerprint: str,
     lifecycle_fingerprint: str,
     sporting_fingerprint: str,
+    prospect_arrivals,
+    prospect_arrival_fingerprint: str,
 ) -> str:
     return json.dumps(
         {
@@ -287,6 +337,9 @@ def _world_event_payload(
             "official_ranking_fingerprint": ranking_fingerprint,
             "player_lifecycle_fingerprint": lifecycle_fingerprint,
             "player_sporting_fingerprint": sporting_fingerprint,
+            "prospect_arrival_fingerprint": prospect_arrival_fingerprint,
+            "prospect_arrival_count": len(prospect_arrivals),
+            "prospect_arrivals": prospect_arrivals,
         },
         sort_keys=True,
         separators=(",", ":"),

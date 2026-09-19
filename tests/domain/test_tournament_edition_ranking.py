@@ -12,6 +12,12 @@ def edition(**updates):
     return CalendarEvent(**data)
 
 
+def test_calendar_event_rejects_main_draw_above_128() -> None:
+    assert edition(main_draw_size=128).main_draw_size == 128
+    with pytest.raises(ValidationError):
+        edition(main_draw_size=256)
+
+
 def test_explicit_ranking_status_enum_rejects_unknown_value():
     assert edition(ranking_status="ranked").ranking_status.value == "ranked"
     assert edition(ranking_status="unranked").ranking_status.value == "unranked"

@@ -4059,6 +4059,191 @@ def test_lucky_loser_order_waits_for_completed_qualification_terminal(
 
 
 @pytest.mark.pr_critical
+def test_multi_q_lucky_loser_order_is_global_and_fills_exact_main_vacancy(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        player_ids = tuple(chr(ord("A") + index) for index in range(12))
+        direct_main_ids = player_ids[:4]
+        qualification_ids = player_ids[4:]
+
+        ranking_authority = install_ranking_authority(session, player_ids)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=tuple(
+                app(
+                    player_id,
+                    "main" if player_id in direct_main_ids else "qualification",
+                )
+                for player_id in player_ids
+            ),
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=8,
+                qualification_draw_size=8,
+                qualifier_spots=4,
+            ),
+            command_id="multi-q-ll-field",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-ll-input",
+            draw_seed=989898,
+        )
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-ll-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-ll-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+
+        assert tuple(
+            bracket.section_id for bracket in initial.qualification_brackets
+        ) == ("Q1", "Q2", "Q3", "Q4")
+        assert all(
+            len(bracket.nodes) == 1
+            for bracket in initial.qualification_brackets
+        )
+
+        results = {}
+        losers = []
+        for ordinal, bracket in enumerate(initial.qualification_brackets, start=1):
+            terminal = bracket.nodes[0]
+            section_players = [
+                slot.player_id
+                for slot in bracket.slots
+                if slot.player_id is not None
+            ]
+            assert len(section_players) == 2
+            winner, loser = section_players
+            losers.append(loser)
+            results[terminal.node_id] = (winner, loser)
+            session.add(
+                SimulationEventGroupModel(
+                    run_id="run",
+                    branch_id="branch",
+                    week_ordinal=0,
+                    slot_id="multi-q-ll-slot",
+                    group_id=f"multi-q-ll-group-{ordinal}",
+                    command_fingerprint=(f"{ordinal:x}" * 64)[:64],
+                    match_id=terminal.node_id,
+                    match_input_fingerprint=(f"{ordinal + 8:x}" * 64)[:64],
+                    result_fingerprint=(f"{ordinal + 4:x}" * 64)[:64],
+                    payload_json="{}",
+                )
+            )
+        session.flush()
+
+        def fake_load(row):
+            winner, loser = results[row.match_id]
+            return SimpleNamespace(
+                authoritative_input=SimpleNamespace(event_id="event"),
+                result=SimpleNamespace(
+                    match_id=row.match_id,
+                    winner_player_id=winner,
+                    loser_player_id=loser,
+                ),
+            )
+
+        monkeypatch.setattr(
+            AuthoritativeSlotMatchExecutor,
+            "_load_group",
+            staticmethod(fake_load),
+        )
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+
+        rank_by_player = {
+            row.player_id: row.rank
+            for row in ranking_authority.ranking_snapshot.rows
+        }
+        expected_order = tuple(
+            sorted(losers, key=lambda player_id: rank_by_player[player_id])
+        )
+
+        order = TournamentLuckyLoserOrderAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert order.ordered_player_ids == expected_order
+        assert tuple(
+            candidate.qualification_round_reached
+            for candidate in order.candidates
+        ) == (1, 1, 1, 1)
+        assert {
+            candidate.elimination_match_id
+            for candidate in order.candidates
+        } == {
+            bracket.nodes[0].node_id
+            for bracket in initial.qualification_brackets
+        }
+
+        withdrawn = direct_main_ids[0]
+        withdrawn_slot = next(
+            slot.slot_index
+            for slot in initial.main.slots
+            if slot.player_id == withdrawn
+        )
+        store = TournamentDrawRevisionStore(session)
+        vacancy = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-ll-vacancy",
+            withdrawn_player_id=withdrawn,
+            main_process_window_ordinal=3,
+        )
+        assert vacancy.lucky_loser_vacancy_authority is not None
+        assert vacancy.lucky_loser_vacancy_authority.placeholder_id == "LL1"
+
+        fill = store.fill_next_frozen_lucky_loser(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-ll-fill",
+            main_process_window_ordinal=3,
+        )
+        authority = fill.lucky_loser_fill_authority
+        assert authority is not None
+        assert authority.placeholder_id == "LL1"
+        assert authority.order_authority.ordered_player_ids == expected_order
+        assert authority.selected_candidate.player_id == expected_order[0]
+        assert authority.selected_candidate.priority_ordinal == 1
+        assert authority.skipped_candidate_player_ids == ()
+        assert authority.prior_assigned_player_ids == ()
+
+        filled_slot = fill.successor_draw.main.slots[withdrawn_slot - 1]
+        assert filled_slot.slot_index == withdrawn_slot
+        assert filled_slot.entrant_kind == "player"
+        assert filled_slot.player_id == expected_order[0]
+        assert filled_slot.entry_status == "lucky_loser"
+        assert filled_slot.seed_number is None
+        assert filled_slot.placeholder_id is None
+        assert filled_slot.lucky_loser_placeholder_id == "LL1"
+
+        assert fill.successor_draw_input.lucky_loser_player_ids == (
+            expected_order[0],
+        )
+        assert fill.successor_draw.main.lucky_loser_placeholder_slots == ()
+
+
+@pytest.mark.pr_critical
 def test_lucky_loser_fill_skips_unavailable_then_prior_assigned_without_reordering(
     database,
     monkeypatch,

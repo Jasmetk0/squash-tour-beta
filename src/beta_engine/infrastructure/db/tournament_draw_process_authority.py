@@ -136,7 +136,7 @@ class TournamentDrawProcessAuthorityStore:
         )
         if row is None:
             return None
-        draw = TournamentDrawAuthorityStore(self.session).get(
+        draw = TournamentDrawAuthorityStore(self.session).get_initial(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,

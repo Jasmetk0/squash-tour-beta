@@ -916,8 +916,12 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=tuple(source_lineage),
             late_bye_count=previous.late_bye_count,
             released_wild_card_slot_ordinals=released_ordinals,
-            withdrawn_player_ids=tuple(
-                sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+            withdrawn_player_ids=(
+                previous.withdrawn_player_ids
+                if q_winner_vacancy
+                else tuple(
+                    sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+                )
             ),
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=previous.qualification_seed_player_ids,

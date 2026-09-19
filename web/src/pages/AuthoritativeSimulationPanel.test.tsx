@@ -18,7 +18,9 @@ const api = vi.hoisted(() => ({
   previewDerivedAuthoritativeWeekTransition: vi.fn(),
   confirmAuthoritativeWeekTransition: vi.fn(),
   previewRankingSave: vi.fn(),
-  saveRankingPreparation: vi.fn()
+  saveRankingPreparation: vi.fn(),
+  previewDerivedRankingTransitionAuthority: vi.fn(),
+  confirmDerivedRankingTransitionAuthority: vi.fn()
 }))
 
 vi.mock('../api/client', async (importOriginal) => ({
@@ -110,6 +112,43 @@ const transitionPreview = {
     player_lifecycle_fingerprint: 'c'.repeat(64),
     player_sporting_fingerprint: 'd'.repeat(64),
     world_event_kind: 'week_transition_completed' as const
+  }
+}
+
+const rankingAuthorityPreview = {
+  authority_fingerprint: '6'.repeat(64),
+  authority: {
+    schema_version: 'ranking_transition_authority.v1' as const,
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    base_revision_id: 'revision-7',
+    completed_week: week,
+    target_week: { season_index: 2, week: 18 },
+    players: [
+      {
+        player_id: 'P001',
+        tie_break_token: 'token-P001',
+        tour_entry_week: { season_index: 0, week: 1 },
+        retired: false
+      },
+      {
+        player_id: 'P002',
+        tie_break_token: 'token-P002',
+        tour_entry_week: { season_index: 0, week: 1 },
+        retired: false
+      }
+    ],
+    policy: {
+      policy_id: 'season-3-policy',
+      best_n: 15,
+      tie_break_version: 'result_profile_age_previous_token.v1' as const
+    },
+    provenance: 'Derived from canonical target-week player lifecycle and predecessor Official Ranking policy',
+    adopted_by_command_id: 'authority-command',
+    audit: {
+      actor_label: 'Admin operator',
+      reason: 'Review canonical ranking boundary'
+    }
   }
 }
 
@@ -205,6 +244,8 @@ beforeEach(() => {
     can_save: true
   })
   api.saveRankingPreparation.mockResolvedValue({ ok: true })
+  api.previewDerivedRankingTransitionAuthority.mockResolvedValue(rankingAuthorityPreview)
+  api.confirmDerivedRankingTransitionAuthority.mockResolvedValue(rankingAuthorityPreview.authority)
 })
 
 describe('AuthoritativeSimulationPanel', () => {
@@ -344,6 +385,121 @@ describe('AuthoritativeSimulationPanel', () => {
       })
     )
     expect(await screen.findByText('Saved as revision revision-8.')).toBeInTheDocument()
+  })
+
+  it('derives, confirms and saves the missing Ranking Transition Authority from canonical state', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: false,
+      transition_blockers: ['ranking_transition_authority_missing'],
+      terminal_sporting_fingerprint: 'f'.repeat(64),
+      position_fingerprint: '2'.repeat(64)
+    })
+    renderPanel()
+
+    await screen.findByText('Ranking Transition Authority')
+    await userEvent.type(screen.getByLabelText('Operator label'), 'Admin operator')
+    await userEvent.type(
+      screen.getByLabelText('Authority reason'),
+      'Review canonical ranking boundary'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review derived Ranking Transition Authority' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewDerivedRankingTransitionAuthority).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          command_id: expect.any(String),
+          audit: {
+            actor_label: 'Admin operator',
+            reason: 'Review canonical ranking boundary'
+          }
+        })
+      )
+    )
+    expect(await screen.findByText('season-3-policy')).toBeInTheDocument()
+    expect(screen.getByText('6'.repeat(64))).toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Confirm reviewed Ranking Transition Authority' })
+    )
+    await waitFor(() =>
+      expect(api.confirmDerivedRankingTransitionAuthority).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          audit: {
+            actor_label: 'Admin operator',
+            reason: 'Review canonical ranking boundary'
+          }
+        }),
+        rankingAuthorityPreview
+      )
+    )
+
+    const save = await screen.findByRole('button', { name: 'Save Ranking Transition Authority' })
+    expect(save).toBeEnabled()
+    await userEvent.click(save)
+    await waitFor(() =>
+      expect(api.saveRankingPreparation).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          draft_version: 12,
+          ranking_fingerprint: 'e'.repeat(64),
+          can_save: true
+        })
+      )
+    )
+  })
+
+  it('does not derive Ranking Transition Authority while another transition blocker remains', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: false,
+      transition_blockers: [
+        'ranking_transition_authority_missing',
+        'prospect_bridge_missing'
+      ],
+      terminal_sporting_fingerprint: 'f'.repeat(64),
+      position_fingerprint: '3'.repeat(64)
+    })
+    renderPanel()
+
+    expect(await screen.findByText(
+      'Ranking Transition Authority is missing, but other canonical blockers must be resolved first.'
+    )).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Review derived Ranking Transition Authority' })
+    ).not.toBeInTheDocument()
+    expect(api.previewDerivedRankingTransitionAuthority).not.toHaveBeenCalled()
   })
 
   it('reviews, confirms and saves one server-derived canonical Week Transition', async () => {

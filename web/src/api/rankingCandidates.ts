@@ -63,4 +63,32 @@ export type RankingPreparationCommand = {
 export type RankingPreparationPlayer = {player_id: string; tie_break_token: string; tour_entry_week: CandidateWeek; retired: boolean}
 export type RankingPreparationPreview = {preview_only: true; request_fingerprint: string; candidate: RankingCandidateDetail}
 
+export type RankingTransitionAuthority = {
+  schema_version: 'ranking_transition_authority.v1'
+  run_id: string
+  branch_id: string
+  base_revision_id: string
+  completed_week: CandidateWeek
+  target_week: CandidateWeek
+  players: RankingPreparationPlayer[]
+  policy: {
+    policy_id: string
+    best_n: number
+    tie_break_version?: 'result_profile_age_previous_token.v1'
+  }
+  provenance: string
+  adopted_by_command_id: string
+  audit: { actor_label: string; reason: string }
+}
+
+export type DerivedRankingTransitionAuthorityRequest = {
+  command_id: string
+  audit: { actor_label: string; reason: string }
+}
+
+export type DerivedRankingTransitionAuthorityPreview = {
+  authority: RankingTransitionAuthority
+  authority_fingerprint: string
+}
+
 export type RankingResultCorrection = RankingCandidateSources['sources'][number]['version']

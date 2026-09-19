@@ -1690,6 +1690,82 @@ export function getPlayerTransitions(runId: string, toSeason: number): Promise<P
 
 export { ApiError }
 
+function verifyRankingTransitionAuthority(
+  runId: string,
+  branchId: string,
+  authority: import('./rankingCandidates').RankingTransitionAuthority
+): void {
+  if (authority.run_id !== runId || authority.branch_id !== branchId) {
+    throw new Error('Ranking Transition Authority scope mismatch.')
+  }
+  if (
+    authority.target_week.season_index !== authority.completed_week.season_index ||
+    authority.target_week.week !== authority.completed_week.week + 1
+  ) {
+    throw new Error('Ranking Transition Authority has an invalid week boundary.')
+  }
+}
+
+export async function previewDerivedRankingTransitionAuthority(
+  runId: string,
+  branchId: string,
+  payload: import('./rankingCandidates').DerivedRankingTransitionAuthorityRequest
+): Promise<import('./rankingCandidates').DerivedRankingTransitionAuthorityPreview> {
+  const data = await request<import('./rankingCandidates').DerivedRankingTransitionAuthorityPreview>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/transition-authorities/derived/preview`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyRankingTransitionAuthority(runId, branchId, data.authority)
+  if (data.authority.adopted_by_command_id !== payload.command_id) {
+    throw new Error('Ranking Transition Authority command identity mismatch.')
+  }
+  if (
+    data.authority.audit.actor_label !== payload.audit.actor_label ||
+    data.authority.audit.reason !== payload.audit.reason
+  ) {
+    throw new Error('Ranking Transition Authority audit differs from the request.')
+  }
+  if (!/^[0-9a-f]{64}$/.test(data.authority_fingerprint)) {
+    throw new Error('Ranking Transition Authority fingerprint is invalid.')
+  }
+  return data
+}
+
+export async function confirmDerivedRankingTransitionAuthority(
+  runId: string,
+  branchId: string,
+  payload: import('./rankingCandidates').DerivedRankingTransitionAuthorityRequest,
+  preview: import('./rankingCandidates').DerivedRankingTransitionAuthorityPreview
+): Promise<import('./rankingCandidates').RankingTransitionAuthority> {
+  verifyRankingTransitionAuthority(runId, branchId, preview.authority)
+  const data = await request<import('./rankingCandidates').RankingTransitionAuthority>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/transition-authorities/derived`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Ranking-Transition-Authority-Fingerprint': preview.authority_fingerprint
+      }
+    }
+  )
+  verifyRankingTransitionAuthority(runId, branchId, data)
+  if (
+    data.base_revision_id !== preview.authority.base_revision_id ||
+    data.adopted_by_command_id !== preview.authority.adopted_by_command_id ||
+    data.completed_week.season_index !== preview.authority.completed_week.season_index ||
+    data.completed_week.week !== preview.authority.completed_week.week ||
+    data.target_week.season_index !== preview.authority.target_week.season_index ||
+    data.target_week.week !== preview.authority.target_week.week ||
+    data.policy.policy_id !== preview.authority.policy.policy_id ||
+    data.policy.best_n !== preview.authority.policy.best_n ||
+    data.players.length !== preview.authority.players.length
+  ) {
+    throw new Error('Confirmed Ranking Transition Authority differs from the reviewed preview.')
+  }
+  return data
+}
+
 export async function getRankingCandidates(runId: string, branchId: string): Promise<import('./rankingCandidates').RankingCandidateHistory> {
   const data = await request<import('./rankingCandidates').RankingCandidateHistory>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates`)
   if (data.run_id !== runId || data.branch_id !== branchId || data.publication_status !== 'candidate_only' || !Array.isArray(data.candidates) || data.candidates.some(c => c.publication_status !== 'candidate_only' || c.snapshot.run_id !== runId || c.snapshot.branch_id !== branchId)) {

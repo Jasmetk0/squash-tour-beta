@@ -89,9 +89,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   The UI confirms only that reviewed request through the existing request/ranking
   fingerprint guards, then reuses the ranking Save CAS to persist the transitioned
   ranking/world draft as a new recoverable Saved Revision. The client never authors
-  tournament bindings or an authority fingerprint. Ranking Transition Authority
-  creation itself remains a separate prerequisite; a missing/stale authority stays
-  an explicit transition blocker.
+  tournament bindings or an authority fingerprint. The immediately preceding
+  Ranking Transition Authority prerequisite is now also server-derived for ordinary
+  within-season Week Transition: Admin supplies only audit provenance, while the
+  backend freezes the current Saved Revision head, target-week lifecycle roster and
+  predecessor Official Ranking policy, previews the exact authority fingerprint,
+  confirms it under CAS, and Saves it through the same ranking revision boundary.
+  Missing authority can therefore be resolved from canonical Run truth; stale
+  authority, Week 61 rollover and prospect-bridge gaps remain fail-closed.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

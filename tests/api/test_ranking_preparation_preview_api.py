@@ -110,6 +110,143 @@ def test_real_run_preview_confirm_save_and_reopen(tmp_path):
         assert _request('GET', root + '/0/1/inputs')[1]['command_audits'][0]['audit'] == command['audit']
 
 
+@pytest.mark.pr_critical
+def test_derived_ranking_transition_authority_preview_confirm_save_and_reopen(tmp_path):
+    from test_saved_revision_history_api import ApiServer, _create_run, _request
+    from test_authoritative_week_transition_api import install_owned_lifecycle
+
+    path = tmp_path / "derived-ranking-authority.db"
+    run_id = branch_id = None
+    audit = {
+        "actor_label": "Admin operator",
+        "reason": "Review canonical Week Transition ranking boundary",
+    }
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, _ = _create_run(
+            server,
+            display_name="Derived ranking authority",
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "ranking-candidates"
+        )
+        bootstrap = initial() | {"run_id": run_id, "branch_id": branch_id}
+        assert _request("POST", root + "/prepare/initial", bootstrap)[0] == 201
+        install_owned_lifecycle(
+            server,
+            run_id,
+            branch_id,
+            bootstrap["players"],
+        )
+        review = _request("GET", root + "/save/preview")[1]
+        status, saved = _request(
+            "POST",
+            root + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 201
+        base_revision = saved["saved_revision"]["revision_id"]
+
+        payload = {
+            "command_id": "derive-week-2-authority",
+            "audit": audit,
+        }
+        before = dump(path)
+        status, preview = _request(
+            "POST",
+            root + "/transition-authorities/derived/preview",
+            payload,
+        )
+        assert status == 200, preview
+        assert dump(path) == before
+        authority = preview["authority"]
+        assert authority["base_revision_id"] == base_revision
+        assert authority["completed_week"] == {"season_index": 0, "week": 1}
+        assert authority["target_week"] == {"season_index": 0, "week": 2}
+        assert authority["policy"]["policy_id"] == bootstrap["policy"]["policy_id"]
+        assert authority["policy"]["best_n"] == bootstrap["policy"].get("best_n", 15)
+        assert authority["adopted_by_command_id"] == payload["command_id"]
+        assert authority["audit"] == audit
+        assert len(authority["players"]) == len(bootstrap["players"])
+        assert len(preview["authority_fingerprint"]) == 64
+
+        req = request.Request(
+            root + "/transition-authorities/derived",
+            data=json.dumps(payload).encode(),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-Ranking-Transition-Authority-Fingerprint": preview[
+                    "authority_fingerprint"
+                ],
+            },
+        )
+        with request.urlopen(req) as response:
+            assert response.status == 201
+            adopted = json.loads(response.read())
+        assert adopted == authority
+
+        # Lost-response retry is exact and idempotent before the authority Save.
+        with request.urlopen(req) as response:
+            assert response.status == 201
+            assert json.loads(response.read()) == authority
+
+        changed = payload | {
+            "audit": audit | {"reason": "Changed after reviewed preview"}
+        }
+        stale = request.Request(
+            root + "/transition-authorities/derived",
+            data=json.dumps(changed).encode(),
+            method="POST",
+            headers={
+                "Content-Type": "application/json",
+                "X-Ranking-Transition-Authority-Fingerprint": preview[
+                    "authority_fingerprint"
+                ],
+            },
+        )
+        with pytest.raises(error.HTTPError) as rejected:
+            request.urlopen(stale)
+        assert rejected.value.code == 409
+
+        review = _request("GET", root + "/save/preview")[1]
+        assert review["can_save"] is True
+        status, saved_authority = _request(
+            "POST",
+            root + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 201
+        saved_state = saved_authority["saved_revision"]["payload"]["content"][
+            "ranking_preparation"
+        ]["state"]
+        assert saved_state["transition_authorities"][-1] == authority
+
+    with ApiServer(database_url=f"sqlite:///{path}") as reopened:
+        root = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "ranking-candidates"
+        )
+        assert _request("GET", root + "/save/preview")[1]["has_unsaved_changes"] is False
+        status, prepared = _request(
+            "POST",
+            root + "/prepare/week/authoritative/preview",
+            {
+                "command_id": "week-2-preview",
+                "target_week": {"season_index": 0, "week": 2},
+                "tournaments": [],
+                "audit": audit,
+            },
+        )
+        assert status == 200, prepared
+
+
 @pytest.mark.smoke
 def test_authoritative_week_inputs_are_server_resolved_and_preview_is_read_only(tmp_path):
     from test_saved_revision_history_api import ApiServer, _create_run, _request

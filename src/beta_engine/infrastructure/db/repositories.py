@@ -1344,6 +1344,57 @@ class SimulationPersistenceRepository:
             bootstrap_sporting(session, installed)
             return installed
 
+    def preview_derived_ranking_transition_authority(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        command_id: str,
+        audit,
+    ):
+        from beta_engine.infrastructure.db.ranking_transition_authority import (
+            derive_ranking_transition_authority,
+        )
+
+        with self._session_factory() as session:
+            session.execute(text("BEGIN"))
+            return derive_ranking_transition_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                command_id=command_id,
+                audit=audit,
+            )
+
+    def adopt_derived_ranking_transition_authority(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        command_id: str,
+        audit,
+        expected_fingerprint: str,
+    ):
+        from beta_engine.infrastructure.db.ranking_transition_authority import (
+            RankingTransitionAuthorityStore,
+            derive_ranking_transition_authority,
+        )
+
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            authority = derive_ranking_transition_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                command_id=command_id,
+                audit=audit,
+            )
+            if authority.fingerprint != expected_fingerprint:
+                raise ValueError(
+                    "Ranking transition authority changed since preview"
+                )
+            return RankingTransitionAuthorityStore(session).append(authority)
+
     def adopt_ranking_transition_authority(self, authority):
         from beta_engine.infrastructure.db.ranking_transition_authority import (
             RankingTransitionAuthorityStore,

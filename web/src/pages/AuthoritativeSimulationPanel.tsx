@@ -13,7 +13,9 @@ import {
   previewDerivedAuthoritativeWeekTransition,
   confirmAuthoritativeWeekTransition,
   previewRankingSave,
-  saveRankingPreparation
+  saveRankingPreparation,
+  previewDerivedRankingTransitionAuthority,
+  confirmDerivedRankingTransitionAuthority
 } from '../api/client'
 import type {
   AuthoritativeSimulationCommandPayload,
@@ -22,6 +24,10 @@ import type {
 } from '../api/types'
 import { newCommandId } from '../admin/branchSimulation'
 import { EmptyState, MetadataList, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import type {
+  DerivedRankingTransitionAuthorityPreview,
+  DerivedRankingTransitionAuthorityRequest
+} from '../api/rankingCandidates'
 import { formatApiError } from '../utils/apiErrors'
 
 type Props = {
@@ -49,6 +55,14 @@ export function AuthoritativeSimulationPanel({
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
   const [weekTransitionCommitted, setWeekTransitionCommitted] = useState(false)
+  const [rankingAuthorityCommandId, setRankingAuthorityCommandId] = useState(newCommandId)
+  const [rankingAuthorityActor, setRankingAuthorityActor] = useState('')
+  const [rankingAuthorityReason, setRankingAuthorityReason] = useState('')
+  const [rankingAuthorityReview, setRankingAuthorityReview] = useState<{
+    payload: DerivedRankingTransitionAuthorityRequest
+    preview: DerivedRankingTransitionAuthorityPreview
+  } | null>(null)
+  const [rankingAuthorityCommitted, setRankingAuthorityCommitted] = useState(false)
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -77,6 +91,12 @@ export function AuthoritativeSimulationPanel({
     enabled: weekTransitionCommitted,
     retry: false
   })
+  const authoritySaveQuery = useQuery({
+    queryKey: ['ranking-transition-authority-save-preview', runId, branchId],
+    queryFn: () => previewRankingSave(runId, branchId),
+    enabled: rankingAuthorityCommitted,
+    retry: false
+  })
 
   useEffect(() => {
     setProposal(null)
@@ -88,6 +108,11 @@ export function AuthoritativeSimulationPanel({
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
+    setRankingAuthorityCommandId(newCommandId())
+    setRankingAuthorityActor('')
+    setRankingAuthorityReason('')
+    setRankingAuthorityReview(null)
+    setRankingAuthorityCommitted(false)
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
@@ -102,6 +127,9 @@ export function AuthoritativeSimulationPanel({
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
+    setRankingAuthorityCommandId(newCommandId())
+    setRankingAuthorityReview(null)
+    setRankingAuthorityCommitted(false)
     setConfirmed(false)
   }, [positionQuery.data?.position_fingerprint])
 
@@ -237,6 +265,76 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const rankingAuthorityPreviewMutation = useMutation({
+    mutationFn: (payload: DerivedRankingTransitionAuthorityRequest) =>
+      previewDerivedRankingTransitionAuthority(runId, branchId, payload),
+    onSuccess: (preview, payload) => {
+      setRankingAuthorityReview({ payload, preview })
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setRankingAuthorityReview(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const rankingAuthorityConfirmMutation = useMutation({
+    mutationFn: () => {
+      if (!rankingAuthorityReview) {
+        throw new Error('Review the derived Ranking Transition Authority first.')
+      }
+      return confirmDerivedRankingTransitionAuthority(
+        runId,
+        branchId,
+        rankingAuthorityReview.payload,
+        rankingAuthorityReview.preview
+      )
+    },
+    onSuccess: async () => {
+      setRankingAuthorityCommitted(true)
+      await queryClient.invalidateQueries({
+        queryKey: ['ranking-transition-authority-save-preview', runId, branchId]
+      })
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setRankingAuthorityReview(null)
+        setRankingAuthorityCommitted(false)
+        setRankingAuthorityCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const rankingAuthoritySaveMutation = useMutation({
+    mutationFn: () => {
+      if (!authoritySaveQuery.data?.can_save) {
+        throw new Error('Reviewed Ranking Transition Authority has no saveable ranking draft.')
+      }
+      return saveRankingPreparation(runId, branchId, authoritySaveQuery.data)
+    },
+    onSuccess: async () => {
+      setRankingAuthorityReview(null)
+      setRankingAuthorityCommitted(false)
+      setRankingAuthorityCommandId(newCommandId())
+      rankingAuthorityConfirmMutation.reset()
+      rankingAuthorityPreviewMutation.reset()
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] }),
+        refreshCanonicalSimulation()
+      ])
+    },
+    onError: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['ranking-transition-authority-save-preview', runId, branchId]
+      })
+    }
+  })
+
   const weekTransitionPreviewMutation = useMutation({
     mutationFn: () => {
       if (!positionQuery.data?.week_ready_for_transition) {
@@ -307,6 +405,14 @@ export function AuthoritativeSimulationPanel({
 
   const schedule = scheduleQuery.data?.schedule
   const position = positionQuery.data
+  const rankingAuthorityMissing = Boolean(
+    position?.transition_blockers.includes('ranking_transition_authority_missing')
+  )
+  const rankingAuthorityCanPrepare = Boolean(
+    position &&
+    position.transition_blockers.length === 1 &&
+    rankingAuthorityMissing
+  )
   const actionPending = nextMatchMutation.isPending || nextSlotMutation.isPending
 
   return (
@@ -494,6 +600,136 @@ export function AuthoritativeSimulationPanel({
           ) : null}
           {saveMutation.error ? (
             <p className="error">Authoritative simulation Save failed: {formatApiError(saveMutation.error)}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {position && (rankingAuthorityMissing || rankingAuthorityCommitted) ? (
+        <>
+          <h4>Ranking Transition Authority</h4>
+          <p className="status">
+            The server derives the target-week lifecycle roster and reuses the predecessor Official Ranking policy. Admin supplies only audit provenance.
+          </p>
+
+          {!rankingAuthorityCommitted ? (
+            rankingAuthorityCanPrepare ? (
+              <>
+                <label>
+                  Operator label
+                  <input
+                    value={rankingAuthorityActor}
+                    maxLength={128}
+                    disabled={Boolean(rankingAuthorityReview) || rankingAuthorityPreviewMutation.isPending}
+                    onChange={(event) => setRankingAuthorityActor(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Authority reason
+                  <textarea
+                    value={rankingAuthorityReason}
+                    maxLength={2000}
+                    disabled={Boolean(rankingAuthorityReview) || rankingAuthorityPreviewMutation.isPending}
+                    onChange={(event) => setRankingAuthorityReason(event.target.value)}
+                  />
+                </label>
+                {!rankingAuthorityReview ? (
+                  <button
+                    type="button"
+                    disabled={
+                      !rankingAuthorityActor.trim() ||
+                      !rankingAuthorityReason.trim() ||
+                      rankingAuthorityPreviewMutation.isPending
+                    }
+                    onClick={() => rankingAuthorityPreviewMutation.mutate({
+                      command_id: rankingAuthorityCommandId,
+                      audit: {
+                        actor_label: rankingAuthorityActor.trim(),
+                        reason: rankingAuthorityReason.trim()
+                      }
+                    })}
+                  >
+                    Review derived Ranking Transition Authority
+                  </button>
+                ) : null}
+                {rankingAuthorityPreviewMutation.error ? (
+                  <p className="error">
+                    Ranking Transition Authority preview failed: {formatApiError(rankingAuthorityPreviewMutation.error)}
+                  </p>
+                ) : null}
+                {rankingAuthorityReview ? (
+                  <>
+                    <MetadataList
+                      items={[
+                        {
+                          label: 'Completed week',
+                          value: `Season index ${rankingAuthorityReview.preview.authority.completed_week.season_index} · Week ${rankingAuthorityReview.preview.authority.completed_week.week}`
+                        },
+                        {
+                          label: 'Target week',
+                          value: `Season index ${rankingAuthorityReview.preview.authority.target_week.season_index} · Week ${rankingAuthorityReview.preview.authority.target_week.week}`
+                        },
+                        { label: 'Target roster', value: rankingAuthorityReview.preview.authority.players.length },
+                        { label: 'Policy ID', value: rankingAuthorityReview.preview.authority.policy.policy_id },
+                        { label: 'Best N', value: rankingAuthorityReview.preview.authority.policy.best_n },
+                        { label: 'Base Saved Revision', value: rankingAuthorityReview.preview.authority.base_revision_id },
+                        { label: 'Authority fingerprint', value: rankingAuthorityReview.preview.authority_fingerprint }
+                      ]}
+                    />
+                    <button
+                      type="button"
+                      disabled={rankingAuthorityConfirmMutation.isPending}
+                      onClick={() => rankingAuthorityConfirmMutation.mutate()}
+                    >
+                      Confirm reviewed Ranking Transition Authority
+                    </button>
+                    <button
+                      type="button"
+                      disabled={rankingAuthorityConfirmMutation.isPending}
+                      onClick={() => {
+                        setRankingAuthorityReview(null)
+                        rankingAuthorityPreviewMutation.reset()
+                        rankingAuthorityConfirmMutation.reset()
+                      }}
+                    >
+                      Edit authority audit
+                    </button>
+                  </>
+                ) : null}
+                {rankingAuthorityConfirmMutation.error ? (
+                  <p className="error">
+                    Ranking Transition Authority confirm failed: {formatApiError(rankingAuthorityConfirmMutation.error)}
+                  </p>
+                ) : null}
+              </>
+            ) : (
+              <p className="status">
+                Ranking Transition Authority is missing, but other canonical blockers must be resolved first.
+              </p>
+            )
+          ) : null}
+
+          {rankingAuthorityCommitted ? (
+            <>
+              <p className="status">
+                Ranking Transition Authority is committed to the ranking draft. Save it as a recoverable Saved Revision before advancing the week.
+              </p>
+              {authoritySaveQuery.isLoading ? <p className="status">Loading authority Save preview…</p> : null}
+              {authoritySaveQuery.error ? (
+                <p className="error">Authority Save preview failed: {formatApiError(authoritySaveQuery.error)}</p>
+              ) : null}
+              {authoritySaveQuery.data ? (
+                <button
+                  type="button"
+                  disabled={!authoritySaveQuery.data.can_save || rankingAuthoritySaveMutation.isPending}
+                  onClick={() => rankingAuthoritySaveMutation.mutate()}
+                >
+                  Save Ranking Transition Authority
+                </button>
+              ) : null}
+              {rankingAuthoritySaveMutation.error ? (
+                <p className="error">Authority Save failed: {formatApiError(rankingAuthoritySaveMutation.error)}</p>
+              ) : null}
+            </>
           ) : null}
         </>
       ) : null}

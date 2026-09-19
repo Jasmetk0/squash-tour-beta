@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from sqlalchemy import select
 
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
@@ -13,6 +15,9 @@ from beta_engine.domain.tournaments.walkover_authority import TournamentWalkover
 from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
+)
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
 )
 
 
@@ -29,12 +34,31 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
         branch_id: str,
         event_id: str,
         player_id: str,
+        draw_type: Literal["qualification", "main"] | None = None,
     ) -> TournamentPlayerReplacementCutoffAuthority:
         # Local import avoids making the domain authority depend on the application
         # executor while still reusing its complete persisted-group validation.
         from beta_engine.application.authoritative_slot_matches import (
             AuthoritativeSlotMatchExecutor,
         )
+
+        allowed_match_ids: set[str] | None = None
+        if draw_type is not None:
+            draw = TournamentDrawAuthorityStore(self.session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if draw is None:
+                raise ValueError("Draw-component replacement cutoff requires canonical Draw")
+            if draw_type == "main":
+                allowed_match_ids = {node.node_id for node in draw.main.nodes}
+            else:
+                allowed_match_ids = {
+                    node.node_id
+                    for bracket in draw.qualification_brackets
+                    for node in bracket.nodes
+                }
 
         groups = self.session.scalars(
             select(SimulationEventGroupModel).where(
@@ -54,6 +78,8 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
 
         evidence = []
         for row in groups:
+            if allowed_match_ids is not None and row.match_id not in allowed_match_ids:
+                continue
             loaded = AuthoritativeSlotMatchExecutor._load_group(row)
             protected = loaded.authoritative_input
             result = loaded.result
@@ -105,6 +131,7 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
             event_id=event_id,
             player_id=player_id,
             played_matches=evidence,
+            draw_type=draw_type,
         )
 
     def resolve_many(
@@ -114,6 +141,7 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
         branch_id: str,
         event_id: str,
         player_ids: tuple[str, ...],
+        draw_type: Literal["qualification", "main"] | None = None,
     ) -> tuple[TournamentPlayerReplacementCutoffAuthority, ...]:
         return tuple(
             self.resolve(
@@ -121,6 +149,7 @@ class TournamentPlayerReplacementCutoffAuthorityStore:
                 branch_id=branch_id,
                 event_id=event_id,
                 player_id=player_id,
+                draw_type=draw_type,
             )
             for player_id in sorted(set(player_ids))
         )

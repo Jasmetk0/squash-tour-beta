@@ -19,6 +19,12 @@ from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldResol
 from beta_engine.domain.tournaments.post_draw_wild_card_repair import (
     TournamentPostDrawWildCardRepairAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.lucky_loser_authority import (
+    TournamentLuckyLoserVacancyAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.models import TournamentDrawRevisionModel
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
@@ -97,6 +103,54 @@ class TournamentDrawRevisionStore:
             )
         return authorities
 
+    def _qualification_start_authority(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        qualification_player_ids: tuple[str, ...],
+    ):
+        if not qualification_player_ids:
+            raise TournamentDrawRevisionConflict(
+                "Lucky Loser vacancy requires Qualification participants"
+            )
+        authorities = TournamentPlayerReplacementCutoffAuthorityStore(
+            self.session
+        ).resolve_many(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            player_ids=qualification_player_ids,
+        )
+        candidates = []
+        for authority in authorities:
+            evidence = authority.first_real_match
+            if evidence is None:
+                continue
+            candidates.append((evidence, authority.player_id))
+        if not candidates:
+            raise TournamentDrawRevisionConflict(
+                "Lucky Loser does not exist before Qualification starts"
+            )
+        evidence, player_id = min(
+            candidates,
+            key=lambda item: (
+                item[0].week_ordinal,
+                item[0].slot_ordinal,
+                item[0].group_id,
+                item[0].match_id,
+                item[1],
+            ),
+        )
+        return TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            player_id=player_id,
+            played_matches=(evidence,),
+        )
+
     def history(self, *, run_id: str, branch_id: str, event_id: str):
         rows = self.session.scalars(
             select(TournamentDrawRevisionModel)
@@ -163,6 +217,80 @@ class TournamentDrawRevisionStore:
                 raise ValueError(
                     "Tournament Draw revision predecessor chain is corrupt"
                 )
+
+            if revision.repair_kind == "lucky_loser_vacancy":
+                authority = revision.lucky_loser_vacancy_authority
+                if authority is None:
+                    raise ValueError("Stored Lucky Loser vacancy lacks authority")
+                if revision.successor_field != previous_field:
+                    raise ValueError(
+                        "Lucky Loser vacancy unexpectedly changed Tournament Entry Field"
+                    )
+                q_start = self._qualification_start_authority(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                    qualification_player_ids=(
+                        previous_draw_input.qualification_player_ids
+                    ),
+                )
+                ordinal = 1 + sum(
+                    1
+                    for prior in out
+                    if prior.repair_kind == "lucky_loser_vacancy"
+                )
+                rebuilt_authority = (
+                    TournamentLuckyLoserVacancyAuthorityBuilder.build(
+                        predecessor=predecessor,
+                        predecessor_draw_input=previous_draw_input,
+                        command_id=revision.command_id,
+                        withdrawn_player_id=authority.withdrawn_player_id,
+                        lucky_loser_ordinal=ordinal,
+                        withdrawn_player_cutoff_authority=(
+                            authority.withdrawn_player_cutoff_authority
+                        ),
+                        qualification_start_authority=q_start,
+                    )
+                )
+                if rebuilt_authority != authority:
+                    raise ValueError(
+                        "Lucky Loser vacancy authority does not replay"
+                    )
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
+                        previous=previous_draw_input,
+                        command_id=revision.command_id,
+                        withdrawn_player_id=authority.withdrawn_player_id,
+                        placeholder_id=authority.placeholder_id,
+                        vacated_main_seed_number=authority.vacated_main_seed_number,
+                    )
+                )
+                if rebuilt_input != revision.successor_draw_input:
+                    raise ValueError(
+                        "Lucky Loser successor Draw Input does not replay"
+                    )
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
+                        predecessor=predecessor,
+                        successor_field=previous_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        lucky_loser_vacancy_authority=rebuilt_authority,
+                    )
+                )
+                if rebuilt_revision != revision:
+                    raise ValueError(
+                        "Lucky Loser Draw revision does not replay"
+                    )
+                out.append(revision)
+                previous_draw_input = revision.successor_draw_input
+                predecessor = revision.successor_draw
+                continue
 
             if revision.repair_kind == "frozen_wild_card_repair":
                 authority = revision.wild_card_repair_authority
@@ -768,6 +896,177 @@ class TournamentDrawRevisionStore:
         return revision
 
 
+
+    def draw_frozen_lucky_loser_vacancy(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        withdrawn_player_id: str,
+        main_process_window_ordinal: int,
+    ) -> TournamentDrawRevision:
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+
+        history = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = next(
+                (item for item in history if item.command_id == command_id),
+                None,
+            )
+            if revision is None:
+                raise ValueError(
+                    "Lucky Loser command exists outside validated history"
+                )
+            authority = revision.lucky_loser_vacancy_authority
+            if (
+                retry.event_id != event_id
+                or revision.repair_kind != "lucky_loser_vacancy"
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or authority is None
+                or authority.withdrawn_player_id != withdrawn_player_id
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Lucky Loser command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise ValueError("Lucky Loser vacancy requires canonical Draw authority")
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if original_input is None or process is None:
+            raise ValueError(
+                "Lucky Loser vacancy requires Draw Input and Draw process authority"
+            )
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+
+        field_store = TournamentEntryFieldStore(self.session)
+        field_rows = field_store._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not field_rows:
+            raise ValueError("Lucky Loser vacancy requires Tournament Entry Field")
+        persisted_field, _ = field_store._load_row(field_rows[-1])
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+
+        withdrawn_cutoff = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=(withdrawn_player_id,),
+        )[0]
+        q_start = self._qualification_start_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            qualification_player_ids=previous_input.qualification_player_ids,
+        )
+        ordinal = 1 + sum(
+            1
+            for prior in history
+            if prior.repair_kind == "lucky_loser_vacancy"
+        )
+        try:
+            authority = TournamentLuckyLoserVacancyAuthorityBuilder.build(
+                predecessor=predecessor,
+                predecessor_draw_input=previous_input,
+                command_id=command_id,
+                withdrawn_player_id=withdrawn_player_id,
+                lucky_loser_ordinal=ordinal,
+                withdrawn_player_cutoff_authority=withdrawn_cutoff,
+                qualification_start_authority=q_start,
+            )
+            successor_input = (
+                TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
+                    previous=previous_input,
+                    command_id=command_id,
+                    withdrawn_player_id=withdrawn_player_id,
+                    placeholder_id=authority.placeholder_id,
+                    vacated_main_seed_number=authority.vacated_main_seed_number,
+                )
+            )
+            revision = (
+                TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
+                    predecessor=predecessor,
+                    successor_field=previous_field,
+                    successor_draw_input=successor_input,
+                    process_authority=process,
+                    main_process_window_ordinal=main_process_window_ordinal,
+                    sequence=len(history) + 1,
+                    command_id=command_id,
+                    lucky_loser_vacancy_authority=authority,
+                )
+            )
+        except ValueError as exc:
+            raise TournamentDrawRevisionConflict(str(exc)) from exc
+
+        request = {
+            "repair_kind": "lucky_loser_vacancy",
+            "predecessor_draw_fingerprint": predecessor.fingerprint,
+            "withdrawn_player_id": withdrawn_player_id,
+            "main_process_window_ordinal": main_process_window_ordinal,
+            "lucky_loser_ordinal": authority.lucky_loser_ordinal,
+            "qualification_start_fingerprint": (
+                authority.qualification_start_authority.fingerprint
+            ),
+        }
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=_fp(request),
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=(
+                    revision.predecessor_draw_fingerprint
+                ),
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
 
     def draw_frozen_wild_card_withdrawal(
         self,

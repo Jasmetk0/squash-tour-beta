@@ -21,6 +21,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 
 router = APIRouter(
@@ -97,6 +98,7 @@ def adopt_topological_week_schedule_proposal(
             run_id=run_id,
             branch_id=branch_id,
             request_id=payload["request_id"],
+            expected_week=RankingWeek.model_validate(payload["expected_week"]),
             expected_schedule_fingerprint=payload["expected_schedule_fingerprint"],
             expected_position_fingerprint=payload["expected_position_fingerprint"],
         )

@@ -89,6 +89,7 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         lucky_loser_ordinal: int,
         withdrawn_player_cutoff_authority: TournamentPlayerReplacementCutoffAuthority,
         qualification_start_authority: TournamentPlayerReplacementCutoffAuthority,
+        qualification_origin_player_ids: tuple[str, ...],
     ) -> TournamentLuckyLoserVacancyAuthority:
         scope = (predecessor.run_id, predecessor.branch_id, predecessor.event_id)
         if (
@@ -102,7 +103,7 @@ class TournamentLuckyLoserVacancyAuthorityBuilder:
         if not predecessor.qualification_brackets:
             raise ValueError("Lucky Loser vacancy requires a Qualification draw")
         if qualification_start_authority.player_id not in set(
-            predecessor_draw_input.qualification_player_ids
+            qualification_origin_player_ids
         ):
             raise ValueError(
                 "LL Qualification-start evidence is not owned by the frozen Q field"

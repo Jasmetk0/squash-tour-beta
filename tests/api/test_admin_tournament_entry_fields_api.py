@@ -269,6 +269,7 @@ def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):
         assert after["withdrawn_player_ids"] == ["D"]
 
 
+@pytest.mark.pr_critical
 def test_canonical_entry_field_http_exposes_odd_main_warning(tmp_path):
     server = ApiServer(database_url=f"sqlite:///{tmp_path / 'entry-field-odd.sqlite'}")
     with server:

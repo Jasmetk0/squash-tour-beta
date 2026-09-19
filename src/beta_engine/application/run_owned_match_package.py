@@ -198,6 +198,8 @@ def _source_identity(
         return None, "bye"
     if slot.entrant_kind == "qualifier_placeholder":
         return None, "qualifier_placeholder"
+    if slot.entrant_kind == "lucky_loser_placeholder":
+        return None, "lucky_loser_placeholder"
     raise ValueError("canonical Draw slot entrant is unsupported")
 
 

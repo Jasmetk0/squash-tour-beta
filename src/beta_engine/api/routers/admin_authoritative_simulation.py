@@ -56,6 +56,31 @@ def position(
         ) from exc
 
 
+@router.get("/week-schedule/proposal")
+def propose_week_schedule(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).propose_topological_schedule(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "topological_schedule_proposal_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("/week-schedule")
 def inspect_week_schedule(
     run_id: str,

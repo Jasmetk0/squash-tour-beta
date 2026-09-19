@@ -3957,6 +3957,14 @@ def test_withdrawn_q_winner_turns_exact_linked_main_slot_into_next_lucky_loser(
 ):
     with database.begin() as session:
         draw_input, initial = _install_mixed_auto_bye_q_for_ll_order(session)
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="q-winner-ll-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
         real_bracket, terminal, q_winner, q_loser = _fake_single_real_q_terminal(
             session,
             monkeypatch,

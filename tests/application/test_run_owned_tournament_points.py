@@ -304,6 +304,192 @@ def _walkover_authorities():
 
 
 @pytest.mark.pr_critical
+def test_withdrawn_q_winner_and_lucky_loser_survive_canonical_points_and_ranking(database):
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="A",
+        finalist_player_id="B",
+        qualification_winner_ids=("QW",),
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="champion",
+                wins=2,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="finalist",
+                wins=1,
+                losses=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="semifinal",
+                losses=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="QW",
+                draw_type="qualification",
+                qualifier=True,
+                reached_stage="qualification_winner",
+                wins=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="LL",
+                draw_type="both",
+                qualifier=True,
+                reached_stage="semifinal",
+                losses=2,
+            ),
+        ),
+        matches=(
+            TournamentMatchResultAuthority(
+                match_id="q-final",
+                draw_type="qualification",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="QW",
+                loser_player_id="LL",
+                scoreline="3-0",
+                result_fingerprint="1" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="main-semi-1",
+                draw_type="main",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="LL",
+                scoreline="3-0",
+                result_fingerprint="2" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="main-semi-2",
+                draw_type="main",
+                round_number=1,
+                bracket_position=2,
+                winner_player_id="B",
+                loser_player_id="C",
+                scoreline="3-0",
+                result_fingerprint="3" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="main-final",
+                draw_type="main",
+                round_number=2,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="B",
+                scoreline="3-0",
+                result_fingerprint="4" * 64,
+            ),
+        ),
+    )
+    frozen_points = FrozenPointAwardAuthority(
+        ranking_status="ranked",
+        point_distribution={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+            "qualification_winner": 150,
+            "qualification_final": 100,
+        },
+        point_distribution_source="calendar_event.ranking_points_table",
+    )
+    point_authority = build_tournament_point_award_authority(
+        result=result,
+        point_authority=frozen_points,
+        seed=812,
+    )
+    by_player = {
+        award.player_id: award for award in point_authority.awards
+    }
+
+    # The withdrawn Q winner keeps the earned Qualification component even though
+    # they never enter Main. The replacement LL keeps the Q-loser component plus
+    # the actual Main finishing-stage component.
+    assert by_player["QW"].point_stage is None
+    assert by_player["QW"].ranking_points_awarded == 150
+    assert by_player["QW"].race_points_awarded == 150
+
+    assert by_player["LL"].qualification_point_stage == "qualification_final"
+    assert by_player["LL"].qualification_points_awarded == 100
+    assert by_player["LL"].ranking_points_awarded == 500
+    assert by_player["LL"].race_points_awarded == 500
+
+    binding = TournamentRankingBinding(
+        run_id="run",
+        branch_id="branch",
+        edition_id="event",
+        event_id="event",
+        completed_week=result.completed_week,
+        first_publication_week=RankingWeek(season_index=0, week=2),
+        validity_weeks=61,
+        ranking_status="ranked",
+        expected_result_fingerprint=result.fingerprint,
+        expected_award_fingerprint=point_authority.fingerprint,
+    )
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result,
+        canonical_awards=point_authority,
+        adopted_by_command_id="close-q-winner-ll-ranking",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+
+    ranking_players = tuple(
+        OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=player.player_id,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        )
+        for player in result.players
+    )
+    policy = OfficialRankingPolicy(policy_id="policy")
+    with database.begin() as session:
+        OfficialRankingCandidateStore(session).append(
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=result.completed_week,
+                policy=policy,
+                players=ranking_players,
+                results=(),
+            ),
+            bootstrap=True,
+        )
+        OwnedTournamentRankingSourceStore(session).append(source)
+
+    snapshot = RankingWeekCommandRunner(database, awards=None).execute(
+        RankingWeekCommand(
+            command_id="publish-q-winner-ll-ranking",
+            tournaments=(binding,),
+            context=RankingTransitionContext(
+                run_id="run",
+                branch_id="branch",
+                completed_week=result.completed_week,
+                target_week=binding.first_publication_week,
+                policy=policy,
+                players=ranking_players,
+                discipline="none",
+            ),
+        )
+    )
+    published = {row.player_id: row.points for row in snapshot.rows}
+    assert published["QW"] == 150
+    assert published["LL"] == 500
+
+
+@pytest.mark.pr_critical
 def test_canonical_prize_money_authority_awards_actual_finishing_stages():
     result, _, _, _, _ = _authorities()
     event = _event().model_copy(

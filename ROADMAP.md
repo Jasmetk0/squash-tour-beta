@@ -277,9 +277,11 @@ fill for ordinary unseeded withdrawals. Cascade preserves original seed identiti
 moves only the necessary later seed layers, promotes the highest-ranked surviving
 eligible unseeded player into the final seed vacancy and fills that player's old slot
 with the ordinary incoming replacement. Main and Qualification remain independently
-phase-gated, multi-Q identities are preserved, the draw seed stays unchanged, and
-the append-only revision is deterministic Saved Revision state. The slice currently
-fails closed if replacement-backed player-count parity cannot be maintained.
+phase-gated, so one atomic v3 repair may fully redraw one affected component while
+cascading the other; the dedicated repair seed affects only the redrawn component.
+Multi-Q identities are preserved and the append-only revision is deterministic Saved
+Revision state. Pure cascade keeps the existing draw seed. The slice currently fails
+closed if replacement-backed player-count parity cannot be maintained.
 
 The next draw-focused slice is direct frozen physical-slot fill after Draw Freeze,
 including the remaining replacement-exhaustion boundary rather than inventing it in

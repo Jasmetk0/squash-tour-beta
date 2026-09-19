@@ -14,6 +14,11 @@ from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 class TournamentPlayerPointAwardAuthority(FrozenInput):
     player_id: str = Field(min_length=1)
     reached_stage: str = Field(min_length=1)
+    point_stage: str | None = Field(
+        default=None,
+        min_length=1,
+        exclude_if=lambda value: value is None,
+    )
     qualifier: bool = False
     seed_number: int | None = Field(default=None, ge=1)
     ranking_points_awarded: int = Field(ge=0)
@@ -25,9 +30,10 @@ class TournamentPlayerPointAwardAuthority(FrozenInput):
 class TournamentPointAwardAuthority(FrozenInput):
     """Canonical event-level ranking/race point awards for one tournament."""
 
-    schema_version: Literal["tournament_point_award_authority.v1"] = (
-        "tournament_point_award_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_point_award_authority.v1",
+        "tournament_point_award_authority.v2",
+    ] = "tournament_point_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -57,6 +63,16 @@ class TournamentPointAwardAuthority(FrozenInput):
             raise ValueError(
                 "Canonical ranked Point Award authority cannot use unranked distribution"
             )
+        if self.schema_version == "tournament_point_award_authority.v1":
+            if any(award.point_stage is not None for award in self.awards):
+                raise ValueError(
+                    "Historical Point Award v1 cannot carry point-stage override"
+                )
+        elif not any(award.point_stage is not None for award in self.awards):
+            raise ValueError(
+                "Point Award v2 requires at least one point-stage override"
+            )
+
         distribution = dict(self.point_distribution)
         if (
             not self.point_distribution
@@ -67,7 +83,8 @@ class TournamentPointAwardAuthority(FrozenInput):
         ):
             raise ValueError("Tournament Point Award distribution snapshot mismatch")
         for award in self.awards:
-            expected_points = distribution.get(award.reached_stage)
+            effective_point_stage = award.point_stage or award.reached_stage
+            expected_points = distribution.get(effective_point_stage)
             if expected_points is None:
                 raise ValueError(
                     "Tournament Point Award stage is absent from frozen distribution"
@@ -79,21 +96,26 @@ class TournamentPointAwardAuthority(FrozenInput):
                 raise ValueError(
                     "Tournament Point Award amount differs from frozen distribution"
                 )
-            expected_award_fingerprint = _hash(
-                {
-                    "schema_version": "tournament_player_point_award_authority.v1",
-                    "event_id": self.event_id,
-                    "seed": self.seed,
-                    "player_id": award.player_id,
-                    "reached_stage": award.reached_stage,
-                    "qualifier": award.qualifier,
-                    "seed_number": award.seed_number,
-                    "ranking_points_awarded": award.ranking_points_awarded,
-                    "race_points_awarded": award.race_points_awarded,
-                    "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
-                    "source_player_result_fingerprint": award.source_player_result_fingerprint,
-                }
-            )
+            award_fingerprint_payload = {
+                "schema_version": (
+                    "tournament_player_point_award_authority.v2"
+                    if award.point_stage is not None
+                    else "tournament_player_point_award_authority.v1"
+                ),
+                "event_id": self.event_id,
+                "seed": self.seed,
+                "player_id": award.player_id,
+                "reached_stage": award.reached_stage,
+                "qualifier": award.qualifier,
+                "seed_number": award.seed_number,
+                "ranking_points_awarded": award.ranking_points_awarded,
+                "race_points_awarded": award.race_points_awarded,
+                "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
+                "source_player_result_fingerprint": award.source_player_result_fingerprint,
+            }
+            if award.point_stage is not None:
+                award_fingerprint_payload["point_stage"] = award.point_stage
+            expected_award_fingerprint = _hash(award_fingerprint_payload)
             if award.award_fingerprint != expected_award_fingerprint:
                 raise ValueError("Tournament Point Award fingerprint mismatch")
         if self.total_ranking_points != sum(

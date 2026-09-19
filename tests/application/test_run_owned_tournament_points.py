@@ -40,6 +40,7 @@ from beta_engine.domain.tournaments.prize_money_award_authority import (
     build_tournament_prize_money_award_authority,
 )
 from beta_engine.domain.tournaments.result_authority import (
+    TournamentMatchResultAuthority,
     TournamentPlayerResultAuthority,
     TournamentResultAuthority,
     build_tournament_result_authority,
@@ -622,6 +623,248 @@ def test_prize_money_authority_rejects_corrupt_reopen():
         )
 
 
+@pytest.mark.pr_critical
+def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_points():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="B",
+        finalist_player_id="A",
+        qualification_winner_ids=("A",),
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="both",
+                qualifier=True,
+                reached_stage="finalist",
+                final_round_number=2,
+                eliminated_by_player_id="B",
+                last_match_id="final",
+                wins=1,
+                losses=1,
+                byes_received=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="champion",
+                final_round_number=2,
+                last_match_id="final",
+                wins=2,
+                losses=0,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="semifinal",
+                final_round_number=1,
+                eliminated_by_player_id="B",
+                last_match_id="semi",
+                wins=0,
+                losses=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="D",
+                draw_type="qualification",
+                reached_stage="qualification_final",
+                final_round_number=1,
+                eliminated_by_player_id="A",
+                last_match_id="q-final",
+                wins=0,
+                losses=1,
+            ),
+        ),
+        matches=(
+            TournamentMatchResultAuthority(
+                match_id="q-final",
+                draw_type="qualification",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="D",
+                scoreline="3-0",
+                result_fingerprint="0" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="bye",
+                draw_type="main",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                scoreline="BYE",
+                result_fingerprint="1" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="semi",
+                draw_type="main",
+                round_number=1,
+                bracket_position=2,
+                winner_player_id="B",
+                loser_player_id="C",
+                scoreline="3-0",
+                result_fingerprint="2" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="final",
+                draw_type="main",
+                round_number=2,
+                bracket_position=1,
+                winner_player_id="B",
+                loser_player_id="A",
+                scoreline="3-0",
+                result_fingerprint="3" * 64,
+            ),
+        ),
+    )
+    frozen_points = FrozenPointAwardAuthority(
+        ranking_status="ranked",
+        point_distribution={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+            "qualification_final": 100,
+        },
+        point_distribution_source="calendar_event.ranking_points_table",
+    )
+
+    authority = build_tournament_point_award_authority(
+        result=result,
+        point_authority=frozen_points,
+        seed=991,
+    )
+    by_player = {award.player_id: award for award in authority.awards}
+    finalist = by_player["A"]
+
+    assert authority.schema_version == "tournament_point_award_authority.v2"
+    assert finalist.reached_stage == "finalist"
+    assert finalist.point_stage == "semifinal"
+    assert finalist.ranking_points_awarded == 400
+    assert finalist.race_points_awarded == 400
+
+    prize = build_tournament_prize_money_award_authority(
+        result=result,
+        event=_event().model_copy(
+            update={
+                "qualification_draw_size": 2,
+                "qualifier_spots": 1,
+                "prize_money_currency": "EUR",
+                "prize_money_table": {
+                    "qualification_final": 1000,
+                    "semifinal": 3000,
+                    "finalist": 6000,
+                    "champion": 10000,
+                },
+            }
+        ),
+    )
+    prize_by_player = {award.player_id: award for award in prize.awards}
+    assert prize_by_player["A"].reached_stage == "finalist"
+    assert prize_by_player["A"].amount == 6000
+
+
+@pytest.mark.pr_critical
+def test_walkover_after_bye_unlocks_actual_finishing_stage_points():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="C",
+        finalist_player_id="A",
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="finalist",
+                final_round_number=3,
+                eliminated_by_player_id="C",
+                last_match_id="final",
+                wins=0,
+                losses=1,
+                byes_received=1,
+                walkovers_received=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="champion",
+                final_round_number=3,
+                last_match_id="final",
+                wins=1,
+                losses=0,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="D",
+                draw_type="main",
+                reached_stage="semifinal",
+                final_round_number=2,
+                eliminated_by_player_id="A",
+                last_match_id="walkover",
+                wins=0,
+                losses=0,
+                retired_or_walkover_loss=True,
+            ),
+        ),
+        matches=(
+            TournamentMatchResultAuthority(
+                match_id="bye",
+                draw_type="main",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                scoreline="BYE",
+                result_fingerprint="4" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="walkover",
+                draw_type="main",
+                round_number=2,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="D",
+                scoreline="W/O",
+                result_fingerprint="5" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="final",
+                draw_type="main",
+                round_number=3,
+                bracket_position=1,
+                winner_player_id="C",
+                loser_player_id="A",
+                scoreline="3-0",
+                result_fingerprint="6" * 64,
+            ),
+        ),
+    )
+    authority = build_tournament_point_award_authority(
+        result=result,
+        point_authority=FrozenPointAwardAuthority(
+            ranking_status="ranked",
+            point_distribution={
+                "champion": 1000,
+                "finalist": 650,
+                "semifinal": 400,
+                "quarterfinal": 250,
+            },
+            point_distribution_source="calendar_event.ranking_points_table",
+        ),
+        seed=992,
+    )
+    finalist = next(award for award in authority.awards if award.player_id == "A")
+
+    assert authority.schema_version == "tournament_point_award_authority.v1"
+    assert finalist.reached_stage == "finalist"
+    assert finalist.point_stage is None
+    assert finalist.ranking_points_awarded == 650
+
+
 def test_canonical_point_authority_maps_frozen_distribution_without_legacy_service():
     result_authority, _, point_authority, _, _ = _authorities()
 
@@ -636,7 +879,9 @@ def test_canonical_point_authority_maps_frozen_distribution_without_legacy_servi
     assert len(semifinalists) == 2
     assert all(award.ranking_points_awarded == 400 for award in semifinalists)
     assert point_authority.total_ranking_points == 2450
+    assert point_authority.schema_version == "tournament_point_award_authority.v1"
     assert point_authority.total_race_points == 2450
+    assert "point_stage" not in point_authority.model_dump_json()
 
 
 def test_canonical_point_authority_rejects_corrupt_distribution_on_reopen():

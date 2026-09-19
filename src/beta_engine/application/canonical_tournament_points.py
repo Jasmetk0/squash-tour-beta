@@ -26,6 +26,7 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
     players = {player.player_id: player for player in result.players}
     competitive_wins = {player_id: 0 for player_id in players}
     competitive_losses = {player_id: 0 for player_id in players}
+    byes_received = {player_id: 0 for player_id in players}
     walkovers_received = {player_id: 0 for player_id in players}
     walkover_losses = {player_id: False for player_id in players}
 
@@ -35,6 +36,7 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
         if match.scoreline == "BYE":
             if match.loser_player_id is not None:
                 raise ValueError("Canonical BYE point source cannot contain a loser")
+            byes_received[match.winner_player_id] += 1
             continue
         if match.loser_player_id is None or match.loser_player_id not in players:
             raise ValueError("Tournament point source contains invalid match loser")
@@ -49,12 +51,92 @@ def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
         if (
             player.wins != competitive_wins[player_id]
             or player.losses != competitive_losses[player_id]
+            or player.byes_received != byes_received[player_id]
             or player.walkovers_received != walkovers_received[player_id]
             or player.retired_or_walkover_loss != walkover_losses[player_id]
         ):
             raise ValueError(
                 "Tournament point source match counters differ from canonical result"
             )
+
+
+def _first_round_point_stage(
+    result: TournamentResultAuthority,
+    *,
+    draw_type: str,
+) -> str:
+    rounds = [
+        match.round_number
+        for match in result.matches
+        if match.draw_type == draw_type
+    ]
+    if not rounds:
+        raise ValueError("Tournament point source has no matches for player draw")
+    distance = max(rounds) - 1
+    if draw_type == "qualification":
+        if distance == 0:
+            return "qualification_final"
+        if distance == 1:
+            return "qualification_semifinal"
+        return "qualification_round"
+    mapping = {
+        0: "finalist",
+        1: "semifinal",
+        2: "quarterfinal",
+        3: "round_of_16",
+        4: "round_of_32",
+        5: "round_of_64",
+        6: "round_of_128",
+    }
+    return mapping.get(distance, "main_draw_participant")
+
+
+def _point_stage(
+    result: TournamentResultAuthority,
+    player,
+) -> str:
+    """Apply Master §15.4 first-real-match ranking unlock semantics per draw."""
+
+    draw_type = (
+        "qualification"
+        if player.reached_stage.startswith("qualification_")
+        else "main"
+    )
+    matches = [
+        match
+        for match in result.matches
+        if match.draw_type == draw_type
+        and player.player_id
+        in {match.winner_player_id, match.loser_player_id}
+    ]
+    has_bye = any(
+        match.scoreline == "BYE"
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_walkover_advance = any(
+        match.scoreline == "W/O"
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_competitive_win = any(
+        match.scoreline not in {"BYE", "W/O"}
+        and match.winner_player_id == player.player_id
+        for match in matches
+    )
+    has_competitive_loss = any(
+        match.scoreline not in {"BYE", "W/O"}
+        and match.loser_player_id == player.player_id
+        for match in matches
+    )
+    if (
+        not has_bye
+        or not has_competitive_loss
+        or has_competitive_win
+        or has_walkover_advance
+    ):
+        return player.reached_stage
+    return _first_round_point_stage(result, draw_type=draw_type)
 
 
 def build_tournament_point_award_authority(
@@ -82,31 +164,41 @@ def build_tournament_point_award_authority(
     distribution_fp = _hash(distribution)
     awards: list[TournamentPlayerPointAwardAuthority] = []
     for player in sorted(result.players, key=lambda item: item.player_id):
-        if player.reached_stage not in distribution:
+        point_stage = _point_stage(result, player)
+        if point_stage not in distribution:
             raise ValueError(
-                "Canonical tournament reached stage has no frozen point mapping"
+                "Canonical tournament point stage has no frozen point mapping"
             )
-        points = max(0, int(distribution[player.reached_stage]))
+        points = max(0, int(distribution[point_stage]))
         player_fp = _hash(player.model_dump(mode="json"))
-        award_fp = _hash(
-            {
-                "schema_version": "tournament_player_point_award_authority.v1",
-                "event_id": result.event_id,
-                "seed": seed,
-                "player_id": player.player_id,
-                "reached_stage": player.reached_stage,
-                "qualifier": player.qualifier,
-                "seed_number": player.seed_number,
-                "ranking_points_awarded": points,
-                "race_points_awarded": points,
-                "source_tournament_result_fingerprint": result.fingerprint,
-                "source_player_result_fingerprint": player_fp,
-            }
+        stored_point_stage = (
+            point_stage if point_stage != player.reached_stage else None
         )
+        award_fp_payload = {
+            "schema_version": (
+                "tournament_player_point_award_authority.v2"
+                if stored_point_stage is not None
+                else "tournament_player_point_award_authority.v1"
+            ),
+            "event_id": result.event_id,
+            "seed": seed,
+            "player_id": player.player_id,
+            "reached_stage": player.reached_stage,
+            "qualifier": player.qualifier,
+            "seed_number": player.seed_number,
+            "ranking_points_awarded": points,
+            "race_points_awarded": points,
+            "source_tournament_result_fingerprint": result.fingerprint,
+            "source_player_result_fingerprint": player_fp,
+        }
+        if stored_point_stage is not None:
+            award_fp_payload["point_stage"] = stored_point_stage
+        award_fp = _hash(award_fp_payload)
         awards.append(
             TournamentPlayerPointAwardAuthority(
                 player_id=player.player_id,
                 reached_stage=player.reached_stage,
+                point_stage=stored_point_stage,
                 qualifier=player.qualifier,
                 seed_number=player.seed_number,
                 ranking_points_awarded=points,
@@ -116,7 +208,13 @@ def build_tournament_point_award_authority(
             )
         )
 
+    schema_version = (
+        "tournament_point_award_authority.v2"
+        if any(award.point_stage is not None for award in awards)
+        else "tournament_point_award_authority.v1"
+    )
     return TournamentPointAwardAuthority(
+        schema_version=schema_version,
         run_id=result.run_id,
         branch_id=result.branch_id,
         event_id=result.event_id,

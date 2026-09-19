@@ -79,6 +79,13 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionConflict,
+    TournamentDrawRevisionStore,
+)
+from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityStore,
+)
 
 WEEK = RankingWeek(season_index=0, week=1)
 
@@ -2420,3 +2427,100 @@ def test_week_transition_development_reads_terminal_post_match_form(tmp_path):
             regression = 1 if difference > 0 else -1
         expected_regressed = terminal_players[pid].current_form + regression
         assert target_players[pid].current_form == expected_regressed
+
+
+def test_player_replacement_cutoff_uses_committed_real_match_receipts(tmp_path):
+    session = session_at(tmp_path / "replacement-cutoff.sqlite")
+    executor = AuthoritativeSlotMatchExecutor(session)
+    cutoff_store = TournamentPlayerReplacementCutoffAuthorityStore(session)
+
+    before = cutoff_store.resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id="a",
+    )
+    assert before.status == "replacement_open"
+    assert before.played_matches == ()
+
+    plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-1",
+        ordinal=1,
+        group_ids=("match-1",),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id="match-1",
+                event_id="event",
+                match_id="match-1",
+                direct_player_ids=("a", "b"),
+            ),
+        ),
+    )
+    played = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-1",
+        group_id="match-1",
+        event_id="event",
+        match_id="match-1",
+        player_a_id="a",
+        player_b_id="b",
+        seed=123,
+        expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+    )
+
+    winner = played.result.winner_player_id
+    loser = played.result.loser_player_id
+    winner_cutoff = cutoff_store.resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id=winner,
+    )
+    loser_cutoff = cutoff_store.resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id=loser,
+    )
+    untouched = cutoff_store.resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id="c",
+    )
+
+    assert winner_cutoff.status == "walkover_required"
+    assert winner_cutoff.first_real_match is not None
+    assert winner_cutoff.first_real_match.match_id == "match-1"
+    assert winner_cutoff.first_real_match.result_fingerprint == (
+        played.result_fingerprint
+    )
+    assert loser_cutoff.status == "already_eliminated"
+    assert untouched.status == "replacement_open"
+
+    draw_revision_store = TournamentDrawRevisionStore(session)
+    with pytest.raises(
+        TournamentDrawRevisionConflict,
+        match="W/O authority is required",
+    ):
+        draw_revision_store._replacement_cutoff_authorities(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            withdrawn_player_ids=(winner,),
+        )
+    with pytest.raises(
+        TournamentDrawRevisionConflict,
+        match="already eliminated",
+    ):
+        draw_revision_store._replacement_cutoff_authorities(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            withdrawn_player_ids=(loser,),
+        )

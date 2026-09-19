@@ -283,9 +283,18 @@ persisted Ranking Transition Authority and Owned Tournament bindings. Admin revi
 that frozen request, confirms it through the existing request/ranking fingerprint
 guards, then saves the transitioned ranking/world draft through the ranking Save CAS.
 This removes manual Week Transition command assembly from the UI while preserving
-exact retry of the reviewed command. **Ranking Transition Authority creation remains
-the prerequisite gap**; this slice deliberately does not infer a later-week roster or
-policy where the existing product contract still requires explicit authority.
+exact retry of the reviewed command.
+
+The ordinary within-season Ranking Transition Authority prerequisite is now derived
+canonically as well. When it is the sole Week Transition blocker, Admin supplies only
+an audit label/reason; the backend freezes the current Saved Revision head,
+target-week roster produced by the canonical lifecycle transition and the predecessor
+Official Ranking policy. Preview is read-only, confirm is bound to the reviewed
+authority fingerprint, and the authority is then Saved through the ranking revision
+CAS before Week Transition becomes ready. The manual authority endpoint remains a
+compatibility/advanced boundary, not the default canonical UI path. Week 61 continues
+to require Season Transition, and unbridged target-week prospects continue to block
+derivation rather than being silently omitted.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

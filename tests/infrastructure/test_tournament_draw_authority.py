@@ -24,6 +24,10 @@ from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayedMatchCutoffEvidence,
+    TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -59,6 +63,9 @@ from beta_engine.infrastructure.db.tournament_draw_input_authority import (
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
@@ -3206,3 +3213,219 @@ def test_seeded_q_rwc_middle_phase_runs_seed_cascade_without_seed_inheritance(da
             branch_id="branch",
             event_id="event",
         ) == (revision,)
+
+
+def _install_ll_vacancy_case(session):
+    draw_input = install_draw_input(session)
+    initial = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-initial-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="ll-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+    assert len(draw_input.qualification_player_ids) == 2
+    return initial, draw_input
+
+
+def _mock_cutoff_resolution(monkeypatch, *, q_player_ids, qualification_started):
+    q_player_ids = tuple(q_player_ids)
+    q_set = set(q_player_ids)
+
+    def resolve_many(
+        self,
+        *,
+        run_id,
+        branch_id,
+        event_id,
+        player_ids,
+    ):
+        out = []
+        for player_id in sorted(set(player_ids)):
+            played = ()
+            if (
+                qualification_started
+                and player_id in q_set
+                and player_id == q_player_ids[0]
+            ):
+                played = (
+                    TournamentPlayedMatchCutoffEvidence(
+                        match_id="q-start-match",
+                        week_ordinal=0,
+                        slot_id="q-start-slot",
+                        slot_ordinal=1,
+                        group_id="q-start-group",
+                        result_fingerprint="a" * 64,
+                        opponent_player_id=q_player_ids[1],
+                        outcome="loss",
+                    ),
+                )
+            out.append(
+                TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                    player_id=player_id,
+                    played_matches=played,
+                )
+            )
+        return tuple(out)
+
+    monkeypatch.setattr(
+        TournamentPlayerReplacementCutoffAuthorityStore,
+        "resolve_many",
+        resolve_many,
+    )
+
+
+@pytest.mark.pr_critical
+def test_frozen_main_vacancies_create_ll1_then_ll2_by_vacancy_chronology(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        initial, draw_input = _install_ll_vacancy_case(session)
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+        original_c = next(
+            slot for slot in initial.main.slots if slot.player_id == "C"
+        )
+        original_d = next(
+            slot for slot in initial.main.slots if slot.player_id == "D"
+        )
+        store = TournamentDrawRevisionStore(session)
+
+        saved_before = capture(session)
+        first = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="create-ll1",
+            withdrawn_player_id="C",
+            main_process_window_ordinal=3,
+        )
+        assert first.schema_version == "tournament_draw_revision.v9"
+        assert first.repair_kind == "lucky_loser_vacancy"
+        assert first.main_repair_action == "frozen_lucky_loser_slot"
+        assert first.lucky_loser_vacancy_authority is not None
+        assert first.lucky_loser_vacancy_authority.lucky_loser_ordinal == 1
+        assert first.lucky_loser_vacancy_authority.placeholder_id == "LL1"
+        assert (
+            first.lucky_loser_vacancy_authority
+            .qualification_start_authority
+            .played_matches[0]
+            .match_id
+            == "q-start-match"
+        )
+        ll1 = first.successor_draw.main.slots[original_c.slot_index - 1]
+        assert ll1.entrant_kind == "lucky_loser_placeholder"
+        assert ll1.placeholder_id == "LL1"
+        assert ll1.player_id is None
+        assert ll1.seed_number is None
+        assert first.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v6"
+        )
+        assert first.successor_draw_input.lucky_loser_placeholder_ids == ("LL1",)
+        assert "C" not in first.successor_draw_input.direct_main_player_ids
+
+        second = store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="create-ll2",
+            withdrawn_player_id="D",
+            main_process_window_ordinal=3,
+        )
+        assert second.lucky_loser_vacancy_authority is not None
+        assert second.lucky_loser_vacancy_authority.lucky_loser_ordinal == 2
+        assert second.lucky_loser_vacancy_authority.placeholder_id == "LL2"
+        ll2 = second.successor_draw.main.slots[original_d.slot_index - 1]
+        assert ll2.entrant_kind == "lucky_loser_placeholder"
+        assert ll2.placeholder_id == "LL2"
+        assert second.successor_draw_input.lucky_loser_placeholder_ids == (
+            "LL1",
+            "LL2",
+        )
+        assert tuple(
+            placeholder_id
+            for placeholder_id, _ in second.successor_draw.main.lucky_loser_placeholder_slots
+        ) == ("LL1", "LL2")
+
+        # LL numbering follows vacancy chronology, not physical top-to-bottom order.
+        assert {
+            "LL1": original_c.slot_index,
+            "LL2": original_d.slot_index,
+        } == dict(second.successor_draw.main.lucky_loser_placeholder_slots)
+
+        assert store.draw_frozen_lucky_loser_vacancy(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="create-ll1",
+            withdrawn_player_id="C",
+            main_process_window_ordinal=3,
+        ) == first
+
+        saved_after = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == ()
+
+        recaptured = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (first, second)
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_vacancy_does_not_exist_before_qualification_starts(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        _, draw_input = _install_ll_vacancy_case(session)
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=False,
+        )
+        with pytest.raises(
+            TournamentDrawRevisionConflict,
+            match="does not exist before Qualification starts",
+        ):
+            TournamentDrawRevisionStore(session).draw_frozen_lucky_loser_vacancy(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="too-early-ll",
+                withdrawn_player_id="C",
+                main_process_window_ordinal=3,
+            )

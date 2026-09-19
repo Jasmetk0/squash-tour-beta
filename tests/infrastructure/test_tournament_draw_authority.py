@@ -4873,7 +4873,7 @@ def test_frozen_ordinary_fallback_late_bye_reprojects_without_dangling_feeder(
 
         assert revision.schema_version == "tournament_draw_revision.v11"
         assert revision.repair_kind == "frozen_ordinary_fallback"
-        assert revision.main_repair_action == "frozen_late_bye"
+        assert revision.main_repair_action == "frozen_source_bye"
 
         late_bye_slot = revision.successor_draw.main.slots[
             original_slot.slot_index - 1

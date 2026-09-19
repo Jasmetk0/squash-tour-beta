@@ -111,6 +111,7 @@ import type {
   AuthoritativeWeekScheduleInspection,
   AuthoritativeWeekScheduleProposal,
   AdoptAuthoritativeWeekScheduleProposalPayload,
+  AuthoritativeWeekScheduleAdoptionResult,
   AuthoritativeSimulationCommandPayload,
   AuthoritativeSimulationSavePreview,
   AuthoritativeSimulationSavePayload,
@@ -1065,12 +1066,13 @@ export async function adoptAuthoritativeWeekScheduleProposal(
   runId: string,
   branchId: string,
   payload: AdoptAuthoritativeWeekScheduleProposalPayload
-): Promise<AuthoritativeWeekScheduleInspection> {
-  const data = await request<AuthoritativeWeekScheduleInspection>(
+): Promise<AuthoritativeWeekScheduleAdoptionResult> {
+  const data = await request<AuthoritativeWeekScheduleAdoptionResult>(
     authoritativeSimulationRoot(runId, branchId) + '/week-schedule/adopt-proposal',
     { method: 'POST', body: JSON.stringify(payload) }
   )
-  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  const scope = 'run_id' in data ? data : data.schedule
+  verifyAuthoritativeSimulationScope(runId, branchId, scope)
   return data
 }
 

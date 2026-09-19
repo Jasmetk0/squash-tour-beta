@@ -55,6 +55,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v5",
         "tournament_draw_revision.v6",
         "tournament_draw_revision.v7",
+        "tournament_draw_revision.v8",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -133,6 +134,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v5",
             "tournament_draw_revision.v6",
             "tournament_draw_revision.v7",
+            "tournament_draw_revision.v8",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -268,17 +270,36 @@ class TournamentDrawRevision(FrozenInput):
             if authority is None:
                 raise ValueError("Frozen WC repair lacks dedicated authority")
             if authority.replacement_source == "qualification":
-                if self.schema_version != "tournament_draw_revision.v7":
-                    raise ValueError(
-                        "Frozen cross-draw RWC repair requires revision schema v7"
-                    )
                 if self.affected_draw_types != ("main", "qualification"):
                     raise ValueError(
-                        "Frozen cross-draw RWC repair must affect Main and Qualification"
+                        "Cross-draw RWC repair must affect Main and Qualification"
                     )
-                if self.qualification_repair_action != "frozen_rwc_q_backfill":
+                if self.schema_version == "tournament_draw_revision.v7":
+                    if self.qualification_repair_action != "frozen_rwc_q_backfill":
+                        raise ValueError(
+                            "Frozen cross-draw RWC repair requires exact Q backfill action"
+                        )
+                    if self.repair_draw_seed is not None:
+                        raise ValueError(
+                            "Frozen Q backfill cannot introduce a redraw seed"
+                        )
+                elif self.schema_version == "tournament_draw_revision.v8":
+                    if self.qualification_repair_action not in {
+                        "full_redraw",
+                        "direct_slot_fill",
+                    }:
+                        raise ValueError(
+                            "Pre-freeze Q RWC repair requires redraw or direct fill"
+                        )
+                    if (
+                        self.qualification_repair_action == "full_redraw"
+                    ) != (self.repair_draw_seed is not None):
+                        raise ValueError(
+                            "Q full redraw requires exactly one repair draw seed"
+                        )
+                else:
                     raise ValueError(
-                        "Frozen cross-draw RWC repair requires exact Q backfill action"
+                        "Cross-draw RWC repair requires revision schema v7 or v8"
                     )
             else:
                 if self.schema_version != "tournament_draw_revision.v6":
@@ -293,10 +314,12 @@ class TournamentDrawRevision(FrozenInput):
                     raise ValueError(
                         "Frozen external WC repair cannot mutate Qualification"
                     )
+                if self.repair_draw_seed is not None:
+                    raise ValueError(
+                        "External frozen WC repair cannot introduce a draw seed"
+                    )
             if self.main_repair_action != "frozen_wild_card_fill":
                 raise ValueError("Frozen WC repair requires WC physical-slot action")
-            if self.repair_draw_seed is not None:
-                raise ValueError("Frozen WC repair cannot introduce a draw seed")
             if (
                 authority.run_id,
                 authority.branch_id,
@@ -820,6 +843,7 @@ class TournamentDrawRevisionBuilder:
         process_authority: TournamentDrawProcessAuthority,
         main_process_window_ordinal: int,
         qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
         sequence: int,
         command_id: str,
         wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority,
@@ -829,18 +853,36 @@ class TournamentDrawRevisionBuilder:
             process_window_ordinal=main_process_window_ordinal,
         ) != "draw_frozen":
             raise ValueError("Dedicated RWC physical-slot repair requires Draw Freeze")
+        qualification_phase = None
         if wild_card_repair_authority.replacement_source == "qualification":
             if qualification_process_window_ordinal is None:
                 raise ValueError(
                     "Qualification RWC promotion requires Q process-window evidence"
                 )
-            if process_authority.phase_for(
+            qualification_phase = process_authority.phase_for(
                 draw_type="qualification",
                 process_window_ordinal=qualification_process_window_ordinal,
-            ) != "draw_frozen":
+            )
+            if (
+                qualification_phase != "draw_frozen"
+                and wild_card_repair_authority.vacated_qualification_seed_number
+                is not None
+            ):
                 raise ValueError(
-                    "Qualification RWC exact-slot backfill requires Q Draw Freeze"
+                    "Seeded Qualification RWC pre-freeze repair requires "
+                    "the later seed-aware Q slice"
                 )
+            if qualification_phase == "full_redraw":
+                if repair_draw_seed is None:
+                    raise ValueError(
+                        "Qualification RWC full redraw requires repair draw seed"
+                    )
+            elif repair_draw_seed is not None:
+                raise ValueError(
+                    "Qualification RWC repair outside full redraw cannot use draw seed"
+                )
+        elif repair_draw_seed is not None:
+            raise ValueError("External RWC repair cannot introduce draw seed")
         if (
             wild_card_repair_authority.predecessor_draw_fingerprint
             != predecessor.fingerprint
@@ -917,82 +959,121 @@ class TournamentDrawRevisionBuilder:
         )
         qualification = predecessor.qualification
         qualification_sections = predecessor.qualification_sections
+        qualification_action = None
         cross_draw = wild_card_repair_authority.replacement_source == "qualification"
         if cross_draw:
-            q_slot_index = (
-                wild_card_repair_authority.qualification_physical_slot_index
-            )
-            q_backfill = wild_card_repair_authority.qualification_backfill_player_id
-            if q_slot_index is None or q_backfill is None:
-                raise ValueError("Qualification RWC repair lacks Q slot/backfill evidence")
-            rebuilt = []
-            matched = 0
-            for bracket in predecessor.qualification_brackets:
-                if bracket.section_id != wild_card_repair_authority.qualification_section_id:
-                    rebuilt.append(bracket)
-                    continue
-                if q_slot_index > bracket.bracket_size:
-                    raise ValueError("Qualification RWC physical slot is outside Q bracket")
-                q_slots = list(bracket.slots)
-                q_template = q_slots[q_slot_index - 1]
-                if (
-                    q_template.player_id
-                    != wild_card_repair_authority.replacement_player_id
-                ):
+            if qualification_phase == "full_redraw":
+                regenerated = TournamentDrawAuthorityBuilder.build(
+                    draw_input=successor_draw_input,
+                    command_id=command_id,
+                    algorithm_version=predecessor.algorithm_version,
+                    draw_seed_override=repair_draw_seed,
+                )
+                qualification = regenerated.qualification
+                qualification_sections = regenerated.qualification_sections
+                qualification_action = "full_redraw"
+            elif qualification_phase == "seed_cascade":
+                repaired_q, qualification_action = _repair_bracket_family(
+                    brackets=predecessor.qualification_brackets,
+                    target_player_ids=successor_draw_input.qualification_player_ids,
+                    draw_type="qualification",
+                    qualification_section_count=len(
+                        predecessor.qualification_brackets
+                    ),
+                )
+                if qualification_action != "direct_slot_fill":
                     raise ValueError(
-                        "Qualification RWC physical slot no longer matches authority"
+                        "Unseeded pre-freeze Q RWC move unexpectedly requires seed cascade"
                     )
-                if (
-                    q_template.seed_number
-                    != wild_card_repair_authority.vacated_qualification_seed_number
-                ):
-                    raise ValueError(
-                        "Qualification RWC seed-vacancy evidence no longer matches slot"
-                    )
-                q_slots[q_slot_index - 1] = TournamentDrawSlot(
-                    slot_index=q_template.slot_index,
-                    idealized_slot_number=q_template.idealized_slot_number,
-                    entrant_kind="player",
-                    player_id=q_backfill,
-                )
-                rebuilt.append(
-                    TournamentDrawBracket(
-                        draw_type=bracket.draw_type,
-                        section_id=bracket.section_id,
-                        bracket_size=bracket.bracket_size,
-                        seed_positions=tuple(
-                            sorted(
-                                (item.seed_number, item.slot_index)
-                                for item in q_slots
-                                if item.seed_number is not None
-                            )
-                        ),
-                        slots=tuple(q_slots),
-                        nodes=bracket.nodes,
-                        bye_slot_indexes=tuple(
-                            item.slot_index
-                            for item in q_slots
-                            if item.entrant_kind == "bye"
-                        ),
-                        qualifier_placeholder_slots=tuple(
-                            (item.placeholder_id, item.slot_index)
-                            for item in q_slots
-                            if item.entrant_kind == "qualifier_placeholder"
-                            and item.placeholder_id is not None
-                        ),
-                    )
-                )
-                matched += 1
-            if matched != 1:
-                raise ValueError(
-                    "Qualification RWC repair did not resolve exactly one Q bracket"
-                )
-            if predecessor.qualification_sections:
-                qualification = None
-                qualification_sections = tuple(rebuilt)
+                if predecessor.qualification_sections:
+                    qualification = None
+                    qualification_sections = repaired_q
+                else:
+                    qualification = repaired_q[0]
+                    qualification_sections = ()
             else:
-                qualification = rebuilt[0]
-                qualification_sections = ()
+                q_slot_index = (
+                    wild_card_repair_authority.qualification_physical_slot_index
+                )
+                q_backfill = wild_card_repair_authority.qualification_backfill_player_id
+                if q_slot_index is None or q_backfill is None:
+                    raise ValueError(
+                        "Qualification RWC repair lacks Q slot/backfill evidence"
+                    )
+                rebuilt = []
+                matched = 0
+                for bracket in predecessor.qualification_brackets:
+                    if (
+                        bracket.section_id
+                        != wild_card_repair_authority.qualification_section_id
+                    ):
+                        rebuilt.append(bracket)
+                        continue
+                    if q_slot_index > bracket.bracket_size:
+                        raise ValueError(
+                            "Qualification RWC physical slot is outside Q bracket"
+                        )
+                    q_slots = list(bracket.slots)
+                    q_template = q_slots[q_slot_index - 1]
+                    if (
+                        q_template.player_id
+                        != wild_card_repair_authority.replacement_player_id
+                    ):
+                        raise ValueError(
+                            "Qualification RWC physical slot no longer matches authority"
+                        )
+                    if (
+                        q_template.seed_number
+                        != wild_card_repair_authority.vacated_qualification_seed_number
+                    ):
+                        raise ValueError(
+                            "Qualification RWC seed-vacancy evidence no longer matches slot"
+                        )
+                    q_slots[q_slot_index - 1] = TournamentDrawSlot(
+                        slot_index=q_template.slot_index,
+                        idealized_slot_number=q_template.idealized_slot_number,
+                        entrant_kind="player",
+                        player_id=q_backfill,
+                    )
+                    rebuilt.append(
+                        TournamentDrawBracket(
+                            draw_type=bracket.draw_type,
+                            section_id=bracket.section_id,
+                            bracket_size=bracket.bracket_size,
+                            seed_positions=tuple(
+                                sorted(
+                                    (item.seed_number, item.slot_index)
+                                    for item in q_slots
+                                    if item.seed_number is not None
+                                )
+                            ),
+                            slots=tuple(q_slots),
+                            nodes=bracket.nodes,
+                            bye_slot_indexes=tuple(
+                                item.slot_index
+                                for item in q_slots
+                                if item.entrant_kind == "bye"
+                            ),
+                            qualifier_placeholder_slots=tuple(
+                                (item.placeholder_id, item.slot_index)
+                                for item in q_slots
+                                if item.entrant_kind == "qualifier_placeholder"
+                                and item.placeholder_id is not None
+                            ),
+                        )
+                    )
+                    matched += 1
+                if matched != 1:
+                    raise ValueError(
+                        "Qualification RWC repair did not resolve exactly one Q bracket"
+                    )
+                if predecessor.qualification_sections:
+                    qualification = None
+                    qualification_sections = tuple(rebuilt)
+                else:
+                    qualification = rebuilt[0]
+                    qualification_sections = ()
+                qualification_action = "frozen_rwc_q_backfill"
 
         successor = TournamentDrawAuthority(
             schema_version=predecessor.schema_version,
@@ -1008,9 +1089,13 @@ class TournamentDrawRevisionBuilder:
         )
         return TournamentDrawRevision(
             schema_version=(
-                "tournament_draw_revision.v7"
-                if cross_draw
-                else "tournament_draw_revision.v6"
+                "tournament_draw_revision.v8"
+                if cross_draw and qualification_phase != "draw_frozen"
+                else (
+                    "tournament_draw_revision.v7"
+                    if cross_draw
+                    else "tournament_draw_revision.v6"
+                )
             ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
@@ -1025,10 +1110,9 @@ class TournamentDrawRevisionBuilder:
             qualification_process_window_ordinal=(
                 qualification_process_window_ordinal if cross_draw else None
             ),
+            repair_draw_seed=repair_draw_seed,
             main_repair_action="frozen_wild_card_fill",
-            qualification_repair_action=(
-                "frozen_rwc_q_backfill" if cross_draw else None
-            ),
+            qualification_repair_action=qualification_action,
             withdrawn_player_ids=(
                 wild_card_repair_authority.withdrawn_player_id,
             ),

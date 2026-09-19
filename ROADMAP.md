@@ -345,8 +345,17 @@ physical slot while recording the former seed number as an explicit frozen vacan
 separates the historical configured seed count from currently active seeded players.
 The draw's `seed_positions` therefore contains only still-active seeds.
 
-The WC workflow still fails closed for non-frozen Qualification repair phases and
-RWC exhaustion. Those need the remaining phase-aware WC fallback slices rather than
-silently skipping priority. Lucky Loser authority remains the next major Main Draw
-replacement workflow after those bounded WC gaps, followed by group Qualification.
-Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.
+Phase-aware Qualification repair is now canonical for **unseeded Q-RWC promotion**
+while Main is already frozen. If Q is still before its Redraw Cutoff, the entire
+Qualification draw is regenerated with an explicit repair draw seed. Between the Q
+Redraw Cutoff and Q Draw Freeze, removing an unseeded RWC performs a direct fill of
+that exact Q physical slot; no seed cascade is triggered. After Q Freeze, the
+existing exact-slot frozen backfill remains authoritative. Draw revision v8 records
+the mixed Main-frozen/Q-pre-freeze transaction and replay uses the same process
+window and redraw seed.
+
+The WC workflow still fails closed for **seeded Q-RWC before Q Freeze** and for RWC
+exhaustion. Those need the remaining seed-aware/fallback slices rather than silently
+skipping priority. Lucky Loser authority remains the next major Main Draw replacement
+workflow after those bounded WC gaps, followed by group Qualification. Legacy
+simulation-run UI/endpoint retirement remains separate Gate 3 work.

@@ -235,6 +235,7 @@ class TournamentDrawRevisionStore:
                         qualification_process_window_ordinal=(
                             revision.qualification_process_window_ordinal
                         ),
+                        repair_draw_seed=revision.repair_draw_seed,
                         sequence=revision.sequence,
                         command_id=revision.command_id,
                         wild_card_repair_authority=rebuilt_wc,
@@ -775,6 +776,7 @@ class TournamentDrawRevisionStore:
         withdrawn_player_id: str,
         main_process_window_ordinal: int,
         qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
         unavailable_reserve_player_ids: tuple[str, ...] = (),
     ) -> TournamentDrawRevision:
         draw_store = TournamentDrawAuthorityStore(self.session)
@@ -812,6 +814,7 @@ class TournamentDrawRevisionStore:
                 != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
                 or authority is None
                 or authority.withdrawn_player_id != withdrawn_player_id
                 or authority.unavailable_player_ids != expected_unavailable
@@ -889,6 +892,43 @@ class TournamentDrawRevisionStore:
         except ValueError as exc:
             raise TournamentDrawRevisionConflict(str(exc)) from exc
 
+        qualification_phase = None
+        if wc_repair.replacement_source == "qualification":
+            if qualification_process_window_ordinal is None:
+                raise TournamentDrawRevisionConflict(
+                    "Qualification RWC promotion requires Q process-window evidence"
+                )
+            qualification_phase = process.phase_for(
+                draw_type="qualification",
+                process_window_ordinal=qualification_process_window_ordinal,
+            )
+            if (
+                qualification_phase != "draw_frozen"
+                and wc_repair.vacated_qualification_seed_number is not None
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Seeded Qualification RWC pre-freeze repair requires "
+                    "the later seed-aware Q slice"
+                )
+            if qualification_phase == "full_redraw":
+                if repair_draw_seed is None:
+                    raise TournamentDrawRevisionConflict(
+                        "Qualification RWC full redraw requires repair draw seed"
+                    )
+            elif repair_draw_seed is not None:
+                raise TournamentDrawRevisionConflict(
+                    "Qualification RWC repair outside full redraw cannot use draw seed"
+                )
+        else:
+            if qualification_process_window_ordinal is not None:
+                raise TournamentDrawRevisionConflict(
+                    "External RWC repair cannot carry Q process-window evidence"
+                )
+            if repair_draw_seed is not None:
+                raise TournamentDrawRevisionConflict(
+                    "External RWC repair cannot introduce draw seed"
+                )
+
         successor_input = (
             TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
                 previous=previous_input,
@@ -922,6 +962,7 @@ class TournamentDrawRevisionStore:
             qualification_process_window_ordinal=(
                 qualification_process_window_ordinal
             ),
+            repair_draw_seed=repair_draw_seed,
             sequence=sequence,
             command_id=command_id,
             wild_card_repair_authority=wc_repair,
@@ -934,6 +975,7 @@ class TournamentDrawRevisionStore:
             "qualification_process_window_ordinal": (
                 qualification_process_window_ordinal
             ),
+            "repair_draw_seed": repair_draw_seed,
             "unavailable_reserve_player_ids": list(unavailable),
             "wild_card_repair_authority_fingerprint": wc_repair.fingerprint,
         }

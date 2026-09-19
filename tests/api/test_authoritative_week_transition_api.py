@@ -224,12 +224,11 @@ def test_server_derived_preview_freezes_current_authoritative_transition_request
         )
         assert status == 200, preview
         command = preview["command"]
-        assert command == manual | {"command_id": "derived-transition"}
-        assert preview["request_fingerprint"] == (
-            AuthoritativeWeekTransitionCommand.model_validate_json(
-                json.dumps(command)
-            ).fingerprint
+        expected = AuthoritativeWeekTransitionCommand.model_validate_json(
+            json.dumps(manual | {"command_id": "derived-transition"})
         )
+        assert command == expected.model_dump(mode="json")
+        assert preview["request_fingerprint"] == expected.fingerprint
 
         status, confirmed = confirm(root, command, preview)
         assert status == 201

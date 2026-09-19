@@ -74,6 +74,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v10",
         "tournament_draw_revision.v11",
         "tournament_draw_revision.v12",
+        "tournament_draw_revision.v13",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -169,6 +170,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v10",
             "tournament_draw_revision.v11",
             "tournament_draw_revision.v12",
+            "tournament_draw_revision.v13",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -212,11 +214,14 @@ class TournamentDrawRevision(FrozenInput):
             )
 
         if (
-            self.repair_kind != "frozen_ordinary_fallback"
+            self.repair_kind not in {
+                "frozen_ordinary_fallback",
+                "lucky_loser_vacancy",
+            }
             and self.replacement_source_authority is not None
         ):
             raise ValueError(
-                "Non-fallback Draw revision cannot carry replacement-source authority"
+                "Draw revision kind cannot carry replacement-source authority"
             )
 
         if self.repair_kind == "full_redraw":
@@ -404,8 +409,13 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError("Frozen WC repair cutoff evidence mismatch")
         elif self.repair_kind == "lucky_loser_vacancy":
             authority = self.lucky_loser_vacancy_authority
-            if self.schema_version != "tournament_draw_revision.v9":
-                raise ValueError("Lucky Loser vacancy requires revision schema v9")
+            if self.schema_version not in {
+                "tournament_draw_revision.v9",
+                "tournament_draw_revision.v13",
+            }:
+                raise ValueError(
+                    "Lucky Loser vacancy requires revision schema v9/v13"
+                )
             if authority is None:
                 raise ValueError("Lucky Loser vacancy lacks dedicated authority")
             if self.wild_card_repair_authority is not None:
@@ -444,6 +454,47 @@ class TournamentDrawRevision(FrozenInput):
                 authority.withdrawn_player_cutoff_authority,
             ):
                 raise ValueError("Lucky Loser vacancy cutoff evidence mismatch")
+            source = self.replacement_source_authority
+            if self.schema_version == "tournament_draw_revision.v13":
+                if source is None:
+                    raise ValueError(
+                        "WC Lucky Loser vacancy lacks replacement-source authority"
+                    )
+                if source.source not in {"lucky_loser_pending", "lucky_loser"}:
+                    raise ValueError(
+                        "WC Lucky Loser revision carries a non-LL source"
+                    )
+                if (
+                    source.run_id,
+                    source.branch_id,
+                    source.event_id,
+                    source.withdrawn_player_id,
+                    source.predecessor_draw_fingerprint,
+                ) != (
+                    self.run_id,
+                    self.branch_id,
+                    self.event_id,
+                    authority.withdrawn_player_id,
+                    self.predecessor_draw_fingerprint,
+                ):
+                    raise ValueError(
+                        "WC Lucky Loser source authority scope mismatch"
+                    )
+                if (
+                    self.successor_draw_input.schema_version
+                    != "tournament_draw_input_authority.v9"
+                    or not self.successor_draw_input.released_wild_card_slot_ordinals
+                    or not self.successor_draw_input.replacement_source_authority_fingerprints
+                    or self.successor_draw_input.replacement_source_authority_fingerprints[-1]
+                    != source.fingerprint
+                ):
+                    raise ValueError(
+                        "WC Lucky Loser revision lacks Draw Input v9 source lineage"
+                    )
+            elif source is not None:
+                raise ValueError(
+                    "Direct Main Lucky Loser vacancy cannot carry WC source authority"
+                )
         elif self.repair_kind == "lucky_loser_fill":
             authority = self.lucky_loser_fill_authority
             if self.schema_version != "tournament_draw_revision.v10":
@@ -1346,6 +1397,7 @@ class TournamentDrawRevisionBuilder:
         sequence: int,
         command_id: str,
         lucky_loser_vacancy_authority: TournamentLuckyLoserVacancyAuthority,
+        replacement_source_authority: TournamentReplacementSourceAuthority | None = None,
     ) -> TournamentDrawRevision:
         if process_authority.phase_for(
             draw_type="main",
@@ -1394,9 +1446,46 @@ class TournamentDrawRevisionBuilder:
             raise ValueError(
                 "Lucky Loser physical slot no longer contains withdrawn player"
             )
-        if template.entry_status is not None:
+        if template.entry_status not in {None, "wild_card"}:
             raise ValueError(
-                "First Lucky Loser vacancy slice requires ordinary Direct slot"
+                "Lucky Loser vacancy requires Direct Main or WC physical slot"
+            )
+        released_wild_card_slot = template.entry_status == "wild_card"
+        if released_wild_card_slot:
+            source = replacement_source_authority
+            if source is None:
+                raise ValueError(
+                    "WC Lucky Loser vacancy requires replacement-source authority"
+                )
+            if source.source not in {"lucky_loser_pending", "lucky_loser"}:
+                raise ValueError(
+                    "WC Lucky Loser vacancy requires LL replacement source"
+                )
+            if (
+                source.predecessor_draw_fingerprint != predecessor.fingerprint
+                or source.predecessor_draw_input_fingerprint
+                != predecessor.draw_input_fingerprint
+                or source.withdrawn_player_id != authority.withdrawn_player_id
+                or source.physical_slot_index != authority.physical_slot_index
+            ):
+                raise ValueError(
+                    "WC Lucky Loser source does not bind to frozen physical vacancy"
+                )
+            if (
+                successor_draw_input.schema_version
+                != "tournament_draw_input_authority.v9"
+                or not successor_draw_input.released_wild_card_slot_ordinals
+                or successor_draw_input.replacement_source_authority_fingerprints[-1]
+                != source.fingerprint
+                or authority.withdrawn_player_id
+                in successor_draw_input.wild_card_player_ids
+            ):
+                raise ValueError(
+                    "WC Lucky Loser successor Input did not release WC status"
+                )
+        elif replacement_source_authority is not None:
+            raise ValueError(
+                "Direct Main Lucky Loser vacancy cannot carry WC source authority"
             )
         if template.seed_number != authority.vacated_main_seed_number:
             raise ValueError("Lucky Loser seed-vacancy evidence differs from slot")
@@ -1442,7 +1531,11 @@ class TournamentDrawRevisionBuilder:
             main=main,
         )
         return TournamentDrawRevision(
-            schema_version="tournament_draw_revision.v9",
+            schema_version=(
+                "tournament_draw_revision.v13"
+                if released_wild_card_slot
+                else "tournament_draw_revision.v9"
+            ),
             run_id=predecessor.run_id,
             branch_id=predecessor.branch_id,
             event_id=predecessor.event_id,
@@ -1457,6 +1550,7 @@ class TournamentDrawRevisionBuilder:
                 authority.withdrawn_player_cutoff_authority,
             ),
             lucky_loser_vacancy_authority=authority,
+            replacement_source_authority=replacement_source_authority,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,

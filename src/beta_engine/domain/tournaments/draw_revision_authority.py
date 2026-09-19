@@ -2051,10 +2051,9 @@ def _repair_bracket_family(
     )
     if not removed:
         raise ValueError("Draw repair component has no removed predecessor player")
-    if len(removed) != len(incoming):
+    if len(incoming) > len(removed):
         raise ValueError(
-            "Seed-cascade phase repair currently requires "
-            "replacement-backed field parity"
+            "Seed-cascade phase repair has more incoming players than vacancies"
         )
 
     removed_refs = {player_ref[player_id] for player_id in removed}
@@ -2169,12 +2168,12 @@ def _repair_bracket_family(
         set(ordinary_vacancies),
         key=lambda ref: _ordinary_vacancy_priority(ref, templates),
     )
-    if len(ordered_ordinary) != len(incoming):
+    if len(incoming) > len(ordered_ordinary):
         raise ValueError(
-            "Draw repair replacement count differs from physical vacancies"
+            "Draw repair has more incoming players than final physical vacancies"
         )
     for destination, player_id in zip(
-        ordered_ordinary, incoming, strict=True
+        ordered_ordinary[: len(incoming)], incoming, strict=True
     ):
         template = templates[destination]
         mutable[destination] = TournamentDrawSlot(
@@ -2182,6 +2181,13 @@ def _repair_bracket_family(
             idealized_slot_number=template.idealized_slot_number,
             entrant_kind="player",
             player_id=player_id,
+        )
+    for destination in ordered_ordinary[len(incoming) :]:
+        template = templates[destination]
+        mutable[destination] = TournamentDrawSlot(
+            slot_index=template.slot_index,
+            idealized_slot_number=template.idealized_slot_number,
+            entrant_kind="bye",
         )
 
     rebuilt = []

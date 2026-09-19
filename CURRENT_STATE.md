@@ -288,9 +288,11 @@ A seeded withdrawal executes tier-aware seed cascade without a new draw seed: mo
 seeded players retain their original seed numbers, only the necessary later seed
 layers move, the highest-ranked surviving eligible unseeded player closes the final
 seed vacancy, and the ordinary incoming replacement fills that player's vacated
-physical slot. Seed 2 therefore does not get renamed after seed 1 withdraws. An
-ordinary unseeded withdrawal in the same phase bypasses cascade and directly fills
-its exact physical slot. Main and Qualification gate independently: one atomic v3
+physical slot. If no ordinary replacement remains, that final physical vacancy
+becomes a BYE instead of failing the cascade. Seed 2 therefore does not get renamed
+after seed 1 withdraws. An ordinary unseeded withdrawal in the same phase bypasses
+cascade and directly fills its exact physical slot; if no replacement exists, that
+same slot becomes a BYE. Main and Qualification gate independently: one atomic v3
 revision can therefore fully redraw one affected component while cascading the other,
 with the repair seed applying only to the component that is actually redrawn.
 Multi-Q section/Q identities remain stable, simultaneous withdrawals are

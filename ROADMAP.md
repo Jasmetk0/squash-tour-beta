@@ -379,9 +379,18 @@ cutoff, the exact Main slot and any vacated seed number. Draw Input v6 stores th
 chronological LL placeholder lineage and Draw revision v9 stores the exact frozen
 slot mutation. Unresolved LL placeholders deliberately block executable topology.
 
-The next Lucky Loser slice must derive and freeze **candidate order** for bracket
-Qualification (reached Q round first, then Tournament Ranking Snapshot), then fill
-LL placeholders once candidates are known. RWC exhaustion can then route into that
-same source-priority authority rather than duplicating LL logic. Group Qualification
-LL ordering remains later Gate 3 work. Legacy simulation-run UI/endpoint retirement
-remains separate Gate 3 work.
+Bracket-Qualification **Lucky Loser candidate order** is now canonical as well.
+`tournament_lucky_loser_order.v1` is derived only after every real Qualification
+terminal has an authoritative result receipt. It freezes the current canonical Draw,
+Tournament Ranking Snapshot authority, terminal-result fingerprints and each
+eliminated candidate's elimination round/result. Candidates sort exactly by Master
+§15.8: highest reached Q round first, then the frozen Tournament Ranking Snapshot.
+The resolver deliberately refuses to publish an order while Qualification is still
+incomplete; unresolved auto-BYE-only Q terminals remain an explicit later edge case.
+
+The next LL slice is now concrete: **fill LL1, LL2, ... from this frozen candidate
+order**, skipping players who are no longer available/eligible without changing the
+relative order. RWC exhaustion can then route into the same source-priority resolver
+rather than duplicating LL logic. External reserves after LL exhaustion and group
+Qualification LL ordering remain later Gate 3 work. Legacy simulation-run
+UI/endpoint retirement remains separate Gate 3 work.

@@ -225,6 +225,12 @@ class TournamentReplacementSourceAuthorityBuilder:
             for item in predecessor.main.slots
             if item.player_id is not None
         }
+        qualification_players = {
+            item.player_id
+            for bracket in predecessor.qualification_brackets
+            for item in bracket.slots
+            if item.player_id is not None
+        }
 
         # WC slots must consume RWC priority before the ordinary phase source.
         if slot.entry_status == "wild_card":
@@ -351,7 +357,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 )
 
         # External reserves follow the same frozen ranking order after LL exhaustion.
-        blocked_external = unavailable | main_players
+        blocked_external = unavailable | main_players | qualification_players
         for ordinal, candidate in enumerate(external_reserve_player_ids, start=1):
             if candidate in blocked_external:
                 continue

@@ -104,7 +104,7 @@ class TournamentDrawAuthorityStore:
             raise ValueError("Tournament Draw authority request fingerprint is corrupt")
         return authority
 
-    def get(
+    def get_initial(
         self, *, run_id: str, branch_id: str, event_id: str
     ) -> TournamentDrawAuthority | None:
         self._scope(run_id, branch_id)
@@ -124,6 +124,27 @@ class TournamentDrawAuthorityStore:
                 "Tournament Draw authority references missing Draw Input authority"
             )
         return self.validate_row(row, draw_input=draw_input)
+
+    def get(
+        self, *, run_id: str, branch_id: str, event_id: str
+    ) -> TournamentDrawAuthority | None:
+        initial = self.get_initial(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if initial is None:
+            return None
+        from beta_engine.infrastructure.db.tournament_draw_revision import (
+            TournamentDrawRevisionStore,
+        )
+
+        history = TournamentDrawRevisionStore(self.session).history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        return history[-1].successor_draw if history else initial
 
     def generate(
         self,

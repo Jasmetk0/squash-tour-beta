@@ -861,6 +861,20 @@ class TournamentDrawRevisionBuilder:
             != wild_card_repair_authority.fingerprint
         ):
             raise ValueError("RWC successor Draw Input lacks repair lineage")
+        if (
+            wild_card_repair_authority.vacated_main_seed_number
+            not in successor_draw_input.main_seed_vacancy_numbers
+            if wild_card_repair_authority.vacated_main_seed_number is not None
+            else False
+        ):
+            raise ValueError("RWC successor Draw Input lacks Main seed vacancy")
+        if (
+            wild_card_repair_authority.vacated_qualification_seed_number
+            not in successor_draw_input.qualification_seed_vacancy_numbers
+            if wild_card_repair_authority.vacated_qualification_seed_number is not None
+            else False
+        ):
+            raise ValueError("RWC successor Draw Input lacks Qualification seed vacancy")
 
         slots = list(predecessor.main.slots)
         index = wild_card_repair_authority.physical_slot_index - 1
@@ -871,9 +885,13 @@ class TournamentDrawRevisionBuilder:
             template.player_id
             != wild_card_repair_authority.withdrawn_player_id
             or template.entry_status != "wild_card"
-            or template.seed_number is not None
         ):
             raise ValueError("RWC physical slot no longer matches repair authority")
+        if (
+            template.seed_number
+            != wild_card_repair_authority.vacated_main_seed_number
+        ):
+            raise ValueError("RWC Main seed-vacancy evidence no longer matches slot")
         slots[index] = TournamentDrawSlot(
             slot_index=template.slot_index,
             idealized_slot_number=template.idealized_slot_number,
@@ -885,7 +903,13 @@ class TournamentDrawRevisionBuilder:
             draw_type=predecessor.main.draw_type,
             section_id=predecessor.main.section_id,
             bracket_size=predecessor.main.bracket_size,
-            seed_positions=predecessor.main.seed_positions,
+            seed_positions=tuple(
+                sorted(
+                    (item.seed_number, item.slot_index)
+                    for item in slots
+                    if item.seed_number is not None
+                )
+            ),
             slots=tuple(slots),
             nodes=predecessor.main.nodes,
             bye_slot_indexes=predecessor.main.bye_slot_indexes,
@@ -914,10 +938,16 @@ class TournamentDrawRevisionBuilder:
                 if (
                     q_template.player_id
                     != wild_card_repair_authority.replacement_player_id
-                    or q_template.seed_number is not None
                 ):
                     raise ValueError(
                         "Qualification RWC physical slot no longer matches authority"
+                    )
+                if (
+                    q_template.seed_number
+                    != wild_card_repair_authority.vacated_qualification_seed_number
+                ):
+                    raise ValueError(
+                        "Qualification RWC seed-vacancy evidence no longer matches slot"
                     )
                 q_slots[q_slot_index - 1] = TournamentDrawSlot(
                     slot_index=q_template.slot_index,

@@ -222,6 +222,15 @@ def test_effective_draw_authority_tracks_latest_append_only_revision(tmp_path):
         status, initial = _request("GET", root + "/authority")
         assert status == 200
         assert _request("GET", root + "/effective-authority") == (200, initial)
+        status, empty_history = _request("GET", root + "/revisions")
+        assert status == 200
+        assert empty_history["initial_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert empty_history["effective_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert empty_history["revisions"] == []
         assert {
             slot["player_id"]
             for slot in initial["main"]["slots"]
@@ -268,6 +277,33 @@ def test_effective_draw_authority_tracks_latest_append_only_revision(tmp_path):
             placeholder_id
             for placeholder_id, _ in effective["main"]["qualifier_placeholder_slots"]
         } == {"Q1"}
+
+        status, history = _request("GET", root + "/revisions")
+        assert status == 200
+        assert history["initial_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert history["effective_draw_fingerprint"] == revision.successor_draw.fingerprint
+        assert len(history["revisions"]) == 1
+        summary = history["revisions"][0]
+        assert summary["sequence"] == 1
+        assert summary["schema_version"] == revision.schema_version
+        assert summary["command_id"] == "withdraw-c-effective-redraw"
+        assert summary["repair_kind"] == "full_redraw"
+        assert summary["affected_draw_types"] == ["main", "qualification"]
+        assert summary["withdrawn_player_ids"] == ["C"]
+        assert summary["main_process_window_ordinal"] == 1
+        assert summary["qualification_process_window_ordinal"] == 1
+        assert summary["repair_draw_seed"] == 987654
+        assert summary["predecessor_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert summary["successor_draw_input_fingerprint"] == (
+            revision.successor_draw_input.fingerprint
+        )
+        assert summary["successor_draw_fingerprint"] == (
+            revision.successor_draw.fingerprint
+        )
 
 
 @pytest.mark.pr_critical

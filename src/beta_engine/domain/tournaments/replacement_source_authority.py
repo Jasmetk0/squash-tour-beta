@@ -132,6 +132,10 @@ class TournamentReplacementSourceAuthority(FrozenInput):
         if self.source == "lucky_loser":
             if self.lucky_loser_order_authority is None:
                 raise ValueError("Lucky Loser source requires frozen LL order")
+            if self.source_ordinal is None or self.source_ordinal > len(
+                self.lucky_loser_order_authority.candidates
+            ):
+                raise ValueError("Lucky Loser source ordinal is outside frozen LL order")
             candidate = self.lucky_loser_order_authority.candidates[
                 self.source_ordinal - 1
             ]
@@ -256,7 +260,6 @@ class TournamentReplacementSourceAuthorityBuilder:
 
         # Before Qualification starts, the active Q list remains the ordinary source.
         if qualification_start_evidence is None:
-            active_q = set(predecessor_draw_input.qualification_player_ids)
             for ordinal, candidate in enumerate(
                 predecessor_draw_input.qualification_player_ids,
                 start=1,
@@ -286,8 +289,6 @@ class TournamentReplacementSourceAuthorityBuilder:
                         else None
                     ),
                 )
-            del active_q
-
         # After Qualification starts, new Main vacancies belong to the LL workflow.
         else:
             if lucky_loser_order_authority is None:

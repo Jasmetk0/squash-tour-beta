@@ -294,8 +294,21 @@ the existing draw seed and deterministic revision replay remain stable. The midd
 seed-cascade path still intentionally requires replacement-backed player-count
 parity.
 
-Post-draw WC/RWC, Lucky Loser, group Qualification and the per-player
-first-real-match replacement cutoff remain subsequent Gate 3 work. W/O after that
-player-specific cutoff therefore remains fail-closed rather than being inferred from
-Draw Freeze alone. Legacy simulation-run UI/endpoint retirement remains separate
-Gate 3 work.
+The player-specific replacement cutoff is now enforced by canonical draw repair.
+Every new successful repair freezes one `tournament_player_replacement_cutoff.v1`
+authority per withdrawn player inside cutoff-aware Draw revision v5. Evidence comes
+only from validated Run/Branch authoritative competitive match receipts; canonical
+BYE auto-advances create no such receipt and therefore do not close the cutoff. In
+the current atomic executor, the first committed real-match group is the durable
+boundary that the player's first real match has started. A player with no such match
+remains replaceable; a player whose latest real match was a win is routed to the
+future W/O path, while an already eliminated player cannot mutate the active Draw.
+Historical v2-v4 Draw revisions remain replayable without retroactively consulting
+later match history.
+
+The next draw-focused slice is therefore the explicit **post-cutoff W/O authority**:
+freeze the withdrawal against the already-played path, preserve the Draw slots, and
+make the following opponent advance without a Match Engine simulation once that
+opponent is resolvable. Post-draw WC/RWC, Lucky Loser and group Qualification remain
+subsequent Gate 3 work. Legacy simulation-run UI/endpoint retirement remains
+separate Gate 3 work.

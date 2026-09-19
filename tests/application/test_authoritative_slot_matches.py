@@ -1247,6 +1247,7 @@ def test_general_eight_player_topology_uses_persisted_feeders_not_round_names(tm
         driver._topology((cyclic,))
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     """Production Entry -> Draw -> Match evidence drives all seven matches."""
@@ -2532,6 +2533,7 @@ def test_player_replacement_cutoff_uses_committed_real_match_receipts(tmp_path):
         )
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_post_cutoff_walkover_commits_group_without_sporting_effects(
     tmp_path, monkeypatch
@@ -2653,6 +2655,7 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
         )
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
     session, executor, _, semifinals, _ = run_semifinals(

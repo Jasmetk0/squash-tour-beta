@@ -86,6 +86,7 @@ def _run_with_restore(repository: SimulationPersistenceRepository) -> None:
     )
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_recovery_activity_validates_restore_links_without_mutation(tmp_path) -> None:
     repository = _repository(f"sqlite:///{tmp_path / 'recovery-activity.db'}")

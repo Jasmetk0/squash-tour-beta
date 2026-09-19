@@ -448,14 +448,14 @@ def build_run_owned_tournament_authorities(
     run_id: str,
     branch_id: str,
     week: RankingWeek,
-    calendar_event: CalendarEvent,
+    calendar_event: CalendarEvent | None = None,
     award_seed: int,
     frozen_point_authority: FrozenPointAwardAuthority | None = None,
 ) -> tuple[
     SeasonEventMatchPackage,
     TournamentResultAuthority,
     TournamentPointAwardAuthority,
-    TournamentPrizeMoneyAwardAuthority,
+    TournamentPrizeMoneyAwardAuthority | None,
 ]:
     """Close a canonical tournament into Run-owned authorities only."""
 
@@ -479,9 +479,13 @@ def build_run_owned_tournament_authorities(
         point_authority=frozen_point_authority,
         seed=award_seed,
     )
-    canonical_prize_awards = build_tournament_prize_money_award_authority(
-        result=canonical_result,
-        event=calendar_event,
+    canonical_prize_awards = (
+        build_tournament_prize_money_award_authority(
+            result=canonical_result,
+            event=calendar_event,
+        )
+        if calendar_event is not None
+        else None
     )
     return (
         projected,

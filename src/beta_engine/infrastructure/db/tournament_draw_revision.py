@@ -190,6 +190,7 @@ class TournamentDrawRevisionStore:
                         withdrawn_player_ids=revision.withdrawn_player_ids,
                         sequence=revision.sequence,
                         command_id=revision.command_id,
+                        repair_draw_seed=revision.repair_draw_seed,
                     )
                 )
             if rebuilt_revision != revision:
@@ -221,6 +222,7 @@ class TournamentDrawRevisionStore:
         repair_draw_seed: int,
         main_process_window_ordinal: int | None = None,
         qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
     ) -> TournamentDrawRevision:
         requested = tuple(sorted(set(withdrawn_player_ids)))
         if not requested:
@@ -257,6 +259,7 @@ class TournamentDrawRevisionStore:
                 or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
             ):
                 raise TournamentDrawRevisionConflict(
                     "Tournament Draw revision command already has a different request"
@@ -364,6 +367,7 @@ class TournamentDrawRevisionStore:
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
+            repair_draw_seed=repair_draw_seed,
         )
         self.session.add(
             TournamentDrawRevisionModel(
@@ -539,6 +543,7 @@ class TournamentDrawRevisionStore:
             "qualification_process_window_ordinal": (
                 qualification_process_window_ordinal
             ),
+            "repair_draw_seed": repair_draw_seed,
             "affected_draw_types": list(affected_draw_types),
             "successor_field_fingerprint": successor_field.fingerprint,
         }

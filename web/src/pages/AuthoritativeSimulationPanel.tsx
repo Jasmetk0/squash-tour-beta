@@ -57,7 +57,7 @@ export function AuthoritativeSimulationPanel({
   const savePreviewQuery = useQuery({
     queryKey: ['authoritative-simulation-save-preview', runId, branchId],
     queryFn: () => previewAuthoritativeSimulationSave(runId, branchId),
-    enabled,
+    enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
 

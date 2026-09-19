@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { ComponentProps } from 'react'
 
 import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
@@ -65,7 +66,7 @@ const proposal = {
   persisted: false as const
 }
 
-function renderPanel(props: Partial<React.ComponentProps<typeof AuthoritativeSimulationPanel>> = {}) {
+function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulationPanel>> = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
@@ -152,6 +153,8 @@ describe('AuthoritativeSimulationPanel', () => {
     renderPanel()
 
     expect(await screen.findByText('Week Simulation Schedule')).toBeInTheDocument()
+    expect(api.getAuthoritativeSimulationPosition).not.toHaveBeenCalled()
+    expect(screen.getByText('Canonical Position and match execution stay locked until this required immutable Week Schedule is adopted.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Build topological schedule proposal' }))
 
     expect(await screen.findByRole('list', { name: 'Proposed authoritative week schedule' })).toHaveTextContent('Slot 1: g1, g2')
@@ -172,6 +175,11 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('simulates one explicitly reviewed eligible match against exact canonical position and Saved Revision head', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
     renderPanel()
 
     const selector = await screen.findByLabelText('Eligible authoritative match group')
@@ -197,6 +205,11 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('simulates the whole current slot without smuggling a group id into the command', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
     renderPanel()
 
     await screen.findByText('Execute current canonical position')
@@ -216,6 +229,11 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('saves only the exact reviewed authoritative simulation draft preview', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
     api.previewAuthoritativeSimulationSave.mockResolvedValue({
       run_id: 'run-a',
       branch_id: 'branch-a',

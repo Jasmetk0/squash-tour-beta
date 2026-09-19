@@ -757,6 +757,39 @@ def test_owned_source_v3_fingerprint_contract_survives_v4_model():
     assert reopened.fingerprint == expected
 
 
+@pytest.mark.pr_critical
+def test_v4_fingerprint_contract_survives_v5_model():
+    result_authority, _, point_authority, _, binding = _authorities()
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="historical-v4",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+    historical_payload = source.model_dump(mode="json")
+    assert "canonical_prize_awards" not in historical_payload
+    expected = hashlib.sha256(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+    reopened = OwnedTournamentRankingSource.model_validate_json(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    assert reopened.schema_version == "owned_tournament_ranking_source.v4"
+    assert reopened.canonical_prize_awards is None
+    assert reopened.fingerprint == expected
+
+
 def test_ranking_week_ingests_v4_without_legacy_dtos_or_award_service(database):
     result_authority, _, point_authority, _, binding = _authorities()
     source = OwnedTournamentRankingSource(

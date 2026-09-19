@@ -194,13 +194,37 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
+            "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
+            "tournament_draw_input_authority.v8",
+            "tournament_draw_input_authority.v9",
         }:
             raise ValueError("Post-draw RWC repair requires canonical WC Draw Input")
 
         wc_players = predecessor_draw_input.wild_card_player_ids
         if wc_players.count(withdrawn_player_id) != 1:
             raise ValueError("RWC repair withdrawal is not an active WC holder")
-        wildcard_index = wc_players.index(withdrawn_player_id) + 1
+        compact_wildcard_index = wc_players.index(withdrawn_player_id)
+        if (
+            predecessor_draw_input.schema_version
+            == "tournament_draw_input_authority.v9"
+        ):
+            released_ordinals = set(
+                predecessor_draw_input.released_wild_card_slot_ordinals
+            )
+            active_ordinals = tuple(
+                ordinal
+                for ordinal in range(
+                    1,
+                    predecessor_draw_input.capacity.wild_card_slots + 1,
+                )
+                if ordinal not in released_ordinals
+            )
+            if len(active_ordinals) != len(wc_players):
+                raise ValueError("Active WC identities do not map to WC-slot ordinals")
+            wildcard_index = active_ordinals[compact_wildcard_index]
+        else:
+            wildcard_index = compact_wildcard_index + 1
 
         matching_slots = [
             slot

@@ -225,9 +225,12 @@ class AuthoritativeFrozenMainReplacement:
                 draw_revisions=(revision,),
             )
 
-        if target.entry_status == "wild_card":
+        if (
+            target.entry_status == "wild_card"
+            and source.source not in {"external_reserve", "bye"}
+        ):
             raise AuthoritativeFrozenMainReplacementConflict(
-                "Ordinary WC-slot fallback after RWC exhaustion is not canonical yet"
+                "WC-slot Qualification/LL fallback after RWC exhaustion is not canonical yet"
             )
 
         if source.source == "qualification_promotion":

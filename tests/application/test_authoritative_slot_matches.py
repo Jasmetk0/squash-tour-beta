@@ -2532,6 +2532,7 @@ def test_player_replacement_cutoff_uses_committed_real_match_receipts(tmp_path):
         )
 
 
+@pytest.mark.smoke
 def test_post_cutoff_walkover_commits_group_without_sporting_effects(
     tmp_path, monkeypatch
 ):
@@ -2652,6 +2653,7 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
         )
 
 
+@pytest.mark.smoke
 def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
     session, executor, _, semifinals, _ = run_semifinals(
         tmp_path / "walkover-restore.sqlite", ("sf-1", "sf-2")

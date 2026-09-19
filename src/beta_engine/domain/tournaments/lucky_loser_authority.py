@@ -151,12 +151,7 @@ class TournamentLuckyLoserQualificationMatchEvidence(FrozenInput):
     section_id: str = Field(min_length=1)
     round_number: int = Field(ge=1)
     winner_player_id: str = Field(min_length=1)
-    loser_player_id: str | None = Field(
-        default=None,
-        min_length=1,
-        exclude_if=lambda value: value is None,
-    )
-    scoreline: str = Field(min_length=1)
+    loser_player_id: str = Field(min_length=1)
     result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
@@ -296,12 +291,6 @@ class TournamentLuckyLoserOrderAuthorityBuilder:
         losses: dict[str, TournamentLuckyLoserQualificationMatchEvidence] = {}
         for match in completed_qualification_matches:
             loser = match.loser_player_id
-            if loser is None:
-                if match.scoreline != "BYE":
-                    raise ValueError(
-                        "Completed Q match without loser must be a canonical BYE"
-                    )
-                continue
             if loser not in q_players:
                 raise ValueError("LL candidate loss belongs to player outside Q field")
             if loser in losses:

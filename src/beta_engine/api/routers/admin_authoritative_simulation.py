@@ -81,6 +81,35 @@ def propose_week_schedule(
         ) from exc
 
 
+@router.post("/week-schedule/adopt-proposal", status_code=201)
+def adopt_topological_week_schedule_proposal(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).adopt_topological_schedule_proposal(
+            run_id=run_id,
+            branch_id=branch_id,
+            request_id=payload["request_id"],
+            expected_schedule_fingerprint=payload["expected_schedule_fingerprint"],
+            expected_position_fingerprint=payload["expected_position_fingerprint"],
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "topological_schedule_adoption_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("/week-schedule")
 def inspect_week_schedule(
     run_id: str,

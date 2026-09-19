@@ -263,9 +263,19 @@ def test_terminal_walkover_closes_canonical_tournament_with_stage_points(
         )
         assert len(sources) == 1
         source = sources[0]
-        assert source.schema_version == "owned_tournament_ranking_source.v4"
+        assert source.schema_version == "owned_tournament_ranking_source.v5"
         assert source.canonical_result is not None
         assert source.canonical_awards is not None
+        assert source.canonical_prize_awards is not None
+        assert (
+            source.canonical_prize_awards.configuration_status
+            == "not_configured"
+        )
+        assert (
+            source.canonical_prize_awards.total_prize_pool_status
+            == "not_configured"
+        )
+        assert source.canonical_prize_awards.total_prize_pool_amount is None
 
         result = source.canonical_result
         awards = {

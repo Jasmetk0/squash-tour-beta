@@ -323,13 +323,15 @@ Master §16.3 exception: a W/O advance can unlock the authored value of the play
 actual finishing stage without creating a played win/loss or H2H result. The point
 builder revalidates those counters from frozen match evidence, and a terminal W/O
 command now executes the normal canonical tournament close and ranking-source
-persistence. The first canonical prize-money configuration boundary now exists on
-Tournament Template / Edition: an optional original 3-letter currency plus a
-partial-capable finishing-stage payout table. Missing stages remain Unknown rather
-than becoming zero, known payouts must strictly increase with later finishing
-stages, and the historical aggregate `prize_money` field is retained only for
-compatibility instead of being reverse-engineered into stage payouts. Dedicated
-run-owned payout calculation/history authority remains separate follow-up work. Post-draw WC/RWC work has now started with the first bounded canonical slice:
+persistence. Canonical prize-money payout calculation is now run-owned. Tournament close builds
+`TournamentPrizeMoneyAwardAuthority v1` from the frozen Tournament Result and
+Edition payout configuration, then persists it inside
+`OwnedTournamentRankingSource v5`. Every player receives one payout status from
+their final tournament finishing stage; known amounts stay in the Edition's original
+currency, unknown/missing stages remain Unknown, W/O advancement is payout-eligible
+without becoming a played win, and the authority distinguishes known subtotal from a
+complete prize pool. Ranking ingestion deliberately continues to consume only
+canonical Result + Point Awards. Historical v1-v4 sources remain immutable readers. Post-draw WC/RWC work has now started with the first bounded canonical slice:
 after Main Draw Freeze, withdrawal of an **unseeded active WC holder** can consume
 the next available **external** Reserve Wild Card in stored RWC order. The repair is
 append-only revision v6, preserves the exact physical Main slot, preserves the

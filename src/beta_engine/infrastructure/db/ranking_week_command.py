@@ -305,6 +305,7 @@ def stage_ranking_week_command(
                 if frozen.schema_version in {
                     "owned_tournament_ranking_source.v3",
                     "owned_tournament_ranking_source.v4",
+                    "owned_tournament_ranking_source.v5",
                 }:
                     if (
                         frozen.canonical_result is None

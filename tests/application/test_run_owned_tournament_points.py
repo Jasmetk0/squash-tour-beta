@@ -35,7 +35,13 @@ from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPointAwardAuthority,
 )
+from beta_engine.domain.tournaments.prize_money_award_authority import (
+    TournamentPrizeMoneyAwardAuthority,
+    build_tournament_prize_money_award_authority,
+)
 from beta_engine.domain.tournaments.result_authority import (
+    TournamentPlayerResultAuthority,
+    TournamentResultAuthority,
     build_tournament_result_authority,
     project_tournament_result_legacy_dto,
 )
@@ -294,6 +300,326 @@ def _walkover_authorities():
         expected_award_fingerprint=awards.fingerprint,
     )
     return result, awards, binding, final
+
+
+@pytest.mark.pr_critical
+def test_canonical_prize_money_authority_awards_actual_finishing_stages():
+    result, _, _, _, _ = _authorities()
+    event = _event().model_copy(
+        update={
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "semifinal": 3000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+    awards = {award.player_id: award for award in authority.awards}
+
+    assert authority.configuration_status == "complete"
+    assert authority.total_prize_pool_status == "complete"
+    assert authority.total_prize_pool_amount == 22000
+    assert authority.known_awarded_amount == 22000
+    assert authority.unknown_award_count == 0
+    assert awards[result.champion_player_id].amount == 10000
+    assert awards[result.finalist_player_id].amount == 6000
+    assert sum(
+        1
+        for award in authority.awards
+        if award.reached_stage == "semifinal" and award.amount == 3000
+    ) == 2
+
+
+@pytest.mark.pr_critical
+def test_canonical_prize_money_partial_table_keeps_unknown_and_pool_incomplete():
+    result, _, _, _, _ = _authorities()
+    event = _event().model_copy(
+        update={
+            "prize_money_currency": "USD",
+            "prize_money_table": {
+                "semifinal": None,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+
+    semifinal_awards = [
+        award for award in authority.awards if award.reached_stage == "semifinal"
+    ]
+    assert authority.configuration_status == "partial"
+    assert authority.total_prize_pool_status == "incomplete"
+    assert authority.total_prize_pool_amount is None
+    assert authority.known_awarded_amount == 16000
+    assert authority.unknown_award_count == 2
+    assert all(award.payout_status == "unknown" for award in semifinal_awards)
+    assert all(award.amount is None for award in semifinal_awards)
+
+
+@pytest.mark.pr_critical
+def test_canonical_walkover_prize_money_uses_stage_without_played_win():
+    result, _, _, final = _walkover_authorities()
+    event = _event().model_copy(
+        update={
+            "prize_money_currency": "GBP",
+            "prize_money_table": {
+                "semifinal": 3000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+    by_player = {player.player_id: player for player in result.players}
+    by_award = {award.player_id: award for award in authority.awards}
+
+    winner = by_player[final.winner_player_id]
+    withdrawn = by_player[final.loser_player_id]
+    assert winner.walkovers_received == 1
+    assert winner.wins == 1
+    assert by_award[winner.player_id].amount == 10000
+    assert withdrawn.retired_or_walkover_loss is True
+    assert withdrawn.losses == 0
+    assert by_award[withdrawn.player_id].amount == 6000
+
+
+@pytest.mark.pr_critical
+def test_owned_source_v5_freezes_prize_money_and_ranking_remains_point_bound(database):
+    result, _, point_authority, _, binding = _authorities()
+    prize_authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=_event().model_copy(
+            update={
+                "prize_money_currency": "EUR",
+                "prize_money_table": {
+                    "semifinal": 3000,
+                    "finalist": 6000,
+                    "champion": 10000,
+                },
+            }
+        ),
+    )
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v5",
+        binding=binding,
+        canonical_result=result,
+        canonical_awards=point_authority,
+        canonical_prize_awards=prize_authority,
+        adopted_by_command_id="close-v5",
+        provenance_kind=(
+            "canonical_run_owned_tournament_authorities_and_prize_money"
+        ),
+    )
+    reopened = OwnedTournamentRankingSource.model_validate_json(
+        source.model_dump_json()
+    )
+    assert reopened == source
+    assert reopened.canonical_prize_awards is not None
+    assert reopened.canonical_prize_awards.fingerprint == prize_authority.fingerprint
+
+    players = tuple(
+        OfficialRankingPlayer(
+            player_id=player.player_id,
+            tie_break_token=player.player_id,
+            tour_entry_week=RankingWeek(season_index=0, week=1),
+        )
+        for player in result.players
+    )
+    policy = OfficialRankingPolicy(policy_id="policy")
+    with database.begin() as session:
+        OfficialRankingCandidateStore(session).append(
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=binding.completed_week,
+                policy=policy,
+                players=players,
+                results=(),
+            ),
+            bootstrap=True,
+        )
+        OwnedTournamentRankingSourceStore(session).append(source)
+
+    command = RankingWeekCommand(
+        command_id="ranking-from-prize-v5",
+        tournaments=(binding,),
+        context=RankingTransitionContext(
+            run_id="run",
+            branch_id="branch",
+            completed_week=binding.completed_week,
+            target_week=binding.first_publication_week,
+            policy=policy,
+            players=players,
+            discipline="none",
+        ),
+    )
+    snapshot = RankingWeekCommandRunner(database, awards=None).execute(command)
+    expected = {
+        award.player_id: award.ranking_points_awarded
+        for award in point_authority.awards
+    }
+    assert {row.player_id: row.points for row in snapshot.rows} == expected
+
+
+@pytest.mark.pr_critical
+def test_qualifier_or_lucky_loser_gets_only_final_main_stage_payout():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="A",
+        finalist_player_id="B",
+        qualification_winner_ids=("QMAIN",),
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="champion",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="finalist",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="QMAIN",
+                draw_type="both",
+                qualifier=True,
+                reached_stage="semifinal",
+            ),
+        ),
+        matches=(),
+    )
+    event = _event().model_copy(
+        update={
+            "main_draw_size": 4,
+            "qualification_draw_size": 2,
+            "qualifier_spots": 1,
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "qualification_final": 1000,
+                "semifinal": 3000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+    qmain = next(
+        award for award in authority.awards if award.player_id == "QMAIN"
+    )
+
+    assert qmain.reached_stage == "semifinal"
+    assert qmain.amount == 3000
+    assert authority.known_awarded_amount == 19000
+
+
+@pytest.mark.pr_critical
+def test_prize_money_required_q_stages_use_each_section_capacity():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="A",
+        finalist_player_id="B",
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="champion",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="finalist",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="QX",
+                draw_type="qualification",
+                reached_stage="qualification_semifinal",
+            ),
+        ),
+        matches=(),
+    )
+    event = _event().model_copy(
+        update={
+            "main_draw_size": 2,
+            "qualification_draw_size": 16,
+            "qualifier_spots": 4,
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "qualification_semifinal": 500,
+                "qualification_final": 1000,
+                "finalist": 6000,
+                "champion": 10000,
+            },
+        }
+    )
+
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+
+    assert authority.required_stage_ids == (
+        "qualification_semifinal",
+        "qualification_final",
+        "finalist",
+        "champion",
+    )
+    assert "qualification_round" not in authority.required_stage_ids
+    assert authority.configuration_status == "complete"
+    q_award = next(
+        award for award in authority.awards if award.player_id == "QX"
+    )
+    assert q_award.amount == 500
+
+
+@pytest.mark.pr_critical
+def test_prize_money_authority_rejects_corrupt_reopen():
+    result, _, _, _, _ = _authorities()
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=_event().model_copy(
+            update={
+                "prize_money_currency": "EUR",
+                "prize_money_table": {
+                    "semifinal": 3000,
+                    "finalist": 6000,
+                    "champion": 10000,
+                },
+            }
+        ),
+    )
+    payload = authority.model_dump(mode="json")
+    payload["known_awarded_amount"] += 1
+
+    with pytest.raises(ValueError, match="known awarded amount mismatch"):
+        TournamentPrizeMoneyAwardAuthority.model_validate_json(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        )
 
 
 def test_canonical_point_authority_maps_frozen_distribution_without_legacy_service():
@@ -556,6 +882,39 @@ def test_owned_source_v3_fingerprint_contract_survives_v4_model():
     reopened = OwnedTournamentRankingSource.model_validate_json(
         json.dumps(historical_payload, sort_keys=True, separators=(",", ":"))
     )
+    assert reopened.fingerprint == expected
+
+
+@pytest.mark.pr_critical
+def test_v4_fingerprint_contract_survives_v5_model():
+    result_authority, _, point_authority, _, binding = _authorities()
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result_authority,
+        canonical_awards=point_authority,
+        adopted_by_command_id="historical-v4",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+    historical_payload = source.model_dump(mode="json")
+    assert "canonical_prize_awards" not in historical_payload
+    expected = hashlib.sha256(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+    reopened = OwnedTournamentRankingSource.model_validate_json(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+    assert reopened.schema_version == "owned_tournament_ranking_source.v4"
+    assert reopened.canonical_prize_awards is None
     assert reopened.fingerprint == expected
 
 

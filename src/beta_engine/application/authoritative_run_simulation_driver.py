@@ -2131,6 +2131,7 @@ class AuthoritativeRunSimulationDriver:
                 continue
             canonical_result = None
             canonical_awards = None
+            canonical_prize_awards = None
             result = None
             awards = None
             if draw_fp is not None:
@@ -2138,6 +2139,7 @@ class AuthoritativeRunSimulationDriver:
                     _,
                     canonical_result,
                     canonical_awards,
+                    canonical_prize_awards,
                 ) = build_run_owned_tournament_authorities(
                     package=package,
                     authoritative=auth,
@@ -2145,6 +2147,7 @@ class AuthoritativeRunSimulationDriver:
                     run_id=command.run_id,
                     branch_id=command.branch_id,
                     week=command.expected_week,
+                    calendar_event=evidence.calendar_event,
                     award_seed=self._stable_seed(package, "awards"),
                     frozen_point_authority=point_authority,
                 )
@@ -2186,14 +2189,29 @@ class AuthoritativeRunSimulationDriver:
                     canonical_result,
                     canonical_awards,
                 )
-                source = OwnedTournamentRankingSource(
-                    schema_version="owned_tournament_ranking_source.v4",
-                    binding=binding,
-                    canonical_result=canonical_result,
-                    canonical_awards=canonical_awards,
-                    adopted_by_command_id=command.command_id,
-                    provenance_kind="canonical_run_owned_tournament_authorities",
-                )
+                if canonical_prize_awards is not None:
+                    source = OwnedTournamentRankingSource(
+                        schema_version="owned_tournament_ranking_source.v5",
+                        binding=binding,
+                        canonical_result=canonical_result,
+                        canonical_awards=canonical_awards,
+                        canonical_prize_awards=canonical_prize_awards,
+                        adopted_by_command_id=command.command_id,
+                        provenance_kind=(
+                            "canonical_run_owned_tournament_authorities_and_prize_money"
+                        ),
+                    )
+                else:
+                    # Historical adopted authorities before Calendar Event snapshot
+                    # freezing cannot reconstruct prize configuration safely.
+                    source = OwnedTournamentRankingSource(
+                        schema_version="owned_tournament_ranking_source.v4",
+                        binding=binding,
+                        canonical_result=canonical_result,
+                        canonical_awards=canonical_awards,
+                        adopted_by_command_id=command.command_id,
+                        provenance_kind="canonical_run_owned_tournament_authorities",
+                    )
             else:
                 if result is None or awards is None:
                     raise ValueError("Legacy tournament close produced no packages")
@@ -2246,6 +2264,7 @@ class AuthoritativeRunSimulationDriver:
         if existing.schema_version in {
             "owned_tournament_ranking_source.v3",
             "owned_tournament_ranking_source.v4",
+            "owned_tournament_ranking_source.v5",
         }:
             if existing.canonical_result is None or existing.canonical_awards is None:
                 raise ValueError("Canonical owned tournament source is incomplete")

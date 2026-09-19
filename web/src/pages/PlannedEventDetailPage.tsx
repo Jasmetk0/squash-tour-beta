@@ -320,8 +320,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     : null
 
   const hasPersistedHistory = plannedEvent ? persistedEventIds.has(plannedEvent.event_id) : false
-  const displayedCanonicalDrawAuthority =
-    canonicalEffectiveDrawAuthorityQuery.data ?? canonicalDrawAuthorityQuery.data
+  const displayedCanonicalDrawAuthority = canonicalEffectiveDrawAuthorityQuery.data
   const canonicalQualificationBrackets = displayedCanonicalDrawAuthority
     ? displayedCanonicalDrawAuthority.qualification_sections?.length
       ? displayedCanonicalDrawAuthority.qualification_sections

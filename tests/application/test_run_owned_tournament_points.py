@@ -739,6 +739,7 @@ def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_po
     by_player = {award.player_id: award for award in authority.awards}
     finalist = by_player["A"]
 
+    assert authority.schema_version == "tournament_point_award_authority.v2"
     assert finalist.reached_stage == "finalist"
     assert finalist.point_stage == "semifinal"
     assert finalist.ranking_points_awarded == 400
@@ -858,6 +859,7 @@ def test_walkover_after_bye_unlocks_actual_finishing_stage_points():
     )
     finalist = next(award for award in authority.awards if award.player_id == "A")
 
+    assert authority.schema_version == "tournament_point_award_authority.v1"
     assert finalist.reached_stage == "finalist"
     assert finalist.point_stage is None
     assert finalist.ranking_points_awarded == 650
@@ -877,6 +879,7 @@ def test_canonical_point_authority_maps_frozen_distribution_without_legacy_servi
     assert len(semifinalists) == 2
     assert all(award.ranking_points_awarded == 400 for award in semifinalists)
     assert point_authority.total_ranking_points == 2450
+    assert point_authority.schema_version == "tournament_point_award_authority.v1"
     assert point_authority.total_race_points == 2450
     assert "point_stage" not in point_authority.model_dump_json()
 

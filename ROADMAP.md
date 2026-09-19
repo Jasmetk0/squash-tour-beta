@@ -292,8 +292,8 @@ replacements never inherit the predecessor's seed number, seed protection or ent
 status. If the ranking-ordered frozen field has no permitted replacement left, the
 same physical slot becomes a late BYE with no reshuffle. Multi-Q section identities,
 the existing draw seed and deterministic revision replay remain stable. The middle
-seed-cascade path still intentionally requires replacement-backed player-count
-parity.
+seed-cascade path now has the same no-replacement safety boundary: after required
+cascade moves complete, any remaining final physical vacancy is frozen as a BYE.
 
 The player-specific replacement cutoff is now enforced by canonical draw repair.
 Every new successful repair freezes one `tournament_player_replacement_cutoff.v1`

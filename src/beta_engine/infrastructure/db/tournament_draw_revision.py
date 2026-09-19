@@ -367,7 +367,6 @@ class TournamentDrawRevisionStore:
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
-            repair_draw_seed=repair_draw_seed,
         )
         self.session.add(
             TournamentDrawRevisionModel(
@@ -396,6 +395,7 @@ class TournamentDrawRevisionStore:
         withdrawn_player_ids: tuple[str, ...],
         main_process_window_ordinal: int | None = None,
         qualification_process_window_ordinal: int | None = None,
+        repair_draw_seed: int | None = None,
     ) -> TournamentDrawRevision:
         requested = tuple(sorted(set(withdrawn_player_ids)))
         if not requested:
@@ -437,6 +437,7 @@ class TournamentDrawRevisionStore:
                 != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
             ):
                 raise TournamentDrawRevisionConflict(
                     "Tournament Draw revision command already has a different request"
@@ -560,6 +561,7 @@ class TournamentDrawRevisionStore:
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
+            repair_draw_seed=repair_draw_seed,
         )
         self.session.add(
             TournamentDrawRevisionModel(

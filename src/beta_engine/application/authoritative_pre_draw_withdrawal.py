@@ -10,6 +10,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.tournaments.bracket_diagnostics import TournamentBracketDiagnostic
 from beta_engine.domain.tournaments.entry_field import TournamentEntryField
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
@@ -54,8 +55,8 @@ class CanonicalPreDrawWithdrawalCommand(FrozenInput):
 class CanonicalTournamentEntryFieldState(FrozenInput):
     """Read model for the current authoritative Tournament Entry Field."""
 
-    schema_version: Literal["canonical_tournament_entry_field_state.v1"] = (
-        "canonical_tournament_entry_field_state.v1"
+    schema_version: Literal["canonical_tournament_entry_field_state.v2"] = (
+        "canonical_tournament_entry_field_state.v2"
     )
     run_id: str
     branch_id: str
@@ -67,6 +68,10 @@ class CanonicalTournamentEntryFieldState(FrozenInput):
     qualification_player_ids: tuple[str, ...]
     below_qualification_cut_player_ids: tuple[str, ...]
     withdrawn_player_ids: tuple[str, ...]
+    main_draw_capacity: int = Field(ge=2, le=128)
+    active_main_entrant_count: int = Field(ge=0, le=128)
+    effective_main_bye_count: int = Field(ge=0, le=128)
+    main_diagnostics: tuple[TournamentBracketDiagnostic, ...] = ()
     draw_input_committed: bool
     pre_draw_repair_locked_by_draw_input: bool
 
@@ -139,6 +144,10 @@ class CanonicalPreDrawWithdrawalService:
                     latest.below_qualification_cut_player_ids
                 ),
                 withdrawn_player_ids=latest.withdrawn_player_ids,
+                main_draw_capacity=latest.capacity.main_draw_size,
+                active_main_entrant_count=latest.active_main_entrant_count,
+                effective_main_bye_count=latest.effective_main_bye_count,
+                main_diagnostics=latest.main_diagnostics,
                 draw_input_committed=draw_input_committed,
                 pre_draw_repair_locked_by_draw_input=draw_input_committed,
             )

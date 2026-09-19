@@ -268,14 +268,20 @@ No default number of early windows is invented because Master §15.10 keeps that
 configuration open. The process authority participates in Saved Revision capture /
 restore and historical states without it retain their previous fingerprint shape.
 
-Canonical pre-cutoff full redraw is now append-only Draw history. The initial Draw
-remains immutable, each full redraw stores a predecessor-linked revision with a new
-repair draw seed, and the active Draw projection resolves to the latest revision.
-The same frozen Draw Input / Tournament Ranking Snapshot dependency is retained.
-Main-only redraw preserves Qualification exactly; Qualification-only redraw preserves
-Main and permanent Q1..Qn linkage identities. Draw revisions are part of Saved
-Revision capture/restore and corrupt predecessor chains fail closed before live state
-mutation.
+Canonical pre-cutoff full redraw is now append-only withdrawal repair history.
+The initial Draw remains immutable. Each revision freezes the repaired Entry Field,
+its derived Draw Input and the successor Draw, all still using the original frozen
+Tournament Ranking Snapshot but a new repair draw seed. A Main withdrawal therefore
+atomically promotes the highest eligible Qualification player into Main and backfills
+Qualification from below the cut before both affected components are redrawn. A
+Qualification-only withdrawal repairs/redraws Qualification while preserving Main.
+Each affected component must independently still be in its own full-redraw phase.
+Permanent Q1..Qn linkage identities are preserved, multiple withdrawals chain from
+the previous revision's full successor field, and the active Draw projection resolves
+to the latest append-only revision. Draw revisions are Saved Revision state and
+corrupt predecessor chains fail closed before live mutation. WC/RWC events remain
+deliberately blocked from this generic slice until their dedicated post-draw repair
+authority exists.
 
 This still does **not** claim the complete Master draw contract. Tier-aware seed
 cascade, frozen-slot mutation, post-draw WC/RWC repair, Lucky Loser ordering, group

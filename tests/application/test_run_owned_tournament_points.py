@@ -548,3 +548,30 @@ def test_ranking_week_ingests_v4_without_legacy_dtos_or_award_service(database):
         for award in point_authority.awards
     }
     assert {row.player_id: row.points for row in snapshot.rows} == expected
+
+
+def test_canonical_point_authority_fails_closed_on_walkover_until_dedicated_rules():
+    result_authority, _, _, _, _ = _authorities()
+    terminal_round = max(match.round_number for match in result_authority.matches)
+    matches = tuple(
+        match.model_copy(update={"scoreline": "W/O"})
+        if match.round_number == terminal_round
+        else match
+        for match in result_authority.matches
+    )
+    walkover_result = result_authority.model_copy(update={"matches": matches})
+
+    with pytest.raises(ValueError, match="W/O point awards"):
+        build_tournament_point_award_authority(
+            result=walkover_result,
+            point_authority=FrozenPointAwardAuthority(
+                ranking_status="ranked",
+                point_distribution={
+                    "champion": 1000,
+                    "finalist": 650,
+                    "semifinal": 400,
+                },
+                point_distribution_source="calendar_event.ranking_points_table",
+            ),
+            seed=88,
+        )

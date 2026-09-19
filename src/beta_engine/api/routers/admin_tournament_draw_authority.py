@@ -69,6 +69,30 @@ def inspect_initial_draw_authority(
         ) from exc
 
 
+@router.get("/effective-authority", response_model=TournamentDrawAuthority)
+def inspect_effective_draw_authority(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentDrawAuthority:
+    """Read the active canonical Draw after any append-only revision chain."""
+
+    try:
+        return _service(runtime).inspect_effective_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "canonical_effective_draw_conflict", "message": str(exc)},
+        ) from exc
+
+
 @router.post("/commit-input", response_model=CanonicalTournamentDrawState)
 def commit_draw_input(
     run_id: str,

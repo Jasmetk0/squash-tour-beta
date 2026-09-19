@@ -194,6 +194,10 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
+            "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
+            "tournament_draw_input_authority.v8",
+            "tournament_draw_input_authority.v9",
         }:
             raise ValueError("Post-draw RWC repair requires canonical WC Draw Input")
 

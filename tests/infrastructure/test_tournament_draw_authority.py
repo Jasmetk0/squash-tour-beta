@@ -1377,3 +1377,286 @@ def test_corrupt_saved_draw_authority_rejected_before_live_mutation(database):
             branch_id="branch",
             event_id="event",
         ) == authority
+
+
+def install_seed_cascade_main(session, *, player_count=34):
+    player_ids = tuple(f"P{index:02d}" for index in range(1, player_count + 1))
+    install_ranking_authority(session, player_ids)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=tuple(app(player_id, "main") for player_id in player_ids),
+        capacity=TournamentEntryFieldCapacity(main_draw_size=32),
+        command_id="seed-cascade-field",
+    )
+    TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-input",
+        draw_seed=12345,
+        main_seed_count=8,
+        qualification_seed_count=0,
+    )
+    initial = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-process",
+        main_process_window_count=3,
+    )
+    return initial
+
+
+def install_seed_cascade_multi_q(session):
+    main_ids = tuple(f"M{index:02d}" for index in range(1, 6))
+    q_ids = tuple(f"Q{index:02d}" for index in range(1, 26))
+    player_ids = (*main_ids, *q_ids)
+    install_ranking_authority(session, player_ids)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=(
+            *tuple(app(player_id, "main") for player_id in main_ids),
+            *tuple(app(player_id, "qualification") for player_id in q_ids),
+        ),
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=8,
+            qualification_draw_size=24,
+            qualifier_spots=3,
+        ),
+        command_id="seed-cascade-q-field",
+    )
+    TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-q-input",
+        draw_seed=24680,
+        main_seed_count=2,
+        qualification_seed_count=6,
+    )
+    initial = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-q-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seed-cascade-q-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+    return initial
+
+
+def draw_player_slots(bracket):
+    return {
+        slot.player_id: slot
+        for slot in bracket.slots
+        if slot.player_id is not None
+    }
+
+
+def test_seed_cascade_main_preserves_seed_numbers_and_physical_history(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        before = draw_player_slots(initial.main)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-seed-one-cascade",
+            withdrawn_player_ids=("P01",),
+            main_process_window_ordinal=2,
+        )
+
+        after = draw_player_slots(revision.successor_draw.main)
+        assert revision.schema_version == "tournament_draw_revision.v3"
+        assert revision.repair_kind == "seed_cascade_phase"
+        assert revision.main_repair_action == "seed_cascade"
+        assert revision.repair_draw_seed is None
+        assert revision.successor_draw_input.draw_seed == 12345
+
+        assert after["P03"].slot_index == before["P01"].slot_index
+        assert after["P03"].seed_number == 3
+        assert after["P05"].slot_index == before["P03"].slot_index
+        assert after["P05"].seed_number == 5
+        assert after["P09"].slot_index == before["P05"].slot_index
+        assert after["P09"].seed_number is None
+        assert after["P33"].slot_index == before["P09"].slot_index
+        assert after["P33"].seed_number is None
+        assert after["P02"] == before["P02"]
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+def test_seed_cascade_phase_directly_fills_unseeded_withdrawal(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        before = draw_player_slots(initial.main)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-unseeded-direct-fill",
+            withdrawn_player_ids=("P20",),
+            main_process_window_ordinal=2,
+        )
+
+        after = draw_player_slots(revision.successor_draw.main)
+        assert revision.main_repair_action == "direct_slot_fill"
+        assert after["P33"].slot_index == before["P20"].slot_index
+        assert revision.successor_draw.main.seed_positions == initial.main.seed_positions
+        for player_id, slot in before.items():
+            if player_id != "P20":
+                assert after[player_id] == slot
+
+
+def test_seed_cascade_multiple_withdrawals_are_atomic_and_order_independent(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_main(session)
+        before = draw_player_slots(initial.main)
+        store = TournamentDrawRevisionStore(session)
+
+        revision = store.seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-two-seeds-cascade",
+            withdrawn_player_ids=("P04", "P01"),
+            main_process_window_ordinal=2,
+        )
+        retry = store.seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-two-seeds-cascade",
+            withdrawn_player_ids=("P01", "P04"),
+            main_process_window_ordinal=2,
+        )
+        assert retry == revision
+
+        after = draw_player_slots(revision.successor_draw.main)
+        assert after["P03"].slot_index == before["P01"].slot_index
+        assert after["P03"].seed_number == 3
+        assert after["P05"].slot_index == before["P03"].slot_index
+        assert after["P05"].seed_number == 5
+        assert after["P06"].slot_index == before["P04"].slot_index
+        assert after["P06"].seed_number == 6
+        assert after["P09"].slot_index == before["P05"].slot_index
+        assert after["P10"].slot_index == before["P06"].slot_index
+        assert {
+            after["P33"].slot_index,
+            after["P34"].slot_index,
+        } == {
+            before["P09"].slot_index,
+            before["P10"].slot_index,
+        }
+
+
+@pytest.mark.parametrize("process_window_ordinal", [1, 3])
+def test_seed_cascade_rejects_pre_cutoff_and_frozen_phase(
+    database, process_window_ordinal
+):
+    with database.begin() as session:
+        install_seed_cascade_main(session)
+        with pytest.raises(
+            ValueError,
+            match="only legal from Redraw Cutoff to Draw Freeze",
+        ):
+            TournamentDrawRevisionStore(
+                session
+            ).seed_cascade_phase_withdrawal(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id=f"wrong-cascade-phase-{process_window_ordinal}",
+                withdrawn_player_ids=("P01",),
+                main_process_window_ordinal=process_window_ordinal,
+            )
+
+
+def test_seed_cascade_multi_q_preserves_q_identity_and_global_seed_numbers(database):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+        assert tuple(
+            section.section_id for section in initial.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+
+        before = {
+            slot.player_id: (section.section_id, slot)
+            for section in initial.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+        q1 = initial.qualification_brackets[0]
+        q1_second_seed = next(
+            slot
+            for slot in q1.slots
+            if slot.seed_number is not None and slot.seed_number != 1
+        )
+        assert q1_second_seed.player_id is not None
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).seed_cascade_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-q1-global-seed",
+            withdrawn_player_ids=("Q01",),
+            qualification_process_window_ordinal=2,
+        )
+
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+        after = {
+            slot.player_id: (section.section_id, slot)
+            for section in revision.successor_draw.qualification_brackets
+            for slot in section.slots
+            if slot.player_id is not None
+        }
+
+        _, withdrawn_slot = before["Q01"]
+        moved_section, moved_seed = after[q1_second_seed.player_id]
+        assert moved_section == "Q1"
+        assert moved_seed.slot_index == withdrawn_slot.slot_index
+        assert moved_seed.seed_number == q1_second_seed.seed_number
+
+        q07_before_section, q07_before = before["Q07"]
+        q07_after_section, q07_after = after["Q07"]
+        assert q07_after_section == "Q1"
+        assert q07_after.slot_index == q1_second_seed.slot_index
+        assert q07_after.seed_number is None
+
+        q25_section, q25_after = after["Q25"]
+        assert q25_section == q07_before_section
+        assert q25_after.slot_index == q07_before.slot_index
+        assert q25_after.seed_number is None
+        assert revision.successor_draw.main == initial.main
+

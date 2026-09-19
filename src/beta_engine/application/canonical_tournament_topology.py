@@ -101,6 +101,7 @@ def project_canonical_draw_to_match_topology(
         ].match_id
 
     auto_sources: dict[str, str] = {}
+    auto_match_sources: dict[str, str] = {}
     bye_match_ids: list[str] = []
     bye_winners: list[tuple[str, str]] = []
     promotions: list[FrozenQualifierPromotion] = []
@@ -124,6 +125,7 @@ def project_canonical_draw_to_match_topology(
                     nodes=nodes,
                     record_by_node=record_by_node,
                     auto_sources=auto_sources,
+                    auto_match_sources=auto_match_sources,
                     qualification_terminal_match_ids=qualification_terminal_match_ids,
                 )
                 for source in raw_sources
@@ -137,6 +139,7 @@ def project_canonical_draw_to_match_topology(
                 if live_source == "bye":
                     raise ValueError("canonical Draw contains a double BYE")
                 auto_sources[node.node_id] = live_source
+                auto_match_sources[record.match_id] = live_source
                 bye_match_ids.append(record.match_id)
                 if live_source.startswith("player:"):
                     winner = live_source.removeprefix("player:")
@@ -236,6 +239,7 @@ def _resolve_source(
     nodes,
     record_by_node,
     auto_sources,
+    auto_match_sources,
     qualification_terminal_match_ids,
 ) -> str:
     if source.startswith("slot:"):
@@ -250,6 +254,13 @@ def _resolve_source(
                 raise ValueError(
                     "canonical qualifier placeholder lacks linked Qualification terminal"
                 )
+            # A one-player Qualification section resolves its terminal through a
+            # canonical BYE. Keep the promotion bound to that terminal match for
+            # result/provenance history, but execution must consume the already
+            # known player directly rather than depending on a non-executable BYE
+            # group.
+            if source_match_id in auto_match_sources:
+                return auto_match_sources[source_match_id]
             return f"winner:{source_match_id}"
         if slot.entrant_kind == "lucky_loser_placeholder":
             raise ValueError(

@@ -780,6 +780,7 @@ def test_canonical_point_authority_maps_frozen_distribution_without_legacy_servi
     assert all(award.ranking_points_awarded == 400 for award in semifinalists)
     assert point_authority.total_ranking_points == 2450
     assert point_authority.total_race_points == 2450
+    assert "point_stage" not in point_authority.model_dump_json()
 
 
 def test_canonical_point_authority_rejects_corrupt_distribution_on_reopen():

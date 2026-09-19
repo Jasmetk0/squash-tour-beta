@@ -3356,12 +3356,11 @@ def test_frozen_main_vacancies_create_ll1_then_ll2_by_vacancy_chronology(
             "LL1",
             "LL2",
         )
-        assert tuple(
-            placeholder_id
-            for placeholder_id, _ in second.successor_draw.main.lucky_loser_placeholder_slots
-        ) == ("LL1", "LL2")
-
-        # LL numbering follows vacancy chronology, not physical top-to-bottom order.
+        # Draw Input stores LL chronology; bracket metadata is physical-slot ordered.
+        assert second.successor_draw_input.lucky_loser_placeholder_ids == (
+            "LL1",
+            "LL2",
+        )
         assert {
             "LL1": original_c.slot_index,
             "LL2": original_d.slot_index,

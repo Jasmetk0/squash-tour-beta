@@ -726,6 +726,7 @@ def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_po
             "champion": 1000,
             "finalist": 650,
             "semifinal": 400,
+            "qualification_winner": 150,
             "qualification_final": 100,
         },
         point_distribution_source="calendar_event.ranking_points_table",
@@ -739,11 +740,13 @@ def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_po
     by_player = {award.player_id: award for award in authority.awards}
     finalist = by_player["A"]
 
-    assert authority.schema_version == "tournament_point_award_authority.v2"
+    assert authority.schema_version == "tournament_point_award_authority.v3"
     assert finalist.reached_stage == "finalist"
     assert finalist.point_stage == "semifinal"
-    assert finalist.ranking_points_awarded == 400
-    assert finalist.race_points_awarded == 400
+    assert finalist.qualification_point_stage == "qualification_winner"
+    assert finalist.qualification_points_awarded == 150
+    assert finalist.ranking_points_awarded == 550
+    assert finalist.race_points_awarded == 550
 
     prize = build_tournament_prize_money_award_authority(
         result=result,

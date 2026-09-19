@@ -420,8 +420,22 @@ replacement cutoff is still open, and every candidate source is exhausted, Maste
 §15.8 does not yet state an explicit action for that intermediate state. The engine
 therefore refuses to invent one.
 
-Next work is to make one **orchestrator command consume this source authority** and
-route into the already-canonical RWC, LL, external-reserve, BYE and W/O mutations.
+A first **frozen-Main replacement orchestrator** now consumes the source authority
+and dispatches one command into the canonical mutation path. It routes direct Main
+vacancies to pre-Q Qualification promotion, pending/immediate Lucky Loser creation
+and fill, source-aware post-Q external reserve, late BYE, and W/O; WC slots still
+take the dedicated RWC path first. External reserve and BYE now have their own
+source-bound Draw Input v8 / Draw revision v11 exact-slot mutation, so those sources
+no longer fall back through generic field repair. Deterministic child command IDs
+make the draw-mutation routes replayable/idempotent across retries.
+
+The orchestrator intentionally requires Main to be in Draw Freeze for this first
+unified slice; pre-freeze full-redraw/cascade routing remains in the existing
+specialized phase commands. Two bounded gaps stay fail-closed rather than being
+guessed: ordinary fallback from a WC slot after RWC exhaustion still needs WC-slot
+schema support, and pre-Q promotion with explicit unavailable-player skips needs a
+source-aware Q repair rather than the older generic field resolver. The undefined
+post-Main-start/all-sources-exhausted policy from Master §15.8 remains unchanged.
 Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
 later Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate
 Gate 3 work.

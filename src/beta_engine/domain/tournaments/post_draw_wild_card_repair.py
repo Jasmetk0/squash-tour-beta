@@ -23,6 +23,7 @@ class TournamentPostDrawWildCardRepairAuthority(FrozenInput):
     schema_version: Literal[
         "tournament_post_draw_wild_card_repair.v1",
         "tournament_post_draw_wild_card_repair.v2",
+        "tournament_post_draw_wild_card_repair.v3",
     ] = "tournament_post_draw_wild_card_repair.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -60,6 +61,16 @@ class TournamentPostDrawWildCardRepairAuthority(FrozenInput):
         ge=1,
         exclude_if=lambda value: value is None,
     )
+    vacated_main_seed_number: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
+    vacated_qualification_seed_number: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
     unavailable_player_ids: tuple[str, ...] = ()
     replacement_cutoff_authority: TournamentPlayerReplacementCutoffAuthority
 
@@ -78,12 +89,14 @@ class TournamentPostDrawWildCardRepairAuthority(FrozenInput):
                     self.qualification_physical_slot_index,
                     self.qualification_backfill_player_id,
                     self.qualification_backfill_ordinal,
+                    self.vacated_main_seed_number,
+                    self.vacated_qualification_seed_number,
                 )
             ):
-                raise ValueError("Historical RWC v1 cannot carry cross-draw evidence")
+                raise ValueError("Historical RWC v1 cannot carry later repair evidence")
         else:
             if self.replacement_source is None:
-                raise ValueError("RWC v2 requires replacement-source evidence")
+                raise ValueError("RWC v2/v3 requires replacement-source evidence")
             q_values = (
                 self.qualification_physical_slot_index,
                 self.qualification_backfill_player_id,
@@ -103,6 +116,17 @@ class TournamentPostDrawWildCardRepairAuthority(FrozenInput):
                 raise ValueError(
                     "External RWC repair cannot carry Qualification backfill evidence"
                 )
+            if self.schema_version == "tournament_post_draw_wild_card_repair.v2":
+                if (
+                    self.vacated_main_seed_number is not None
+                    or self.vacated_qualification_seed_number is not None
+                ):
+                    raise ValueError("RWC v2 cannot carry frozen seed vacancies")
+            elif (
+                self.vacated_main_seed_number is None
+                and self.vacated_qualification_seed_number is None
+            ):
+                raise ValueError("RWC v3 requires at least one frozen seed vacancy")
         cutoff = self.replacement_cutoff_authority
         if (
             cutoff.run_id,
@@ -169,6 +193,7 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
         if predecessor_draw_input.schema_version not in {
             "tournament_draw_input_authority.v3",
             "tournament_draw_input_authority.v4",
+            "tournament_draw_input_authority.v5",
         }:
             raise ValueError("Post-draw RWC repair requires canonical WC Draw Input")
 
@@ -187,10 +212,7 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
         slot = matching_slots[0]
         if slot.entry_status != "wild_card":
             raise ValueError("RWC repair target physical slot is not a WC slot")
-        if slot.seed_number is not None:
-            raise ValueError(
-                "Seeded WC withdrawal requires the later seed-aware WC repair slice"
-            )
+        vacated_main_seed_number = slot.seed_number
 
         unavailable = set(base_wild_card_authority.unavailable_player_ids)
         unavailable.update(unavailable_player_ids)
@@ -216,6 +238,7 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
         qualification_physical_slot_index = None
         qualification_backfill_player_id = None
         qualification_backfill_ordinal = None
+        vacated_qualification_seed_number = None
 
         for ordinal, reserve in enumerate(
             base_wild_card_authority.reserve_wild_card_player_ids,
@@ -252,11 +275,8 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
                     "Qualification RWC promotion cannot resolve one physical Q slot"
                 )
             qualification_section_id, qualification_slot = matches[0]
-            if qualification_slot.seed_number is not None:
-                raise ValueError(
-                    "Seeded Qualification RWC requires the later seed-aware Q repair slice"
-                )
             qualification_physical_slot_index = qualification_slot.slot_index
+            vacated_qualification_seed_number = qualification_slot.seed_number
 
             active_players = main_players | qualification_players
             for ordinal, candidate in enumerate(
@@ -272,6 +292,12 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
                 raise ValueError(
                     "Qualification RWC promotion has no below-cut Q backfill player"
                 )
+
+        if (
+            vacated_main_seed_number is not None
+            or vacated_qualification_seed_number is not None
+        ):
+            schema_version = "tournament_post_draw_wild_card_repair.v3"
 
         return TournamentPostDrawWildCardRepairAuthority(
             schema_version=schema_version,
@@ -289,13 +315,15 @@ class TournamentPostDrawWildCardRepairAuthorityBuilder:
             reserve_ordinal=reserve_ordinal,
             replacement_source=(
                 replacement_source
-                if schema_version == "tournament_post_draw_wild_card_repair.v2"
+                if schema_version != "tournament_post_draw_wild_card_repair.v1"
                 else None
             ),
             qualification_section_id=qualification_section_id,
             qualification_physical_slot_index=qualification_physical_slot_index,
             qualification_backfill_player_id=qualification_backfill_player_id,
             qualification_backfill_ordinal=qualification_backfill_ordinal,
+            vacated_main_seed_number=vacated_main_seed_number,
+            vacated_qualification_seed_number=vacated_qualification_seed_number,
             unavailable_player_ids=tuple(sorted(set(unavailable_player_ids))),
             replacement_cutoff_authority=replacement_cutoff_authority,
         )

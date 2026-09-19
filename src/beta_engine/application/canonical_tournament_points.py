@@ -120,7 +120,11 @@ def _point_stage_for_draw(
         draw_type=draw_type,
     )
     if not matches:
-        raise ValueError("Tournament point source has no matches for player draw")
+        # Historical/synthetic single-component authorities may carry an already
+        # resolved reached_stage without match detail. Preserve that compatibility
+        # boundary; additive Qualification + Main v3 still requires Q match history
+        # in _qualification_nominal_stage so its extra component cannot be invented.
+        return nominal_stage
 
     has_bye = any(
         match.scoreline == "BYE"

@@ -980,6 +980,7 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
 @pytest.mark.pr_critical
 def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
     tmp_path,
+    monkeypatch,
 ):
     driver, _, _, first, _ = _multi_driver_fixture(
         tmp_path / "proposal-conflict"
@@ -998,7 +999,11 @@ def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
             participant_sources=("player:shared", "player:right"),
         ),
     }
-    driver._topology_for_session = lambda *args, **kwargs: plans
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_topology_for_session",
+        lambda self, *args, **kwargs: plans,
+    )
 
     with pytest.raises(
         ValueError,

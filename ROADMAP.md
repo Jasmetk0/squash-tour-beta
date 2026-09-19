@@ -331,7 +331,16 @@ their final tournament finishing stage; known amounts stay in the Edition's orig
 currency, unknown/missing stages remain Unknown, W/O advancement is payout-eligible
 without becoming a played win, and the authority distinguishes known subtotal from a
 complete prize pool. Ranking ingestion deliberately continues to consume only
-canonical Result + Point Awards. Historical v1-v4 sources remain immutable readers. Post-draw WC/RWC work has now started with the first bounded canonical slice:
+canonical Result + Point Awards. Historical v1-v4 sources remain immutable readers.
+
+Player prize-money history now has a branch-scoped read model over those owned
+sources. It provides the exact event ledger, per-season status counts and known
+season/career totals by original currency, while preserving Unknown,
+not-configured and pre-v5 historical-unavailable states. It deliberately does not
+sum different currencies. The next finance dependency for Master §19.1 is a
+Run-owned historical FX table keyed by week plus reporting-currency conversion;
+source/generation of rates, base currency and rounding remain unresolved product
+configuration and must not be invented. Post-draw WC/RWC work has now started with the first bounded canonical slice:
 after Main Draw Freeze, withdrawal of an **unseeded active WC holder** can consume
 the next available **external** Reserve Wild Card in stored RWC order. The repair is
 append-only revision v6, preserves the exact physical Main slot, preserves the

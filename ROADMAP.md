@@ -433,13 +433,15 @@ replayable/idempotent across retries.
 
 The orchestrator intentionally requires Main to be in Draw Freeze; pre-freeze
 full-redraw/cascade routing remains in the existing specialized phase commands.
-The post-Q WC→Lucky-Loser gap is now closed with source-bound WC release: revision
-v13 creates the exact chronological LL placeholder while Draw Input v9 records the
-released WC ordinal and replacement-source fingerprint. Remaining bounded gaps stay
-fail-closed rather than being guessed: WC-slot fallback into pre-Q Qualification
-promotion still needs source-bound WC release inside the Q mutation, and pre-Q
-promotion with explicit unavailable-player skips needs a source-aware Q repair rather
-than the older generic field resolver. The undefined
+The post-Q WC→Lucky-Loser gap is closed with source-bound WC release: revision v13
+creates the exact chronological LL placeholder while Draw Input v9 records the
+released WC ordinal and replacement-source fingerprint. The pre-Q gap is now closed
+as well: revision v14 routes both Direct-Main and exhausted-WC vacancies through the
+frozen `qualification_promotion` source, skips explicitly unavailable candidates,
+releases WC status where needed, and uses Qualification's own redraw /
+seed-cascade / freeze phase for the Q-side repair. The older generic field resolver
+remains available for non-orchestrated legacy repair paths but is no longer the
+orchestrator's source of truth for pre-Q replacement. The undefined
 post-Main-start/all-sources-exhausted policy from Master §15.8 remains unchanged.
 Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
 later Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate

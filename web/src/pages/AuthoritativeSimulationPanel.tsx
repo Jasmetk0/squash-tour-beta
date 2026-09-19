@@ -215,7 +215,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Position → dependency-safe Week Schedule → Next Match / Next Slot → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot → Save.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -235,7 +235,7 @@ export function AuthoritativeSimulationPanel({
         <>
           <SummaryPills
             items={[
-              { label: 'Week', value: `S${position.current_week.season_index} · W${position.current_week.week}` },
+              { label: 'Week', value: `Season index ${position.current_week.season_index} · Week ${position.current_week.week}` },
               { label: 'Current slot', value: position.current_slot_id ?? 'Not materialized' },
               { label: 'Eligible matches', value: position.eligible_match_ids.length },
               { label: 'Blocked matches', value: position.blocked_match_ids.length },

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
+from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
 from beta_engine.application.authoritative_tournament_draw import (
     CanonicalDrawGenerateCommand,
     CanonicalDrawInputCommitCommand,
@@ -43,6 +44,28 @@ def inspect_draw_state(
         raise HTTPException(
             status_code=409,
             detail={"code": "canonical_draw_state_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/authority", response_model=TournamentDrawAuthority)
+def inspect_initial_draw_authority(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentDrawAuthority:
+    try:
+        return _service(runtime).inspect_initial_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "canonical_draw_authority_conflict", "message": str(exc)},
         ) from exc
 
 

@@ -17,6 +17,7 @@ from beta_engine.domain.tournaments.draw_authority import (
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
 )
+from beta_engine.domain.tournaments.entry_field import TournamentEntryField
 from beta_engine.domain.tournaments.draw_process_authority import (
     TournamentDrawProcessAuthority,
 )
@@ -37,6 +38,7 @@ class TournamentDrawRevision(FrozenInput):
     withdrawn_player_ids: tuple[str, ...]
     predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     process_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    successor_field: TournamentEntryField
     successor_draw_input: TournamentDrawInputAuthority
     successor_draw: TournamentDrawAuthority
 
@@ -55,6 +57,8 @@ class TournamentDrawRevision(FrozenInput):
             self.successor_draw_input.event_id,
         ) != scope:
             raise ValueError("Draw revision successor input scope mismatch")
+        if self.successor_draw_input.entry_field_fingerprint != self.successor_field.fingerprint:
+            raise ValueError("Draw revision successor Input/Field binding mismatch")
         if (
             self.successor_draw.draw_input_fingerprint
             != self.successor_draw_input.fingerprint
@@ -93,6 +97,7 @@ class TournamentDrawRevisionBuilder:
     def build_full_redraw(
         *,
         predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
         successor_draw_input: TournamentDrawInputAuthority,
         process_authority: TournamentDrawProcessAuthority,
         affected_draw_types: tuple[TournamentDrawType, ...],
@@ -179,6 +184,7 @@ class TournamentDrawRevisionBuilder:
             withdrawn_player_ids=withdrawn_player_ids,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
+            successor_field=successor_field,
             successor_draw_input=successor_draw_input,
             successor_draw=successor,
         )

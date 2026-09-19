@@ -1123,10 +1123,12 @@ class AuthoritativeSlotMatchExecutor:
     ) -> AuthoritativeTournamentGroupResult:
         payload = json.loads(row.payload_json)
         if payload.get("schema_version") == "authoritative_walkover_group.v1":
-            authority = TournamentWalkoverAuthority.model_validate(
-                payload.get("walkover_authority")
+            authority = TournamentWalkoverAuthority.model_validate_json(
+                json.dumps(payload.get("walkover_authority"))
             )
-            result = TournamentWalkoverResult.model_validate(payload.get("result"))
+            result = TournamentWalkoverResult.model_validate_json(
+                json.dumps(payload.get("result"))
+            )
             result_fp = fingerprint(
                 {
                     "authority": authority.fingerprint,

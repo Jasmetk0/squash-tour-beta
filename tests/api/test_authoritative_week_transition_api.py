@@ -593,7 +593,61 @@ def test_target_week_prospect_is_frozen_as_branch_owned_pre_tour_arrival(tmp_pat
             )
         assert confirm(root, command, preview) == (201, confirmed)
 
+        ranking_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "ranking-candidates"
+        )
+        review = _request("GET", ranking_root + "/save/preview")[1]
+        status, saved = _request(
+            "POST",
+            ranking_root + "/save",
+            {
+                "expected_draft_version": review["draft_version"],
+                "expected_ranking_fingerprint": review["ranking_fingerprint"],
+            },
+        )
+        assert status == 201
+        arrival_revision = saved["saved_revision"]["revision_id"]
+        restore_root = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/"
+            "saved-revisions"
+        )
+        status, back = _request(
+            "POST",
+            f"{restore_root}/{command['base_revision_id']}/restore",
+            {
+                "expected_head_saved_revision_id": arrival_revision,
+                "expected_draft_version": saved["working_draft"]["draft_version"],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        with sqlite3.connect(path) as connection:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM authoritative_world_events "
+                "WHERE command_id='derived-prospect-transition'"
+            ).fetchone()[0] == 0
 
+        status, _ = _request(
+            "POST",
+            f"{restore_root}/{arrival_revision}/restore",
+            {
+                "expected_head_saved_revision_id": back["saved_revision"]["revision_id"],
+                "expected_draft_version": back["working_draft"]["draft_version"],
+                "expected_current_viewer_branch_id": branch_id,
+                "explicit_confirmation": True,
+            },
+        )
+        assert status == 201
+        with sqlite3.connect(path) as connection:
+            restored_event = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM authoritative_world_events "
+                    "WHERE command_id='derived-prospect-transition'"
+                ).fetchone()[0]
+            )
+        assert restored_event == event
 
 
 @pytest.mark.pr_critical

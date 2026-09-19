@@ -204,6 +204,35 @@ describe('AuthoritativeSimulationPanel', () => {
     )
   })
 
+  it('reuses the frozen command id when a Next Match response is lost and the user retries', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextMatch
+      .mockRejectedValueOnce(new Error('network response lost'))
+      .mockResolvedValueOnce({
+        ...position,
+        eligible_match_ids: ['g2'],
+        unresolved_group_ids: ['g2', 'g3'],
+        position_fingerprint: 'f'.repeat(64)
+      })
+    renderPanel()
+
+    await screen.findByLabelText('Eligible authoritative match group')
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const button = screen.getByRole('button', { name: 'Simulate authoritative Next Match' })
+    await userEvent.click(button)
+
+    expect(await screen.findByText('Authoritative Next Match failed: network response lost')).toBeInTheDocument()
+    const firstCommandId = api.simulateAuthoritativeNextMatch.mock.calls[0][2].command_id
+
+    await userEvent.click(button)
+    await waitFor(() => expect(api.simulateAuthoritativeNextMatch).toHaveBeenCalledTimes(2))
+    expect(api.simulateAuthoritativeNextMatch.mock.calls[1][2].command_id).toBe(firstCommandId)
+  })
+
   it('simulates the whole current slot without smuggling a group id into the command', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,

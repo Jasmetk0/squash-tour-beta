@@ -199,7 +199,15 @@ def test_run_owned_package_executes_single_q_bye_as_canonical_auto_advance():
     assert q_match.match_id in topology.bye_match_ids
     assert dict(topology.bye_winners)[q_match.match_id] == "D"
     assert len(topology.qualifier_promotions) == 1
-    assert topology.qualifier_promotions[0].source_match_id == q_match.match_id
+    promotion = topology.qualifier_promotions[0]
+    assert promotion.source_match_id == q_match.match_id
+
+    target_plan = next(
+        plan for plan in topology.plans
+        if plan.group_id == promotion.target_match_id
+    )
+    assert "player:D" in target_plan.participant_sources
+    assert f"winner:{q_match.match_id}" not in target_plan.participant_sources
 
 
 def test_run_owned_package_freezes_explicit_bye_from_canonical_draw():

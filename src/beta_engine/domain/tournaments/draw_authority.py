@@ -16,7 +16,12 @@ from beta_engine.domain.tournaments.draw_input_authority import (
 
 
 TournamentDrawType = Literal["qualification", "main"]
-TournamentDrawEntrantKind = Literal["player", "qualifier_placeholder", "bye"]
+TournamentDrawEntrantKind = Literal[
+    "player",
+    "qualifier_placeholder",
+    "lucky_loser_placeholder",
+    "bye",
+]
 TournamentDrawAlgorithmVersion = Literal[
     "protected_seed_shuffle.v1",
     "idealized_seed_tiers.v2",
@@ -47,13 +52,26 @@ class TournamentDrawSlot(FrozenInput):
         if self.entrant_kind == "player":
             if not self.player_id or self.placeholder_id is not None:
                 raise ValueError("Player draw slot requires exactly one player identity")
-        elif self.entrant_kind == "qualifier_placeholder":
+        elif self.entrant_kind in {
+            "qualifier_placeholder",
+            "lucky_loser_placeholder",
+        }:
             if not self.placeholder_id or self.player_id is not None:
                 raise ValueError(
-                    "Qualifier-placeholder draw slot requires exactly one placeholder identity"
+                    "Placeholder draw slot requires exactly one placeholder identity"
                 )
             if self.seed_number is not None or self.is_seed_protected:
-                raise ValueError("Qualifier placeholder cannot be seeded")
+                raise ValueError("Placeholder draw slot cannot be seeded")
+            if (
+                self.entrant_kind == "qualifier_placeholder"
+                and not self.placeholder_id.startswith("Q")
+            ):
+                raise ValueError("Qualifier placeholder must use Q identity")
+            if (
+                self.entrant_kind == "lucky_loser_placeholder"
+                and not self.placeholder_id.startswith("LL")
+            ):
+                raise ValueError("Lucky Loser placeholder must use LL identity")
         else:
             if self.player_id is not None or self.placeholder_id is not None:
                 raise ValueError("BYE draw slot cannot carry an entrant identity")
@@ -91,6 +109,7 @@ class TournamentDrawBracket(FrozenInput):
     nodes: tuple[TournamentDrawNode, ...]
     bye_slot_indexes: tuple[int, ...] = ()
     qualifier_placeholder_slots: tuple[tuple[str, int], ...] = ()
+    lucky_loser_placeholder_slots: tuple[tuple[str, int], ...] = ()
 
     @model_validator(mode="after")
     def validate_bracket(self) -> "TournamentDrawBracket":
@@ -140,6 +159,17 @@ class TournamentDrawBracket(FrozenInput):
         if self.qualifier_placeholder_slots != expected_placeholders:
             raise ValueError(
                 "Tournament draw qualifier placeholders differ from slot payload"
+            )
+
+        expected_lucky_losers = tuple(
+            (slot.placeholder_id, slot.slot_index)
+            for slot in self.slots
+            if slot.entrant_kind == "lucky_loser_placeholder"
+            and slot.placeholder_id is not None
+        )
+        if self.lucky_loser_placeholder_slots != expected_lucky_losers:
+            raise ValueError(
+                "Tournament draw Lucky Loser placeholders differ from slot payload"
             )
 
         node_ids = [node.node_id for node in self.nodes]

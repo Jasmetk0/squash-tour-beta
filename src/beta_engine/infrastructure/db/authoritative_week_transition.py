@@ -305,7 +305,6 @@ def preview_persisted_week_transition(
         mapping = (
             ("world predecessor", "authoritative_world_head_mismatch"),
             ("roster identity", "ranking_transition_roster_mismatch"),
-            ("prospect", "prospect_bridge_missing"),
             ("Saved Revision", "ranking_transition_authority_stale"),
         )
         return (

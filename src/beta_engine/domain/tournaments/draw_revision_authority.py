@@ -168,6 +168,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v9",
             "tournament_draw_revision.v10",
             "tournament_draw_revision.v11",
+            "tournament_draw_revision.v12",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -479,8 +480,24 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError("Lucky Loser fill authority scope mismatch")
         else:
             authority = self.replacement_source_authority
-            if self.schema_version != "tournament_draw_revision.v11":
-                raise ValueError("Frozen ordinary fallback requires revision schema v11")
+            if self.schema_version not in {
+                "tournament_draw_revision.v11",
+                "tournament_draw_revision.v12",
+            }:
+                raise ValueError(
+                    "Frozen ordinary fallback requires revision schema v11/v12"
+                )
+            if (
+                self.schema_version == "tournament_draw_revision.v12"
+                and (
+                    self.successor_draw_input.schema_version
+                    != "tournament_draw_input_authority.v9"
+                    or not self.successor_draw_input.released_wild_card_slot_count
+                )
+            ):
+                raise ValueError(
+                    "WC-release fallback revision requires Draw Input v9 lineage"
+                )
             if authority is None:
                 raise ValueError("Frozen ordinary fallback lacks source authority")
             if authority.source not in {"external_reserve", "bye"}:

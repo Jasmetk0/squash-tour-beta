@@ -107,6 +107,14 @@ import type {
   AdminBranchSimulateFullSeasonResponse,
   AdminBranchSimulateWorldTourFinalsRequest,
   AdminBranchSimulateWorldTourFinalsResponse,
+  AuthoritativeSimulationPosition,
+  AuthoritativeWeekScheduleInspection,
+  AuthoritativeWeekScheduleProposal,
+  AdoptAuthoritativeWeekScheduleProposalPayload,
+  AuthoritativeSimulationCommandPayload,
+  AuthoritativeSimulationSavePreview,
+  AuthoritativeSimulationSavePayload,
+  AuthoritativeSimulationSaveResponse,
   RunWeeklyIntakeCohortSeasonPreviewParams,
   RunWeeklyIntakeCohortSeasonPreviewResponse,
   RunPlayerDetail,
@@ -1002,6 +1010,119 @@ export function simulateFullSeasonOnBranch(productRunId: string, branchId: strin
 
 export function simulateWorldTourFinalsOnBranch(productRunId: string, branchId: string, payload: AdminBranchSimulateWorldTourFinalsRequest): Promise<AdminBranchSimulateWorldTourFinalsResponse> {
   return request(`/admin/runs/${encodeURIComponent(productRunId)}/branches/${encodeURIComponent(branchId)}/simulate-world-tour-finals`, { method: 'POST', body: JSON.stringify(payload) })
+}
+
+function authoritativeSimulationRoot(runId: string, branchId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/authoritative-simulation`
+}
+
+function verifyAuthoritativeSimulationScope(
+  runId: string,
+  branchId: string,
+  data: { run_id: string; branch_id: string }
+): void {
+  if (data.run_id !== runId || data.branch_id !== branchId) {
+    throw new Error('Authoritative simulation response does not match the requested Run/Branch.')
+  }
+}
+
+export async function getAuthoritativeSimulationPosition(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeSimulationPosition> {
+  const data = await request<AuthoritativeSimulationPosition>(
+    authoritativeSimulationRoot(runId, branchId) + '/position'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function inspectAuthoritativeWeekSchedule(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeWeekScheduleInspection> {
+  const data = await request<AuthoritativeWeekScheduleInspection>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function proposeAuthoritativeWeekSchedule(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeWeekScheduleProposal> {
+  const data = await request<AuthoritativeWeekScheduleProposal>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule/proposal'
+  )
+  if (data.schedule.run_id !== runId || data.schedule.branch_id !== branchId) {
+    throw new Error('Authoritative schedule proposal does not match the requested Run/Branch.')
+  }
+  return data
+}
+
+export async function adoptAuthoritativeWeekScheduleProposal(
+  runId: string,
+  branchId: string,
+  payload: AdoptAuthoritativeWeekScheduleProposalPayload
+): Promise<AuthoritativeWeekScheduleInspection> {
+  const data = await request<AuthoritativeWeekScheduleInspection>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule/adopt-proposal',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function simulateAuthoritativeNextMatch(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeSimulationCommandPayload
+): Promise<AuthoritativeSimulationPosition> {
+  const data = await request<AuthoritativeSimulationPosition>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-match',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function simulateAuthoritativeNextSlot(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeSimulationCommandPayload
+): Promise<AuthoritativeSimulationPosition> {
+  const data = await request<AuthoritativeSimulationPosition>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-slot',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function previewAuthoritativeSimulationSave(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeSimulationSavePreview> {
+  const data = await request<AuthoritativeSimulationSavePreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/save/preview'
+  )
+  if (data.run_id && data.run_id !== runId) throw new Error('Authoritative simulation Save preview Run mismatch.')
+  if (data.branch_id && data.branch_id !== branchId) throw new Error('Authoritative simulation Save preview Branch mismatch.')
+  return data
+}
+
+export async function saveAuthoritativeSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeSimulationSavePayload
+): Promise<AuthoritativeSimulationSaveResponse> {
+  const data = await request<AuthoritativeSimulationSaveResponse>(
+    authoritativeSimulationRoot(runId, branchId) + '/save',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
 }
 
 export function getRun(runId: string): Promise<SeasonStateResponse> {

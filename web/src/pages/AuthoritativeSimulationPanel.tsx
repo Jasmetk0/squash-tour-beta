@@ -266,6 +266,9 @@ export function AuthoritativeSimulationPanel({
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
+        setWeekTransitionReview(null)
+        setWeekTransitionCommitted(false)
+        setWeekTransitionCommandId(newCommandId())
         await Promise.all([
           refreshCanonicalSimulation(),
           queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] })

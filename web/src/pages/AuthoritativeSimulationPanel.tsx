@@ -38,6 +38,8 @@ export function AuthoritativeSimulationPanel({
   const [confirmed, setConfirmed] = useState(false)
   const [proposal, setProposal] = useState<AuthoritativeWeekScheduleProposal | null>(null)
   const [proposalRequestId, setProposalRequestId] = useState('')
+  const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
+  const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -66,12 +68,27 @@ export function AuthoritativeSimulationPanel({
     setProposalRequestId('')
     setConfirmed(false)
     setSelectedGroupId('')
+    setNextMatchCommandId(newCommandId())
+    setNextSlotCommandId(newCommandId())
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
     const eligible = positionQuery.data?.eligible_match_ids ?? []
     if (!eligible.includes(selectedGroupId)) setSelectedGroupId(eligible[0] ?? '')
   }, [positionQuery.data, selectedGroupId])
+
+  useEffect(() => {
+    if (!positionQuery.data?.position_fingerprint) return
+    setNextMatchCommandId(newCommandId())
+    setNextSlotCommandId(newCommandId())
+    setConfirmed(false)
+  }, [positionQuery.data?.position_fingerprint])
+
+  useEffect(() => {
+    if (!selectedGroupId) return
+    setNextMatchCommandId(newCommandId())
+    setConfirmed(false)
+  }, [selectedGroupId])
 
   async function refreshCanonicalSimulation(): Promise<void> {
     await Promise.all([
@@ -113,11 +130,11 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
-  function simulationPayload(groupId?: string): AuthoritativeSimulationCommandPayload {
+  function simulationPayload(commandId: string, groupId?: string): AuthoritativeSimulationCommandPayload {
     const position = positionQuery.data
     if (!position || !savedRevisionId) throw new Error('Current authoritative position and Saved Revision head are required.')
     return {
-      command_id: newCommandId(),
+      command_id: commandId,
       run_id: runId,
       branch_id: branchId,
       expected_week: position.current_week,
@@ -130,7 +147,7 @@ export function AuthoritativeSimulationPanel({
   const nextMatchMutation = useMutation({
     mutationFn: () => {
       if (!selectedGroupId) throw new Error('Select one currently eligible match group.')
-      return simulateAuthoritativeNextMatch(runId, branchId, simulationPayload(selectedGroupId))
+      return simulateAuthoritativeNextMatch(runId, branchId, simulationPayload(nextMatchCommandId, selectedGroupId))
     },
     onSuccess: async (position) => {
       queryClient.setQueryData(['authoritative-simulation-position', runId, branchId], position)
@@ -140,13 +157,17 @@ export function AuthoritativeSimulationPanel({
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
         setConfirmed(false)
-        await refreshCanonicalSimulation()
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+        ])
       }
     }
   })
 
   const nextSlotMutation = useMutation({
-    mutationFn: () => simulateAuthoritativeNextSlot(runId, branchId, simulationPayload()),
+    mutationFn: () => simulateAuthoritativeNextSlot(runId, branchId, simulationPayload(nextSlotCommandId)),
     onSuccess: async (position) => {
       queryClient.setQueryData(['authoritative-simulation-position', runId, branchId], position)
       setConfirmed(false)
@@ -155,7 +176,11 @@ export function AuthoritativeSimulationPanel({
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
         setConfirmed(false)
-        await refreshCanonicalSimulation()
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+        ])
       }
     }
   })

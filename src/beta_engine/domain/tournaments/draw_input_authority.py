@@ -572,8 +572,12 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=lineage,
             late_bye_count=previous.late_bye_count + (1 if create_bye else 0),
             released_wild_card_slot_ordinals=released_wild_card_slot_ordinals,
-            withdrawn_player_ids=tuple(
-                sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+            withdrawn_player_ids=(
+                previous.withdrawn_player_ids
+                if q_winner_vacancy
+                else tuple(
+                    sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+                )
             ),
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=previous.qualification_seed_player_ids,
@@ -773,6 +777,7 @@ class TournamentDrawInputAuthorityBuilder:
         placeholder_id: str,
         vacated_main_seed_number: int | None,
         replacement_source_authority_fingerprint: str | None = None,
+        vacated_qualifier_placeholder_id: str | None = None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v2",
@@ -791,7 +796,29 @@ class TournamentDrawInputAuthorityBuilder:
         wild_card_count = previous.wild_card_player_ids.count(
             withdrawn_player_id
         )
-        if direct_count + wild_card_count != 1:
+        q_winner_vacancy = vacated_qualifier_placeholder_id is not None
+        if q_winner_vacancy:
+            if direct_count or wild_card_count:
+                raise ValueError(
+                    "Qualification-winner LL vacancy cannot also be Direct Main or WC"
+                )
+            if withdrawn_player_id not in set(previous.qualification_player_ids):
+                raise ValueError(
+                    "Qualification-winner LL vacancy player is outside frozen Q field"
+                )
+            if vacated_qualifier_placeholder_id not in set(
+                previous.qualifier_placeholder_ids
+            ):
+                raise ValueError(
+                    "Qualification-winner LL vacancy references unknown Q placeholder"
+                )
+            if vacated_main_seed_number is not None:
+                raise ValueError("Qualification Q slot cannot vacate a Main seed")
+            if replacement_source_authority_fingerprint is not None:
+                raise ValueError(
+                    "Qualification-winner LL vacancy cannot release WC source lineage"
+                )
+        elif direct_count + wild_card_count != 1:
             raise ValueError(
                 "Lucky Loser vacancy requires one active Direct Main or WC withdrawal"
             )
@@ -828,16 +855,21 @@ class TournamentDrawInputAuthorityBuilder:
                 raise ValueError(
                     "Direct Main Lucky Loser vacancy cannot add WC release lineage"
                 )
-            direct.remove(withdrawn_player_id)
+            if not q_winner_vacancy:
+                direct.remove(withdrawn_player_id)
 
         main_seed_players = list(previous.main_seed_player_ids)
         main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
         withdrawn_was_seeded = withdrawn_player_id in main_seed_players
-        if withdrawn_was_seeded != (vacated_main_seed_number is not None):
-            raise ValueError("Lucky Loser seed-vacancy evidence mismatch")
-        if withdrawn_was_seeded:
-            main_seed_players.remove(withdrawn_player_id)
-            main_seed_vacancies.add(vacated_main_seed_number)
+        if q_winner_vacancy:
+            if withdrawn_was_seeded:
+                raise ValueError("Qualification winner cannot own Direct Main seed identity")
+        else:
+            if withdrawn_was_seeded != (vacated_main_seed_number is not None):
+                raise ValueError("Lucky Loser seed-vacancy evidence mismatch")
+            if withdrawn_was_seeded:
+                main_seed_players.remove(withdrawn_player_id)
+                main_seed_vacancies.add(vacated_main_seed_number)
 
         released_ordinals = tuple(released_ordinals)
         return TournamentDrawInputAuthority(

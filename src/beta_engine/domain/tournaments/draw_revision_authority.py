@@ -33,6 +33,9 @@ from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserFillAuthority,
     TournamentLuckyLoserVacancyAuthority,
 )
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentReplacementSourceAuthority,
+)
 
 
 TournamentDrawRevisionRepairKind = Literal[
@@ -42,6 +45,7 @@ TournamentDrawRevisionRepairKind = Literal[
     "frozen_wild_card_repair",
     "lucky_loser_vacancy",
     "lucky_loser_fill",
+    "frozen_ordinary_fallback",
 ]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
@@ -52,6 +56,8 @@ TournamentDrawComponentRepairAction = Literal[
     "frozen_rwc_q_backfill",
     "frozen_lucky_loser_slot",
     "frozen_lucky_loser_fill",
+    "frozen_external_reserve_fill",
+    "frozen_source_bye",
 ]
 
 
@@ -66,6 +72,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v8",
         "tournament_draw_revision.v9",
         "tournament_draw_revision.v10",
+        "tournament_draw_revision.v11",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -98,6 +105,10 @@ class TournamentDrawRevision(FrozenInput):
         exclude_if=lambda value: value is None,
     )
     lucky_loser_fill_authority: TournamentLuckyLoserFillAuthority | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    replacement_source_authority: TournamentReplacementSourceAuthority | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
     )
@@ -155,6 +166,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v8",
             "tournament_draw_revision.v9",
             "tournament_draw_revision.v10",
+            "tournament_draw_revision.v11",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -195,6 +207,14 @@ class TournamentDrawRevision(FrozenInput):
         ):
             raise ValueError(
                 "Non-Lucky-Loser-fill revision cannot carry LL fill authority"
+            )
+
+        if (
+            self.repair_kind != "frozen_ordinary_fallback"
+            and self.replacement_source_authority is not None
+        ):
+            raise ValueError(
+                "Non-fallback Draw revision cannot carry replacement-source authority"
             )
 
         if self.repair_kind == "full_redraw":
@@ -422,7 +442,7 @@ class TournamentDrawRevision(FrozenInput):
                 authority.withdrawn_player_cutoff_authority,
             ):
                 raise ValueError("Lucky Loser vacancy cutoff evidence mismatch")
-        else:
+        elif self.repair_kind == "lucky_loser_fill":
             authority = self.lucky_loser_fill_authority
             if self.schema_version != "tournament_draw_revision.v10":
                 raise ValueError("Lucky Loser fill requires revision schema v10")
@@ -456,6 +476,47 @@ class TournamentDrawRevision(FrozenInput):
                 self.predecessor_draw_fingerprint,
             ):
                 raise ValueError("Lucky Loser fill authority scope mismatch")
+        else:
+            authority = self.replacement_source_authority
+            if self.schema_version != "tournament_draw_revision.v11":
+                raise ValueError("Frozen ordinary fallback requires revision schema v11")
+            if authority is None:
+                raise ValueError("Frozen ordinary fallback lacks source authority")
+            if authority.source not in {"external_reserve", "bye"}:
+                raise ValueError(
+                    "Frozen ordinary fallback only supports external reserve or BYE"
+                )
+            if self.affected_draw_types != ("main",):
+                raise ValueError("Frozen ordinary fallback may affect Main Draw only")
+            expected_action = (
+                "frozen_external_reserve_fill"
+                if authority.source == "external_reserve"
+                else "frozen_source_bye"
+            )
+            if self.main_repair_action != expected_action:
+                raise ValueError("Frozen ordinary fallback action/source mismatch")
+            if self.qualification_repair_action is not None:
+                raise ValueError("Frozen ordinary fallback cannot mutate Qualification")
+            if self.repair_draw_seed is not None:
+                raise ValueError("Frozen ordinary fallback cannot introduce draw seed")
+            if self.withdrawn_player_ids != (authority.withdrawn_player_id,):
+                raise ValueError("Frozen ordinary fallback withdrawal mismatch")
+            if self.replacement_cutoff_authorities != (
+                authority.replacement_cutoff_authority,
+            ):
+                raise ValueError("Frozen ordinary fallback cutoff mismatch")
+            if (
+                authority.run_id,
+                authority.branch_id,
+                authority.event_id,
+                authority.predecessor_draw_fingerprint,
+            ) != (
+                self.run_id,
+                self.branch_id,
+                self.event_id,
+                self.predecessor_draw_fingerprint,
+            ):
+                raise ValueError("Frozen ordinary fallback source scope mismatch")
         return self
 
     @property
@@ -1483,6 +1544,129 @@ class TournamentDrawRevisionBuilder:
             main_repair_action="frozen_lucky_loser_fill",
             withdrawn_player_ids=(),
             lucky_loser_fill_authority=authority,
+            predecessor_draw_fingerprint=predecessor.fingerprint,
+            process_authority_fingerprint=process_authority.fingerprint,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            successor_draw=successor,
+        )
+
+
+    @staticmethod
+    def build_frozen_ordinary_fallback(
+        *,
+        predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
+        successor_draw_input: TournamentDrawInputAuthority,
+        process_authority: TournamentDrawProcessAuthority,
+        main_process_window_ordinal: int,
+        sequence: int,
+        command_id: str,
+        replacement_source_authority: TournamentReplacementSourceAuthority,
+    ) -> TournamentDrawRevision:
+        if process_authority.phase_for(
+            draw_type="main",
+            process_window_ordinal=main_process_window_ordinal,
+        ) != "draw_frozen":
+            raise ValueError("Frozen ordinary fallback requires Main Draw Freeze")
+        authority = replacement_source_authority
+        if authority.source not in {"external_reserve", "bye"}:
+            raise ValueError(
+                "Frozen ordinary fallback requires external reserve or BYE source"
+            )
+        if authority.predecessor_draw_fingerprint != predecessor.fingerprint:
+            raise ValueError("Frozen ordinary fallback predecessor mismatch")
+        if (
+            authority.predecessor_draw_input_fingerprint
+            != predecessor.draw_input_fingerprint
+        ):
+            raise ValueError("Frozen ordinary fallback Draw Input mismatch")
+        if successor_draw_input.entry_field_fingerprint != successor_field.fingerprint:
+            raise ValueError("Frozen ordinary fallback Input/Field mismatch")
+        if (
+            successor_draw_input.replacement_source_authority_fingerprints[-1]
+            != authority.fingerprint
+        ):
+            raise ValueError(
+                "Frozen ordinary fallback Draw Input lacks source lineage"
+            )
+
+        slots = list(predecessor.main.slots)
+        index = authority.physical_slot_index - 1
+        if index < 0 or index >= len(slots):
+            raise ValueError("Frozen ordinary fallback slot is outside Main Draw")
+        template = slots[index]
+        if template.player_id != authority.withdrawn_player_id:
+            raise ValueError("Frozen ordinary fallback slot no longer matches withdrawal")
+        if template.entry_status is not None:
+            raise ValueError(
+                "Frozen ordinary fallback currently supports Direct Main slots only"
+            )
+        if authority.source == "external_reserve":
+            if authority.selected_player_id is None:
+                raise ValueError("External reserve source lacks selected player")
+            slots[index] = TournamentDrawSlot(
+                slot_index=template.slot_index,
+                idealized_slot_number=template.idealized_slot_number,
+                entrant_kind="player",
+                player_id=authority.selected_player_id,
+            )
+            action = "frozen_external_reserve_fill"
+        else:
+            slots[index] = TournamentDrawSlot(
+                slot_index=template.slot_index,
+                idealized_slot_number=template.idealized_slot_number,
+                entrant_kind="bye",
+            )
+            action = "frozen_source_bye"
+
+        main = TournamentDrawBracket(
+            draw_type=predecessor.main.draw_type,
+            section_id=predecessor.main.section_id,
+            bracket_size=predecessor.main.bracket_size,
+            seed_positions=tuple(
+                sorted(
+                    (item.seed_number, item.slot_index)
+                    for item in slots
+                    if item.seed_number is not None
+                )
+            ),
+            slots=tuple(slots),
+            nodes=predecessor.main.nodes,
+            bye_slot_indexes=tuple(
+                item.slot_index for item in slots if item.entrant_kind == "bye"
+            ),
+            qualifier_placeholder_slots=predecessor.main.qualifier_placeholder_slots,
+            lucky_loser_placeholder_slots=predecessor.main.lucky_loser_placeholder_slots,
+        )
+        successor = TournamentDrawAuthority(
+            schema_version=predecessor.schema_version,
+            algorithm_version=predecessor.algorithm_version,
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            generated_by_command_id=command_id,
+            draw_input_fingerprint=successor_draw_input.fingerprint,
+            qualification=predecessor.qualification,
+            qualification_sections=predecessor.qualification_sections,
+            main=main,
+        )
+        return TournamentDrawRevision(
+            schema_version="tournament_draw_revision.v11",
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            sequence=sequence,
+            command_id=command_id,
+            repair_kind="frozen_ordinary_fallback",
+            affected_draw_types=("main",),
+            main_process_window_ordinal=main_process_window_ordinal,
+            main_repair_action=action,
+            withdrawn_player_ids=(authority.withdrawn_player_id,),
+            replacement_cutoff_authorities=(
+                authority.replacement_cutoff_authority,
+            ),
+            replacement_source_authority=authority,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,

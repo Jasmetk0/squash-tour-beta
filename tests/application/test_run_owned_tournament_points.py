@@ -770,6 +770,135 @@ def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_po
 
 
 @pytest.mark.pr_critical
+def test_qualification_winner_walkover_unlocks_main_stage_and_keeps_additive_q_points():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="B",
+        finalist_player_id="A",
+        qualification_winner_ids=("A",),
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="both",
+                qualifier=True,
+                reached_stage="finalist",
+                final_round_number=3,
+                eliminated_by_player_id="B",
+                last_match_id="final",
+                wins=1,
+                losses=1,
+                byes_received=1,
+                walkovers_received=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="champion",
+                final_round_number=3,
+                last_match_id="final",
+                wins=2,
+                losses=0,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="semifinal",
+                final_round_number=2,
+                eliminated_by_player_id="A",
+                last_match_id="walkover",
+                wins=0,
+                losses=0,
+                retired_or_walkover_loss=True,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="D",
+                draw_type="qualification",
+                reached_stage="qualification_final",
+                final_round_number=1,
+                eliminated_by_player_id="A",
+                last_match_id="q-final",
+                wins=0,
+                losses=1,
+            ),
+        ),
+        matches=(
+            TournamentMatchResultAuthority(
+                match_id="q-final",
+                draw_type="qualification",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="D",
+                scoreline="3-0",
+                result_fingerprint="0" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="bye",
+                draw_type="main",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                scoreline="BYE",
+                result_fingerprint="1" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="walkover",
+                draw_type="main",
+                round_number=2,
+                bracket_position=1,
+                winner_player_id="A",
+                loser_player_id="C",
+                scoreline="W/O",
+                result_fingerprint="2" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="final",
+                draw_type="main",
+                round_number=3,
+                bracket_position=1,
+                winner_player_id="B",
+                loser_player_id="A",
+                scoreline="3-0",
+                result_fingerprint="3" * 64,
+            ),
+        ),
+    )
+
+    authority = build_tournament_point_award_authority(
+        result=result,
+        point_authority=FrozenPointAwardAuthority(
+            ranking_status="ranked",
+            point_distribution={
+                "champion": 1000,
+                "finalist": 650,
+                "semifinal": 400,
+                "quarterfinal": 250,
+                "qualification_winner": 150,
+                "qualification_final": 100,
+            },
+            point_distribution_source="calendar_event.ranking_points_table",
+        ),
+        seed=993,
+    )
+    by_player = {award.player_id: award for award in authority.awards}
+    finalist = by_player["A"]
+
+    assert authority.schema_version == "tournament_point_award_authority.v3"
+    assert finalist.reached_stage == "finalist"
+    assert finalist.point_stage is None
+    assert finalist.qualification_point_stage == "qualification_winner"
+    assert finalist.qualification_points_awarded == 150
+    assert finalist.ranking_points_awarded == 800
+    assert finalist.race_points_awarded == 800
+    assert by_player["D"].ranking_points_awarded == 100
+
+
+@pytest.mark.pr_critical
 def test_walkover_after_bye_unlocks_actual_finishing_stage_points():
     result = TournamentResultAuthority(
         run_id="run",

@@ -23,8 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI is intentionally a small smoke suite for fast PR feedback, not full coverage.
-      # The separate "Full Test Suite" workflow remains the complete validation safety net.
+      # Fast CI intentionally runs only a tiny catastrophic-regression gate.
+      # The separate "Full Test Suite" runs all tests after merge to buuk and nightly.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -51,7 +51,7 @@ jobs:
               - '**/*.md'
 
   backend-tests:
-    name: Backend smoke
+    name: Backend PR critical
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -68,9 +68,9 @@ jobs:
         run: python -m pip install -e . pytest
       - name: Compile backend source
         run: python -m compileall -q src
-      - name: Run backend smoke suite
+      - name: Run PR critical backend tests
         run: |
-          python -m pytest -m smoke
+          python -m pytest -m pr_critical --maxfail=1 --durations=10
 
   frontend-checks:
     name: Frontend build + critical tests

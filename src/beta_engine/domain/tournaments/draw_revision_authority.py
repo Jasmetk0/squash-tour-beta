@@ -29,6 +29,9 @@ from beta_engine.domain.tournaments.replacement_cutoff_authority import (
 from beta_engine.domain.tournaments.post_draw_wild_card_repair import (
     TournamentPostDrawWildCardRepairAuthority,
 )
+from beta_engine.domain.tournaments.lucky_loser_authority import (
+    TournamentLuckyLoserVacancyAuthority,
+)
 
 
 TournamentDrawRevisionRepairKind = Literal[
@@ -36,6 +39,7 @@ TournamentDrawRevisionRepairKind = Literal[
     "seed_cascade_phase",
     "draw_frozen_phase",
     "frozen_wild_card_repair",
+    "lucky_loser_vacancy",
 ]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
@@ -44,6 +48,7 @@ TournamentDrawComponentRepairAction = Literal[
     "frozen_slot_fill",
     "frozen_wild_card_fill",
     "frozen_rwc_q_backfill",
+    "frozen_lucky_loser_slot",
 ]
 
 
@@ -56,6 +61,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v6",
         "tournament_draw_revision.v7",
         "tournament_draw_revision.v8",
+        "tournament_draw_revision.v9",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -80,6 +86,10 @@ class TournamentDrawRevision(FrozenInput):
         TournamentPlayerReplacementCutoffAuthority, ...
     ] = Field(default=(), exclude_if=lambda value: not value)
     wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    lucky_loser_vacancy_authority: TournamentLuckyLoserVacancyAuthority | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
     )
@@ -135,6 +145,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v6",
             "tournament_draw_revision.v7",
             "tournament_draw_revision.v8",
+            "tournament_draw_revision.v9",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -265,7 +276,11 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Draw-Freeze repair without full redraw cannot introduce a new draw seed"
                 )
-        else:
+        elif self.repair_kind == "frozen_wild_card_repair":
+            if self.lucky_loser_vacancy_authority is not None:
+                raise ValueError(
+                    "Frozen WC repair cannot carry Lucky Loser vacancy authority"
+                )
             authority = self.wild_card_repair_authority
             if authority is None:
                 raise ValueError("Frozen WC repair lacks dedicated authority")
@@ -341,6 +356,48 @@ class TournamentDrawRevision(FrozenInput):
                 authority.replacement_cutoff_authority,
             ):
                 raise ValueError("Frozen WC repair cutoff evidence mismatch")
+        else:
+            authority = self.lucky_loser_vacancy_authority
+            if self.schema_version != "tournament_draw_revision.v9":
+                raise ValueError("Lucky Loser vacancy requires revision schema v9")
+            if authority is None:
+                raise ValueError("Lucky Loser vacancy lacks dedicated authority")
+            if self.wild_card_repair_authority is not None:
+                raise ValueError(
+                    "Lucky Loser vacancy cannot carry WC repair authority"
+                )
+            if self.affected_draw_types != ("main",):
+                raise ValueError("Lucky Loser vacancy may affect Main Draw only")
+            if self.main_repair_action != "frozen_lucky_loser_slot":
+                raise ValueError(
+                    "Lucky Loser vacancy requires exact frozen Main-slot action"
+                )
+            if self.qualification_repair_action is not None:
+                raise ValueError(
+                    "Lucky Loser vacancy cannot mutate Qualification Draw"
+                )
+            if self.repair_draw_seed is not None:
+                raise ValueError("Lucky Loser vacancy cannot introduce draw seed")
+            if (
+                authority.run_id,
+                authority.branch_id,
+                authority.event_id,
+                authority.command_id,
+                authority.predecessor_draw_fingerprint,
+            ) != (
+                self.run_id,
+                self.branch_id,
+                self.event_id,
+                self.command_id,
+                self.predecessor_draw_fingerprint,
+            ):
+                raise ValueError("Lucky Loser vacancy authority scope mismatch")
+            if self.withdrawn_player_ids != (authority.withdrawn_player_id,):
+                raise ValueError("Lucky Loser vacancy withdrawal identity mismatch")
+            if self.replacement_cutoff_authorities != (
+                authority.withdrawn_player_cutoff_authority,
+            ):
+                raise ValueError("Lucky Loser vacancy cutoff evidence mismatch")
         return self
 
     @property
@@ -1133,6 +1190,136 @@ class TournamentDrawRevisionBuilder:
                 wild_card_repair_authority.replacement_cutoff_authority,
             ),
             wild_card_repair_authority=wild_card_repair_authority,
+            predecessor_draw_fingerprint=predecessor.fingerprint,
+            process_authority_fingerprint=process_authority.fingerprint,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            successor_draw=successor,
+        )
+
+
+    @staticmethod
+    def build_frozen_lucky_loser_vacancy(
+        *,
+        predecessor: TournamentDrawAuthority,
+        successor_field: TournamentEntryField,
+        successor_draw_input: TournamentDrawInputAuthority,
+        process_authority: TournamentDrawProcessAuthority,
+        main_process_window_ordinal: int,
+        sequence: int,
+        command_id: str,
+        lucky_loser_vacancy_authority: TournamentLuckyLoserVacancyAuthority,
+    ) -> TournamentDrawRevision:
+        if process_authority.phase_for(
+            draw_type="main",
+            process_window_ordinal=main_process_window_ordinal,
+        ) != "draw_frozen":
+            raise ValueError(
+                "Lucky Loser vacancy first slice requires Main Draw Freeze"
+            )
+        authority = lucky_loser_vacancy_authority
+        if authority.predecessor_draw_fingerprint != predecessor.fingerprint:
+            raise ValueError("Lucky Loser vacancy predecessor mismatch")
+        if (
+            authority.predecessor_draw_input_fingerprint
+            != predecessor.draw_input_fingerprint
+        ):
+            raise ValueError("Lucky Loser vacancy Draw Input mismatch")
+        if (
+            successor_draw_input.entry_field_fingerprint
+            != successor_field.fingerprint
+        ):
+            raise ValueError("Lucky Loser successor Draw Input/Field mismatch")
+        if not successor_draw_input.lucky_loser_placeholder_ids:
+            raise ValueError("Lucky Loser successor Draw Input lacks LL placeholder")
+        if (
+            successor_draw_input.lucky_loser_placeholder_ids[-1]
+            != authority.placeholder_id
+        ):
+            raise ValueError(
+                "Lucky Loser successor Draw Input does not append this vacancy"
+            )
+        if (
+            authority.vacated_main_seed_number is not None
+            and authority.vacated_main_seed_number
+            not in successor_draw_input.main_seed_vacancy_numbers
+        ):
+            raise ValueError(
+                "Lucky Loser successor Draw Input lacks vacated Main seed"
+            )
+
+        slots = list(predecessor.main.slots)
+        index = authority.physical_slot_index - 1
+        if index < 0 or index >= len(slots):
+            raise ValueError("Lucky Loser physical slot is outside Main Draw")
+        template = slots[index]
+        if template.player_id != authority.withdrawn_player_id:
+            raise ValueError(
+                "Lucky Loser physical slot no longer contains withdrawn player"
+            )
+        if template.entry_status is not None:
+            raise ValueError(
+                "First Lucky Loser vacancy slice requires ordinary Direct slot"
+            )
+        if template.seed_number != authority.vacated_main_seed_number:
+            raise ValueError("Lucky Loser seed-vacancy evidence differs from slot")
+
+        slots[index] = TournamentDrawSlot(
+            slot_index=template.slot_index,
+            idealized_slot_number=template.idealized_slot_number,
+            entrant_kind="lucky_loser_placeholder",
+            placeholder_id=authority.placeholder_id,
+        )
+        main = TournamentDrawBracket(
+            draw_type=predecessor.main.draw_type,
+            section_id=predecessor.main.section_id,
+            bracket_size=predecessor.main.bracket_size,
+            seed_positions=tuple(
+                sorted(
+                    (item.seed_number, item.slot_index)
+                    for item in slots
+                    if item.seed_number is not None
+                )
+            ),
+            slots=tuple(slots),
+            nodes=predecessor.main.nodes,
+            bye_slot_indexes=predecessor.main.bye_slot_indexes,
+            qualifier_placeholder_slots=predecessor.main.qualifier_placeholder_slots,
+            lucky_loser_placeholder_slots=tuple(
+                (item.placeholder_id, item.slot_index)
+                for item in slots
+                if item.entrant_kind == "lucky_loser_placeholder"
+                and item.placeholder_id is not None
+            ),
+        )
+        successor = TournamentDrawAuthority(
+            schema_version=predecessor.schema_version,
+            algorithm_version=predecessor.algorithm_version,
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            generated_by_command_id=command_id,
+            draw_input_fingerprint=successor_draw_input.fingerprint,
+            qualification=predecessor.qualification,
+            qualification_sections=predecessor.qualification_sections,
+            main=main,
+        )
+        return TournamentDrawRevision(
+            schema_version="tournament_draw_revision.v9",
+            run_id=predecessor.run_id,
+            branch_id=predecessor.branch_id,
+            event_id=predecessor.event_id,
+            sequence=sequence,
+            command_id=command_id,
+            repair_kind="lucky_loser_vacancy",
+            affected_draw_types=("main",),
+            main_process_window_ordinal=main_process_window_ordinal,
+            main_repair_action="frozen_lucky_loser_slot",
+            withdrawn_player_ids=(authority.withdrawn_player_id,),
+            replacement_cutoff_authorities=(
+                authority.withdrawn_player_cutoff_authority,
+            ),
+            lucky_loser_vacancy_authority=authority,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
             successor_field=successor_field,

@@ -378,7 +378,7 @@ describe('AuthoritativeSimulationPanel', () => {
         expect.any(String)
       )
     )
-    expect(await screen.findByText('event-a', { exact: false })).toBeInTheDocument()
+    expect(await screen.findByText('7'.repeat(64))).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Confirm reviewed Week Transition' }))
     await waitFor(() =>

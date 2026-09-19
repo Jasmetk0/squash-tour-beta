@@ -486,7 +486,7 @@ describe('AuthoritativeSimulationPanel', () => {
       week_ready_for_transition: false,
       transition_blockers: [
         'ranking_transition_authority_missing',
-        'prospect_bridge_missing'
+        'authoritative_world_head_mismatch'
       ],
       terminal_sporting_fingerprint: 'f'.repeat(64),
       position_fingerprint: '3'.repeat(64)

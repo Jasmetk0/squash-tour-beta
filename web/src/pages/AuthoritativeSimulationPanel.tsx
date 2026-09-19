@@ -39,16 +39,19 @@ export function AuthoritativeSimulationPanel({
   const [proposal, setProposal] = useState<AuthoritativeWeekScheduleProposal | null>(null)
   const [proposalRequestId, setProposalRequestId] = useState('')
 
-  const positionQuery = useQuery({
-    queryKey: ['authoritative-simulation-position', runId, branchId],
-    queryFn: () => getAuthoritativeSimulationPosition(runId, branchId),
-    enabled,
-    retry: false
-  })
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
     queryFn: () => inspectAuthoritativeWeekSchedule(runId, branchId),
     enabled,
+    retry: false
+  })
+  const scheduleAllowsPosition = Boolean(
+    scheduleQuery.data && (!scheduleQuery.data.required || scheduleQuery.data.schedule)
+  )
+  const positionQuery = useQuery({
+    queryKey: ['authoritative-simulation-position', runId, branchId],
+    queryFn: () => getAuthoritativeSimulationPosition(runId, branchId),
+    enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
   const savePreviewQuery = useQuery({
@@ -196,8 +199,8 @@ export function AuthoritativeSimulationPanel({
         <p role="alert" className="error">Canonical simulation blocked: Branch has no Saved Revision head.</p>
       ) : null}
 
-      {(positionQuery.isLoading || scheduleQuery.isLoading || savePreviewQuery.isLoading) && enabled ? (
-        <p className="status">Loading authoritative sporting position…</p>
+      {(scheduleQuery.isLoading || savePreviewQuery.isLoading || (scheduleAllowsPosition && positionQuery.isLoading)) && enabled ? (
+        <p className="status">Loading authoritative sporting state…</p>
       ) : null}
       {positionQuery.error ? <p className="error">Position unavailable: {formatApiError(positionQuery.error)}</p> : null}
       {scheduleQuery.error ? <p className="error">Week Schedule unavailable: {formatApiError(scheduleQuery.error)}</p> : null}
@@ -249,6 +252,9 @@ export function AuthoritativeSimulationPanel({
             </ol>
           ) : scheduleQuery.data.required ? (
             <>
+              <p className="status">
+                Canonical Position and match execution stay locked until this required immutable Week Schedule is adopted.
+              </p>
               <button
                 type="button"
                 onClick={() => proposalMutation.mutate()}

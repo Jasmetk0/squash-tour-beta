@@ -448,8 +448,8 @@ def build_run_owned_tournament_authorities(
     run_id: str,
     branch_id: str,
     week: RankingWeek,
-    calendar_event: CalendarEvent | None = None,
     award_seed: int,
+    calendar_event: CalendarEvent | None = None,
     frozen_point_authority: FrozenPointAwardAuthority | None = None,
 ) -> tuple[
     SeasonEventMatchPackage,

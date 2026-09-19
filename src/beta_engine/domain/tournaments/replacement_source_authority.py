@@ -298,6 +298,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 if candidate in unavailable or candidate in main_players:
                     continue
                 return TournamentReplacementSourceAuthority(
+                    schema_version=authority_schema,
                     run_id=scope[0],
                     branch_id=scope[1],
                     event_id=scope[2],
@@ -305,6 +306,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                     predecessor_draw_fingerprint=predecessor.fingerprint,
                     predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                     physical_slot_index=slot.slot_index,
+                    qualification_winner_evidence=qualification_winner_evidence,
                     source="reserve_wild_card",
                     selected_player_id=candidate,
                     source_ordinal=ordinal,
@@ -333,6 +335,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 if candidate in unavailable or candidate in main_players:
                     continue
                 return TournamentReplacementSourceAuthority(
+                    schema_version=authority_schema,
                     run_id=scope[0],
                     branch_id=scope[1],
                     event_id=scope[2],
@@ -340,6 +343,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                     predecessor_draw_fingerprint=predecessor.fingerprint,
                     predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                     physical_slot_index=slot.slot_index,
+                    qualification_winner_evidence=qualification_winner_evidence,
                     source="qualification_promotion",
                     selected_player_id=candidate,
                     source_ordinal=ordinal,
@@ -359,6 +363,7 @@ class TournamentReplacementSourceAuthorityBuilder:
         else:
             if lucky_loser_order_authority is None:
                 return TournamentReplacementSourceAuthority(
+                    schema_version=authority_schema,
                     run_id=scope[0],
                     branch_id=scope[1],
                     event_id=scope[2],
@@ -366,6 +371,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                     predecessor_draw_fingerprint=predecessor.fingerprint,
                     predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                     physical_slot_index=slot.slot_index,
+                    qualification_winner_evidence=qualification_winner_evidence,
                     source="lucky_loser_pending",
                     qualification_start_evidence=qualification_start_evidence,
                     main_start_evidence=main_start_evidence,
@@ -390,6 +396,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                 if candidate.player_id in blocked:
                     continue
                 return TournamentReplacementSourceAuthority(
+                    schema_version=authority_schema,
                     run_id=scope[0],
                     branch_id=scope[1],
                     event_id=scope[2],
@@ -397,6 +404,7 @@ class TournamentReplacementSourceAuthorityBuilder:
                     predecessor_draw_fingerprint=predecessor.fingerprint,
                     predecessor_draw_input_fingerprint=predecessor_draw_input.fingerprint,
                     physical_slot_index=slot.slot_index,
+                    qualification_winner_evidence=qualification_winner_evidence,
                     source="lucky_loser",
                     selected_player_id=candidate.player_id,
                     source_ordinal=candidate.priority_ordinal,

@@ -28,6 +28,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v4",
     "tournament_draw_input_authority.v5",
     "tournament_draw_input_authority.v6",
+    "tournament_draw_input_authority.v7",
 ]
 
 
@@ -119,6 +120,10 @@ class TournamentDrawInputAuthority(FrozenInput):
         default=(),
         exclude_if=lambda value: not value,
     )
+    lucky_loser_player_ids: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     withdrawn_player_ids: tuple[str, ...]
     main_seed_player_ids: tuple[str, ...]
     qualification_seed_player_ids: tuple[str, ...]
@@ -141,17 +146,27 @@ class TournamentDrawInputAuthority(FrozenInput):
             raise ValueError("Canonical Qualification field contains duplicate players")
         if len(set(self.wild_card_player_ids)) != len(self.wild_card_player_ids):
             raise ValueError("Canonical WC field contains duplicate players")
-        main_players = set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
-        if len(main_players) != len(self.direct_main_player_ids) + len(self.wild_card_player_ids):
+        if len(set(self.lucky_loser_player_ids)) != len(self.lucky_loser_player_ids):
+            raise ValueError("Canonical LL field contains duplicate players")
+        ordinary_main = set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
+        if len(ordinary_main) != len(self.direct_main_player_ids) + len(self.wild_card_player_ids):
             raise ValueError("Player appears in both Direct Main and WC field")
-        if main_players & set(self.qualification_player_ids):
-            raise ValueError("Player appears in both Main and Qualification field")
+        if ordinary_main & set(self.qualification_player_ids):
+            raise ValueError("Ordinary Main player also remains in Qualification field")
+        if ordinary_main & set(self.lucky_loser_player_ids):
+            raise ValueError("Lucky Loser player already exists in ordinary Main field")
+        if not set(self.lucky_loser_player_ids).issubset(
+            set(self.qualification_player_ids)
+        ):
+            raise ValueError("Lucky Loser player must originate from Qualification field")
+        main_players = ordinary_main | set(self.lucky_loser_player_ids)
         active = main_players | set(self.qualification_player_ids)
         if active & set(self.withdrawn_player_ids):
             raise ValueError("Withdrawn player remains in committed draw input")
         if self.schema_version in {
             "tournament_draw_input_authority.v5",
             "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
         }:
             if (
                 len(self.main_seed_player_ids)
@@ -236,17 +251,29 @@ class TournamentDrawInputAuthority(FrozenInput):
             raise ValueError(
                 "Lucky Loser placeholders must be chronological LL1..LLn"
             )
-        if (
-            self.schema_version == "tournament_draw_input_authority.v6"
-            and not self.lucky_loser_placeholder_ids
-        ):
-            raise ValueError("Draw Input v6 requires Lucky Loser vacancy evidence")
-        if (
-            self.schema_version != "tournament_draw_input_authority.v6"
-            and self.lucky_loser_placeholder_ids
-        ):
+        if self.schema_version in {
+            "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
+        }:
+            if not self.lucky_loser_placeholder_ids:
+                raise ValueError("Lucky Loser Draw Input requires vacancy lineage")
+            if len(self.lucky_loser_player_ids) > len(
+                self.lucky_loser_placeholder_ids
+            ):
+                raise ValueError("More Lucky Loser players than LL vacancies")
+            if (
+                self.schema_version == "tournament_draw_input_authority.v7"
+                and not self.lucky_loser_player_ids
+            ):
+                raise ValueError("Draw Input v7 requires at least one filled LL slot")
+            if (
+                self.schema_version == "tournament_draw_input_authority.v6"
+                and self.lucky_loser_player_ids
+            ):
+                raise ValueError("Draw Input v6 cannot carry filled LL players")
+        elif self.lucky_loser_placeholder_ids or self.lucky_loser_player_ids:
             raise ValueError(
-                "Historical Draw Input cannot carry Lucky Loser placeholders"
+                "Historical Draw Input cannot carry Lucky Loser lineage"
             )
         if self.schema_version in {
             "tournament_draw_input_authority.v2",
@@ -254,6 +281,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
             "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
         }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
@@ -280,6 +308,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
             "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
         }:
             if self.capacity.wild_card_slots != len(self.wild_card_player_ids):
                 raise ValueError(
@@ -339,6 +368,7 @@ class TournamentDrawInputAuthorityBuilder:
             "tournament_draw_input_authority.v4",
             "tournament_draw_input_authority.v5",
             "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
         }:
             raise ValueError("Lucky Loser vacancy requires canonical Draw Input")
         if previous.direct_main_player_ids.count(withdrawn_player_id) != 1:
@@ -361,7 +391,11 @@ class TournamentDrawInputAuthorityBuilder:
             main_seed_vacancies.add(vacated_main_seed_number)
 
         return TournamentDrawInputAuthority(
-            schema_version="tournament_draw_input_authority.v6",
+            schema_version=(
+                "tournament_draw_input_authority.v7"
+                if previous.lucky_loser_player_ids
+                else "tournament_draw_input_authority.v6"
+            ),
             run_id=previous.run_id,
             branch_id=previous.branch_id,
             event_id=previous.event_id,
@@ -388,12 +422,76 @@ class TournamentDrawInputAuthorityBuilder:
                 *previous.lucky_loser_placeholder_ids,
                 placeholder_id,
             ),
+            lucky_loser_player_ids=previous.lucky_loser_player_ids,
             withdrawn_player_ids=tuple(
                 sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
             ),
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=previous.qualification_seed_player_ids,
             main_seed_vacancy_numbers=tuple(sorted(main_seed_vacancies)),
+            qualification_seed_vacancy_numbers=(
+                previous.qualification_seed_vacancy_numbers
+            ),
+        )
+
+    @staticmethod
+    def build_lucky_loser_fill(
+        *,
+        previous: TournamentDrawInputAuthority,
+        command_id: str,
+        placeholder_id: str,
+        player_id: str,
+    ) -> TournamentDrawInputAuthority:
+        if previous.schema_version not in {
+            "tournament_draw_input_authority.v6",
+            "tournament_draw_input_authority.v7",
+        }:
+            raise ValueError("Lucky Loser fill requires LL Draw Input")
+        filled = previous.lucky_loser_player_ids
+        if len(filled) >= len(previous.lucky_loser_placeholder_ids):
+            raise ValueError("No unresolved Lucky Loser placeholder remains")
+        expected_placeholder = previous.lucky_loser_placeholder_ids[len(filled)]
+        if placeholder_id != expected_placeholder:
+            raise ValueError("Lucky Loser fills must follow LL vacancy chronology")
+        if player_id not in set(previous.qualification_player_ids):
+            raise ValueError("Lucky Loser fill player is outside Qualification field")
+        if player_id in (
+            set(previous.direct_main_player_ids)
+            | set(previous.wild_card_player_ids)
+            | set(filled)
+        ):
+            raise ValueError("Lucky Loser fill player is already active in Main")
+
+        return TournamentDrawInputAuthority(
+            schema_version="tournament_draw_input_authority.v7",
+            run_id=previous.run_id,
+            branch_id=previous.branch_id,
+            event_id=previous.event_id,
+            committed_by_command_id=command_id,
+            draw_seed=previous.draw_seed,
+            main_seed_count=previous.main_seed_count,
+            qualification_seed_count=previous.qualification_seed_count,
+            field_sequence=previous.field_sequence,
+            capacity=previous.capacity,
+            tournament_ranking_authority_fingerprint=(
+                previous.tournament_ranking_authority_fingerprint
+            ),
+            ranking_snapshot_fingerprint=previous.ranking_snapshot_fingerprint,
+            entry_field_fingerprint=previous.entry_field_fingerprint,
+            wild_card_authority_fingerprint=previous.wild_card_authority_fingerprint,
+            post_draw_wild_card_repair_fingerprints=(
+                previous.post_draw_wild_card_repair_fingerprints
+            ),
+            direct_main_player_ids=previous.direct_main_player_ids,
+            wild_card_player_ids=previous.wild_card_player_ids,
+            qualification_player_ids=previous.qualification_player_ids,
+            qualifier_placeholder_ids=previous.qualifier_placeholder_ids,
+            lucky_loser_placeholder_ids=previous.lucky_loser_placeholder_ids,
+            lucky_loser_player_ids=(*filled, player_id),
+            withdrawn_player_ids=previous.withdrawn_player_ids,
+            main_seed_player_ids=previous.main_seed_player_ids,
+            qualification_seed_player_ids=previous.qualification_seed_player_ids,
+            main_seed_vacancy_numbers=previous.main_seed_vacancy_numbers,
             qualification_seed_vacancy_numbers=(
                 previous.qualification_seed_vacancy_numbers
             ),

@@ -1064,7 +1064,8 @@ def test_full_redraw_qualification_preserves_main_and_q_linkages(database):
         assert revision.successor_draw.main.qualifier_placeholder_slots == (
             initial.main.qualifier_placeholder_slots
         )
-        assert revision.successor_draw.qualification_brackets != initial.qualification_brackets
+        assert revision.successor_draw.fingerprint != initial.fingerprint
+        assert revision.repair_draw_seed == 246810
 
 
 def test_full_redraw_is_rejected_at_or_after_redraw_cutoff(database):

@@ -268,9 +268,17 @@ No default number of early windows is invented because Master §15.10 keeps that
 configuration open. The process authority participates in Saved Revision capture /
 restore and historical states without it retain their previous fingerprint shape.
 
-This still does **not** claim the complete Master draw contract. The authority now
-proves which repair phase applies, but actual post-draw WC/RWC repair, full redraw /
-tier-aware seed cascade / frozen-slot mutations, Lucky Loser ordering, group
+Canonical pre-cutoff full redraw is now append-only Draw history. The initial Draw
+remains immutable, each full redraw stores a predecessor-linked revision with a new
+repair draw seed, and the active Draw projection resolves to the latest revision.
+The same frozen Draw Input / Tournament Ranking Snapshot dependency is retained.
+Main-only redraw preserves Qualification exactly; Qualification-only redraw preserves
+Main and permanent Q1..Qn linkage identities. Draw revisions are part of Saved
+Revision capture/restore and corrupt predecessor chains fail closed before live state
+mutation.
+
+This still does **not** claim the complete Master draw contract. Tier-aware seed
+cascade, frozen-slot mutation, post-draw WC/RWC repair, Lucky Loser ordering, group
 Qualification and the per-player first-real-match replacement cutoff remain Gate 3
 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

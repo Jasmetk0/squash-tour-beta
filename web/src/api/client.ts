@@ -51,6 +51,9 @@ import type {
   CanonicalTournamentDrawAuthority,
   CanonicalDrawInputCommitPayload,
   CanonicalDrawGeneratePayload,
+  CanonicalTournamentDrawProcessState,
+  CanonicalDrawProcessConfigurePayload,
+  CanonicalTournamentDrawRevisionHistoryState,
   RunLineageApiResponse,
   RunStatusSummary,
   RunWorldStatus,
@@ -1289,6 +1292,66 @@ export async function getCanonicalTournamentDrawAuthority(
 ): Promise<CanonicalTournamentDrawAuthority> {
   const data = await request<CanonicalTournamentDrawAuthority>(
     canonicalTournamentDrawRoot(runId, branchId, eventId) + '/authority'
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  return data
+}
+
+export async function getCanonicalTournamentEffectiveDrawAuthority(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentDrawAuthority> {
+  const data = await request<CanonicalTournamentDrawAuthority>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/effective-authority'
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  return data
+}
+
+export async function getCanonicalTournamentDrawRevisionHistory(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentDrawRevisionHistoryState> {
+  const data = await request<CanonicalTournamentDrawRevisionHistoryState>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/revisions'
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  if (data.schema_version !== 'canonical_tournament_draw_revision_history.v1') {
+    throw new Error('Canonical Tournament Draw revision history has an unsupported schema.')
+  }
+  return data
+}
+
+function canonicalTournamentDrawProcessRoot(runId: string, branchId: string, eventId: string): string {
+  return canonicalTournamentDrawRoot(runId, branchId, eventId) + '/process'
+}
+
+export async function getCanonicalTournamentDrawProcessState(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentDrawProcessState> {
+  const data = await request<CanonicalTournamentDrawProcessState>(
+    canonicalTournamentDrawProcessRoot(runId, branchId, eventId)
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  if (data.schema_version !== 'canonical_tournament_draw_process_state.v1') {
+    throw new Error('Canonical Tournament Draw process state has an unsupported schema.')
+  }
+  return data
+}
+
+export async function configureCanonicalTournamentDrawProcess(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalDrawProcessConfigurePayload
+): Promise<CanonicalTournamentDrawProcessState> {
+  const data = await request<CanonicalTournamentDrawProcessState>(
+    canonicalTournamentDrawProcessRoot(runId, branchId, eventId) + '/configure',
+    { method: 'POST', body: JSON.stringify(payload) }
   )
   verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
   return data

@@ -4,12 +4,15 @@ import json
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
-from pydantic import ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from beta_engine.api.deps import ApiRuntime, get_runtime, get_season_point_awards_service
 from beta_engine.application.authoritative_week_transition import AuthoritativeWeekTransitionCommand
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
-from beta_engine.infrastructure.db.authoritative_week_transition import AuthoritativeWeekTransitionRunner
+from beta_engine.infrastructure.db.authoritative_week_transition import (
+    AuthoritativeWeekTransitionRunner,
+    derive_persisted_week_transition_command,
+)
 
 router = APIRouter(prefix="/admin/runs/{run_id}/branches/{branch_id}/week-transitions", tags=["admin-week-transitions"])
 
@@ -30,6 +33,47 @@ def _run(runtime, awards, run_id, branch_id, payload, *, preview,
         raise HTTPException(status_code=422, detail={"code": "invalid_week_transition", "message": str(exc)}) from exc
     except ValueError as exc:
         raise HTTPException(status_code=409, detail={"code": "week_transition_conflict", "message": str(exc)}) from exc
+
+
+class DerivedWeekTransitionPreviewRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+@router.post("/derived/preview")
+def preview_derived_week_transition(
+    run_id: str,
+    branch_id: str,
+    payload: DerivedWeekTransitionPreviewRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    awards: Annotated[SeasonPointAwardsService, Depends(get_season_point_awards_service)],
+):
+    try:
+        with runtime.repository._session_factory() as session:
+            command = derive_persisted_week_transition_command(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                command_id=payload.command_id,
+            )
+        runner = AuthoritativeWeekTransitionRunner(
+            runtime.repository._session_factory,
+            awards,
+        )
+        result = runner.preview(command)
+        return {
+            "request_fingerprint": command.fingerprint,
+            "command": command.model_dump(mode="json"),
+            "result": result,
+        }
+    except (ValidationError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "derived_week_transition_unavailable",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.post("/preview")

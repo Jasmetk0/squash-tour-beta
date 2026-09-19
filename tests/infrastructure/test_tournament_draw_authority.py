@@ -4479,6 +4479,159 @@ def test_released_first_wc_preserves_second_wc_original_ordinal(database):
 
 
 @pytest.mark.pr_critical
+def test_exhausted_wc_routes_to_source_bound_lucky_loser_vacancy(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        install_ranking_authority(session)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=standard_applications(),
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=2,
+                qualifier_spots=1,
+                wild_card_slots=1,
+            ),
+            command_id="wc-ll-field",
+        )
+        wc = TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-ll-resolve",
+            original_wild_card_player_ids=("A",),
+            reserve_wild_card_player_ids=("B", "E", "F"),
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-ll-input",
+            draw_seed=31337,
+        )
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-ll-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-ll-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        assert draw_input.wild_card_player_ids == ("B",)
+        assert draw_input.qualification_player_ids == ("D", "E")
+
+        _mock_cutoff_resolution(
+            monkeypatch,
+            q_player_ids=draw_input.qualification_player_ids,
+            qualification_started=True,
+        )
+        cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            player_id="B",
+            played_matches=(),
+        )
+        source = TournamentReplacementSourceAuthorityBuilder.build(
+            predecessor=initial,
+            predecessor_draw_input=draw_input,
+            withdrawn_player_id="B",
+            replacement_cutoff_authority=cutoff,
+            qualification_start_evidence=TournamentDrawStartEvidence(
+                match_id="q-start-match",
+                result_fingerprint="a" * 64,
+            ),
+            main_start_evidence=None,
+            base_wild_card_authority=wc,
+            lucky_loser_order_authority=None,
+            external_reserve_player_ids=(
+                wc.adjusted_below_qualification_cut_player_ids
+            ),
+            unavailable_player_ids=("E", "F"),
+        )
+        assert source.source == "lucky_loser_pending"
+        assert source.base_wild_card_authority_fingerprint == wc.fingerprint
+
+        def resolve_source(self, **kwargs):
+            assert kwargs["withdrawn_player_id"] == "B"
+            assert kwargs["unavailable_player_ids"] == ("E", "F")
+            return source
+
+        monkeypatch.setattr(
+            TournamentReplacementSourceAuthorityStore,
+            "resolve",
+            resolve_source,
+        )
+
+        original_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
+        )
+        service = AuthoritativeFrozenMainReplacement(session)
+        result = service.execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-wc-ll",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=("F", "E"),
+        )
+
+        assert result.source == "lucky_loser_pending"
+        assert result.source_authority == source
+        assert len(result.draw_revisions) == 1
+        revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v13"
+        assert revision.repair_kind == "lucky_loser_vacancy"
+        assert revision.replacement_source_authority == source
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v9"
+        )
+        assert revision.successor_draw_input.wild_card_player_ids == ()
+        assert revision.successor_draw_input.released_wild_card_slot_ordinals == (1,)
+        assert revision.successor_draw_input.replacement_source_authority_fingerprints == (
+            source.fingerprint,
+        )
+        assert revision.successor_draw_input.lucky_loser_placeholder_ids == ("LL1",)
+
+        slot = revision.successor_draw.main.slots[original_slot.slot_index - 1]
+        assert slot.entrant_kind == "lucky_loser_placeholder"
+        assert slot.placeholder_id == "LL1"
+        assert slot.player_id is None
+        assert slot.entry_status is None
+        assert slot.seed_number is None
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+        retry = service.execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-wc-ll",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=("E", "F"),
+        )
+        assert retry.source == "lucky_loser_pending"
+        assert retry.source_authority == source
+        assert retry.draw_revisions == result.draw_revisions
+
+
+@pytest.mark.pr_critical
 def test_frozen_main_replacement_orchestrator_dispatches_source_aware_bye(database):
     with database.begin() as session:
         install_draw_input(session)

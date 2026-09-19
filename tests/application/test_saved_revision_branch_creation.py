@@ -68,6 +68,7 @@ def _empty_run(
     return run, repository.get_branch_revision_state(branch_id=branch_id)
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_branch_from_saved_revision_shares_history_and_owns_clean_draft(
     tmp_path,

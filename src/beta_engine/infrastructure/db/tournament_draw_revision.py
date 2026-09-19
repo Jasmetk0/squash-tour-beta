@@ -203,6 +203,16 @@ class TournamentDrawRevisionStore:
                         withdrawn_player_id=authority.withdrawn_player_id,
                         replacement_player_id=authority.replacement_player_id,
                         repair_authority_fingerprint=authority.fingerprint,
+                        qualification_replacement_player_id=(
+                            authority.replacement_player_id
+                            if authority.replacement_source == "qualification"
+                            else None
+                        ),
+                        qualification_backfill_player_id=(
+                            authority.qualification_backfill_player_id
+                            if authority.replacement_source == "qualification"
+                            else None
+                        ),
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
@@ -217,6 +227,9 @@ class TournamentDrawRevisionStore:
                         process_authority=process,
                         main_process_window_ordinal=(
                             revision.main_process_window_ordinal
+                        ),
+                        qualification_process_window_ordinal=(
+                            revision.qualification_process_window_ordinal
                         ),
                         sequence=revision.sequence,
                         command_id=revision.command_id,
@@ -757,6 +770,7 @@ class TournamentDrawRevisionStore:
         command_id: str,
         withdrawn_player_id: str,
         main_process_window_ordinal: int,
+        qualification_process_window_ordinal: int | None = None,
         unavailable_reserve_player_ids: tuple[str, ...] = (),
     ) -> TournamentDrawRevision:
         draw_store = TournamentDrawAuthorityStore(self.session)
@@ -792,6 +806,8 @@ class TournamentDrawRevisionStore:
                 or revision.repair_kind != "frozen_wild_card_repair"
                 or revision.main_process_window_ordinal
                 != main_process_window_ordinal
+                or revision.qualification_process_window_ordinal
+                != qualification_process_window_ordinal
                 or authority is None
                 or authority.withdrawn_player_id != withdrawn_player_id
                 or authority.unavailable_player_ids != expected_unavailable
@@ -876,6 +892,16 @@ class TournamentDrawRevisionStore:
                 withdrawn_player_id=withdrawn_player_id,
                 replacement_player_id=wc_repair.replacement_player_id,
                 repair_authority_fingerprint=wc_repair.fingerprint,
+                qualification_replacement_player_id=(
+                    wc_repair.replacement_player_id
+                    if wc_repair.replacement_source == "qualification"
+                    else None
+                ),
+                qualification_backfill_player_id=(
+                    wc_repair.qualification_backfill_player_id
+                    if wc_repair.replacement_source == "qualification"
+                    else None
+                ),
             )
         )
         sequence = len(history) + 1
@@ -885,6 +911,9 @@ class TournamentDrawRevisionStore:
             successor_draw_input=successor_input,
             process_authority=process,
             main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=(
+                qualification_process_window_ordinal
+            ),
             sequence=sequence,
             command_id=command_id,
             wild_card_repair_authority=wc_repair,
@@ -894,6 +923,9 @@ class TournamentDrawRevisionStore:
             "predecessor_draw_fingerprint": predecessor.fingerprint,
             "withdrawn_player_id": withdrawn_player_id,
             "main_process_window_ordinal": main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                qualification_process_window_ordinal
+            ),
             "unavailable_reserve_player_ids": list(unavailable),
             "wild_card_repair_authority_fingerprint": wc_repair.fingerprint,
         }

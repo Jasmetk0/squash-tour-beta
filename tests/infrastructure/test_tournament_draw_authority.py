@@ -4909,12 +4909,12 @@ def test_frozen_ordinary_fallback_late_bye_reprojects_without_dangling_feeder(
             package=package,
         )
 
-        # 3 Q nodes + 3 Main nodes exist canonically, but the repaired Main BYE
-        # node is already resolved and must not remain executable.
-        assert len(package.qualification_matches) == 3
+        # 1 Q node + 3 Main nodes exist canonically, but the repaired Main BYE
+        # node is non-executable and collapses onto the Q terminal feeder.
+        assert len(package.qualification_matches) == 1
         assert len(package.main_draw_matches) == 3
         assert len(topology.bye_match_ids) == 1
-        assert len(topology.plans) == 5
+        assert len(topology.plans) == 3
 
         bye_match_id = topology.bye_match_ids[0]
         executable_ids = {plan.group_id for plan in topology.plans}

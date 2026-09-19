@@ -346,6 +346,33 @@ def _world_event_payload(
     )
 
 
+def _world_event_matches_result(payload_json: str, command, result) -> bool:
+    try:
+        payload = json.loads(payload_json)
+        arrivals = payload.get("prospect_arrivals", [])
+        encoded = json.dumps(arrivals, sort_keys=True, separators=(",", ":"))
+        arrival_fingerprint = hashlib.sha256(encoded.encode()).hexdigest()
+        return (
+            payload.get("audit") == command.audit.model_dump(mode="json")
+            and payload.get("completed_week")
+            == command.completed_week.model_dump(mode="json")
+            and payload.get("target_week") == command.target_week.model_dump(mode="json")
+            and payload.get("official_ranking_fingerprint")
+            == result.official_ranking_fingerprint
+            and payload.get("player_lifecycle_fingerprint")
+            == result.player_lifecycle_fingerprint
+            and payload.get("player_sporting_fingerprint")
+            == result.player_sporting_fingerprint
+            and payload.get("prospect_arrival_fingerprint")
+            == result.prospect_arrival_fingerprint
+            and payload.get("prospect_arrival_count") == result.prospect_arrival_count
+            and arrival_fingerprint == result.prospect_arrival_fingerprint
+            and len(arrivals) == result.prospect_arrival_count
+        )
+    except (TypeError, ValueError):
+        return False
+
+
 class AuthoritativeWeekTransitionRunner:
     def __init__(self, factory: sessionmaker[Session], awards=None):
         self.factory = factory
@@ -428,13 +455,7 @@ def transition_in_transaction(session: Session, awards, command):
                 or event.command_id != command.command_id
                 or event.week_ordinal != result.target_week.ordinal
                 or event.event_kind != result.world_event_kind
-                or event.payload_json
-                != _world_event_payload(
-                    command,
-                    result.official_ranking_fingerprint,
-                    result.player_lifecycle_fingerprint,
-                    result.player_sporting_fingerprint,
-                )
+                or not _world_event_matches_result(event.payload_json, command, result)
             )
         ):
             raise ValueError("Completed Week Transition receipt is corrupt")
@@ -538,26 +559,16 @@ def transition_in_transaction(session: Session, awards, command):
     ):
         raise ValueError("Ranking transition authority boundary differs")
 
-    target_position = season_week_to_calendar_position(
-        2000 + command.target_week.season_index, command.target_week.week
+    prospect_arrivals, prospect_source_fingerprint = _target_week_prospect_snapshot(
+        session, run_id=command.run_id, target_week=command.target_week
     )
-    pending_prospect = session.scalar(
-        select(RunProspectModel.prospect_id)
-        .where(
-            RunProspectModel.run_id == command.run_id,
-            RunProspectModel.season_start_year
-            == 2000 + command.target_week.season_index,
-            RunProspectModel.season_week == command.target_week.week,
-            RunProspectModel.calendar_year == target_position.calendar_year,
-            RunProspectModel.year_week == target_position.year_week,
-        )
-        .limit(1)
-    )
-    if pending_prospect is not None:
-        raise ValueError(
-            "Target week has Run-scoped prospect intake but no authoritative "
-            "Run/Branch-owned player source bridge"
-        )
+    if command.prospect_source_fingerprint is None:
+        if prospect_arrivals:
+            raise ValueError(
+                "Week Transition with target-week prospects requires a frozen prospect source fingerprint"
+            )
+    elif command.prospect_source_fingerprint != prospect_source_fingerprint:
+        raise ValueError("Week Transition prospect source changed since preview")
 
     shared_blockers = week_transition_readiness_blockers(
         session,
@@ -720,7 +731,12 @@ def transition_in_transaction(session: Session, awards, command):
     world.current_ordinal = command.target_week.ordinal
     world.ranking_fingerprint = snapshot.fingerprint
     event_payload = _world_event_payload(
-        command, snapshot.fingerprint, lifecycle.fingerprint, sporting.fingerprint
+        command,
+        snapshot.fingerprint,
+        lifecycle.fingerprint,
+        sporting.fingerprint,
+        prospect_arrivals,
+        prospect_source_fingerprint,
     )
     session.add(
         AuthoritativeWorldEventModel(
@@ -741,6 +757,8 @@ def transition_in_transaction(session: Session, awards, command):
         official_ranking_fingerprint=snapshot.fingerprint,
         player_lifecycle_fingerprint=lifecycle.fingerprint,
         player_sporting_fingerprint=sporting.fingerprint,
+        prospect_arrival_fingerprint=prospect_source_fingerprint,
+        prospect_arrival_count=len(prospect_arrivals),
     )
     session.add(
         AuthoritativeWeekTransitionReceiptModel(

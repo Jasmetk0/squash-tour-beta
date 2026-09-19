@@ -64,6 +64,23 @@ class TournamentDrawRevisionStore:
         )
         if predecessor is None and rows:
             raise ValueError("Draw revision history references missing initial Draw")
+        if not rows:
+            return ()
+
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        field_store = TournamentEntryFieldStore(self.session)
+        field_rows = field_store._rows(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if process is None or ranking is None or not field_rows:
+            raise ValueError("Draw revision history has missing frozen dependencies")
+        previous_field, applications = field_store._load_row(field_rows[-1])
+
         for expected, row in enumerate(rows, start=1):
             if row.sequence != expected:
                 raise ValueError("Tournament Draw revision sequence has a gap")
@@ -87,7 +104,52 @@ class TournamentDrawRevisionStore:
                 or revision.predecessor_draw_fingerprint != predecessor.fingerprint
             ):
                 raise ValueError("Tournament Draw revision predecessor chain is corrupt")
+
+            rebuilt_field = TournamentEntryFieldResolver.repair_pre_draw(
+                authority=ranking,
+                applications=applications,
+                previous=previous_field,
+                withdrawn_player_ids=revision.withdrawn_player_ids,
+            )
+            if rebuilt_field != revision.successor_field:
+                raise ValueError(
+                    "Tournament Draw revision field does not replay from frozen ranking"
+                )
+            rebuilt_input = TournamentDrawInputAuthorityBuilder.build(
+                authority=ranking,
+                field=rebuilt_field,
+                field_sequence=revision.successor_draw_input.field_sequence,
+                command_id=revision.command_id,
+                draw_seed=revision.repair_draw_seed,
+                main_seed_count=None,
+                qualification_seed_count=None,
+                schema_version="tournament_draw_input_authority.v2",
+            )
+            if rebuilt_input != revision.successor_draw_input:
+                raise ValueError(
+                    "Tournament Draw revision input does not replay from repaired field"
+                )
+            rebuilt_revision = TournamentDrawRevisionBuilder.build_full_redraw(
+                predecessor=predecessor,
+                successor_field=rebuilt_field,
+                successor_draw_input=rebuilt_input,
+                process_authority=process,
+                affected_draw_types=revision.affected_draw_types,
+                main_process_window_ordinal=revision.main_process_window_ordinal,
+                qualification_process_window_ordinal=(
+                    revision.qualification_process_window_ordinal
+                ),
+                repair_draw_seed=revision.repair_draw_seed,
+                withdrawn_player_ids=revision.withdrawn_player_ids,
+                sequence=revision.sequence,
+                command_id=revision.command_id,
+            )
+            if rebuilt_revision != revision:
+                raise ValueError(
+                    "Tournament Draw revision does not replay from frozen dependencies"
+                )
             out.append(revision)
+            previous_field = revision.successor_field
             predecessor = revision.successor_draw
         return tuple(out)
 

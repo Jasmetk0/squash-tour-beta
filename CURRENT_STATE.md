@@ -259,8 +259,18 @@ authority fingerprint, seed Direct + WC players from the same frozen Tournament
 Ranking Snapshot and preserve explicit `wild_card` provenance in Main Draw slots.
 The authority is included in Saved Revision state and locks after Draw Input commit.
 
-This still does **not** claim the complete Master draw contract. Post-draw WC/RWC
-repair, Qualification/Main redraw-cascade-freeze phases, Lucky Loser ordering, group
+Qualification/Main Draw process windows now have canonical Run/Branch authority.
+Each persisted process authority is bound to one exact Draw Authority fingerprint.
+Qualification and Main keep independent configured window counts; the penultimate
+window is always the Redraw Cutoff / seed-cascade phase and the final window is
+always Draw Freeze, while all earlier configured windows are complete-redraw phase.
+No default number of early windows is invented because Master §15.10 keeps that
+configuration open. The process authority participates in Saved Revision capture /
+restore and historical states without it retain their previous fingerprint shape.
+
+This still does **not** claim the complete Master draw contract. The authority now
+proves which repair phase applies, but actual post-draw WC/RWC repair, full redraw /
+tier-aware seed cascade / frozen-slot mutations, Lucky Loser ordering, group
 Qualification and the per-player first-real-match replacement cutoff remain Gate 3
 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

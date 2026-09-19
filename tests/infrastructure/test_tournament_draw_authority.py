@@ -32,6 +32,7 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
     TournamentDrawAuthorityModel,
+    TournamentDrawProcessAuthorityModel,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -40,6 +41,10 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityConflict,
     TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityConflict,
+    TournamentDrawProcessAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
@@ -719,6 +724,220 @@ def test_multi_q_bye_partial_layer_changes_with_draw_seed_but_stays_in_same_laye
             len(section.bye_slot_indexes)
             for section in draw.qualification_brackets
         ) == [1, 1, 2]
+
+
+def test_draw_process_authority_keeps_qualification_and_main_phases_independent(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        process = TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-draw-process",
+            qualification_process_window_count=3,
+            main_process_window_count=5,
+        )
+
+        assert process.draw_authority_fingerprint == draw.fingerprint
+        assert process.qualification is not None
+        assert process.qualification.redraw_cutoff_window_ordinal == 2
+        assert process.qualification.draw_freeze_window_ordinal == 3
+        assert process.main.redraw_cutoff_window_ordinal == 4
+        assert process.main.draw_freeze_window_ordinal == 5
+
+        assert process.phase_for(
+            draw_type="qualification", process_window_ordinal=1
+        ) == "full_redraw"
+        assert process.phase_for(
+            draw_type="qualification", process_window_ordinal=2
+        ) == "seed_cascade"
+        assert process.phase_for(
+            draw_type="qualification", process_window_ordinal=3
+        ) == "draw_frozen"
+
+        assert process.phase_for(
+            draw_type="main", process_window_ordinal=1
+        ) == "full_redraw"
+        assert process.phase_for(
+            draw_type="main", process_window_ordinal=3
+        ) == "full_redraw"
+        assert process.phase_for(
+            draw_type="main", process_window_ordinal=4
+        ) == "seed_cascade"
+        assert process.phase_for(
+            draw_type="main", process_window_ordinal=5
+        ) == "draw_frozen"
+
+        assert (
+            TournamentDrawProcessAuthorityStore(session).get(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+            )
+            == process
+        )
+        assert TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-draw-process",
+            qualification_process_window_count=3,
+            main_process_window_count=5,
+        ) == process
+
+        with pytest.raises(
+            TournamentDrawProcessAuthorityConflict,
+            match="different request",
+        ):
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="configure-draw-process",
+                qualification_process_window_count=4,
+                main_process_window_count=5,
+            )
+
+
+def test_draw_process_authority_requires_exact_draw_structure(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+
+        with pytest.raises(ValueError, match="Qualification Draw requires"):
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="missing-q-process",
+                main_process_window_count=4,
+            )
+
+        with pytest.raises(ValueError, match="at least Redraw Cutoff"):
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="too-few-windows",
+                qualification_process_window_count=1,
+                main_process_window_count=4,
+            )
+
+
+def test_saved_revision_restores_draw_process_authority_backward_and_forward(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        saved_before_process = capture(session)
+        before_component = saved_before_process["content"]["simulation_slot_match_state"]
+        assert "draw_process_authorities" not in before_component
+
+        process = TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-draw-process",
+            qualification_process_window_count=3,
+            main_process_window_count=5,
+        )
+        saved_after_process = capture(session)
+        after_component = saved_after_process["content"]["simulation_slot_match_state"]
+        assert len(after_component["draw_process_authorities"]) == 1
+        assert after_component["fingerprint"] != before_component["fingerprint"]
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after_process,
+            target_payload=saved_before_process,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert TournamentDrawProcessAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) is None
+
+        recaptured_before = capture(session)
+        assert (
+            recaptured_before["content"]["simulation_slot_match_state"]["fingerprint"]
+            == before_component["fingerprint"]
+        )
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured_before,
+            target_payload=saved_after_process,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert TournamentDrawProcessAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == process
+
+
+def test_corrupt_saved_draw_process_authority_is_rejected(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        process = TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-draw-process",
+            qualification_process_window_count=3,
+            main_process_window_count=5,
+        )
+        saved = capture(session)
+
+        corrupt = {
+            "content": {
+                key: (dict(value) if isinstance(value, dict) else value)
+                for key, value in saved["content"].items()
+            }
+        }
+        component = dict(corrupt["content"]["simulation_slot_match_state"])
+        rows = [dict(value) for value in component["draw_process_authorities"]]
+        rows[0]["authority_fingerprint"] = "0" * 64
+        component["draw_process_authorities"] = rows
+        corrupt["content"]["simulation_slot_match_state"] = component
+
+        with pytest.raises(ValueError):
+            restore_saved_simulation_slots(
+                session,
+                current_payload=saved,
+                target_payload=corrupt,
+                run_id="run",
+                branch_id="branch",
+            )
+        assert TournamentDrawProcessAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == process
 
 
 def test_corrupt_persisted_draw_fails_closed(database):

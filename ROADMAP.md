@@ -255,7 +255,14 @@ acceptance releases WC automatically, RWC has priority for the freed WC slot, an
 Qualification is atomically backfilled when its player receives WC. Draw Input v3
 then consumes the resolved WC players with frozen provenance.
 
-After this slice, draw-focused work proceeds to phase-aware post-draw WC/RWC and
-Qualification/Main redraw/cascade/freeze, Lucky Loser, group Qualification and the
-first-real-match replacement cutoff. Legacy simulation-run UI/endpoint retirement
-remains separate Gate 3 work.
+Qualification and Main Draw process-window authority is the next implemented
+foundation: each draw component has an independent configured timeline, with the
+penultimate window fixed as Redraw Cutoff / seed-cascade and the final window fixed
+as Draw Freeze. The authority is bound to the exact canonical Draw fingerprint and
+is Saved Revision state.
+
+The next draw-focused slice can now execute real phase-aware repair against that
+authority: full redraw before cutoff, tier-aware seed cascade between cutoff/freeze,
+and direct frozen-slot fill after freeze. Post-draw WC/RWC, Lucky Loser, group
+Qualification and the first-real-match replacement cutoff remain subsequent Gate 3
+work. Legacy simulation-run UI/endpoint retirement remains separate Gate 3 work.

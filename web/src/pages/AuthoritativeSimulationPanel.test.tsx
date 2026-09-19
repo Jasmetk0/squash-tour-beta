@@ -17,7 +17,10 @@ const api = vi.hoisted(() => ({
   saveAuthoritativeSimulation: vi.fn()
 }))
 
-vi.mock('../api/client', () => api)
+vi.mock('../api/client', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../api/client')>()),
+  ...api
+}))
 
 const week = { season_index: 2, week: 17 }
 const position = {

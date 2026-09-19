@@ -1465,8 +1465,6 @@ class AuthoritativeRunSimulationDriver:
         """Propose earliest dependency-safe Simulation Slots from canonical topology."""
         with self.factory() as session:
             self._require_writable_scope(session, run_id, branch_id)
-            if current_week != expected_week:
-                raise ValueError("schedule week is stale")
             schedule, position_fingerprint = (
                 self._build_topological_schedule_proposal(
                     session,
@@ -1521,6 +1519,8 @@ class AuthoritativeRunSimulationDriver:
                     }
                 raise ValueError("week schedule is already adopted and immutable")
 
+            if current_week != expected_week:
+                raise ValueError("schedule week is stale")
             schedule, position_fingerprint = (
                 self._build_topological_schedule_proposal(
                     session,

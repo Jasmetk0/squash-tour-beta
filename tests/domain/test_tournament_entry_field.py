@@ -99,6 +99,21 @@ def app(
     )
 
 
+@pytest.mark.parametrize("main_draw_size", (2, 4, 8, 16, 32, 64, 128))
+def test_classic_main_capacity_accepts_supported_power_of_two_sizes(main_draw_size):
+    capacity = TournamentEntryFieldCapacity(main_draw_size=main_draw_size)
+    assert capacity.main_draw_size == main_draw_size
+
+
+@pytest.mark.parametrize("main_draw_size", (1, 3, 6, 12, 24, 48, 96, 127))
+def test_classic_main_capacity_rejects_non_power_of_two_sizes(main_draw_size):
+    with pytest.raises(
+        ValueError,
+        match="Classic Main Draw capacity must be one of 2, 4, 8, 16, 32, 64, 128",
+    ):
+        TournamentEntryFieldCapacity(main_draw_size=main_draw_size)
+
+
 def capacity():
     # Three ranking-derived direct places plus one future Q placeholder.
     return TournamentEntryFieldCapacity(

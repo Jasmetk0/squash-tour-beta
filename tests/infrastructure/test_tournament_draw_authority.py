@@ -32,6 +32,7 @@ from beta_engine.domain.tournaments.replacement_cutoff_authority import (
 )
 from beta_engine.domain.tournaments.replacement_source_authority import (
     TournamentDrawStartEvidence,
+    TournamentReplacementSourceAuthority,
     TournamentReplacementSourceAuthorityBuilder,
 )
 from beta_engine.domain.tournaments.lucky_loser_authority import (
@@ -4277,6 +4278,121 @@ def test_frozen_main_replacement_orchestrator_dispatches_rwc(database):
         )
         assert replacement.slot_index == original_slot.slot_index
         assert replacement.entry_status == "wild_card"
+
+
+@pytest.mark.pr_critical
+def test_frozen_wc_fallback_releases_wc_status_for_external_reserve(database):
+    with database.begin() as session:
+        initial, draw_input, wc = install_frozen_external_rwc_main(session)
+        original_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "E"
+        )
+        cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            player_id="E",
+            played_matches=(),
+        )
+        source = TournamentReplacementSourceAuthority(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            withdrawn_player_id="E",
+            predecessor_draw_fingerprint=initial.fingerprint,
+            predecessor_draw_input_fingerprint=draw_input.fingerprint,
+            physical_slot_index=original_slot.slot_index,
+            source="external_reserve",
+            selected_player_id="F",
+            source_ordinal=1,
+            qualification_start_evidence=TournamentDrawStartEvidence(
+                match_id="q-start",
+                result_fingerprint="1" * 64,
+            ),
+            replacement_cutoff_authority=cutoff,
+            external_reserve_player_ids=("F", "G"),
+            base_wild_card_authority_fingerprint=wc.fingerprint,
+        )
+
+        store = TournamentDrawRevisionStore(session)
+        revision = store.apply_frozen_ordinary_fallback(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-external-fallback",
+            main_process_window_ordinal=3,
+            replacement_source_authority=source,
+        )
+
+        assert revision.schema_version == "tournament_draw_revision.v12"
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v9"
+        )
+        assert revision.successor_draw_input.released_wild_card_slot_count == 1
+        assert revision.successor_draw_input.wild_card_player_ids == ()
+        assert "F" in revision.successor_draw_input.direct_main_player_ids
+        assert "E" in revision.successor_draw_input.withdrawn_player_ids
+
+        replacement = revision.successor_draw.main.slots[original_slot.slot_index - 1]
+        assert replacement.player_id == "F"
+        assert replacement.entry_status is None
+        assert replacement.seed_number is None
+        assert revision.replacement_source_authority == source
+
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_frozen_main_replacement_orchestrates_exhausted_wc_to_bye(database):
+    with database.begin() as session:
+        initial, _, _ = install_frozen_external_rwc_main(session)
+        original_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "E"
+        )
+        service = AuthoritativeFrozenMainReplacement(session)
+
+        result = service.execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-wc-bye",
+            withdrawn_player_id="E",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=("F", "G"),
+        )
+
+        assert result.source == "bye"
+        assert len(result.draw_revisions) == 1
+        revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v12"
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v9"
+        )
+        assert revision.successor_draw_input.wild_card_player_ids == ()
+        assert revision.successor_draw_input.released_wild_card_slot_count == 1
+        assert revision.successor_draw_input.late_bye_count == 1
+
+        slot = revision.successor_draw.main.slots[original_slot.slot_index - 1]
+        assert slot.entrant_kind == "bye"
+        assert slot.player_id is None
+        assert slot.entry_status is None
+        assert original_slot.slot_index in revision.successor_draw.main.bye_slot_indexes
+
+        retry = service.execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="orchestrate-wc-bye",
+            withdrawn_player_id="E",
+            main_process_window_ordinal=3,
+            unavailable_player_ids=("F", "G"),
+        )
+        assert retry.source == "bye"
+        assert retry.draw_revisions == result.draw_revisions
 
 
 @pytest.mark.pr_critical

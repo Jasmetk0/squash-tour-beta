@@ -14,7 +14,11 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
-  saveAuthoritativeSimulation: vi.fn()
+  saveAuthoritativeSimulation: vi.fn(),
+  previewDerivedAuthoritativeWeekTransition: vi.fn(),
+  confirmAuthoritativeWeekTransition: vi.fn(),
+  previewRankingSave: vi.fn(),
+  saveRankingPreparation: vi.fn()
 }))
 
 vi.mock('../api/client', async (importOriginal) => ({
@@ -67,6 +71,46 @@ const proposal = {
   position_fingerprint: 'd'.repeat(64),
   provenance: 'earliest_dependency_safe_topological_proposal_v1; not Match Day timing or Final Commitment authority',
   persisted: false as const
+}
+
+const transitionPreview = {
+  request_fingerprint: '7'.repeat(64),
+  command: {
+    kind: 'authoritative_week_transition.v1' as const,
+    command_id: 'transition-command',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    base_revision_id: 'revision-7',
+    completed_week: week,
+    target_week: { season_index: 2, week: 18 },
+    authority_fingerprint: '8'.repeat(64),
+    tournaments: [{
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      edition_id: 'event-a',
+      event_id: 'event-a',
+      completed_week: week,
+      first_publication_week: { season_index: 2, week: 18 },
+      validity_weeks: 52,
+      ranking_status: 'ranked' as const,
+      expected_result_fingerprint: '9'.repeat(64),
+      expected_award_fingerprint: 'a'.repeat(64)
+    }],
+    corrections: [],
+    zero_versions: [],
+    audit: { actor_label: 'Admin', reason: 'Reviewed canonical transition' }
+  },
+  result: {
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    command_id: 'transition-command',
+    completed_week: week,
+    target_week: { season_index: 2, week: 18 },
+    official_ranking_fingerprint: 'b'.repeat(64),
+    player_lifecycle_fingerprint: 'c'.repeat(64),
+    player_sporting_fingerprint: 'd'.repeat(64),
+    world_event_kind: 'week_transition_completed' as const
+  }
 }
 
 function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulationPanel>> = {}) {
@@ -149,6 +193,18 @@ beforeEach(() => {
     },
     audit_event_id: 'audit-8'
   })
+  api.previewDerivedAuthoritativeWeekTransition.mockResolvedValue(transitionPreview)
+  api.confirmAuthoritativeWeekTransition.mockResolvedValue(transitionPreview)
+  api.previewRankingSave.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    ranking_fingerprint: 'e'.repeat(64),
+    saved_head_revision_id: 'revision-7',
+    draft_version: 12,
+    has_unsaved_changes: true,
+    can_save: true
+  })
+  api.saveRankingPreparation.mockResolvedValue({ ok: true })
 })
 
 describe('AuthoritativeSimulationPanel', () => {
@@ -288,6 +344,78 @@ describe('AuthoritativeSimulationPanel', () => {
       })
     )
     expect(await screen.findByText('Saved as revision revision-8.')).toBeInTheDocument()
+  })
+
+  it('reviews, confirms and saves one server-derived canonical Week Transition', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: true,
+      transition_blockers: [],
+      terminal_sporting_fingerprint: 'f'.repeat(64),
+      position_fingerprint: '1'.repeat(64)
+    })
+    renderPanel()
+
+    const reviewButton = await screen.findByRole('button', { name: 'Review derived Week Transition' })
+    await userEvent.click(reviewButton)
+
+    await waitFor(() =>
+      expect(api.previewDerivedAuthoritativeWeekTransition).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.any(String)
+      )
+    )
+    expect(await screen.findByText('7'.repeat(64))).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm reviewed Week Transition' }))
+    await waitFor(() =>
+      expect(api.confirmAuthoritativeWeekTransition).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        transitionPreview
+      )
+    )
+
+    const save = await screen.findByRole('button', { name: 'Save transitioned week' })
+    expect(save).toBeEnabled()
+    await userEvent.click(save)
+    await waitFor(() =>
+      expect(api.saveRankingPreparation).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          draft_version: 12,
+          ranking_fingerprint: 'e'.repeat(64),
+          can_save: true
+        })
+      )
+    )
+  })
+
+  it('keeps Week Transition unavailable while canonical position reports blockers', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    renderPanel()
+
+    expect(await screen.findByText('Week Transition is not ready. Resolve the canonical blockers shown above before advancing world time.')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Review derived Week Transition' })).not.toBeInTheDocument()
+    expect(api.previewDerivedAuthoritativeWeekTransition).not.toHaveBeenCalled()
   })
 
   it('does not query or mutate canonical simulation when the target Branch is blocked', async () => {

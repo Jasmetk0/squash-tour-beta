@@ -5,6 +5,7 @@ import json
 from urllib import error, request
 
 import pytest
+from beta_engine.application.authoritative_week_transition import AuthoritativeWeekTransitionCommand
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
@@ -202,6 +203,40 @@ def prepared_transition(server, name, *, retirement_player=False):
         "audit": bootstrap["audit"],
     }
     return run_id, branch_id, command
+
+
+@pytest.mark.pr_critical
+def test_server_derived_preview_freezes_current_authoritative_transition_request(tmp_path):
+    path = tmp_path / "derived-week-transition.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, manual = prepared_transition(
+            server,
+            "server derived week transition",
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, preview = _request(
+            "POST",
+            root + "/derived/preview",
+            {"command_id": "derived-transition"},
+        )
+        assert status == 200, preview
+        command = preview["command"]
+        expected = AuthoritativeWeekTransitionCommand.model_validate_json(
+            json.dumps(manual | {"command_id": "derived-transition"})
+        )
+        assert command == expected.model_dump(mode="json")
+        assert preview["request_fingerprint"] == expected.fingerprint
+
+        status, confirmed = confirm(root, command, preview)
+        assert status == 201
+        assert confirmed["result"] == preview["result"]
+
+        # The exact frozen command remains a valid idempotent retry even though
+        # current persisted state has already advanced.
+        assert confirm(root, command, preview) == (201, confirmed)
 
 
 def test_real_http_retirement_preview_confirm_and_exact_retry(tmp_path):

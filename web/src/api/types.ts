@@ -879,6 +879,55 @@ export type AuthoritativeSimulationSaveResponse = {
   audit_event_id: string
 }
 
+export type TournamentRankingBinding = {
+  run_id: string
+  branch_id: string
+  edition_id: string
+  event_id: string
+  completed_week: AuthoritativeRankingWeek
+  first_publication_week: AuthoritativeRankingWeek
+  validity_weeks: number
+  ranking_status: 'ranked'
+  expected_result_fingerprint: string
+  expected_award_fingerprint: string
+}
+
+export type AuthoritativeWeekTransitionCommand = {
+  kind: 'authoritative_week_transition.v1'
+  command_id: string
+  run_id: string
+  branch_id: string
+  base_revision_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  authority_fingerprint: string
+  tournaments: TournamentRankingBinding[]
+  corrections: unknown[]
+  zero_versions: unknown[]
+  audit: {
+    actor_label: string
+    reason: string
+  }
+}
+
+export type AuthoritativeWeekTransitionResult = {
+  run_id: string
+  branch_id: string
+  command_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  official_ranking_fingerprint: string
+  player_lifecycle_fingerprint: string
+  player_sporting_fingerprint: string
+  world_event_kind: 'week_transition_completed'
+}
+
+export type DerivedAuthoritativeWeekTransitionPreview = {
+  request_fingerprint: string
+  command: AuthoritativeWeekTransitionCommand
+  result: AuthoritativeWeekTransitionResult
+}
+
 export type SetResult = { set_number: number; winner_player_id: string; loser_player_id: string; winner_games: number; loser_games: number; was_close_endgame: boolean; ended_by_retirement: boolean }
 export type MatchResult = { match_id: string; winner_player_id: string; loser_player_id: string; player_a_id: string; player_b_id: string; best_of: number; games_to: number; win_by: number; sets: SetResult[]; sets_won: { [playerId: string]: number }; termination_reason: 'COMPLETED' | 'RETIREMENT'; retired_player_id: string | null; retired_at_set_start: number | null }
 export type FinalsQualifiedPlayer = { player_id: string; race_rank: number; race_points: number; seed: number }

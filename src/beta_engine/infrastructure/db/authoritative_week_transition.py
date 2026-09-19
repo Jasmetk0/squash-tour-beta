@@ -134,6 +134,85 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     return tuple(blockers)
 
 
+def derive_persisted_week_transition_command(
+    session,
+    *,
+    run_id: str,
+    branch_id: str,
+    command_id: str,
+) -> AuthoritativeWeekTransitionCommand:
+    """Derive one exact Week Transition request from current persisted authority."""
+    branch = session.get(RunBranchModel, branch_id)
+    draft = session.scalar(
+        select(BranchWorkingDraftModel).where(
+            BranchWorkingDraftModel.branch_id == branch_id
+        )
+    )
+    if (
+        branch is None
+        or draft is None
+        or branch.run_id != run_id
+        or not branch.saved_head_revision_id
+    ):
+        raise ValueError("Week Transition Run/Branch Saved Revision scope is unavailable")
+
+    candidates = OfficialRankingCandidateStore(session).history(
+        run_id=run_id,
+        branch_id=branch_id,
+    )
+    predecessor = candidates[-1] if candidates else None
+    if predecessor is None:
+        raise ValueError("Week Transition predecessor ranking is missing")
+    completed_week = predecessor.week
+
+    blockers = week_transition_readiness_blockers(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        completed_week=completed_week,
+    )
+    if blockers:
+        raise ValueError(
+            "Week Transition is not ready: " + ", ".join(blockers)
+        )
+
+    target_week = RankingWeek(
+        season_index=completed_week.season_index,
+        week=completed_week.week + 1,
+    )
+    authority = RankingTransitionAuthorityStore(session).get(
+        run_id=run_id,
+        branch_id=branch_id,
+        target_ordinal=target_week.ordinal,
+    )
+    if authority is None:
+        raise ValueError("Week Transition ranking authority is missing")
+
+    sources = OwnedTournamentRankingSourceStore(session).history(
+        run_id=run_id,
+        branch_id=branch_id,
+    )
+    if any(source is None for source in sources):
+        raise ValueError("Week Transition tournament source history is incomplete")
+    bindings = tuple(
+        source.binding
+        for source in sources
+        if source is not None and source.binding.completed_week == completed_week
+    )
+
+    return AuthoritativeWeekTransitionCommand(
+        command_id=command_id,
+        run_id=run_id,
+        branch_id=branch_id,
+        base_revision_id=branch.saved_head_revision_id,
+        completed_week=completed_week,
+        target_week=target_week,
+        authority_fingerprint=authority.fingerprint,
+        tournaments=bindings,
+        audit=authority.audit,
+    )
+
+
 def preview_persisted_week_transition(
     session, awards, *, run_id, branch_id, completed_week
 ):

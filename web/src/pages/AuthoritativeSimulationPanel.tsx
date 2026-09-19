@@ -9,11 +9,16 @@ import {
   proposeAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
   simulateAuthoritativeNextMatch,
-  simulateAuthoritativeNextSlot
+  simulateAuthoritativeNextSlot,
+  previewDerivedAuthoritativeWeekTransition,
+  confirmAuthoritativeWeekTransition,
+  previewRankingSave,
+  saveRankingPreparation
 } from '../api/client'
 import type {
   AuthoritativeSimulationCommandPayload,
-  AuthoritativeWeekScheduleProposal
+  AuthoritativeWeekScheduleProposal,
+  DerivedAuthoritativeWeekTransitionPreview
 } from '../api/types'
 import { newCommandId } from '../admin/branchSimulation'
 import { EmptyState, MetadataList, SectionCard, SummaryPills } from '../components/RunScopedUi'
@@ -40,6 +45,10 @@ export function AuthoritativeSimulationPanel({
   const [proposalRequestId, setProposalRequestId] = useState('')
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
+  const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
+  const [weekTransitionReview, setWeekTransitionReview] =
+    useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
+  const [weekTransitionCommitted, setWeekTransitionCommitted] = useState(false)
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -62,6 +71,12 @@ export function AuthoritativeSimulationPanel({
     enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
+  const transitionSaveQuery = useQuery({
+    queryKey: ['authoritative-week-transition-save-preview', runId, branchId],
+    queryFn: () => previewRankingSave(runId, branchId),
+    enabled: weekTransitionCommitted,
+    retry: false
+  })
 
   useEffect(() => {
     setProposal(null)
@@ -70,6 +85,9 @@ export function AuthoritativeSimulationPanel({
     setSelectedGroupId('')
     setNextMatchCommandId(newCommandId())
     setNextSlotCommandId(newCommandId())
+    setWeekTransitionCommandId(newCommandId())
+    setWeekTransitionReview(null)
+    setWeekTransitionCommitted(false)
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
@@ -81,6 +99,9 @@ export function AuthoritativeSimulationPanel({
     if (!positionQuery.data?.position_fingerprint) return
     setNextMatchCommandId(newCommandId())
     setNextSlotCommandId(newCommandId())
+    setWeekTransitionCommandId(newCommandId())
+    setWeekTransitionReview(null)
+    setWeekTransitionCommitted(false)
     setConfirmed(false)
   }, [positionQuery.data?.position_fingerprint])
 
@@ -213,6 +234,74 @@ export function AuthoritativeSimulationPanel({
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) await refreshCanonicalSimulation()
+    }
+  })
+
+  const weekTransitionPreviewMutation = useMutation({
+    mutationFn: () => {
+      if (!positionQuery.data?.week_ready_for_transition) {
+        throw new Error('Canonical week is not ready for Week Transition.')
+      }
+      return previewDerivedAuthoritativeWeekTransition(runId, branchId, weekTransitionCommandId)
+    },
+    onSuccess: (preview) => setWeekTransitionReview(preview),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekTransitionReview(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const weekTransitionConfirmMutation = useMutation({
+    mutationFn: () => {
+      if (!weekTransitionReview) throw new Error('Review the derived Week Transition preview first.')
+      return confirmAuthoritativeWeekTransition(runId, branchId, weekTransitionReview)
+    },
+    onSuccess: async () => {
+      setWeekTransitionCommitted(true)
+      await queryClient.invalidateQueries({
+        queryKey: ['authoritative-week-transition-save-preview', runId, branchId]
+      })
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekTransitionReview(null)
+        setWeekTransitionCommitted(false)
+        setWeekTransitionCommandId(newCommandId())
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] })
+        ])
+      }
+    }
+  })
+
+  const weekTransitionSaveMutation = useMutation({
+    mutationFn: () => {
+      if (!transitionSaveQuery.data?.can_save) {
+        throw new Error('Reviewed Week Transition has no saveable ranking/world draft.')
+      }
+      return saveRankingPreparation(runId, branchId, transitionSaveQuery.data)
+    },
+    onSuccess: async () => {
+      setWeekTransitionReview(null)
+      setWeekTransitionCommitted(false)
+      setWeekTransitionCommandId(newCommandId())
+      weekTransitionConfirmMutation.reset()
+      weekTransitionPreviewMutation.reset()
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] }),
+        refreshCanonicalSimulation()
+      ])
+    },
+    onError: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['authoritative-week-transition-save-preview', runId, branchId]
+      })
     }
   })
 
@@ -405,6 +494,94 @@ export function AuthoritativeSimulationPanel({
           ) : null}
           {saveMutation.error ? (
             <p className="error">Authoritative simulation Save failed: {formatApiError(saveMutation.error)}</p>
+          ) : null}
+        </>
+      ) : null}
+
+      {position ? (
+        <>
+          <h4>Canonical Week Transition</h4>
+          {!position.week_ready_for_transition ? (
+            <p className="status">
+              Week Transition is not ready. Resolve the canonical blockers shown above before advancing world time.
+            </p>
+          ) : (
+            <>
+              <p className="status">
+                The server derives the exact transition request from the Saved Revision head, frozen Ranking Transition Authority and owned tournament sources.
+              </p>
+              {!weekTransitionCommitted ? (
+                <button
+                  type="button"
+                  onClick={() => weekTransitionPreviewMutation.mutate()}
+                  disabled={weekTransitionPreviewMutation.isPending || weekTransitionConfirmMutation.isPending}
+                >
+                  Review derived Week Transition
+                </button>
+              ) : null}
+              {weekTransitionPreviewMutation.error ? (
+                <p className="error">Week Transition preview failed: {formatApiError(weekTransitionPreviewMutation.error)}</p>
+              ) : null}
+              {weekTransitionReview ? (
+                <>
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Completed week',
+                        value: `Season index ${weekTransitionReview.command.completed_week.season_index} · Week ${weekTransitionReview.command.completed_week.week}`
+                      },
+                      {
+                        label: 'Target week',
+                        value: `Season index ${weekTransitionReview.command.target_week.season_index} · Week ${weekTransitionReview.command.target_week.week}`
+                      },
+                      { label: 'Tournament bindings', value: weekTransitionReview.command.tournaments.length },
+                      { label: 'Base Saved Revision', value: weekTransitionReview.command.base_revision_id },
+                      { label: 'Request fingerprint', value: weekTransitionReview.request_fingerprint },
+                      { label: 'Preview ranking fingerprint', value: weekTransitionReview.result.official_ranking_fingerprint }
+                    ]}
+                  />
+                  {!weekTransitionCommitted ? (
+                    <button
+                      type="button"
+                      onClick={() => weekTransitionConfirmMutation.mutate()}
+                      disabled={weekTransitionConfirmMutation.isPending}
+                    >
+                      Confirm reviewed Week Transition
+                    </button>
+                  ) : null}
+                </>
+              ) : null}
+              {weekTransitionConfirmMutation.error ? (
+                <p className="error">Week Transition confirm failed: {formatApiError(weekTransitionConfirmMutation.error)}</p>
+              ) : null}
+            </>
+          )}
+
+          {weekTransitionCommitted ? (
+            <>
+              <p className="status">
+                Week Transition committed to the Branch Working Draft. Save it as a recoverable Saved Revision before continuing simulation.
+              </p>
+              {transitionSaveQuery.isLoading ? <p className="status">Loading transition Save preview…</p> : null}
+              {transitionSaveQuery.error ? (
+                <p className="error">Transition Save preview failed: {formatApiError(transitionSaveQuery.error)}</p>
+              ) : null}
+              {transitionSaveQuery.data ? (
+                <button
+                  type="button"
+                  onClick={() => weekTransitionSaveMutation.mutate()}
+                  disabled={!transitionSaveQuery.data.can_save || weekTransitionSaveMutation.isPending}
+                >
+                  Save transitioned week
+                </button>
+              ) : null}
+              {weekTransitionSaveMutation.error ? (
+                <p className="error">Transition Save failed: {formatApiError(weekTransitionSaveMutation.error)}</p>
+              ) : null}
+              {weekTransitionSaveMutation.isSuccess ? (
+                <p className="status">Transitioned week saved. Canonical simulation can continue from the new world head.</p>
+              ) : null}
+            </>
           ) : null}
         </>
       ) : null}

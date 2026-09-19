@@ -943,93 +943,9 @@ def test_corrupt_saved_draw_process_authority_is_rejected(database):
         ) == process
 
 
-def test_full_redraw_main_creates_append_only_active_revision(database):
+def test_main_withdrawal_full_redraw_atomically_repairs_main_and_qualification(database):
     with database.begin() as session:
-        players = tuple(chr(ord("A") + index) for index in range(8))
-        applications = tuple(app(player_id, "main") for player_id in players)
-        install_ranking_authority(session, players)
-        TournamentEntryFieldStore(session).stage_initial(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            applications=applications,
-            capacity=TournamentEntryFieldCapacity(
-                main_draw_size=8,
-                qualification_draw_size=0,
-                qualifier_spots=0,
-            ),
-            command_id="initial-field",
-        )
-        TournamentDrawInputAuthorityStore(session).commit(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="commit-draw-input",
-            draw_seed=123,
-            main_seed_count=2,
-            qualification_seed_count=0,
-        )
-        draw_store = TournamentDrawAuthorityStore(session)
-        initial = draw_store.generate(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="generate-draw",
-        )
-        TournamentDrawProcessAuthorityStore(session).configure(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="configure-process",
-            main_process_window_count=4,
-        )
-
-        revision = TournamentDrawRevisionStore(session).full_redraw(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="redraw-main-1",
-            draw_type="main",
-            process_window_ordinal=1,
-            repair_draw_seed=987654,
-        )
-
-        assert revision.sequence == 1
-        assert revision.predecessor_draw_fingerprint == initial.fingerprint
-        assert revision.successor_draw.draw_input_fingerprint == initial.draw_input_fingerprint
-        assert revision.successor_draw.main != initial.main
-        assert draw_store.get_initial(
-            run_id="run", branch_id="branch", event_id="event"
-        ) == initial
-        assert draw_store.get(
-            run_id="run", branch_id="branch", event_id="event"
-        ) == revision.successor_draw
-        assert TournamentDrawRevisionStore(session).history(
-            run_id="run", branch_id="branch", event_id="event"
-        ) == (revision,)
-
-
-def test_full_redraw_qualification_preserves_main_and_q_linkages(database):
-    with database.begin() as session:
-        applications = (
-            app("A", "main"),
-            app("B", "main"),
-            app("C", "qualification"),
-            app("D", "qualification"),
-            app("E", "qualification"),
-            app("F", "qualification"),
-        )
-        install_draw_input(
-            session,
-            applications=applications,
-            capacity=TournamentEntryFieldCapacity(
-                main_draw_size=4,
-                qualification_draw_size=4,
-                qualifier_spots=2,
-            ),
-            main_seed_count=1,
-            qualification_seed_count=2,
-        )
+        install_draw_input(session)
         draw_store = TournamentDrawAuthorityStore(session)
         initial = draw_store.generate(
             run_id="run",
@@ -1046,59 +962,45 @@ def test_full_redraw_qualification_preserves_main_and_q_linkages(database):
             qualification_process_window_count=3,
         )
 
-        revision = TournamentDrawRevisionStore(session).full_redraw(
+        revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
             run_id="run",
             branch_id="branch",
             event_id="event",
-            command_id="redraw-q-1",
-            draw_type="qualification",
-            process_window_ordinal=1,
-            repair_draw_seed=246810,
+            command_id="withdraw-c-redraw",
+            withdrawn_player_ids=("C",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=987654,
         )
 
-        assert revision.successor_draw.main == initial.main
+        assert revision.sequence == 1
+        assert revision.predecessor_draw_fingerprint == initial.fingerprint
+        assert revision.affected_draw_types == ("main", "qualification")
+        assert revision.withdrawn_player_ids == ("C",)
+        assert revision.successor_field.direct_main_player_ids == ("A", "B", "D")
+        assert revision.successor_field.qualification_player_ids == ("E", "F")
+        assert revision.successor_field.below_qualification_cut_player_ids == ("G",)
+        assert revision.successor_draw_input.withdrawn_player_ids == ("C",)
+        assert revision.successor_draw.draw_input_fingerprint == (
+            revision.successor_draw_input.fingerprint
+        )
+        assert draw_store.get_initial(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == initial
+        assert draw_store.get(
+            run_id="run", branch_id="branch", event_id="event"
+        ) == revision.successor_draw
         assert tuple(
             section.section_id
             for section in revision.successor_draw.qualification_brackets
-        ) == ("Q1", "Q2")
-        assert revision.successor_draw.main.qualifier_placeholder_slots == (
-            initial.main.qualifier_placeholder_slots
-        )
-        assert revision.successor_draw.fingerprint != initial.fingerprint
-        assert revision.repair_draw_seed == 246810
+        ) == ("Q1",)
+        assert {
+            placeholder_id
+            for placeholder_id, _ in revision.successor_draw.main.qualifier_placeholder_slots
+        } == {"Q1"}
 
 
-def test_full_redraw_is_rejected_at_or_after_redraw_cutoff(database):
-    with database.begin() as session:
-        install_draw_input(session)
-        TournamentDrawAuthorityStore(session).generate(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="generate-draw",
-        )
-        TournamentDrawProcessAuthorityStore(session).configure(
-            run_id="run",
-            branch_id="branch",
-            event_id="event",
-            command_id="configure-process",
-            main_process_window_count=4,
-            qualification_process_window_count=3,
-        )
-
-        with pytest.raises(ValueError, match="only legal before Redraw Cutoff"):
-            TournamentDrawRevisionStore(session).full_redraw(
-                run_id="run",
-                branch_id="branch",
-                event_id="event",
-                command_id="too-late-redraw",
-                draw_type="qualification",
-                process_window_ordinal=2,
-                repair_draw_seed=44,
-            )
-
-
-def test_saved_revision_restores_active_full_redraw(database):
+def test_qualification_only_withdrawal_redraw_preserves_main(database):
     with database.begin() as session:
         install_draw_input(session)
         draw_store = TournamentDrawAuthorityStore(session)
@@ -1113,18 +1015,141 @@ def test_saved_revision_restores_active_full_redraw(database):
             branch_id="branch",
             event_id="event",
             command_id="configure-process",
-            main_process_window_count=4,
+            main_process_window_count=5,
+            qualification_process_window_count=3,
+        )
+
+        revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-b-redraw",
+            withdrawn_player_ids=("B",),
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=246810,
+        )
+
+        assert revision.affected_draw_types == ("qualification",)
+        assert revision.successor_field.direct_main_player_ids == ("A", "C", "D")
+        assert revision.successor_field.qualification_player_ids == ("E", "F")
+        assert revision.successor_draw.main == initial.main
+        assert revision.successor_draw.main.qualifier_placeholder_slots == (
+            initial.main.qualifier_placeholder_slots
+        )
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1",)
+
+
+def test_full_redraw_checks_each_affected_component_phase(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-process",
+            main_process_window_count=5,
+            qualification_process_window_count=3,
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="Qualification full redraw is only legal before Redraw Cutoff",
+        ):
+            TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="too-late-main-withdrawal",
+                withdrawn_player_ids=("C",),
+                main_process_window_ordinal=1,
+                qualification_process_window_ordinal=2,
+                repair_draw_seed=44,
+            )
+
+
+def test_multiple_full_redraw_withdrawals_chain_from_frozen_successor_field(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-process",
+            main_process_window_count=5,
+            qualification_process_window_count=3,
+        )
+
+        first = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-c",
+            withdrawn_player_ids=("C",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=101,
+        )
+        second = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="withdraw-e",
+            withdrawn_player_ids=("E",),
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=202,
+        )
+
+        assert first.successor_field.qualification_player_ids == ("E", "F")
+        assert second.sequence == 2
+        assert second.predecessor_draw_fingerprint == first.successor_draw.fingerprint
+        assert second.successor_field.direct_main_player_ids == ("A", "B", "D")
+        assert second.successor_field.qualification_player_ids == ("F", "G")
+        assert second.successor_field.withdrawn_player_ids == ("C", "E")
+
+
+def test_saved_revision_restores_active_full_redraw_withdrawal(database):
+    with database.begin() as session:
+        install_draw_input(session)
+        draw_store = TournamentDrawAuthorityStore(session)
+        initial = draw_store.generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="generate-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="configure-process",
+            main_process_window_count=5,
             qualification_process_window_count=3,
         )
         saved_before = capture(session)
 
-        revision = TournamentDrawRevisionStore(session).full_redraw(
+        revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
             run_id="run",
             branch_id="branch",
             event_id="event",
-            command_id="redraw-main",
-            draw_type="main",
-            process_window_ordinal=1,
+            command_id="withdraw-c",
+            withdrawn_player_ids=("C",),
+            main_process_window_ordinal=1,
+            qualification_process_window_ordinal=1,
             repair_draw_seed=9991,
         )
         saved_after = capture(session)

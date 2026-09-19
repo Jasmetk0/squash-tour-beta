@@ -16,6 +16,7 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
 
 PlayerPrizeMoneyHistoryStatus = Literal[
     "known",
+    "zero",
     "unknown",
     "not_configured",
     "historical_unavailable",
@@ -41,6 +42,7 @@ class PlayerPrizeMoneyHistoryEntry(BaseModel):
     payout_status: PlayerPrizeMoneyHistoryStatus
     amount: int | None = Field(default=None, ge=0)
     currency: str | None = Field(default=None, min_length=3, max_length=3)
+    zero_reason: str | None = Field(default=None)
     owned_source_schema_version: str = Field(min_length=1)
     owned_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     prize_authority_fingerprint: str | None = Field(
@@ -55,6 +57,7 @@ class PlayerPrizeMoneySeasonSummary(BaseModel):
     season_index: int = Field(ge=0)
     event_count: int = Field(ge=0)
     known_payout_count: int = Field(ge=0)
+    zero_payout_count: int = Field(default=0, ge=0)
     unknown_payout_count: int = Field(ge=0)
     not_configured_count: int = Field(ge=0)
     historical_unavailable_count: int = Field(ge=0)
@@ -75,6 +78,7 @@ class PlayerPrizeMoneyHistory(BaseModel):
     season_summaries: tuple[PlayerPrizeMoneySeasonSummary, ...] = ()
     career_known_totals_by_currency: tuple[PrizeMoneyCurrencyTotal, ...] = ()
     known_payout_count: int = Field(ge=0)
+    zero_payout_count: int = Field(default=0, ge=0)
     unknown_payout_count: int = Field(ge=0)
     not_configured_count: int = Field(ge=0)
     historical_unavailable_count: int = Field(ge=0)
@@ -129,6 +133,7 @@ class PlayerPrizeMoneyHistoryService:
                             payout_status="historical_unavailable",
                             amount=None,
                             currency=None,
+                            zero_reason=None,
                             owned_source_schema_version=source.schema_version,
                             owned_source_fingerprint=source.fingerprint,
                             prize_authority_fingerprint=None,
@@ -163,6 +168,7 @@ class PlayerPrizeMoneyHistoryService:
                         payout_status=player_award.payout_status,
                         amount=player_award.amount,
                         currency=player_award.currency,
+                        zero_reason=player_award.zero_reason,
                         owned_source_schema_version=source.schema_version,
                         owned_source_fingerprint=source.fingerprint,
                         prize_authority_fingerprint=prize_authority.fingerprint,
@@ -184,6 +190,9 @@ class PlayerPrizeMoneyHistoryService:
 
         known_count = sum(
             1 for entry in ordered_entries if entry.payout_status == "known"
+        )
+        zero_count = sum(
+            1 for entry in ordered_entries if entry.payout_status == "zero"
         )
         unknown_count = sum(
             1 for entry in ordered_entries if entry.payout_status == "unknown"
@@ -210,6 +219,7 @@ class PlayerPrizeMoneyHistoryService:
             season_summaries=season_summaries,
             career_known_totals_by_currency=career_totals,
             known_payout_count=known_count,
+            zero_payout_count=zero_count,
             unknown_payout_count=unknown_count,
             not_configured_count=not_configured_count,
             historical_unavailable_count=historical_unavailable_count,
@@ -260,6 +270,11 @@ class PlayerPrizeMoneyHistoryService:
                         1
                         for entry in season_entries
                         if entry.payout_status == "known"
+                    ),
+                    zero_payout_count=sum(
+                        1
+                        for entry in season_entries
+                        if entry.payout_status == "zero"
                     ),
                     unknown_payout_count=sum(
                         1

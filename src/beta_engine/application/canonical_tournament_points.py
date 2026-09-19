@@ -20,6 +20,43 @@ from beta_engine.domain.tournaments.result_authority import TournamentResultAuth
 from beta_engine.application.season_event_results_service import SeasonEventResultPackage
 
 
+def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
+    """Keep noncompetitive BYE/W/O progression separate from played match records."""
+
+    players = {player.player_id: player for player in result.players}
+    competitive_wins = {player_id: 0 for player_id in players}
+    competitive_losses = {player_id: 0 for player_id in players}
+    walkovers_received = {player_id: 0 for player_id in players}
+    walkover_losses = {player_id: False for player_id in players}
+
+    for match in result.matches:
+        if match.winner_player_id not in players:
+            raise ValueError("Tournament point source contains unknown match winner")
+        if match.scoreline == "BYE":
+            if match.loser_player_id is not None:
+                raise ValueError("Canonical BYE point source cannot contain a loser")
+            continue
+        if match.loser_player_id is None or match.loser_player_id not in players:
+            raise ValueError("Tournament point source contains invalid match loser")
+        if match.scoreline == "W/O":
+            walkovers_received[match.winner_player_id] += 1
+            walkover_losses[match.loser_player_id] = True
+            continue
+        competitive_wins[match.winner_player_id] += 1
+        competitive_losses[match.loser_player_id] += 1
+
+    for player_id, player in players.items():
+        if (
+            player.wins != competitive_wins[player_id]
+            or player.losses != competitive_losses[player_id]
+            or player.walkovers_received != walkovers_received[player_id]
+            or player.retired_or_walkover_loss != walkover_losses[player_id]
+        ):
+            raise ValueError(
+                "Tournament point source match counters differ from canonical result"
+            )
+
+
 def build_tournament_point_award_authority(
     *,
     result: TournamentResultAuthority,
@@ -32,10 +69,7 @@ def build_tournament_point_award_authority(
         raise ValueError(
             "Canonical ranked tournament close requires ranked point authority"
         )
-    if any(match.scoreline == "W/O" for match in result.matches):
-        raise ValueError(
-            "Canonical W/O point awards require dedicated Master award handling"
-        )
+    _validate_result_match_counters(result)
     if (
         point_authority.point_distribution_source.startswith("fallback")
         or point_authority.point_distribution_source == "calendar_event.unranked"

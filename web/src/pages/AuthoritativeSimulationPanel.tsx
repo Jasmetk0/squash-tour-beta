@@ -508,13 +508,15 @@ export function AuthoritativeSimulationPanel({
               <p className="status">
                 The server derives the exact transition request from the Saved Revision head, frozen Ranking Transition Authority and owned tournament sources.
               </p>
-              <button
-                type="button"
-                onClick={() => weekTransitionPreviewMutation.mutate()}
-                disabled={weekTransitionPreviewMutation.isPending || weekTransitionConfirmMutation.isPending}
-              >
-                Review derived Week Transition
-              </button>
+              {!weekTransitionCommitted ? (
+                <button
+                  type="button"
+                  onClick={() => weekTransitionPreviewMutation.mutate()}
+                  disabled={weekTransitionPreviewMutation.isPending || weekTransitionConfirmMutation.isPending}
+                >
+                  Review derived Week Transition
+                </button>
+              ) : null}
               {weekTransitionPreviewMutation.error ? (
                 <p className="error">Week Transition preview failed: {formatApiError(weekTransitionPreviewMutation.error)}</p>
               ) : null}
@@ -536,13 +538,15 @@ export function AuthoritativeSimulationPanel({
                       { label: 'Preview ranking fingerprint', value: weekTransitionReview.result.official_ranking_fingerprint }
                     ]}
                   />
-                  <button
-                    type="button"
-                    onClick={() => weekTransitionConfirmMutation.mutate()}
-                    disabled={weekTransitionConfirmMutation.isPending}
-                  >
-                    Confirm reviewed Week Transition
-                  </button>
+                  {!weekTransitionCommitted ? (
+                    <button
+                      type="button"
+                      onClick={() => weekTransitionConfirmMutation.mutate()}
+                      disabled={weekTransitionConfirmMutation.isPending}
+                    >
+                      Confirm reviewed Week Transition
+                    </button>
+                  ) : null}
                 </>
               ) : null}
               {weekTransitionConfirmMutation.error ? (

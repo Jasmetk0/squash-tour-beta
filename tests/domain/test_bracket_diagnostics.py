@@ -76,6 +76,30 @@ def test_automatic_capacity_exposes_same_non_authoritative_diagnostics() -> None
     assert "main_diagnostics" not in capacity.model_dump(mode="json")
 
 
+def test_current_version_accepts_128_but_rejects_129_main_entrants() -> None:
+    capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+        main_entrant_count=128,
+    )
+    assert capacity.main_draw_size == 128
+    assert capacity.bye_slots == 0
+    assert "large_main_draw_over_64" in {
+        item.code for item in capacity.main_diagnostics
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="supports at most 128 entrants",
+    ):
+        TournamentEntryFieldCapacity.for_main_entrant_count(
+            main_entrant_count=129,
+        )
+
+
+def test_explicit_capacity_above_128_is_not_supported() -> None:
+    with pytest.raises(ValueError):
+        TournamentEntryFieldCapacity(main_draw_size=256)
+
+
 def test_diagnostics_reject_incoherent_counts() -> None:
     with pytest.raises(
         ValueError,

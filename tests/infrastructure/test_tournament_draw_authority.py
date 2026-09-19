@@ -1516,6 +1516,53 @@ def install_frozen_external_rwc_main(session):
     return initial, draw_input, wc
 
 
+
+
+def install_frozen_seeded_wc_main(session):
+    install_ranking_authority(session)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=standard_applications(),
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=8,
+            wild_card_slots=1,
+            bye_slots=4,
+        ),
+        command_id="seeded-wc-field",
+    )
+    wc = TournamentWildCardAuthorityStore(session).resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-wc-resolve",
+        original_wild_card_player_ids=("B",),
+        reserve_wild_card_player_ids=("E", "F", "G"),
+    )
+    draw_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-wc-input",
+        draw_seed=778899,
+    )
+    initial = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-wc-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-wc-process",
+        main_process_window_count=3,
+    )
+    return initial, draw_input, wc
+
+
 def draw_player_slots(bracket):
     return {
         slot.player_id: slot
@@ -2569,3 +2616,185 @@ def test_frozen_wc_promotes_priority_rwc_from_q_and_backfills_exact_q_slot(datab
             event_id="event",
         ) == (revision,)
 
+
+
+@pytest.mark.pr_critical
+def test_frozen_seeded_wc_repair_vacates_seed_instead_of_inheriting_it(database):
+    with database.begin() as session:
+        initial, draw_input, wc = install_frozen_seeded_wc_main(session)
+        assert draw_input.wild_card_player_ids == ("B",)
+        assert draw_input.main_seed_player_ids == ("A", "B")
+        seeded_wc_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
+        )
+        assert seeded_wc_slot.entry_status == "wild_card"
+        assert seeded_wc_slot.seed_number == 2
+
+        saved_before = capture(session)
+        store = TournamentDrawRevisionStore(session)
+        revision = store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-wc-to-rwc",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+        )
+
+        authority = revision.wild_card_repair_authority
+        assert authority is not None
+        assert authority.schema_version == "tournament_post_draw_wild_card_repair.v3"
+        assert authority.replacement_source == "external_reserve"
+        assert authority.vacated_main_seed_number == 2
+        assert authority.vacated_qualification_seed_number is None
+        assert authority.replacement_player_id == "E"
+
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v5"
+        )
+        assert revision.successor_draw_input.main_seed_count == 2
+        assert revision.successor_draw_input.main_seed_player_ids == ("A",)
+        assert revision.successor_draw_input.main_seed_vacancy_numbers == (2,)
+        assert revision.successor_draw_input.wild_card_player_ids == ("E",)
+
+        replacement = next(
+            slot for slot in revision.successor_draw.main.slots
+            if slot.player_id == "E"
+        )
+        assert replacement.slot_index == seeded_wc_slot.slot_index
+        assert replacement.entry_status == "wild_card"
+        assert replacement.seed_number is None
+        assert replacement.is_seed_protected is False
+        assert revision.successor_draw.main.seed_positions == ((1, initial.main.seed_positions[0][1]),)
+
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+        saved_after = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        recaptured = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_frozen_seeded_q_rwc_vacates_q_seed_and_backfills_same_slot(database):
+    with database.begin() as session:
+        install_ranking_authority(session)
+        TournamentEntryFieldStore(session).stage_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=standard_applications(),
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=2,
+                qualifier_spots=1,
+                wild_card_slots=1,
+            ),
+            command_id="seeded-q-rwc-field",
+        )
+        TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-resolve",
+            original_wild_card_player_ids=("A",),
+            reserve_wild_card_player_ids=("B", "D", "F"),
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-input",
+            draw_seed=556677,
+        )
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+
+        assert draw_input.wild_card_player_ids == ("B",)
+        assert draw_input.qualification_player_ids == ("D", "E")
+        assert draw_input.qualification_seed_player_ids == ("D",)
+        q_bracket = initial.qualification_brackets[0]
+        seeded_q_slot = next(slot for slot in q_bracket.slots if slot.player_id == "D")
+        assert seeded_q_slot.seed_number == 1
+        wc_slot = next(slot for slot in initial.main.slots if slot.player_id == "B")
+
+        store = TournamentDrawRevisionStore(session)
+        revision = store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-promote",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=3,
+        )
+
+        authority = revision.wild_card_repair_authority
+        assert authority is not None
+        assert authority.schema_version == "tournament_post_draw_wild_card_repair.v3"
+        assert authority.replacement_source == "qualification"
+        assert authority.replacement_player_id == "D"
+        assert authority.vacated_main_seed_number is None
+        assert authority.vacated_qualification_seed_number == 1
+        assert authority.qualification_backfill_player_id == "F"
+
+        assert revision.successor_draw_input.schema_version == (
+            "tournament_draw_input_authority.v5"
+        )
+        assert revision.successor_draw_input.wild_card_player_ids == ("D",)
+        assert revision.successor_draw_input.qualification_player_ids == ("E", "F")
+        assert revision.successor_draw_input.qualification_seed_count == 1
+        assert revision.successor_draw_input.qualification_seed_player_ids == ()
+        assert revision.successor_draw_input.qualification_seed_vacancy_numbers == (1,)
+
+        promoted = next(
+            slot for slot in revision.successor_draw.main.slots
+            if slot.player_id == "D"
+        )
+        assert promoted.slot_index == wc_slot.slot_index
+        assert promoted.entry_status == "wild_card"
+        assert promoted.seed_number is None
+
+        repaired_q = revision.successor_draw.qualification_brackets[0]
+        backfill = repaired_q.slots[seeded_q_slot.slot_index - 1]
+        assert backfill.player_id == "F"
+        assert backfill.seed_number is None
+        assert repaired_q.seed_positions == ()
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)

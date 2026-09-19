@@ -18,6 +18,10 @@ const api = vi.hoisted(() => ({
   getCanonicalTournamentEntryFieldState: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
+  getCanonicalTournamentEffectiveDrawAuthority: vi.fn(),
+  getCanonicalTournamentDrawRevisionHistory: vi.fn(),
+  getCanonicalTournamentDrawProcessState: vi.fn(),
+  configureCanonicalTournamentDrawProcess: vi.fn(),
   commitCanonicalTournamentDrawInput: vi.fn(),
   generateCanonicalTournamentDraw: vi.fn(),
   getEventPreDrawWithdrawalActions: vi.fn(),
@@ -223,6 +227,50 @@ describe('PlannedEventDetailPage', () => {
         qualifier_placeholder_slots: [['Q1', 4]]
       }
     })
+    api.getCanonicalTournamentEffectiveDrawAuthority.mockImplementation(
+      (...args: unknown[]) => api.getCanonicalTournamentDrawAuthority(...args)
+    )
+    api.getCanonicalTournamentDrawRevisionHistory.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_revision_history.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      initial_draw_fingerprint: 'c'.repeat(64),
+      effective_draw_fingerprint: 'c'.repeat(64),
+      revisions: []
+    })
+    api.getCanonicalTournamentDrawProcessState.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_process_state.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      draw_authority_fingerprint: 'c'.repeat(64),
+      has_qualification: true,
+      configured: false,
+      authority_fingerprint: null,
+      main: null,
+      qualification: null
+    })
+    api.configureCanonicalTournamentDrawProcess.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_process_state.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      draw_authority_fingerprint: 'c'.repeat(64),
+      has_qualification: true,
+      configured: true,
+      authority_fingerprint: 'd'.repeat(64),
+      main: {
+        process_window_count: 4,
+        redraw_cutoff_window_ordinal: 3,
+        draw_freeze_window_ordinal: 4
+      },
+      qualification: {
+        process_window_count: 3,
+        redraw_cutoff_window_ordinal: 2,
+        draw_freeze_window_ordinal: 3
+      }
+    })
     api.getEventPreDrawWithdrawalState.mockResolvedValue({
       run_id: 'run-a',
       event_id: 'E1',
@@ -394,7 +442,7 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
     for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Late-replacement action history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
-    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
+    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
 
@@ -571,6 +619,90 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('Q1').length).toBeGreaterThanOrEqual(2)
     expect(await screen.findByRole('table', { name: 'Canonical Qualification slots' })).toBeInTheDocument()
     expect(api.getCanonicalTournamentDrawAuthority).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
+  })
+
+  it('configures canonical Draw process windows explicitly against the immutable Draw fingerprint', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentDrawState.mockResolvedValue({
+      ...(await api.generateCanonicalTournamentDraw()),
+      initial_draw_generated: true,
+      draw_authority_fingerprint: 'c'.repeat(64)
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByText('Draw process windows')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Main process windows'), { target: { value: '4' } })
+    fireEvent.change(screen.getByLabelText('Qualification process windows'), { target: { value: '3' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Configure canonical Draw process' }))
+
+    await waitFor(() =>
+      expect(api.configureCanonicalTournamentDrawProcess).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        expect.objectContaining({
+          schema_version: 'canonical_tournament_draw_process_configure_command.v1',
+          expected_draw_authority_fingerprint: 'c'.repeat(64),
+          main_process_window_count: 4,
+          qualification_process_window_count: 3
+        })
+      )
+    )
+  })
+
+  it('renders effective successor Draw and append-only revision audit instead of stale initial slots', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentDrawState.mockResolvedValue({
+      ...(await api.generateCanonicalTournamentDraw()),
+      initial_draw_generated: true,
+      draw_authority_fingerprint: 'c'.repeat(64)
+    })
+    api.getCanonicalTournamentEffectiveDrawAuthority.mockResolvedValue({
+      ...(await api.getCanonicalTournamentDrawAuthority()),
+      draw_input_fingerprint: 'e'.repeat(64),
+      main: {
+        ...(await api.getCanonicalTournamentDrawAuthority()).main,
+        slots: [
+          { slot_index: 1, idealized_slot_number: 1, entrant_kind: 'player', player_id: 'P1', placeholder_id: null, seed_number: 1, is_seed_protected: true },
+          { slot_index: 2, idealized_slot_number: 4, entrant_kind: 'player', player_id: 'P2', placeholder_id: null, seed_number: null, is_seed_protected: false },
+          { slot_index: 3, idealized_slot_number: 3, entrant_kind: 'player', player_id: 'P4-EFFECTIVE', placeholder_id: null, seed_number: null, is_seed_protected: false },
+          { slot_index: 4, idealized_slot_number: 2, entrant_kind: 'qualifier_placeholder', player_id: null, placeholder_id: 'Q1', seed_number: null, is_seed_protected: false }
+        ]
+      }
+    })
+    api.getCanonicalTournamentDrawRevisionHistory.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_revision_history.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      initial_draw_fingerprint: 'c'.repeat(64),
+      effective_draw_fingerprint: 'f'.repeat(64),
+      revisions: [{
+        sequence: 1,
+        schema_version: 'tournament_draw_revision.v5',
+        command_id: 'withdraw-p3',
+        repair_kind: 'full_redraw',
+        affected_draw_types: ['main', 'qualification'],
+        withdrawn_player_ids: ['P3'],
+        main_process_window_ordinal: 1,
+        qualification_process_window_ordinal: 1,
+        main_repair_action: null,
+        qualification_repair_action: null,
+        repair_draw_seed: 987,
+        predecessor_draw_fingerprint: 'c'.repeat(64),
+        successor_draw_input_fingerprint: 'e'.repeat(64),
+        successor_draw_fingerprint: 'f'.repeat(64)
+      }]
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByText('P4-EFFECTIVE')).toBeInTheDocument()
+    expect(screen.queryByText('P3')).not.toBeInTheDocument()
+    const history = screen.getByRole('list', { name: 'Canonical Draw revision history' })
+    expect(history).toHaveTextContent('#1 · full_redraw · main + qualification · withdrawn P3 · Main window 1 · Q window 1')
+    expect(screen.getByText('Latest effective successor Draw')).toBeInTheDocument()
   })
 
   it('renders pre-draw withdrawal controls and submits deterministic one-step action', async () => {

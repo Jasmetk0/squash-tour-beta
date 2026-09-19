@@ -5,6 +5,7 @@ import json
 from urllib import error, request
 
 import pytest
+from beta_engine.application.authoritative_week_transition import AuthoritativeWeekTransitionCommand
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,

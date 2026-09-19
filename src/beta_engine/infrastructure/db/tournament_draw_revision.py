@@ -217,6 +217,9 @@ class TournamentDrawRevisionStore:
                         qualification_vacated_seed_number=(
                             authority.vacated_qualification_seed_number
                         ),
+                        qualification_full_redraw_reseed=(
+                            revision.qualification_repair_action == "full_redraw"
+                        ),
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
@@ -902,14 +905,6 @@ class TournamentDrawRevisionStore:
                 draw_type="qualification",
                 process_window_ordinal=qualification_process_window_ordinal,
             )
-            if (
-                qualification_phase != "draw_frozen"
-                and wc_repair.vacated_qualification_seed_number is not None
-            ):
-                raise TournamentDrawRevisionConflict(
-                    "Seeded Qualification RWC pre-freeze repair requires "
-                    "the later seed-aware Q slice"
-                )
             if qualification_phase == "full_redraw":
                 if repair_draw_seed is None:
                     raise TournamentDrawRevisionConflict(
@@ -949,6 +944,9 @@ class TournamentDrawRevisionStore:
                 main_vacated_seed_number=wc_repair.vacated_main_seed_number,
                 qualification_vacated_seed_number=(
                     wc_repair.vacated_qualification_seed_number
+                ),
+                qualification_full_redraw_reseed=(
+                    qualification_phase == "full_redraw"
                 ),
             )
         )

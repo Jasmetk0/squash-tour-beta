@@ -299,6 +299,7 @@ class TournamentDrawInputAuthorityBuilder:
         qualification_backfill_player_id: str | None = None,
         main_vacated_seed_number: int | None = None,
         qualification_vacated_seed_number: int | None = None,
+        qualification_full_redraw_reseed: bool = False,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v3",
@@ -357,11 +358,6 @@ class TournamentDrawInputAuthorityBuilder:
         if withdrawn_was_seeded:
             main_seed_players.remove(withdrawn_player_id)
             main_seed_vacancies.add(main_vacated_seed_number)
-        if replacement_in_q and qualification_vacated_seed_number is not None:
-            qualification_seed_players.remove(replacement_player_id)
-            qualification_seed_vacancies.add(
-                qualification_vacated_seed_number
-            )
 
         qualification_players = list(previous.qualification_player_ids)
         if replacement_in_q:
@@ -373,6 +369,30 @@ class TournamentDrawInputAuthorityBuilder:
                 raise ValueError("Qualification RWC backfill player is already active")
             qualification_players.remove(replacement_player_id)
             qualification_players.append(qualification_backfill_player_id)
+            if qualification_vacated_seed_number is not None:
+                if qualification_full_redraw_reseed:
+                    if previous.qualification_seed_vacancy_numbers:
+                        raise ValueError(
+                            "Q full redraw cannot start from frozen Q seed vacancies"
+                        )
+                    qualification_seed_players = list(
+                        qualification_players[: previous.qualification_seed_count]
+                    )
+                    qualification_seed_vacancies.clear()
+                else:
+                    qualification_seed_players.remove(replacement_player_id)
+                    qualification_seed_vacancies.add(
+                        qualification_vacated_seed_number
+                    )
+            elif qualification_full_redraw_reseed:
+                qualification_seed_players = list(
+                    qualification_players[: previous.qualification_seed_count]
+                )
+                qualification_seed_vacancies.clear()
+        elif qualification_full_redraw_reseed:
+            raise ValueError(
+                "Q full-redraw reseed requires Qualification RWC promotion"
+            )
 
         wc_players = list(previous.wild_card_player_ids)
         wc_players[wc_players.index(withdrawn_player_id)] = replacement_player_id

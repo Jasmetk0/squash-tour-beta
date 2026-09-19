@@ -287,6 +287,7 @@ class TournamentDrawRevision(FrozenInput):
                     if self.qualification_repair_action not in {
                         "full_redraw",
                         "direct_slot_fill",
+                        "seed_cascade",
                     }:
                         raise ValueError(
                             "Pre-freeze Q RWC repair requires redraw or direct fill"
@@ -863,15 +864,6 @@ class TournamentDrawRevisionBuilder:
                 draw_type="qualification",
                 process_window_ordinal=qualification_process_window_ordinal,
             )
-            if (
-                qualification_phase != "draw_frozen"
-                and wild_card_repair_authority.vacated_qualification_seed_number
-                is not None
-            ):
-                raise ValueError(
-                    "Seeded Qualification RWC pre-freeze repair requires "
-                    "the later seed-aware Q slice"
-                )
             if qualification_phase == "full_redraw":
                 if repair_draw_seed is None:
                     raise ValueError(
@@ -910,13 +902,28 @@ class TournamentDrawRevisionBuilder:
             else False
         ):
             raise ValueError("RWC successor Draw Input lacks Main seed vacancy")
-        if (
-            wild_card_repair_authority.vacated_qualification_seed_number
-            not in successor_draw_input.qualification_seed_vacancy_numbers
-            if wild_card_repair_authority.vacated_qualification_seed_number is not None
-            else False
-        ):
-            raise ValueError("RWC successor Draw Input lacks Qualification seed vacancy")
+        if wild_card_repair_authority.vacated_qualification_seed_number is not None:
+            q_seed_number = (
+                wild_card_repair_authority.vacated_qualification_seed_number
+            )
+            if qualification_phase == "full_redraw":
+                if q_seed_number in successor_draw_input.qualification_seed_vacancy_numbers:
+                    raise ValueError(
+                        "Q full redraw cannot retain departed seed as a vacancy"
+                    )
+                if (
+                    len(successor_draw_input.qualification_seed_player_ids)
+                    != successor_draw_input.qualification_seed_count
+                ):
+                    raise ValueError(
+                        "Q full redraw must restore the canonical active seed count"
+                    )
+            elif q_seed_number not in (
+                successor_draw_input.qualification_seed_vacancy_numbers
+            ):
+                raise ValueError(
+                    "RWC successor Draw Input lacks Qualification seed vacancy"
+                )
 
         slots = list(predecessor.main.slots)
         index = wild_card_repair_authority.physical_slot_index - 1
@@ -981,9 +988,15 @@ class TournamentDrawRevisionBuilder:
                         predecessor.qualification_brackets
                     ),
                 )
-                if qualification_action != "direct_slot_fill":
+                expected_q_action = (
+                    "seed_cascade"
+                    if wild_card_repair_authority.vacated_qualification_seed_number
+                    is not None
+                    else "direct_slot_fill"
+                )
+                if qualification_action != expected_q_action:
                     raise ValueError(
-                        "Unseeded pre-freeze Q RWC move unexpectedly requires seed cascade"
+                        "Pre-freeze Q RWC repair action differs from seed evidence"
                     )
                 if predecessor.qualification_sections:
                     qualification = None

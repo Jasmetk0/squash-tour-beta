@@ -3001,3 +3001,208 @@ def test_q_rwc_middle_phase_directly_backfills_unseeded_q_slot(database):
             branch_id="branch",
             event_id="event",
         ) == (revision,)
+
+
+def _install_seeded_q_rwc_pre_freeze_case(session):
+    install_ranking_authority(session)
+    TournamentEntryFieldStore(session).stage_initial(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        applications=standard_applications(),
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=2,
+            qualifier_spots=1,
+            wild_card_slots=1,
+        ),
+        command_id="seeded-phase-q-rwc-field",
+    )
+    wc = TournamentWildCardAuthorityStore(session).resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-phase-q-rwc-resolve",
+        original_wild_card_player_ids=("A",),
+        reserve_wild_card_player_ids=("B", "D", "F"),
+    )
+    draw_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-phase-q-rwc-input",
+        draw_seed=717171,
+    )
+    initial = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-phase-q-rwc-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command_id="seeded-phase-q-rwc-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+    assert draw_input.wild_card_player_ids == ("B",)
+    assert draw_input.qualification_player_ids == ("D", "E")
+    assert draw_input.qualification_seed_player_ids == ("D",)
+    assert wc.adjusted_below_qualification_cut_player_ids == ("F", "G")
+    return initial
+
+
+@pytest.mark.pr_critical
+def test_seeded_q_rwc_before_cutoff_full_redraw_reseeds_new_q_field(database):
+    with database.begin() as session:
+        initial = _install_seeded_q_rwc_pre_freeze_case(session)
+        original_wc_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
+        )
+        store = TournamentDrawRevisionStore(session)
+
+        revision = store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-full-redraw",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=818181,
+        )
+
+        authority = revision.wild_card_repair_authority
+        assert authority is not None
+        assert authority.schema_version == "tournament_post_draw_wild_card_repair.v3"
+        assert authority.replacement_source == "qualification"
+        assert authority.replacement_player_id == "D"
+        assert authority.vacated_qualification_seed_number == 1
+        assert authority.qualification_backfill_player_id == "F"
+
+        assert revision.schema_version == "tournament_draw_revision.v8"
+        assert revision.qualification_repair_action == "full_redraw"
+        assert revision.repair_draw_seed == 818181
+        assert revision.successor_draw_input.qualification_player_ids == ("E", "F")
+        assert revision.successor_draw_input.qualification_seed_player_ids == ("E",)
+        assert revision.successor_draw_input.qualification_seed_vacancy_numbers == ()
+
+        promoted = next(
+            slot for slot in revision.successor_draw.main.slots
+            if slot.player_id == "D"
+        )
+        assert promoted.slot_index == original_wc_slot.slot_index
+        assert promoted.entry_status == "wild_card"
+        assert promoted.seed_number is None
+
+        q_slots = {
+            slot.player_id: slot
+            for bracket in revision.successor_draw.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        assert set(q_slots) == {"E", "F"}
+        assert q_slots["E"].seed_number == 1
+        assert q_slots["F"].seed_number is None
+
+        assert store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-full-redraw",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=1,
+            repair_draw_seed=818181,
+        ) == revision
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
+def test_seeded_q_rwc_middle_phase_runs_seed_cascade_without_seed_inheritance(database):
+    with database.begin() as session:
+        initial = _install_seeded_q_rwc_pre_freeze_case(session)
+        original_wc_slot = next(
+            slot for slot in initial.main.slots if slot.player_id == "B"
+        )
+        q_bracket = initial.qualification_brackets[0]
+        seeded_d = next(slot for slot in q_bracket.slots if slot.player_id == "D")
+        unseeded_e = next(slot for slot in q_bracket.slots if slot.player_id == "E")
+        assert seeded_d.seed_number == 1
+        assert unseeded_e.seed_number is None
+
+        saved_before = capture(session)
+        store = TournamentDrawRevisionStore(session)
+        revision = store.draw_frozen_wild_card_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="seeded-q-rwc-cascade",
+            withdrawn_player_id="B",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=2,
+        )
+
+        authority = revision.wild_card_repair_authority
+        assert authority is not None
+        assert authority.replacement_player_id == "D"
+        assert authority.vacated_qualification_seed_number == 1
+        assert authority.qualification_backfill_player_id == "F"
+
+        assert revision.schema_version == "tournament_draw_revision.v8"
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert revision.repair_draw_seed is None
+        assert revision.successor_draw_input.qualification_player_ids == ("E", "F")
+        assert revision.successor_draw_input.qualification_seed_player_ids == ()
+        assert revision.successor_draw_input.qualification_seed_vacancy_numbers == (1,)
+
+        promoted = next(
+            slot for slot in revision.successor_draw.main.slots
+            if slot.player_id == "D"
+        )
+        assert promoted.slot_index == original_wc_slot.slot_index
+        assert promoted.entry_status == "wild_card"
+        assert promoted.seed_number is None
+
+        repaired_q = revision.successor_draw.qualification_brackets[0]
+        e_after = next(slot for slot in repaired_q.slots if slot.player_id == "E")
+        f_after = next(slot for slot in repaired_q.slots if slot.player_id == "F")
+        assert e_after.slot_index == seeded_d.slot_index
+        assert e_after.seed_number is None
+        assert f_after.slot_index == unseeded_e.slot_index
+        assert f_after.seed_number is None
+        assert repaired_q.seed_positions == ()
+
+        saved_after = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=saved_after,
+            target_payload=saved_before,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == ()
+
+        recaptured = capture(session)
+        restore_saved_simulation_slots(
+            session,
+            current_payload=recaptured,
+            target_payload=saved_after,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)

@@ -271,7 +271,7 @@ export function PlannedEventDetailPage(): JSX.Element {
       }
       if (
         processState.has_qualification &&
-        (!Number.isSafeInteger(qualificationCount) || qualificationCount === null || qualificationCount < 2)
+        (qualificationCount === null || !Number.isSafeInteger(qualificationCount) || qualificationCount < 2)
       ) {
         throw new Error('Qualification Draw process window count must be an integer of at least 2.')
       }

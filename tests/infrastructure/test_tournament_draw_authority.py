@@ -4581,6 +4581,110 @@ def test_exhausted_wc_pre_q_promotion_releases_wc_and_skips_unavailable_rwc(
 
 
 @pytest.mark.pr_critical
+def test_source_bound_pre_q_seed_cascade_without_backfill_ends_in_q_bye(
+    database,
+):
+    with database.begin() as session:
+        applications = (
+            app("A", "main"),
+            app("C", "main"),
+            app("D", "main"),
+            app("B", "qualification"),
+            app("E", "qualification"),
+        )
+        draw_input = install_draw_input(
+            session,
+            applications=applications,
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=2,
+                qualifier_spots=1,
+            ),
+            draw_seed=515151,
+            main_seed_count=1,
+            qualification_seed_count=1,
+        )
+        initial = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-bound-no-q-backfill-draw",
+        )
+        TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-bound-no-q-backfill-process",
+            main_process_window_count=3,
+            qualification_process_window_count=3,
+        )
+        assert draw_input.qualification_player_ids == ("B", "E")
+
+        original_main = next(
+            slot for slot in initial.main.slots if slot.player_id == "C"
+        )
+        original_q_b = next(
+            slot
+            for bracket in initial.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id == "B"
+        )
+        assert original_q_b.seed_number == 1
+
+        result = AuthoritativeFrozenMainReplacement(session).execute(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="source-bound-no-q-backfill",
+            withdrawn_player_id="C",
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=2,
+        )
+
+        assert result.source == "qualification_promotion"
+        source = result.source_authority
+        assert source is not None
+        assert source.selected_player_id == "B"
+        assert source.external_reserve_player_ids == ()
+
+        revision = result.draw_revisions[0]
+        assert revision.schema_version == "tournament_draw_revision.v14"
+        assert revision.qualification_repair_action == "seed_cascade"
+        promoted = revision.successor_draw.main.slots[
+            original_main.slot_index - 1
+        ]
+        assert promoted.player_id == "B"
+        assert promoted.entry_status is None
+        assert promoted.seed_number is None
+
+        q_bracket = revision.successor_draw.qualification_brackets[0]
+        q_players = {
+            slot.player_id
+            for slot in q_bracket.slots
+            if slot.player_id is not None
+        }
+        assert q_players == {"E"}
+        assert len(q_bracket.bye_slot_indexes) == 1
+        q_seed_origin = q_bracket.slots[original_q_b.slot_index - 1]
+        assert q_seed_origin.player_id == "E"
+        assert q_seed_origin.seed_number is None
+        assert q_seed_origin.entrant_kind == "player"
+
+        bye_slot = next(
+            slot for slot in q_bracket.slots if slot.entrant_kind == "bye"
+        )
+        assert bye_slot.slot_index != original_q_b.slot_index
+        assert revision.successor_draw_input.qualification_player_ids == ("E",)
+        assert revision.successor_draw_input.qualification_seed_vacancy_numbers == (1,)
+
+        assert TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        ) == (revision,)
+
+
+@pytest.mark.pr_critical
 def test_frozen_main_replacement_orchestrator_dispatches_rwc(database):
     with database.begin() as session:
         initial, _, _ = install_frozen_external_rwc_main(session)

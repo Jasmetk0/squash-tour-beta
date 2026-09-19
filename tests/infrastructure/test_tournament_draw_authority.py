@@ -4333,7 +4333,9 @@ def test_frozen_wc_fallback_releases_wc_status_for_external_reserve(database):
         assert "F" in revision.successor_draw_input.direct_main_player_ids
         assert "E" in revision.successor_draw_input.withdrawn_player_ids
 
-        replacement = revision.successor_draw.main.slots[original_slot.slot_index - 1]
+        replacement = revision.successor_draw.main.slots[
+            original_slot.slot_index - 1
+        ]
         assert replacement.player_id == "F"
         assert replacement.entry_status is None
         assert replacement.seed_number is None

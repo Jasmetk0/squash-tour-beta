@@ -568,7 +568,7 @@ describe('PlannedEventDetailPage', () => {
 
     expect(await screen.findByRole('table', { name: 'Canonical Main Draw slots' })).toBeInTheDocument()
     expect(screen.getByText('P1')).toBeInTheDocument()
-    expect(screen.getByText('Q1')).toBeInTheDocument()
+    expect(screen.getAllByText('Q1').length).toBeGreaterThanOrEqual(2)
     expect(await screen.findByRole('table', { name: 'Canonical Qualification slots' })).toBeInTheDocument()
     expect(api.getCanonicalTournamentDrawAuthority).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
   })

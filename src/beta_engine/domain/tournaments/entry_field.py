@@ -46,6 +46,33 @@ class TournamentEntryFieldCapacity(FrozenInput):
     wild_card_slots: int = Field(default=0, ge=0)
     bye_slots: int = Field(default=0, ge=0)
 
+    @classmethod
+    def for_main_entrant_count(
+        cls,
+        *,
+        main_entrant_count: int,
+        qualification_draw_size: int = 0,
+        qualifier_spots: int = 0,
+        wild_card_slots: int = 0,
+    ) -> "TournamentEntryFieldCapacity":
+        """Derive classic Main bracket capacity and explicit BYEs from entrants."""
+
+        if main_entrant_count < 2:
+            raise ValueError("Classic Main Draw requires at least two entrants")
+        reserved_non_bye = qualifier_spots + wild_card_slots
+        if reserved_non_bye > main_entrant_count:
+            raise ValueError(
+                "Qualifier and Wild Card slots exceed requested Main entrants"
+            )
+        bracket_capacity = 1 << (main_entrant_count - 1).bit_length()
+        return cls(
+            main_draw_size=bracket_capacity,
+            qualification_draw_size=qualification_draw_size,
+            qualifier_spots=qualifier_spots,
+            wild_card_slots=wild_card_slots,
+            bye_slots=bracket_capacity - main_entrant_count,
+        )
+
     @model_validator(mode="after")
     def validate_reserved_main_slots(self) -> "TournamentEntryFieldCapacity":
         reserved = self.qualifier_spots + self.wild_card_slots + self.bye_slots

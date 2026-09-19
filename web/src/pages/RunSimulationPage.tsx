@@ -10,6 +10,7 @@ import { adminBranchCheckpointsQueryKey, adminBranchHeadQueryKey, adminBranchSta
 import { BranchSimulationAction, executeBranchSimulation, newCommandId, simulationActions, simulationEligibility, validExecutionResponse } from '../admin/branchSimulation'
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
+import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
 type Review = { action: BranchSimulationAction; runId: string; branchId: string; head: string; state: BranchState; checkpointKind: string }
 type ExecutionSnapshot = Review & { auditReason: string; commandId: string; viewerBranchId: string | null }
@@ -36,6 +37,25 @@ export function RunSimulationPage(): JSX.Element {
   const checkpoint = checkpointQuery.data?.checkpoint_id === headId && checkpointQuery.data.run_id === runId && checkpointQuery.data.branch_id === selectedBranchId ? checkpointQuery.data : undefined
   const eligibility = selectedBranch ? simulationEligibility(runQuery.data, selectedBranch, state, checkpoint ? [checkpoint] : []) : 'Select an Active Admin Branch in the header.'
   const currentHead = !eligibility ? headId : null
+  const canonicalEligibility = !selectedBranch
+    ? 'Select an Active Admin Branch in the header.'
+    : selectedBranch.run_id !== runId
+      ? 'Branch belongs to another Product Run.'
+      : runQuery.isLoading
+        ? 'Product Run is still loading.'
+        : !runQuery.data
+          ? 'Product Run is unavailable.'
+          : runQuery.data.status !== 'active'
+            ? 'Product Run must be active.'
+            : runQuery.data.read_only
+              ? 'Product Run is read-only.'
+              : selectedBranch.status !== 'active'
+                ? 'Branch must be active.'
+                : selectedBranch.read_only
+                  ? 'Branch is read-only.'
+                  : !selectedBranch.saved_head_revision_id
+                    ? 'Branch has no Saved Revision head.'
+                    : null
 
   useEffect(() => {
     setReview(null); setReason(''); setConfirmed(false); setNotice(null); setResult(null); setCommandId(newCommandId())
@@ -99,8 +119,20 @@ export function RunSimulationPage(): JSX.Element {
     ]} />
     {(runQuery.isLoading || stateQuery.isLoading || checkpointQuery.isLoading) && <p className="status">Loading Active Admin Branch execution state…</p>}
     {(runQuery.error || stateQuery.error || checkpointQuery.error) && <p role="alert" className="error">Simulation context unavailable: {formatApiError(runQuery.error || stateQuery.error || checkpointQuery.error)}</p>}
-    {eligibility && <p role="alert" className="error">Simulation blocked: {eligibility}</p>}
-    <SectionCard title="Choose action"><div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).map(action => <button key={action} type="button" disabled={Boolean(eligibility)} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div></SectionCard>
+    <AuthoritativeSimulationPanel
+      runId={runId}
+      branchId={selectedBranchId ?? ''}
+      savedRevisionId={selectedBranch?.saved_head_revision_id ?? null}
+      blockedReason={canonicalEligibility}
+    />
+
+    {eligibility && <p role="alert" className="error">Legacy compatibility simulation blocked: {eligibility}</p>}
+    <SectionCard title="Legacy compatibility simulation actions">
+      <p className="status">
+        These controls still use the legacy branch simulation wrapper. Canonical sporting execution is the authoritative panel above; higher-level Next Round/Week/Tournament/Season equivalents are not treated as interchangeable until their canonical orchestration exists.
+      </p>
+      <div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).map(action => <button key={action} type="button" disabled={Boolean(eligibility)} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div>
+    </SectionCard>
     {review && <SectionCard title={`Review ${simulationActions[review.action].label}`}>
       <form onSubmit={event => { event.preventDefault(); if (canSubmit && review) mutation.mutate({ ...review, auditReason: reason.trim(), commandId: commandId.trim(), viewerBranchId }) }}>
         <MetadataList items={[{ label: 'Action', value: simulationActions[review.action].label }, { label: 'Run', value: review.runId }, { label: 'Branch', value: review.branchId }, { label: 'Reviewed head', value: review.head }, { label: 'Checkpoint kind', value: review.checkpointKind }, { label: 'Season', value: review.state.current_season ?? '—' }, { label: 'Week', value: review.state.current_week ?? '—' }, { label: 'Event', value: review.state.current_event_id ?? '—' }, { label: 'Event sequence', value: review.state.current_event_sequence ?? '—' }]} />

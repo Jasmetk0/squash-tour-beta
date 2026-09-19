@@ -264,9 +264,18 @@ authority and revision visibility boundary: Main/Q window counts are configured
 explicitly, Redraw Cutoff/Draw Freeze ordinals remain server-derived from Master
 §15.10, the immutable initial Draw remains inspectable, the displayed active bracket
 comes from the effective successor Draw, and compact append-only revision history
-shows why it changed. This closes the Draw authority inspection/configuration slice;
-revision mutation orchestration and authoritative simulation remain separate
-workflows.
+shows why it changed. This closes the Draw authority inspection/configuration slice.
+
+The existing Run/Branch authoritative Simulation Slot driver is now surfaced in the
+Simulation Admin UI as its own canonical path. The UI respects the backend lifecycle:
+inspect Week Schedule requirements first; when chronology is required, build and
+atomically adopt the dependency-safe topological proposal; only then inspect Position
+and execute explicit Next Match / whole Next Slot commands; finally Save through the
+simulation-draft fingerprint/version CAS boundary. This does not reinterpret the
+legacy branch wrapper. Higher-level Next Round / Next Week / Next Tournament / Full
+Season controls remain clearly marked compatibility actions until equivalent
+canonical orchestration is implemented. Week transition/ranking-authority preparation
+also remains a separate Gate 3 workflow.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

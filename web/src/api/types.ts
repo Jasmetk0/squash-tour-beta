@@ -773,6 +773,112 @@ export type AdminBranchSimulateNextWeekResponse = AdminBranchSimulationResponse<
 export type AdminBranchSimulateNextTournamentResponse = AdminBranchSimulationResponse<'simulate_next_tournament'>
 export type AdminBranchSimulateFullSeasonResponse = AdminBranchSimulationResponse<'simulate_full_season'>
 
+export type AuthoritativeRankingWeek = {
+  season_index: number
+  week: number
+}
+
+export type AuthoritativeSimulationPosition = {
+  run_id: string
+  branch_id: string
+  current_week: AuthoritativeRankingWeek
+  current_slot_id: string | null
+  slot_ordinal: number | null
+  unresolved_group_ids: string[]
+  eligible_match_ids: string[]
+  blocked_match_ids: string[]
+  current_slot_complete: boolean
+  supported_tournament_complete: boolean
+  week_ready_for_transition: boolean
+  transition_blockers: string[]
+  terminal_sporting_fingerprint: string | null
+  position_fingerprint: string
+}
+
+export type AuthoritativeWeekScheduleSlot = {
+  ordinal: number
+  group_ids: string[]
+}
+
+export type AuthoritativeWeekSchedule = {
+  schema_version: 'week_simulation_schedule.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  slots: AuthoritativeWeekScheduleSlot[]
+}
+
+export type AuthoritativeWeekScheduleInspection = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  required: boolean
+  event_ids: string[]
+  group_ids: string[]
+  schedule: AuthoritativeWeekSchedule | null
+  schedule_fingerprint: string | null
+  expected_position_fingerprint: string
+  adoption?: 'adopted_topological_proposal' | 'exact_retry'
+}
+
+export type AuthoritativeWeekScheduleProposal = {
+  schedule: AuthoritativeWeekSchedule
+  schedule_fingerprint: string
+  position_fingerprint: string
+  provenance: string
+  persisted: false
+}
+
+export type AdoptAuthoritativeWeekScheduleProposalPayload = {
+  request_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_schedule_fingerprint: string
+  expected_position_fingerprint: string
+}
+
+export type AuthoritativeWeekScheduleAdoptionResult =
+  | AuthoritativeWeekScheduleInspection
+  | {
+      schedule: AuthoritativeWeekSchedule
+      schedule_fingerprint: string
+      adoption: 'exact_retry'
+    }
+
+export type AuthoritativeSimulationCommandPayload = {
+  command_id: string
+  run_id: string
+  branch_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  group_id?: string
+}
+
+export type AuthoritativeSimulationSavePreview = {
+  run_id?: string
+  branch_id?: string
+  saved_head_revision_id?: string
+  draft_version: number
+  has_unsaved_changes?: boolean
+  can_save: boolean
+  simulation_fingerprint: string
+}
+
+export type AuthoritativeSimulationSavePayload = {
+  expected_draft_version: number
+  expected_simulation_fingerprint: string
+}
+
+export type AuthoritativeSimulationSaveResponse = {
+  run_id: string
+  branch_id: string
+  previous_viewer_branch_id: string
+  viewer_branch_id: string
+  saved_revision: SavedRevision
+  working_draft: ViewerBranchWorkingDraft
+  audit_event_id: string
+}
+
 export type SetResult = { set_number: number; winner_player_id: string; loser_player_id: string; winner_games: number; loser_games: number; was_close_endgame: boolean; ended_by_retirement: boolean }
 export type MatchResult = { match_id: string; winner_player_id: string; loser_player_id: string; player_a_id: string; player_b_id: string; best_of: number; games_to: number; win_by: number; sets: SetResult[]; sets_won: { [playerId: string]: number }; termination_reason: 'COMPLETED' | 'RETIREMENT'; retired_player_id: string | null; retired_at_set_start: number | null }
 export type FinalsQualifiedPlayer = { player_id: string; race_rank: number; race_points: number; seed: number }

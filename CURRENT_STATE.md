@@ -75,6 +75,16 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Main/Q window counts rather than inventing defaults, renders the effective Draw
   after append-only revisions and exposes compact revision audit history while
   preserving the initial Draw as historical truth.
+  The Simulation page now exposes the existing Run/Branch-owned authoritative sporting
+  driver as a separate canonical panel. It inspects immutable Week Schedule
+  requirements before Position, can build/review/adopt the dependency-safe
+  topological proposal, executes Next Match only against an explicitly reviewed
+  eligible group, executes Next Slot without a hidden group override, and Saves only
+  against the exact simulation draft fingerprint/version. Every execution command is
+  CAS-guarded by the current authoritative position fingerprint plus the Branch Saved
+  Revision head. The legacy branch-simulation controls remain explicitly labeled
+  compatibility actions for higher-level Next Round/Week/Tournament/Season commands;
+  those are not claimed to be canonical equivalents yet.
   The legacy simulation-run endpoint/UI remain non-canonical. Post-draw repair phases, RWC/WC repair, LL
   priority and the first-real-match replacement cutoff are still required before
   those later producer paths may be re-enabled.

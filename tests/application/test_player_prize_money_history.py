@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+
 import pytest
 
 from beta_engine.application.canonical_tournament_points import (
@@ -78,8 +80,12 @@ def _result(*, event_id: str, week: RankingWeek) -> TournamentResultAuthority:
         branch_id="branch",
         event_id=event_id,
         completed_week=week,
-        draw_authority_fingerprint=(event_id[0] * 64),
-        match_package_fingerprint=(event_id[-1] * 64),
+        draw_authority_fingerprint=hashlib.sha256(
+            f"draw|{event_id}".encode()
+        ).hexdigest(),
+        match_package_fingerprint=hashlib.sha256(
+            f"package|{event_id}".encode()
+        ).hexdigest(),
         champion_player_id="A",
         finalist_player_id="B",
         players=(

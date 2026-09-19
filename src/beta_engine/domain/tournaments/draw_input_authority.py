@@ -463,6 +463,7 @@ class TournamentDrawInputAuthorityBuilder:
         replacement_player_id: str | None,
         vacated_main_seed_number: int | None,
         create_bye: bool,
+        vacated_qualifier_placeholder_id: str | None = None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v2",
@@ -477,7 +478,21 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError("Frozen ordinary fallback requires canonical Draw Input")
         direct_count = previous.direct_main_player_ids.count(withdrawn_player_id)
         wild_card_count = previous.wild_card_player_ids.count(withdrawn_player_id)
-        if direct_count + wild_card_count != 1:
+        q_winner_vacancy = vacated_qualifier_placeholder_id is not None
+        if q_winner_vacancy:
+            if direct_count or wild_card_count:
+                raise ValueError(
+                    "Q-winner fallback cannot also be Direct Main or WC"
+                )
+            if withdrawn_player_id not in set(previous.qualification_player_ids):
+                raise ValueError("Q-winner fallback player is outside frozen Q field")
+            if vacated_qualifier_placeholder_id not in set(
+                previous.qualifier_placeholder_ids
+            ):
+                raise ValueError("Q-winner fallback references unknown Q placeholder")
+            if vacated_main_seed_number is not None:
+                raise ValueError("Q-winner fallback cannot vacate a Main seed")
+        elif direct_count + wild_card_count != 1:
             raise ValueError(
                 "Frozen ordinary fallback requires one active Direct Main or WC withdrawal"
             )
@@ -517,7 +532,8 @@ class TournamentDrawInputAuthorityBuilder:
             released_wild_card_slot_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
         else:
-            direct.remove(withdrawn_player_id)
+            if not q_winner_vacancy:
+                direct.remove(withdrawn_player_id)
         if replacement_player_id is not None:
             # Once RWC priority is exhausted, an ordinary replacement entering a
             # former WC slot no longer carries WC status.
@@ -526,11 +542,15 @@ class TournamentDrawInputAuthorityBuilder:
         main_seed_players = list(previous.main_seed_player_ids)
         main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
         withdrawn_was_seeded = withdrawn_player_id in main_seed_players
-        if withdrawn_was_seeded != (vacated_main_seed_number is not None):
-            raise ValueError("Fallback Main seed-vacancy evidence mismatch")
-        if withdrawn_was_seeded:
-            main_seed_players.remove(withdrawn_player_id)
-            main_seed_vacancies.add(vacated_main_seed_number)
+        if q_winner_vacancy:
+            if withdrawn_was_seeded:
+                raise ValueError("Q winner cannot own Direct Main seed identity")
+        else:
+            if withdrawn_was_seeded != (vacated_main_seed_number is not None):
+                raise ValueError("Fallback Main seed-vacancy evidence mismatch")
+            if withdrawn_was_seeded:
+                main_seed_players.remove(withdrawn_player_id)
+                main_seed_vacancies.add(vacated_main_seed_number)
 
         lineage = (
             *previous.replacement_source_authority_fingerprints,
@@ -572,8 +592,12 @@ class TournamentDrawInputAuthorityBuilder:
             replacement_source_authority_fingerprints=lineage,
             late_bye_count=previous.late_bye_count + (1 if create_bye else 0),
             released_wild_card_slot_ordinals=released_wild_card_slot_ordinals,
-            withdrawn_player_ids=tuple(
-                sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+            withdrawn_player_ids=(
+                previous.withdrawn_player_ids
+                if q_winner_vacancy
+                else tuple(
+                    sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
+                )
             ),
             main_seed_player_ids=tuple(main_seed_players),
             qualification_seed_player_ids=previous.qualification_seed_player_ids,

@@ -108,7 +108,7 @@ class TournamentTemplate(BaseModel):
     event_name: str = Field(min_length=1)
     region: str = Field(min_length=1)
     host_country: str = Field(min_length=3, max_length=3)
-    main_draw_size: int = Field(gt=0)
+    main_draw_size: int = Field(gt=0, le=128)
     qualification_draw_size: int = Field(ge=0)
     seeds_count: int = Field(ge=0)
     qualifier_spots: int = Field(ge=0)
@@ -212,7 +212,7 @@ class CalendarEvent(BaseModel):
     start_season_week: int | None = Field(default=None, ge=1, le=61)
     end_season_week: int | None = Field(default=None, ge=1, le=61)
     status: SeasonCalendarEventStatus = "planned"
-    main_draw_size: int = Field(default=1, ge=0)
+    main_draw_size: int = Field(default=1, ge=0, le=128)
     qualification_draw_size: int = Field(default=0, ge=0)
     seeds_count: int = Field(default=0, ge=0)
     qualifier_spots: int = Field(default=0, ge=0)

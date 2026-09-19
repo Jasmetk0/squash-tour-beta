@@ -14,6 +14,10 @@ import {
   getCanonicalTournamentEntryFieldState,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
+  getCanonicalTournamentEffectiveDrawAuthority,
+  getCanonicalTournamentDrawRevisionHistory,
+  getCanonicalTournamentDrawProcessState,
+  configureCanonicalTournamentDrawProcess,
   commitCanonicalTournamentDrawInput,
   generateCanonicalTournamentDraw,
   getEventWildcardActions,
@@ -44,6 +48,8 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
   const [lateReplacementWithdrawnPlayerId, setLateReplacementWithdrawnPlayerId] = useState('')
   const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
+  const [mainProcessWindowCount, setMainProcessWindowCount] = useState('')
+  const [qualificationProcessWindowCount, setQualificationProcessWindowCount] = useState('')
   const commissionerQueryKeys = [
     ['wildcards', runId, eventId],
     ['wildcard-candidates', runId, eventId],
@@ -135,6 +141,33 @@ export function PlannedEventDetailPage(): JSX.Element {
       canonicalDrawStateQuery.data?.initial_draw_generated === true,
     retry: false
   })
+  const canonicalEffectiveDrawAuthorityQuery = useQuery({
+    queryKey: ['canonical-tournament-effective-draw-authority', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentEffectiveDrawAuthority(runId, activeBranchId, eventId),
+    enabled:
+      Boolean(runId && activeBranchId && eventId) &&
+      !viewed.historical &&
+      canonicalDrawStateQuery.data?.initial_draw_generated === true,
+    retry: false
+  })
+  const canonicalDrawRevisionHistoryQuery = useQuery({
+    queryKey: ['canonical-tournament-draw-revisions', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentDrawRevisionHistory(runId, activeBranchId, eventId),
+    enabled:
+      Boolean(runId && activeBranchId && eventId) &&
+      !viewed.historical &&
+      canonicalDrawStateQuery.data?.initial_draw_generated === true,
+    retry: false
+  })
+  const canonicalDrawProcessQuery = useQuery({
+    queryKey: ['canonical-tournament-draw-process', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentDrawProcessState(runId, activeBranchId, eventId),
+    enabled:
+      Boolean(runId && activeBranchId && eventId) &&
+      !viewed.historical &&
+      canonicalDrawStateQuery.data?.initial_draw_generated === true,
+    retry: false
+  })
   const preDrawWithdrawalActionsQuery = useQuery({
     queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
     queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
@@ -180,7 +213,10 @@ export function PlannedEventDetailPage(): JSX.Element {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-state', runId, activeBranchId, eventId] }),
-      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-authority', runId, activeBranchId, eventId] })
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-authority', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-effective-draw-authority', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-revisions', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-process', runId, activeBranchId, eventId] })
     ])
   }
 
@@ -221,6 +257,47 @@ export function PlannedEventDetailPage(): JSX.Element {
     },
     onSuccess: invalidateCanonicalDrawQueries
   })
+  const canonicalDrawProcessMutation = useMutation({
+    mutationFn: () => {
+      const drawState = canonicalDrawStateQuery.data
+      const processState = canonicalDrawProcessQuery.data
+      if (!drawState?.draw_authority_fingerprint || !processState) {
+        throw new Error('Generated canonical Draw is required before process-window configuration.')
+      }
+      const mainCount = Number(mainProcessWindowCount)
+      const qualificationCount = processState.has_qualification ? Number(qualificationProcessWindowCount) : null
+      if (!Number.isSafeInteger(mainCount) || mainCount < 2) {
+        throw new Error('Main Draw process window count must be an integer of at least 2.')
+      }
+      if (
+        processState.has_qualification &&
+        (!Number.isSafeInteger(qualificationCount) || qualificationCount === null || qualificationCount < 2)
+      ) {
+        throw new Error('Qualification Draw process window count must be an integer of at least 2.')
+      }
+      const commandId = [
+        'admin-ui-draw-process',
+        drawState.draw_authority_fingerprint.slice(0, 16),
+        mainCount,
+        qualificationCount ?? 'none'
+      ].join('-')
+      return configureCanonicalTournamentDrawProcess(runId, activeBranchId, eventId, {
+        schema_version: 'canonical_tournament_draw_process_configure_command.v1',
+        command_id: commandId.slice(0, 128),
+        run_id: runId,
+        branch_id: activeBranchId,
+        event_id: eventId,
+        expected_draw_authority_fingerprint: drawState.draw_authority_fingerprint,
+        main_process_window_count: mainCount,
+        qualification_process_window_count: qualificationCount
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-draw-process', runId, activeBranchId, eventId]
+      })
+    }
+  })
 
   const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
   const orderedEvents = seasonState?.ordered_events ?? []
@@ -243,13 +320,31 @@ export function PlannedEventDetailPage(): JSX.Element {
     : null
 
   const hasPersistedHistory = plannedEvent ? persistedEventIds.has(plannedEvent.event_id) : false
-  const canonicalQualificationBrackets = canonicalDrawAuthorityQuery.data
-    ? canonicalDrawAuthorityQuery.data.qualification_sections?.length
-      ? canonicalDrawAuthorityQuery.data.qualification_sections
-      : canonicalDrawAuthorityQuery.data.qualification
-        ? [canonicalDrawAuthorityQuery.data.qualification]
+  const displayedCanonicalDrawAuthority =
+    canonicalEffectiveDrawAuthorityQuery.data ?? canonicalDrawAuthorityQuery.data
+  const canonicalQualificationBrackets = displayedCanonicalDrawAuthority
+    ? displayedCanonicalDrawAuthority.qualification_sections?.length
+      ? displayedCanonicalDrawAuthority.qualification_sections
+      : displayedCanonicalDrawAuthority.qualification
+        ? [displayedCanonicalDrawAuthority.qualification]
         : []
     : []
+  const canonicalDrawRevisionCount = canonicalDrawRevisionHistoryQuery.data?.revisions.length ?? 0
+  const mainProcessCount = Number(mainProcessWindowCount)
+  const qualificationProcessCount = Number(qualificationProcessWindowCount)
+  const canConfigureDrawProcess = Boolean(
+    canonicalDrawProcessQuery.data &&
+      !canonicalDrawProcessQuery.data.configured &&
+      Number.isSafeInteger(mainProcessCount) &&
+      mainProcessCount >= 2 &&
+      (!canonicalDrawProcessQuery.data.has_qualification ||
+        (Number.isSafeInteger(qualificationProcessCount) && qualificationProcessCount >= 2))
+  )
+
+  useEffect(() => {
+    setMainProcessWindowCount('')
+    setQualificationProcessWindowCount('')
+  }, [runId, activeBranchId, eventId])
 
   useEffect(() => {
     const firstCandidateId = wildcardCandidatesQuery.data?.candidates[0]?.player_id ?? ''
@@ -512,18 +607,136 @@ export function PlannedEventDetailPage(): JSX.Element {
             </>
           ) : null}
 
-          {canonicalDrawAuthorityQuery.isLoading ? <p className="status">Loading immutable canonical bracket...</p> : null}
-          {canonicalDrawAuthorityQuery.error ? (
-            <p className="error">Failed to load canonical Draw authority: {formatApiError(canonicalDrawAuthorityQuery.error)}</p>
+          {canonicalDrawStateQuery.data?.initial_draw_generated ? (
+            <>
+              <h4>Draw process windows</h4>
+              {canonicalDrawProcessQuery.isLoading ? <p className="status">Loading Draw process authority...</p> : null}
+              {canonicalDrawProcessQuery.error ? (
+                <p className="error">Failed to load Draw process authority: {formatApiError(canonicalDrawProcessQuery.error)}</p>
+              ) : null}
+              {canonicalDrawProcessQuery.data ? (
+                canonicalDrawProcessQuery.data.configured ? (
+                  <MetadataList
+                    items={[
+                      { label: 'Process authority', value: 'Configured / immutable' },
+                      { label: 'Main windows', value: canonicalDrawProcessQuery.data.main?.process_window_count ?? '—' },
+                      { label: 'Main Redraw Cutoff', value: canonicalDrawProcessQuery.data.main?.redraw_cutoff_window_ordinal ?? '—' },
+                      { label: 'Main Draw Freeze', value: canonicalDrawProcessQuery.data.main?.draw_freeze_window_ordinal ?? '—' },
+                      {
+                        label: 'Qualification windows',
+                        value: canonicalDrawProcessQuery.data.qualification?.process_window_count ?? 'Not applicable'
+                      },
+                      {
+                        label: 'Qualification Redraw Cutoff',
+                        value: canonicalDrawProcessQuery.data.qualification?.redraw_cutoff_window_ordinal ?? '—'
+                      },
+                      {
+                        label: 'Qualification Draw Freeze',
+                        value: canonicalDrawProcessQuery.data.qualification?.draw_freeze_window_ordinal ?? '—'
+                      }
+                    ]}
+                  />
+                ) : (
+                  <div className="grid">
+                    <p className="status">
+                      Master fixes the penultimate window as Redraw Cutoff and the final window as Draw Freeze. The total counts stay explicit configuration.
+                    </p>
+                    <label>
+                      Main process windows
+                      <input
+                        aria-label="Main process windows"
+                        type="number"
+                        min={2}
+                        value={mainProcessWindowCount}
+                        onChange={(event) => setMainProcessWindowCount(event.target.value)}
+                      />
+                    </label>
+                    {canonicalDrawProcessQuery.data.has_qualification ? (
+                      <label>
+                        Qualification process windows
+                        <input
+                          aria-label="Qualification process windows"
+                          type="number"
+                          min={2}
+                          value={qualificationProcessWindowCount}
+                          onChange={(event) => setQualificationProcessWindowCount(event.target.value)}
+                        />
+                      </label>
+                    ) : null}
+                    <button
+                      type="button"
+                      onClick={() => canonicalDrawProcessMutation.mutate()}
+                      disabled={!canConfigureDrawProcess || canonicalDrawProcessMutation.isPending}
+                    >
+                      Configure canonical Draw process
+                    </button>
+                  </div>
+                )
+              ) : null}
+              {canonicalDrawProcessMutation.error ? (
+                <p className="error">Draw process configuration failed: {formatApiError(canonicalDrawProcessMutation.error)}</p>
+              ) : null}
+
+              <h4>Effective Draw and append-only history</h4>
+              {canonicalDrawRevisionHistoryQuery.isLoading ? <p className="status">Loading Draw revision history...</p> : null}
+              {canonicalDrawRevisionHistoryQuery.error ? (
+                <p className="error">Failed to load Draw revision history: {formatApiError(canonicalDrawRevisionHistoryQuery.error)}</p>
+              ) : null}
+              {canonicalDrawRevisionHistoryQuery.data ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Revision count', value: canonicalDrawRevisionCount },
+                      { label: 'Initial Draw fingerprint', value: canonicalDrawRevisionHistoryQuery.data.initial_draw_fingerprint },
+                      { label: 'Effective Draw fingerprint', value: canonicalDrawRevisionHistoryQuery.data.effective_draw_fingerprint },
+                      {
+                        label: 'Displayed bracket',
+                        value: canonicalDrawRevisionCount > 0 ? 'Latest effective successor Draw' : 'Initial Draw (no revisions)'
+                      }
+                    ]}
+                  />
+                  {canonicalDrawRevisionCount > 0 ? (
+                    <ol aria-label="Canonical Draw revision history">
+                      {canonicalDrawRevisionHistoryQuery.data.revisions.map((revision) => (
+                        <li key={revision.sequence}>
+                          #{revision.sequence} · {revision.repair_kind} · {revision.affected_draw_types.join(' + ')}
+                          {revision.withdrawn_player_ids.length > 0
+                            ? ` · withdrawn ${revision.withdrawn_player_ids.join(', ')}`
+                            : ''}
+                          {revision.main_process_window_ordinal != null
+                            ? ` · Main window ${revision.main_process_window_ordinal}`
+                            : ''}
+                          {revision.qualification_process_window_ordinal != null
+                            ? ` · Q window ${revision.qualification_process_window_ordinal}`
+                            : ''}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="status">No append-only Draw revisions. Effective Draw equals the immutable initial Draw.</p>
+                  )}
+                </>
+              ) : null}
+            </>
           ) : null}
-          {canonicalDrawAuthorityQuery.data ? (
+
+          {canonicalDrawAuthorityQuery.isLoading || canonicalEffectiveDrawAuthorityQuery.isLoading ? (
+            <p className="status">Loading canonical initial/effective bracket...</p>
+          ) : null}
+          {canonicalDrawAuthorityQuery.error ? (
+            <p className="error">Failed to load initial canonical Draw authority: {formatApiError(canonicalDrawAuthorityQuery.error)}</p>
+          ) : null}
+          {canonicalEffectiveDrawAuthorityQuery.error ? (
+            <p className="error">Failed to load effective canonical Draw authority: {formatApiError(canonicalEffectiveDrawAuthorityQuery.error)}</p>
+          ) : null}
+          {displayedCanonicalDrawAuthority ? (
             <>
               <SummaryPills
                 items={[
-                  { label: 'Main slots', value: canonicalDrawAuthorityQuery.data.main.bracket_size },
-                  { label: 'Main BYEs', value: canonicalDrawAuthorityQuery.data.main.bye_slot_indexes.length },
+                  { label: 'Main slots', value: displayedCanonicalDrawAuthority.main.bracket_size },
+                  { label: 'Main BYEs', value: displayedCanonicalDrawAuthority.main.bye_slot_indexes.length },
                   { label: 'Q sections', value: canonicalQualificationBrackets.length },
-                  { label: 'Algorithm', value: canonicalDrawAuthorityQuery.data.algorithm_version }
+                  { label: 'Algorithm', value: displayedCanonicalDrawAuthority.algorithm_version }
                 ]}
               />
               <div className="table-wrap">
@@ -532,7 +745,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                     <tr><th>Slot</th><th>Idealized</th><th>Entrant</th><th>Seed</th><th>Status</th></tr>
                   </thead>
                   <tbody>
-                    {canonicalDrawAuthorityQuery.data.main.slots.map((slot) => (
+                    {displayedCanonicalDrawAuthority.main.slots.map((slot) => (
                       <tr key={slot.slot_index}>
                         <td>{slot.slot_index}</td>
                         <td>{slot.idealized_slot_number ?? '—'}</td>

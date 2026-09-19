@@ -12,7 +12,9 @@ topological proposal from the canonical match DAG. The proposal places every gro
 in the earliest dependency-safe global Simulation Slot, parallelizes independent
 groups at the same depth, remains read-only until adoption, and fails instead of
 choosing chronology when one directly known player appears in parallel independent
-groups. Each event closes independently and exactly once
+groups. An explicit atomic Admin command can now adopt the current proposal without
+round-tripping its full payload: it rebuilds under the write lock and verifies the
+expected Ranking Week, schedule fingerprint and position fingerprint before commit. Each event closes independently and exactly once
 through the existing completion, award and `OwnedTournamentRankingSource` contracts.
 Legacy `start_day`, list/event ordering and draw-round arithmetic are not substitutes. Explicit authoritative Admin routes expose
 position, split Next Match and Next Slot without redirecting legacy simulation.

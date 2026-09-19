@@ -21,6 +21,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 
 router = APIRouter(
@@ -76,6 +77,36 @@ def propose_week_schedule(
             status_code=409,
             detail={
                 "code": "topological_schedule_proposal_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/week-schedule/adopt-proposal", status_code=201)
+def adopt_topological_week_schedule_proposal(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).adopt_topological_schedule_proposal(
+            run_id=run_id,
+            branch_id=branch_id,
+            request_id=payload["request_id"],
+            expected_week=RankingWeek.model_validate(payload["expected_week"]),
+            expected_schedule_fingerprint=payload["expected_schedule_fingerprint"],
+            expected_position_fingerprint=payload["expected_position_fingerprint"],
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "topological_schedule_adoption_conflict",
                 "message": str(exc),
             },
         ) from exc

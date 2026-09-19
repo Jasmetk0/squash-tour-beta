@@ -57,6 +57,7 @@ from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    WeekSimulationScheduleModel,
     RunBranchModel,
     RunContainerModel,
     RankingTransitionAuthorityModel,
@@ -975,6 +976,73 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     assert repeated["schedule"] == proposed["schedule"]
     assert repeated["schedule_fingerprint"] == proposed["schedule_fingerprint"]
     assert repeated["position_fingerprint"] == proposed["position_fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_path):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "proposal-adoption"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+
+    with pytest.raises(ValueError, match="proposal is stale"):
+        driver.adopt_topological_schedule_proposal(
+            run_id="run",
+            branch_id="branch",
+            request_id="adopt-proposal",
+            expected_week=week,
+            expected_schedule_fingerprint="0" * 64,
+            expected_position_fingerprint=proposed["position_fingerprint"],
+        )
+    with factory() as session:
+        assert session.scalars(select(WeekSimulationScheduleModel)).all() == []
+
+    with pytest.raises(ValueError, match="simulation position is stale"):
+        driver.adopt_topological_schedule_proposal(
+            run_id="run",
+            branch_id="branch",
+            request_id="adopt-proposal",
+            expected_week=week,
+            expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+            expected_position_fingerprint="0" * 64,
+        )
+    with factory() as session:
+        assert session.scalars(select(WeekSimulationScheduleModel)).all() == []
+
+    adopted = driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="adopt-proposal",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+    assert adopted["adoption"] == "adopted_topological_proposal"
+    assert adopted["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+
+    retry = driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="adopt-proposal",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+    assert retry["adoption"] == "exact_retry"
+    assert retry["schedule_fingerprint"] == proposed["schedule_fingerprint"]
+
+    with pytest.raises(ValueError, match="already adopted and immutable"):
+        driver.adopt_topological_schedule_proposal(
+            run_id="run",
+            branch_id="branch",
+            request_id="different-request",
+            expected_week=week,
+            expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+            expected_position_fingerprint=proposed["position_fingerprint"],
+        )
 
 
 @pytest.mark.pr_critical

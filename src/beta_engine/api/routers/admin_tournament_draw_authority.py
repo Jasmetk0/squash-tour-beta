@@ -10,6 +10,7 @@ from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthorit
 from beta_engine.application.authoritative_tournament_draw import (
     CanonicalDrawGenerateCommand,
     CanonicalDrawInputCommitCommand,
+    CanonicalTournamentDrawRevisionHistoryState,
     CanonicalTournamentDrawService,
     CanonicalTournamentDrawState,
 )
@@ -66,6 +67,52 @@ def inspect_initial_draw_authority(
         raise HTTPException(
             status_code=409,
             detail={"code": "canonical_draw_authority_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/effective-authority", response_model=TournamentDrawAuthority)
+def inspect_effective_draw_authority(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentDrawAuthority:
+    """Read the active canonical Draw after any append-only revision chain."""
+
+    try:
+        return _service(runtime).inspect_effective_authority(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "canonical_effective_draw_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/revisions", response_model=CanonicalTournamentDrawRevisionHistoryState)
+def inspect_draw_revision_history(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> CanonicalTournamentDrawRevisionHistoryState:
+    try:
+        return _service(runtime).inspect_revision_history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "canonical_draw_revision_history_conflict", "message": str(exc)},
         ) from exc
 
 

@@ -4,6 +4,13 @@ from __future__ import annotations
 
 import pytest
 
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
+
 from tests.api.test_admin_tournament_entry_fields_api import (
     _command as _withdrawal_payload,
     _install_entry_field,
@@ -168,6 +175,135 @@ def test_canonical_draw_input_commit_and_initial_generation_over_http(tmp_path):
         # Initial Draw generation retries exactly against the frozen Draw Input.
         assert _request("POST", root + "/generate", generate) == (200, generated)
         assert _request("GET", root) == (200, generated)
+
+
+@pytest.mark.pr_critical
+def test_effective_draw_authority_tracks_latest_append_only_revision(tmp_path):
+    server = ApiServer(database_url=f"sqlite:///{tmp_path / 'effective-draw.sqlite'}")
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server, display_name="Effective Canonical Draw"
+        )
+        event_id = "event"
+        field = _install_entry_field(
+            server,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        root = _root(server, run_id, branch_id, event_id)
+
+        status, committed = _request(
+            "POST",
+            root + "/commit-input",
+            _commit_payload(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="commit-effective-draw-input",
+                expected_field_fingerprint=field.fingerprint,
+                draw_seed=4242,
+            ),
+        )
+        assert status == 200
+        status, generated = _request(
+            "POST",
+            root + "/generate",
+            _generate_payload(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="generate-effective-draw",
+                expected_draw_input_fingerprint=committed["draw_input_fingerprint"],
+            ),
+        )
+        assert status == 200
+
+        status, initial = _request("GET", root + "/authority")
+        assert status == 200
+        assert _request("GET", root + "/effective-authority") == (200, initial)
+        status, empty_history = _request("GET", root + "/revisions")
+        assert status == 200
+        assert empty_history["initial_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert empty_history["effective_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert empty_history["revisions"] == []
+        assert {
+            slot["player_id"]
+            for slot in initial["main"]["slots"]
+            if slot["player_id"] is not None
+        } == {"A", "C", "D"}
+
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="configure-effective-draw-process",
+                main_process_window_count=5,
+                qualification_process_window_count=3,
+            )
+            revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="withdraw-c-effective-redraw",
+                withdrawn_player_ids=("C",),
+                main_process_window_ordinal=1,
+                qualification_process_window_ordinal=1,
+                repair_draw_seed=987654,
+            )
+
+        # Immutable initial authority remains historical truth.
+        assert _request("GET", root + "/authority") == (200, initial)
+
+        status, effective = _request("GET", root + "/effective-authority")
+        assert status == 200
+        assert effective["draw_input_fingerprint"] == (
+            revision.successor_draw_input.fingerprint
+        )
+        assert effective["draw_input_fingerprint"] != initial["draw_input_fingerprint"]
+        effective_main_players = {
+            slot["player_id"]
+            for slot in effective["main"]["slots"]
+            if slot["player_id"] is not None
+        }
+        assert "C" not in effective_main_players
+        assert {"A", "B", "D"} <= effective_main_players
+        assert {
+            placeholder_id
+            for placeholder_id, _ in effective["main"]["qualifier_placeholder_slots"]
+        } == {"Q1"}
+
+        status, history = _request("GET", root + "/revisions")
+        assert status == 200
+        assert history["initial_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert history["effective_draw_fingerprint"] == revision.successor_draw.fingerprint
+        assert len(history["revisions"]) == 1
+        summary = history["revisions"][0]
+        assert summary["sequence"] == 1
+        assert summary["schema_version"] == revision.schema_version
+        assert summary["command_id"] == "withdraw-c-effective-redraw"
+        assert summary["repair_kind"] == "full_redraw"
+        assert summary["affected_draw_types"] == ["main", "qualification"]
+        assert summary["withdrawn_player_ids"] == ["C"]
+        assert summary["main_process_window_ordinal"] == 1
+        assert summary["qualification_process_window_ordinal"] == 1
+        assert summary["repair_draw_seed"] == 987654
+        assert summary["predecessor_draw_fingerprint"] == generated[
+            "draw_authority_fingerprint"
+        ]
+        assert summary["successor_draw_input_fingerprint"] == (
+            revision.successor_draw_input.fingerprint
+        )
+        assert summary["successor_draw_fingerprint"] == (
+            revision.successor_draw.fingerprint
+        )
 
 
 @pytest.mark.pr_critical

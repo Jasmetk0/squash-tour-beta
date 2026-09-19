@@ -342,8 +342,13 @@ W/O is eligible for the same authored ranking-point value as that finishing stag
 while the point builder independently verifies that BYE/W/O evidence did not leak
 into played win/loss counters. A terminal post-cutoff W/O now runs the normal
 canonical tournament close in the same command and can persist an
-`OwnedTournamentRankingSource v4`. Dedicated canonical prize-money authority is
-still outside the current narrow close path.
+`OwnedTournamentRankingSource v4`. The first canonical prize-money configuration
+boundary now exists on Tournament Template / Edition: an optional original 3-letter
+currency plus a partial-capable finishing-stage payout table. Missing stages remain
+Unknown rather than becoming zero, known payouts must strictly increase with later
+finishing stages, and the historical aggregate `prize_money` field is retained only
+for compatibility instead of being reverse-engineered into stage payouts. Dedicated
+run-owned payout calculation/history authority remains separate follow-up work.
 
 Frozen external RWC repair is now canonical for the bounded case where an
 unseeded active WC holder withdraws after Main Draw Freeze and the next available

@@ -37,6 +37,68 @@ class TournamentPointDistribution(BaseModel):
     round_of_32: int = Field(default=0, ge=0)
 
 
+PRIZE_MONEY_STAGE_ORDER: tuple[str, ...] = (
+    "qualification_round",
+    "qualification_semifinal",
+    "qualification_final",
+    "main_draw_participant",
+    "round_of_128",
+    "round_of_64",
+    "round_of_32",
+    "round_of_16",
+    "quarterfinal",
+    "semifinal",
+    "finalist",
+    "champion",
+)
+
+
+def _validate_prize_money_configuration(
+    *,
+    table: dict[str, int | None],
+    currency: str | None,
+) -> str | None:
+    """Validate Master §19.1 stage payouts without inventing missing values."""
+
+    normalized_currency = currency.strip().upper() if currency else None
+    if normalized_currency is not None and (
+        len(normalized_currency) != 3 or not normalized_currency.isalpha()
+    ):
+        raise ValueError("prize_money_currency must be a 3-letter currency code")
+
+    unknown_stages = sorted(set(table) - set(PRIZE_MONEY_STAGE_ORDER))
+    if unknown_stages:
+        raise ValueError(
+            "prize_money_table contains unsupported finishing stages: "
+            + ", ".join(unknown_stages)
+        )
+
+    known = [
+        (stage, table[stage])
+        for stage in PRIZE_MONEY_STAGE_ORDER
+        if stage in table and table[stage] is not None
+    ]
+    if known and normalized_currency is None:
+        raise ValueError(
+            "Configured prize-money payouts require prize_money_currency"
+        )
+
+    previous_stage: str | None = None
+    previous_amount: int | None = None
+    for stage, amount in known:
+        assert amount is not None
+        if amount < 0:
+            raise ValueError("prize-money payouts cannot be negative")
+        if previous_amount is not None and amount <= previous_amount:
+            raise ValueError(
+                "Known prize-money payouts must strictly increase with finishing stage "
+                f"({previous_stage}={previous_amount}, {stage}={amount})"
+            )
+        previous_stage = stage
+        previous_amount = amount
+    return normalized_currency
+
+
 class TournamentTemplate(BaseModel):
     """Reusable tournament template shared by season calendar entries."""
 
@@ -59,7 +121,11 @@ class TournamentTemplate(BaseModel):
     qualification_duration_days: int = Field(ge=0)
     preferred_week_type: str | None = None
     seasonal_grouping: str | None = None
+    # Legacy aggregate retained for config compatibility. Canonical payout logic
+    # must use the stage table + original currency below.
     prize_money: int = Field(default=0, ge=0)
+    prize_money_currency: str | None = None
+    prize_money_table: dict[str, int | None] = Field(default_factory=dict)
     prestige: float = Field(default=0.0, ge=0)
     duration_in_season_weeks: int = Field(default=1, ge=1)
     host_requirements: dict[str, object] = Field(default_factory=dict)
@@ -81,6 +147,10 @@ class TournamentTemplate(BaseModel):
             raise ValueError("wild_cards cannot exceed main_draw_size")
         if self.byes > self.main_draw_size:
             raise ValueError("byes cannot exceed main_draw_size")
+        self.prize_money_currency = _validate_prize_money_configuration(
+            table=self.prize_money_table,
+            currency=self.prize_money_currency,
+        )
         return self
 
 
@@ -154,7 +224,11 @@ class CalendarEvent(BaseModel):
     ranking_status: TournamentEditionRankingStatus = TournamentEditionRankingStatus.RANKED
     ranking_points_table: dict[str, Any] = Field(default_factory=dict)
     ranking_configuration_legacy: bool = True
+    # Legacy aggregate retained for old calendar snapshots. Canonical prize-money
+    # configuration is explicit, partial-capable and currency-bound.
     prize_money: int = Field(default=0, ge=0)
+    prize_money_currency: str | None = None
+    prize_money_table: dict[str, int | None] = Field(default_factory=dict)
     prestige: float = Field(default=0.0, ge=0)
     event_level_overrides: dict[str, Any] = Field(default_factory=dict)
     source_template_fingerprint: str | None = None
@@ -242,6 +316,10 @@ class CalendarEvent(BaseModel):
             self.tour_level = "WORLD_TOUR"
         elif self.is_elite_tour and not self.is_world_tour:
             self.tour_level = "ELITE_TOUR"
+        self.prize_money_currency = _validate_prize_money_configuration(
+            table=self.prize_money_table,
+            currency=self.prize_money_currency,
+        )
         return self
 
 

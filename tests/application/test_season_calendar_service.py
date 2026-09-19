@@ -105,6 +105,49 @@ def test_persist_calendar_and_overwrite_safety(tmp_path: Path) -> None:
     assert svc.get_calendar(season="2001/2002").summary.event_count == 2
 
 
+@pytest.mark.pr_critical
+def test_calendar_freezes_stage_prize_money_config_without_using_legacy_total(
+    tmp_path: Path,
+) -> None:
+    svc = service(tmp_path)
+    base = svc.template_service.get_config().templates[0]
+    payload = base.model_dump(mode="json")
+    payload.update(
+        {
+            "prize_money": 999999,
+            "prize_money_currency": "EUR",
+            "prize_money_table": {
+                "qualification_final": 500,
+                "round_of_32": 1000,
+                "round_of_16": 2000,
+                "quarterfinal": 4000,
+                "semifinal": 7000,
+                "finalist": 12000,
+                "champion": 20000,
+            },
+        }
+    )
+    template = type(base).model_validate(payload)
+
+    events = svc._build_events(
+        season="2000/2001",
+        templates=[template],
+        seed=0,
+        season_start_calendar_year=2000,
+        season_start_year_week=37,
+        category_points={template.category: {"champion": 100}},
+    )
+    assert len(events) == 1
+    event = events[0]
+
+    assert event.prize_money == 999999
+    assert event.prize_money_currency == "EUR"
+    assert event.prize_money_table["qualification_final"] == 500
+    assert event.prize_money_table["champion"] == 20000
+    assert event.template_snapshot["prize_money_currency"] == "EUR"
+    assert event.template_snapshot["prize_money_table"]["round_of_16"] == 2000
+
+
 def test_template_snapshot_and_determinism(tmp_path: Path) -> None:
     svc = service(tmp_path)
     a = svc.build_calendar(season="2000/2001", request=SeasonCalendarBuildRequest(seed=44, dry_run=True))

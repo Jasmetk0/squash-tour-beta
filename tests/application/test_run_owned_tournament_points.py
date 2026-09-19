@@ -40,6 +40,7 @@ from beta_engine.domain.tournaments.prize_money_award_authority import (
     build_tournament_prize_money_award_authority,
 )
 from beta_engine.domain.tournaments.result_authority import (
+    TournamentMatchResultAuthority,
     TournamentPlayerResultAuthority,
     TournamentResultAuthority,
     build_tournament_result_authority,
@@ -620,6 +621,122 @@ def test_prize_money_authority_rejects_corrupt_reopen():
         TournamentPrizeMoneyAwardAuthority.model_validate_json(
             json.dumps(payload, sort_keys=True, separators=(",", ":"))
         )
+
+
+@pytest.mark.pr_critical
+def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_points():
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=1),
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="B",
+        finalist_player_id="A",
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="finalist",
+                final_round_number=2,
+                eliminated_by_player_id="B",
+                last_match_id="final",
+                wins=0,
+                losses=1,
+                byes_received=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="champion",
+                final_round_number=2,
+                last_match_id="final",
+                wins=2,
+                losses=0,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="semifinal",
+                final_round_number=1,
+                eliminated_by_player_id="B",
+                last_match_id="semi",
+                wins=0,
+                losses=1,
+            ),
+        ),
+        matches=(
+            TournamentMatchResultAuthority(
+                match_id="bye",
+                draw_type="main",
+                round_number=1,
+                bracket_position=1,
+                winner_player_id="A",
+                scoreline="BYE",
+                result_fingerprint="1" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="semi",
+                draw_type="main",
+                round_number=1,
+                bracket_position=2,
+                winner_player_id="B",
+                loser_player_id="C",
+                scoreline="3-0",
+                result_fingerprint="2" * 64,
+            ),
+            TournamentMatchResultAuthority(
+                match_id="final",
+                draw_type="main",
+                round_number=2,
+                bracket_position=1,
+                winner_player_id="B",
+                loser_player_id="A",
+                scoreline="3-0",
+                result_fingerprint="3" * 64,
+            ),
+        ),
+    )
+    frozen_points = FrozenPointAwardAuthority(
+        ranking_status="ranked",
+        point_distribution={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+        },
+        point_distribution_source="calendar_event.ranking_points_table",
+    )
+
+    authority = build_tournament_point_award_authority(
+        result=result,
+        point_authority=frozen_points,
+        seed=991,
+    )
+    by_player = {award.player_id: award for award in authority.awards}
+    finalist = by_player["A"]
+
+    assert finalist.reached_stage == "finalist"
+    assert finalist.point_stage == "semifinal"
+    assert finalist.ranking_points_awarded == 400
+    assert finalist.race_points_awarded == 400
+
+    prize = build_tournament_prize_money_award_authority(
+        result=result,
+        event=_event().model_copy(
+            update={
+                "prize_money_currency": "EUR",
+                "prize_money_table": {
+                    "semifinal": 3000,
+                    "finalist": 6000,
+                    "champion": 10000,
+                },
+            }
+        ),
+    )
+    prize_by_player = {award.player_id: award for award in prize.awards}
+    assert prize_by_player["A"].reached_stage == "finalist"
+    assert prize_by_player["A"].amount == 6000
 
 
 def test_canonical_point_authority_maps_frozen_distribution_without_legacy_service():

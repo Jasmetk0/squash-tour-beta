@@ -46,28 +46,55 @@ class TournamentReplacementSourceAuthorityStore:
     def __init__(self, session):
         self.session = session
 
-    def _current_draw_input(self, *, run_id: str, branch_id: str, event_id: str):
-        rows = self.session.scalars(
+    def _latest_revision(self, *, run_id: str, branch_id: str, event_id: str):
+        row = self.session.scalar(
             select(TournamentDrawRevisionModel)
             .where(
                 TournamentDrawRevisionModel.run_id == run_id,
                 TournamentDrawRevisionModel.branch_id == branch_id,
                 TournamentDrawRevisionModel.event_id == event_id,
             )
-            .order_by(TournamentDrawRevisionModel.sequence)
-        ).all()
-        if rows:
-            from beta_engine.domain.tournaments.draw_revision_authority import (
-                TournamentDrawRevision,
-            )
-            return TournamentDrawRevision.model_validate_json(
-                rows[-1].payload_json
-            ).successor_draw_input
+            .order_by(TournamentDrawRevisionModel.sequence.desc())
+        )
+        if row is None:
+            return None
+        from beta_engine.domain.tournaments.draw_revision_authority import (
+            TournamentDrawRevision,
+        )
+        return TournamentDrawRevision.model_validate_json(row.payload_json)
+
+    def _current_draw_input(self, *, run_id: str, branch_id: str, event_id: str):
+        revision = self._latest_revision(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if revision is not None:
+            return revision.successor_draw_input
         return TournamentDrawInputAuthorityStore(self.session).get(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
         )
+
+    def _current_field(self, *, run_id: str, branch_id: str, event_id: str):
+        revision = self._latest_revision(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if revision is not None:
+            return revision.successor_field
+        field_store = TournamentEntryFieldStore(self.session)
+        rows = field_store._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not rows:
+            return None
+        field, _ = field_store._load_row(rows[-1])
+        return field
 
     def _first_start_evidence(
         self,
@@ -189,17 +216,15 @@ class TournamentReplacementSourceAuthorityStore:
         if wc is not None:
             external_reserves = wc.adjusted_below_qualification_cut_player_ids
         else:
-            field_store = TournamentEntryFieldStore(self.session)
-            rows = field_store._rows(
+            field = self._current_field(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
             )
-            if not rows:
+            if field is None:
                 raise TournamentReplacementSourceUnavailable(
                     "Replacement source requires Tournament Entry Field"
                 )
-            field, _ = field_store._load_row(rows[-1])
             external_reserves = field.below_qualification_cut_player_ids
 
         try:

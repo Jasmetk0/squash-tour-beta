@@ -748,8 +748,11 @@ def test_bye_first_real_match_loss_keeps_finishing_stage_but_uses_first_round_po
         result=result,
         event=_event().model_copy(
             update={
+                "qualification_draw_size": 2,
+                "qualifier_spots": 1,
                 "prize_money_currency": "EUR",
                 "prize_money_table": {
+                    "qualification_final": 1000,
                     "semifinal": 3000,
                     "finalist": 6000,
                     "champion": 10000,

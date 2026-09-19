@@ -222,7 +222,6 @@ class TournamentDrawRevisionStore:
         repair_draw_seed: int,
         main_process_window_ordinal: int | None = None,
         qualification_process_window_ordinal: int | None = None,
-        repair_draw_seed: int | None = None,
     ) -> TournamentDrawRevision:
         requested = tuple(sorted(set(withdrawn_player_ids)))
         if not requested:
@@ -259,7 +258,6 @@ class TournamentDrawRevisionStore:
                 or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
-                or revision.repair_draw_seed != repair_draw_seed
             ):
                 raise TournamentDrawRevisionConflict(
                     "Tournament Draw revision command already has a different request"

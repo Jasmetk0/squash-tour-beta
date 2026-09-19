@@ -229,6 +229,8 @@ class TournamentDrawInputAuthorityBuilder:
         withdrawn_player_id: str,
         replacement_player_id: str,
         repair_authority_fingerprint: str,
+        qualification_replacement_player_id: str | None = None,
+        qualification_backfill_player_id: str | None = None,
     ) -> TournamentDrawInputAuthority:
         if previous.schema_version not in {
             "tournament_draw_input_authority.v3",
@@ -241,12 +243,47 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError(
                 "Seeded WC replacement requires seed-aware post-draw WC repair"
             )
-        if replacement_player_id in (
+        active_main = (
             set(previous.direct_main_player_ids)
             | set(previous.wild_card_player_ids)
-            | set(previous.qualification_player_ids)
+        )
+        replacement_in_q = replacement_player_id in set(
+            previous.qualification_player_ids
+        )
+        if replacement_player_id in active_main:
+            raise ValueError("Post-draw WC replacement player is already active in Main")
+        if replacement_in_q:
+            if qualification_replacement_player_id != replacement_player_id:
+                raise ValueError(
+                    "Qualification RWC promotion requires matching Q replacement identity"
+                )
+            if not qualification_backfill_player_id:
+                raise ValueError(
+                    "Qualification RWC promotion requires Q backfill identity"
+                )
+            if replacement_player_id in previous.qualification_seed_player_ids:
+                raise ValueError(
+                    "Seeded Qualification RWC requires seed-aware Q repair"
+                )
+        elif (
+            qualification_replacement_player_id is not None
+            or qualification_backfill_player_id is not None
         ):
-            raise ValueError("Post-draw WC replacement player is already active")
+            raise ValueError(
+                "External RWC repair cannot carry Qualification replacement evidence"
+            )
+
+        qualification_players = list(previous.qualification_player_ids)
+        if replacement_in_q:
+            if qualification_backfill_player_id in (
+                active_main
+                | set(previous.wild_card_player_ids)
+                | set(previous.qualification_player_ids)
+            ):
+                raise ValueError("Qualification RWC backfill player is already active")
+            q_index = qualification_players.index(replacement_player_id)
+            qualification_players[q_index] = qualification_backfill_player_id
+
         wc_players = list(previous.wild_card_player_ids)
         wc_players[wc_players.index(withdrawn_player_id)] = replacement_player_id
         repairs = (
@@ -276,7 +313,7 @@ class TournamentDrawInputAuthorityBuilder:
             post_draw_wild_card_repair_fingerprints=repairs,
             direct_main_player_ids=previous.direct_main_player_ids,
             wild_card_player_ids=tuple(wc_players),
-            qualification_player_ids=previous.qualification_player_ids,
+            qualification_player_ids=tuple(qualification_players),
             qualifier_placeholder_ids=previous.qualifier_placeholder_ids,
             withdrawn_player_ids=withdrawn,
             main_seed_player_ids=previous.main_seed_player_ids,

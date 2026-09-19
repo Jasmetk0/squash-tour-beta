@@ -321,11 +321,26 @@ current durable evidence for first-real-match start. Historical Draw revisions v
 continue replaying from their stored payload and are not reinterpreted using newer
 match history.
 
-This still does **not** claim the complete Master draw contract. The next missing
-piece is execution of the post-cutoff W/O itself: the Draw must remain unchanged and
-the following opponent must advance without Match Engine play when resolvable.
-The middle seed-cascade phase still intentionally requires replacement-backed
-player-count parity. Post-draw WC/RWC repair, Lucky Loser ordering and group
-Qualification also remain Gate 3 work. See
-`docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
+Post-cutoff W/O is now explicit Run/Branch authority. Once a player's replacement
+cutoff is `walkover_required`, the next already-planned match that consumes that
+player's latest real-match win can be completed by
+`tournament_walkover_authority.v1`. The opponent must already resolve from the
+authoritative topology. The Draw is not revised, the Match Engine is not called,
+and the W/O event group carries zero Form/Sharpness/Fatigue effects. It still
+completes the planned group and feeds its winner forward. Saved Revision
+capture/restore validates the same immutable W/O receipt, and the Run driver plus
+Admin endpoint expose the operation as an idempotent command.
+
+Canonical Tournament Result now records `walkovers_received` and
+`retired_or_walkover_loss` separately: W/O advances reached-stage progression but
+does not increment played wins or losses. Sporting week transition likewise counts
+only competitive match effects, so W/O contributes zero competitive matches.
+Canonical ranking/point/prize handling for W/O is intentionally **not** claimed:
+point-award construction fails closed until its dedicated Master semantics are
+implemented.
+
+This still does **not** claim the complete Master draw contract. The middle
+seed-cascade phase still intentionally requires replacement-backed player-count
+parity. Post-draw WC/RWC repair, Lucky Loser ordering and group Qualification remain
+Gate 3 work. See `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.

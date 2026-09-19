@@ -16,6 +16,7 @@ from beta_engine.api.deps import (
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
+    AuthoritativeWalkoverCommand,
 )
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
@@ -171,6 +172,31 @@ def simulate_next_slot(
     ],
 ):
     return _mutate(run_id, branch_id, payload, runtime, matches, awards, slot=True)
+
+
+@router.post("/post-cutoff-walkover")
+def post_cutoff_walkover(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeWalkoverCommand.model_validate(payload)
+        if (command.run_id, command.branch_id) != (run_id, branch_id):
+            raise ValueError("authoritative W/O request scope mismatch")
+        return _driver(runtime, matches, awards).commit_post_cutoff_walkover(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "authoritative_walkover_conflict", "message": str(exc)},
+        ) from exc
 
 
 @router.get("/save/preview")

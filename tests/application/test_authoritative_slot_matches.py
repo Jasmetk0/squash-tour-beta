@@ -86,6 +86,12 @@ from beta_engine.infrastructure.db.tournament_draw_revision import (
 from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
     TournamentPlayerReplacementCutoffAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_walkover_authority import (
+    TournamentWalkoverAuthorityStore,
+)
 
 WEEK = RankingWeek(season_index=0, week=1)
 
@@ -2524,3 +2530,205 @@ def test_player_replacement_cutoff_uses_committed_real_match_receipts(tmp_path):
             event_id="event",
             withdrawn_player_ids=(loser,),
         )
+
+
+@pytest.mark.smoke
+def test_post_cutoff_walkover_commits_group_without_sporting_effects(
+    tmp_path, monkeypatch
+):
+    session, executor, _, semifinals, _ = run_semifinals(
+        tmp_path / "walkover.sqlite", ("sf-1", "sf-2")
+    )
+    withdrawn = semifinals["sf-1"].result.winner_player_id
+    expected_winner = semifinals["sf-2"].result.winner_player_id
+    final_plan = SimulationMatchEventPlan(
+        group_id="final",
+        event_id="event",
+        match_id="final",
+        participant_sources=("winner:sf-1", "winner:sf-2"),
+    )
+    slot_plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-2",
+        ordinal=2,
+        group_ids=("final",),
+        match_events=(final_plan,),
+        dependency_ids=("sf-1", "sf-2"),
+    )
+    slot = session.get(
+        SimulationSlotModel, ("run", "branch", WEEK.ordinal, "slot-2")
+    )
+    start = executor._load_slot_start(slot)
+
+    monkeypatch.setattr(
+        TournamentDrawAuthorityStore,
+        "get",
+        lambda self, **kwargs: SimpleNamespace(fingerprint="d" * 64),
+    )
+    store = TournamentWalkoverAuthorityStore(session)
+    walkover = store.commit(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        event_id="event",
+        command_id="walkover-final",
+        withdrawn_player_id=withdrawn,
+        slot_id="slot-2",
+        group_id="final",
+    )
+
+    assert walkover.result.scoreline == "W/O"
+    assert walkover.result.winner_player_id == expected_winner
+    assert walkover.result.loser_player_id == withdrawn
+    assert walkover.effects == ()
+    assert walkover.authoritative_input.replacement_cutoff_authority.status == (
+        "walkover_required"
+    )
+    assert walkover.authoritative_input.source_real_match_id == "sf-1"
+    assert slot.status == "complete"
+
+    terminal = executor._load_checkpoint(slot)
+    assert terminal.players == start.players
+    assert terminal.applied_effect_fingerprints == start.applied_effect_fingerprints
+    replay = executor.replay(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-2",
+        group_id="final",
+    )
+    assert replay.result == walkover.result
+    assert replay.effects == ()
+
+    cutoff_after = TournamentPlayerReplacementCutoffAuthorityStore(
+        session
+    ).resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id=withdrawn,
+    )
+    assert cutoff_after.status == "walkover_required"
+    assert tuple(item.match_id for item in cutoff_after.played_matches) == ("sf-1",)
+
+    context = resolve_completed_context_from_authoritative_matches(
+        session,
+        run_id="run",
+        branch_id="branch",
+        completed_week=WEEK,
+        player_ids=("a", "b", "c", "d"),
+    )
+    assert {
+        item.player_id: item.count for item in context.competitive_match_counts
+    } == {"a": 1, "b": 1, "c": 1, "d": 1}
+
+    retry = store.commit(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        event_id="event",
+        command_id="walkover-final",
+        withdrawn_player_id=withdrawn,
+        slot_id="slot-2",
+        group_id="final",
+    )
+    assert retry.exact_retry is True
+    assert retry.result_fingerprint == walkover.result_fingerprint
+
+    with pytest.raises(ValueError, match="conflicts"):
+        executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="slot-2",
+            group_id="final",
+            event_id="event",
+            match_id="final",
+            player_a_id=withdrawn,
+            player_b_id=expected_winner,
+            seed=999,
+            expected_slot_start_fingerprint=slot_plan.slot_start_fingerprint,
+        )
+
+
+@pytest.mark.smoke
+def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
+    session, executor, _, semifinals, _ = run_semifinals(
+        tmp_path / "walkover-restore.sqlite", ("sf-1", "sf-2")
+    )
+    withdrawn = semifinals["sf-1"].result.winner_player_id
+    final_plan = SimulationMatchEventPlan(
+        group_id="final",
+        event_id="event",
+        match_id="final",
+        participant_sources=("winner:sf-1", "winner:sf-2"),
+    )
+    executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-2",
+        ordinal=2,
+        group_ids=("final",),
+        match_events=(final_plan,),
+        dependency_ids=("sf-1", "sf-2"),
+    )
+    before = {"content": {}}
+    capture_saved_simulation_slots(
+        session, before, run_id="run", branch_id="branch"
+    )
+
+    monkeypatch.setattr(
+        TournamentDrawAuthorityStore,
+        "get",
+        lambda self, **kwargs: SimpleNamespace(fingerprint="e" * 64),
+    )
+    committed = TournamentWalkoverAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        event_id="event",
+        command_id="walkover-restore",
+        withdrawn_player_id=withdrawn,
+        slot_id="slot-2",
+        group_id="final",
+    )
+    after = {"content": {}}
+    capture_saved_simulation_slots(
+        session, after, run_id="run", branch_id="branch"
+    )
+
+    restore_saved_simulation_slots(
+        session,
+        current_payload=after,
+        target_payload=before,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert (
+        session.get(
+            SimulationEventGroupModel,
+            ("run", "branch", WEEK.ordinal, "slot-2", "final"),
+        )
+        is None
+    )
+
+    restore_saved_simulation_slots(
+        session,
+        current_payload=before,
+        target_payload=after,
+        run_id="run",
+        branch_id="branch",
+    )
+    replay = executor.replay(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="slot-2",
+        group_id="final",
+    )
+    assert replay.result_fingerprint == committed.result_fingerprint
+    assert replay.result.scoreline == "W/O"
+    assert replay.effects == ()

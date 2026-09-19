@@ -50,6 +50,12 @@ class TournamentPlayerResultAuthority(FrozenInput):
     wins: int = Field(default=0, ge=0)
     losses: int = Field(default=0, ge=0)
     byes_received: int = Field(default=0, ge=0)
+    walkovers_received: int = Field(
+        default=0, ge=0, exclude_if=lambda value: value == 0
+    )
+    retired_or_walkover_loss: bool = Field(
+        default=False, exclude_if=lambda value: not value
+    )
 
 
 class TournamentResultAuthority(FrozenInput):
@@ -200,6 +206,8 @@ def build_tournament_result_authority(
                     "wins": 0,
                     "losses": 0,
                     "byes": 0,
+                    "walkovers": 0,
+                    "walkover_loss": False,
                     "last_match_id": None,
                     "last_round": None,
                     "last_draw": match.draw_type,
@@ -217,6 +225,10 @@ def build_tournament_result_authority(
             if match.loser_player_id is not None:
                 raise ValueError("canonical BYE result cannot contain a loser")
             winner["byes"] += 1
+        elif match.scoreline == "W/O":
+            if match.loser_player_id is None:
+                raise ValueError("canonical W/O result requires the withdrawn loser")
+            winner["walkovers"] += 1
         else:
             if match.loser_player_id is None:
                 raise ValueError("competitive canonical match lacks a loser")
@@ -224,7 +236,10 @@ def build_tournament_result_authority(
 
         if match.loser_player_id is not None:
             loser = stats[match.loser_player_id]
-            loser["losses"] += 1
+            if match.scoreline == "W/O":
+                loser["walkover_loss"] = True
+            else:
+                loser["losses"] += 1
             loser["last_match_id"] = match.match_id
             loser["last_round"] = match.round_number
             loser["last_draw"] = match.draw_type
@@ -272,6 +287,8 @@ def build_tournament_result_authority(
                 wins=int(item["wins"]),
                 losses=int(item["losses"]),
                 byes_received=int(item["byes"]),
+                walkovers_received=int(item["walkovers"]),
+                retired_or_walkover_loss=bool(item["walkover_loss"]),
             )
         )
 
@@ -344,8 +361,8 @@ def project_tournament_result_legacy_dto(
             wins=player.wins,
             losses=player.losses,
             byes_received=player.byes_received,
-            walkovers_received=0,
-            retired_or_walkover_loss=False,
+            walkovers_received=player.walkovers_received,
+            retired_or_walkover_loss=player.retired_or_walkover_loss,
         )
         for player in authority.players
     ]

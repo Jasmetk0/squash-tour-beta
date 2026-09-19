@@ -306,9 +306,20 @@ future W/O path, while an already eliminated player cannot mutate the active Dra
 Historical v2-v4 Draw revisions remain replayable without retroactively consulting
 later match history.
 
-The next draw-focused slice is therefore the explicit **post-cutoff W/O authority**:
-freeze the withdrawal against the already-played path, preserve the Draw slots, and
-make the following opponent advance without a Match Engine simulation once that
-opponent is resolvable. Post-draw WC/RWC, Lucky Loser and group Qualification remain
-subsequent Gate 3 work. Legacy simulation-run UI/endpoint retirement remains
-separate Gate 3 work.
+Post-cutoff W/O now has its own canonical authority and Run/Branch command path.
+A W/O is persisted as a noncompetitive authoritative event-group receipt in the
+already planned Simulation Slot: it preserves the Draw unchanged, resolves the
+opponent from the existing topology, advances that opponent with scoreline `W/O`,
+and produces no Match Engine input, rallies or sporting effects. The embedded
+replacement-cutoff evidence proves that the withdrawn player had already crossed
+their first-real-match boundary. W/O receipts do not themselves become new
+real-match cutoff evidence. Saved Revision capture/restore reuses the common group
+ledger, and the Admin boundary exposes an explicit post-cutoff W/O command.
+
+Canonical result authority distinguishes W/O from played wins/losses while still
+using it for bracket stage progression. **W/O ranking/point/prize semantics remain
+fail-closed**: canonical point award construction rejects a W/O tournament until the
+dedicated Master award rules are implemented, rather than silently treating W/O as
+an ordinary played loss. The next draw-focused work is post-draw WC/RWC and Lucky
+Loser authority, followed by group Qualification. Legacy simulation-run
+UI/endpoint retirement remains separate Gate 3 work.

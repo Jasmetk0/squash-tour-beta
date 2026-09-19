@@ -431,3 +431,69 @@ def test_owned_source_v2_persists_canonical_result_and_v1_remains_supported():
     assert reopened.schema_version == "owned_tournament_ranking_source.v1"
     assert reopened.canonical_result is None
     assert reopened.fingerprint == expected_v1_fingerprint
+
+
+def test_canonical_result_tracks_walkover_without_counting_played_win_or_loss():
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_input(),
+        command_id="draw-walkover",
+    )
+    event = _event()
+    week = RankingWeek(season_index=0, week=1)
+    package = _complete(
+        draw,
+        build_run_owned_match_package(draw=draw, event=event, week=week),
+    )
+    final_round = max(match.round_number for match in package.main_draw_matches)
+    final = next(
+        match for match in package.main_draw_matches if match.round_number == final_round
+    )
+    final.scoreline = "W/O"
+    final.result_fingerprint = hashlib.sha256(
+        f"walkover|{final.match_id}|{final.winner_player_id}|{final.loser_player_id}".encode()
+    ).hexdigest()
+
+    authority = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        draw=draw,
+        package=package,
+    )
+    winner = next(
+        player
+        for player in authority.players
+        if player.player_id == final.winner_player_id
+    )
+    withdrawn = next(
+        player
+        for player in authority.players
+        if player.player_id == final.loser_player_id
+    )
+
+    assert winner.reached_stage == "champion"
+    assert winner.walkovers_received == 1
+    assert winner.wins == 1
+    assert withdrawn.reached_stage == "finalist"
+    assert withdrawn.retired_or_walkover_loss is True
+    assert withdrawn.losses == 0
+
+    dto = project_tournament_result_legacy_dto(
+        authority=authority,
+        event=event,
+        package=package,
+        seed=999,
+    )
+    dto_winner = next(
+        player for player in dto.player_results if player.player_id == winner.player_id
+    )
+    dto_withdrawn = next(
+        player
+        for player in dto.player_results
+        if player.player_id == withdrawn.player_id
+    )
+    assert dto_winner.walkovers_received == 1
+    assert dto_withdrawn.retired_or_walkover_loss is True
+    assert next(
+        ref for ref in dto.match_result_refs if ref.match_id == final.match_id
+    ).scoreline == "W/O"

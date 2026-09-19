@@ -32,6 +32,10 @@ def build_tournament_point_award_authority(
         raise ValueError(
             "Canonical ranked tournament close requires ranked point authority"
         )
+    if any(match.scoreline == "W/O" for match in result.matches):
+        raise ValueError(
+            "Canonical W/O point awards require dedicated Master award handling"
+        )
     if (
         point_authority.point_distribution_source.startswith("fallback")
         or point_authority.point_distribution_source == "calendar_event.unranked"

@@ -26,6 +26,7 @@ from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayedMatchCutoffEvidence,
     TournamentPlayerReplacementCutoffAuthorityBuilder,
@@ -91,6 +92,12 @@ from beta_engine.infrastructure.db.tournament_replacement_source_authority impor
 )
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeSlotMatchExecutor,
+)
+from beta_engine.application.canonical_tournament_topology import (
+    project_canonical_draw_to_match_topology,
+)
+from beta_engine.application.run_owned_match_package import (
+    build_run_owned_match_package,
 )
 from beta_engine.application.authoritative_frozen_main_replacement import (
     AuthoritativeFrozenMainReplacement,
@@ -2311,6 +2318,102 @@ def test_draw_freeze_supports_main_frozen_with_q_cascade(database):
         assert "Q01" not in after_q
         assert "Q25" in after_q
         assert before_q["Q01"][0] == "Q1"
+
+
+@pytest.mark.pr_critical
+def test_multi_q_successor_draw_reprojects_into_executable_topology_after_repair(
+    database,
+):
+    with database.begin() as session:
+        initial = install_seed_cascade_multi_q(session)
+
+        revision = TournamentDrawRevisionStore(
+            session
+        ).draw_frozen_phase_withdrawal(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="multi-q-reproject-after-repair",
+            withdrawn_player_ids=("M01",),
+            main_process_window_ordinal=3,
+            qualification_process_window_ordinal=2,
+        )
+
+        assert revision.main_repair_action == "frozen_slot_fill"
+        assert revision.qualification_repair_action == "seed_cascade"
+        assert tuple(
+            section.section_id
+            for section in revision.successor_draw.qualification_brackets
+        ) == ("Q1", "Q2", "Q3")
+
+        active = TournamentDrawAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert active == revision.successor_draw
+        assert active != initial
+
+        event = CalendarEvent(
+            event_id="event",
+            season="2000/2001",
+            season_week=1,
+            calendar_year=2000,
+            year_week=1,
+            template_id="template",
+            event_name="Repair Open",
+            category="TEST",
+            tour_level="WORLD_TOUR",
+            host_country="CZE",
+            region="Europe",
+            main_draw_size=8,
+            qualification_draw_size=24,
+            qualifier_spots=3,
+        )
+        package = build_run_owned_match_package(
+            draw=active,
+            event=event,
+            week=RankingWeek(season_index=0, week=1),
+        )
+        topology = project_canonical_draw_to_match_topology(
+            draw=active,
+            package=package,
+        )
+
+        assert len(topology.qualifier_promotions) == 3
+        assert {
+            promotion.qualifier_index
+            for promotion in topology.qualifier_promotions
+        } == {1, 2, 3}
+        assert topology.terminal_group_id in {
+            plan.group_id for plan in topology.plans
+        }
+
+        executable_ids = {plan.group_id for plan in topology.plans}
+        for plan in topology.plans:
+            for source in plan.participant_sources or ():
+                if source.startswith("winner:"):
+                    assert source.removeprefix("winner:") in executable_ids
+
+        # The promoted Q player now owns the exact vacated Main slot, while Q
+        # remains independently executable after its seed-cascade repair.
+        main_players = {
+            slot.player_id
+            for slot in active.main.slots
+            if slot.player_id is not None
+        }
+        assert "M01" not in main_players
+        assert "Q01" in main_players
+
+        q_players = {
+            slot.player_id
+            for bracket in active.qualification_brackets
+            for slot in bracket.slots
+            if slot.player_id is not None
+        }
+        assert "Q01" not in q_players
+        assert "Q25" in q_players
+        assert len(q_players) == 24
 
 
 def test_draw_freeze_supports_main_frozen_with_q_full_redraw(database):

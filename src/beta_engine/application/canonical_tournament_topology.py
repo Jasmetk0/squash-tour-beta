@@ -131,6 +131,32 @@ def project_canonical_draw_to_match_topology(
                 for source in raw_sources
             )
 
+            for side_index, canonical_source in enumerate(raw_sources):
+                if (
+                    bracket.draw_type == "main"
+                    and canonical_source.startswith("slot:")
+                ):
+                    slot = slots[int(canonical_source.removeprefix("slot:"))]
+                    if slot.entrant_kind == "qualifier_placeholder":
+                        source_match_id = qualification_terminal_match_ids.get(
+                            slot.placeholder_id
+                        )
+                        if source_match_id is None:
+                            raise ValueError(
+                                "Main Draw qualifier placeholder lacks linked Qualification authority"
+                            )
+                        promotions.append(
+                            FrozenQualifierPromotion(
+                                qualifier_index=int(
+                                    slot.placeholder_id.removeprefix("Q")
+                                ),
+                                source_match_id=source_match_id,
+                                target_match_id=record.match_id,
+                                target_side="top" if side_index == 0 else "bottom",
+                                target_slot_id=f"{package.event_id}:main:S{slot.slot_index}",
+                            )
+                        )
+
             bye_sides = tuple(index for index, value in enumerate(resolved) if value == "bye")
             if bye_sides:
                 if len(bye_sides) != 1:
@@ -168,32 +194,6 @@ def project_canonical_draw_to_match_topology(
                     participant_sources=participant_sources,
                 )
             )
-
-            for side_index, canonical_source in enumerate(raw_sources):
-                if (
-                    bracket.draw_type == "main"
-                    and canonical_source.startswith("slot:")
-                ):
-                    slot = slots[int(canonical_source.removeprefix("slot:"))]
-                    if slot.entrant_kind == "qualifier_placeholder":
-                        source_match_id = qualification_terminal_match_ids.get(
-                            slot.placeholder_id
-                        )
-                        if source_match_id is None:
-                            raise ValueError(
-                                "Main Draw qualifier placeholder lacks linked Qualification authority"
-                            )
-                        promotions.append(
-                            FrozenQualifierPromotion(
-                                qualifier_index=int(
-                                    slot.placeholder_id.removeprefix("Q")
-                                ),
-                                source_match_id=source_match_id,
-                                target_match_id=record.match_id,
-                                target_side="top" if side_index == 0 else "bottom",
-                                target_slot_id=f"{package.event_id}:main:S{slot.slot_index}",
-                            )
-                        )
 
     executable_ids = {plan.match_id for plan in plans}
     expected_ids = {record.match_id for record in all_records} - set(bye_match_ids)

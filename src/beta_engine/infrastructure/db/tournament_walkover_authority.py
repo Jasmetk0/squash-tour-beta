@@ -54,20 +54,6 @@ class TournamentWalkoverAuthorityStore:
         if not command_id or len(command_id) > 128:
             raise ValueError("W/O requires a valid command ID")
 
-        cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
-            self.session
-        ).resolve(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-            player_id=withdrawn_player_id,
-        )
-        if cutoff.status != "walkover_required" or not cutoff.played_matches:
-            raise TournamentWalkoverAuthorityConflict(
-                "W/O requires the withdrawn player's first real-match cutoff to have passed"
-            )
-        source_real_match_id = cutoff.played_matches[-1].match_id
-
         slot = self.session.get(
             SimulationSlotModel,
             (run_id, branch_id, week.ordinal, slot_id),
@@ -87,6 +73,43 @@ class TournamentWalkoverAuthorityStore:
             raise ValueError(
                 "canonical post-cutoff W/O requires explicit participant sources"
             )
+
+        draw = TournamentDrawAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if draw is None:
+            raise ValueError("W/O requires canonical active Draw authority")
+        main_match_ids = {node.node_id for node in draw.main.nodes}
+        qualification_match_ids = {
+            node.node_id
+            for bracket in draw.qualification_brackets
+            for node in bracket.nodes
+        }
+        if event_plan.match_id in main_match_ids:
+            cutoff_draw_type = "main"
+        elif event_plan.match_id in qualification_match_ids:
+            cutoff_draw_type = "qualification"
+        else:
+            raise TournamentWalkoverAuthorityConflict(
+                "W/O target match is outside canonical Draw authority"
+            )
+
+        cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
+            self.session
+        ).resolve(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            player_id=withdrawn_player_id,
+            draw_type=cutoff_draw_type,
+        )
+        if cutoff.status != "walkover_required" or not cutoff.played_matches:
+            raise TournamentWalkoverAuthorityConflict(
+                "W/O requires the withdrawn player's first real-match cutoff to have passed"
+            )
+        source_real_match_id = cutoff.played_matches[-1].match_id
 
         sources = tuple(event_plan.participant_sources)
         withdrawn_source = f"winner:{source_real_match_id}"
@@ -114,14 +137,6 @@ class TournamentWalkoverAuthorityStore:
             raise TournamentWalkoverAuthorityConflict(
                 "W/O opponent resolves to the withdrawn player"
             )
-
-        draw = TournamentDrawAuthorityStore(self.session).get(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-        )
-        if draw is None:
-            raise ValueError("W/O requires canonical active Draw authority")
 
         authority = TournamentWalkoverAuthorityBuilder.build(
             run_id=run_id,

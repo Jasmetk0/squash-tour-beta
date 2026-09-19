@@ -371,8 +371,8 @@ class TournamentDrawInputAuthorityBuilder:
                 | set(previous.qualification_player_ids)
             ):
                 raise ValueError("Qualification RWC backfill player is already active")
-            q_index = qualification_players.index(replacement_player_id)
-            qualification_players[q_index] = qualification_backfill_player_id
+            qualification_players.remove(replacement_player_id)
+            qualification_players.append(qualification_backfill_player_id)
 
         wc_players = list(previous.wild_card_player_ids)
         wc_players[wc_players.index(withdrawn_player_id)] = replacement_player_id

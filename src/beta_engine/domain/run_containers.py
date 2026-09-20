@@ -12,6 +12,18 @@ RUN_DISPLAY_NAME_MAX_LENGTH = 256
 # sequence through ``first_available_timeline_name``.
 INITIAL_BRANCH_DISPLAY_NAME = "Timeline 1"
 WORKING_RUN_STATUS = "working"
+COMPLETED_RUN_STATUS = "completed"
+ARCHIVED_RUN_STATUS = "archived"
+# Compatibility only: early product-container rows and direct DB fixtures used
+# "active" before the canonical Working / Completed / Archived lifecycle landed.
+LEGACY_ACTIVE_RUN_STATUS = "active"
+PRE_COMPLETION_RUN_STATUSES = frozenset(
+    {WORKING_RUN_STATUS, LEGACY_ACTIVE_RUN_STATUS}
+)
+
+
+def is_pre_completion_run_status(value: str) -> bool:
+    return value in PRE_COMPLETION_RUN_STATUSES
 
 
 class RunDisplayNameValidationError(ValueError):

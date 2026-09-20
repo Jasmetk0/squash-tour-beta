@@ -787,6 +787,7 @@ export type AuthoritativeSeasonTransitionPreflight = {
   final_season: boolean
   saved_revision_id: string | null
   draft_version: number | null
+  default_configuration_fingerprint: string | null
   position_fingerprint: string
   state_blockers: string[]
   implementation_gaps: string[]

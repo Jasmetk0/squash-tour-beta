@@ -104,13 +104,21 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   status, and freezes the blocking set under a stable inspection fingerprint.
   The inspection explicitly reports `bridge_supported=false`; no Tour-entry
   activation or sporting profile is invented.
-  Week 61 now also exposes a **read-only canonical Season Transition preflight**.
+  Week 61 exposes a **read-only canonical Season Transition preflight**.
   It freezes current Position/Saved Revision evidence, separates current branch
-  blockers from known missing Season Transition writers, projects the next Season
-  Week 1 target (or final Run closure after 2049/50), and remains explicitly
-  non-executable. At Week 61 the Admin Simulation page renders this preflight,
-  separates branch blockers from engine gaps and hides ordinary Week Transition
-  review/confirm controls. It does not reuse the legacy MVP rollover service.
+  blockers from known missing Season Transition writers and projects the next Season
+  Week 1 target (or final Run closure after 2049/50). Final 2049/50 can execute when
+  its real blockers are empty; ordinary season rollover remains blocked by its
+  remaining writers. Ordinary rollover now also resolves a deterministic
+  `season_transition_configuration.v1`: the current Week-61 Official/sporting
+  fingerprints and Saved Revision head are bound to incoming Ranking + Development
+  policies and an explicit season-scoped reset catalog. Default preview inherits the
+  outgoing supported policies; the Admin API can preview explicit incoming
+  overrides without mutation. The reset registry is currently intentionally empty
+  because there is still no authoritative branch-scoped resettable season-stat
+  producer. At Week 61 the Admin Simulation page renders the preflight, separates
+  branch blockers from engine gaps and hides ordinary Week Transition controls. It
+  does not reuse the legacy MVP rollover service.
   The first Season Transition write primitive is now implemented separately:
   `season_closing_ranking.v1` calculates an immutable archived ranking immediately
   after Week 61 under the outgoing Week 61 policy, and an append-only store binds it

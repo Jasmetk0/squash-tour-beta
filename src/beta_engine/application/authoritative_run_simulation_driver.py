@@ -31,6 +31,9 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionResult,
     commit_final_season_transition,
 )
+from beta_engine.application.season_transition_configuration import (
+    resolve_season_transition_configuration,
+)
 from beta_engine.application.run_owned_match_package import (
     build_run_owned_match_package,
 )
@@ -144,6 +147,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     final_season: bool
     saved_revision_id: str | None
     draft_version: int | None = None
+    default_configuration_fingerprint: str | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
     implementation_gaps: tuple[str, ...] = ()
@@ -224,12 +228,20 @@ class AuthoritativeRunSimulationDriver:
             if at_boundary and not final_season
             else None
         )
+        default_configuration = None
+        if target_week is not None:
+            try:
+                default_configuration = resolve_season_transition_configuration(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                )
+            except ValueError:
+                blockers.append("season_transition_configuration_unavailable")
         implementation_gaps = (
             ()
             if final_season
             else (
-                "new_season_policy_activation_not_implemented",
-                "season_scoped_reset_catalog_not_implemented",
                 "season_boundary_lifecycle_writer_not_implemented",
                 "season_prospect_creation_bridge_not_implemented",
                 "season_week_1_ranking_writer_not_implemented",
@@ -248,6 +260,9 @@ class AuthoritativeRunSimulationDriver:
             if branch
             else None,
             "draft_version": draft.draft_version if draft else None,
+            "default_configuration_fingerprint": (
+                default_configuration.fingerprint if default_configuration else None
+            ),
             "position_fingerprint": position.position_fingerprint,
             "state_blockers": state_blockers,
             "implementation_gaps": implementation_gaps,
@@ -263,6 +278,9 @@ class AuthoritativeRunSimulationDriver:
             if branch
             else None,
             draft_version=draft.draft_version if draft else None,
+            default_configuration_fingerprint=(
+                default_configuration.fingerprint if default_configuration else None
+            ),
             position_fingerprint=position.position_fingerprint,
             state_blockers=state_blockers,
             implementation_gaps=implementation_gaps,

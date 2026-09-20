@@ -20,10 +20,14 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     FinalSeasonTransitionCommand,
 )
 from beta_engine.application.season_match_service import SeasonMatchService
+from beta_engine.application.season_transition_configuration import (
+    resolve_season_transition_configuration,
+)
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
-from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
+from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 
 router = APIRouter(
@@ -36,6 +40,55 @@ def _driver(runtime, matches, awards):
     return AuthoritativeRunSimulationDriver(
         runtime.repository._session_factory, matches, awards
     )
+
+
+@router.post("/season-transition/configuration/preview")
+def preview_season_transition_configuration(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        ranking_payload = payload.get("target_ranking_policy")
+        development_payload = payload.get("target_development_policy")
+        target_ranking_policy = (
+            OfficialRankingPolicy.model_validate(ranking_payload)
+            if ranking_payload is not None
+            else None
+        )
+        target_development_policy = (
+            PlayerDevelopmentPolicy.model_validate(development_payload)
+            if development_payload is not None
+            else None
+        )
+        with runtime.repository._session_factory() as session:
+            configuration = resolve_season_transition_configuration(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                target_ranking_policy=target_ranking_policy,
+                target_development_policy=target_development_policy,
+            )
+        return {
+            "configuration": configuration,
+            "configuration_fingerprint": configuration.fingerprint,
+            "ranking_policy_inherited": configuration.ranking_policy_inherited,
+            "development_policy_inherited": (
+                configuration.development_policy_inherited
+            ),
+            "reset_component_ids": list(
+                configuration.reset_catalog.component_ids
+            ),
+        }
+    except (KeyError, ValueError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "season_transition_configuration_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.get("/prospect-bridge")

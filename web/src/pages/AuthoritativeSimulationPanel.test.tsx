@@ -182,6 +182,7 @@ beforeEach(() => {
     final_season: false,
     saved_revision_id: 'revision-7',
     draft_version: 4,
+    default_closing_ranking_fingerprint: '0'.repeat(64),
     default_configuration_fingerprint: '6'.repeat(64),
     default_sporting_fingerprint: '7'.repeat(64),
     default_lifecycle_fingerprint: '8'.repeat(64),
@@ -189,8 +190,7 @@ beforeEach(() => {
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
     implementation_gaps: [
-      'season_prospect_creation_bridge_not_implemented',
-      'season_transition_atomic_writer_not_implemented'
+      'season_prospect_creation_bridge_not_implemented'
     ],
     ready_for_execution: false,
     preflight_fingerprint: '5'.repeat(64)
@@ -630,7 +630,10 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(screen.getByText('Season index 3 · Week 1')).toBeInTheDocument()
     expect(
       screen.getByRole('list', { name: 'Season Transition implementation gaps' })
-    ).toHaveTextContent('season_transition_atomic_writer_not_implemented')
+    ).toHaveTextContent('season_prospect_creation_bridge_not_implemented')
+    expect(
+      screen.getByRole('list', { name: 'Season Transition implementation gaps' })
+    ).not.toHaveTextContent('season_transition_atomic_writer_not_implemented')
     expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })
@@ -662,6 +665,7 @@ describe('AuthoritativeSimulationPanel', () => {
       final_season: true,
       saved_revision_id: 'revision-7',
       draft_version: 4,
+      default_closing_ranking_fingerprint: '0'.repeat(64),
       default_configuration_fingerprint: null,
       default_sporting_fingerprint: null,
       default_lifecycle_fingerprint: null,

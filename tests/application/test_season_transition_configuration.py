@@ -540,6 +540,8 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
 
     assert preflight.final_season is False
     assert preflight.target_week == RankingWeek(season_index=1, week=1)
+    assert preflight.default_closing_ranking_fingerprint is not None
+    assert len(preflight.default_closing_ranking_fingerprint) == 64
     assert preflight.default_configuration_fingerprint == expected.fingerprint
     assert preflight.default_sporting_fingerprint is not None
     assert len(preflight.default_sporting_fingerprint) == 64
@@ -551,7 +553,6 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
     assert preflight.implementation_gaps == (
         "season_prospect_creation_bridge_not_implemented",
-        "season_transition_atomic_writer_not_implemented",
     )
     assert preflight.state_blockers == ()
     assert preflight.ready_for_execution is False

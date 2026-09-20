@@ -18,6 +18,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeSimulationCommand,
     AuthoritativeWalkoverCommand,
     FinalSeasonTransitionCommand,
+    OrdinarySeasonTransitionCommand,
 )
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_transition_configuration import (
@@ -152,6 +153,32 @@ def season_transition_preflight(
             status_code=409,
             detail={
                 "code": "season_transition_preflight_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/season-transition/advance", status_code=201)
+def advance_ordinary_season(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = OrdinarySeasonTransitionCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).advance_season(command)
+    except (KeyError, ValueError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "ordinary_season_transition_conflict",
                 "message": str(exc),
             },
         ) from exc

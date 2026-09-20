@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from sqlalchemy import text
 
@@ -11,6 +13,7 @@ from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleWeekState,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.players.prospect_sporting_profile import ProspectSportingProfile
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 
 
@@ -164,7 +167,8 @@ def _materialization_service(repository: SimulationPersistenceRepository) -> Run
     return RunProspectMaterializationService(repository=repository, preview_service=preview)
 
 
-def test_materialize_15yo_cohort_generates_deterministic_records_and_shells(tmp_path):
+@pytest.mark.pr_critical
+def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_profiles(tmp_path):
     repository, _ = _repository(tmp_path)
     repository.upsert_simulation_run(SimulationRunInfo(run_id="run-m", season=2027, seed=1))
     service = _materialization_service(repository)
@@ -182,10 +186,23 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_shells(tmp_
     assert first.source_type == "weekly_15yo_cohort"
     assert first.display_name.startswith("GER Prospect ")
     assert all([first.identity_seed, first.profile_seed, first.development_seed, first.potential_seed, first.trait_seed])
-    assert first.profile_json["reserved_for_future_attributes"] is True
-    assert first.development_json["reserved_for_future_development"] is True
-    assert first.potential_json["reserved_for_future_potential"] is True
+    canonical = ProspectSportingProfile.model_validate(
+        first.profile_json["canonical_sporting_profile"]
+    )
+    assert first.profile_json["canonical_sporting_profile_fingerprint"] == canonical.fingerprint
+    assert len(canonical.attributes) == 57
+    assert first.development_json["development_timing"] == canonical.development_timing
+    assert first.development_json["sporting_profile_fingerprint"] == canonical.fingerprint
+    assert first.potential_json["potential_ovr"] == canonical.potential_ovr
+    assert first.potential_json["potential_identity"] == canonical.potential_identity
+    assert first.potential_json["sporting_profile_fingerprint"] == canonical.fingerprint
     assert first.trait_json["reserved_for_future_traits"] is True
+    assert "reserved_for_future_attributes" not in first.profile_json
+    assert "reserved_for_future_development" not in first.development_json
+    assert "reserved_for_future_potential" not in first.potential_json
+    assert first.profile_seed not in json.dumps(first.profile_json, sort_keys=True)
+    assert first.profile_json["materialization_policy"]["sporting_profile_policy_id"]
+    assert first.profile_json["materialization_policy"]["sporting_profile_policy_fingerprint"]
 
 
 def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):

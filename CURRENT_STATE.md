@@ -96,7 +96,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   predecessor Official Ranking policy, previews the exact authority fingerprint,
   confirms it under CAS, and Saves it through the same ranking revision boundary.
   Missing authority can therefore be resolved from canonical Run truth; stale
-  authority, Week 61 rollover and prospect-bridge gaps remain fail-closed.
+  authority and Week 61 rollover remain fail-closed. Target-week Run prospects also
+  remain fail-closed, but Admin now has a canonical read-only Prospect Bridge
+  inspection: it derives the exact target week from the current Official Ranking
+  head, lists only the Run-scoped prospects that block that boundary, exposes their
+  cohort/profile versions plus placeholder sporting/development/potential/trait
+  status, and freezes the blocking set under a stable inspection fingerprint.
+  The inspection explicitly reports `bridge_supported=false`; no Tour-entry
+  activation or sporting profile is invented.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

@@ -293,8 +293,18 @@ Official Ranking policy. Preview is read-only, confirm is bound to the reviewed
 authority fingerprint, and the authority is then Saved through the ranking revision
 CAS before Week Transition becomes ready. The manual authority endpoint remains a
 compatibility/advanced boundary, not the default canonical UI path. Week 61 continues
-to require Season Transition, and unbridged target-week prospects continue to block
-derivation rather than being silently omitted.
+to require Season Transition.
+
+Unbridged target-week prospects still block Week Transition rather than being
+silently omitted, but the blocker is now inspectable through a canonical read-only
+Run/Branch boundary. The engine derives the target calendar/season week from the
+current Official Ranking head, selects the exact Run-scoped blocking prospect rows,
+surfaces cohort/profile versions and explicit placeholder status for attributes,
+development, potential and traits, and fingerprints that blocking set. The Admin
+Simulation page renders the inspection only when `prospect_bridge_missing` is
+present. This is intentionally **not** the prospect/Tour-entry bridge: the current
+technical contracts still leave Tour-entry activation and canonical sporting-profile
+creation open, so no mutation is exposed until those rules are decided/implemented.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

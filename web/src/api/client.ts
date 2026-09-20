@@ -116,6 +116,7 @@ import type {
   AuthoritativeSimulationSavePreview,
   AuthoritativeSimulationSavePayload,
   AuthoritativeSimulationSaveResponse,
+  ProspectBridgeInspection,
   DerivedAuthoritativeWeekTransitionPreview,
   AuthoritativeWeekTransitionCommand,
   RunWeeklyIntakeCohortSeasonPreviewParams,
@@ -1027,6 +1028,24 @@ function verifyAuthoritativeSimulationScope(
   if (data.run_id !== runId || data.branch_id !== branchId) {
     throw new Error('Authoritative simulation response does not match the requested Run/Branch.')
   }
+}
+
+export async function getProspectBridgeInspection(
+  runId: string,
+  branchId: string
+): Promise<ProspectBridgeInspection> {
+  const data = await request<ProspectBridgeInspection>(
+    authoritativeSimulationRoot(runId, branchId) + '/prospect-bridge'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'prospect_bridge_inspection.v1' ||
+    data.bridge_supported !== false ||
+    !/^[0-9a-f]{64}$/.test(data.inspection_fingerprint)
+  ) {
+    throw new Error('Prospect Bridge inspection response is invalid.')
+  }
+  return data
 }
 
 export async function getAuthoritativeSimulationPosition(

@@ -280,6 +280,7 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
     return week
 
 
+@pytest.mark.pr_critical
 def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     server, package = _server_state(tmp_path)
     legacy_hash = hashlib.sha256(
@@ -295,6 +296,33 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
         root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
         status, opening = _request("GET", root + "/position")
         assert status == 200 and len(opening["eligible_match_ids"]) == 2
+        before_preflight = Path(
+            server.app.state.runtime.repository._engine.url.database
+        ).read_bytes()
+        status, season_preflight = _request(
+            "GET", root + "/season-transition/preflight"
+        )
+        assert status == 200
+        assert (
+            season_preflight["schema_version"]
+            == "authoritative_season_transition_preflight.v1"
+        )
+        assert season_preflight["completed_week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+        assert season_preflight["target_week"] is None
+        assert season_preflight["final_season"] is False
+        assert "not_at_season_boundary" in season_preflight["state_blockers"]
+        assert season_preflight["ready_for_execution"] is False
+        assert (
+            "season_transition_atomic_writer_not_implemented"
+            in season_preflight["implementation_gaps"]
+        )
+        assert len(season_preflight["preflight_fingerprint"]) == 64
+        assert Path(
+            server.app.state.runtime.repository._engine.url.database
+        ).read_bytes() == before_preflight
         base = {
             "command_id": "sf",
             "run_id": run_id,

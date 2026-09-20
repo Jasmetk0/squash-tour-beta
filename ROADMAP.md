@@ -411,14 +411,18 @@ its exact generation-policy fingerprint. Ordinary Week **and Season** Transition
 adopt exact birth-week prospects into the target sporting snapshot only after
 completed-week development/recovery, while keeping `tour_entry_week=None` and
 excluding them from Official Ranking. Placeholder/corrupt profile evidence fails
-closed at the affected transition boundary. The next prospect lifecycle authority gap
-is formal Tour-entry activation from the Master-defined trigger (first valid MSA Tour
-application or definitive WC assignment). Do not derive that event from the later
-Tournament Entry Field cut: the current field application payload has no authoritative
-submission week, and the older wildcard action is not branch-owned lifecycle truth.
-Introduce exact branch-scoped submission / definitive-WC trigger evidence first, then
-apply the one-time lifecycle Tour-entry mutation. The historically scoped Admin/Viewer
-prospect surface is implemented from lifecycle truth.
+closed at the affected transition boundary. Formal Tour-entry activation now has exact branch-scoped evidence for both
+Master-defined triggers: valid MSA Tour application submission and definitive WC/RWC
+assignment. The first trigger is append-only, immediately visible through the current
+lifecycle read projection, and sealed into later lifecycle/ranking boundaries without
+retroactive Official Ranking mutation. The application side now preserves a complete
+shared-snapshot pre-cut Entry decision slot, persists explicit validation outcomes and
+valid submissions, and can feed the canonical Tournament Entry Field from persisted
+submission truth rather than caller-reconstructed applications. The remaining Entry
+authority work is the concrete versioned eligibility/deadline validator and the later
+generic multi-kind Simulation Slot planner needed for future Entry reservations among
+already-planned match slots. The historically scoped Admin/Viewer prospect surface is
+implemented from lifecycle truth.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

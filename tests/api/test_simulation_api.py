@@ -1894,9 +1894,15 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
             assert prospect["profile_version"] == "prospect_profile_v1"
             assert prospect["display_name"]
             assert all(prospect[key] for key in ["identity_seed", "profile_seed", "development_seed", "potential_seed", "trait_seed"])
-            assert prospect["profile_json"]["reserved_for_future_attributes"] is True
-            assert prospect["development_json"]["reserved_for_future_development"] is True
-            assert prospect["potential_json"]["reserved_for_future_potential"] is True
+            canonical = prospect["profile_json"]["canonical_sporting_profile"]
+            fingerprint = prospect["profile_json"]["canonical_sporting_profile_fingerprint"]
+            assert canonical["schema_version"] == "prospect_sporting_profile.v1"
+            assert len(canonical["attributes"]) == 57
+            assert prospect["development_json"]["development_timing"] == canonical["development_timing"]
+            assert prospect["development_json"]["sporting_profile_fingerprint"] == fingerprint
+            assert prospect["potential_json"]["potential_ovr"] == canonical["potential_ovr"]
+            assert prospect["potential_json"]["potential_identity"] == canonical["potential_identity"]
+            assert prospect["potential_json"]["sporting_profile_fingerprint"] == fingerprint
             assert prospect["trait_json"]["reserved_for_future_traits"] is True
 
         status, again = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})

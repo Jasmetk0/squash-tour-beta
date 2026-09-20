@@ -879,6 +879,38 @@ export type AuthoritativeSimulationSaveResponse = {
   audit_event_id: string
 }
 
+export type ProspectBridgeInspectionItem = {
+  prospect_id: string
+  display_name: string
+  country_code: string
+  age: number
+  status: string
+  source_type: string
+  cohort_policy_version: string
+  profile_version: string
+  profile_placeholder: boolean
+  development_placeholder: boolean
+  potential_placeholder: boolean
+  trait_placeholder: boolean
+}
+
+export type ProspectBridgeInspection = {
+  schema_version: 'prospect_bridge_inspection.v1'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  season_start_year: number
+  calendar_year: number
+  year_week: number
+  run_scoped_source: boolean
+  bridge_supported: false
+  blocking_code: string
+  unresolved_contracts: string[]
+  prospects: ProspectBridgeInspectionItem[]
+  inspection_fingerprint: string
+}
+
 export type TournamentRankingBinding = {
   run_id: string
   branch_id: string

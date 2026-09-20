@@ -114,6 +114,9 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
     load_saved_ranking_component,
     restore_saved_ranking_component,
 )
+from beta_engine.infrastructure.db.saved_revision_season_closure import (
+    SEASON_CLOSURE_COMPONENT_KEY,
+)
 from beta_engine.infrastructure.db.initial_world_state import (
     INITIAL_WORLD_COMPONENT_KEY,
     capture_saved_initial_world,
@@ -2438,6 +2441,13 @@ class SimulationPersistenceRepository:
                         "Branch creation from initial-world Saved Revisions requires "
                         "player snapshot identity remapping, which is not yet supported"
                     )
+                if SEASON_CLOSURE_COMPONENT_KEY in source_revision.payload.get(
+                    "content", {}
+                ):
+                    raise SavedRevisionBranchForkConflictError(
+                        "Branch creation from final Season Closure revisions requires "
+                        "closure identity remapping; branch from an earlier Saved Revision"
+                    )
 
                 if session.get(RunBranchModel, branch_id) is not None:
                     raise BranchCreationIdentityConflictError(
@@ -3225,6 +3235,7 @@ class SimulationPersistenceRepository:
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
+                        SEASON_CLOSURE_COMPONENT_KEY,
                     }
                     or set(target_content)
                     - {
@@ -3233,6 +3244,7 @@ class SimulationPersistenceRepository:
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
+                        SEASON_CLOSURE_COMPONENT_KEY,
                     }
                     or has_unrestorable_run_state
                 ):

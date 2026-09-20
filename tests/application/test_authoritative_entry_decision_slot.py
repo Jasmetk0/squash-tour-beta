@@ -9,6 +9,8 @@ from beta_engine.domain.tournaments.application_validation_authority import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import RunBranchModel
+from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotStore,
 )
@@ -22,6 +24,44 @@ from test_authoritative_slot_matches import (
     _driver_fixture,
     _multi_driver_fixture,
 )
+
+
+def _align_compatibility_roster(driver, factory, week):
+    with factory() as session:
+        lifecycle = get_lifecycle(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=week,
+        )
+        sporting = get_sporting(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=week,
+        )
+        assert lifecycle is not None and sporting is not None
+        sporting_ids = {player.player_id for player in sporting.players}
+        owned_ids = {
+            player.player_id
+            for player in lifecycle.players
+            if player.status == "active" and player.player_id in sporting_ids
+        }
+
+    active_service = (
+        driver.match_service.draw_service.entry_list_service.active_players_service
+    )
+    season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+    registry = active_service._load_registry()
+    available = {
+        player.player_id: player
+        for player in registry.players_by_season.get(season, [])
+    }
+    assert owned_ids <= set(available)
+    registry.players_by_season[season] = [
+        available[player_id] for player_id in sorted(owned_ids)
+    ]
+    active_service._save_registry(registry)
 
 
 def _command_from_preview(preview, *, command_id="entry-slot"):
@@ -42,6 +82,7 @@ def _command_from_preview(preview, *, command_id="entry-slot"):
 @pytest.mark.pr_critical
 def test_single_event_entry_slot_preview_commit_and_retry_are_run_owned(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "single-entry-slot")
+    _align_compatibility_roster(driver, factory, week)
     entry_service = driver.match_service.draw_service.entry_list_service
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     before_registry = entry_service._load_registry().model_dump(mode="json")
@@ -86,6 +127,7 @@ def test_multi_event_entry_slot_uses_one_shared_snapshot_and_canonical_events(tm
     driver, factory, week, first, second = _multi_driver_fixture(
         tmp_path / "multi-entry-slot"
     )
+    _align_compatibility_roster(driver, factory, week)
     event_ids = tuple(sorted((first.event_id, second.event_id)))
     preview = driver.preview_entry_decision_slot(
         run_id="run",
@@ -123,6 +165,7 @@ def test_multi_event_entry_slot_uses_one_shared_snapshot_and_canonical_events(tm
 @pytest.mark.pr_critical
 def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "entry-validation-command")
+    _align_compatibility_roster(driver, factory, week)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     preview = driver.preview_entry_decision_slot(
         run_id="run",
@@ -203,7 +246,8 @@ def test_entry_slot_preview_fails_closed_when_compatibility_roster_drifts(
     tmp_path,
     monkeypatch,
 ):
-    driver, _, _ = _driver_fixture(tmp_path / "entry-roster-drift")
+    driver, factory, week = _driver_fixture(tmp_path / "entry-roster-drift")
+    _align_compatibility_roster(driver, factory, week)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     active_service = (
         driver.match_service.draw_service.entry_list_service.active_players_service
@@ -233,6 +277,7 @@ def test_entry_slot_preview_fails_closed_when_compatibility_roster_drifts(
 @pytest.mark.pr_critical
 def test_entry_slot_commit_rejects_stale_batch_fingerprint_without_persistence(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "stale-entry-batch")
+    _align_compatibility_roster(driver, factory, week)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     preview = driver.preview_entry_decision_slot(
         run_id="run",
@@ -257,7 +302,8 @@ def test_entry_slot_commit_rejects_stale_batch_fingerprint_without_persistence(t
 
 @pytest.mark.pr_critical
 def test_entry_slot_commit_rejects_stale_branch_head(tmp_path):
-    driver, factory, _ = _driver_fixture(tmp_path / "stale-entry-head")
+    driver, factory, week = _driver_fixture(tmp_path / "stale-entry-head")
+    _align_compatibility_roster(driver, factory, week)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     preview = driver.preview_entry_decision_slot(
         run_id="run",

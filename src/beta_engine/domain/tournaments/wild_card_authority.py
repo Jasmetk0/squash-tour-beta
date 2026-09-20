@@ -8,7 +8,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.tournaments.entry_field import TournamentEntryField
 
 
@@ -38,15 +38,18 @@ class TournamentWildCardSlotResolution(FrozenInput):
 
 
 class TournamentWildCardAuthority(FrozenInput):
-    schema_version: Literal["tournament_wild_card_authority.v1"] = (
-        "tournament_wild_card_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_wild_card_authority.v1",
+        "tournament_wild_card_authority.v2",
+    ] = "tournament_wild_card_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     resolved_by_command_id: str = Field(min_length=1, max_length=128)
     entry_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     field_sequence: int = Field(ge=1)
+    decision_week: RankingWeek | None = None
+    decision_slot_ordinal: int | None = Field(default=None, ge=1)
     original_wild_card_player_ids: tuple[str | None, ...]
     reserve_wild_card_player_ids: tuple[str, ...] = ()
     unavailable_player_ids: tuple[str, ...] = ()
@@ -56,6 +59,11 @@ class TournamentWildCardAuthority(FrozenInput):
 
     @model_validator(mode="after")
     def validate_structure(self):
+        if self.schema_version == "tournament_wild_card_authority.v1":
+            if self.decision_week is not None or self.decision_slot_ordinal is not None:
+                raise ValueError("Historical WC authority v1 cannot carry global-slot chronology")
+        elif self.decision_week is None or self.decision_slot_ordinal is None:
+            raise ValueError("WC authority v2 requires exact decision week and global slot ordinal")
         expected = tuple(range(1, len(self.slots) + 1))
         actual = tuple(slot.wildcard_index for slot in self.slots)
         if actual != expected:
@@ -83,9 +91,15 @@ class TournamentWildCardAuthority(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
+        payload = self.model_dump(mode="json")
+        # Historical v1 fingerprints predate chronology fields. Keep their exact
+        # payload shape so old Saved Revisions remain immutable/replayable.
+        if self.schema_version == "tournament_wild_card_authority.v1":
+            payload.pop("decision_week", None)
+            payload.pop("decision_slot_ordinal", None)
         return hashlib.sha256(
             json.dumps(
-                self.model_dump(mode="json"),
+                payload,
                 sort_keys=True,
                 separators=(",", ":"),
             ).encode()
@@ -102,7 +116,16 @@ class TournamentWildCardAuthorityBuilder:
         original_wild_card_player_ids: tuple[str | None, ...],
         reserve_wild_card_player_ids: tuple[str, ...] = (),
         unavailable_player_ids: tuple[str, ...] = (),
+        decision_week: RankingWeek | None = None,
+        decision_slot_ordinal: int | None = None,
     ) -> TournamentWildCardAuthority:
+        if (decision_week is None) != (decision_slot_ordinal is None):
+            raise ValueError("WC decision chronology requires week and slot ordinal together")
+        schema_version = (
+            "tournament_wild_card_authority.v2"
+            if decision_week is not None
+            else "tournament_wild_card_authority.v1"
+        )
         slot_count = field.capacity.wild_card_slots
         if len(original_wild_card_player_ids) != slot_count:
             raise ValueError(
@@ -179,12 +202,15 @@ class TournamentWildCardAuthorityBuilder:
         below = below[needed:]
 
         return TournamentWildCardAuthority(
+            schema_version=schema_version,
             run_id=field.run_id,
             branch_id=field.branch_id,
             event_id=field.event_id,
             resolved_by_command_id=command_id,
             entry_field_fingerprint=field.fingerprint,
             field_sequence=field_sequence,
+            decision_week=decision_week,
+            decision_slot_ordinal=decision_slot_ordinal,
             original_wild_card_player_ids=original_wild_card_player_ids,
             reserve_wild_card_player_ids=reserve_wild_card_player_ids,
             unavailable_player_ids=tuple(sorted(unavailable)),

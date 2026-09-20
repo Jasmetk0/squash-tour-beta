@@ -96,7 +96,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   predecessor Official Ranking policy, previews the exact authority fingerprint,
   confirms it under CAS, and Saves it through the same ranking revision boundary.
   Missing authority can therefore be resolved from canonical Run truth; stale
-  authority, Week 61 rollover and prospect-bridge gaps remain fail-closed.
+  authority and prospect-bridge gaps remain fail-closed. Week 61 now has a separate
+  **read-only canonical Season Transition preflight** on the authoritative Simulation
+  page. It never invokes the legacy MVP rollover service. Instead it freezes current
+  Run/Branch Position + Saved Revision evidence, reports branch-specific blockers
+  separately from missing Season Transition engine layers, validates the canonical
+  `Week 61 -> next Season Week 1` boundary (or final Run closure), and remains
+  explicitly non-executable until the Season Closing Ranking, season-summary /
+  Closure Marker, new-season policy/reset/lifecycle/prospect/Week-1 ranking and
+  atomic Season Transition writers exist.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

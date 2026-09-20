@@ -2831,6 +2831,11 @@ class AuthoritativeRunSimulationDriver:
 
     def _ensure_current_slot(self, session, command, packages):
         pos = self._position(session, command.run_id, command.branch_id)
+        if "entry_validation_pending" in pos.transition_blockers:
+            raise ValueError(
+                "nearest unresolved global Simulation Slot is an Entry decision slot "
+                "awaiting complete application validation"
+            )
         if any(
             s.status != "complete"
             for s in session.scalars(

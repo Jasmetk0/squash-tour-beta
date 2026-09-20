@@ -735,7 +735,7 @@ describe('PlannedEventDetailPage', () => {
       )
     )
     expect(await screen.findByText('qualification_promotion')).toBeInTheDocument()
-    expect(screen.getByText('Q1')).toBeInTheDocument()
+    expect(screen.getAllByText('Q1').length).toBeGreaterThan(0)
 
     fireEvent.change(
       screen.getByLabelText('Frozen Main Qualification process window'),

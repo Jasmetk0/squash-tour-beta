@@ -506,6 +506,67 @@ class AuthoritativeRunSimulationDriver:
                     "authoritative lifecycle identity"
                 )
 
+    def inspect_entry_decision_slot(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        decision_slot_ordinal: int,
+    ) -> dict:
+        """Read one persisted Entry slot with canonical lifecycle identity evidence."""
+
+        if decision_slot_ordinal < 1:
+            raise ValueError("Entry decision slot ordinal must be one-based")
+        with self.factory() as session:
+            week = self._current_week(session, run_id, branch_id)
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Entry decision slot is missing")
+
+            lifecycle = get_lifecycle(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+            if lifecycle is None:
+                raise ValueError(
+                    "Entry decision slot inspection requires lifecycle identity"
+                )
+            identities = {player.player_id: player for player in lifecycle.players}
+            decision_players = {decision.player_id for decision in slot.decisions}
+            missing = decision_players - set(identities)
+            if missing:
+                raise ValueError(
+                    "Entry decision slot contains player missing from lifecycle identity"
+                )
+
+            validation = session.get(
+                ResolvedApplicationValidationSlotModel,
+                (run_id, branch_id, week.ordinal, decision_slot_ordinal),
+            )
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": decision_slot_ordinal,
+                "slot_fingerprint": slot.fingerprint,
+                "authority": slot.model_dump(mode="json"),
+                "identity_tokens": {
+                    player_id: identities[player_id].tie_break_token
+                    for player_id in sorted(decision_players)
+                },
+                "validation_resolved": validation is not None,
+                "validation_fingerprint": (
+                    None if validation is None else validation.fingerprint
+                ),
+            }
+
     def commit_application_validation_slot(
         self,
         command: AuthoritativeApplicationValidationCommand,

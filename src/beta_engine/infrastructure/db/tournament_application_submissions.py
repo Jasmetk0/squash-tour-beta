@@ -194,6 +194,17 @@ def record_valid_application_submission(
     replaces an earlier first Tour-entry trigger.
     """
 
+    submission_store = TournamentApplicationSubmissionStore(session)
+    existing_submission = submission_store.get(
+        run_id=submission.run_id,
+        branch_id=submission.branch_id,
+        application_id=submission.application_id,
+    )
+    if existing_submission is not None and existing_submission != submission:
+        raise TournamentApplicationSubmissionConflict(
+            "Application ID already has different submission authority"
+        )
+
     trigger_store = PlayerTourEntryTriggerStore(session)
     proposed_trigger = submission.to_tour_entry_trigger()
     existing_trigger = trigger_store.get(
@@ -218,7 +229,7 @@ def record_valid_application_submission(
     else:
         first_trigger = proposed_trigger
 
-    stored = TournamentApplicationSubmissionStore(session).append(submission)
+    stored = submission_store.append(submission)
     if existing_trigger is None:
         first_trigger = trigger_store.append(proposed_trigger)
 

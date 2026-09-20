@@ -3171,6 +3171,25 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player lifecycle state"
                     )
+                has_uncaptured_tour_entry = (
+                    session.scalar(
+                        select(PlayerTourEntryTriggerModel.run_id)
+                        .where(
+                            PlayerTourEntryTriggerModel.run_id == run_id,
+                            PlayerTourEntryTriggerModel.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                )
+                if (
+                    has_uncaptured_tour_entry
+                    and PLAYER_TOUR_ENTRY_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture player Tour-entry triggers"
+                    )
                 has_uncaptured_sporting = session.scalar(
                     select(PlayerSportingWeekStateModel.run_id).where(
                         PlayerSportingWeekStateModel.run_id == run_id,
@@ -3239,6 +3258,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
                         SEASON_CLOSURE_COMPONENT_KEY,
@@ -3248,6 +3268,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
                         SEASON_CLOSURE_COMPONENT_KEY,
@@ -3335,6 +3356,22 @@ class SimulationPersistenceRepository:
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player lifecycle: {exc}"
+                        ) from exc
+                if (
+                    PLAYER_TOUR_ENTRY_COMPONENT_KEY in current_content
+                    or PLAYER_TOUR_ENTRY_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_tour_entry_triggers(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore player Tour-entry triggers: {exc}"
                         ) from exc
                 if (
                     PLAYER_SPORTING_COMPONENT_KEY in current_content

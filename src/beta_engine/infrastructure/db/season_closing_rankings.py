@@ -1,9 +1,11 @@
 """Append-only persistence for archived Season Closing Rankings."""
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.rankings.season_closing import SeasonClosingRankingSnapshot
 from beta_engine.infrastructure.db.models import (
+    PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
     SeasonClosingRankingModel,
@@ -80,6 +82,106 @@ class SeasonClosingRankingStore:
                 season_index=season_index,
             )
         )
+
+    def history(
+        self, *, run_id: str, branch_id: str
+    ) -> tuple[SeasonClosingRankingSnapshot, ...]:
+        self._scope(run_id, branch_id)
+        records = self.session.scalars(
+            select(SeasonClosingRankingModel)
+            .where(
+                SeasonClosingRankingModel.run_id == run_id,
+                SeasonClosingRankingModel.branch_id == branch_id,
+            )
+            .order_by(SeasonClosingRankingModel.season_index)
+        ).all()
+        return tuple(
+            self._load(
+                record,
+                run_id=run_id,
+                branch_id=branch_id,
+                season_index=record.season_index,
+            )
+            for record in records
+        )
+
+    def install_restored(
+        self, snapshot: SeasonClosingRankingSnapshot
+    ) -> SeasonClosingRankingSnapshot:
+        """Install verified Saved Revision archive without requiring it to be live head.
+
+        The restore path may contain Closing Rankings from multiple historical seasons,
+        so the normal append() current-head guard is intentionally inapplicable here.
+        Safety is instead anchored to the exact restored Official Week-61 publication
+        in the same transaction.
+        """
+
+        snapshot = SeasonClosingRankingSnapshot.model_validate_json(
+            snapshot.model_dump_json()
+        )
+        self._scope(snapshot.run_id, snapshot.branch_id, writing=True)
+        season_index = snapshot.completed_week.season_index
+        existing = self.get(
+            run_id=snapshot.run_id,
+            branch_id=snapshot.branch_id,
+            season_index=season_index,
+        )
+        if existing is not None:
+            if existing.fingerprint != snapshot.fingerprint:
+                raise SeasonClosingRankingConflict(
+                    "Season already has a different restored Closing Ranking"
+                )
+            return existing
+
+        publication = self.session.get(
+            PublishedOfficialRankingModel,
+            (
+                snapshot.run_id,
+                snapshot.branch_id,
+                snapshot.completed_week.ordinal,
+            ),
+        )
+        if (
+            publication is None
+            or publication.snapshot_fingerprint
+            != snapshot.predecessor_official_fingerprint
+        ):
+            raise ValueError(
+                "Restored Season Closing Ranking requires its Official Week 61 publication"
+            )
+        from beta_engine.domain.rankings.official import load_official_ranking_snapshot
+
+        predecessor = load_official_ranking_snapshot(
+            publication.payload_json,
+            expected_fingerprint=publication.snapshot_fingerprint,
+            run_id=snapshot.run_id,
+            branch_id=snapshot.branch_id,
+            week=snapshot.completed_week,
+        )
+        if predecessor.policy != snapshot.policy:
+            raise ValueError(
+                "Restored Season Closing Ranking policy differs from Week 61 publication"
+            )
+
+        self.session.add(
+            SeasonClosingRankingModel(
+                run_id=snapshot.run_id,
+                branch_id=snapshot.branch_id,
+                season_index=season_index,
+                completed_ordinal=snapshot.completed_week.ordinal,
+                fingerprint=snapshot.fingerprint,
+                payload_json=snapshot.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        installed = self.get(
+            run_id=snapshot.run_id,
+            branch_id=snapshot.branch_id,
+            season_index=season_index,
+        )
+        if installed is None:  # pragma: no cover
+            raise ValueError("Restored Season Closing Ranking could not be verified")
+        return installed
 
     def append(
         self, snapshot: SeasonClosingRankingSnapshot

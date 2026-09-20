@@ -12,6 +12,7 @@ from beta_engine.application.ordinary_season_transition import (
     commit_ordinary_season_transition,
 )
 from beta_engine.application.official_ranking_transition import RankingTransitionContext
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
@@ -172,47 +173,67 @@ def _install_boundary(session):
         ),
     )
     policy = OfficialRankingPolicy(policy_id="season-0-policy", best_n=15)
-    official = calculate_official_ranking(
-        run_id="run",
-        branch_id="branch",
-        week=completed,
-        policy=policy,
-        players=lifecycle.ranking_roster(),
-        results=(),
-    )
-    OfficialRankingCandidateStore(session).append(official, bootstrap=True)
-    receipt_command = RankingWeekCommand(
-        command_id="week61-ranking-source",
-        context=RankingTransitionContext(
+    candidates = OfficialRankingCandidateStore(session)
+    previous = None
+    for week_number in range(1, 62):
+        ranking_week = RankingWeek(season_index=0, week=week_number)
+        if previous is None:
+            receipt_command = RankingBootstrapCommand(
+                command_id="ranking-week-1",
+                run_id="run",
+                branch_id="branch",
+                target_week=ranking_week,
+                policy=policy,
+                players=(),
+                discipline="stored_zeros",
+            )
+        else:
+            receipt_command = RankingWeekCommand(
+                command_id=f"ranking-week-{week_number}",
+                context=RankingTransitionContext(
+                    run_id="run",
+                    branch_id="branch",
+                    completed_week=previous.week,
+                    target_week=ranking_week,
+                    policy=policy,
+                    players=(),
+                    discipline="stored_zeros",
+                ),
+                tournaments=(),
+            )
+        snapshot = calculate_official_ranking(
             run_id="run",
             branch_id="branch",
-            completed_week=RankingWeek(season_index=0, week=60),
-            target_week=completed,
+            week=ranking_week,
             policy=policy,
             players=(),
-            discipline="stored_zeros",
-        ),
-        tournaments=(),
-    )
-    manifest = RankingInputManifest(
-        command_request_fingerprint=receipt_command.fingerprint,
-        zeros_from_history=True,
-        players=(),
-        results=(),
-    )
-    session.add(
-        OfficialRankingCommandModel(
-            run_id="run",
-            branch_id="branch",
-            command_id=receipt_command.command_id,
-            request_fingerprint=receipt_command.fingerprint,
-            request_payload_json=receipt_command.canonical_request_json,
-            target_ordinal=completed.ordinal,
-            snapshot_fingerprint=official.fingerprint,
-            input_manifest_version=1,
-            input_manifest_json=manifest.model_dump_json(),
+            results=(),
+            previous=previous,
         )
-    )
+        candidates.append(snapshot, bootstrap=previous is None)
+        manifest = RankingInputManifest(
+            command_request_fingerprint=receipt_command.fingerprint,
+            zeros_from_history=True,
+            players=(),
+            results=(),
+        )
+        session.add(
+            OfficialRankingCommandModel(
+                run_id="run",
+                branch_id="branch",
+                command_id=receipt_command.command_id,
+                request_fingerprint=receipt_command.fingerprint,
+                request_payload_json=receipt_command.canonical_request_json,
+                target_ordinal=ranking_week.ordinal,
+                snapshot_fingerprint=snapshot.fingerprint,
+                input_manifest_version=1,
+                input_manifest_json=manifest.model_dump_json(),
+            )
+        )
+        previous = snapshot
+
+    official = previous
+    assert official is not None and official.week == completed
     session.add(
         PublishedOfficialRankingModel(
             run_id="run",

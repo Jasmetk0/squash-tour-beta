@@ -142,13 +142,8 @@ class PlayerLifecycleWeekState(FrozenInput):
 def advance_lifecycle(
     predecessor: PlayerLifecycleWeekState, target: RankingWeek
 ) -> PlayerLifecycleWeekState:
-    if (
-        target.season_index != predecessor.week.season_index
-        or target.ordinal != predecessor.week.ordinal + 1
-    ):
-        raise ValueError(
-            "Player lifecycle supports only ordinary same-season Week Transition"
-        )
+    if target.ordinal != predecessor.week.ordinal + 1:
+        raise ValueError("Player lifecycle supports only consecutive Week Transition")
     players = []
     for player in predecessor.players:
         if player.birth_year_week == season_week_to_year_week(target.week):

@@ -6,18 +6,18 @@ from sqlalchemy.orm import Session
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
-from beta_engine.domain.players.lifecycle import advance_lifecycle
-from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
     BranchWorkingDraftModel,
     RankingTransitionAuthorityModel,
     RunBranchModel,
     RunContainerModel,
-    RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
-from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    advance_lifecycle_with_prospects,
+    get_lifecycle,
+)
 
 
 
@@ -93,27 +93,11 @@ def derive_ranking_transition_authority(
             "Ranking transition predecessor player lifecycle snapshot is missing"
         )
 
-    position = season_week_to_calendar_position(
-        2000 + target_week.season_index,
-        target_week.week,
-    )
-    pending_prospect = session.scalar(
-        select(RunProspectModel.prospect_id)
-        .where(
-            RunProspectModel.run_id == run_id,
-            RunProspectModel.season_start_year == 2000 + target_week.season_index,
-            RunProspectModel.season_week == target_week.week,
-            RunProspectModel.calendar_year == position.calendar_year,
-            RunProspectModel.year_week == position.year_week,
-        )
-        .limit(1)
-    )
-    if pending_prospect is not None:
-        raise ValueError(
-            "Ranking transition target week has unbridged Run prospects"
-        )
-
-    target_roster = advance_lifecycle(lifecycle, target_week).ranking_roster()
+    target_roster = advance_lifecycle_with_prospects(
+        session,
+        predecessor=lifecycle,
+        target=target_week,
+    ).ranking_roster()
     return RankingTransitionAuthority(
         run_id=run_id,
         branch_id=branch_id,

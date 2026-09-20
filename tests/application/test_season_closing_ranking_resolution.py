@@ -88,7 +88,7 @@ def _lifecycle_player(
     season_index: int = 0,
 ) -> PlayerLifecycleIdentity:
     position = season_week_to_calendar_position(2000 + season_index, 61)
-    birth_year = 1975
+    birth_year = 1975 + season_index
     birth_year_week = 1
     return PlayerLifecycleIdentity(
         player_id=player_id,
@@ -96,7 +96,10 @@ def _lifecycle_player(
         birth_year_week=birth_year_week,
         tie_break_token=token,
         tie_break_provenance=f"test:{player_id}",
-        tour_entry_week=RankingWeek(season_index=0, week=1),
+        tour_entry_week=RankingWeek(
+            season_index=max(0, season_index - 5),
+            week=1,
+        ),
         age=age_at_calendar_position(
             birth_year=birth_year,
             birth_year_week=birth_year_week,

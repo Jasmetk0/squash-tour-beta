@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from sqlalchemy import select
 
@@ -53,7 +55,7 @@ def test_topological_match_schedule_skips_persisted_entry_global_ordinal(tmp_pat
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate(proposal["schedule"])
+    schedule = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
     match_ordinals = tuple(slot.ordinal for slot in schedule.slots)
     assert match_ordinals == tuple(sorted(match_ordinals))
     assert match_ordinals[0] == 2
@@ -96,7 +98,7 @@ def test_adopted_match_schedule_reservation_blocks_late_entry_slot(tmp_path):
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate(proposal["schedule"])
+    schedule = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
     first_match_ordinal = schedule.slots[0].ordinal
 
     driver.adopt_topological_schedule_proposal(
@@ -130,7 +132,7 @@ def test_sparse_match_schedule_can_reserve_middle_entry_ordinal(tmp_path):
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate(proposal["schedule"])
+    schedule = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
     ordinals = tuple(slot.ordinal for slot in schedule.slots)
 
     assert ordinals[0] == 1
@@ -164,7 +166,7 @@ def test_manual_sparse_match_schedule_rejects_unowned_global_gap(tmp_path):
         run_id="run",
         branch_id="branch",
     )
-    canonical = WeekSimulationSchedule.model_validate(proposal["schedule"])
+    canonical = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
     sparse = WeekSimulationSchedule(
         run_id=canonical.run_id,
         branch_id=canonical.branch_id,

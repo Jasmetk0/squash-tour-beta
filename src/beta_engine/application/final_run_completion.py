@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Literal
 
 from pydantic import Field
@@ -62,9 +63,7 @@ def stage_final_run_completion(
         raise ValueError("Final Run completion Saved Revision is not the Branch head")
 
     component = load_saved_revision_season_closure(
-        {
-            "content": __import__("json").loads(revision.payload_json).get("content", {})
-        },
+        json.loads(revision.payload_json),
         run_id=run_id,
         branch_id=branch_id,
         revision_id=final_saved_revision_id,

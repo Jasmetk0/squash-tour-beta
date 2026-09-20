@@ -99,5 +99,8 @@ not set `tour_entry_week`. The Official Ranking roster therefore remains unchang
 A target prospect with only legacy placeholder profile data now blocks the affected
 ordinary Week Transition with `prospect_sporting_profile_unready`.
 
-Week 61 → next-season Week 1 still requires the same adoption parity in the Season
-Transition path.
+The ordinary Season Transition now applies the same rule at Week 61 → next-season
+Week 1: outgoing-season development/recovery completes first, then exact Week-1
+birth-week prospects are appended from this persisted sporting truth. Placeholder or
+inconsistent prospect evidence makes the Season sporting candidate unavailable and
+therefore prevents the atomic Season advance.

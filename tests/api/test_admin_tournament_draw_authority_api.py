@@ -435,6 +435,15 @@ def test_frozen_main_replacement_preview_commit_and_exact_retry_over_http(tmp_pa
             commit,
         ) == (201, result)
 
+        # The same parent command ID cannot adopt a different reviewed source
+        # fingerprint after the first commit.
+        changed_status, changed = _request(
+            "POST",
+            root + "/frozen-main-replacement/commit",
+            commit | {"expected_source_fingerprint": "f" * 64},
+        )
+        assert changed_status == 409, changed
+
         status, effective = _request("GET", root + "/effective-authority")
         assert status == 200
         main_players = {

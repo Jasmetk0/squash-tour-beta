@@ -540,9 +540,9 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
 
     assert preflight.final_season is False
     assert preflight.target_week == RankingWeek(season_index=1, week=1)
+    assert preflight.default_configuration_fingerprint == expected.fingerprint
     assert preflight.default_closing_ranking_fingerprint is not None
     assert len(preflight.default_closing_ranking_fingerprint) == 64
-    assert preflight.default_configuration_fingerprint == expected.fingerprint
     assert preflight.default_sporting_fingerprint is not None
     assert len(preflight.default_sporting_fingerprint) == 64
     assert preflight.default_lifecycle_fingerprint is not None
@@ -551,8 +551,74 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert len(preflight.default_ranking_fingerprint) == 64
     assert "new_season_policy_activation_not_implemented" not in preflight.implementation_gaps
     assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
+    assert preflight.implementation_gaps == ()
+    assert preflight.state_blockers == ()
+    assert preflight.ready_for_execution is True
+
+@pytest.mark.pr_critical
+def test_ordinary_preflight_requires_prospect_bridge_only_when_target_prospect_exists(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        completed, _, _ = _install_boundary(session)
+        target_position = season_week_to_calendar_position(2001, 1)
+        session.add(
+            RunProspectModel(
+                prospect_id="prospect-s1-w1",
+                run_id="run",
+                world_id="fax_official",
+                season_start_year=2001,
+                season_label="2001/02",
+                season_week=1,
+                calendar_year=target_position.calendar_year,
+                year_week=target_position.year_week,
+                birth_year=1986,
+                birth_year_week=target_position.year_week,
+                age=15,
+                country_code="EGY",
+                cohort_policy_version="test.v1",
+                profile_version="test.v1",
+                display_name="Prospect",
+                identity_seed="identity",
+                profile_seed="profile",
+                development_seed="development",
+                potential_seed="potential",
+                trait_seed="trait",
+            )
+        )
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=completed,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="a" * 64,
+        position_fingerprint="c" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: position,
+    )
+    preflight = AuthoritativeRunSimulationDriver(
+        database, None, None
+    ).season_transition_preflight(run_id="run", branch_id="branch")
+
+    assert preflight.default_closing_ranking_fingerprint is not None
+    assert preflight.default_lifecycle_fingerprint is None
+    assert preflight.default_ranking_fingerprint is None
     assert preflight.implementation_gaps == (
         "season_prospect_creation_bridge_not_implemented",
     )
     assert preflight.state_blockers == ()
     assert preflight.ready_for_execution is False
+

@@ -64,7 +64,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
-        # Smoke tests need production dependencies and pytest, but not the heavier
+        # PR tests need production dependencies and pytest, but not the heavier
         # dev-only Ruff/httpx extras. The full workflow still installs all dev extras.
         run: python -m pip install -e . pytest
       - name: Compile backend source
@@ -79,7 +79,15 @@ jobs:
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
           mapfile -t changed_tests < <(
             git diff --name-only "$BASE_SHA" HEAD -- tests |
-              grep -E '^tests/.*test_.*\.py
+              grep -E '^tests/.*test_.*\.py$' || true
+          )
+          if (( ${#changed_tests[$]} == 0 )); then
+            echo "No backend test files changed in this PR."
+            exit 0
+          fi
+          printf 'Running changed backend tests:\n%s\n' "${changed_tests[*]}"
+          python -m pytest "${changed_tests[$]}" --maxfail=1 --durations=10
+
   frontend-checks:
     name: Frontend build + critical tests
     needs: changes
@@ -116,80 +124,11 @@ jobs:
           git -C .. fetch --no-tags --depth=1 origin "$BASE_SHA"
           mapfile -t changed_files < <(
             git -C .. diff --name-only "$BASE_SHA" HEAD -- web/src |
-              grep -E '^web/src/.*\.(ts|tsx)      - name: Run web build
-        run: npm run build
-
-  docs-only-check:
-    name: Docs-only quick check
-    needs: changes
-    if: needs.changes.outputs.docs_only == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      # Docs-only changes intentionally skip expensive backend/frontend jobs.
-      - name: Docs-only change detected
-        run: |
-          echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."
- || true
-          )
-          if (( ${#changed_tests[@]} == 0 )); then
-            echo "No backend test files changed in this PR."
-            exit 0
-          fi
-          printf 'Running changed backend tests:\n%s\n' "${changed_tests[*]}"
-          python -m pytest "${changed_tests[@]}" --maxfail=1 --durations=10
-
-  frontend-checks:
-    name: Frontend build + critical tests
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - name: Install web dependencies
-        run: npm ci
-      - name: Run broad critical frontend tests
-        run: |
-          npm run test -- \
-            src/App.module17.test.tsx \
-            src/test/faxReferenceFixture.test.ts \
-            src/components/Layout.test.tsx \
-            src/pages/admin/AdminHomePage.test.tsx \
-            src/viewer/ViewerProductRunRouteContext.test.tsx \
-            src/pages/TalentPreviewPage.test.tsx \
-            src/pages/AdminSeasonsPage.test.tsx \
-            src/pages/TournamentTemplatesPage.test.tsx \
-            src/pages/RunPage.test.tsx \
-            src/pages/AdminRankingCandidatesPage.test.tsx \
-            src/pages/RankingPreparationPanel.test.tsx \
-            src/pages/RankingSavePanel.test.tsx \
-            src/api/rankingPreparation.test.ts \
-            src/pages/AdminRunBranchesPage.test.tsx
-      - name: Run web build
-        run: npm run build
-
-  docs-only-check:
-    name: Docs-only quick check
-    needs: changes
-    if: needs.changes.outputs.docs_only == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      # Docs-only changes intentionally skip expensive backend/frontend jobs.
-      - name: Docs-only change detected
-        run: |
-          echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."
- || true
+              grep -E '^web/src/.*\.(ts|tsx)$' || true
           )
 
           declare -a tests=()
-          for repo_path in "${changed_files[@]}"; do
+          for repo_path in "${changed_files[$]}"; do
             rel="${repo_path#web/}"
             if [[ "$rel" =~ \.test\.(ts|tsx)$ ]]; then
               tests+=("$rel")
@@ -205,70 +144,14 @@ jobs:
             fi
           done
 
-          if (( ${#tests[@]} == 0 )); then
+          if (( ${#tests[$]} == 0 )); then
             echo "No changed or colocated frontend tests found."
             exit 0
           fi
 
-          mapfile -t unique_tests < <(printf '%s\n' "${tests[@]}" | sort -u)
+          mapfile -t unique_tests < <(printf '%s\n' "${tests[$]}" | sort -u)
           printf 'Running changed/colocated frontend tests:\n%s\n' "${unique_tests[*]}"
-          npm run test -- "${unique_tests[@]}"
-      - name: Run web build
-        run: npm run build
-
-  docs-only-check:
-    name: Docs-only quick check
-    needs: changes
-    if: needs.changes.outputs.docs_only == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
-    runs-on: ubuntu-latest
-    steps:
-      # Docs-only changes intentionally skip expensive backend/frontend jobs.
-      - name: Docs-only change detected
-        run: |
-          echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."
- || true
-          )
-          if (( ${#changed_tests[@]} == 0 )); then
-            echo "No backend test files changed in this PR."
-            exit 0
-          fi
-          printf 'Running changed backend tests:\n%s\n' "${changed_tests[*]}"
-          python -m pytest "${changed_tests[@]}" --maxfail=1 --durations=10
-
-  frontend-checks:
-    name: Frontend build + critical tests
-    needs: changes
-    if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - name: Install web dependencies
-        run: npm ci
-      - name: Run broad critical frontend tests
-        run: |
-          npm run test -- \
-            src/App.module17.test.tsx \
-            src/test/faxReferenceFixture.test.ts \
-            src/components/Layout.test.tsx \
-            src/pages/admin/AdminHomePage.test.tsx \
-            src/viewer/ViewerProductRunRouteContext.test.tsx \
-            src/pages/TalentPreviewPage.test.tsx \
-            src/pages/AdminSeasonsPage.test.tsx \
-            src/pages/TournamentTemplatesPage.test.tsx \
-            src/pages/RunPage.test.tsx \
-            src/pages/AdminRankingCandidatesPage.test.tsx \
-            src/pages/RankingPreparationPanel.test.tsx \
-            src/pages/RankingSavePanel.test.tsx \
-            src/api/rankingPreparation.test.ts \
-            src/pages/AdminRunBranchesPage.test.tsx
+          npm run test -- "${unique_tests[$]}"
       - name: Run web build
         run: npm run build
 

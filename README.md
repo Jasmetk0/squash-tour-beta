@@ -70,4 +70,4 @@ Decision status matters: **decided**, **provisional**, **target**, **open**, **d
 
 ## Development
 
-Backend tests use Pytest; frontend tests use Vitest. Fast CI runs a broad smoke subset and the separate full-suite workflow is the complete validation safety net. Shared FAX contract/component fixtures are deliberately not called real integration tests; see [`docs/testing/fax-reference-strategy.md`](docs/testing/fax-reference-strategy.md).
+Backend tests use Pytest; frontend tests use Vitest. Fast CI runs a compact PR-critical baseline plus test files changed by the pull request; long acceptance/regression coverage stays in `smoke` or the separate Full Test Suite, which runs after merge to `buuk` and nightly. Shared FAX contract/component fixtures are deliberately not called real integration tests; see [`docs/testing/fax-reference-strategy.md`](docs/testing/fax-reference-strategy.md).

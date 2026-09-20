@@ -632,11 +632,14 @@ def test_birth_week_prospect_profile_change_after_preview_rolls_back_confirm(tmp
             canonical_profile=True,
         )
         with server.app.state.runtime.repository._session_factory.begin() as session:
-            row = session.get(
-                RunProspectModel,
-                replacement.prospect_id,
+            row = (
+                session.query(RunProspectModel)
+                .filter(
+                    RunProspectModel.run_id == run_id,
+                    RunProspectModel.prospect_id == replacement.prospect_id,
+                )
+                .one()
             )
-            assert row is not None and row.run_id == run_id
             row.profile_seed = replacement.profile_seed
             row.profile_json = replacement.profile_json
             row.development_json = replacement.development_json

@@ -29,9 +29,6 @@ class VisiblePreTourProspect(FrozenInput):
     lifecycle_status: Literal["active", "retired"]
     tour_status: Literal["pre_tour"] = "pre_tour"
     visible_since_week: RankingWeek
-    source_type: str = Field(min_length=1)
-    cohort_policy_version: str = Field(min_length=1)
-    profile_version: str = Field(min_length=1)
 
 
 class VisiblePreTourProspects(FrozenInput):
@@ -167,9 +164,6 @@ def resolve_visible_pre_tour_prospects(
                 birth_year_week=identity.birth_year_week,
                 lifecycle_status=identity.status,
                 visible_since_week=visible_since,
-                source_type=row.source_type,
-                cohort_policy_version=row.cohort_policy_version,
-                profile_version=row.profile_version,
             )
         )
 

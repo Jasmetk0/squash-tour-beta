@@ -58,6 +58,16 @@ This is intentionally separate from the legacy `/runs/{run_id}/events/.../pre-dr
 surface, whose identity belongs to the older simulation-run namespace and whose
 direct-replacement semantics are not canonical Run/Branch authority.
 
+The canonical command is now exposed in Planned Event under **Canonical Main Draw
+preflight**. Admin selects an active Main or Qualification player from the current
+Run/Branch field; the client binds the command to the exact current field fingerprint
+and the server remains the only rebalance authority.
+
+The legacy simulation-run pre-draw authoring surface is retired. Its GET/POST
+`.../pre-draw-withdrawal` endpoints return `410 Gone`, and the old Commissioner
+mutation form is no longer rendered. Existing
+`.../pre-draw-withdrawal-actions` history remains read-only for old saves and audit.
+
 ## Hard boundary
 
 This command is **pre-draw only**. Once `TournamentDrawInputAuthority` is committed,

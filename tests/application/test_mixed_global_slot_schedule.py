@@ -137,3 +137,46 @@ def test_sparse_match_schedule_can_reserve_middle_entry_ordinal(tmp_path):
     assert 2 not in ordinals
     if len(ordinals) > 1:
         assert ordinals[1] == 3
+
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="schedule-with-middle-entry-gap",
+        expected_week=week,
+        expected_schedule_fingerprint=schedule.fingerprint,
+        expected_position_fingerprint=proposal["position_fingerprint"],
+    )
+    first, before_first = _driver_command(driver, week, "before-middle-gap")
+    assert before_first.slot_ordinal == 1
+    driver.simulate_next_slot(first)
+    if len(ordinals) > 1:
+        second, before_second = _driver_command(driver, week, "after-middle-gap")
+        assert before_second.slot_ordinal == 3
+        driver.simulate_next_slot(second)
+
+
+@pytest.mark.pr_critical
+def test_manual_sparse_match_schedule_rejects_unowned_global_gap(tmp_path):
+    driver, _, _, _, _ = _multi_driver_fixture(
+        tmp_path / "unowned-match-gap"
+    )
+    proposal = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    canonical = WeekSimulationSchedule.model_validate(proposal["schedule"])
+    sparse = WeekSimulationSchedule(
+        run_id=canonical.run_id,
+        branch_id=canonical.branch_id,
+        week=canonical.week,
+        slots=tuple(
+            slot.model_copy(update={"ordinal": slot.ordinal + 1})
+            for slot in canonical.slots
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="global-slot gap not owned by an entry-decision slot",
+    ):
+        driver.preview_schedule(sparse)

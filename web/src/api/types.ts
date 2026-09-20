@@ -882,6 +882,7 @@ export type AuthoritativeSimulationPosition = {
   run_id: string
   branch_id: string
   current_week: AuthoritativeRankingWeek
+  current_slot_kind: 'entry' | 'match' | null
   current_slot_id: string | null
   slot_ordinal: number | null
   unresolved_group_ids: string[]
@@ -893,6 +894,71 @@ export type AuthoritativeSimulationPosition = {
   transition_blockers: string[]
   terminal_sporting_fingerprint: string | null
   position_fingerprint: string
+}
+
+export type AuthoritativeEntryDecisionEvidence = {
+  event_id: string
+  player_id: string
+  target: 'MAIN' | 'QUALIFICATION'
+  source_decision_fingerprint: string
+}
+
+export type AuthoritativeRunEntryDecisionSlotAuthority = {
+  schema_version: 'run_entry_decision_slot_authority.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  source_entry_batch_fingerprint: string
+  source_application_decisions_fingerprint: string
+  source_active_players_fingerprint: string
+  decisions: AuthoritativeEntryDecisionEvidence[]
+}
+
+export type AuthoritativeEntryDecisionSlotInspection = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  slot_fingerprint: string
+  authority: AuthoritativeRunEntryDecisionSlotAuthority
+  identity_tokens: Record<string, string>
+  validation_resolved: boolean
+  validation_fingerprint: string | null
+}
+
+export type AuthoritativeApplicationValidationReview = {
+  event_id: string
+  player_id: string
+  outcome: 'valid' | 'invalid'
+  reasons: string[]
+}
+
+export type AuthoritativeExplicitApplicationValidationPayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_revision_id: string
+  expected_position_fingerprint: string
+  decision_slot_ordinal: number
+  expected_entry_slot_fingerprint: string
+  operator_label: string
+  reason: string
+  reviews: AuthoritativeApplicationValidationReview[]
+}
+
+export type AuthoritativeApplicationValidationCommitResult = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  entry_slot_fingerprint: string
+  validation_fingerprint: string
+  validation_mode: 'explicit_admin_review.v1'
+  validation_policy_id: string
+  validation_policy_fingerprint: string
+  valid_submission_count: number
+  submission_batch_fingerprint: string | null
+  first_tour_entry_trigger_fingerprints: string[]
 }
 
 export type AuthoritativeWeekScheduleSlot = {

@@ -105,6 +105,9 @@ unambiguously and fails before mutation.
 ## Explicitly still open/out of scope
 
 The projection and development numbers, final OVR weights, Form-from-match,
-Sharpness gains, detailed training, medical simulation, 57-attribute Match
-Engine consumption, formal prospect→Tour-entry authority, player AI, and final
-development probability architecture remain unimplemented or open.
+Sharpness gains, detailed training, medical simulation, full 57-attribute Match
+Engine consumption, the concrete application eligibility/deadline validator, broader
+player AI, and final development probability architecture remain unimplemented or
+open. Formal prospect→Tour-entry trigger authority itself is now branch-owned and
+persisted for valid application submissions and definitive WC/RWC assignments, with
+current lifecycle projection and later boundary sealing.

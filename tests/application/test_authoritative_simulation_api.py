@@ -27,6 +27,9 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
     put_sporting,
 )
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
+)
 
 from test_authoritative_slot_matches import session_at, _multi_driver_fixture
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
@@ -237,7 +240,15 @@ def _server_state(tmp_path):
     return server, package
 
 
-def _install_owned_state(server, package, run_id, branch_id, additional_packages=()):
+def _install_owned_state(
+    server,
+    package,
+    run_id,
+    branch_id,
+    additional_packages=(),
+    *,
+    align_entry_roster=False,
+):
     ids = tuple(
         dict.fromkeys(
             player_id
@@ -249,6 +260,22 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
             for player_id in (match.top_player_id, match.bottom_player_id)
         )
     )
+    if align_entry_roster:
+        entry_service = server.app.dependency_overrides[
+            get_season_match_service
+        ]().draw_service.entry_list_service
+        active_service = entry_service.active_players_service
+        registry = active_service._load_registry()
+        available = {
+            player.player_id: player
+            for player in registry.players_by_season.get(package.season, [])
+        }
+        assert set(ids) <= set(available)
+        registry.players_by_season[package.season] = [
+            available[player_id] for player_id in sorted(ids)
+        ]
+        active_service._save_registry(registry)
+
     week = RankingWeek(season_index=0, week=package.season_week)
     source = session_at(
         Path(server.app.state.runtime.repository._engine.url.database + ".source"),
@@ -284,6 +311,195 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
             ),
         )
     return week
+
+
+@pytest.mark.pr_critical
+def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_path):
+    server, package = _server_state(tmp_path / "entry-slot-http")
+    entry_service = server.app.dependency_overrides[
+        get_season_match_service
+    ]().draw_service.entry_list_service
+    before_registry = entry_service._load_registry().model_dump(mode="json")
+
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server, display_name="Authoritative Entry Slot HTTP"
+        )
+        week = _install_owned_state(
+            server,
+            package,
+            run_id,
+            branch_id,
+            align_entry_roster=True,
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            "/authoritative-simulation"
+        )
+
+        status, preview = _request(
+            "POST",
+            root + "/entry-decision-slot/preview",
+            {
+                "event_ids": [package.event_id],
+                "decision_slot_ordinal": 1,
+                "seed": 4201,
+            },
+        )
+        assert status == 200
+        assert preview["week"] == week.model_dump(mode="json")
+        assert preview["event_ids"] == [package.event_id]
+        assert preview["expected_revision_id"] == revision
+        assert preview["decision_slot_ordinal"] == 1
+        assert preview["persisted"] is False
+        assert preview["decision_count"] == len(preview["authority"]["decisions"])
+
+        command = {
+            "command_id": "entry-slot-1",
+            "expected_week": preview["week"],
+            "expected_revision_id": preview["expected_revision_id"],
+            "decision_slot_ordinal": preview["decision_slot_ordinal"],
+            "event_ids": preview["event_ids"],
+            "seed": preview["seed"],
+            "expected_entry_batch_fingerprint": preview["entry_batch_fingerprint"],
+            "expected_slot_fingerprint": preview["slot_fingerprint"],
+        }
+        status, committed = _request(
+            "POST",
+            root + "/entry-decision-slot/commit",
+            command,
+        )
+        assert status == 201
+        assert committed["adoption"] == "committed"
+        assert committed["slot_fingerprint"] == preview["slot_fingerprint"]
+
+        status, retry = _request(
+            "POST",
+            root + "/entry-decision-slot/commit",
+            command,
+        )
+        assert status == 201
+        assert retry["adoption"] == "exact_retry"
+
+        status, inspected = _request(
+            "GET",
+            root + "/entry-decision-slot/1",
+        )
+        assert status == 200
+        assert inspected["slot_fingerprint"] == preview["slot_fingerprint"]
+        assert inspected["validation_resolved"] is False
+        assert inspected["validation_fingerprint"] is None
+
+        decisions = inspected["authority"]["decisions"]
+        assert decisions
+
+        # Once an Entry slot owns ordinal 1, canonical Position intentionally stays
+        # hidden until the immutable Week Schedule reserves non-colliding match slots.
+        status, proposed_schedule = _request(
+            "GET",
+            root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed_schedule
+        status, adopted_schedule = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            {
+                "request_id": "entry-validation-schedule",
+                "expected_week": proposed_schedule["schedule"]["week"],
+                "expected_schedule_fingerprint": proposed_schedule[
+                    "schedule_fingerprint"
+                ],
+                "expected_position_fingerprint": proposed_schedule[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted_schedule
+
+        status, entry_position = _request("GET", root + "/position")
+        assert status == 200
+        assert entry_position["current_slot_kind"] == "entry"
+        assert entry_position["slot_ordinal"] == 1
+
+        reviews = []
+        for index, decision in enumerate(decisions):
+            valid = index == 0
+            reviews.append(
+                {
+                    "event_id": decision["event_id"],
+                    "player_id": decision["player_id"],
+                    "outcome": "valid" if valid else "invalid",
+                    "reasons": [] if valid else ["explicit_http_rejection"],
+                }
+            )
+
+        review_command = {
+            "command_id": "review-entry-slot-1",
+            "expected_week": preview["week"],
+            "expected_revision_id": revision,
+            "expected_position_fingerprint": entry_position[
+                "position_fingerprint"
+            ],
+            "decision_slot_ordinal": 1,
+            "expected_entry_slot_fingerprint": preview["slot_fingerprint"],
+            "operator_label": "HTTP Admin",
+            "reason": "Reviewed frozen Entry application evidence",
+            "reviews": reviews,
+        }
+        stale_command = review_command | {
+            "command_id": "stale-review-entry-slot-1",
+            "expected_position_fingerprint": "0" * 64,
+        }
+        stale_status, stale_response = _request(
+            "POST",
+            root + "/entry-decision-slot/validation/review",
+            stale_command,
+        )
+        assert stale_status == 409, stale_response
+
+        status, validated = _request(
+            "POST",
+            root + "/entry-decision-slot/validation/review",
+            review_command,
+        )
+        assert status == 201
+        assert validated["validation_mode"] == "explicit_admin_review.v1"
+        assert (
+            validated["validation_policy_id"]
+            == "explicit_admin_application_validation.v1"
+        )
+        assert len(validated["validation_policy_fingerprint"]) == 64
+        assert validated["valid_submission_count"] == 1
+        assert len(validated["first_tour_entry_trigger_fingerprints"]) == 1
+
+        # A lost HTTP response is safe to retry even though successful validation
+        # advances canonical Position beyond the Entry slot.
+        assert _request(
+            "POST",
+            root + "/entry-decision-slot/validation/review",
+            review_command,
+        ) == (201, validated)
+
+        status, resolved_inspection = _request(
+            "GET",
+            root + "/entry-decision-slot/1",
+        )
+        assert status == 200
+        assert resolved_inspection["validation_resolved"] is True
+        assert (
+            resolved_inspection["validation_fingerprint"]
+            == validated["validation_fingerprint"]
+        )
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            stored = RunEntryDecisionSlotStore(session).list(
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+            assert len(stored) == 1
+            assert stored[0].fingerprint == preview["slot_fingerprint"]
+
+    assert entry_service._load_registry().model_dump(mode="json") == before_registry
 
 
 @pytest.mark.pr_critical

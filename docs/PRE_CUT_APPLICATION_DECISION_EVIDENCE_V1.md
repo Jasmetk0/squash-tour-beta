@@ -29,11 +29,13 @@ The evidence is:
 - bound by its own `application_decisions_fingerprint`;
 - included in the overall batch build fingerprint.
 
-This does **not** yet declare the decisions valid MSA Tour submissions. Exact
-eligibility remains the separate authority that Master still leaves partly open.
-Likewise, this slice does not add Run/Branch ownership, global Simulation Slot timing,
-Tour-entry triggers or Saved Revision persistence.
+This evidence still does **not** by itself declare decisions valid MSA Tour
+submissions. Exact eligibility/deadline policy remains a separate versioned authority.
 
-Its purpose is narrower: preserve the complete shared-snapshot pre-cut decision truth
-so the later Run/Branch application authority does not have to reconstruct or guess
-who actually applied from a lossy field-cut list.
+The downstream Run/Branch bridge is now implemented: a guarded authoritative-driver
+preview rebuilds the complete shared-snapshot batch without mutating the legacy
+EntryList registry, freezes it at an exact global Simulation Slot ordinal, and commits
+that immutable Run entry-decision authority transactionally. Saved Revisions preserve
+the Run slot, complete validation result, valid submissions and first Tour-entry
+triggers in causal order. This keeps the original purpose intact: no later layer has to
+reconstruct or guess who actually applied from a lossy field-cut list.

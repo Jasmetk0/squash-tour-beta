@@ -32,7 +32,7 @@ class DefinitiveWildCardAssignmentAuthority(FrozenInput):
     assignment_source: DefinitiveWildCardSource
     reserve_ordinal: int | None = Field(default=None, ge=1)
     assignment_week: RankingWeek
-    decision_slot_ordinal: int = Field(ge=0)
+    decision_slot_ordinal: int = Field(ge=1)
     source_wild_card_command_id: str = Field(min_length=1, max_length=128)
     source_wild_card_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     source_entry_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")

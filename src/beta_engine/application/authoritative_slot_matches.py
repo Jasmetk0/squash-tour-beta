@@ -73,6 +73,8 @@ from beta_engine.domain.simulation_slots import (
     projected_engine_player,
 )
 from beta_engine.infrastructure.db.models import (
+    ResolvedApplicationValidationSlotModel,
+    RunEntryDecisionSlotAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
 )
@@ -613,18 +615,73 @@ class AuthoritativeSlotMatchExecutor:
             ):
                 raise ValueError("Simulation Slot retry conflicts with stored plan")
             return stored
+        entry_slot = self.session.get(
+            RunEntryDecisionSlotAuthorityModel,
+            (run_id, branch_id, week.ordinal, ordinal),
+        )
+        if entry_slot is not None:
+            raise ValueError(
+                "Global Simulation Slot ordinal already belongs to an entry-decision slot"
+            )
         prior = self.session.scalar(
-            select(SimulationSlotModel).where(
+            select(SimulationSlotModel)
+            .where(
                 SimulationSlotModel.run_id == run_id,
                 SimulationSlotModel.branch_id == branch_id,
                 SimulationSlotModel.week_ordinal == week.ordinal,
-                SimulationSlotModel.slot_ordinal == ordinal - 1,
+                SimulationSlotModel.slot_ordinal < ordinal,
             )
+            .order_by(SimulationSlotModel.slot_ordinal.desc())
+            .limit(1)
         )
-        if ordinal > 1 and (prior is None or prior.status != "complete"):
+        if prior is not None and prior.status != "complete":
             raise ValueError(
-                "dependent later slot requires a complete predecessor slot"
+                "later match slot requires the previous match slot to be complete"
             )
+        gap_start = 1 if prior is None else prior.slot_ordinal + 1
+        missing_ordinals = set(range(gap_start, ordinal))
+        if missing_ordinals:
+            reserved_entry_ordinals = set(
+                self.session.scalars(
+                    select(
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                    ).where(
+                        RunEntryDecisionSlotAuthorityModel.run_id == run_id,
+                        RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
+                        RunEntryDecisionSlotAuthorityModel.week_ordinal == week.ordinal,
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        >= gap_start,
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        < ordinal,
+                    )
+                ).all()
+            )
+            if missing_ordinals != reserved_entry_ordinals:
+                raise ValueError(
+                    "match slot skips a global ordinal not owned by an entry-decision slot"
+                )
+            resolved_entry_ordinals = set(
+                self.session.scalars(
+                    select(
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                    ).where(
+                        ResolvedApplicationValidationSlotModel.run_id == run_id,
+                        ResolvedApplicationValidationSlotModel.branch_id == branch_id,
+                        ResolvedApplicationValidationSlotModel.week_ordinal
+                        == week.ordinal,
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                        >= gap_start,
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                        < ordinal,
+                    )
+                ).all()
+            )
+            if resolved_entry_ordinals != missing_ordinals:
+                unresolved = sorted(missing_ordinals - resolved_entry_ordinals)
+                raise ValueError(
+                    "match slot cannot pass unresolved entry-decision slots: "
+                    f"{unresolved}"
+                )
         feeder_ids = tuple(
             feeder
             for event in match_events

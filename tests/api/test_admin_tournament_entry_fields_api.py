@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from beta_engine.domain.rankings.official import (
@@ -11,13 +13,20 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.tournaments.application_submission_authority import (
+    TournamentApplicationSubmissionAuthority,
+)
 from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )
 from beta_engine.infrastructure.db.models import PublishedOfficialRankingModel
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
@@ -176,6 +185,30 @@ def _install_entry_field(server, *, run_id: str, branch_id: str, event_id: str):
         )
 
 
+def _valid_submission(
+    *,
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    player_id: str,
+    window: str,
+) -> TournamentApplicationSubmissionAuthority:
+    return TournamentApplicationSubmissionAuthority(
+        application_id=f"valid-{player_id}",
+        run_id=run_id,
+        branch_id=branch_id,
+        event_id=event_id,
+        player_id=player_id,
+        entry_window=window,
+        submission_week=RankingWeek(season_index=0, week=2),
+        decision_slot_ordinal=1,
+        nr_tie_break_token=f"entry-{player_id}",
+        validation_authority_id=f"validation-{player_id}",
+        validation_authority_fingerprint="a" * 64,
+        provenance="HTTP valid-submission fixture",
+    )
+
+
 def _root(server, run_id: str, branch_id: str, event_id: str) -> str:
     return (
         f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
@@ -201,6 +234,81 @@ def _command(
         "expected_field_fingerprint": expected_field_fingerprint,
         "withdrawn_player_ids": list(withdrawn_player_ids),
     }
+
+
+@pytest.mark.pr_critical
+def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_http(
+    tmp_path,
+):
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'valid-submission-field-api.sqlite'}"
+    )
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server, display_name="Valid Submission Field HTTP"
+        )
+        event_id = "event"
+        snapshot = _ranking_snapshot(run_id=run_id, branch_id=branch_id)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                PublishedOfficialRankingModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=snapshot.week.ordinal,
+                    snapshot_fingerprint=snapshot.fingerprint,
+                    payload_json=snapshot.model_dump_json(),
+                )
+            )
+            session.flush()
+            TournamentRankingSnapshotAuthorityStore(session).adopt(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                ranking_week=snapshot.week,
+                command_id="adopt-valid-submission-ranking",
+            )
+            submissions = TournamentApplicationSubmissionStore(session)
+            for player_id, window in (
+                ("A", "main"),
+                ("C", "main"),
+                ("D", "main"),
+                ("B", "qualification"),
+                ("E", "qualification"),
+                ("F", "qualification"),
+                ("G", "qualification"),
+            ):
+                submissions.append(
+                    _valid_submission(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        player_id=player_id,
+                        window=window,
+                    )
+                )
+
+        root = _root(server, run_id, branch_id, event_id)
+        status, field = _request(
+            "POST",
+            root + "/from-valid-submissions",
+            {
+                "command_id": "initial-from-valid-submissions",
+                "capacity": {
+                    "main_draw_size": 4,
+                    "qualification_draw_size": 2,
+                    "qualifier_spots": 1,
+                },
+            },
+        )
+        assert status == 201
+        assert field["direct_main_player_ids"] == ["A", "C", "D"]
+        assert field["qualification_player_ids"] == ["B", "E"]
+        assert field["below_qualification_cut_player_ids"] == ["F", "G"]
+
+        status, inspected = _request("GET", root)
+        assert status == 200
+        returned_field = TournamentEntryField.model_validate_json(json.dumps(field))
+        assert inspected["field_fingerprint"] == returned_field.fingerprint
 
 
 def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):

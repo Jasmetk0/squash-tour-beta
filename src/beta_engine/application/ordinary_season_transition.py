@@ -60,6 +60,12 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     capture_saved_tour_entry_triggers,
 )
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    capture_saved_run_entry_decision_slots,
+)
+from beta_engine.infrastructure.db.application_validation_slots import (
+    capture_saved_application_validation_slots,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     capture_saved_application_submissions,
 )
@@ -496,6 +502,12 @@ def commit_ordinary_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_lifecycle(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_run_entry_decision_slots(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_application_validation_slots(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_application_submissions(

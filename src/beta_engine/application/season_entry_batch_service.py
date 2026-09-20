@@ -52,9 +52,11 @@ class SeasonEntryBatchResult(BaseModel):
 
 @dataclass(slots=True)
 class SeasonEntryBatchService:
-    """Generate one overlapping event cluster from one frozen player snapshot.
+    """Generate one entry-decision event set from one frozen player snapshot.
 
-    Each event is evaluated independently from the same pre-slot sporting/world
+    A single event is the degenerate valid case; when multiple events are supplied
+    they must form one pairwise-overlapping cluster. Each event is evaluated
+    independently from the same pre-slot sporting/world
     snapshot and the resulting entry lists are committed together. A player may be
     provisionally accepted into more than one overlapping event: that is historical
     Entry/Application state, not authority to compete twice. This layer therefore
@@ -67,9 +69,9 @@ class SeasonEntryBatchService:
     def generate_overlapping_entry_lists(
         self, *, event_ids: list[str], request: EntryBatchGenerateRequest
     ) -> SeasonEntryBatchResult:
-        if len(event_ids) < 2 or len(set(event_ids)) != len(event_ids):
+        if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
-                "overlapping Entry batch requires at least two unique event IDs"
+                "Entry decision batch requires at least one unique event ID"
             )
         ordered_event_ids = tuple(sorted(event_ids))
         service = self.entry_list_service

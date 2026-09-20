@@ -728,10 +728,25 @@ The full ordinary Season writer persists that sporting state, lifecycle state, W
 Official Ranking, publication, World Event and Saved Revision atomically. PR-critical
 coverage proves both the direct sporting candidate and the complete Season advance
 with a Week-1 prospect. The immediate prospect-profile parity gap is therefore closed
-for ordinary Week and Season boundaries. Formal prospect → Tour Player activation
-remains a separate authority driven by first valid MSA Tour application or definitive
-Wild Card assignment per Master. The existing canonical `TournamentEntryApplication`
-is only caller-resolved field-cut evidence and carries no authoritative submission
-week, while the older wildcard Admin action is not the branch-owned lifecycle
-authority. Therefore neither may silently set `tour_entry_week`; the next technical
-slice must first own exact branch-scoped trigger evidence.
+for ordinary Week and Season boundaries. Formal prospect → Tour Player activation now has explicit branch-owned trigger
+evidence for both Master-defined paths: valid MSA Tour application submission and
+definitive WC/RWC assignment. First-entry triggers are persisted append-only, projected
+onto current lifecycle reads immediately, and sealed into later lifecycle boundaries
+without retroactively rewriting the current Official Ranking. The application path now
+preserves the complete shared-snapshot pre-cut decision batch in a Run entry-decision
+Simulation Slot, persists complete validation outcomes, atomically commits already-valid
+submissions plus first Tour-entry truth, and can project those persisted submissions
+directly into the canonical Tournament Entry Field. The authoritative Run driver also
+has a guarded preview/commit boundary that rebuilds the shared-snapshot Entry batch
+under the expected Branch head and stores the complete Run slot without mutating the
+legacy EntryList registry. Persisting those decisions reserves the global ordinal;
+chronological completion requires the matching complete validation slot, so later
+Entry/match execution cannot overtake unresolved application validity. Exact
+eligibility/deadline validation policy remains upstream and intentionally unresolved.
+The Simulation Admin workflow can now inspect the currently blocking persisted Entry
+slot and commit a complete **explicit Admin validation review** using only valid/invalid
+verdicts plus rejection reasons and audit provenance. The server derives application
+IDs, source fingerprints, Main/Q windows and NR tie-break evidence from frozen Run
+truth and CAS-guards the current Position, Branch head and Entry slot before mutation.
+This is an operational pre-alpha bridge, not an invented automatic eligibility or
+deadline policy. Field capacity still cannot create or revoke Tour status.

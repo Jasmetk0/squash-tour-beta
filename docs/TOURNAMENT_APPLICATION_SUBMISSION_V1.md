@@ -18,6 +18,11 @@ field-cut payload. That projection intentionally drops only the submission week 
 validation provenance that the downstream field cut does not need; player/event,
 entry window, decision slot and NR tie-break identity remain identical.
 
-This slice does not persist submissions or emit a Tour-entry trigger yet. Those are
-separate integration boundaries so a future command can validate the exact current
-week/slot and commit submission evidence plus first-entry trigger atomically.
+Submission persistence and first Tour-entry integration now exist. Valid
+submissions are stored append-only on Run/Branch, simultaneous submissions from one
+Entry Slot commit as one batch, and the first qualifying application creates the
+player's persisted Tour-entry trigger in the same SQL transaction. Saved Revisions
+capture submission history before Tour-entry triggers. The upstream validator remains
+a separate authority: this contract still does not invent eligibility or deadline
+policy. Persisted submissions can now project directly into the canonical Tournament
+Entry Field input without callers reconstructing application payloads.

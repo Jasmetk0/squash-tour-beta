@@ -24,13 +24,14 @@ def _fingerprint(value: object) -> str:
     ).hexdigest()
 
 
-def freeze_entry_batch_as_run_slot(
+def _freeze_entry_batch_as_run_slot(
     *,
     batch: SeasonEntryBatchResult,
     run_id: str,
     branch_id: str,
     week: RankingWeek,
     decision_slot_ordinal: int,
+    require_persisted_batch: bool,
 ) -> RunEntryDecisionSlotAuthority:
     """Bind committed legacy entry-decision evidence to exact Run chronology.
 
@@ -40,7 +41,9 @@ def freeze_entry_batch_as_run_slot(
     the batch evidence and never decides application validity.
     """
 
-    if not batch.metadata.persisted or batch.metadata.dry_run:
+    if require_persisted_batch and (
+        not batch.metadata.persisted or batch.metadata.dry_run
+    ):
         raise ValueError("Run entry decision authority requires a persisted Entry batch")
 
     raw_decisions = [
@@ -77,4 +80,49 @@ def freeze_entry_batch_as_run_slot(
         source_application_decisions_fingerprint=decisions_fingerprint,
         source_active_players_fingerprint=batch.metadata.active_players_fingerprint,
         decisions=decisions,
+    )
+
+
+def freeze_entry_batch_as_run_slot(
+    *,
+    batch: SeasonEntryBatchResult,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    decision_slot_ordinal: int,
+) -> RunEntryDecisionSlotAuthority:
+    """Freeze already-persisted compatibility Entry evidence into Run chronology."""
+
+    return _freeze_entry_batch_as_run_slot(
+        batch=batch,
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        decision_slot_ordinal=decision_slot_ordinal,
+        require_persisted_batch=True,
+    )
+
+
+def freeze_entry_batch_proposal_as_run_slot(
+    *,
+    batch: SeasonEntryBatchResult,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    decision_slot_ordinal: int,
+) -> RunEntryDecisionSlotAuthority:
+    """Freeze deterministic shared-snapshot proposal evidence before legacy persistence.
+
+    The caller must commit the returned authority transactionally in Run/Branch storage.
+    This path intentionally permits dry-run Entry batch evidence so Run-owned history can
+    become authoritative before any mutable compatibility EntryList registry is changed.
+    """
+
+    return _freeze_entry_batch_as_run_slot(
+        batch=batch,
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        decision_slot_ordinal=decision_slot_ordinal,
+        require_persisted_batch=False,
     )

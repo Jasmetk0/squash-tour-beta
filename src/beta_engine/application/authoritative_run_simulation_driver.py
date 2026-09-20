@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -60,6 +60,21 @@ from beta_engine.application.ranking_tournament_ingestion import (
     prepare_final_season_closing_ranking_results,
     prepare_tournament_ranking_sources,
 )
+from beta_engine.application.season_entry_batch_service import (
+    EntryBatchGenerateRequest,
+    SeasonEntryBatchService,
+)
+from beta_engine.application.run_entry_decision_slot import (
+    freeze_entry_batch_proposal_as_run_slot,
+)
+from beta_engine.domain.tournaments.application_validation_authority import (
+    ResolvedApplicationValidationSlot,
+    TournamentApplicationValidationAuthority,
+)
+from beta_engine.infrastructure.db.application_validation_slots import (
+    ApplicationValidationSlotStore,
+    record_resolved_application_validation_slot,
+)
 from beta_engine.application.season_match_service import (
     FrozenQualifierPromotion,
     SeasonEventMatchPackage,
@@ -86,8 +101,10 @@ from beta_engine.infrastructure.db.models import (
     BranchWorkingDraftModel,
     PlayerSportingWeekStateModel,
     RankingTransitionAuthorityModel,
+    ResolvedApplicationValidationSlotModel,
     RunBranchModel,
     RunContainerModel,
+    RunEntryDecisionSlotAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     TournamentDrawAuthorityModel,
@@ -95,6 +112,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
 )
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
@@ -141,6 +161,123 @@ class AuthoritativeWalkoverCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeEntryDecisionSlotCommand(FrozenInput):
+    """Guarded commit of one shared-snapshot Entry decision Simulation Slot."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    decision_slot_ordinal: int = Field(ge=1)
+    event_ids: tuple[str, ...] = Field(min_length=1)
+    seed: int = 12345
+    expected_entry_batch_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def canonical_events(self):
+        if self.event_ids != tuple(sorted(set(self.event_ids))):
+            raise ValueError("Entry decision command event IDs must be canonical and unique")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeApplicationValidationCommand(FrozenInput):
+    """Guarded complete validation outcome for one persisted Entry decision slot."""
+
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    decision_slot_ordinal: int = Field(ge=1)
+    expected_entry_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    validations: tuple[TournamentApplicationValidationAuthority, ...]
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID = (
+    "explicit_admin_application_validation.v1"
+)
+EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT = fingerprint(
+    {
+        "policy_id": EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID,
+        "resolution_mode": "explicit_admin_review",
+        "automatic_eligibility_rules": False,
+        "automatic_deadline_rules": False,
+    }
+)
+
+
+class AuthoritativeApplicationValidationReview(FrozenInput):
+    """Minimal Admin verdict over one frozen Entry decision.
+
+    The browser supplies only the reviewed outcome and, for rejection, canonical
+    reasons. Scope, source evidence, application identity and NR tie-break truth are
+    reconstructed from persisted Run state by the server.
+    """
+
+    event_id: str = Field(min_length=1)
+    player_id: str = Field(min_length=1)
+    outcome: Literal["valid", "invalid"]
+    reasons: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_review(self):
+        if any(not reason.strip() or reason != reason.strip() for reason in self.reasons):
+            raise ValueError("Application validation review reasons must be trimmed and non-blank")
+        if self.reasons != tuple(sorted(set(self.reasons))):
+            raise ValueError("Application validation review reasons must be unique and canonical")
+        if self.outcome == "valid" and self.reasons:
+            raise ValueError("Valid explicit application review must not carry rejection reasons")
+        if self.outcome == "invalid" and not self.reasons:
+            raise ValueError("Invalid explicit application review requires at least one reason")
+        return self
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return (self.event_id, self.player_id)
+
+
+class AuthoritativeExplicitApplicationValidationCommand(FrozenInput):
+    """CAS-guarded explicit Admin resolution of the current Entry slot."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    decision_slot_ordinal: int = Field(ge=1)
+    expected_entry_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=128)
+    reason: str = Field(min_length=1, max_length=512)
+    reviews: tuple[AuthoritativeApplicationValidationReview, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_command(self):
+        if self.operator_label != self.operator_label.strip():
+            raise ValueError("Application validation operator label must be trimmed")
+        if self.reason != self.reason.strip():
+            raise ValueError("Application validation audit reason must be trimmed")
+        keys = tuple(review.key for review in self.reviews)
+        if keys != tuple(sorted(keys)):
+            raise ValueError("Application validation reviews must use canonical event/player order")
+        if len(set(keys)) != len(keys):
+            raise ValueError("Application validation reviews contain duplicate decisions")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class _AdoptedTournamentEvidence(FrozenInput):
     """One immutable tournament entry inside adopted week authority."""
 
@@ -180,6 +317,7 @@ class AuthoritativeSimulationPosition(FrozenInput):
     run_id: str
     branch_id: str
     current_week: RankingWeek
+    current_slot_kind: Literal["entry", "match"] | None = None
     current_slot_id: str | None
     slot_ordinal: int | None
     unresolved_group_ids: tuple[str, ...]
@@ -204,6 +342,573 @@ class AuthoritativeRunSimulationDriver:
     ) -> AuthoritativeSimulationPosition:
         with self.factory() as session:
             return self._position(session, run_id, branch_id)
+
+    def _validate_legacy_entry_roster_against_run(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> None:
+        """Fail closed unless compatibility Entry AI sees the owned active sporting roster."""
+
+        lifecycle = get_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        sporting = get_sporting(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if lifecycle is None or sporting is None:
+            raise ValueError(
+                "Authoritative Entry decisions require lifecycle and sporting roster"
+            )
+
+        sporting_ids = {player.player_id for player in sporting.players}
+        owned_ids = tuple(
+            sorted(
+                player.player_id
+                for player in lifecycle.players
+                if player.status == "active" and player.player_id in sporting_ids
+            )
+        )
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        compatibility = (
+            self.match_service.draw_service.entry_list_service.active_players_service
+            .get_active_players(season=season)
+            .players
+        )
+        compatibility_ids = tuple(
+            sorted(player.player_id for player in compatibility)
+        )
+        if compatibility_ids != owned_ids:
+            raise ValueError(
+                "Compatibility Entry AI roster differs from authoritative "
+                "Run/Branch active sporting roster"
+            )
+
+    def preview_entry_decision_slot(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_ids: tuple[str, ...],
+        decision_slot_ordinal: int,
+        seed: int = 12345,
+    ) -> dict:
+        """Build complete pre-cut Entry decisions without mutating compatibility state."""
+
+        if not event_ids or event_ids != tuple(sorted(set(event_ids))):
+            raise ValueError("Entry decision preview event IDs must be canonical and unique")
+        if decision_slot_ordinal < 1:
+            raise ValueError("Entry decision slot ordinal must be one-based")
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or not branch.saved_head_revision_id:
+                raise ValueError("Entry decision preview requires a saved Branch head")
+
+            self._validate_legacy_entry_roster_against_run(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+            batch = SeasonEntryBatchService(
+                self.match_service.draw_service.entry_list_service
+            ).generate_overlapping_entry_lists(
+                event_ids=list(event_ids),
+                request=EntryBatchGenerateRequest(
+                    seed=seed,
+                    dry_run=True,
+                    overwrite_existing=False,
+                    max_alternates=0,
+                    include_not_entered=False,
+                ),
+            )
+            authority = freeze_entry_batch_proposal_as_run_slot(
+                batch=batch,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+
+            # Preview must also fail on already-owned global chronology instead of
+            # advertising a proposal that commit can never accept.
+            store = RunEntryDecisionSlotStore(session)
+            existing = store.validate_candidate(authority)
+
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": decision_slot_ordinal,
+                "event_ids": list(event_ids),
+                "seed": seed,
+                "expected_revision_id": branch.saved_head_revision_id,
+                "entry_batch_fingerprint": batch.metadata.build_fingerprint,
+                "application_decisions_fingerprint": (
+                    batch.metadata.application_decisions_fingerprint
+                ),
+                "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "decision_count": len(authority.decisions),
+                "slot_fingerprint": authority.fingerprint,
+                "authority": authority.model_dump(mode="json"),
+                "persisted": existing is not None,
+            }
+
+    def commit_entry_decision_slot(
+        self,
+        command: AuthoritativeEntryDecisionSlotCommand,
+    ) -> dict:
+        """Rebuild and atomically persist the exact previewed Entry decision slot."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Entry decision slot week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Entry decision Branch head is stale")
+
+            self._validate_legacy_entry_roster_against_run(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+            )
+            batch = SeasonEntryBatchService(
+                self.match_service.draw_service.entry_list_service
+            ).generate_overlapping_entry_lists(
+                event_ids=list(command.event_ids),
+                request=EntryBatchGenerateRequest(
+                    seed=command.seed,
+                    dry_run=True,
+                    overwrite_existing=False,
+                    max_alternates=0,
+                    include_not_entered=False,
+                ),
+            )
+            if (
+                batch.metadata.build_fingerprint
+                != command.expected_entry_batch_fingerprint
+            ):
+                raise ValueError("Entry decision batch proposal is stale")
+
+            authority = freeze_entry_batch_proposal_as_run_slot(
+                batch=batch,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if authority.fingerprint != command.expected_slot_fingerprint:
+                raise ValueError("Entry decision slot proposal is stale")
+
+            store = RunEntryDecisionSlotStore(session)
+            existing = store.get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            stored = store.append(authority)
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "event_ids": list(command.event_ids),
+                "entry_batch_fingerprint": batch.metadata.build_fingerprint,
+                "application_decisions_fingerprint": (
+                    batch.metadata.application_decisions_fingerprint
+                ),
+                "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "decision_count": len(stored.decisions),
+                "slot_fingerprint": stored.fingerprint,
+                "authority": stored.model_dump(mode="json"),
+                "adoption": "exact_retry" if existing == stored else "committed",
+            }
+
+    def _validate_application_identity_tokens(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        validations: tuple[TournamentApplicationValidationAuthority, ...],
+    ) -> None:
+        """Bind application validation identity to canonical lifecycle truth."""
+
+        lifecycle = get_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if lifecycle is None:
+            raise ValueError(
+                "Application validation requires authoritative lifecycle identity"
+            )
+        identities = {player.player_id: player for player in lifecycle.players}
+        for validation in validations:
+            identity = identities.get(validation.player_id)
+            if identity is None:
+                raise ValueError(
+                    "Application validation player is missing from lifecycle identity"
+                )
+            if (
+                validation.nr_tie_break_token is not None
+                and validation.nr_tie_break_token != identity.tie_break_token
+            ):
+                raise ValueError(
+                    "Application validation NR tie-break token differs from "
+                    "authoritative lifecycle identity"
+                )
+
+    def inspect_entry_decision_slot(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        decision_slot_ordinal: int,
+    ) -> dict:
+        """Read one persisted Entry slot with canonical lifecycle identity evidence."""
+
+        if decision_slot_ordinal < 1:
+            raise ValueError("Entry decision slot ordinal must be one-based")
+        with self.factory() as session:
+            week = self._current_week(session, run_id, branch_id)
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Entry decision slot is missing")
+
+            lifecycle = get_lifecycle(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+            if lifecycle is None:
+                raise ValueError(
+                    "Entry decision slot inspection requires lifecycle identity"
+                )
+            identities = {player.player_id: player for player in lifecycle.players}
+            decision_players = {decision.player_id for decision in slot.decisions}
+            missing = decision_players - set(identities)
+            if missing:
+                raise ValueError(
+                    "Entry decision slot contains player missing from lifecycle identity"
+                )
+
+            validation = session.get(
+                ResolvedApplicationValidationSlotModel,
+                (run_id, branch_id, week.ordinal, decision_slot_ordinal),
+            )
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": decision_slot_ordinal,
+                "slot_fingerprint": slot.fingerprint,
+                "authority": slot.model_dump(mode="json"),
+                "identity_tokens": {
+                    player_id: identities[player_id].tie_break_token
+                    for player_id in sorted(decision_players)
+                },
+                "validation_resolved": validation is not None,
+                "validation_fingerprint": (
+                    None if validation is None else validation.fingerprint
+                ),
+            }
+
+    def commit_application_validation_slot(
+        self,
+        command: AuthoritativeApplicationValidationCommand,
+    ) -> dict:
+        """Persist complete explicit validity outcomes for one real Run Entry slot."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Application validation week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Application validation Branch head is stale")
+
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Application validation Entry slot is missing")
+            if slot.fingerprint != command.expected_entry_slot_fingerprint:
+                raise ValueError("Application validation Entry slot is stale")
+
+            self._validate_application_identity_tokens(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                validations=command.validations,
+            )
+            resolved = ResolvedApplicationValidationSlot(
+                slot=slot,
+                validations=command.validations,
+            )
+            committed = record_resolved_application_validation_slot(
+                session,
+                resolved,
+            )
+            submission = committed.submission_commit
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "entry_slot_fingerprint": slot.fingerprint,
+                "validation_fingerprint": committed.validation_slot.fingerprint,
+                "valid_submission_count": (
+                    0 if submission is None else len(submission.batch.submissions)
+                ),
+                "submission_batch_fingerprint": (
+                    None if submission is None else submission.batch.fingerprint
+                ),
+                "first_tour_entry_trigger_fingerprints": (
+                    []
+                    if submission is None
+                    else [
+                        item.fingerprint
+                        for item in submission.first_tour_entry_triggers
+                    ]
+                ),
+            }
+
+    def commit_explicit_application_validation_slot(
+        self,
+        command: AuthoritativeExplicitApplicationValidationCommand,
+    ) -> dict:
+        """Resolve the current Entry slot from minimal explicit Admin verdicts.
+
+        This intentionally does not invent an eligibility/deadline algorithm. The
+        persisted Entry decision slot and lifecycle state remain the source of every
+        authority field except the Admin-reviewed valid/invalid verdict and rejection
+        reason.
+        """
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Explicit application validation week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Explicit application validation Branch head is stale")
+
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Explicit application validation Entry slot is missing")
+            if slot.fingerprint != command.expected_entry_slot_fingerprint:
+                raise ValueError("Explicit application validation Entry slot is stale")
+
+            decisions = {
+                (decision.event_id, decision.player_id): decision
+                for decision in slot.decisions
+            }
+            review_keys = tuple(review.key for review in command.reviews)
+            if set(review_keys) != set(decisions):
+                raise ValueError(
+                    "Explicit application validation must review every frozen decision exactly once"
+                )
+
+            lifecycle = get_lifecycle(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+            )
+            if lifecycle is None:
+                raise ValueError(
+                    "Explicit application validation requires authoritative lifecycle identity"
+                )
+            identities = {player.player_id: player for player in lifecycle.players}
+
+            validations: list[TournamentApplicationValidationAuthority] = []
+            for review in command.reviews:
+                decision = decisions[review.key]
+                identity = identities.get(decision.player_id)
+                if identity is None:
+                    raise ValueError(
+                        "Explicit application validation player is missing from lifecycle identity"
+                    )
+                if review.outcome == "valid" and not identity.tie_break_token:
+                    raise ValueError(
+                        "Valid explicit application review requires lifecycle NR tie-break token"
+                    )
+
+                stable_identity = fingerprint(
+                    {
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "week_ordinal": week.ordinal,
+                        "decision_slot_ordinal": command.decision_slot_ordinal,
+                        "source_slot_fingerprint": slot.fingerprint,
+                        "event_id": decision.event_id,
+                        "player_id": decision.player_id,
+                        "source_decision_fingerprint": (
+                            decision.source_decision_fingerprint
+                        ),
+                    }
+                )
+                validations.append(
+                    TournamentApplicationValidationAuthority(
+                        validation_id=f"explicit-admin:{stable_identity}",
+                        application_id=f"application:{stable_identity}",
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=week,
+                        decision_slot_ordinal=command.decision_slot_ordinal,
+                        source_slot_fingerprint=slot.fingerprint,
+                        event_id=decision.event_id,
+                        player_id=decision.player_id,
+                        entry_window=(
+                            "main"
+                            if decision.target == "MAIN"
+                            else "qualification"
+                        ),
+                        source_decision_fingerprint=(
+                            decision.source_decision_fingerprint
+                        ),
+                        outcome=review.outcome,
+                        nr_tie_break_token=(
+                            identity.tie_break_token
+                            if review.outcome == "valid"
+                            else None
+                        ),
+                        validation_policy_id=(
+                            EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID
+                        ),
+                        validation_policy_fingerprint=(
+                            EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT
+                        ),
+                        reasons=review.reasons,
+                        provenance=(
+                            "explicit_admin_application_validation.v1; "
+                            f"operator={command.operator_label}; reason={command.reason}"
+                        ),
+                    )
+                )
+
+            validation_tuple = tuple(validations)
+            self._validate_application_identity_tokens(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                validations=validation_tuple,
+            )
+            resolved = ResolvedApplicationValidationSlot(
+                slot=slot,
+                validations=validation_tuple,
+            )
+            existing_validation = ApplicationValidationSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if existing_validation is None:
+                position = self._position(session, command.run_id, command.branch_id)
+                if (
+                    position.position_fingerprint
+                    != command.expected_position_fingerprint
+                ):
+                    raise ValueError("Explicit application validation Position is stale")
+                if (
+                    position.current_slot_kind != "entry"
+                    or position.slot_ordinal != command.decision_slot_ordinal
+                ):
+                    raise ValueError(
+                        "Explicit application validation must resolve the current Entry slot"
+                    )
+            elif existing_validation != resolved:
+                raise ValueError(
+                    "Application validation slot already has different resolved authority"
+                )
+
+            committed = record_resolved_application_validation_slot(session, resolved)
+            submission = committed.submission_commit
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "entry_slot_fingerprint": slot.fingerprint,
+                "validation_fingerprint": committed.validation_slot.fingerprint,
+                "validation_mode": "explicit_admin_review.v1",
+                "validation_policy_id": (
+                    EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID
+                ),
+                "validation_policy_fingerprint": (
+                    EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT
+                ),
+                "valid_submission_count": (
+                    0 if submission is None else len(submission.batch.submissions)
+                ),
+                "submission_batch_fingerprint": (
+                    None if submission is None else submission.batch.fingerprint
+                ),
+                "first_tour_entry_trigger_fingerprints": (
+                    []
+                    if submission is None
+                    else [
+                        item.fingerprint
+                        for item in submission.first_tour_entry_triggers
+                    ]
+                ),
+            }
 
     def season_transition_preflight(
         self, *, run_id: str, branch_id: str
@@ -1583,6 +2288,22 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("adopted week schedule is corrupt")
         return value
 
+    @staticmethod
+    def _entry_slot_ordinals(session, run_id, branch_id, week):
+        return tuple(
+            session.scalars(
+                select(RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal)
+                .where(
+                    RunEntryDecisionSlotAuthorityModel.run_id == run_id,
+                    RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
+                    RunEntryDecisionSlotAuthorityModel.week_ordinal == week.ordinal,
+                )
+                .order_by(
+                    RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                )
+            ).all()
+        )
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)
@@ -1597,6 +2318,9 @@ class AuthoritativeRunSimulationDriver:
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
             ) if packages else {}
+            entry_slot_ordinals = self._entry_slot_ordinals(
+                session, run_id, branch_id, week
+            )
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
@@ -1604,7 +2328,12 @@ class AuthoritativeRunSimulationDriver:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "week": week.model_dump(mode="json"),
-                "required": len(packages) > 1 or len(plans) != 3,
+                "required": (
+                    bool(entry_slot_ordinals)
+                    or len(packages) > 1
+                    or len(plans) != 3
+                ),
+                "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
                 "event_ids": [p.event_id for p in packages],
                 "group_ids": list(plans),
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
@@ -1673,9 +2402,17 @@ class AuthoritativeRunSimulationDriver:
         for group_id, ordinal in depth_cache.items():
             grouped.setdefault(ordinal, []).append(group_id)
 
+        reserved_entry_ordinals = set(
+            self._entry_slot_ordinals(session, run_id, branch_id, week)
+        )
         slots: list[WeekSimulationScheduleSlot] = []
-        for ordinal in sorted(grouped):
-            group_ids = tuple(sorted(grouped[ordinal]))
+        next_global_ordinal = 1
+        for depth_ordinal in sorted(grouped):
+            while next_global_ordinal in reserved_entry_ordinals:
+                next_global_ordinal += 1
+            global_ordinal = next_global_ordinal
+            next_global_ordinal += 1
+            group_ids = tuple(sorted(grouped[depth_ordinal]))
             known_players: dict[str, str] = {}
             for group_id in group_ids:
                 plan = plans[group_id]
@@ -1701,7 +2438,7 @@ class AuthoritativeRunSimulationDriver:
                     known_players[player_id] = group_id
             slots.append(
                 WeekSimulationScheduleSlot(
-                    ordinal=ordinal,
+                    ordinal=global_ordinal,
                     group_ids=group_ids,
                 )
             )
@@ -2125,6 +2862,28 @@ class AuthoritativeRunSimulationDriver:
             packages,
             week=schedule.week,
         )
+        reserved_entry_ordinals = set(
+            self._entry_slot_ordinals(
+                session,
+                schedule.run_id,
+                schedule.branch_id,
+                schedule.week,
+            )
+        )
+        overlap = reserved_entry_ordinals & {
+            slot.ordinal for slot in schedule.slots
+        }
+        if overlap:
+            raise ValueError(
+                "match schedule collides with persisted entry-decision global slot"
+            )
+        match_ordinals = {slot.ordinal for slot in schedule.slots}
+        required_prefix = set(range(1, max(match_ordinals) + 1))
+        unexplained_gaps = required_prefix - match_ordinals - reserved_entry_ordinals
+        if unexplained_gaps:
+            raise ValueError(
+                "match schedule contains a global-slot gap not owned by an entry-decision slot"
+            )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
             authored_sequence
@@ -2165,11 +2924,36 @@ class AuthoritativeRunSimulationDriver:
             )
         )
         schedule = self._schedule(session, run_id, branch_id, week)
+        entry_slot_ordinals = self._entry_slot_ordinals(
+            session, run_id, branch_id, week
+        )
+        entry_validation_rows = tuple(
+            session.scalars(
+                select(ResolvedApplicationValidationSlotModel)
+                .where(
+                    ResolvedApplicationValidationSlotModel.run_id == run_id,
+                    ResolvedApplicationValidationSlotModel.branch_id == branch_id,
+                    ResolvedApplicationValidationSlotModel.week_ordinal == week.ordinal,
+                )
+                .order_by(
+                    ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                )
+            ).all()
+        )
+        resolved_entry_ordinals = {
+            row.decision_slot_ordinal for row in entry_validation_rows
+        }
+        unresolved_entry_ordinals = tuple(
+            ordinal
+            for ordinal in entry_slot_ordinals
+            if ordinal not in resolved_entry_ordinals
+        )
         if (
             schedule is None
             and packages
             and (
-                len(packages) > 1
+                bool(entry_slot_ordinals)
+                or len(packages) > 1
                 or len(
                     self._topology_for_session(
                         session, run_id, branch_id, packages, week=week
@@ -2209,7 +2993,12 @@ class AuthoritativeRunSimulationDriver:
         )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
-        if not authored_slots and len(packages) == 1 and len(plans) == 3:
+        if (
+            not authored_slots
+            and not entry_slot_ordinals
+            and len(packages) == 1
+            and len(plans) == 3
+        ):
             matches = sorted(
                 packages[0].main_draw_matches,
                 key=lambda m: (m.round_number, m.bracket_position),
@@ -2231,8 +3020,27 @@ class AuthoritativeRunSimulationDriver:
             or (next_spec.group_ids if next_spec else ())
         )
         unresolved = tuple(g for g in current_ids if g not in done)
-        eligible_groups = tuple(
-            g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
+        target_match_ordinal = (
+            current.slot_ordinal
+            if current is not None
+            else (next_spec.ordinal if next_spec is not None else None)
+        )
+        pending_entry_ordinal = (
+            min(unresolved_entry_ordinals) if unresolved_entry_ordinals else None
+        )
+        entry_is_current = (
+            pending_entry_ordinal is not None
+            and (
+                target_match_ordinal is None
+                or pending_entry_ordinal < target_match_ordinal
+            )
+        )
+        eligible_groups = (
+            ()
+            if entry_is_current
+            else tuple(
+                g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
+            )
         )
         blocked_groups = tuple(
             g for g in plans if g not in done and g not in eligible_groups
@@ -2251,7 +3059,11 @@ class AuthoritativeRunSimulationDriver:
             else None
         )
         blockers = []
-        if schedule is None and (len(packages) > 1 or len(plans) != 3):
+        if unresolved_entry_ordinals:
+            blockers.append("entry_validation_pending")
+        if schedule is None and (
+            bool(entry_slot_ordinals) or len(packages) > 1 or len(plans) != 3
+        ):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
@@ -2307,6 +3119,17 @@ class AuthoritativeRunSimulationDriver:
         body = {
             "scope": [run_id, branch_id, week.ordinal],
             "schedule": schedule.fingerprint if schedule else None,
+            "entry_slot_ordinals": list(entry_slot_ordinals),
+            "entry_validation_slots": [
+                (row.decision_slot_ordinal, row.fingerprint)
+                for row in entry_validation_rows
+            ],
+            "current_slot_kind": "entry" if entry_is_current else (
+                "match" if target_match_ordinal is not None else None
+            ),
+            "current_slot_ordinal": (
+                pending_entry_ordinal if entry_is_current else target_match_ordinal
+            ),
             "proposed_schedule_requirement": [p.event_id for p in packages],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
@@ -2368,24 +3191,35 @@ class AuthoritativeRunSimulationDriver:
             run_id=run_id,
             branch_id=branch_id,
             current_week=week,
-            current_slot_id=current.slot_id
-            if current
-            else (
-                (
-                    f"week-{week.ordinal}:slot:{next_spec.ordinal}"
-                    if schedule
-                    else f"{packages[0].event_id}:slot:{next_spec.ordinal}"
-                )
-                if next_spec
-                else None
+            current_slot_kind=(
+                "entry"
+                if entry_is_current
+                else ("match" if target_match_ordinal is not None else None)
             ),
-            slot_ordinal=current.slot_ordinal
-            if current
-            else (next_spec.ordinal if next_spec else None),
-            unresolved_group_ids=unresolved,
+            current_slot_id=(
+                f"week-{week.ordinal}:entry-slot:{pending_entry_ordinal}"
+                if entry_is_current
+                else (
+                    current.slot_id
+                    if current
+                    else (
+                        (
+                            f"week-{week.ordinal}:slot:{next_spec.ordinal}"
+                            if schedule
+                            else f"{packages[0].event_id}:slot:{next_spec.ordinal}"
+                        )
+                        if next_spec
+                        else None
+                    )
+                )
+            ),
+            slot_ordinal=(
+                pending_entry_ordinal if entry_is_current else target_match_ordinal
+            ),
+            unresolved_group_ids=(() if entry_is_current else unresolved),
             eligible_match_ids=tuple(plans[g].match_id for g in eligible_groups),
             blocked_match_ids=tuple(plans[g].match_id for g in blocked_groups),
-            current_slot_complete=not unresolved,
+            current_slot_complete=(False if entry_is_current else not unresolved),
             supported_tournament_complete=bool(packages) and all(owned.values()),
             week_ready_for_transition=ready,
             transition_blockers=tuple(blockers),
@@ -2395,6 +3229,11 @@ class AuthoritativeRunSimulationDriver:
 
     def _ensure_current_slot(self, session, command, packages):
         pos = self._position(session, command.run_id, command.branch_id)
+        if pos.current_slot_kind == "entry":
+            raise ValueError(
+                "nearest unresolved global Simulation Slot is an Entry decision slot "
+                "awaiting complete application validation"
+            )
         if any(
             s.status != "complete"
             for s in session.scalars(

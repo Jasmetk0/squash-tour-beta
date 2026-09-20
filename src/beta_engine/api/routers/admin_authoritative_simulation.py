@@ -14,6 +14,9 @@ from beta_engine.api.deps import (
     get_run_working_draft_service,
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeApplicationValidationCommand,
+    AuthoritativeExplicitApplicationValidationCommand,
+    AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
     AuthoritativeWalkoverCommand,
@@ -109,6 +112,153 @@ def prospect_bridge(
         raise HTTPException(
             status_code=409,
             detail={"code": "prospect_bridge_inspection_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/entry-decision-slot/preview")
+def preview_entry_decision_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        event_ids = tuple(payload["event_ids"])
+        return _driver(runtime, matches, awards).preview_entry_decision_slot(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_ids=event_ids,
+            decision_slot_ordinal=payload["decision_slot_ordinal"],
+            seed=payload.get("seed", 12345),
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "entry_decision_slot_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get("/entry-decision-slot/{decision_slot_ordinal}")
+def inspect_entry_decision_slot(
+    run_id: str,
+    branch_id: str,
+    decision_slot_ordinal: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_entry_decision_slot(
+            run_id=run_id,
+            branch_id=branch_id,
+            decision_slot_ordinal=decision_slot_ordinal,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "entry_decision_slot_inspection_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/entry-decision-slot/commit", status_code=201)
+def commit_entry_decision_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeEntryDecisionSlotCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
+        )
+        return _driver(runtime, matches, awards).commit_entry_decision_slot(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "entry_decision_slot_commit_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/entry-decision-slot/validation/commit", status_code=201)
+def commit_application_validation_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeApplicationValidationCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
+        )
+        return _driver(runtime, matches, awards).commit_application_validation_slot(
+            command
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "application_validation_slot_commit_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/entry-decision-slot/validation/review", status_code=201)
+def review_application_validation_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeExplicitApplicationValidationCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
+        )
+        return _driver(
+            runtime, matches, awards
+        ).commit_explicit_application_validation_slot(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "explicit_application_validation_review_conflict",
+                "message": str(exc),
+            },
         ) from exc
 
 

@@ -11,6 +11,9 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.tournaments.application_submission_authority import (
+    TournamentApplicationSubmissionAuthority,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
@@ -35,6 +38,9 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldConflict,
     TournamentEntryFieldStore,
+)
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
 )
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
@@ -166,6 +172,29 @@ def capacity():
     )
 
 
+def valid_submission(
+    player_id: str,
+    window: str,
+    *,
+    event_id: str = "event",
+    suffix: str = "",
+):
+    return TournamentApplicationSubmissionAuthority(
+        application_id=f"valid-{event_id}-{player_id}{suffix}",
+        run_id="run",
+        branch_id="branch",
+        event_id=event_id,
+        player_id=player_id,
+        entry_window=window,
+        submission_week=RankingWeek(season_index=0, week=2),
+        decision_slot_ordinal=1,
+        nr_tie_break_token=f"entry-{player_id}",
+        validation_authority_id=f"validation-{event_id}-{player_id}{suffix}",
+        validation_authority_fingerprint="a" * 64,
+        provenance="test valid submission",
+    )
+
+
 def capture(session):
     payload = {"content": {}}
     capture_saved_simulation_slots(
@@ -214,6 +243,66 @@ def test_legacy_simulation_component_without_entry_fields_keeps_wire_identity(
         assert "entry_fields" not in recaptured["content"]["simulation_slot_match_state"]
         assert "draw_inputs" not in recaptured["content"]["simulation_slot_match_state"]
         assert "draw_authorities" not in recaptured["content"]["simulation_slot_match_state"]
+
+
+@pytest.mark.pr_critical
+def test_initial_field_can_freeze_only_persisted_valid_submissions_for_event(database):
+    with database.begin() as session:
+        install_ranking_authority(session)
+        submission_store = TournamentApplicationSubmissionStore(session)
+        for player_id, window in (
+            ("A", "main"),
+            ("C", "main"),
+            ("D", "main"),
+            ("B", "qualification"),
+            ("E", "qualification"),
+            ("F", "qualification"),
+            ("G", "qualification"),
+        ):
+            submission_store.append(valid_submission(player_id, window))
+        submission_store.append(
+            valid_submission("A", "main", event_id="other-event", suffix="-other")
+        )
+
+        field_store = TournamentEntryFieldStore(session)
+        field = field_store.stage_initial_from_persisted_submissions(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            capacity=capacity(),
+            command_id="initial-from-valid-submissions",
+        )
+
+        assert field.direct_main_player_ids == ("A", "C", "D")
+        assert field.qualification_player_ids == ("B", "E")
+        assert field.below_qualification_cut_player_ids == ("F", "G")
+
+        rows = field_store._rows(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+        )
+        assert len(rows) == 1
+        _, frozen_apps = field_store._load_row(rows[0])
+        expected = tuple(
+            sorted(
+                (
+                    valid_submission(player_id, window).to_entry_field_application()
+                    for player_id, window in (
+                        ("A", "main"),
+                        ("C", "main"),
+                        ("D", "main"),
+                        ("B", "qualification"),
+                        ("E", "qualification"),
+                        ("F", "qualification"),
+                        ("G", "qualification"),
+                    )
+                ),
+                key=lambda item: item.application_id,
+            )
+        )
+        assert frozen_apps == expected
+        assert all(item.event_id == "event" for item in frozen_apps)
 
 
 def test_store_replays_initial_repair_and_exact_retries(database):

@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import {
   adoptAuthoritativeWeekScheduleProposal,
   getAuthoritativeSimulationPosition,
+  inspectAuthoritativeEntryDecisionSlot,
+  reviewAuthoritativeEntryDecisionSlot,
   getAuthoritativeSeasonTransitionPreflight,
   getAdminVisibleProspects,
   previewAuthoritativeSeasonTransitionConfiguration,
@@ -25,6 +27,7 @@ import {
 import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeWeekScheduleProposal,
+  AuthoritativeApplicationValidationReview,
   DerivedAuthoritativeWeekTransitionPreview
 } from '../api/types'
 import { newCommandId } from '../admin/branchSimulation'
@@ -40,6 +43,15 @@ type Props = {
   branchId: string
   savedRevisionId: string | null
   blockedReason: string | null
+}
+
+type EntryValidationDraft = {
+  outcome: '' | 'valid' | 'invalid'
+  reason: string
+}
+
+function entryValidationKey(eventId: string, playerId: string): string {
+  return `${eventId}\u001f${playerId}`
 }
 
 export function AuthoritativeSimulationPanel({
@@ -76,6 +88,11 @@ export function AuthoritativeSimulationPanel({
   const [finalSeasonRevisionId, setFinalSeasonRevisionId] = useState(newCommandId)
   const [finalSeasonAuditId, setFinalSeasonAuditId] = useState(newCommandId)
   const [finalSeasonConfirmed, setFinalSeasonConfirmed] = useState(false)
+  const [entryValidationCommandId, setEntryValidationCommandId] = useState(newCommandId)
+  const [entryValidationOperator, setEntryValidationOperator] = useState('')
+  const [entryValidationReason, setEntryValidationReason] = useState('')
+  const [entryValidationDrafts, setEntryValidationDrafts] =
+    useState<Record<string, EntryValidationDraft>>({})
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -90,6 +107,26 @@ export function AuthoritativeSimulationPanel({
     queryKey: ['authoritative-simulation-position', runId, branchId],
     queryFn: () => getAuthoritativeSimulationPosition(runId, branchId),
     enabled: enabled && scheduleAllowsPosition,
+    retry: false
+  })
+  const currentEntrySlotOrdinal =
+    positionQuery.data?.current_slot_kind === 'entry'
+      ? positionQuery.data.slot_ordinal
+      : null
+  const entrySlotQuery = useQuery({
+    queryKey: [
+      'authoritative-entry-decision-slot',
+      runId,
+      branchId,
+      currentEntrySlotOrdinal
+    ],
+    queryFn: () =>
+      inspectAuthoritativeEntryDecisionSlot(
+        runId,
+        branchId,
+        currentEntrySlotOrdinal as number
+      ),
+    enabled: Boolean(enabled && currentEntrySlotOrdinal != null),
     retry: false
   })
   const visibleProspectsQuery = useQuery({
@@ -166,6 +203,10 @@ export function AuthoritativeSimulationPanel({
     setFinalSeasonRevisionId(newCommandId())
     setFinalSeasonAuditId(newCommandId())
     setFinalSeasonConfirmed(false)
+    setEntryValidationCommandId(newCommandId())
+    setEntryValidationOperator('')
+    setEntryValidationReason('')
+    setEntryValidationDrafts({})
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
@@ -191,8 +232,28 @@ export function AuthoritativeSimulationPanel({
     setFinalSeasonRevisionId(newCommandId())
     setFinalSeasonAuditId(newCommandId())
     setFinalSeasonConfirmed(false)
+    setEntryValidationCommandId(newCommandId())
     setConfirmed(false)
   }, [positionQuery.data?.position_fingerprint])
+
+  useEffect(() => {
+    const inspection = entrySlotQuery.data
+    if (!inspection || inspection.validation_resolved) {
+      setEntryValidationDrafts({})
+      return
+    }
+    const nextDrafts: Record<string, EntryValidationDraft> = {}
+    for (const decision of inspection.authority.decisions) {
+      nextDrafts[entryValidationKey(decision.event_id, decision.player_id)] = {
+        outcome: '',
+        reason: ''
+      }
+    }
+    setEntryValidationDrafts(nextDrafts)
+    setEntryValidationCommandId(newCommandId())
+    setEntryValidationOperator('')
+    setEntryValidationReason('')
+  }, [entrySlotQuery.data?.slot_fingerprint, entrySlotQuery.data?.validation_resolved])
 
   useEffect(() => {
     if (!selectedGroupId) return
@@ -204,7 +265,8 @@ export function AuthoritativeSimulationPanel({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] })
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] })
     ])
   }
 
@@ -299,6 +361,74 @@ export function AuthoritativeSimulationPanel({
           queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
           queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
         ])
+      }
+    }
+  })
+
+  const entryValidationMutation = useMutation({
+    mutationFn: () => {
+      const position = positionQuery.data
+      const inspection = entrySlotQuery.data
+      if (!position || position.current_slot_kind !== 'entry' || position.slot_ordinal == null) {
+        throw new Error('The current canonical position is not an Entry decision slot.')
+      }
+      if (!inspection || inspection.validation_resolved) {
+        throw new Error('The current Entry decision slot is not available for review.')
+      }
+      if (!savedRevisionId) {
+        throw new Error('A Saved Revision head is required for Entry validation.')
+      }
+      const operator = entryValidationOperator.trim()
+      const auditReason = entryValidationReason.trim()
+      if (!operator || !auditReason) {
+        throw new Error('Operator label and audit reason are required.')
+      }
+
+      const reviews: AuthoritativeApplicationValidationReview[] =
+        inspection.authority.decisions.map((decision) => {
+          const draft =
+            entryValidationDrafts[
+              entryValidationKey(decision.event_id, decision.player_id)
+            ]
+          if (!draft?.outcome) {
+            throw new Error('Every frozen Entry decision must receive a validation outcome.')
+          }
+          const rejectionReason = draft.reason.trim()
+          if (draft.outcome === 'invalid' && !rejectionReason) {
+            throw new Error('Every invalid application requires a rejection reason.')
+          }
+          return {
+            event_id: decision.event_id,
+            player_id: decision.player_id,
+            outcome: draft.outcome,
+            reasons:
+              draft.outcome === 'invalid'
+                ? [rejectionReason]
+                : []
+          }
+        })
+
+      return reviewAuthoritativeEntryDecisionSlot(runId, branchId, {
+        command_id: entryValidationCommandId,
+        expected_week: position.current_week,
+        expected_revision_id: savedRevisionId,
+        expected_position_fingerprint: position.position_fingerprint,
+        decision_slot_ordinal: position.slot_ordinal,
+        expected_entry_slot_fingerprint: inspection.slot_fingerprint,
+        operator_label: operator,
+        reason: auditReason,
+        reviews
+      })
+    },
+    onSuccess: async () => {
+      setEntryValidationOperator('')
+      setEntryValidationReason('')
+      setEntryValidationDrafts({})
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        await refreshCanonicalSimulation()
       }
     }
   })
@@ -566,7 +696,30 @@ export function AuthoritativeSimulationPanel({
     position.transition_blockers.length === 1 &&
     rankingAuthorityMissing
   )
-  const actionPending = nextMatchMutation.isPending || nextSlotMutation.isPending
+  const actionPending =
+    nextMatchMutation.isPending ||
+    nextSlotMutation.isPending ||
+    entryValidationMutation.isPending
+  const currentEntrySlot = position?.current_slot_kind === 'entry'
+  const entryInspection = entrySlotQuery.data
+  const entryValidationReady = Boolean(
+    currentEntrySlot &&
+    entryInspection &&
+    !entryInspection.validation_resolved &&
+    entryValidationOperator.trim() &&
+    entryValidationReason.trim() &&
+    entryInspection.authority.decisions.length > 0 &&
+    entryInspection.authority.decisions.every((decision) => {
+      const draft =
+        entryValidationDrafts[
+          entryValidationKey(decision.event_id, decision.player_id)
+        ]
+      return Boolean(
+        draft?.outcome &&
+        (draft.outcome === 'valid' || draft.reason.trim())
+      )
+    })
+  )
 
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
@@ -600,6 +753,7 @@ export function AuthoritativeSimulationPanel({
           />
           <MetadataList
             items={[
+              { label: 'Slot kind', value: position.current_slot_kind === 'entry' ? 'Entry decision' : position.current_slot_kind === 'match' ? 'Match' : '—' },
               { label: 'Slot ordinal', value: position.slot_ordinal ?? '—' },
               { label: 'Unresolved groups', value: position.unresolved_group_ids.length },
               { label: 'Current slot complete', value: position.current_slot_complete ? 'Yes' : 'No' },
@@ -713,6 +867,132 @@ export function AuthoritativeSimulationPanel({
       {position ? (
         <>
           <h4>Execute current canonical position</h4>
+          {currentEntrySlot ? (
+            <>
+              <p className="status">
+                The nearest unresolved Simulation Slot is an Entry decision slot. Complete its application validation before match simulation can continue.
+              </p>
+              <h4>Entry application validation</h4>
+              <p className="status">
+                This is an explicit audited Admin resolution over frozen Entry evidence. The engine does not infer the still-open automatic eligibility or deadline rules here.
+              </p>
+              {entrySlotQuery.isLoading ? (
+                <p className="status">Loading frozen Entry decisions…</p>
+              ) : null}
+              {entrySlotQuery.error ? (
+                <p className="error">
+                  Entry decision inspection failed: {formatApiError(entrySlotQuery.error)}
+                </p>
+              ) : null}
+              {entryInspection ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Entry slot fingerprint', value: entryInspection.slot_fingerprint },
+                      { label: 'Frozen decisions', value: entryInspection.authority.decisions.length },
+                      { label: 'Validation resolved', value: entryInspection.validation_resolved ? 'Yes' : 'No' }
+                    ]}
+                  />
+                  {entryInspection.validation_resolved ? (
+                    <p className="status">
+                      This Entry slot already has immutable validation evidence.
+                    </p>
+                  ) : (
+                    <>
+                      <ul aria-label="Frozen Entry application decisions">
+                        {entryInspection.authority.decisions.map((decision) => {
+                          const key = entryValidationKey(decision.event_id, decision.player_id)
+                          const draft = entryValidationDrafts[key] ?? {
+                            outcome: '',
+                            reason: ''
+                          }
+                          const decisionLabel = `${decision.event_id}/${decision.player_id}`
+                          return (
+                            <li key={key}>
+                              <strong>
+                                {decision.event_id} · {decision.player_id} · {decision.target}
+                              </strong>{' '}
+                              <label>
+                                Outcome
+                                <select
+                                  aria-label={`Validation outcome ${decisionLabel}`}
+                                  value={draft.outcome}
+                                  onChange={(event) => {
+                                    const outcome = event.target.value as EntryValidationDraft['outcome']
+                                    setEntryValidationDrafts((current) => ({
+                                      ...current,
+                                      [key]: {
+                                        outcome,
+                                        reason: outcome === 'invalid' ? (current[key]?.reason ?? '') : ''
+                                      }
+                                    }))
+                                  }}
+                                  disabled={entryValidationMutation.isPending}
+                                >
+                                  <option value="">Pending review</option>
+                                  <option value="valid">Valid</option>
+                                  <option value="invalid">Invalid</option>
+                                </select>
+                              </label>
+                              {draft.outcome === 'invalid' ? (
+                                <label>
+                                  Rejection reason
+                                  <input
+                                    aria-label={`Validation rejection reason ${decisionLabel}`}
+                                    value={draft.reason}
+                                    onChange={(event) =>
+                                      setEntryValidationDrafts((current) => ({
+                                        ...current,
+                                        [key]: {
+                                          outcome: 'invalid',
+                                          reason: event.target.value
+                                        }
+                                      }))
+                                    }
+                                    disabled={entryValidationMutation.isPending}
+                                  />
+                                </label>
+                              ) : null}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                      <label>
+                        Entry validation operator
+                        <input
+                          aria-label="Entry validation operator"
+                          value={entryValidationOperator}
+                          onChange={(event) => setEntryValidationOperator(event.target.value)}
+                          disabled={entryValidationMutation.isPending}
+                        />
+                      </label>
+                      <label>
+                        Entry validation audit reason
+                        <input
+                          aria-label="Entry validation audit reason"
+                          value={entryValidationReason}
+                          onChange={(event) => setEntryValidationReason(event.target.value)}
+                          disabled={entryValidationMutation.isPending}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => entryValidationMutation.mutate()}
+                        disabled={!entryValidationReady || entryValidationMutation.isPending}
+                      >
+                        Commit explicit application validation
+                      </button>
+                    </>
+                  )}
+                </>
+              ) : null}
+              {entryValidationMutation.error ? (
+                <p className="error">
+                  Entry application validation failed: {formatApiError(entryValidationMutation.error)}
+                </p>
+              ) : null}
+            </>
+          ) : null}
           {position.eligible_match_ids.length ? (
             <label>
               Eligible match group
@@ -745,14 +1025,14 @@ export function AuthoritativeSimulationPanel({
             <button
               type="button"
               onClick={() => nextMatchMutation.mutate()}
-              disabled={!confirmed || !selectedGroupId || actionPending}
+              disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
             >
               Simulate authoritative Next Match
             </button>
             <button
               type="button"
               onClick={() => nextSlotMutation.mutate()}
-              disabled={!confirmed || position.eligible_match_ids.length === 0 || actionPending}
+              disabled={currentEntrySlot || !confirmed || position.eligible_match_ids.length === 0 || actionPending}
             >
               Simulate authoritative Next Slot
             </button>
@@ -764,6 +1044,12 @@ export function AuthoritativeSimulationPanel({
             <p className="error">Authoritative Next Slot failed: {formatApiError(nextSlotMutation.error)}</p>
           ) : null}
         </>
+      ) : null}
+
+      {entryValidationMutation.data ? (
+        <p className="status">
+          Entry validation committed: {entryValidationMutation.data.valid_submission_count} valid application(s), {entryValidationMutation.data.first_tour_entry_trigger_fingerprints.length} first Tour-entry trigger(s).
+        </p>
       ) : null}
 
       {savePreviewQuery.data ? (

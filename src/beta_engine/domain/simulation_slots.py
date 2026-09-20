@@ -42,10 +42,11 @@ class WeekSimulationSchedule(FrozenInput):
 
     @model_validator(mode="after")
     def validate_canonical_shape(self):
-        if tuple(slot.ordinal for slot in self.slots) != tuple(
-            range(1, len(self.slots) + 1)
-        ):
-            raise ValueError("schedule slot ordinals must be canonical and contiguous")
+        ordinals = tuple(slot.ordinal for slot in self.slots)
+        if ordinals != tuple(sorted(set(ordinals))):
+            raise ValueError(
+                "schedule match-slot ordinals must be unique and strictly increasing"
+            )
         groups = tuple(group for slot in self.slots for group in slot.group_ids)
         if len(groups) != len(set(groups)):
             raise ValueError("schedule contains a duplicate group")

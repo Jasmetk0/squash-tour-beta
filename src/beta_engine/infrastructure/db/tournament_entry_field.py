@@ -20,6 +20,9 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
 )
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -265,6 +268,39 @@ class TournamentEntryFieldStore:
     ) -> TournamentEntryField | None:
         history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         return history[-1] if history else None
+
+    def stage_initial_from_persisted_submissions(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        capacity: TournamentEntryFieldCapacity,
+        command_id: str,
+    ) -> TournamentEntryField:
+        """Freeze the current valid-submission history as field-cut input.
+
+        Eligibility/validation remains upstream. This method only removes the old
+        requirement for callers to reconstruct TournamentEntryApplication payloads
+        manually after valid submissions are already persisted authoritatively.
+        """
+
+        submissions = TournamentApplicationSubmissionStore(self.session).list_for_event(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        applications = tuple(
+            submission.to_entry_field_application() for submission in submissions
+        )
+        return self.stage_initial(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            applications=applications,
+            capacity=capacity,
+            command_id=command_id,
+        )
 
     def stage_initial(
         self,

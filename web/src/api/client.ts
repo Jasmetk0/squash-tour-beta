@@ -108,6 +108,9 @@ import type {
   AdminBranchSimulateWorldTourFinalsRequest,
   AdminBranchSimulateWorldTourFinalsResponse,
   AuthoritativeSimulationPosition,
+  AuthoritativeEntryDecisionSlotInspection,
+  AuthoritativeExplicitApplicationValidationPayload,
+  AuthoritativeApplicationValidationCommitResult,
   AuthoritativeSeasonTransitionPreflight,
   SeasonTransitionConfigurationPreview,
   OrdinarySeasonTransitionPayload,
@@ -1185,6 +1188,50 @@ export async function getAuthoritativeSimulationPosition(
     authoritativeSimulationRoot(runId, branchId) + '/position'
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function inspectAuthoritativeEntryDecisionSlot(
+  runId: string,
+  branchId: string,
+  decisionSlotOrdinal: number
+): Promise<AuthoritativeEntryDecisionSlotInspection> {
+  const data = await request<AuthoritativeEntryDecisionSlotInspection>(
+    authoritativeSimulationRoot(runId, branchId) +
+      `/entry-decision-slot/${encodeURIComponent(String(decisionSlotOrdinal))}`
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.decision_slot_ordinal !== decisionSlotOrdinal ||
+    data.authority.decision_slot_ordinal !== decisionSlotOrdinal ||
+    data.authority.run_id !== runId ||
+    data.authority.branch_id !== branchId ||
+    !/^[0-9a-f]{64}$/.test(data.slot_fingerprint)
+  ) {
+    throw new Error('Authoritative Entry decision slot response is invalid.')
+  }
+  return data
+}
+
+export async function reviewAuthoritativeEntryDecisionSlot(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeExplicitApplicationValidationPayload
+): Promise<AuthoritativeApplicationValidationCommitResult> {
+  const data = await request<AuthoritativeApplicationValidationCommitResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/entry-decision-slot/validation/review',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.decision_slot_ordinal !== payload.decision_slot_ordinal ||
+    data.entry_slot_fingerprint !== payload.expected_entry_slot_fingerprint ||
+    data.validation_mode !== 'explicit_admin_review.v1' ||
+    !/^[0-9a-f]{64}$/.test(data.validation_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.validation_policy_fingerprint)
+  ) {
+    throw new Error('Explicit Entry application validation response is invalid.')
+  }
   return data
 }
 

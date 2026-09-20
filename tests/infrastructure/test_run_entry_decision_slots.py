@@ -241,3 +241,35 @@ def test_saved_revision_target_rejects_entry_match_global_slot_collision(tmp_pat
             )
     finally:
         session.close()
+
+@pytest.mark.pr_critical
+def test_saved_revision_rejects_unowned_sparse_match_gap(tmp_path):
+    session = session_at(tmp_path / "saved-unowned-gap.sqlite")
+    _ensure_scope(session)
+    try:
+        payload = {
+            "content": {
+                "simulation_slot_match_state": {
+                    "slots": [
+                        {
+                            "run_id": "run",
+                            "branch_id": "branch",
+                            "week_ordinal": WEEK.ordinal,
+                            "slot_ordinal": 2,
+                        }
+                    ]
+                }
+            }
+        }
+        with pytest.raises(
+            ValueError,
+            match="global-slot gap not owned by an entry-decision slot",
+        ):
+            validate_saved_entry_match_slot_collisions(
+                payload,
+                run_id="run",
+                branch_id="branch",
+            )
+    finally:
+        session.close()
+

@@ -788,6 +788,7 @@ export type AuthoritativeSeasonTransitionPreflight = {
   saved_revision_id: string | null
   draft_version: number | null
   default_configuration_fingerprint: string | null
+  default_closing_ranking_fingerprint: string | null
   default_sporting_fingerprint: string | null
   default_lifecycle_fingerprint: string | null
   default_ranking_fingerprint: string | null
@@ -796,6 +797,63 @@ export type AuthoritativeSeasonTransitionPreflight = {
   implementation_gaps: string[]
   ready_for_execution: boolean
   preflight_fingerprint: string
+}
+
+export type SeasonTransitionConfiguration = {
+  schema_version: 'season_transition_configuration.v1'
+  run_id: string
+  branch_id: string
+  base_revision_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  predecessor_official_fingerprint: string
+  predecessor_sporting_fingerprint: string
+  outgoing_ranking_policy_fingerprint: string
+  target_ranking_policy: Record<string, unknown>
+  outgoing_development_policy_fingerprint: string
+  target_development_policy: Record<string, unknown>
+  reset_catalog: {
+    schema_version: 'season_scoped_reset_catalog.v1'
+    registry_version: 'season_scoped_reset_registry.v1'
+    component_ids: string[]
+  }
+  provenance: string
+}
+
+export type SeasonTransitionConfigurationPreview = {
+  configuration: SeasonTransitionConfiguration
+  configuration_fingerprint: string
+  ranking_policy_inherited: boolean
+  development_policy_inherited: boolean
+  reset_component_ids: string[]
+}
+
+export type OrdinarySeasonTransitionPayload = {
+  command_id: string
+  configuration: SeasonTransitionConfiguration
+  expected_preflight_fingerprint: string
+  expected_saved_revision_id: string
+  expected_draft_version: number
+  next_saved_revision_id: string
+  audit_event_id: string
+}
+
+export type OrdinarySeasonTransitionResult = {
+  schema_version: 'ordinary_season_transition_result.v1'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  saved_revision_id: string
+  configuration_fingerprint: string
+  closing_ranking_fingerprint: string
+  season_summary_fingerprint: string
+  closure_marker_fingerprint: string
+  player_sporting_fingerprint: string
+  player_lifecycle_fingerprint: string
+  official_ranking_fingerprint: string
+  world_event_kind: 'season_transition_completed'
+  draft_version: number
 }
 
 export type FinalSeasonTransitionPayload = {

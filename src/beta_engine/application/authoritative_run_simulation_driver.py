@@ -100,6 +100,7 @@ from beta_engine.infrastructure.db.models import (
     BranchWorkingDraftModel,
     PlayerSportingWeekStateModel,
     RankingTransitionAuthorityModel,
+    ResolvedApplicationValidationSlotModel,
     RunBranchModel,
     RunContainerModel,
     RunEntryDecisionSlotAuthorityModel,
@@ -2548,6 +2549,27 @@ class AuthoritativeRunSimulationDriver:
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
         )
+        entry_validation_rows = tuple(
+            session.scalars(
+                select(ResolvedApplicationValidationSlotModel)
+                .where(
+                    ResolvedApplicationValidationSlotModel.run_id == run_id,
+                    ResolvedApplicationValidationSlotModel.branch_id == branch_id,
+                    ResolvedApplicationValidationSlotModel.week_ordinal == week.ordinal,
+                )
+                .order_by(
+                    ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                )
+            ).all()
+        )
+        resolved_entry_ordinals = {
+            row.decision_slot_ordinal for row in entry_validation_rows
+        }
+        unresolved_entry_ordinals = tuple(
+            ordinal
+            for ordinal in entry_slot_ordinals
+            if ordinal not in resolved_entry_ordinals
+        )
         if (
             schedule is None
             and packages
@@ -2620,8 +2642,24 @@ class AuthoritativeRunSimulationDriver:
             or (next_spec.group_ids if next_spec else ())
         )
         unresolved = tuple(g for g in current_ids if g not in done)
-        eligible_groups = tuple(
-            g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
+        target_match_ordinal = (
+            current.slot_ordinal
+            if current is not None
+            else (next_spec.ordinal if next_spec is not None else None)
+        )
+        entry_validation_pending = (
+            target_match_ordinal is not None
+            and any(
+                ordinal < target_match_ordinal
+                for ordinal in unresolved_entry_ordinals
+            )
+        )
+        eligible_groups = (
+            ()
+            if entry_validation_pending
+            else tuple(
+                g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
+            )
         )
         blocked_groups = tuple(
             g for g in plans if g not in done and g not in eligible_groups
@@ -2640,6 +2678,8 @@ class AuthoritativeRunSimulationDriver:
             else None
         )
         blockers = []
+        if unresolved_entry_ordinals:
+            blockers.append("entry_validation_pending")
         if schedule is None and (
             bool(entry_slot_ordinals) or len(packages) > 1 or len(plans) != 3
         ):
@@ -2699,6 +2739,10 @@ class AuthoritativeRunSimulationDriver:
             "scope": [run_id, branch_id, week.ordinal],
             "schedule": schedule.fingerprint if schedule else None,
             "entry_slot_ordinals": list(entry_slot_ordinals),
+            "entry_validation_slots": [
+                (row.decision_slot_ordinal, row.fingerprint)
+                for row in entry_validation_rows
+            ],
             "proposed_schedule_requirement": [p.event_id for p in packages],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)

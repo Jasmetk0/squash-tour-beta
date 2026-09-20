@@ -214,15 +214,11 @@ class AuthoritativeRunSimulationDriver:
             )
             implementation_gaps = (
                 (
-                    "season_summary_freeze_not_implemented",
-                    "season_closure_marker_writer_not_implemented",
                     "final_run_closure_writer_not_implemented",
                     "season_transition_atomic_writer_not_implemented",
                 )
                 if final_season
                 else (
-                    "season_summary_freeze_not_implemented",
-                    "season_closure_marker_writer_not_implemented",
                     "new_season_policy_activation_not_implemented",
                     "season_scoped_reset_catalog_not_implemented",
                     "season_boundary_lifecycle_writer_not_implemented",

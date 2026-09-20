@@ -141,6 +141,15 @@ class SeasonClosureMarker(FrozenInput):
     rule_versions: tuple[ClosureRuleVersionRef, ...]
     final_saved_revision_id: str = Field(min_length=1)
 
+    @model_validator(mode="after")
+    def validate_marker(self):
+        if self.completed_week.week != 61:
+            raise ValueError("Season Closure Marker requires completed Week 61")
+        keys = [item.rule_kind for item in self.rule_versions]
+        if keys != sorted(set(keys)):
+            raise ValueError("Closure rule versions must be canonical and unique")
+        return self
+
     @property
     def fingerprint(self) -> str:
         return _hash(self.model_dump(mode="json"))

@@ -14,7 +14,13 @@ from beta_engine.domain.tournaments.wild_card_authority import (
 )
 
 
-def _wild_card_authority(*, reserve=False, unfilled=False):
+def _wild_card_authority(
+    *,
+    reserve=False,
+    unfilled=False,
+    decision_week=None,
+    decision_slot_ordinal=None,
+):
     if unfilled:
         slot = TournamentWildCardSlotResolution(
             wildcard_index=1,
@@ -36,12 +42,19 @@ def _wild_card_authority(*, reserve=False, unfilled=False):
             source="original_wc",
         )
     return TournamentWildCardAuthority(
+        schema_version=(
+            "tournament_wild_card_authority.v2"
+            if decision_week is not None
+            else "tournament_wild_card_authority.v1"
+        ),
         run_id="run",
         branch_id="branch",
         event_id="event",
         resolved_by_command_id="wc-command",
         entry_field_fingerprint="a" * 64,
         field_sequence=3,
+        decision_week=decision_week,
+        decision_slot_ordinal=decision_slot_ordinal,
         original_wild_card_player_ids=(slot.original_player_id,),
         reserve_wild_card_player_ids=("prospect-rwc",) if reserve else (),
         slots=(slot,),
@@ -86,6 +99,32 @@ def test_definitive_rwc_assignment_preserves_reserve_provenance():
     assert assignment.player_id == "prospect-rwc"
     assert assignment.assignment_source == "reserve_wc"
     assert assignment.reserve_ordinal == 2
+
+
+@pytest.mark.pr_critical
+def test_definitive_wc_reuses_canonical_source_global_slot():
+    week = RankingWeek(season_index=2, week=18)
+    source = _wild_card_authority(
+        decision_week=week,
+        decision_slot_ordinal=7,
+    )
+    assignment = DefinitiveWildCardAssignmentAuthority.from_resolution(
+        authority=source,
+        wildcard_index=1,
+        assignment_week=week,
+        decision_slot_ordinal=7,
+        provenance="canonical WC slot",
+    )
+    assert assignment.decision_position == (week.ordinal, 7)
+
+    with pytest.raises(ValueError, match="reuse source WC global-slot chronology"):
+        DefinitiveWildCardAssignmentAuthority.from_resolution(
+            authority=source,
+            wildcard_index=1,
+            assignment_week=week,
+            decision_slot_ordinal=8,
+            provenance="stale or mismatched WC slot",
+        )
 
 
 @pytest.mark.pr_critical

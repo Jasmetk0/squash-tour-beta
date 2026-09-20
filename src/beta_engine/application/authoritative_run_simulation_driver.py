@@ -265,6 +265,7 @@ class AuthoritativeRunSimulationDriver:
         default_sporting = None
         default_lifecycle = None
         default_ranking = None
+        prospect_bridge_required = False
         if target_week is not None:
             try:
                 default_configuration = resolve_season_transition_configuration(
@@ -288,10 +289,10 @@ class AuthoritativeRunSimulationDriver:
                         default_configuration,
                     )
                 except SeasonTransitionProspectBridgeRequired:
-                    # Prospect activation is a separate known engine gap. Do not
-                    # misclassify it as corrupt branch state while that bridge is
-                    # intentionally unsupported.
-                    pass
+                    # Only a boundary that actually contains target-week prospects
+                    # requires the unresolved bridge. Prospect-free boundaries can
+                    # execute without pretending the bridge itself is implemented.
+                    prospect_bridge_required = True
                 except ValueError:
                     blockers.append("season_transition_lifecycle_unavailable")
                 if default_lifecycle is not None:
@@ -303,11 +304,9 @@ class AuthoritativeRunSimulationDriver:
                     except ValueError:
                         blockers.append("season_transition_ranking_unavailable")
         implementation_gaps = (
-            ()
-            if final_season
-            else (
-                "season_prospect_creation_bridge_not_implemented",
-            )
+            ("season_prospect_creation_bridge_not_implemented",)
+            if (not final_season and prospect_bridge_required)
+            else ()
         )
         state_blockers = tuple(dict.fromkeys(blockers))
         body = {
@@ -394,20 +393,12 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "ordinary Season Transition requires a non-final Week 61 boundary"
                 )
-            if preflight.state_blockers:
+            if not preflight.ready_for_execution:
                 raise ValueError(
-                    "ordinary Season Transition preflight has state blockers: "
-                    + ", ".join(preflight.state_blockers)
-                )
-            unsupported_gaps = tuple(
-                gap
-                for gap in preflight.implementation_gaps
-                if gap != "season_prospect_creation_bridge_not_implemented"
-            )
-            if unsupported_gaps:
-                raise ValueError(
-                    "ordinary Season Transition has unsupported implementation gaps: "
-                    + ", ".join(unsupported_gaps)
+                    "ordinary Season Transition preflight is not ready: "
+                    + ", ".join(
+                        (*preflight.state_blockers, *preflight.implementation_gaps)
+                    )
                 )
             if preflight.saved_revision_id != command.expected_saved_revision_id:
                 raise ValueError("Season Transition Saved Revision head is stale")

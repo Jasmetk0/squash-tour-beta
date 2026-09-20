@@ -117,12 +117,14 @@ class OrdinarySeasonTransitionResult(FrozenInput):
     completed_week: RankingWeek
     target_week: RankingWeek
     saved_revision_id: str
+    configuration_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     closing_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     season_summary_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     closure_marker_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_sporting_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     player_lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     official_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    world_event_kind: Literal["season_transition_completed"] = "season_transition_completed"
     draft_version: int = Field(ge=0)
 
 
@@ -162,6 +164,8 @@ def _world_event_payload(
 ) -> str:
     return json.dumps(
         {
+            "schema_version": "season_transition_world_event.v1",
+            "command_id": command.command_id,
             "completed_week": command.configuration.completed_week.model_dump(mode="json"),
             "target_week": command.configuration.target_week.model_dump(mode="json"),
             "configuration_fingerprint": command.configuration.fingerprint,
@@ -297,6 +301,7 @@ def _retry_result(
         completed_week=command.configuration.completed_week,
         target_week=target,
         saved_revision_id=command.season_saved_revision_id,
+        configuration_fingerprint=command.configuration.fingerprint,
         closing_ranking_fingerprint=closing.fingerprint,
         season_summary_fingerprint=summary.fingerprint,
         closure_marker_fingerprint=marker.fingerprint,
@@ -598,6 +603,7 @@ def commit_ordinary_season_transition(
         completed_week=configuration.completed_week,
         target_week=configuration.target_week,
         saved_revision_id=command.season_saved_revision_id,
+        configuration_fingerprint=command.configuration.fingerprint,
         closing_ranking_fingerprint=closing.fingerprint,
         season_summary_fingerprint=package.summary.fingerprint,
         closure_marker_fingerprint=marker.fingerprint,

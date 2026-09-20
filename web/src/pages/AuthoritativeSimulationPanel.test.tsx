@@ -9,6 +9,8 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   getAuthoritativeSeasonTransitionPreflight: vi.fn(),
+  previewAuthoritativeSeasonTransitionConfiguration: vi.fn(),
+  advanceAuthoritativeOrdinarySeason: vi.fn(),
   finalizeAuthoritativeFinalSeason: vi.fn(),
   getProspectBridgeInspection: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
@@ -182,8 +184,8 @@ beforeEach(() => {
     final_season: false,
     saved_revision_id: 'revision-7',
     draft_version: 4,
-    default_closing_ranking_fingerprint: '0'.repeat(64),
     default_configuration_fingerprint: '6'.repeat(64),
+    default_closing_ranking_fingerprint: 'a'.repeat(64),
     default_sporting_fingerprint: '7'.repeat(64),
     default_lifecycle_fingerprint: '8'.repeat(64),
     default_ranking_fingerprint: '9'.repeat(64),
@@ -300,6 +302,49 @@ beforeEach(() => {
   api.saveRankingPreparation.mockResolvedValue({ ok: true })
   api.previewDerivedRankingTransitionAuthority.mockResolvedValue(rankingAuthorityPreview)
   api.confirmDerivedRankingTransitionAuthority.mockResolvedValue(rankingAuthorityPreview.authority)
+  api.previewAuthoritativeSeasonTransitionConfiguration.mockResolvedValue({
+    configuration: {
+      schema_version: 'season_transition_configuration.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      base_revision_id: 'revision-7',
+      completed_week: { season_index: 2, week: 61 },
+      target_week: { season_index: 3, week: 1 },
+      predecessor_official_fingerprint: '1'.repeat(64),
+      predecessor_sporting_fingerprint: '2'.repeat(64),
+      outgoing_ranking_policy_fingerprint: '3'.repeat(64),
+      target_ranking_policy: { policy_id: 'incoming-ranking', best_n: 15 },
+      outgoing_development_policy_fingerprint: '4'.repeat(64),
+      target_development_policy: { policy_id: 'incoming-development' },
+      reset_catalog: {
+        schema_version: 'season_scoped_reset_catalog.v1',
+        registry_version: 'season_scoped_reset_registry.v1',
+        component_ids: []
+      },
+      provenance: 'test'
+    },
+    configuration_fingerprint: '6'.repeat(64),
+    ranking_policy_inherited: true,
+    development_policy_inherited: true,
+    reset_component_ids: []
+  })
+  api.advanceAuthoritativeOrdinarySeason.mockResolvedValue({
+    schema_version: 'ordinary_season_transition_result.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    completed_week: { season_index: 2, week: 61 },
+    target_week: { season_index: 3, week: 1 },
+    saved_revision_id: 'revision-season-3',
+    configuration_fingerprint: '6'.repeat(64),
+    closing_ranking_fingerprint: 'a'.repeat(64),
+    season_summary_fingerprint: 'b'.repeat(64),
+    closure_marker_fingerprint: 'c'.repeat(64),
+    player_sporting_fingerprint: 'd'.repeat(64),
+    player_lifecycle_fingerprint: 'e'.repeat(64),
+    official_ranking_fingerprint: 'f'.repeat(64),
+    world_event_kind: 'season_transition_completed',
+    draft_version: 5
+  })
 })
 
 describe('AuthoritativeSimulationPanel', () => {
@@ -544,10 +589,7 @@ describe('AuthoritativeSimulationPanel', () => {
     })
     renderPanel()
 
-    expect(await screen.findByText('Prospect Bridge inspection')).toBeInTheDocument()
-    await waitFor(() =>
-      expect(api.getProspectBridgeInspection).toHaveBeenCalledWith('run-a', 'branch-a')
-    )
+    expect(api.getProspectBridgeInspection).not.toHaveBeenCalled()
     expect(screen.getByText('CZE Prospect 0001', { exact: false })).toHaveTextContent(
       'placeholders attributes, development, potential, traits'
     )
@@ -631,13 +673,87 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       screen.getByRole('list', { name: 'Season Transition implementation gaps' })
     ).toHaveTextContent('season_prospect_creation_bridge_not_implemented')
-    expect(
-      screen.getByRole('list', { name: 'Season Transition implementation gaps' })
-    ).not.toHaveTextContent('season_transition_atomic_writer_not_implemented')
+    expect(await screen.findByText('Prospect Bridge inspection')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(api.getProspectBridgeInspection).toHaveBeenCalledWith('run-a', 'branch-a')
+    )
     expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })
     ).not.toBeInTheDocument()
+  })
+
+  it('requires review before committing a ready ordinary Season Transition', async () => {
+    const week61 = { season_index: 2, week: 61 }
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      week: week61,
+      schedule: { ...proposal.schedule, week: week61 },
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_week: week61,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: true,
+      transition_blockers: ['season_transition_required'],
+      terminal_sporting_fingerprint: '3'.repeat(64),
+      position_fingerprint: '4'.repeat(64)
+    })
+    api.getAuthoritativeSeasonTransitionPreflight.mockResolvedValue({
+      schema_version: 'authoritative_season_transition_preflight.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      completed_week: week61,
+      target_week: { season_index: 3, week: 1 },
+      final_season: false,
+      saved_revision_id: 'revision-7',
+      draft_version: 4,
+      default_configuration_fingerprint: '6'.repeat(64),
+      default_closing_ranking_fingerprint: 'a'.repeat(64),
+      default_sporting_fingerprint: '7'.repeat(64),
+      default_lifecycle_fingerprint: '8'.repeat(64),
+      default_ranking_fingerprint: '9'.repeat(64),
+      position_fingerprint: '4'.repeat(64),
+      state_blockers: [],
+      implementation_gaps: [],
+      ready_for_execution: true,
+      preflight_fingerprint: '5'.repeat(64)
+    })
+
+    renderPanel()
+
+    const review = await screen.findByRole('button', { name: 'Review Season Transition' })
+    expect(api.getProspectBridgeInspection).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: 'Advance to next season' })).not.toBeInTheDocument()
+    await userEvent.click(review)
+    await userEvent.click(await screen.findByRole('button', { name: 'Advance to next season' }))
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeSeasonTransitionConfiguration).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    await waitFor(() =>
+      expect(api.advanceAuthoritativeOrdinarySeason).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          expected_preflight_fingerprint: '5'.repeat(64),
+          expected_saved_revision_id: 'revision-7',
+          expected_draft_version: 4
+        })
+      )
+    )
+    expect(await screen.findByText('revision-season-3')).toBeInTheDocument()
+    expect(screen.getByText('f'.repeat(64))).toBeInTheDocument()
   })
 
   it('requires explicit confirmation before finalizing 2049/50', async () => {
@@ -665,8 +781,8 @@ describe('AuthoritativeSimulationPanel', () => {
       final_season: true,
       saved_revision_id: 'revision-7',
       draft_version: 4,
-      default_closing_ranking_fingerprint: '0'.repeat(64),
       default_configuration_fingerprint: null,
+      default_closing_ranking_fingerprint: null,
       default_sporting_fingerprint: null,
       default_lifecycle_fingerprint: null,
       default_ranking_fingerprint: null,

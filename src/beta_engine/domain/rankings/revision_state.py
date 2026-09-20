@@ -51,6 +51,7 @@ class RankingRevisionState(FrozenInput):
         "ranking_revision_state.v4",
         "ranking_revision_state.v5",
         "ranking_revision_state.v6",
+        "ranking_revision_state.v7",
     ] = "ranking_revision_state.v4"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -92,12 +93,14 @@ class RankingRevisionState(FrozenInput):
             "ranking_revision_state.v4",
             "ranking_revision_state.v5",
             "ranking_revision_state.v6",
+            "ranking_revision_state.v7",
         } and self.authoritative_transition_state is not None:
             raise ValueError("Legacy ranking revision state cannot contain Week Transition state")
         if (
             self.schema_version not in {
                 "ranking_revision_state.v5",
                 "ranking_revision_state.v6",
+                "ranking_revision_state.v7",
             }
             and self.tournament_ranking_snapshot_authorities
         ):
@@ -105,7 +108,10 @@ class RankingRevisionState(FrozenInput):
                 "Legacy ranking revision state cannot contain Tournament Ranking Snapshot authority"
             )
         if (
-            self.schema_version != "ranking_revision_state.v6"
+            self.schema_version not in {
+                "ranking_revision_state.v6",
+                "ranking_revision_state.v7",
+            }
             and self.season_closing_rankings
         ):
             raise ValueError(
@@ -138,11 +144,84 @@ class RankingRevisionState(FrozenInput):
                 )
             receipt_ids = [row["command_id"] for row in state["receipts"]]
             event_ids = [row["command_id"] for row in state["events"]]
-            if receipt_ids != sorted(set(receipt_ids)) or event_ids != receipt_ids:
+            if (
+                receipt_ids != sorted(set(receipt_ids))
+                or event_ids != sorted(set(event_ids))
+            ):
+                raise ValueError(
+                    "Authoritative transition receipt/event identities are not canonical"
+                )
+            week_events = [
+                row
+                for row in state["events"]
+                if row["event_kind"] == "week_transition_completed"
+            ]
+            season_events = [
+                row
+                for row in state["events"]
+                if row["event_kind"] == "season_transition_completed"
+            ]
+            if len(week_events) + len(season_events) != len(state["events"]):
+                raise ValueError("Unsupported authoritative transition World Event kind")
+            week_event_ids = [row["command_id"] for row in week_events]
+            if week_event_ids != receipt_ids:
                 raise ValueError("Week Transition receipts and World Events do not pair")
+            season_event_ids = [row["command_id"] for row in season_events]
+            if set(season_event_ids).intersection(receipt_ids):
+                raise ValueError(
+                    "Season Transition World Event cannot reuse a Week Transition receipt"
+                )
+            if season_events and self.schema_version != "ranking_revision_state.v7":
+                raise ValueError(
+                    "Legacy ranking revision state cannot contain Season Transition World Events"
+                )
             for row in (*state["receipts"], *state["events"]):
                 if (row["run_id"], row["branch_id"]) != (self.run_id, self.branch_id):
-                    raise ValueError("Week Transition audit scope mismatch")
+                    raise ValueError("Authoritative transition audit scope mismatch")
+            for row in season_events:
+                try:
+                    payload = json.loads(row["payload_json"])
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        "Season Transition World Event payload is invalid"
+                    ) from exc
+                if not isinstance(payload, dict):
+                    raise ValueError("Season Transition World Event payload is invalid")
+                completed = RankingWeek.model_validate(payload.get("completed_week"))
+                target = RankingWeek.model_validate(payload.get("target_week"))
+                if (
+                    payload.get("schema_version") != "season_transition_world_event.v1"
+                    or payload.get("command_id") != row["command_id"]
+                    or completed.week != 61
+                    or target
+                    != RankingWeek(
+                        season_index=completed.season_index + 1,
+                        week=1,
+                    )
+                    or row["week_ordinal"] != target.ordinal
+                    or not str(payload.get("saved_revision_id", "")).strip()
+                ):
+                    raise ValueError(
+                        "Season Transition World Event payload boundary is invalid"
+                    )
+                for key in (
+                    "configuration_fingerprint",
+                    "closing_ranking_fingerprint",
+                    "season_summary_fingerprint",
+                    "closure_marker_fingerprint",
+                    "player_sporting_fingerprint",
+                    "player_lifecycle_fingerprint",
+                    "official_ranking_fingerprint",
+                ):
+                    value = payload.get(key)
+                    if (
+                        not isinstance(value, str)
+                        or len(value) != 64
+                        or any(ch not in "0123456789abcdef" for ch in value)
+                    ):
+                        raise ValueError(
+                            "Season Transition World Event fingerprint is invalid"
+                        )
             if world is not None and (not ordinals or world["current_ordinal"] != ordinals[-1]
                     or world["ranking_fingerprint"] != state["publications"][-1]["snapshot_fingerprint"]):
                 raise ValueError("Authoritative world head differs from published ranking")
@@ -314,21 +393,35 @@ def ranking_revision_states_equivalent(
 ) -> bool:
     """Compare authoritative content without rewriting historical wire identity.
 
-    V1-v4 predate Tournament Ranking Snapshot authority and v6 adds archived Season
-    Closing Rankings. Equivalent historical states keep the established v4/v5
-    normalization, while any Closing Ranking archive upgrades both sides to v6 so
-    recovery evidence cannot be silently erased.
+    V1-v4 predate Tournament Ranking Snapshot authority, v6 adds archived Season
+    Closing Rankings and v7 adds ordinary Season Transition World Events. Equivalent
+    historical states normalize only to the newest schema required by their actual
+    content so recovery evidence cannot be silently erased.
     """
-    normalized_version = (
-        "ranking_revision_state.v6"
-        if left.season_closing_rankings or right.season_closing_rankings
-        else (
-            "ranking_revision_state.v5"
-            if (
-                left.tournament_ranking_snapshot_authorities
-                or right.tournament_ranking_snapshot_authorities
+    def has_season_transition_event(state: RankingRevisionState) -> bool:
+        transition = state.authoritative_transition_state
+        return bool(
+            transition
+            and any(
+                row.get("event_kind") == "season_transition_completed"
+                for row in transition["events"]
             )
-            else "ranking_revision_state.v4"
+        )
+
+    normalized_version = (
+        "ranking_revision_state.v7"
+        if has_season_transition_event(left) or has_season_transition_event(right)
+        else (
+            "ranking_revision_state.v6"
+            if left.season_closing_rankings or right.season_closing_rankings
+            else (
+                "ranking_revision_state.v5"
+                if (
+                    left.tournament_ranking_snapshot_authorities
+                    or right.tournament_ranking_snapshot_authorities
+                )
+                else "ranking_revision_state.v4"
+            )
         )
     )
     return left.model_copy(

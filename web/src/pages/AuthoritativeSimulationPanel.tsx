@@ -5,6 +5,8 @@ import {
   adoptAuthoritativeWeekScheduleProposal,
   getAuthoritativeSimulationPosition,
   getAuthoritativeSeasonTransitionPreflight,
+  previewAuthoritativeSeasonTransitionConfiguration,
+  advanceAuthoritativeOrdinarySeason,
   finalizeAuthoritativeFinalSeason,
   getProspectBridgeInspection,
   inspectAuthoritativeWeekSchedule,
@@ -66,6 +68,10 @@ export function AuthoritativeSimulationPanel({
     preview: DerivedRankingTransitionAuthorityPreview
   } | null>(null)
   const [rankingAuthorityCommitted, setRankingAuthorityCommitted] = useState(false)
+  const [ordinarySeasonCommandId, setOrdinarySeasonCommandId] = useState(newCommandId)
+  const [ordinarySeasonRevisionId, setOrdinarySeasonRevisionId] = useState(newCommandId)
+  const [ordinarySeasonAuditId, setOrdinarySeasonAuditId] = useState(newCommandId)
+  const [ordinarySeasonConfirmed, setOrdinarySeasonConfirmed] = useState(false)
   const [finalSeasonCommandId, setFinalSeasonCommandId] = useState(newCommandId)
   const [finalSeasonRevisionId, setFinalSeasonRevisionId] = useState(newCommandId)
   const [finalSeasonAuditId, setFinalSeasonAuditId] = useState(newCommandId)
@@ -86,16 +92,6 @@ export function AuthoritativeSimulationPanel({
     enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
-  const prospectBridgeQuery = useQuery({
-    queryKey: ['authoritative-prospect-bridge', runId, branchId, positionQuery.data?.position_fingerprint],
-    queryFn: () => getProspectBridgeInspection(runId, branchId),
-    enabled: Boolean(
-      enabled &&
-      positionQuery.data?.transition_blockers.includes('prospect_bridge_missing')
-    ),
-    retry: false
-  })
-
   const seasonTransitionPreflightQuery = useQuery({
     queryKey: [
       'authoritative-season-transition-preflight',
@@ -107,6 +103,23 @@ export function AuthoritativeSimulationPanel({
     enabled: Boolean(
       enabled &&
       positionQuery.data?.current_week.week === 61
+    ),
+    retry: false
+  })
+
+  const prospectBridgeQuery = useQuery({
+    queryKey: [
+      'authoritative-prospect-bridge',
+      runId,
+      branchId,
+      positionQuery.data?.position_fingerprint,
+      seasonTransitionPreflightQuery.data?.preflight_fingerprint
+    ],
+    queryFn: () => getProspectBridgeInspection(runId, branchId),
+    enabled: Boolean(
+      enabled &&
+      positionQuery.data?.current_week.week !== 61 &&
+      positionQuery.data?.transition_blockers.includes('prospect_bridge_missing')
     ),
     retry: false
   })
@@ -145,6 +158,10 @@ export function AuthoritativeSimulationPanel({
     setRankingAuthorityReason('')
     setRankingAuthorityReview(null)
     setRankingAuthorityCommitted(false)
+    setOrdinarySeasonCommandId(newCommandId())
+    setOrdinarySeasonRevisionId(newCommandId())
+    setOrdinarySeasonAuditId(newCommandId())
+    setOrdinarySeasonConfirmed(false)
     setFinalSeasonCommandId(newCommandId())
     setFinalSeasonRevisionId(newCommandId())
     setFinalSeasonAuditId(newCommandId())
@@ -166,6 +183,10 @@ export function AuthoritativeSimulationPanel({
     setRankingAuthorityCommandId(newCommandId())
     setRankingAuthorityReview(null)
     setRankingAuthorityCommitted(false)
+    setOrdinarySeasonCommandId(newCommandId())
+    setOrdinarySeasonRevisionId(newCommandId())
+    setOrdinarySeasonAuditId(newCommandId())
+    setOrdinarySeasonConfirmed(false)
     setFinalSeasonCommandId(newCommandId())
     setFinalSeasonRevisionId(newCommandId())
     setFinalSeasonAuditId(newCommandId())
@@ -278,6 +299,56 @@ export function AuthoritativeSimulationPanel({
           queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
           queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
         ])
+      }
+    }
+  })
+
+  const ordinarySeasonMutation = useMutation({
+    mutationFn: async () => {
+      const preflight = seasonTransitionPreflightQuery.data
+      if (
+        !preflight ||
+        preflight.final_season ||
+        !preflight.target_week ||
+        !preflight.ready_for_execution ||
+        !preflight.saved_revision_id ||
+        preflight.draft_version == null ||
+        !preflight.default_configuration_fingerprint
+      ) {
+        throw new Error('Ordinary Season Transition preflight is not executable.')
+      }
+      if (!ordinarySeasonConfirmed) {
+        throw new Error('Confirm ordinary Season Transition before execution.')
+      }
+      const preview = await previewAuthoritativeSeasonTransitionConfiguration(runId, branchId)
+      if (preview.configuration_fingerprint !== preflight.default_configuration_fingerprint) {
+        throw new Error('Season Transition configuration changed since preflight.')
+      }
+      return advanceAuthoritativeOrdinarySeason(runId, branchId, {
+        command_id: ordinarySeasonCommandId,
+        configuration: preview.configuration,
+        expected_preflight_fingerprint: preflight.preflight_fingerprint,
+        expected_saved_revision_id: preflight.saved_revision_id,
+        expected_draft_version: preflight.draft_version,
+        season_saved_revision_id: ordinarySeasonRevisionId,
+        audit_event_id: ordinarySeasonAuditId
+      })
+    },
+    onSuccess: async () => {
+      setOrdinarySeasonConfirmed(false)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['authoritative-season-transition-preflight', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+      ])
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setOrdinarySeasonConfirmed(false)
+        await refreshCanonicalSimulation()
       }
     }
   })
@@ -868,7 +939,7 @@ export function AuthoritativeSimulationPanel({
         <>
           <h4>Canonical Season Transition preflight</h4>
           <p className="status">
-            Week 61 crosses a season boundary. Ordinary seasons remain blocked until every implementation layer is complete; the final 2049/50 closure becomes executable only when this exact persisted state passes preflight.
+            Week 61 crosses a season boundary. Ordinary rollover becomes executable when this exact persisted state has no branch blocker and no boundary-specific engine gap; the final 2049/50 closure uses its dedicated terminal path.
           </p>
           {seasonTransitionPreflightQuery.isLoading ? (
             <p className="status">Loading Season Transition preflight…</p>
@@ -909,6 +980,10 @@ export function AuthoritativeSimulationPanel({
                     value: seasonTransitionPreflightQuery.data.ready_for_execution ? 'Yes' : 'No'
                   },
                   {
+                    label: 'Closing Ranking candidate',
+                    value: seasonTransitionPreflightQuery.data.default_closing_ranking_fingerprint ?? '—'
+                  },
+                  {
                     label: 'Preflight fingerprint',
                     value: seasonTransitionPreflightQuery.data.preflight_fingerprint
                   }
@@ -928,12 +1003,73 @@ export function AuthoritativeSimulationPanel({
                   Current persisted Week 61 state has no additional branch-specific blocker.
                 </p>
               )}
-              <strong>Engine implementation gaps</strong>
-              <ul aria-label="Season Transition implementation gaps">
-                {seasonTransitionPreflightQuery.data.implementation_gaps.map((gap) => (
-                  <li key={gap}>{gap}</li>
-                ))}
-              </ul>
+              {seasonTransitionPreflightQuery.data.implementation_gaps.length ? (
+                <>
+                  <strong>Engine implementation gaps</strong>
+                  <ul aria-label="Season Transition implementation gaps">
+                    {seasonTransitionPreflightQuery.data.implementation_gaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="status">
+                  No boundary-specific engine implementation gap remains for this transition.
+                </p>
+              )}
+              {!seasonTransitionPreflightQuery.data.final_season &&
+              seasonTransitionPreflightQuery.data.ready_for_execution &&
+              seasonTransitionPreflightQuery.data.target_week ? (
+                <>
+                  <p className="status">
+                    Ordinary rollover is atomic: Closing Ranking, Season Summary/Marker, Week-1 sporting and lifecycle state, Official Ranking publication, world state and the new Saved Revision commit together.
+                  </p>
+                  {!ordinarySeasonConfirmed ? (
+                    <button
+                      type="button"
+                      onClick={() => setOrdinarySeasonConfirmed(true)}
+                      disabled={ordinarySeasonMutation.isPending}
+                    >
+                      Review Season Transition
+                    </button>
+                  ) : (
+                    <>
+                      <p className="status">
+                        Confirm opening Season index {seasonTransitionPreflightQuery.data.target_week.season_index} · Week 1. A failure rolls back the complete rollover.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => ordinarySeasonMutation.mutate()}
+                        disabled={ordinarySeasonMutation.isPending}
+                      >
+                        Advance to next season
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setOrdinarySeasonConfirmed(false)}
+                        disabled={ordinarySeasonMutation.isPending}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                  {ordinarySeasonMutation.error ? (
+                    <p className="error">
+                      Season Transition failed: {formatApiError(ordinarySeasonMutation.error)}
+                    </p>
+                  ) : null}
+                  {ordinarySeasonMutation.data ? (
+                    <MetadataList
+                      items={[
+                        { label: 'New Saved Revision', value: ordinarySeasonMutation.data.saved_revision_id },
+                        { label: 'Closing Ranking', value: ordinarySeasonMutation.data.closing_ranking_fingerprint },
+                        { label: 'Week-1 Official Ranking', value: ordinarySeasonMutation.data.official_ranking_fingerprint },
+                        { label: 'Closure Marker', value: ordinarySeasonMutation.data.closure_marker_fingerprint }
+                      ]}
+                    />
+                  ) : null}
+                </>
+              ) : null}
               {seasonTransitionPreflightQuery.data.final_season &&
               seasonTransitionPreflightQuery.data.ready_for_execution ? (
                 <>

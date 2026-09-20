@@ -214,7 +214,6 @@ class AuthoritativeRunSimulationDriver:
             )
             implementation_gaps = (
                 (
-                    "final_season_closing_ranking_source_adapter_not_implemented",
                     "season_summary_freeze_not_implemented",
                     "season_closure_marker_writer_not_implemented",
                     "final_run_closure_writer_not_implemented",

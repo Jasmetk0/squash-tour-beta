@@ -6,7 +6,11 @@ from sqlalchemy import select
 from beta_engine.application.canonical_tournament_points import (
     build_tournament_point_award_authority,
 )
-from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
+from beta_engine.application.ranking_tournament_ingestion import (
+    TournamentRankingBinding,
+    prepare_canonical_tournament_ranking_sources,
+    prepare_final_season_closing_ranking_results,
+)
 from beta_engine.application.season_closing_ranking_resolution import (
     resolve_canonical_season_closing_ranking,
     stage_canonical_season_closing_ranking,
@@ -21,10 +25,12 @@ from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleWeekState,
 )
 from beta_engine.domain.rankings.official import (
+    OfficialRankingPlayer,
     OfficialRankingPolicy,
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.tournaments.result_authority import (
     TournamentPlayerResultAuthority,
@@ -77,9 +83,14 @@ def database(tmp_path):
     engine.dispose()
 
 
-def _lifecycle_player(player_id: str, token: str) -> PlayerLifecycleIdentity:
-    position = season_week_to_calendar_position(2000, 61)
-    birth_year = 1975
+def _lifecycle_player(
+    player_id: str,
+    token: str,
+    *,
+    season_index: int = 0,
+) -> PlayerLifecycleIdentity:
+    position = season_week_to_calendar_position(2000 + season_index, 61)
+    birth_year = 1975 + season_index
     birth_year_week = 1
     return PlayerLifecycleIdentity(
         player_id=player_id,
@@ -87,7 +98,10 @@ def _lifecycle_player(player_id: str, token: str) -> PlayerLifecycleIdentity:
         birth_year_week=birth_year_week,
         tie_break_token=token,
         tie_break_provenance=f"test:{player_id}",
-        tour_entry_week=RankingWeek(season_index=0, week=1),
+        tour_entry_week=RankingWeek(
+            season_index=max(0, season_index - 5),
+            week=1,
+        ),
         age=age_at_calendar_position(
             birth_year=birth_year,
             birth_year_week=birth_year_week,
@@ -99,8 +113,8 @@ def _lifecycle_player(player_id: str, token: str) -> PlayerLifecycleIdentity:
     )
 
 
-def _install_week61_authority(session):
-    completed = RankingWeek(season_index=0, week=61)
+def _install_week61_authority(session, *, season_index: int = 0):
+    completed = RankingWeek(season_index=season_index, week=61)
     lifecycle = put_lifecycle(
         session,
         PlayerLifecycleWeekState(
@@ -108,8 +122,8 @@ def _install_week61_authority(session):
             branch_id="branch",
             week=completed,
             players=(
-                _lifecycle_player("A", "token-A"),
-                _lifecycle_player("B", "token-B"),
+                _lifecycle_player("A", "token-A", season_index=season_index),
+                _lifecycle_player("B", "token-B", season_index=season_index),
             ),
             source_initial_world_fingerprint="initial-world-test",
         ),
@@ -118,7 +132,10 @@ def _install_week61_authority(session):
         run_id="run",
         branch_id="branch",
         week=completed,
-        policy=OfficialRankingPolicy(policy_id="season-2000-policy", best_n=15),
+        policy=OfficialRankingPolicy(
+            policy_id=f"season-{2000 + season_index}-policy",
+            best_n=15,
+        ),
         players=lifecycle.ranking_roster(),
         results=(),
     )
@@ -143,8 +160,8 @@ def _install_week61_authority(session):
     return completed, predecessor
 
 
-def _owned_week61_source():
-    completed = RankingWeek(season_index=0, week=61)
+def _owned_week61_source(*, season_index: int = 0):
+    completed = RankingWeek(season_index=season_index, week=61)
     result = TournamentResultAuthority(
         run_id="run",
         branch_id="branch",
@@ -181,25 +198,41 @@ def _owned_week61_source():
         point_authority=frozen_points,
         seed=77,
     )
+    final_season = season_index == 49
     binding = TournamentRankingBinding(
         run_id="run",
         branch_id="branch",
         edition_id="week61-event",
         event_id="week61-event",
         completed_week=completed,
-        first_publication_week=RankingWeek(season_index=1, week=1),
+        first_publication_week=(
+            None
+            if final_season
+            else RankingWeek(season_index=season_index + 1, week=1)
+        ),
+        closing_eligibility_ordinal=(
+            completed.ordinal + 1 if final_season else None
+        ),
         validity_weeks=61,
         ranking_status="ranked",
         expected_result_fingerprint=result.fingerprint,
         expected_award_fingerprint=awards.fingerprint,
     )
     return OwnedTournamentRankingSource(
-        schema_version="owned_tournament_ranking_source.v4",
+        schema_version=(
+            "owned_tournament_ranking_source.v6"
+            if final_season
+            else "owned_tournament_ranking_source.v4"
+        ),
         binding=binding,
         canonical_result=result,
         canonical_awards=awards,
         adopted_by_command_id="close-week61",
-        provenance_kind="canonical_run_owned_tournament_authorities",
+        provenance_kind=(
+            "canonical_run_owned_tournament_authorities_final_closing"
+            if final_season
+            else "canonical_run_owned_tournament_authorities"
+        ),
     )
 
 
@@ -269,12 +302,100 @@ def test_resolver_requires_published_world_head(database):
             )
 
 
-def test_final_season_remains_fail_closed_for_dedicated_adapter(database):
+@pytest.mark.pr_critical
+def test_final_season_closing_source_uses_boundary_ordinal_without_week1(database):
     with database.begin() as session:
-        with pytest.raises(ValueError, match="final-season source adapter"):
-            resolve_canonical_season_closing_ranking(
-                session,
+        completed, predecessor = _install_week61_authority(
+            session,
+            season_index=49,
+        )
+        source = _owned_week61_source(season_index=49)
+        OwnedTournamentRankingSourceStore(session).append(source)
+
+        projected = prepare_final_season_closing_ranking_results(
+            source.binding,
+            source.canonical_result,
+            source.canonical_awards,
+        )
+        assert all(result.first_publication_week is None for result in projected)
+        assert {
+            result.closing_eligibility_ordinal for result in projected
+        } == {completed.ordinal + 1}
+        with pytest.raises(ValueError, match="Official ranking ingestion"):
+            prepare_canonical_tournament_ranking_sources(
+                source.binding,
+                source.canonical_result,
+                source.canonical_awards,
+            )
+        with pytest.raises(ValueError, match="cannot enter Official ranking history"):
+            RankingResultVersion(
                 run_id="run",
                 branch_id="branch",
-                completed_week=RankingWeek(season_index=49, week=61),
+                effective_week=completed,
+                previous_fingerprint=None,
+                result=projected[0],
             )
+        with pytest.raises(ValueError, match="cannot consume Closing-only"):
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=completed,
+                policy=predecessor.policy,
+                players=(
+                    OfficialRankingPlayer(
+                        player_id="A",
+                        tie_break_token="token-A",
+                        tour_entry_week=RankingWeek(season_index=44, week=1),
+                    ),
+                    OfficialRankingPlayer(
+                        player_id="B",
+                        tie_break_token="token-B",
+                        tour_entry_week=RankingWeek(season_index=44, week=1),
+                    ),
+                ),
+                results=projected,
+            )
+
+        preview = resolve_canonical_season_closing_ranking(
+            session,
+            run_id="run",
+            branch_id="branch",
+            completed_week=completed,
+        )
+        assert preview.predecessor_official_fingerprint == predecessor.fingerprint
+        assert [(row.player_id, row.points) for row in preview.rows] == [
+            ("B", 200),
+            ("A", 100),
+        ]
+        assert all(
+            result.first_publication_week is None
+            and result.closing_eligibility_ordinal == completed.ordinal + 1
+            for row in preview.rows
+            for result in row.counted_results
+        )
+
+        staged = stage_canonical_season_closing_ranking(
+            session,
+            run_id="run",
+            branch_id="branch",
+            completed_week=completed,
+        )
+        assert staged == preview
+        assert session.scalars(select(OfficialRankingResultVersionModel)).all() == []
+
+    with database() as session:
+        publications = session.scalars(
+            select(PublishedOfficialRankingModel).order_by(
+                PublishedOfficialRankingModel.week_ordinal
+            )
+        ).all()
+        assert [row.week_ordinal for row in publications] == [
+            RankingWeek(season_index=49, week=61).ordinal
+        ]
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert world.current_ordinal == RankingWeek(
+            season_index=49,
+            week=61,
+        ).ordinal
+        closing = session.scalars(select(SeasonClosingRankingModel)).all()
+        assert len(closing) == 1

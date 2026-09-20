@@ -26,6 +26,7 @@ class OwnedTournamentRankingSource(FrozenInput):
         "owned_tournament_ranking_source.v3",
         "owned_tournament_ranking_source.v4",
         "owned_tournament_ranking_source.v5",
+        "owned_tournament_ranking_source.v6",
     ] = "owned_tournament_ranking_source.v1"
     binding: TournamentRankingBinding
     result: SeasonEventResultPackage | None = None
@@ -43,6 +44,8 @@ class OwnedTournamentRankingSource(FrozenInput):
         "canonical_run_owned_tournament_result_and_points",
         "canonical_run_owned_tournament_authorities",
         "canonical_run_owned_tournament_authorities_and_prize_money",
+        "canonical_run_owned_tournament_authorities_final_closing",
+        "canonical_run_owned_tournament_authorities_and_prize_money_final_closing",
     ] = "explicit_legacy_tournament_adoption"
 
     @model_serializer(mode="wrap")
@@ -51,6 +54,7 @@ class OwnedTournamentRankingSource(FrozenInput):
         if self.schema_version in {
             "owned_tournament_ranking_source.v4",
             "owned_tournament_ranking_source.v5",
+            "owned_tournament_ranking_source.v6",
         }:
             # Canonical v4+ does not persist compatibility DTO copies.
             payload.pop("result", None)
@@ -60,6 +64,44 @@ class OwnedTournamentRankingSource(FrozenInput):
     @model_validator(mode="after")
     def validate_identity(self):
         version = self.schema_version
+
+        if version == "owned_tournament_ranking_source.v6":
+            if not self.binding.closing_only:
+                raise ValueError(
+                    "Final Closing source requires Closing-only tournament binding"
+                )
+            if self.canonical_result is None or self.canonical_awards is None:
+                raise ValueError(
+                    "Final Closing source requires canonical result and point awards"
+                )
+            if self.result is not None or self.awards is not None:
+                raise ValueError(
+                    "Final Closing source cannot persist legacy compatibility DTOs"
+                )
+            self._validate_canonical_authority_binding()
+            if self.canonical_prize_awards is None:
+                if (
+                    self.provenance_kind
+                    != "canonical_run_owned_tournament_authorities_final_closing"
+                ):
+                    raise ValueError(
+                        "Final Closing source requires canonical final provenance"
+                    )
+            else:
+                self._validate_canonical_prize_award_binding()
+                if (
+                    self.provenance_kind
+                    != "canonical_run_owned_tournament_authorities_and_prize_money_final_closing"
+                ):
+                    raise ValueError(
+                        "Final Closing prize source requires canonical final provenance"
+                    )
+            return self
+
+        if self.binding.closing_only:
+            raise ValueError(
+                "Historical tournament source versions cannot carry Closing-only binding"
+            )
 
         if version == "owned_tournament_ranking_source.v1":
             self._require_legacy_compatibility()

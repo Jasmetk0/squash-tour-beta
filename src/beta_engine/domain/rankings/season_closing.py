@@ -79,7 +79,7 @@ class SeasonClosingRankingSnapshot(FrozenInput):
                         "Season Closing Ranking disciplinary zero is not active at boundary"
                     )
             for result in row.counted_results:
-                age = boundary_ordinal - result.first_publication_week.ordinal
+                age = boundary_ordinal - result.eligibility_ordinal
                 if (
                     result.completed_week.ordinal > self.completed_week.ordinal
                     or not result.ranked
@@ -180,7 +180,7 @@ def calculate_season_closing_ranking(
         player.player_id: [] for player in players
     }
     for result in results:
-        age = boundary_ordinal - result.first_publication_week.ordinal
+        age = boundary_ordinal - result.eligibility_ordinal
         if result.ranked and 0 <= age < result.validity_weeks:
             by_player[result.player_id].append(result)
 

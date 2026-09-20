@@ -21,6 +21,10 @@ class RankingResultVersion(FrozenInput):
 
     @model_validator(mode="after")
     def validate_effective_week(self):
+        if self.result.first_publication_week is None:
+            raise ValueError(
+                "Closing-only tournament result cannot enter Official ranking history"
+            )
         if self.effective_week.ordinal < self.result.first_publication_week.ordinal:
             raise ValueError("Result cannot be effective before first publication")
         if (

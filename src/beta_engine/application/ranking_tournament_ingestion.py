@@ -4,7 +4,7 @@ import hashlib
 import json
 from typing import Literal, Protocol
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from beta_engine.application.season_event_results_service import (
     SeasonEventResultPackage,
@@ -33,11 +33,45 @@ class TournamentRankingBinding(FrozenInput):
     edition_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     completed_week: RankingWeek
-    first_publication_week: RankingWeek
+    first_publication_week: RankingWeek | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    closing_eligibility_ordinal: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
     validity_weeks: int = Field(ge=1)
     ranking_status: Literal["ranked"]
     expected_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def validate_ranking_boundary(self):
+        if self.first_publication_week is not None:
+            if self.closing_eligibility_ordinal is not None:
+                raise ValueError(
+                    "Tournament ranking binding cannot mix Official and Closing-only eligibility"
+                )
+            if self.first_publication_week.ordinal <= self.completed_week.ordinal:
+                raise ValueError(
+                    "Tournament Official publication must follow completion"
+                )
+            return self
+        if (
+            self.completed_week != RankingWeek(season_index=49, week=61)
+            or self.closing_eligibility_ordinal
+            != self.completed_week.ordinal + 1
+        ):
+            raise ValueError(
+                "Closing-only tournament binding is reserved for final Season Week 61"
+            )
+        return self
+
+    @property
+    def closing_only(self) -> bool:
+        return self.first_publication_week is None
 
 
 class RankingSourceWriter(Protocol):
@@ -136,6 +170,10 @@ def prepare_tournament_ranking_sources(
 ) -> tuple[RankingResultVersion, ...]:
     """Validate the entire package before producing any persistence writes."""
     binding = TournamentRankingBinding.model_validate_json(binding.model_dump_json())
+    if binding.first_publication_week is None:
+        raise ValueError(
+            "Official ranking ingestion cannot consume Closing-only tournament binding"
+        )
     result = SeasonEventResultPackage.model_validate_json(result.model_dump_json())
     awards = EventPointAwardPackage.model_validate_json(awards.model_dump_json())
     season_start = 2000 + binding.completed_week.season_index
@@ -265,13 +303,11 @@ def prepare_tournament_ranking_sources(
     return tuple(versions)
 
 
-def prepare_canonical_tournament_ranking_sources(
+def _validated_canonical_awards(
     binding: TournamentRankingBinding,
     result: TournamentResultAuthority,
     awards: TournamentPointAwardAuthority,
-) -> tuple[RankingResultVersion, ...]:
-    """Materialize ranking history directly from canonical Run-owned authorities."""
-
+):
     binding = TournamentRankingBinding.model_validate_json(binding.model_dump_json())
     result = TournamentResultAuthority.model_validate_json(result.model_dump_json())
     awards = TournamentPointAwardAuthority.model_validate_json(awards.model_dump_json())
@@ -319,8 +355,7 @@ def prepare_canonical_tournament_ranking_sources(
         raise ValueError(
             "Canonical tournament awards must cover every result player exactly once"
         )
-
-    versions: list[RankingResultVersion] = []
+    pairs = []
     for player_id in sorted(award_by_id):
         player = result_by_id[player_id]
         award = award_by_id[player_id]
@@ -336,6 +371,24 @@ def prepare_canonical_tournament_ranking_sources(
             _hash(player.model_dump(mode="json")),
         ):
             raise ValueError("Canonical player award provenance mismatch")
+        pairs.append((player_id, award))
+    return binding, result, tuple(pairs)
+
+
+def prepare_canonical_tournament_ranking_sources(
+    binding: TournamentRankingBinding,
+    result: TournamentResultAuthority,
+    awards: TournamentPointAwardAuthority,
+) -> tuple[RankingResultVersion, ...]:
+    """Materialize ranking history directly from canonical Run-owned authorities."""
+
+    binding, result, pairs = _validated_canonical_awards(binding, result, awards)
+    if binding.first_publication_week is None:
+        raise ValueError(
+            "Official ranking ingestion cannot consume Closing-only tournament binding"
+        )
+    versions: list[RankingResultVersion] = []
+    for player_id, award in pairs:
         versions.append(
             RankingResultVersion(
                 run_id=binding.run_id,
@@ -360,6 +413,44 @@ def prepare_canonical_tournament_ranking_sources(
             )
         )
     return tuple(versions)
+
+
+def prepare_final_season_closing_ranking_results(
+    binding: TournamentRankingBinding,
+    result: TournamentResultAuthority,
+    awards: TournamentPointAwardAuthority,
+) -> tuple[OfficialRankingResult, ...]:
+    """Project final-season canonical tournament awards only into Closing Ranking.
+
+    These records have no Official publication week and must never enter ranking
+    history. Their sole eligibility boundary is the ordinal immediately after
+    2049/50 Week 61.
+    """
+
+    binding, result, pairs = _validated_canonical_awards(binding, result, awards)
+    if not binding.closing_only or binding.closing_eligibility_ordinal is None:
+        raise ValueError(
+            "Final Season Closing adapter requires Closing-only tournament binding"
+        )
+    return tuple(
+        OfficialRankingResult(
+            edition_id=binding.edition_id,
+            player_id=player_id,
+            completed_week=binding.completed_week,
+            closing_eligibility_ordinal=binding.closing_eligibility_ordinal,
+            validity_weeks=binding.validity_weeks,
+            main_points=award.ranking_points_awarded,
+            source_fingerprint=_hash(
+                {
+                    "binding": binding.model_dump(mode="json"),
+                    "tournament_result": result.fingerprint,
+                    "point_award": award.award_fingerprint,
+                    "consumer": "season_closing_ranking",
+                }
+            ),
+        )
+        for player_id, award in pairs
+    )
 
 
 def ingest_canonical_tournament_ranking_sources(

@@ -124,8 +124,10 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   with next Season Week 1 as first publication, the final simulation command succeeds
   idempotently, and the returned position remains Week 61 with
   `season_transition_required` rather than advancing the world clock.
-  The resolver explicitly refuses 2049/50 until its no-next-Week-1 source adapter
-  exists. Closing Ranking archives now participate in Saved Revision capture/restore
+  The 2049/50 edge now uses a canonical Closing-only owned tournament source v6:
+  it carries a boundary ordinal after final Week 61 rather than inventing 2050/51
+  Week 1, never enters Official ranking history, and feeds the final Season Closing
+  Ranking directly. Closing Ranking archives participate in Saved Revision capture/restore
   through `ranking_revision_state.v6`; restore requires the exact recovered Week-61
   publication and outgoing policy before archive installation. Season summary/Closure
   Marker and the full atomic Season Transition remain open.

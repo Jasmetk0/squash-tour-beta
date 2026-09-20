@@ -97,6 +97,10 @@ def stage_official_ranking_transition(
         for r in request.results
     ):
         raise ValueError("Ranking inputs contain future completed results")
+    if any(r.first_publication_week is None for r in request.results):
+        raise ValueError(
+            "Official Ranking transition cannot consume Closing-only tournament results"
+        )
     if any(
         r.first_publication_week.ordinal > request.target_week.ordinal
         for r in request.results

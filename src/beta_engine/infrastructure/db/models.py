@@ -366,6 +366,19 @@ class TournamentApplicationSubmissionAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class ResolvedApplicationValidationSlotModel(Base):
+    """Immutable complete validation result for one global entry-decision slot."""
+
+    __tablename__ = "resolved_application_validation_slots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    source_slot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class DefinitiveWildCardAssignmentAuthorityModel(Base):
     """Immutable definitive WC/RWC assignment authority."""
 

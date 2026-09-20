@@ -362,9 +362,19 @@ Revision → Working Draft/head advance → Run Completed. The command uses
 `BEGIN IMMEDIATE`, embeds the closure evidence in the exact final revision, records
 an audit request fingerprint for retry identity, and rolls back every staged closure
 write on failure. Final preflight can therefore become executable when its real
-state blockers are empty. Remaining Season Transition work is the ordinary
-season-0–48 path: development/recovery, new-season policy activation, explicit
-season-scoped resets, lifecycle/prospects, Week-1 Official Ranking and public state.
+state blockers are empty. Ordinary seasons now also have a deterministic
+`season_transition_configuration.v1` staging contract. It binds the exact Week-61
+Official Ranking, Week-61 sporting state and current Saved Revision head to the
+incoming Week-1 Ranking Policy, incoming Player Development Policy and an explicit
+`season_scoped_reset_catalog.v1`. The default proposal inherits both supported
+outgoing policies, while the preview API may supply explicit incoming overrides.
+The reset registry is deliberately empty until a real branch-scoped resettable
+season-stat producer exists; empty means reset nothing, not fabricate zero values.
+The ordinary preflight fingerprints this default configuration and no longer lists
+policy activation or reset-catalog construction as missing kernels. Remaining
+ordinary season-0–48 work is development/recovery integration, lifecycle/prospects,
+Week-1 Official Ranking/public state and the atomic rollover commit that activates
+the selected configuration.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

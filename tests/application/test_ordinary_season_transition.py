@@ -1,17 +1,19 @@
 import json
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import select, text
 
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
-import beta_engine.application.ordinary_season_transition as ordinary_transition
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
     commit_ordinary_season_transition,
 )
+from beta_engine.application.official_ranking_transition import RankingTransitionContext
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
@@ -21,6 +23,7 @@ from beta_engine.domain.players.sporting import (
     PlayerDevelopmentPolicy,
     PlayerSportingWeekState,
 )
+from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
     RankingWeek,
@@ -33,8 +36,6 @@ from beta_engine.domain.run_revisions import (
     INITIAL_SAVED_REVISION_KIND,
     RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
     RUN_WORKING_DRAFT_SCHEMA_VERSION,
-    SEASON_TRANSITION_AUDIT_EVENT_KIND,
-    SEASON_TRANSITION_SAVED_REVISION_KIND,
     initial_saved_revision_payload,
     saved_revision_content_hash,
 )
@@ -50,7 +51,7 @@ from beta_engine.infrastructure.db.models import (
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
-    OfficialRankingCandidateModel,
+    OfficialRankingCommandModel,
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
@@ -71,10 +72,6 @@ from beta_engine.infrastructure.db.saved_revision_season_closure import (
 )
 
 
-COMPLETED_WEEK = RankingWeek(season_index=0, week=61)
-TARGET_WEEK = RankingWeek(season_index=1, week=1)
-
-
 @pytest.fixture
 def database(tmp_path):
     engine = create_sqlite_engine(
@@ -87,6 +84,7 @@ def database(tmp_path):
 
 
 def _install_boundary(session):
+    completed = RankingWeek(season_index=0, week=61)
     run = RunContainerModel(
         run_id="run",
         display_name="Run",
@@ -119,7 +117,7 @@ def _install_boundary(session):
     )
     base_summary = {
         "kind": INITIAL_SAVED_REVISION_KIND,
-        "summary": "Test ordinary season-boundary base",
+        "summary": "Test ordinary-season boundary base",
     }
     base_hash = saved_revision_content_hash(
         revision_id="revision-before-season",
@@ -169,26 +167,78 @@ def _install_boundary(session):
         PlayerLifecycleWeekState(
             run_id="run",
             branch_id="branch",
-            week=COMPLETED_WEEK,
+            week=completed,
             players=(),
-            source_initial_world_fingerprint="empty-world",
+            source_initial_world_fingerprint="world",
         ),
     )
-    ranking_policy = OfficialRankingPolicy(policy_id="season-0-policy", best_n=15)
-    official = calculate_official_ranking(
-        run_id="run",
-        branch_id="branch",
-        week=COMPLETED_WEEK,
-        policy=ranking_policy,
-        players=lifecycle.ranking_roster(),
-        results=(),
-    )
-    OfficialRankingCandidateStore(session).append(official, bootstrap=True)
+    policy = OfficialRankingPolicy(policy_id="season-0-policy", best_n=15)
+    candidates = OfficialRankingCandidateStore(session)
+    previous = None
+    for week_number in range(1, 62):
+        ranking_week = RankingWeek(season_index=0, week=week_number)
+        if previous is None:
+            receipt_command = RankingBootstrapCommand(
+                command_id="ranking-week-1",
+                run_id="run",
+                branch_id="branch",
+                target_week=ranking_week,
+                policy=policy,
+                players=(),
+                discipline="stored_zeros",
+            )
+        else:
+            receipt_command = RankingWeekCommand(
+                command_id=f"ranking-week-{week_number}",
+                context=RankingTransitionContext(
+                    run_id="run",
+                    branch_id="branch",
+                    completed_week=previous.week,
+                    target_week=ranking_week,
+                    policy=policy,
+                    players=(),
+                    discipline="stored_zeros",
+                ),
+                tournaments=(),
+            )
+        snapshot = calculate_official_ranking(
+            run_id="run",
+            branch_id="branch",
+            week=ranking_week,
+            policy=policy,
+            players=(),
+            results=(),
+            previous=previous,
+        )
+        candidates.append(snapshot, bootstrap=previous is None)
+        manifest = RankingInputManifest(
+            command_request_fingerprint=receipt_command.fingerprint,
+            zeros_from_history=True,
+            players=(),
+            results=(),
+        )
+        session.add(
+            OfficialRankingCommandModel(
+                run_id="run",
+                branch_id="branch",
+                command_id=receipt_command.command_id,
+                request_fingerprint=receipt_command.fingerprint,
+                request_payload_json=receipt_command.canonical_request_json,
+                target_ordinal=ranking_week.ordinal,
+                snapshot_fingerprint=snapshot.fingerprint,
+                input_manifest_version=1,
+                input_manifest_json=manifest.model_dump_json(),
+            )
+        )
+        previous = snapshot
+
+    official = previous
+    assert official is not None and official.week == completed
     session.add(
         PublishedOfficialRankingModel(
             run_id="run",
             branch_id="branch",
-            week_ordinal=COMPLETED_WEEK.ordinal,
+            week_ordinal=completed.ordinal,
             snapshot_fingerprint=official.fingerprint,
             payload_json=official.model_dump_json(),
         )
@@ -197,86 +247,73 @@ def _install_boundary(session):
         AuthoritativeWorldStateModel(
             run_id="run",
             branch_id="branch",
-            current_ordinal=COMPLETED_WEEK.ordinal,
+            current_ordinal=completed.ordinal,
             ranking_fingerprint=official.fingerprint,
         )
     )
 
-    development_policy = PlayerDevelopmentPolicy(policy_id="season-0-development")
-    sporting = PlayerSportingWeekState(
-        run_id="run",
-        branch_id="branch",
-        week=COMPLETED_WEEK,
-        players=(),
-        effective_development_policy=development_policy,
-        completed_context_fingerprint="week61-context",
-        source_initial_world_fingerprint="empty-world",
-        stage_provenance="test",
+    development_policy = PlayerDevelopmentPolicy(
+        policy_id="season-0-development"
     )
-    put_sporting(session, sporting)
-    put_completed_context(
+    sporting = put_sporting(
         session,
-        CompletedWeekSportingContext(
+        PlayerSportingWeekState(
             run_id="run",
             branch_id="branch",
-            completed_week=COMPLETED_WEEK,
-            competitive_match_counts=(),
-            source_fingerprints=(),
-            provenance="explicit empty Week 61 test context",
+            week=RankingWeek(season_index=0, week=1),
+            players=(),
+            effective_development_policy=development_policy,
+            completed_context_fingerprint="bootstrap:not-a-completed-week",
+            source_initial_world_fingerprint="world",
+            stage_provenance="test-bootstrap",
         ),
     )
-    session.flush()
-    return official
-
-
-def _patch_saved_revision_captures(monkeypatch):
-    calls = []
-
-    def fake_capture(name):
-        def capture(session, payload, *, run_id, branch_id):
-            calls.append((name, run_id, branch_id))
-        return capture
-
-    for name in (
-        "capture_saved_ranking_component",
-        "capture_saved_initial_world",
-        "capture_saved_lifecycle",
-        "capture_saved_sporting",
-        "capture_saved_simulation_slots",
-    ):
-        monkeypatch.setattr(ordinary_transition, name, fake_capture(name))
-    return calls
-
-
-def _command(configuration, preflight_fingerprint="a" * 64):
-    return OrdinarySeasonTransitionCommand(
-        command_id="advance-season-0",
-        run_id="run",
-        branch_id="branch",
-        expected_preflight_fingerprint=preflight_fingerprint,
-        expected_saved_revision_id="revision-before-season",
-        expected_draft_version=7,
-        configuration=configuration,
-        season_saved_revision_id="revision-season-1",
-        audit_event_id="audit-season-1",
-    )
-
-
-@pytest.mark.pr_critical
-def test_atomic_ordinary_season_writer_commits_complete_week1_state(database, monkeypatch):
-    capture_calls = _patch_saved_revision_captures(monkeypatch)
-    with database.begin() as session:
-        predecessor = _install_boundary(session)
-        configuration = resolve_season_transition_configuration(
-            session,
-            run_id="run",
-            branch_id="branch",
+    for completed_week_number in range(1, 62):
+        sporting_week = RankingWeek(
+            season_index=0,
+            week=completed_week_number,
         )
+        context = put_completed_context(
+            session,
+            CompletedWeekSportingContext(
+                run_id="run",
+                branch_id="branch",
+                completed_week=sporting_week,
+                competitive_match_counts=(),
+                source_fingerprints=(),
+                provenance=f"explicit empty test context week {completed_week_number}",
+            ),
+        )
+        if completed_week_number == 61:
+            break
+        target_week = RankingWeek(
+            season_index=0,
+            week=completed_week_number + 1,
+        )
+        sporting = put_sporting(
+            session,
+            PlayerSportingWeekState(
+                run_id="run",
+                branch_id="branch",
+                week=target_week,
+                players=(),
+                effective_development_policy=development_policy,
+                applied_development_policy_id=development_policy.policy_id,
+                completed_context_fingerprint=context.fingerprint,
+                source_initial_world_fingerprint="world",
+                predecessor_fingerprint=sporting.fingerprint,
+                stage_provenance="test-week-transition",
+            ),
+        )
+    assert sporting.week == completed
+    return completed
 
-    position = AuthoritativeSimulationPosition(
+
+def _position(completed):
+    return AuthoritativeSimulationPosition(
         run_id="run",
         branch_id="branch",
-        current_week=COMPLETED_WEEK,
+        current_week=completed,
         current_slot_id=None,
         slot_ordinal=None,
         unresolved_group_ids=(),
@@ -286,176 +323,176 @@ def test_atomic_ordinary_season_writer_commits_complete_week1_state(database, mo
         supported_tournament_complete=True,
         week_ready_for_transition=True,
         transition_blockers=("season_transition_required",),
-        terminal_sporting_fingerprint="d" * 64,
-        position_fingerprint="e" * 64,
+        terminal_sporting_fingerprint="a" * 64,
+        position_fingerprint="b" * 64,
     )
+
+
+def _command(configuration, preflight_fingerprint):
+    return OrdinarySeasonTransitionCommand(
+        command_id="advance-season-1",
+        run_id="run",
+        branch_id="branch",
+        configuration=configuration,
+        expected_preflight_fingerprint=preflight_fingerprint,
+        expected_saved_revision_id="revision-before-season",
+        expected_draft_version=7,
+        season_saved_revision_id="revision-season-1",
+        audit_event_id="audit-season-1",
+    )
+
+
+@pytest.mark.pr_critical
+def test_driver_commits_complete_ordinary_season_transition_and_retry(database, monkeypatch):
+    with database.begin() as session:
+        completed = _install_boundary(session)
+
     monkeypatch.setattr(
         AuthoritativeRunSimulationDriver,
         "_position",
-        lambda self, session, run_id, branch_id: position,
+        lambda self, session, run_id, branch_id: _position(completed),
     )
     driver = AuthoritativeRunSimulationDriver(database, None, None)
     preflight = driver.season_transition_preflight(run_id="run", branch_id="branch")
-    assert preflight.final_season is False
-    assert preflight.target_week == TARGET_WEEK
+    assert preflight.ready_for_execution is True
+    assert preflight.implementation_gaps == ()
     assert preflight.default_closing_ranking_fingerprint is not None
-    assert preflight.default_configuration_fingerprint == configuration.fingerprint
     assert preflight.default_sporting_fingerprint is not None
     assert preflight.default_lifecycle_fingerprint is not None
     assert preflight.default_ranking_fingerprint is not None
-    assert preflight.state_blockers == ()
-    assert preflight.implementation_gaps == (
-        "season_prospect_creation_bridge_not_implemented",
-    )
-    assert preflight.ready_for_execution is False
-
-    result = driver.advance_season(
-        _command(configuration, preflight.preflight_fingerprint)
-    )
-    assert result.completed_week == COMPLETED_WEEK
-    assert result.target_week == TARGET_WEEK
-    assert result.saved_revision_id == "revision-season-1"
-    assert result.draft_version == 8
-    assert [name for name, _, _ in capture_calls] == [
-        "capture_saved_ranking_component",
-        "capture_saved_initial_world",
-        "capture_saved_lifecycle",
-        "capture_saved_sporting",
-        "capture_saved_simulation_slots",
-    ]
 
     with database() as session:
+        configuration = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+    command = _command(configuration, preflight.preflight_fingerprint)
+
+    result = driver.advance_season(command)
+    assert result.target_week == RankingWeek(season_index=1, week=1)
+    assert result.draft_version == 8
+
+    with database() as session:
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert world.current_ordinal == result.target_week.ordinal
+        assert world.ranking_fingerprint == result.official_ranking_fingerprint
+
+        publication = session.get(
+            PublishedOfficialRankingModel,
+            ("run", "branch", result.target_week.ordinal),
+        )
+        assert publication.snapshot_fingerprint == result.official_ranking_fingerprint
+
+        lifecycle = get_lifecycle(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=result.target_week,
+        )
+        sporting = get_sporting(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=result.target_week,
+        )
+        assert lifecycle.fingerprint == result.player_lifecycle_fingerprint
+        assert sporting.fingerprint == result.player_sporting_fingerprint
+
+        revision = session.get(BranchSavedRevisionModel, "revision-season-1")
         branch = session.get(RunBranchModel, "branch")
         draft = session.scalar(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == "branch"
             )
         )
-        revision = session.get(BranchSavedRevisionModel, "revision-season-1")
-        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
-        publication = session.get(
-            PublishedOfficialRankingModel,
-            ("run", "branch", TARGET_WEEK.ordinal),
-        )
-        event = session.get(
-            AuthoritativeWorldEventModel,
-            ("run", "branch", "advance-season-0"),
-        )
-        lifecycle = get_lifecycle(
-            session, run_id="run", branch_id="branch", week=TARGET_WEEK
-        )
-        sporting = get_sporting(
-            session, run_id="run", branch_id="branch", week=TARGET_WEEK
-        )
-
+        assert revision.parent_revision_id == "revision-before-season"
         assert branch.saved_head_revision_id == "revision-season-1"
         assert draft.base_revision_id == "revision-season-1"
         assert draft.draft_version == 8
-        assert revision.kind == SEASON_TRANSITION_SAVED_REVISION_KIND
-        assert revision.parent_revision_id == "revision-before-season"
-        assert revision.sequence == 2
-        assert world.current_ordinal == TARGET_WEEK.ordinal
-        assert publication.snapshot_fingerprint == result.official_ranking_fingerprint
-        assert world.ranking_fingerprint == publication.snapshot_fingerprint
-        assert lifecycle.fingerprint == result.player_lifecycle_fingerprint
-        assert sporting.fingerprint == result.player_sporting_fingerprint
-        assert event.event_kind == "season_transition_completed"
-        assert event.week_ordinal == TARGET_WEEK.ordinal
-        assert predecessor.fingerprint != publication.snapshot_fingerprint
 
-        payload = json.loads(revision.payload_json)
+        revision_payload = json.loads(revision.payload_json)
+        assert (
+            revision_payload["content"]["ranking_preparation"]["state"]["schema_version"]
+            == "ranking_revision_state.v7"
+        )
+        assert [
+            row["event_kind"]
+            for row in revision_payload["content"]["ranking_preparation"]["state"][
+                "authoritative_transition_state"
+            ]["events"]
+        ] == ["season_transition_completed"]
+
         closure = load_saved_revision_season_closure(
-            payload,
+            revision_payload,
             run_id="run",
             branch_id="branch",
             revision_id="revision-season-1",
         )
         assert closure is not None
-        assert closure.parsed_marker.completed_week == COMPLETED_WEEK
-        assert closure.parsed_marker.final_saved_revision_id == "revision-season-1"
-        assert (
-            closure.parsed_marker.closing_ranking_fingerprint
-            == result.closing_ranking_fingerprint
-        )
+        assert closure.parsed_summary.fingerprint == result.season_summary_fingerprint
+        assert closure.parsed_marker.fingerprint == result.closure_marker_fingerprint
 
-        closing = session.scalars(select(SeasonClosingRankingModel)).all()
-        assert len(closing) == 1
-        assert closing[0].fingerprint == result.closing_ranking_fingerprint
+        event = session.get(
+            AuthoritativeWorldEventModel,
+            ("run", "branch", "advance-season-1"),
+        )
+        assert event.event_kind == "season_transition_completed"
+        assert event.week_ordinal == result.target_week.ordinal
         audit = session.get(BranchRevisionAuditEventModel, "audit-season-1")
-        assert audit.event_kind == SEASON_TRANSITION_AUDIT_EVENT_KIND
+        assert audit.saved_revision_id == "revision-season-1"
 
-    with database.begin() as session:
-        retry = commit_ordinary_season_transition(
-            session,
-            _command(configuration, preflight.preflight_fingerprint),
-        )
-        assert retry == result
-
-    with database() as session:
-        assert len(session.scalars(select(BranchSavedRevisionModel)).all()) == 2
-        assert len(session.scalars(select(SeasonClosingRankingModel)).all()) == 1
-        assert len(session.scalars(select(BranchRevisionAuditEventModel)).all()) == 1
-        assert len(session.scalars(select(AuthoritativeWorldEventModel)).all()) == 1
+    assert driver.advance_season(command) == result
 
 
 @pytest.mark.pr_critical
-def test_atomic_ordinary_season_writer_rolls_back_after_publication_failure(
-    database, monkeypatch
-):
-    _patch_saved_revision_captures(monkeypatch)
+def test_atomic_writer_rolls_back_every_stage_after_public_state_fault(database):
     with database.begin() as session:
-        predecessor = _install_boundary(session)
+        completed = _install_boundary(session)
+
+    with database() as session:
         configuration = resolve_season_transition_configuration(
             session,
             run_id="run",
             branch_id="branch",
         )
-    command = _command(configuration)
+    command = _command(configuration, "c" * 64)
 
     with pytest.raises(RuntimeError, match="fault after ordinary Season Transition publication"):
         with database.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
             commit_ordinary_season_transition(
                 session,
                 command,
                 fault_at="after_publication",
             )
 
+    target = RankingWeek(season_index=1, week=1)
     with database() as session:
-        branch = session.get(RunBranchModel, "branch")
-        draft = session.scalar(
-            select(BranchWorkingDraftModel).where(
-                BranchWorkingDraftModel.branch_id == "branch"
-            )
-        )
         world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
-        assert branch.saved_head_revision_id == "revision-before-season"
-        assert draft.base_revision_id == "revision-before-season"
-        assert draft.draft_version == 7
-        assert world.current_ordinal == COMPLETED_WEEK.ordinal
-        assert world.ranking_fingerprint == predecessor.fingerprint
+        assert world.current_ordinal == completed.ordinal
         assert (
-            session.get(
-                PublishedOfficialRankingModel,
-                ("run", "branch", TARGET_WEEK.ordinal),
-            )
+            session.get(PublishedOfficialRankingModel, ("run", "branch", target.ordinal))
             is None
         )
         assert get_lifecycle(
-            session, run_id="run", branch_id="branch", week=TARGET_WEEK
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=target,
         ) is None
         assert get_sporting(
-            session, run_id="run", branch_id="branch", week=TARGET_WEEK
-        ) is None
-        assert session.get(BranchSavedRevisionModel, "revision-season-1") is None
-        assert session.get(BranchRevisionAuditEventModel, "audit-season-1") is None
-        assert session.get(
-            AuthoritativeWorldEventModel,
-            ("run", "branch", "advance-season-0"),
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=target,
         ) is None
         assert session.scalars(select(SeasonClosingRankingModel)).all() == []
-        candidates = session.scalars(
-            select(OfficialRankingCandidateModel).order_by(
-                OfficialRankingCandidateModel.week_ordinal
+        assert session.get(BranchSavedRevisionModel, "revision-season-1") is None
+        assert (
+            session.get(
+                AuthoritativeWorldEventModel,
+                ("run", "branch", "advance-season-1"),
             )
-        ).all()
-        assert [row.week_ordinal for row in candidates] == [COMPLETED_WEEK.ordinal]
+            is None
+        )

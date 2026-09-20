@@ -44,6 +44,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityConflict,
     TournamentWildCardAuthorityStore,
+    wild_card_decision_slot_ordinals,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -455,6 +456,41 @@ def test_canonical_wc_v2_cannot_skip_missing_global_ordinal(database):
                 original_wild_card_player_ids=("B",),
                 decision_week=RankingWeek(season_index=0, week=3),
                 decision_slot_ordinal=2,
+            )
+
+
+@pytest.mark.pr_critical
+def test_wc_chronology_fails_closed_after_newer_entry_field_repair(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        week = RankingWeek(season_index=0, week=3)
+        TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-before-repair",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        )
+        TournamentEntryFieldStore(session).stage_pre_draw_repair(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            applications=applications(),
+            withdrawn_player_ids=("D",),
+            command_id="withdraw-after-wc",
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="no longer references terminal Entry Field",
+        ):
+            wild_card_decision_slot_ordinals(
+                session,
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=week.ordinal,
             )
 
 

@@ -311,7 +311,9 @@ an operation that actually needs that sporting state. A branch-aware prospect re
 model now uses exact lifecycle history as the visibility authority: Admin may inspect
 an exact historical week and Viewer exposes only the current selected Viewer Branch
 pre-Tour population. Future pregenerated cohorts and seed/profile internals are not
-Viewer data.
+Viewer data. Once a prospect becomes lifecycle-visible on any branch, the backing
+public identity metadata is immutable under normal prospect materialization so later
+overwrite cannot rewrite historical Viewer identity.
 
 Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state

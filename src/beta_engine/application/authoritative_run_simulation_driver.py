@@ -12,7 +12,7 @@ import json
 from dataclasses import dataclass
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
@@ -60,6 +60,13 @@ from beta_engine.application.ranking_tournament_ingestion import (
     prepare_final_season_closing_ranking_results,
     prepare_tournament_ranking_sources,
 )
+from beta_engine.application.season_entry_batch_service import (
+    EntryBatchGenerateRequest,
+    SeasonEntryBatchService,
+)
+from beta_engine.application.run_entry_decision_slot import (
+    freeze_entry_batch_proposal_as_run_slot,
+)
 from beta_engine.application.season_match_service import (
     FrozenQualifierPromotion,
     SeasonEventMatchPackage,
@@ -96,6 +103,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
+)
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
 )
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
@@ -136,6 +146,31 @@ class AuthoritativeWalkoverCommand(FrozenInput):
     expected_revision_id: str = Field(min_length=1)
     group_id: str = Field(min_length=1)
     withdrawn_player_id: str = Field(min_length=1)
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeEntryDecisionSlotCommand(FrozenInput):
+    """Guarded commit of one shared-snapshot Entry decision Simulation Slot."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    decision_slot_ordinal: int = Field(ge=1)
+    event_ids: tuple[str, ...] = Field(min_length=1)
+    seed: int = 12345
+    expected_entry_batch_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @model_validator(mode="after")
+    def canonical_events(self):
+        if self.event_ids != tuple(sorted(set(self.event_ids))):
+            raise ValueError("Entry decision command event IDs must be canonical and unique")
+        return self
 
     @property
     def fingerprint(self) -> str:
@@ -205,6 +240,155 @@ class AuthoritativeRunSimulationDriver:
     ) -> AuthoritativeSimulationPosition:
         with self.factory() as session:
             return self._position(session, run_id, branch_id)
+
+    def preview_entry_decision_slot(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_ids: tuple[str, ...],
+        decision_slot_ordinal: int,
+        seed: int = 12345,
+    ) -> dict:
+        """Build complete pre-cut Entry decisions without mutating compatibility state."""
+
+        if not event_ids or event_ids != tuple(sorted(set(event_ids))):
+            raise ValueError("Entry decision preview event IDs must be canonical and unique")
+        if decision_slot_ordinal < 1:
+            raise ValueError("Entry decision slot ordinal must be one-based")
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or not branch.saved_head_revision_id:
+                raise ValueError("Entry decision preview requires a saved Branch head")
+
+            batch = SeasonEntryBatchService(
+                self.match_service.draw_service.entry_list_service
+            ).generate_overlapping_entry_lists(
+                event_ids=list(event_ids),
+                request=EntryBatchGenerateRequest(
+                    seed=seed,
+                    dry_run=True,
+                    overwrite_existing=False,
+                    max_alternates=0,
+                    include_not_entered=False,
+                ),
+            )
+            authority = freeze_entry_batch_proposal_as_run_slot(
+                batch=batch,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+
+            # Preview must also fail on already-owned global chronology instead of
+            # advertising a proposal that commit can never accept.
+            existing = RunEntryDecisionSlotStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+            if existing is not None and existing != authority:
+                raise ValueError(
+                    "Entry decision preview conflicts with persisted slot authority"
+                )
+
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": decision_slot_ordinal,
+                "event_ids": list(event_ids),
+                "seed": seed,
+                "expected_revision_id": branch.saved_head_revision_id,
+                "entry_batch_fingerprint": batch.metadata.build_fingerprint,
+                "application_decisions_fingerprint": (
+                    batch.metadata.application_decisions_fingerprint
+                ),
+                "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "decision_count": len(authority.decisions),
+                "slot_fingerprint": authority.fingerprint,
+                "authority": authority.model_dump(mode="json"),
+                "persisted": existing is not None,
+            }
+
+    def commit_entry_decision_slot(
+        self,
+        command: AuthoritativeEntryDecisionSlotCommand,
+    ) -> dict:
+        """Rebuild and atomically persist the exact previewed Entry decision slot."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Entry decision slot week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Entry decision Branch head is stale")
+
+            batch = SeasonEntryBatchService(
+                self.match_service.draw_service.entry_list_service
+            ).generate_overlapping_entry_lists(
+                event_ids=list(command.event_ids),
+                request=EntryBatchGenerateRequest(
+                    seed=command.seed,
+                    dry_run=True,
+                    overwrite_existing=False,
+                    max_alternates=0,
+                    include_not_entered=False,
+                ),
+            )
+            if (
+                batch.metadata.build_fingerprint
+                != command.expected_entry_batch_fingerprint
+            ):
+                raise ValueError("Entry decision batch proposal is stale")
+
+            authority = freeze_entry_batch_proposal_as_run_slot(
+                batch=batch,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if authority.fingerprint != command.expected_slot_fingerprint:
+                raise ValueError("Entry decision slot proposal is stale")
+
+            store = RunEntryDecisionSlotStore(session)
+            existing = store.get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            stored = store.append(authority)
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "event_ids": list(command.event_ids),
+                "entry_batch_fingerprint": batch.metadata.build_fingerprint,
+                "application_decisions_fingerprint": (
+                    batch.metadata.application_decisions_fingerprint
+                ),
+                "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "decision_count": len(stored.decisions),
+                "slot_fingerprint": stored.fingerprint,
+                "authority": stored.model_dump(mode="json"),
+                "adoption": "exact_retry" if existing == stored else "committed",
+            }
 
     def season_transition_preflight(
         self, *, run_id: str, branch_id: str

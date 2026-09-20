@@ -8,6 +8,7 @@ from typing import Literal
 
 from pydantic import Field
 
+from beta_engine.domain.players.tour_entry import PlayerTourEntryTrigger
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.tournaments.entry_field import (
     EntryWindow,
@@ -52,6 +53,22 @@ class TournamentApplicationSubmissionAuthority(FrozenInput):
                 separators=(",", ":"),
             ).encode()
         ).hexdigest()
+
+    def to_tour_entry_trigger(self) -> PlayerTourEntryTrigger:
+        """Project this valid submission into the canonical first-entry contract."""
+
+        return PlayerTourEntryTrigger(
+            run_id=self.run_id,
+            branch_id=self.branch_id,
+            player_id=self.player_id,
+            event_id=self.event_id,
+            trigger_kind="valid_tournament_application",
+            trigger_week=self.submission_week,
+            decision_slot_ordinal=self.decision_slot_ordinal,
+            source_evidence_id=self.application_id,
+            source_evidence_fingerprint=self.fingerprint,
+            provenance=self.provenance,
+        )
 
     def to_entry_field_application(self) -> TournamentEntryApplication:
         """Project submission truth into the existing downstream field-cut payload."""

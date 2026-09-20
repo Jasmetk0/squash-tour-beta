@@ -309,7 +309,7 @@ def birth_week_prospect_model(
 
 
 @pytest.mark.pr_critical
-def test_prospect_bridge_inspection_exposes_nonblocking_target_week_profile_readiness(tmp_path):
+def test_prospect_bridge_inspection_exposes_target_week_profile_blocker(tmp_path):
     path = tmp_path / "prospect-bridge-inspection.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         run_id, branch_id, _ = prepared_transition(
@@ -379,7 +379,7 @@ def test_prospect_bridge_inspection_exposes_nonblocking_target_week_profile_read
         assert inspection["target_week"] == {"season_index": 0, "week": 2}
         assert inspection["run_scoped_source"] is True
         assert inspection["bridge_supported"] is True
-        assert inspection["blocking_code"] == "no_transition_blocker"
+        assert inspection["blocking_code"] == "prospect_sporting_profile_unready"
         assert inspection["unresolved_contracts"] == [
             "canonical_sporting_profile",
         ]

@@ -42,6 +42,7 @@ def accepted_ids(entry_list):
     }
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path):
     service = make_service(tmp_path)
@@ -80,6 +81,16 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
     assert forward.metadata.active_players_fingerprint == reverse.metadata.active_players_fingerprint
     assert forward.metadata.resolved_conflict_player_count == 0
     assert forward.metadata.unresolved_conflict_player_count > 0
+    assert forward.application_decisions == reverse.application_decisions
+    assert (
+        forward.metadata.application_decisions_fingerprint
+        == reverse.metadata.application_decisions_fingerprint
+    )
+    assert forward.application_decisions
+    assert all(
+        decision.target.value in {"MAIN", "QUALIFICATION"}
+        for decision in forward.application_decisions
+    )
     assert (
         accepted_ids(forward.entry_lists_by_event_id[first_id])
         & accepted_ids(forward.entry_lists_by_event_id[second_id])
@@ -90,6 +101,32 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
         for entry_list in forward.entry_lists_by_event_id.values()
     )
     assert not (tmp_path / "entries.json").exists()
+
+    compact = batch_service.generate_overlapping_entry_lists(
+        event_ids=[second_id, first_id],
+        request=request.model_copy(
+            update={
+                "include_not_entered": False,
+                "max_alternates": 0,
+            }
+        ),
+    )
+    assert compact.application_decisions == forward.application_decisions
+    assert (
+        compact.metadata.application_decisions_fingerprint
+        == forward.metadata.application_decisions_fingerprint
+    )
+    compact_visible_pairs = {
+        (entry_list.event_id, entry.player_id)
+        for entry_list in compact.entry_lists_by_event_id.values()
+        for entry in entry_list.entries
+        if entry.player_id is not None
+    }
+    submitted_pairs = {
+        (decision.event_id, decision.player_id)
+        for decision in compact.application_decisions
+    }
+    assert compact_visible_pairs < submitted_pairs
 
     persisted = batch_service.generate_overlapping_entry_lists(
         event_ids=[second_id, first_id],

@@ -39,12 +39,14 @@ class EntryBatchMetadata(BaseModel):
     # Canonical entry batching no longer auto-resolves competing applications.
     resolved_conflict_player_count: int = Field(default=0, ge=0)
     unresolved_conflict_player_count: int = Field(default=0, ge=0)
+    application_decisions_fingerprint: str
     build_fingerprint: str
     persistence_path: str | None = None
 
 
 class SeasonEntryBatchResult(BaseModel):
     entry_lists_by_event_id: dict[str, SeasonEventEntryList]
+    application_decisions: tuple[EntryDecision, ...] = ()
     metadata: EntryBatchMetadata
 
 
@@ -172,6 +174,31 @@ class SeasonEntryBatchService:
                 )
             decisions_by_event[event_id] = decisions
             warnings_by_event[event_id] = warnings
+
+        application_decisions = tuple(
+            sorted(
+                (
+                    decision
+                    for event_id in ordered_event_ids
+                    for decision in decisions_by_event[event_id].values()
+                    if decision.target in {
+                        EntryTarget.MAIN,
+                        EntryTarget.QUALIFICATION,
+                    }
+                ),
+                key=lambda decision: (
+                    decision.event_id,
+                    decision.player_id,
+                    decision.target.value,
+                ),
+            )
+        )
+        application_decisions_fingerprint = service._fingerprint(
+            [
+                decision.model_dump(mode="json")
+                for decision in application_decisions
+            ]
+        )
 
         pool_capacity: dict[tuple[str, str], int] = {}
         pool_candidates: dict[tuple[str, str], list[EntryDecision]] = {}
@@ -412,6 +439,7 @@ class SeasonEntryBatchService:
                 "season": season,
                 "seed": request.seed,
                 "active_players_fingerprint": active_fp,
+                "application_decisions_fingerprint": application_decisions_fingerprint,
                 "entry_lists": [
                     lists[event_id].metadata.build_fingerprint
                     for event_id in ordered_event_ids
@@ -428,6 +456,7 @@ class SeasonEntryBatchService:
             active_players_fingerprint=active_fp,
             resolved_conflict_player_count=0,
             unresolved_conflict_player_count=len(conflicted_players),
+            application_decisions_fingerprint=application_decisions_fingerprint,
             build_fingerprint=batch_fp,
             persistence_path=(
                 None if request.dry_run else str(service.entry_lists_path)
@@ -441,6 +470,7 @@ class SeasonEntryBatchService:
             )
         return SeasonEntryBatchResult(
             entry_lists_by_event_id=lists,
+            application_decisions=application_decisions,
             metadata=metadata,
         )
 

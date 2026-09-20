@@ -121,40 +121,33 @@ def test_adopted_match_schedule_reservation_blocks_late_entry_slot(tmp_path):
 
 
 @pytest.mark.pr_critical
-def test_sparse_match_schedule_can_reserve_middle_entry_ordinal(tmp_path):
+def test_multiple_leading_entry_slots_shift_first_match_layer(tmp_path):
     driver, factory, week, _, _ = _multi_driver_fixture(
-        tmp_path / "entry-reserved-middle"
+        tmp_path / "two-leading-entry-slots"
     )
     with factory.begin() as session:
-        RunEntryDecisionSlotStore(session).append(_entry_slot(week, ordinal=2))
+        store = RunEntryDecisionSlotStore(session)
+        store.append(_entry_slot(week, ordinal=1))
+        second = _entry_slot(week, ordinal=2).model_copy(
+            update={
+                "source_entry_batch_fingerprint": "e" * 64,
+                "source_application_decisions_fingerprint": "f" * 64,
+            }
+        )
+        store.append(second)
 
     proposal = driver.propose_topological_schedule(
         run_id="run",
         branch_id="branch",
     )
-    schedule = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":"))
+    )
     ordinals = tuple(slot.ordinal for slot in schedule.slots)
 
-    assert ordinals[0] == 1
+    assert ordinals[0] == 3
+    assert 1 not in ordinals
     assert 2 not in ordinals
-    if len(ordinals) > 1:
-        assert ordinals[1] == 3
-
-    driver.adopt_topological_schedule_proposal(
-        run_id="run",
-        branch_id="branch",
-        request_id="schedule-with-middle-entry-gap",
-        expected_week=week,
-        expected_schedule_fingerprint=schedule.fingerprint,
-        expected_position_fingerprint=proposal["position_fingerprint"],
-    )
-    first, before_first = _driver_command(driver, week, "before-middle-gap")
-    assert before_first.slot_ordinal == 1
-    driver.simulate_next_slot(first)
-    if len(ordinals) > 1:
-        second, before_second = _driver_command(driver, week, "after-middle-gap")
-        assert before_second.slot_ordinal == 3
-        driver.simulate_next_slot(second)
 
 
 @pytest.mark.pr_critical

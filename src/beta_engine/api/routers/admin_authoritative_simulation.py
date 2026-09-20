@@ -15,6 +15,7 @@ from beta_engine.api.deps import (
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeApplicationValidationCommand,
+    AuthoritativeExplicitApplicationValidationCommand,
     AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
@@ -226,6 +227,36 @@ def commit_application_validation_slot(
             status_code=409,
             detail={
                 "code": "application_validation_slot_commit_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/entry-decision-slot/validation/review", status_code=201)
+def review_application_validation_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeExplicitApplicationValidationCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(
+            runtime, matches, awards
+        ).commit_explicit_application_validation_slot(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "explicit_application_validation_review_conflict",
                 "message": str(exc),
             },
         ) from exc

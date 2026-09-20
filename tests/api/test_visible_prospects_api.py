@@ -13,6 +13,7 @@ from beta_engine.domain.players.lifecycle import (
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
+    PlayerLifecycleWeekStateModel,
     RunProspectModel,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
@@ -182,6 +183,8 @@ def test_viewer_next_gen_uses_lifecycle_visibility_and_never_future_pregeneratio
         assert viewer["branch_id"] == branch_id
         assert viewer["week"] == {"season_index": 0, "week": 2}
         assert viewer["total"] == 1
+        assert viewer["limit"] == 100
+        assert viewer["offset"] == 0
         assert [player["player_id"] for player in viewer["prospects"]] == [
             "prospect-visible"
         ]
@@ -194,6 +197,8 @@ def test_viewer_next_gen_uses_lifecycle_visibility_and_never_future_pregeneratio
         assert "identity_seed" not in prospect
         assert "profile_json" not in prospect
         assert "potential_json" not in prospect
+        assert "cohort_policy_version" not in prospect
+        assert "profile_version" not in prospect
 
         # Admin can inspect exact historical branch snapshots. Before the birthday
         # week the player is not visible even though the pregenerated row exists.
@@ -214,6 +219,18 @@ def test_viewer_next_gen_uses_lifecycle_visibility_and_never_future_pregeneratio
         assert [player["player_id"] for player in at_birth["prospects"]] == [
             "prospect-visible"
         ]
+
+        # Pagination is applied after lifecycle visibility. The raw table contains
+        # a second, future prospect, but it must not affect public totals/pages.
+        status, second_page = _request(
+            "GET",
+            f"{server.base_url}/viewer/runs/run/prospects/next-gen?limit=1&offset=1",
+        )
+        assert status == 200, second_page
+        assert second_page["total"] == 1
+        assert second_page["limit"] == 1
+        assert second_page["offset"] == 1
+        assert second_page["prospects"] == []
         assert dump(path) == before
 
 
@@ -251,10 +268,7 @@ def test_viewer_next_gen_fails_closed_without_canonical_world_or_metadata(tmp_pa
             # Corrupt historical state: lifecycle says this Run prospect is visible,
             # but its metadata row is missing.
             existing = session.get(
-                __import__(
-                    "beta_engine.infrastructure.db.models",
-                    fromlist=["PlayerLifecycleWeekStateModel"],
-                ).PlayerLifecycleWeekStateModel,
+                PlayerLifecycleWeekStateModel,
                 ("run", branch_id, week.ordinal),
             )
             session.delete(existing)

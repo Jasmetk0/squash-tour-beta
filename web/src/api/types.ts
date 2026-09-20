@@ -1686,23 +1686,6 @@ export type AssignWildcardsPayload = {
   }>
 }
 
-export type PreDrawWithdrawablePlayer = {
-  player_id: string
-  player_name: string
-  country_code: string
-  country_name: string | null
-  entry_id: string
-  acceptance_status: string
-}
-
-export type PreDrawWithdrawalStateResponse = {
-  run_id: string
-  event_id: string
-  eligible: boolean
-  eligibility_reason: string | null
-  withdrawable_main_draw_players: PreDrawWithdrawablePlayer[]
-}
-
 export type MainBracketDiagnostic = {
   severity: 'warning'
   code: 'odd_main_entrant_count' | 'majority_first_round_byes' | 'large_main_draw_over_64'
@@ -1934,20 +1917,32 @@ export type CanonicalTournamentDrawRevisionHistoryState = {
   revisions: CanonicalTournamentDrawRevisionSummary[]
 }
 
-export type ApplyPreDrawWithdrawalPayload = {
-  withdrawn_player_id: string
+export type CanonicalPreDrawWithdrawalPayload = {
+  schema_version: 'canonical_pre_draw_withdrawal_command.v1'
+  command_id: string
+  run_id: string
+  branch_id: string
+  event_id: string
+  expected_field_fingerprint: string
+  withdrawn_player_ids: string[]
 }
 
-export type PreDrawWithdrawalResultResponse = {
+export type CanonicalPreDrawWithdrawalResult = {
+  schema_version: 'canonical_pre_draw_withdrawal_result.v1'
+  command_id: string
   run_id: string
+  branch_id: string
   event_id: string
-  withdrawn_player_id: string
-  replacement_player_id: string
-  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
-  withdrawn_entry_id: string
-  replacement_entry_id: string
-  eligible: boolean
-  eligibility_reason: string | null
+  field_sequence: number
+  predecessor_field_fingerprint: string
+  field_fingerprint: string
+  newly_withdrawn_player_ids: string[]
+  promoted_to_main_player_ids: string[]
+  qualification_backfill_player_ids: string[]
+  direct_main_player_ids: string[]
+  qualification_player_ids: string[]
+  below_qualification_cut_player_ids: string[]
+  withdrawn_player_ids: string[]
 }
 
 export type PreDrawWithdrawalActionHistoryItem = {

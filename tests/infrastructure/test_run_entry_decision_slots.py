@@ -9,6 +9,7 @@ from beta_engine.domain.tournaments.run_entry_decision_slot import (
     EntryDecisionEvidence,
     RunEntryDecisionSlotAuthority,
 )
+from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
     RunEntryDecisionSlotConflict,
@@ -22,6 +23,33 @@ from test_authoritative_slot_matches import session_at
 
 
 WEEK = RankingWeek(season_index=0, week=1)
+
+
+def _ensure_scope(session):
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                display_name="Run",
+                storage_kind="custom_local",
+                read_only=0,
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+                official_branch_id="branch",
+                status="working",
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Timeline 1",
+                status="active",
+                read_only=0,
+            )
+        )
+    session.flush()
 
 
 def _entry_slot(**overrides):
@@ -68,6 +96,7 @@ def _match_plan(executor, *, ordinal=1):
 @pytest.mark.pr_critical
 def test_entry_slot_store_is_idempotent_and_immutable(tmp_path):
     session = session_at(tmp_path / "entry-slot.sqlite")
+    _ensure_scope(session)
     try:
         store = RunEntryDecisionSlotStore(session)
         authority = _entry_slot()
@@ -88,6 +117,7 @@ def test_entry_slot_store_is_idempotent_and_immutable(tmp_path):
 @pytest.mark.pr_critical
 def test_match_slot_then_entry_slot_collision_fails_closed(tmp_path):
     session = session_at(tmp_path / "match-first.sqlite")
+    _ensure_scope(session)
     try:
         executor = AuthoritativeSlotMatchExecutor(session)
         _match_plan(executor, ordinal=1)
@@ -104,6 +134,7 @@ def test_match_slot_then_entry_slot_collision_fails_closed(tmp_path):
 @pytest.mark.pr_critical
 def test_entry_slot_then_match_slot_collision_fails_closed(tmp_path):
     session = session_at(tmp_path / "entry-first.sqlite")
+    _ensure_scope(session)
     try:
         RunEntryDecisionSlotStore(session).append(_entry_slot())
 
@@ -119,6 +150,7 @@ def test_entry_slot_then_match_slot_collision_fails_closed(tmp_path):
 @pytest.mark.pr_critical
 def test_saved_component_round_trip_restores_entry_slots(tmp_path):
     session = session_at(tmp_path / "saved-entry-slots.sqlite")
+    _ensure_scope(session)
     try:
         empty_payload = {"content": {}}
         capture_saved_run_entry_decision_slots(
@@ -176,6 +208,7 @@ def test_saved_component_round_trip_restores_entry_slots(tmp_path):
 @pytest.mark.pr_critical
 def test_saved_revision_target_rejects_entry_match_global_slot_collision(tmp_path):
     session = session_at(tmp_path / "saved-collision.sqlite")
+    _ensure_scope(session)
     try:
         authority = _entry_slot()
         RunEntryDecisionSlotStore(session).append(authority)

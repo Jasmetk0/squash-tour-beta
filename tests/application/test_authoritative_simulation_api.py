@@ -392,54 +392,61 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
 
         decisions = inspected["authority"]["decisions"]
         assert decisions
-        lifecycle_tokens = inspected["identity_tokens"]
-        assert set(lifecycle_tokens) == {
-            decision["player_id"] for decision in decisions
-        }
-        validations = []
+        status, entry_position = _request("GET", root + "/position")
+        assert status == 200
+        assert entry_position["current_slot_kind"] == "entry"
+        assert entry_position["slot_ordinal"] == 1
+
+        reviews = []
         for index, decision in enumerate(decisions):
             valid = index == 0
-            validations.append(
+            reviews.append(
                 {
-                    "validation_id": f"http-validation-{index + 1}",
-                    "application_id": f"http-application-{index + 1}",
-                    "run_id": run_id,
-                    "branch_id": branch_id,
-                    "week": preview["week"],
-                    "decision_slot_ordinal": 1,
-                    "source_slot_fingerprint": preview["slot_fingerprint"],
                     "event_id": decision["event_id"],
                     "player_id": decision["player_id"],
-                    "entry_window": (
-                        "main"
-                        if decision["target"] == "MAIN"
-                        else "qualification"
-                    ),
-                    "source_decision_fingerprint": decision[
-                        "source_decision_fingerprint"
-                    ],
                     "outcome": "valid" if valid else "invalid",
-                    "nr_tie_break_token": (
-                        lifecycle_tokens[decision["player_id"]] if valid else None
-                    ),
-                    "validation_policy_id": "http-explicit-policy.v1",
-                    "validation_policy_fingerprint": "f" * 64,
                     "reasons": [] if valid else ["explicit_http_rejection"],
-                    "provenance": "HTTP explicit validation test",
                 }
             )
+
+        review_command = {
+            "command_id": "review-entry-slot-1",
+            "expected_week": preview["week"],
+            "expected_revision_id": revision,
+            "expected_position_fingerprint": entry_position[
+                "position_fingerprint"
+            ],
+            "decision_slot_ordinal": 1,
+            "expected_entry_slot_fingerprint": preview["slot_fingerprint"],
+            "operator_label": "HTTP Admin",
+            "reason": "Reviewed frozen Entry application evidence",
+            "reviews": reviews,
+        }
+        stale_command = review_command | {
+            "command_id": "stale-review-entry-slot-1",
+            "expected_position_fingerprint": "0" * 64,
+        }
+        assert (
+            _request(
+                "POST",
+                root + "/entry-decision-slot/validation/review",
+                stale_command,
+            )[0]
+            == 409
+        )
+
         status, validated = _request(
             "POST",
-            root + "/entry-decision-slot/validation/commit",
-            {
-                "expected_week": preview["week"],
-                "expected_revision_id": revision,
-                "decision_slot_ordinal": 1,
-                "expected_entry_slot_fingerprint": preview["slot_fingerprint"],
-                "validations": validations,
-            },
+            root + "/entry-decision-slot/validation/review",
+            review_command,
         )
         assert status == 201
+        assert validated["validation_mode"] == "explicit_admin_review.v1"
+        assert (
+            validated["validation_policy_id"]
+            == "explicit_admin_application_validation.v1"
+        )
+        assert len(validated["validation_policy_fingerprint"]) == 64
         assert validated["valid_submission_count"] == 1
         assert len(validated["first_tour_entry_trigger_fingerprints"]) == 1
 

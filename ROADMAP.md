@@ -316,6 +316,17 @@ Transition review/confirm controls at that boundary. The preflight never calls t
 legacy rollover path and always reports execution unavailable in this slice; no
 Season Transition mutation is claimed.
 
+The first Season Transition write primitive now exists below that preflight:
+`season_closing_ranking.v1` is a separate immutable archive snapshot calculated
+from the Week 61 Official head under the outgoing policy. Its ranking boundary is
+immediately after Week 61, so newly completed Week 61 results can affect the closing
+order without creating a next-season Official Ranking. An append-only Run/Branch/
+season store binds the archive to the exact Week 61 Official fingerprint and exact
+retries are idempotent. This kernel deliberately does **not** publish to the world
+clock, feed entries/seeding/AI, resolve its production Week-61 source manifest,
+participate in Saved Revision restore, create the season summary/Closure Marker or
+execute Season Transition yet.
+
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused
 production-backed acceptance proves four two-player Q sections end-to-end:

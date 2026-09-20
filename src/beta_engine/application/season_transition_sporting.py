@@ -52,7 +52,7 @@ def _completed_context(
     session,
     *,
     configuration: SeasonTransitionConfiguration,
-    lifecycle,
+    sporting: PlayerSportingWeekState,
 ) -> CompletedWeekSportingContext:
     key = (
         configuration.run_id,
@@ -72,7 +72,7 @@ def _completed_context(
         run_id=configuration.run_id,
         branch_id=configuration.branch_id,
         completed_week=configuration.completed_week,
-        player_ids=tuple(player.player_id for player in lifecycle.players),
+        player_ids=tuple(player.player_id for player in sporting.players),
     )
 
 
@@ -103,7 +103,7 @@ def resolve_season_transition_sporting(
     context = _completed_context(
         session,
         configuration=configuration,
-        lifecycle=lifecycle,
+        sporting=predecessor,
     )
     terminal_players = None
     if context.terminal_sporting_fingerprint:

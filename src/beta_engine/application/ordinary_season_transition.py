@@ -162,6 +162,8 @@ def _world_event_payload(
 ) -> str:
     return json.dumps(
         {
+            "schema_version": "season_transition_world_event.v1",
+            "command_id": command.command_id,
             "completed_week": command.configuration.completed_week.model_dump(mode="json"),
             "target_week": command.configuration.target_week.model_dump(mode="json"),
             "configuration_fingerprint": command.configuration.fingerprint,

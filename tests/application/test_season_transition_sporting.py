@@ -310,6 +310,49 @@ def _one_player_boundary():
 
 
 @pytest.mark.pr_critical
+def test_pre_tour_draft_can_remain_outside_sporting_roster_across_next_week():
+    completed, target, lifecycle, predecessor, _, context = _one_player_boundary()
+    position = season_week_to_calendar_position(2000, completed.week)
+    prospect = PlayerLifecycleIdentity(
+        player_id="prospect",
+        birth_year=1984,
+        birth_year_week=50,
+        tie_break_token="prospect-token",
+        tie_break_provenance="birth-week draft",
+        tour_entry_week=None,
+        age=age_at_calendar_position(
+            birth_year=1984,
+            birth_year_week=50,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+        ),
+        status="active",
+        origin="run_prospect:weekly_15yo_cohort:prospect_profile_v1",
+    )
+    lifecycle_with_draft = lifecycle.model_copy(
+        update={
+            "players": tuple(
+                sorted((*lifecycle.players, prospect), key=lambda player: player.player_id)
+            )
+        }
+    )
+
+    successor = stage_sporting_transition(
+        predecessor=predecessor,
+        context=context,
+        lifecycle=lifecycle_with_draft,
+        target=target,
+    )
+
+    assert tuple(player.player_id for player in lifecycle_with_draft.players) == (
+        "p",
+        "prospect",
+    )
+    assert tuple(player.player_id for player in successor.players) == ("p",)
+    assert successor.predecessor_fingerprint == predecessor.fingerprint
+
+
+@pytest.mark.pr_critical
 def test_terminal_match_state_preserves_saved_weekly_predecessor_lineage(database):
     completed, target, lifecycle, predecessor, terminal_player, context = (
         _one_player_boundary()

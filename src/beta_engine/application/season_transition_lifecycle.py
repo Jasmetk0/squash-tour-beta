@@ -27,7 +27,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 
 
 class SeasonTransitionProspectBridgeRequired(ValueError):
-    """Target Week 1 contains Run prospects that cannot yet enter canonical Tour state."""
+    """Target Week 1 contains Run prospects without canonical player sporting state."""
 
 
 class SeasonTransitionLifecycleStage(FrozenInput):
@@ -71,9 +71,10 @@ def resolve_season_transition_lifecycle(
 ) -> SeasonTransitionLifecycleStage:
     """Calculate existing-player Week-1 lifecycle without persisting it.
 
-    Prospect/Tour-entry activation remains a separate fail-closed Season Transition
-    step. This kernel must never silently omit a Run-scoped prospect that belongs to
-    the opening week.
+    Birth-week prospect visibility is distinct from formal Tour entry. The remaining
+    fail-closed bridge is canonical player sporting state: this kernel must never
+    silently omit a Run-scoped prospect whose profile still lacks simulation-valid
+    sporting data.
     """
 
     configuration = validate_season_transition_configuration(session, configuration)

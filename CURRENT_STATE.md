@@ -129,11 +129,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   retirement, while preserving predecessor lineage and leaving the public world clock
   untouched. Lifecycle now explicitly supports pre-Tour identities: a player with no
   formal `tour_entry_week` remains in historical lifecycle state but is excluded from
-  the Official Ranking roster until a later authoritative entry event. A target-week
-  Run prospect still fails closed because its materialized payload does not yet provide
-  the simulation-valid canonical sporting profile required by the player core; birth-week
-  visibility itself is not Tour entry. The Season preflight fingerprints the lifecycle
-  candidate whenever that separate sporting-profile bridge is not required.
+  the Official Ranking roster until a later authoritative entry event. Target-week Run
+  prospects are activated exactly when their birth week opens as pre-Tour Draft
+  lifecycle identities; their placeholder profile does not enter the simulation-ready
+  sporting roster and does not block Week/Season Transition. Birth-week visibility is
+  not Tour entry. The Season preflight fingerprints the exact lifecycle candidate,
+  including any target Week-1 Draft prospects, while sporting/ranking fingerprints
+  remain scoped to their respective simulation-ready/Tour populations.
   The next-season Official Ranking is now resolvable and stageable from the same
   frozen Season configuration. The read-only candidate uses the incoming Ranking
   Policy, the exact staged Week-1 lifecycle roster, persisted disciplinary-zero

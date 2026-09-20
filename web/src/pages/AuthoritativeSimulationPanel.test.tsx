@@ -8,6 +8,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
+  getProspectBridgeInspection: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
   proposeAuthoritativeWeekSchedule: vi.fn(),
@@ -170,6 +171,35 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getProspectBridgeInspection.mockResolvedValue({
+    schema_version: 'prospect_bridge_inspection.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    completed_week: week,
+    target_week: { season_index: 2, week: 18 },
+    season_start_year: 2002,
+    calendar_year: 2003,
+    year_week: 1,
+    run_scoped_source: true,
+    bridge_supported: false,
+    blocking_code: 'prospect_bridge_missing',
+    unresolved_contracts: ['tour_entry_activation', 'canonical_sporting_profile'],
+    prospects: [{
+      prospect_id: 'prospect-1',
+      display_name: 'CZE Prospect 0001',
+      country_code: 'CZE',
+      age: 15,
+      status: 'prospect',
+      source_type: 'weekly_15yo_cohort',
+      cohort_policy_version: 'weekly_15yo_cohort_v1',
+      profile_version: 'prospect_profile_v1',
+      profile_placeholder: true,
+      development_placeholder: true,
+      potential_placeholder: true,
+      trait_placeholder: true
+    }],
+    inspection_fingerprint: '5'.repeat(64)
+  })
   api.inspectAuthoritativeWeekSchedule.mockResolvedValue(scheduleInspection)
   api.previewAuthoritativeSimulationSave.mockResolvedValue({
     run_id: 'run-a',
@@ -466,6 +496,40 @@ describe('AuthoritativeSimulationPanel', () => {
         })
       )
     )
+  })
+
+  it('shows exact read-only Prospect Bridge blockers without offering activation', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: false,
+      transition_blockers: ['prospect_bridge_missing'],
+      terminal_sporting_fingerprint: 'f'.repeat(64),
+      position_fingerprint: '4'.repeat(64)
+    })
+    renderPanel()
+
+    expect(await screen.findByText('Prospect Bridge inspection')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(api.getProspectBridgeInspection).toHaveBeenCalledWith('run-a', 'branch-a')
+    )
+    expect(screen.getByText('CZE Prospect 0001', { exact: false })).toHaveTextContent(
+      'placeholders attributes, development, potential, traits'
+    )
+    expect(screen.getByText('tour_entry_activation, canonical_sporting_profile')).toBeInTheDocument()
+    expect(screen.getByText('5'.repeat(64))).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /prospect/i })).not.toBeInTheDocument()
   })
 
   it('does not derive Ranking Transition Authority while another transition blocker remains', async () => {

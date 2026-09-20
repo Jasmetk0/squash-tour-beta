@@ -51,7 +51,7 @@ def test_profile_readiness_accepts_only_consistent_persisted_canonical_payload()
 
     assert not _canonical_sporting_profile_ready(
         profile=profile,
-        development=development | {"development_timing": "Late Bloomer"},
+        development=development | {"development_timing": "tampered"},
         potential=potential,
     )
     assert not _canonical_sporting_profile_ready(

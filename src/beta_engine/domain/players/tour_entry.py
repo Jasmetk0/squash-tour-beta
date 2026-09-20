@@ -40,7 +40,7 @@ class PlayerTourEntryTrigger(FrozenInput):
     event_id: str = Field(min_length=1)
     trigger_kind: TourEntryTriggerKind
     trigger_week: RankingWeek
-    decision_slot_ordinal: int = Field(ge=0)
+    decision_slot_ordinal: int = Field(ge=1)
     source_evidence_id: str = Field(min_length=1, max_length=256)
     source_evidence_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     provenance: str = Field(min_length=1)

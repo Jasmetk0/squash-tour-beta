@@ -533,7 +533,7 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
         assert len(check.scalars(select(SimulationEventGroupModel)).all()) == 3
 
 
-def _driver_fixture(path):
+def _driver_fixture(path, *, season_week=None):
     from test_season_point_awards_service import make_points_service
 
     service, event_id = make_points_service(path / "source")
@@ -541,6 +541,23 @@ def _driver_fixture(path):
     registry = match_service._load_registry()
     package = registry.matches_by_event_id[event_id]
     package.qualification_matches = []
+    if season_week is not None:
+        package.season_week = season_week
+        calendars = service.calendar_service._load_registry()
+        calendar = calendars.calendars_by_season[package.season]
+        for index, event in enumerate(calendar.events):
+            if event.event_id == event_id:
+                calendar.events[index] = event.model_copy(
+                    update={
+                        "season_week": season_week,
+                        "start_season_week": season_week,
+                        "end_season_week": season_week,
+                    }
+                )
+                break
+        else:  # pragma: no cover
+            raise AssertionError("driver fixture Calendar Event is missing")
+        service.calendar_service._save_registry(calendars)
     registry.matches_by_event_id[event_id] = package
     match_service._save_registry(registry)
     week = RankingWeek(season_index=0, week=package.season_week)
@@ -669,6 +686,66 @@ def _driver_command(driver, week, command_id, group_id=None):
         expected_revision_id="revision",
         group_id=group_id,
     ), position
+
+
+@pytest.mark.pr_critical
+def test_week61_closes_tournament_source_before_season_transition_boundary(tmp_path):
+    driver, factory, week = _driver_fixture(
+        tmp_path / "week61-close",
+        season_week=61,
+    )
+    assert week == RankingWeek(season_index=0, week=61)
+
+    first, _ = _driver_command(driver, week, "week61-semifinals")
+    driver.simulate_next_slot(first)
+    final, before_final = _driver_command(driver, week, "week61-final")
+    assert "tournament_source_missing" in before_final.transition_blockers
+    assert "season_transition_required" in before_final.transition_blockers
+
+    boundary = driver.simulate_next_slot(final)
+    assert boundary["current_week"] == {"season_index": 0, "week": 61}
+    assert boundary["supported_tournament_complete"] is True
+    assert boundary["week_ready_for_transition"] is False
+    assert boundary["transition_blockers"] == ["season_transition_required"]
+
+    with factory() as session:
+        sources = OwnedTournamentRankingSourceStore(session).history(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert len(sources) == 1
+        source = sources[0]
+        assert source is not None
+        assert source.binding.completed_week == week
+        assert source.binding.first_publication_week == RankingWeek(
+            season_index=1,
+            week=1,
+        )
+        assert session.get(
+            AuthoritativeWorldStateModel,
+            ("run", "branch"),
+        ) is None
+
+    # A lost response / exact command retry returns the completed boundary state
+    # without duplicating frozen tournament evidence.
+    assert driver.simulate_next_slot(final) == boundary
+    with factory() as session:
+        assert len(
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run",
+                branch_id="branch",
+            )
+        ) == 1
+
+
+def test_final_season_tournament_publication_boundary_remains_fail_closed():
+    with pytest.raises(
+        ValueError,
+        match="final_season_closing_ranking_source_adapter_required",
+    ):
+        AuthoritativeRunSimulationDriver._ranking_publication_boundary(
+            RankingWeek(season_index=49, week=61)
+        )
 
 
 def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):

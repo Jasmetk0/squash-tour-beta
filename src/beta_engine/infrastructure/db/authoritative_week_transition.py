@@ -294,13 +294,28 @@ class AuthoritativeWeekTransitionRunner:
         command: AuthoritativeWeekTransitionCommand,
         *,
         expected_ranking_fingerprint=None,
+        expected_lifecycle_fingerprint=None,
+        expected_sporting_fingerprint=None,
     ):
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             result = transition_in_transaction(session, self.awards, command)
             if (
-                expected_ranking_fingerprint is not None
-                and result.official_ranking_fingerprint != expected_ranking_fingerprint
+                (
+                    expected_ranking_fingerprint is not None
+                    and result.official_ranking_fingerprint
+                    != expected_ranking_fingerprint
+                )
+                or (
+                    expected_lifecycle_fingerprint is not None
+                    and result.player_lifecycle_fingerprint
+                    != expected_lifecycle_fingerprint
+                )
+                or (
+                    expected_sporting_fingerprint is not None
+                    and result.player_sporting_fingerprint
+                    != expected_sporting_fingerprint
+                )
             ):
                 raise ValueError("Week Transition inputs changed since preview")
             return result

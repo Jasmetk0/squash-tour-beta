@@ -13,6 +13,10 @@ from beta_engine.application.season_transition_lifecycle import (
     resolve_season_transition_lifecycle,
     stage_season_transition_lifecycle,
 )
+from beta_engine.application.season_transition_ranking import (
+    resolve_season_transition_ranking,
+    stage_season_transition_ranking,
+)
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.sporting import (
@@ -328,6 +332,47 @@ def test_cross_season_lifecycle_refuses_to_silently_omit_target_week_prospect(da
 
 
 @pytest.mark.pr_critical
+def test_week1_ranking_resolves_and_stages_without_publication_or_clock_advance(database):
+    with database.begin() as session:
+        completed, predecessor, _ = _install_boundary(session)
+        incoming_policy = OfficialRankingPolicy(
+            policy_id="season-incoming-ranking",
+            best_n=12,
+        )
+        config = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+            target_ranking_policy=incoming_policy,
+        )
+        resolved = resolve_season_transition_ranking(session, config)
+
+        assert resolved.target_snapshot.week == RankingWeek(season_index=1, week=1)
+        assert resolved.target_snapshot.policy == incoming_policy
+        assert resolved.target_snapshot.previous_fingerprint == predecessor.fingerprint
+        assert resolved.predecessor_official_fingerprint == predecessor.fingerprint
+        assert len(resolved.ranking_command_fingerprint) == 64
+
+        staged = stage_season_transition_ranking(session, config)
+        assert staged.target_snapshot.fingerprint == resolved.target_snapshot.fingerprint
+        history = OfficialRankingCandidateStore(session).history(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert history[-1].fingerprint == resolved.target_snapshot.fingerprint
+        assert (
+            session.get(
+                PublishedOfficialRankingModel,
+                ("run", "branch", config.target_week.ordinal),
+            )
+            is None
+        )
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert world.current_ordinal == completed.ordinal
+        assert world.ranking_fingerprint == predecessor.fingerprint
+
+
+@pytest.mark.pr_critical
 def test_ordinary_preflight_fingerprints_default_configuration(database, monkeypatch):
     with database.begin() as session:
         completed, _, _ = _install_boundary(session)
@@ -371,11 +416,12 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert len(preflight.default_sporting_fingerprint) == 64
     assert preflight.default_lifecycle_fingerprint is not None
     assert len(preflight.default_lifecycle_fingerprint) == 64
+    assert preflight.default_ranking_fingerprint is not None
+    assert len(preflight.default_ranking_fingerprint) == 64
     assert "new_season_policy_activation_not_implemented" not in preflight.implementation_gaps
     assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
     assert preflight.implementation_gaps == (
         "season_prospect_creation_bridge_not_implemented",
-        "season_week_1_ranking_writer_not_implemented",
         "season_transition_atomic_writer_not_implemented",
     )
     assert preflight.state_blockers == ()

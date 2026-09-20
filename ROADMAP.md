@@ -329,8 +329,11 @@ uses the Week 61 lifecycle roster, converts frozen Run-owned Week-61 tournament
 sources directly to ranking results, overlays historically resolved result/discipline
 state at next Season Week 1, and appends the archive inside the caller transaction.
 It deliberately refuses the final 2049/50 edge because no Season 50 Week 1 exists.
-Saved Revision capture/restore, that final-season source adapter, the season
-summary/Closure Marker and full atomic Season Transition remain open.
+Saved Revision capture/restore now includes Closing Ranking archives through
+`ranking_revision_state.v6`, preserving exact Week-61 publication/policy binding
+and guarded recovery of historical season archives. The dedicated final-season
+source adapter, season summary/Closure Marker and full atomic Season Transition
+remain open.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

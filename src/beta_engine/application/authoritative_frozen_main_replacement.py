@@ -87,15 +87,29 @@ class AuthoritativeFrozenMainReplacementResult:
     walkover_result: object | None = None
 
 
-def _child_command_id(command_id: str, suffix: str) -> str:
+def _child_command_id(
+    command_id: str,
+    suffix: str,
+    *,
+    reviewed_source_fingerprint: str | None = None,
+) -> str:
     if not command_id or len(command_id) > 128:
         raise ValueError("Replacement orchestration requires a valid command ID")
-    candidate = f"{command_id}:{suffix}"
-    if len(candidate) <= 128:
-        return candidate
-    digest = hashlib.sha256(candidate.encode()).hexdigest()[:12]
-    room = 128 - len(suffix) - len(digest) - 2
-    return f"{command_id[:room]}:{suffix}:{digest}"
+    if reviewed_source_fingerprint is None:
+        candidate = f"{command_id}:{suffix}"
+        if len(candidate) <= 128:
+            return candidate
+        digest = hashlib.sha256(candidate.encode()).hexdigest()[:12]
+        room = 128 - len(suffix) - len(digest) - 2
+        return f"{command_id[:room]}:{suffix}:{digest}"
+
+    candidate = (
+        f"{command_id}:{suffix}:review:{reviewed_source_fingerprint}"
+    )
+    digest = hashlib.sha256(candidate.encode()).hexdigest()[:32]
+    stable_suffix = f"{suffix}:review:{digest}"
+    room = 128 - len(stable_suffix) - 1
+    return f"{command_id[:room]}:{stable_suffix}"
 
 
 class AuthoritativeFrozenMainReplacement:
@@ -145,6 +159,7 @@ class AuthoritativeFrozenMainReplacement:
         branch_id: str,
         event_id: str,
         command_id: str,
+        expected_source_fingerprint: str | None = None,
     ) -> AuthoritativeFrozenMainReplacementResult | None:
         history = TournamentDrawRevisionStore(self.session).history(
             run_id=run_id,
@@ -152,21 +167,33 @@ class AuthoritativeFrozenMainReplacement:
             event_id=event_id,
         )
         by_command = {item.command_id: item for item in history}
-        rwc = by_command.get(_child_command_id(command_id, "rwc"))
+        rwc = by_command.get(_child_command_id(
+            command_id,
+            "rwc",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
         if rwc is not None:
             return AuthoritativeFrozenMainReplacementResult(
                 source="reserve_wild_card",
                 source_authority=None,
                 draw_revisions=(rwc,),
             )
-        q = by_command.get(_child_command_id(command_id, "q"))
+        q = by_command.get(_child_command_id(
+            command_id,
+            "q",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
         if q is not None:
             return AuthoritativeFrozenMainReplacementResult(
                 source="qualification_promotion",
                 source_authority=q.replacement_source_authority,
                 draw_revisions=(q,),
             )
-        fallback = by_command.get(_child_command_id(command_id, "fallback"))
+        fallback = by_command.get(_child_command_id(
+            command_id,
+            "fallback",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
         if fallback is not None:
             authority = fallback.replacement_source_authority
             if authority is None:
@@ -178,8 +205,16 @@ class AuthoritativeFrozenMainReplacement:
                 source_authority=authority,
                 draw_revisions=(fallback,),
             )
-        vacancy = by_command.get(_child_command_id(command_id, "ll-vacancy"))
-        fill = by_command.get(_child_command_id(command_id, "ll-fill"))
+        vacancy = by_command.get(_child_command_id(
+            command_id,
+            "ll-vacancy",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
+        fill = by_command.get(_child_command_id(
+            command_id,
+            "ll-fill",
+            reviewed_source_fingerprint=expected_source_fingerprint,
+        ))
         if fill is not None:
             revisions = tuple(
                 item for item in (vacancy, fill) if item is not None
@@ -223,6 +258,7 @@ class AuthoritativeFrozenMainReplacement:
             branch_id=branch_id,
             event_id=event_id,
             command_id=command_id,
+            expected_source_fingerprint=expected_source_fingerprint,
         )
         if retry is not None:
             return retry
@@ -282,7 +318,11 @@ class AuthoritativeFrozenMainReplacement:
                 branch_id=branch_id,
                 week=walkover_week,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "wo"),
+                command_id=_child_command_id(
+                    command_id,
+                    "wo",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 withdrawn_player_id=withdrawn_player_id,
                 slot_id=walkover_slot_id,
                 group_id=walkover_group_id,
@@ -306,7 +346,11 @@ class AuthoritativeFrozenMainReplacement:
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "rwc"),
+                command_id=_child_command_id(
+                    command_id,
+                    "rwc",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 withdrawn_player_id=withdrawn_player_id,
                 main_process_window_ordinal=main_process_window_ordinal,
                 qualification_process_window_ordinal=(
@@ -348,7 +392,11 @@ class AuthoritativeFrozenMainReplacement:
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "q"),
+                command_id=_child_command_id(
+                    command_id,
+                    "q",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 main_process_window_ordinal=main_process_window_ordinal,
                 qualification_process_window_ordinal=(
                     qualification_process_window_ordinal
@@ -381,7 +429,11 @@ class AuthoritativeFrozenMainReplacement:
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "ll-vacancy"),
+                command_id=_child_command_id(
+                    command_id,
+                    "ll-vacancy",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 withdrawn_player_id=withdrawn_player_id,
                 main_process_window_ordinal=main_process_window_ordinal,
                 replacement_source_authority=(
@@ -398,7 +450,11 @@ class AuthoritativeFrozenMainReplacement:
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "ll-fill"),
+                command_id=_child_command_id(
+                    command_id,
+                    "ll-fill",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 main_process_window_ordinal=main_process_window_ordinal,
                 unavailable_player_ids=tuple(
                     sorted(set(unavailable_player_ids))
@@ -424,7 +480,11 @@ class AuthoritativeFrozenMainReplacement:
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
-                command_id=_child_command_id(command_id, "fallback"),
+                command_id=_child_command_id(
+                    command_id,
+                    "fallback",
+                    reviewed_source_fingerprint=expected_source_fingerprint,
+                ),
                 main_process_window_ordinal=main_process_window_ordinal,
                 replacement_source_authority=source,
             )

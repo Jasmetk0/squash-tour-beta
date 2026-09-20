@@ -445,9 +445,13 @@ def test_frozen_main_replacement_preview_commit_and_exact_retry_over_http(tmp_pa
         assert "C" not in main_players
         assert "B" in main_players
 
+        qualification_brackets = (
+            effective.get("qualification_sections")
+            or ([effective["qualification"]] if effective.get("qualification") else [])
+        )
         qualification_players = {
             slot["player_id"]
-            for bracket in effective["qualification_brackets"]
+            for bracket in qualification_brackets
             for slot in bracket["slots"]
             if slot["player_id"] is not None
         }

@@ -630,7 +630,10 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(screen.getByText('Season index 3 · Week 1')).toBeInTheDocument()
     expect(
       screen.getByRole('list', { name: 'Season Transition implementation gaps' })
-    ).toHaveTextContent('season_transition_atomic_writer_not_implemented')
+    ).toHaveTextContent('season_prospect_creation_bridge_not_implemented')
+    expect(
+      screen.getByRole('list', { name: 'Season Transition implementation gaps' })
+    ).not.toHaveTextContent('season_transition_atomic_writer_not_implemented')
     expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })

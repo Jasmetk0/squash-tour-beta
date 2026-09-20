@@ -19,7 +19,6 @@ from beta_engine.domain.calendar.season_weeks import (
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.prospect_sporting_profile import (
-    DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
     materialize_prospect_sporting_profile,
 )
 from beta_engine.domain.players.sporting import (
@@ -220,10 +219,10 @@ def birth_week_prospect_model(
     run_id: str,
     target: RankingWeek,
     identity_seed: str = "identity-seed",
+    profile_seed: str = "profile-seed",
     canonical_profile: bool = True,
 ) -> RunProspectModel:
     position = season_week_to_calendar_position(2000 + target.season_index, target.week)
-    profile_seed = "profile-seed"
     development_seed = "development-seed"
     potential_seed = "potential-seed"
 
@@ -597,6 +596,69 @@ def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
             assert connection.execute(
                 "SELECT COUNT(*) FROM official_ranking_commands "
                 "WHERE target_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+
+
+@pytest.mark.pr_critical
+def test_birth_week_prospect_profile_change_after_preview_rolls_back_confirm(tmp_path):
+    path = tmp_path / "prospect-profile-preview-stale.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect sporting preview stale guard",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                birth_week_prospect_model(
+                    run_id=run_id,
+                    target=target,
+                    canonical_profile=True,
+                )
+            )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, preview = _request("POST", root + "/preview", command)
+        assert status == 200, preview
+
+        replacement = birth_week_prospect_model(
+            run_id=run_id,
+            target=target,
+            profile_seed="profile-seed-after-preview",
+            canonical_profile=True,
+        )
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            row = session.get(
+                RunProspectModel,
+                replacement.prospect_id,
+            )
+            assert row is not None and row.run_id == run_id
+            row.profile_seed = replacement.profile_seed
+            row.profile_json = replacement.profile_json
+            row.development_json = replacement.development_json
+            row.potential_json = replacement.potential_json
+
+        mutated = dump(path)
+        mutated_counts = counts(path)
+        status, conflict = confirm(root, command, preview)
+        assert status == 409, conflict
+        assert "inputs changed since preview" in str(conflict)
+        assert dump(path) == mutated
+        assert counts(path) == mutated_counts
+
+        with sqlite3.connect(path) as connection:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_lifecycle_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_sporting_week_states "
+                "WHERE week_ordinal=?",
                 (target.ordinal,),
             ).fetchone()[0] == 0
 

@@ -38,6 +38,9 @@ from beta_engine.application.season_transition_lifecycle import (
     SeasonTransitionProspectBridgeRequired,
     resolve_season_transition_lifecycle,
 )
+from beta_engine.application.season_transition_ranking import (
+    resolve_season_transition_ranking,
+)
 from beta_engine.application.season_transition_sporting import (
     resolve_season_transition_sporting,
 )
@@ -157,6 +160,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     default_configuration_fingerprint: str | None = None
     default_sporting_fingerprint: str | None = None
     default_lifecycle_fingerprint: str | None = None
+    default_ranking_fingerprint: str | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
     implementation_gaps: tuple[str, ...] = ()
@@ -240,6 +244,7 @@ class AuthoritativeRunSimulationDriver:
         default_configuration = None
         default_sporting = None
         default_lifecycle = None
+        default_ranking = None
         if target_week is not None:
             try:
                 default_configuration = resolve_season_transition_configuration(
@@ -269,12 +274,19 @@ class AuthoritativeRunSimulationDriver:
                     pass
                 except ValueError:
                     blockers.append("season_transition_lifecycle_unavailable")
+                if default_lifecycle is not None:
+                    try:
+                        default_ranking = resolve_season_transition_ranking(
+                            session,
+                            default_configuration,
+                        )
+                    except ValueError:
+                        blockers.append("season_transition_ranking_unavailable")
         implementation_gaps = (
             ()
             if final_season
             else (
                 "season_prospect_creation_bridge_not_implemented",
-                "season_week_1_ranking_writer_not_implemented",
                 "season_transition_atomic_writer_not_implemented",
             )
         )
@@ -299,6 +311,9 @@ class AuthoritativeRunSimulationDriver:
             "default_lifecycle_fingerprint": (
                 default_lifecycle.target_state.fingerprint if default_lifecycle else None
             ),
+            "default_ranking_fingerprint": (
+                default_ranking.target_snapshot.fingerprint if default_ranking else None
+            ),
             "position_fingerprint": position.position_fingerprint,
             "state_blockers": state_blockers,
             "implementation_gaps": implementation_gaps,
@@ -322,6 +337,9 @@ class AuthoritativeRunSimulationDriver:
             ),
             default_lifecycle_fingerprint=(
                 default_lifecycle.target_state.fingerprint if default_lifecycle else None
+            ),
+            default_ranking_fingerprint=(
+                default_ranking.target_snapshot.fingerprint if default_ranking else None
             ),
             position_fingerprint=position.position_fingerprint,
             state_blockers=state_blockers,

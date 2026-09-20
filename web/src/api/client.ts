@@ -109,6 +109,9 @@ import type {
   AdminBranchSimulateWorldTourFinalsResponse,
   AuthoritativeSimulationPosition,
   AuthoritativeSeasonTransitionPreflight,
+  SeasonTransitionConfigurationPreview,
+  OrdinarySeasonTransitionPayload,
+  OrdinarySeasonTransitionResult,
   FinalSeasonTransitionPayload,
   FinalSeasonTransitionResult,
   AuthoritativeWeekScheduleInspection,
@@ -1070,8 +1073,20 @@ export async function getAuthoritativeSeasonTransitionPreflight(
       !/^[0-9a-f]{64}$/.test(data.default_configuration_fingerprint)
     ) ||
     (
+      data.default_closing_ranking_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.default_closing_ranking_fingerprint)
+    ) ||
+    (
       data.default_sporting_fingerprint !== null &&
       !/^[0-9a-f]{64}$/.test(data.default_sporting_fingerprint)
+    ) ||
+    (
+      data.default_lifecycle_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.default_lifecycle_fingerprint)
+    ) ||
+    (
+      data.default_ranking_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.default_ranking_fingerprint)
     )
   ) {
     throw new Error('Season Transition preflight fingerprint is invalid.')
@@ -1087,6 +1102,53 @@ export async function getAuthoritativeSeasonTransitionPreflight(
     ) {
       throw new Error('Season Transition preflight has an invalid target Week 1 boundary.')
     }
+  }
+  return data
+}
+
+export async function previewAuthoritativeSeasonTransitionConfiguration(
+  runId: string,
+  branchId: string
+): Promise<SeasonTransitionConfigurationPreview> {
+  const data = await request<SeasonTransitionConfigurationPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/season-transition/configuration/preview',
+    { method: 'POST', body: JSON.stringify({}) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data.configuration)
+  if (
+    data.configuration.schema_version !== 'season_transition_configuration.v1' ||
+    !/^[0-9a-f]{64}$/.test(data.configuration_fingerprint)
+  ) {
+    throw new Error('Season Transition configuration preview is invalid.')
+  }
+  return data
+}
+
+export async function advanceAuthoritativeOrdinarySeason(
+  runId: string,
+  branchId: string,
+  payload: OrdinarySeasonTransitionPayload
+): Promise<OrdinarySeasonTransitionResult> {
+  const data = await request<OrdinarySeasonTransitionResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/season-transition/advance',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'ordinary_season_transition_result.v1' ||
+    data.completed_week.week !== 61 ||
+    data.target_week.week !== 1 ||
+    data.target_week.season_index !== data.completed_week.season_index + 1 ||
+    data.world_event_kind !== 'season_transition_completed' ||
+    !/^[0-9a-f]{64}$/.test(data.configuration_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.closing_ranking_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.season_summary_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.closure_marker_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.player_lifecycle_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.official_ranking_fingerprint)
+  ) {
+    throw new Error('Ordinary Season Transition response is invalid.')
   }
   return data
 }

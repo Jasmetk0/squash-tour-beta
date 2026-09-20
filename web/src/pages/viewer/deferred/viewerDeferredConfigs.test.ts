@@ -67,14 +67,6 @@ describe('viewerDeferredConfigs', () => {
         },
       ],
       [
-        'next-gen',
-        {
-          title: 'Prospects / Next Gen',
-          deferredCopy:
-            'No prospects list is shown until a real Next Gen player read model exists.',
-        },
-      ],
-      [
         'retired',
         {
           title: 'Retired Players',

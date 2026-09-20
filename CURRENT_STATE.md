@@ -108,7 +108,9 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   It freezes current Position/Saved Revision evidence, separates current branch
   blockers from known missing Season Transition writers, projects the next Season
   Week 1 target (or final Run closure after 2049/50), and remains explicitly
-  non-executable. It does not reuse the legacy MVP rollover service.
+  non-executable. At Week 61 the Admin Simulation page renders this preflight,
+  separates branch blockers from engine gaps and hides ordinary Week Transition
+  review/confirm controls. It does not reuse the legacy MVP rollover service.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

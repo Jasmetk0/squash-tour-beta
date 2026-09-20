@@ -393,6 +393,9 @@ Week-1 sporting/lifecycle/ranking, then publishes the Official Ranking, advances
 world clock, emits the Season world event and captures the complete state in a new
 Saved Revision + audit event. Fault injection proves post-publication failure rolls
 everything back, while exact command retry resolves from the committed revision.
+Ordinary rollover recovery upgrades only these bundles to `ranking_revision_state.v7`:
+Week Transition events still pair exactly with Week receipts, while validated Season
+Transition events persist independently; older v4-v6 bundles remain compatible.
 Preflight also fingerprints the Closing Ranking candidate and requires the prospect
 bridge only when target Week 1 actually contains unbridged Run prospects. Remaining
 ordinary season-0–48 work is therefore the prospect/Tour-entry + canonical

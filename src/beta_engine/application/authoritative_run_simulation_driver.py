@@ -264,6 +264,56 @@ class AuthoritativeRunSimulationDriver:
         with self.factory() as session:
             return self._position(session, run_id, branch_id)
 
+    def _validate_legacy_entry_roster_against_run(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> None:
+        """Fail closed unless compatibility Entry AI sees the owned active sporting roster."""
+
+        lifecycle = get_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        sporting = get_sporting(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if lifecycle is None or sporting is None:
+            raise ValueError(
+                "Authoritative Entry decisions require lifecycle and sporting roster"
+            )
+
+        sporting_ids = {player.player_id for player in sporting.players}
+        owned_ids = tuple(
+            sorted(
+                player.player_id
+                for player in lifecycle.players
+                if player.status == "active" and player.player_id in sporting_ids
+            )
+        )
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        compatibility = (
+            self.match_service.draw_service.entry_list_service.active_players_service
+            .get_active_players(season=season)
+            .players
+        )
+        compatibility_ids = tuple(
+            sorted(player.player_id for player in compatibility)
+        )
+        if compatibility_ids != owned_ids:
+            raise ValueError(
+                "Compatibility Entry AI roster differs from authoritative "
+                "Run/Branch active sporting roster"
+            )
+
     def preview_entry_decision_slot(
         self,
         *,
@@ -287,6 +337,12 @@ class AuthoritativeRunSimulationDriver:
             if branch is None or not branch.saved_head_revision_id:
                 raise ValueError("Entry decision preview requires a saved Branch head")
 
+            self._validate_legacy_entry_roster_against_run(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
             batch = SeasonEntryBatchService(
                 self.match_service.draw_service.entry_list_service
             ).generate_overlapping_entry_lists(
@@ -352,6 +408,12 @@ class AuthoritativeRunSimulationDriver:
             ):
                 raise ValueError("Entry decision Branch head is stale")
 
+            self._validate_legacy_entry_roster_against_run(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+            )
             batch = SeasonEntryBatchService(
                 self.match_service.draw_service.entry_list_service
             ).generate_overlapping_entry_lists(

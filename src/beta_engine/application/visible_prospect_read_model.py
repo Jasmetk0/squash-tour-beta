@@ -43,6 +43,8 @@ class VisiblePreTourProspects(FrozenInput):
     week: RankingWeek
     lifecycle_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     total: int = Field(ge=0)
+    limit: int = Field(ge=1, le=500)
+    offset: int = Field(ge=0)
     prospects: tuple[VisiblePreTourProspect, ...]
 
 
@@ -71,6 +73,8 @@ def resolve_visible_pre_tour_prospects(
     run_id: str,
     branch_id: str,
     week: RankingWeek | None = None,
+    limit: int = 100,
+    offset: int = 0,
 ) -> VisiblePreTourProspects:
     """Resolve public prospect visibility from exact branch-owned lifecycle history.
 
@@ -78,6 +82,11 @@ def resolve_visible_pre_tour_prospects(
     identity that is already historically visible, but they never decide whether a
     player is visible.
     """
+
+    if not 1 <= limit <= 500:
+        raise ValueError("Prospect read model limit must be between 1 and 500")
+    if offset < 0:
+        raise ValueError("Prospect read model offset must be non-negative")
 
     branch = session.get(RunBranchModel, branch_id)
     if branch is None or branch.run_id != run_id:
@@ -108,6 +117,8 @@ def resolve_visible_pre_tour_prospects(
             week=target,
             lifecycle_fingerprint=lifecycle.fingerprint,
             total=0,
+            limit=limit,
+            offset=offset,
             prospects=(),
         )
 
@@ -172,11 +183,14 @@ def resolve_visible_pre_tour_prospects(
             ),
         )
     )
+    page = ordered[offset : offset + limit]
     return VisiblePreTourProspects(
         run_id=run_id,
         branch_id=branch_id,
         week=target,
         lifecycle_fingerprint=lifecycle.fingerprint,
         total=len(ordered),
-        prospects=ordered,
+        limit=limit,
+        offset=offset,
+        prospects=page,
     )

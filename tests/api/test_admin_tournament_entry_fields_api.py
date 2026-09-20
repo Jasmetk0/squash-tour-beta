@@ -1,8 +1,8 @@
 """Real HTTP/SQLite coverage for canonical Tournament Entry Field Admin routes."""
 
-import json
-
 from __future__ import annotations
+
+import json
 
 import pytest
 

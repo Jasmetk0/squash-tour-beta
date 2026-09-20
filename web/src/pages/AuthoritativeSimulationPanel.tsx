@@ -92,16 +92,6 @@ export function AuthoritativeSimulationPanel({
     enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
-  const prospectBridgeQuery = useQuery({
-    queryKey: ['authoritative-prospect-bridge', runId, branchId, positionQuery.data?.position_fingerprint],
-    queryFn: () => getProspectBridgeInspection(runId, branchId),
-    enabled: Boolean(
-      enabled &&
-      positionQuery.data?.transition_blockers.includes('prospect_bridge_missing')
-    ),
-    retry: false
-  })
-
   const seasonTransitionPreflightQuery = useQuery({
     queryKey: [
       'authoritative-season-transition-preflight',
@@ -113,6 +103,27 @@ export function AuthoritativeSimulationPanel({
     enabled: Boolean(
       enabled &&
       positionQuery.data?.current_week.week === 61
+    ),
+    retry: false
+  })
+
+  const prospectBridgeQuery = useQuery({
+    queryKey: [
+      'authoritative-prospect-bridge',
+      runId,
+      branchId,
+      positionQuery.data?.position_fingerprint,
+      seasonTransitionPreflightQuery.data?.preflight_fingerprint
+    ],
+    queryFn: () => getProspectBridgeInspection(runId, branchId),
+    enabled: Boolean(
+      enabled &&
+      (
+        positionQuery.data?.transition_blockers.includes('prospect_bridge_missing') ||
+        seasonTransitionPreflightQuery.data?.implementation_gaps.includes(
+          'season_prospect_creation_bridge_not_implemented'
+        )
+      )
     ),
     retry: false
   })

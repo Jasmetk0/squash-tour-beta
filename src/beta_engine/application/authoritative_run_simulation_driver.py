@@ -72,6 +72,7 @@ from beta_engine.domain.tournaments.application_validation_authority import (
     TournamentApplicationValidationAuthority,
 )
 from beta_engine.infrastructure.db.application_validation_slots import (
+    ApplicationValidationSlotStore,
     record_resolved_application_validation_slot,
 )
 from beta_engine.application.season_match_service import (
@@ -741,17 +742,6 @@ class AuthoritativeRunSimulationDriver:
             ):
                 raise ValueError("Explicit application validation Branch head is stale")
 
-            position = self._position(session, command.run_id, command.branch_id)
-            if position.position_fingerprint != command.expected_position_fingerprint:
-                raise ValueError("Explicit application validation Position is stale")
-            if (
-                position.current_slot_kind != "entry"
-                or position.slot_ordinal != command.decision_slot_ordinal
-            ):
-                raise ValueError(
-                    "Explicit application validation must resolve the current Entry slot"
-                )
-
             slot = RunEntryDecisionSlotStore(session).get(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
@@ -863,6 +853,31 @@ class AuthoritativeRunSimulationDriver:
                 slot=slot,
                 validations=validation_tuple,
             )
+            existing_validation = ApplicationValidationSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if existing_validation is None:
+                position = self._position(session, command.run_id, command.branch_id)
+                if (
+                    position.position_fingerprint
+                    != command.expected_position_fingerprint
+                ):
+                    raise ValueError("Explicit application validation Position is stale")
+                if (
+                    position.current_slot_kind != "entry"
+                    or position.slot_ordinal != command.decision_slot_ordinal
+                ):
+                    raise ValueError(
+                        "Explicit application validation must resolve the current Entry slot"
+                    )
+            elif existing_validation != resolved:
+                raise ValueError(
+                    "Application validation slot already has different resolved authority"
+                )
+
             committed = record_resolved_application_validation_slot(session, resolved)
             submission = committed.submission_commit
             return {

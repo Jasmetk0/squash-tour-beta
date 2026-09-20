@@ -35,6 +35,7 @@ from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
 from beta_engine.application.season_transition_lifecycle import (
+    SeasonTransitionProspectBridgeRequired,
     resolve_season_transition_lifecycle,
 )
 from beta_engine.application.season_transition_sporting import (
@@ -261,12 +262,13 @@ class AuthoritativeRunSimulationDriver:
                         session,
                         default_configuration,
                     )
-                except ValueError as exc:
+                except SeasonTransitionProspectBridgeRequired:
                     # Prospect activation is a separate known engine gap. Do not
                     # misclassify it as corrupt branch state while that bridge is
                     # intentionally unsupported.
-                    if "unbridged Run prospects" not in str(exc):
-                        blockers.append("season_transition_lifecycle_unavailable")
+                    pass
+                except ValueError:
+                    blockers.append("season_transition_lifecycle_unavailable")
         implementation_gaps = (
             ()
             if final_season

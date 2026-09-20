@@ -116,8 +116,12 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   after Week 61 under the outgoing Week 61 policy, and an append-only store binds it
   to the exact current Official Ranking Week 61 head. Week 61 results can therefore
   affect the closing order without any Official publication/world-clock mutation.
-  Canonical source resolution, Saved Revision integration, season summary/Closure
-  Marker and atomic Season Transition staging remain open.
+  Ordinary season boundaries now resolve/stage that archive directly from the
+  published Week 61 head, Week 61 lifecycle roster, frozen Run-owned tournament
+  sources and historical result/discipline stores inside the caller transaction.
+  The resolver explicitly refuses 2049/50 until its no-next-Week-1 source adapter
+  exists. Saved Revision integration, season summary/Closure Marker and the full
+  atomic Season Transition remain open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

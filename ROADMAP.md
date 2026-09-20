@@ -323,9 +323,14 @@ immediately after Week 61, so newly completed Week 61 results can affect the clo
 order without creating a next-season Official Ranking. An append-only Run/Branch/
 season store binds the archive to the exact Week 61 Official fingerprint and exact
 retries are idempotent. This kernel deliberately does **not** publish to the world
-clock, feed entries/seeding/AI, resolve its production Week-61 source manifest,
-participate in Saved Revision restore, create the season summary/Closure Marker or
-execute Season Transition yet.
+clock or feed entries/seeding/AI. Ordinary season boundaries now also have a
+canonical resolver/stager: it requires the published authoritative Week 61 head,
+uses the Week 61 lifecycle roster, converts frozen Run-owned Week-61 tournament
+sources directly to ranking results, overlays historically resolved result/discipline
+state at next Season Week 1, and appends the archive inside the caller transaction.
+It deliberately refuses the final 2049/50 edge because no Season 50 Week 1 exists.
+Saved Revision capture/restore, that final-season source adapter, the season
+summary/Closure Marker and full atomic Season Transition remain open.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

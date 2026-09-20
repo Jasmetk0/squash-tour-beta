@@ -34,6 +34,9 @@ from beta_engine.application.final_season_transition import (
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
+from beta_engine.application.season_transition_sporting import (
+    resolve_season_transition_sporting,
+)
 from beta_engine.application.run_owned_match_package import (
     build_run_owned_match_package,
 )
@@ -148,6 +151,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     saved_revision_id: str | None
     draft_version: int | None = None
     default_configuration_fingerprint: str | None = None
+    default_sporting_fingerprint: str | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
     implementation_gaps: tuple[str, ...] = ()
@@ -229,6 +233,7 @@ class AuthoritativeRunSimulationDriver:
             else None
         )
         default_configuration = None
+        default_sporting = None
         if target_week is not None:
             try:
                 default_configuration = resolve_season_transition_configuration(
@@ -238,6 +243,14 @@ class AuthoritativeRunSimulationDriver:
                 )
             except ValueError:
                 blockers.append("season_transition_configuration_unavailable")
+            if default_configuration is not None:
+                try:
+                    default_sporting = resolve_season_transition_sporting(
+                        session,
+                        default_configuration,
+                    )
+                except ValueError:
+                    blockers.append("season_transition_sporting_unavailable")
         implementation_gaps = (
             ()
             if final_season
@@ -263,6 +276,9 @@ class AuthoritativeRunSimulationDriver:
             "default_configuration_fingerprint": (
                 default_configuration.fingerprint if default_configuration else None
             ),
+            "default_sporting_fingerprint": (
+                default_sporting.target_state.fingerprint if default_sporting else None
+            ),
             "position_fingerprint": position.position_fingerprint,
             "state_blockers": state_blockers,
             "implementation_gaps": implementation_gaps,
@@ -280,6 +296,9 @@ class AuthoritativeRunSimulationDriver:
             draft_version=draft.draft_version if draft else None,
             default_configuration_fingerprint=(
                 default_configuration.fingerprint if default_configuration else None
+            ),
+            default_sporting_fingerprint=(
+                default_sporting.target_state.fingerprint if default_sporting else None
             ),
             position_fingerprint=position.position_fingerprint,
             state_blockers=state_blockers,

@@ -262,15 +262,36 @@ def validate_saved_entry_match_slot_collisions(
         except (KeyError, TypeError, ValueError) as exc:
             raise ValueError("Saved Simulation Slot row has invalid global position") from exc
         match_positions.add(position)
-    overlap = match_positions & {
+    entry_positions = {
         (item.week.ordinal, item.decision_slot_ordinal) for item in entry_slots
     }
+    overlap = match_positions & entry_positions
     if overlap:
         week_ordinal, slot_ordinal = sorted(overlap)[0]
         raise ValueError(
             "Saved entry and match slots claim the same global position "
             f"({week_ordinal}, {slot_ordinal})"
         )
+
+    match_weeks = {week for week, _ in match_positions}
+    for week_ordinal in sorted(match_weeks):
+        match_ordinals = {
+            ordinal for week, ordinal in match_positions if week == week_ordinal
+        }
+        entry_ordinals = {
+            ordinal for week, ordinal in entry_positions if week == week_ordinal
+        }
+        max_match = max(match_ordinals)
+        missing = (
+            set(range(1, max_match + 1))
+            - match_ordinals
+            - entry_ordinals
+        )
+        if missing:
+            raise ValueError(
+                "Saved match chronology contains a global-slot gap not owned "
+                "by an entry-decision slot"
+            )
 
 
 def restore_saved_run_entry_decision_slots(

@@ -144,6 +144,10 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   time, emits the Season world event and captures the complete result in a new Saved
   Revision plus audit record. Injected failure after public-state staging rolls the
   entire transition back, and exact retries are verified from the committed revision.
+  Ranking Saved Revision recovery now uses `ranking_revision_state.v7` when an
+  ordinary Season Transition World Event is present. V7 keeps Week Transition
+  receipt/event pairing strict while storing Season Transition events as their own
+  validated event kind; historical v4-v6 states retain their previous meaning.
   The preflight now also fingerprints the read-only Closing Ranking candidate and only
   reports the unresolved prospect bridge when target Week 1 actually contains
   unbridged Run prospects. Prospect-free ordinary boundaries can therefore become

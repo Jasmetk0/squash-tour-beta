@@ -119,25 +119,39 @@ def resolve_visible_pre_tour_prospects(
             prospects=(),
         )
 
-    ids = tuple(player.player_id for player in identities)
+    total = len(identities)
+    page_identities = identities[offset : offset + limit]
+    if not page_identities:
+        return VisiblePreTourProspects(
+            run_id=run_id,
+            branch_id=branch_id,
+            week=target,
+            lifecycle_fingerprint=lifecycle.fingerprint,
+            total=total,
+            limit=limit,
+            offset=offset,
+            prospects=(),
+        )
+
+    page_ids = tuple(player.player_id for player in page_identities)
     rows = tuple(
         session.scalars(
             select(RunProspectModel)
             .where(
                 RunProspectModel.run_id == run_id,
-                RunProspectModel.prospect_id.in_(ids),
+                RunProspectModel.prospect_id.in_(page_ids),
             )
             .order_by(RunProspectModel.prospect_id)
         )
     )
     by_id = {row.prospect_id: row for row in rows}
-    if set(by_id) != set(ids):
+    if set(by_id) != set(page_ids):
         raise ValueError(
             "Visible lifecycle prospect is missing its Run prospect metadata"
         )
 
     prospects: list[VisiblePreTourProspect] = []
-    for identity in identities:
+    for identity in page_identities:
         row = by_id[identity.player_id]
         visible_since = RankingWeek(
             season_index=row.season_start_year - 2000,
@@ -167,24 +181,13 @@ def resolve_visible_pre_tour_prospects(
             )
         )
 
-    ordered = tuple(
-        sorted(
-            prospects,
-            key=lambda item: (
-                item.country_code,
-                item.display_name.casefold(),
-                item.player_id,
-            ),
-        )
-    )
-    page = ordered[offset : offset + limit]
     return VisiblePreTourProspects(
         run_id=run_id,
         branch_id=branch_id,
         week=target,
         lifecycle_fingerprint=lifecycle.fingerprint,
-        total=len(ordered),
+        total=total,
         limit=limit,
         offset=offset,
-        prospects=page,
+        prospects=tuple(prospects),
     )

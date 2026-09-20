@@ -280,7 +280,7 @@ def test_entry_slot_cannot_overtake_missing_prior_global_slot(tmp_path):
     try:
         with pytest.raises(
             RunEntryDecisionSlotConflict,
-            match="missing completed ordinals \[1\]",
+            match=r"missing completed ordinals \[1\]",
         ):
             RunEntryDecisionSlotStore(session).append(
                 _entry_slot(decision_slot_ordinal=2)

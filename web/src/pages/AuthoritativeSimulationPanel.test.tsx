@@ -8,6 +8,8 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
+  inspectAuthoritativeEntryDecisionSlot: vi.fn(),
+  reviewAuthoritativeEntryDecisionSlot: vi.fn(),
   getAuthoritativeSeasonTransitionPreflight: vi.fn(),
   getAdminVisibleProspects: vi.fn(),
   previewAuthoritativeSeasonTransitionConfiguration: vi.fn(),
@@ -176,6 +178,57 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.inspectAuthoritativeEntryDecisionSlot.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    decision_slot_ordinal: 1,
+    slot_fingerprint: '4'.repeat(64),
+    authority: {
+      schema_version: 'run_entry_decision_slot_authority.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      decision_slot_ordinal: 1,
+      source_entry_batch_fingerprint: '1'.repeat(64),
+      source_application_decisions_fingerprint: '2'.repeat(64),
+      source_active_players_fingerprint: '3'.repeat(64),
+      decisions: [
+        {
+          event_id: 'event-a',
+          player_id: 'P001',
+          target: 'MAIN',
+          source_decision_fingerprint: '5'.repeat(64)
+        },
+        {
+          event_id: 'event-b',
+          player_id: 'P002',
+          target: 'QUALIFICATION',
+          source_decision_fingerprint: '6'.repeat(64)
+        }
+      ]
+    },
+    identity_tokens: {
+      P001: 'token-P001',
+      P002: 'token-P002'
+    },
+    validation_resolved: false,
+    validation_fingerprint: null
+  })
+  api.reviewAuthoritativeEntryDecisionSlot.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    decision_slot_ordinal: 1,
+    entry_slot_fingerprint: '4'.repeat(64),
+    validation_fingerprint: '7'.repeat(64),
+    validation_mode: 'explicit_admin_review.v1',
+    validation_policy_id: 'explicit_admin_application_validation.v1',
+    validation_policy_fingerprint: '8'.repeat(64),
+    valid_submission_count: 1,
+    submission_batch_fingerprint: '9'.repeat(64),
+    first_tour_entry_trigger_fingerprints: ['a'.repeat(64)]
+  })
   api.getAdminVisibleProspects.mockResolvedValue({
     schema_version: 'visible_pre_tour_prospects.v1',
     run_id: 'run-a',
@@ -476,6 +529,94 @@ describe('AuthoritativeSimulationPanel', () => {
       expected_revision_id: 'revision-7'
     })
     expect(payload).not.toHaveProperty('group_id')
+  })
+
+  it('reviews the current Entry slot with minimal explicit Admin verdicts', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_slot_kind: 'entry',
+      current_slot_id: 'entry-slot-1',
+      slot_ordinal: 1,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: ['g1', 'g2', 'g3'],
+      current_slot_complete: false,
+      position_fingerprint: 'a'.repeat(64)
+    })
+    renderPanel()
+
+    expect(
+      await screen.findByRole('heading', { name: 'Entry application validation' })
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('list', { name: 'Frozen Entry application decisions' })
+    ).toHaveTextContent('event-a · P001 · MAIN')
+
+    await userEvent.selectOptions(
+      screen.getByLabelText('Validation outcome event-a/P001'),
+      'valid'
+    )
+    await userEvent.selectOptions(
+      screen.getByLabelText('Validation outcome event-b/P002'),
+      'invalid'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Validation rejection reason event-b/P002'),
+      'explicit eligibility review rejected'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Entry validation operator'),
+      'Admin operator'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Entry validation audit reason'),
+      'Reviewed frozen application evidence'
+    )
+
+    const commit = screen.getByRole('button', {
+      name: 'Commit explicit application validation'
+    })
+    expect(commit).toBeEnabled()
+    await userEvent.click(commit)
+
+    await waitFor(() =>
+      expect(api.reviewAuthoritativeEntryDecisionSlot).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          command_id: expect.any(String),
+          expected_week: week,
+          expected_revision_id: 'revision-7',
+          expected_position_fingerprint: 'a'.repeat(64),
+          decision_slot_ordinal: 1,
+          expected_entry_slot_fingerprint: '4'.repeat(64),
+          operator_label: 'Admin operator',
+          reason: 'Reviewed frozen application evidence',
+          reviews: [
+            {
+              event_id: 'event-a',
+              player_id: 'P001',
+              outcome: 'valid',
+              reasons: []
+            },
+            {
+              event_id: 'event-b',
+              player_id: 'P002',
+              outcome: 'invalid',
+              reasons: ['explicit eligibility review rejected']
+            }
+          ]
+        }
+      )
+    )
+
+    expect(api.simulateAuthoritativeNextMatch).not.toHaveBeenCalled()
+    expect(api.simulateAuthoritativeNextSlot).not.toHaveBeenCalled()
   })
 
   it('saves only the exact reviewed authoritative simulation draft preview', async () => {

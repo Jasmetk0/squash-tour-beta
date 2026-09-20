@@ -34,6 +34,9 @@ from beta_engine.application.final_season_transition import (
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
+from beta_engine.application.season_transition_lifecycle import (
+    resolve_season_transition_lifecycle,
+)
 from beta_engine.application.season_transition_sporting import (
     resolve_season_transition_sporting,
 )
@@ -152,6 +155,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     draft_version: int | None = None
     default_configuration_fingerprint: str | None = None
     default_sporting_fingerprint: str | None = None
+    default_lifecycle_fingerprint: str | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
     implementation_gaps: tuple[str, ...] = ()
@@ -234,6 +238,7 @@ class AuthoritativeRunSimulationDriver:
         )
         default_configuration = None
         default_sporting = None
+        default_lifecycle = None
         if target_week is not None:
             try:
                 default_configuration = resolve_season_transition_configuration(
@@ -251,11 +256,21 @@ class AuthoritativeRunSimulationDriver:
                     )
                 except ValueError:
                     blockers.append("season_transition_sporting_unavailable")
+                try:
+                    default_lifecycle = resolve_season_transition_lifecycle(
+                        session,
+                        default_configuration,
+                    )
+                except ValueError as exc:
+                    # Prospect activation is a separate known engine gap. Do not
+                    # misclassify it as corrupt branch state while that bridge is
+                    # intentionally unsupported.
+                    if "unbridged Run prospects" not in str(exc):
+                        blockers.append("season_transition_lifecycle_unavailable")
         implementation_gaps = (
             ()
             if final_season
             else (
-                "season_boundary_lifecycle_writer_not_implemented",
                 "season_prospect_creation_bridge_not_implemented",
                 "season_week_1_ranking_writer_not_implemented",
                 "season_transition_atomic_writer_not_implemented",
@@ -279,6 +294,9 @@ class AuthoritativeRunSimulationDriver:
             "default_sporting_fingerprint": (
                 default_sporting.target_state.fingerprint if default_sporting else None
             ),
+            "default_lifecycle_fingerprint": (
+                default_lifecycle.target_state.fingerprint if default_lifecycle else None
+            ),
             "position_fingerprint": position.position_fingerprint,
             "state_blockers": state_blockers,
             "implementation_gaps": implementation_gaps,
@@ -299,6 +317,9 @@ class AuthoritativeRunSimulationDriver:
             ),
             default_sporting_fingerprint=(
                 default_sporting.target_state.fingerprint if default_sporting else None
+            ),
+            default_lifecycle_fingerprint=(
+                default_lifecycle.target_state.fingerprint if default_lifecycle else None
             ),
             position_fingerprint=position.position_fingerprint,
             state_blockers=state_blockers,

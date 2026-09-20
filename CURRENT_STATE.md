@@ -124,6 +124,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   candidate. The common weekly sporting path also fixes terminal-match lineage:
   target snapshots now retain the persisted weekly predecessor fingerprint, while
   terminal match state remains independently bound by CompletedWeekSportingContext.
+  Ordinary cross-season lifecycle staging now advances the persisted Week-61 roster
+  into next-season Week 1, including canonical calendar-week birthdays and age-based
+  retirement, while preserving predecessor lineage and leaving the public world clock
+  untouched. A target-week Run prospect remains fail-closed instead of being silently
+  omitted because Tour-entry activation and canonical prospect sporting profiles are
+  still a separate unresolved bridge. The Season preflight fingerprints the lifecycle
+  candidate whenever that separate prospect bridge is not required.
   At Week 61 the Admin Simulation page renders the preflight, separates branch
   blockers from engine gaps and hides ordinary Week Transition controls. It does not
   reuse the legacy MVP rollover service.

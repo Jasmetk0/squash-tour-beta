@@ -8,12 +8,11 @@ from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
-from beta_engine.infrastructure.db.models import (
-    AuthoritativeWorldStateModel,
-    RunBranchModel,
-    RunProspectModel,
+from beta_engine.application.effective_player_lifecycle import (
+    resolve_current_effective_lifecycle,
 )
+from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
+from beta_engine.infrastructure.db.models import RunBranchModel, RunProspectModel
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
 
@@ -45,24 +44,6 @@ class VisiblePreTourProspects(FrozenInput):
     prospects: tuple[VisiblePreTourProspect, ...]
 
 
-def _current_week(
-    session: Session,
-    *,
-    run_id: str,
-    branch_id: str,
-) -> RankingWeek:
-    world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
-    if world is None:
-        raise ValueError(
-            "Canonical Viewer prospect state requires an authoritative world head"
-        )
-    if world.current_ordinal < 0:
-        raise ValueError("Authoritative world ordinal is invalid")
-    return RankingWeek(
-        season_index=world.current_ordinal // 61,
-        week=world.current_ordinal % 61 + 1,
-    )
-
 
 def resolve_visible_pre_tour_prospects(
     session: Session,
@@ -73,7 +54,12 @@ def resolve_visible_pre_tour_prospects(
     limit: int = 100,
     offset: int = 0,
 ) -> VisiblePreTourProspects:
-    """Resolve public prospect visibility from exact branch-owned lifecycle history.
+    """Resolve pre-Tour visibility from branch-owned lifecycle authority.
+
+    The implicit current-world read overlays already-persisted Tour-entry triggers so
+    a player leaves the prospect section immediately after formal entry without
+    rewriting the immutable week-opening snapshot. An explicit historical week keeps
+    exact stored week-boundary semantics until slot-aware Time Machine reads exist.
 
     RunProspect rows are pregeneration metadata only. They may enrich a lifecycle
     identity that is already historically visible, but they never decide whether a
@@ -89,17 +75,25 @@ def resolve_visible_pre_tour_prospects(
     if branch is None or branch.run_id != run_id:
         raise ValueError("Prospect read model Run/Branch scope is unavailable")
 
-    target = week or _current_week(session, run_id=run_id, branch_id=branch_id)
-    lifecycle = get_lifecycle(
-        session,
-        run_id=run_id,
-        branch_id=branch_id,
-        week=target,
-    )
-    if lifecycle is None:
-        raise ValueError(
-            "Prospect read model requires the exact historical lifecycle snapshot"
+    if week is None:
+        lifecycle = resolve_current_effective_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
         )
+        target = lifecycle.week
+    else:
+        target = week
+        lifecycle = get_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=target,
+        )
+        if lifecycle is None:
+            raise ValueError(
+                "Prospect read model requires the exact historical lifecycle snapshot"
+            )
 
     identities = tuple(
         player

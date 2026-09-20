@@ -623,6 +623,19 @@ class AuthoritativeSlotMatchExecutor:
             raise ValueError(
                 "Global Simulation Slot ordinal already belongs to an entry-decision slot"
             )
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            wild_card_decision_slot_ordinals,
+        )
+        wc_ordinals = wild_card_decision_slot_ordinals(
+            self.session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week.ordinal,
+        )
+        if ordinal in wc_ordinals:
+            raise ValueError(
+                "Global Simulation Slot ordinal already belongs to a WC-decision slot"
+            )
         prior = self.session.scalar(
             select(SimulationSlotModel)
             .where(
@@ -656,9 +669,13 @@ class AuthoritativeSlotMatchExecutor:
                     )
                 ).all()
             )
-            if missing_ordinals != reserved_entry_ordinals:
+            reserved_nonmatch_ordinals = reserved_entry_ordinals | {
+                item for item in wc_ordinals if gap_start <= item < ordinal
+            }
+            if missing_ordinals != reserved_nonmatch_ordinals:
                 raise ValueError(
-                    "match slot skips a global ordinal not owned by an entry-decision slot"
+                    "match slot skips a global ordinal not owned by an entry-decision "
+                    "slot or WC-decision slot"
                 )
             resolved_entry_ordinals = set(
                 self.session.scalars(
@@ -676,8 +693,13 @@ class AuthoritativeSlotMatchExecutor:
                     )
                 ).all()
             )
-            if resolved_entry_ordinals != missing_ordinals:
-                unresolved = sorted(missing_ordinals - resolved_entry_ordinals)
+            completed_nonmatch_ordinals = resolved_entry_ordinals | {
+                item for item in wc_ordinals if gap_start <= item < ordinal
+            }
+            if completed_nonmatch_ordinals != missing_ordinals:
+                unresolved = sorted(
+                    missing_ordinals - completed_nonmatch_ordinals
+                )
                 raise ValueError(
                     "match slot cannot pass unresolved entry-decision slots: "
                     f"{unresolved}"

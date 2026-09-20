@@ -45,11 +45,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
 
 ## Audit findings and corrections
 
-- Post-#740 audit correction: Fast CI is only the smoke suite. The separate Full Test
-  Suite is the complete repository safety net. The latest known frontend full-suite
-  failure is the pre-existing Viewer route-context test boundary; backend full pytest
-  passed after #736, while later full-suite runs were cancelled by subsequent merges
-  or were still running during this audit.
+- Fast CI is intentionally a feedback gate rather than the complete safety net. It
+  runs a compact `pr_critical` backend baseline plus backend test files changed by the
+  PR, and a compact frontend baseline plus changed/colocated frontend tests and the
+  production build. Long tournament end-to-end acceptances are marked `smoke` instead
+  of `pr_critical`; they remain covered by the separate Full Test Suite after merge to
+  `buuk` and nightly. This keeps expensive acceptance coverage without forcing every
+  pull request to wait on it.
 - #737's Qualification/BYE/ranking-ingestion work remains useful. Its overlapping
   Entry resolver was product-wrong because it automatically chose one tournament
   using Entry score/Main-vs-Qualification preference. Canon permits provisional

@@ -81,14 +81,22 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         run_id=run_id,
         branch_id=branch_id,
     )
+    has_season_transition_event = any(
+        row["event_kind"] == "season_transition_completed"
+        for row in events
+    )
     return RankingRevisionState(
         schema_version=(
-            "ranking_revision_state.v6"
-            if season_closing_rankings
+            "ranking_revision_state.v7"
+            if has_season_transition_event
             else (
-                "ranking_revision_state.v5"
-                if frozen_tournament_rankings
-                else "ranking_revision_state.v4"
+                "ranking_revision_state.v6"
+                if season_closing_rankings
+                else (
+                    "ranking_revision_state.v5"
+                    if frozen_tournament_rankings
+                    else "ranking_revision_state.v4"
+                )
             )
         ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),

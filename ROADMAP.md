@@ -336,9 +336,12 @@ Transition or world-clock advance occurs.
 It deliberately refuses the final 2049/50 edge because no Season 50 Week 1 exists.
 Saved Revision capture/restore now includes Closing Ranking archives through
 `ranking_revision_state.v6`, preserving exact Week-61 publication/policy binding
-and guarded recovery of historical season archives. The dedicated final-season
-source adapter, season summary/Closure Marker and full atomic Season Transition
-remain open.
+and guarded recovery of historical season archives. The final 2049/50 source edge now also has a dedicated Closing-only adapter:
+canonical Week-61 tournament evidence is frozen as owned source v6 with an
+eligibility ordinal immediately after the last real week, never a fabricated
+2050/51 Week 1. The final Closing Ranking resolver consumes that evidence directly
+while ordinary Official history remains unchanged. Season summary/Closure Marker,
+Run Completed persistence and the full atomic Season Transition remain open.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

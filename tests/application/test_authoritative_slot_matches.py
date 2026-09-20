@@ -30,6 +30,10 @@ from beta_engine.domain.rankings.tournament_source import OwnedTournamentRanking
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
+from beta_engine.domain.calendar.season_weeks import (
+    age_at_calendar_position,
+    season_week_to_calendar_position,
+)
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
@@ -192,6 +196,16 @@ def session_at(
         adoption_request_fingerprint="1" * 64,
     )
     put_initial_world(session, world)
+    position = season_week_to_calendar_position(
+        2000 + week.season_index,
+        week.week,
+    )
+    lifecycle_age = age_at_calendar_position(
+        birth_year=1975,
+        birth_year_week=1,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+    )
     put_lifecycle(
         session,
         PlayerLifecycleWeekState(
@@ -207,7 +221,7 @@ def session_at(
                     tie_break_token=f"token:{pid}",
                     tie_break_provenance="test",
                     tour_entry_week=week,
-                    age=25,
+                    age=lifecycle_age,
                     status="active",
                     origin="test",
                 )

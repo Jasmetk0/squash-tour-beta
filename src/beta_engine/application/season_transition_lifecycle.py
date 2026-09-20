@@ -26,6 +26,10 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 )
 
 
+class SeasonTransitionProspectBridgeRequired(ValueError):
+    """Target Week 1 contains Run prospects that cannot yet enter canonical Tour state."""
+
+
 class SeasonTransitionLifecycleStage(FrozenInput):
     schema_version: Literal["season_transition_lifecycle_stage.v1"] = (
         "season_transition_lifecycle_stage.v1"
@@ -84,7 +88,7 @@ def resolve_season_transition_lifecycle(
 
     prospect_ids = _target_prospect_ids(session, configuration)
     if prospect_ids:
-        raise ValueError(
+        raise SeasonTransitionProspectBridgeRequired(
             "Season Transition target week has unbridged Run prospects: "
             + ", ".join(prospect_ids)
         )

@@ -256,9 +256,9 @@ def test_entry_slot_preview_fails_closed_when_compatibility_roster_drifts(
     assert len(original.players) > 1
     drifted = original.model_copy(update={"players": original.players[:-1]})
     monkeypatch.setattr(
-        active_service,
+        type(active_service),
         "get_active_players",
-        lambda *, season: drifted,
+        lambda self, *, season: drifted,
     )
 
     with pytest.raises(

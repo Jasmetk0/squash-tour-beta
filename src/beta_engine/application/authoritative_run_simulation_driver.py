@@ -67,6 +67,13 @@ from beta_engine.application.season_entry_batch_service import (
 from beta_engine.application.run_entry_decision_slot import (
     freeze_entry_batch_proposal_as_run_slot,
 )
+from beta_engine.domain.tournaments.application_validation_authority import (
+    ResolvedApplicationValidationSlot,
+    TournamentApplicationValidationAuthority,
+)
+from beta_engine.infrastructure.db.application_validation_slots import (
+    record_resolved_application_validation_slot,
+)
 from beta_engine.application.season_match_service import (
     FrozenQualifierPromotion,
     SeasonEventMatchPackage,
@@ -171,6 +178,22 @@ class AuthoritativeEntryDecisionSlotCommand(FrozenInput):
         if self.event_ids != tuple(sorted(set(self.event_ids))):
             raise ValueError("Entry decision command event IDs must be canonical and unique")
         return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeApplicationValidationCommand(FrozenInput):
+    """Guarded complete validation outcome for one persisted Entry decision slot."""
+
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    decision_slot_ordinal: int = Field(ge=1)
+    expected_entry_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    validations: tuple[TournamentApplicationValidationAuthority, ...]
 
     @property
     def fingerprint(self) -> str:
@@ -380,6 +403,70 @@ class AuthoritativeRunSimulationDriver:
                 "slot_fingerprint": stored.fingerprint,
                 "authority": stored.model_dump(mode="json"),
                 "adoption": "exact_retry" if existing == stored else "committed",
+            }
+
+    def commit_application_validation_slot(
+        self,
+        command: AuthoritativeApplicationValidationCommand,
+    ) -> dict:
+        """Persist complete explicit validity outcomes for one real Run Entry slot."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Application validation week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Application validation Branch head is stale")
+
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Application validation Entry slot is missing")
+            if slot.fingerprint != command.expected_entry_slot_fingerprint:
+                raise ValueError("Application validation Entry slot is stale")
+
+            resolved = ResolvedApplicationValidationSlot(
+                slot=slot,
+                validations=command.validations,
+            )
+            committed = record_resolved_application_validation_slot(
+                session,
+                resolved,
+            )
+            submission = committed.submission_commit
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "entry_slot_fingerprint": slot.fingerprint,
+                "validation_fingerprint": committed.validation_slot.fingerprint,
+                "valid_submission_count": (
+                    0 if submission is None else len(submission.batch.submissions)
+                ),
+                "submission_batch_fingerprint": (
+                    None if submission is None else submission.batch.fingerprint
+                ),
+                "first_tour_entry_trigger_fingerprints": (
+                    []
+                    if submission is None
+                    else [
+                        item.fingerprint
+                        for item in submission.first_tour_entry_triggers
+                    ]
+                ),
             }
 
     def season_transition_preflight(

@@ -637,6 +637,28 @@ class AuthoritativeSlotMatchExecutor:
             raise ValueError(
                 "later match slot requires the previous match slot to be complete"
             )
+        gap_start = 1 if prior is None else prior.slot_ordinal + 1
+        missing_ordinals = set(range(gap_start, ordinal))
+        if missing_ordinals:
+            reserved_entry_ordinals = set(
+                self.session.scalars(
+                    select(
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                    ).where(
+                        RunEntryDecisionSlotAuthorityModel.run_id == run_id,
+                        RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
+                        RunEntryDecisionSlotAuthorityModel.week_ordinal == week.ordinal,
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        >= gap_start,
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        < ordinal,
+                    )
+                ).all()
+            )
+            if missing_ordinals != reserved_entry_ordinals:
+                raise ValueError(
+                    "match slot skips a global ordinal not owned by an entry-decision slot"
+                )
         feeder_ids = tuple(
             feeder
             for event in match_events

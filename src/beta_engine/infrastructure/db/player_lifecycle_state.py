@@ -123,7 +123,7 @@ def bootstrap_lifecycle(
     )
 
 
-def _target_week_prospect_rows(
+def target_week_prospect_rows(
     session: Session,
     *,
     run_id: str,
@@ -146,7 +146,7 @@ def _target_week_prospect_rows(
     )
 
 
-def _prospect_lifecycle_identity(row, *, target: RankingWeek) -> PlayerLifecycleIdentity:
+def prospect_lifecycle_identity(row, *, target: RankingWeek) -> PlayerLifecycleIdentity:
     season_start_year = 2000 + target.season_index
     position = season_week_to_calendar_position(season_start_year, target.week)
     if row.age != 15:
@@ -207,20 +207,20 @@ def advance_lifecycle_with_prospects(
 
     Materialized future prospects are technical seed records only. They become part of
     branch-owned canonical lifecycle at their birth week, with no implied Tour entry.
-    A pre-Tour prospect may intentionally have no canonical sporting record yet.
+    Sporting state is staged independently from the same validated birth-week source.
     """
 
     advanced = advance_lifecycle(predecessor, target)
     existing_ids = {player.player_id for player in advanced.players}
     additions = []
-    for row in _target_week_prospect_rows(
+    for row in target_week_prospect_rows(
         session,
         run_id=predecessor.run_id,
         target=target,
     ):
         if row.prospect_id in existing_ids:
             raise ValueError("Run prospect identity already exists in predecessor lifecycle")
-        additions.append(_prospect_lifecycle_identity(row, target=target))
+        additions.append(prospect_lifecycle_identity(row, target=target))
         existing_ids.add(row.prospect_id)
 
     return PlayerLifecycleWeekState(

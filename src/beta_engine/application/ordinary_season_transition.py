@@ -57,6 +57,9 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     capture_saved_lifecycle,
     get_lifecycle,
 )
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    capture_saved_tour_entry_triggers,
+)
 from beta_engine.infrastructure.db.player_sporting_state import (
     capture_saved_sporting,
     get_sporting,
@@ -487,6 +490,9 @@ def commit_ordinary_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_lifecycle(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_tour_entry_triggers(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_sporting(

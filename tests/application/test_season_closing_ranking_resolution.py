@@ -29,6 +29,7 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.tournaments.result_authority import (
     TournamentPlayerResultAuthority,
@@ -324,6 +325,34 @@ def test_final_season_closing_source_uses_boundary_ordinal_without_week1(databas
                 source.binding,
                 source.canonical_result,
                 source.canonical_awards,
+            )
+        with pytest.raises(ValueError, match="cannot enter Official ranking history"):
+            RankingResultVersion(
+                run_id="run",
+                branch_id="branch",
+                effective_week=completed,
+                previous_fingerprint=None,
+                result=projected[0],
+            )
+        with pytest.raises(ValueError, match="cannot consume Closing-only"):
+            calculate_official_ranking(
+                run_id="run",
+                branch_id="branch",
+                week=completed,
+                policy=predecessor.policy,
+                players=(
+                    _lifecycle_player(
+                        "A",
+                        "token-A",
+                        season_index=49,
+                    ).model_copy(),
+                    _lifecycle_player(
+                        "B",
+                        "token-B",
+                        season_index=49,
+                    ).model_copy(),
+                ),
+                results=projected,
             )
 
         preview = resolve_canonical_season_closing_ranking(

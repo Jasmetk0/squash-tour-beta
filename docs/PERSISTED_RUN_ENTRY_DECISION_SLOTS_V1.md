@@ -21,6 +21,20 @@ rejects a match slot when a persisted entry-decision slot already owns that posi
 
 Thus technical execution order cannot create two different “slot 4” authorities.
 
+## Reserved vs completed Entry slot
+
+Persisting `RunEntryDecisionSlotAuthority` freezes the slot's complete simultaneous
+candidate decisions and reserves its global ordinal. It does **not** by itself make
+the slot chronologically complete.
+
+The Entry slot becomes complete only when the corresponding
+`ResolvedApplicationValidationSlot` exists for the same Run/Branch/week/ordinal.
+That resolution covers every preserved application decision exactly once and can then
+atomically create valid submissions plus first Tour-entry triggers.
+
+A later Entry slot or a later match slot therefore fails closed while any earlier
+Entry ordinal is still only reserved and has no complete validation result.
+
 ## Saved Revision history
 
 Saved Revisions capture entry-decision slots before application-validation results:

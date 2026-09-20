@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
 
 import { getViewerVisibleProspects } from '../../../api/client'
 import {
@@ -14,11 +15,20 @@ function weekLabel(seasonIndex: number, week: number): string {
   return `${start}/${String((start + 1) % 100).padStart(2, '0')} · W${week}`
 }
 
+const PAGE_SIZE = 50
+
 export function ViewerNextGenPlayersPage(): JSX.Element {
   const productRunId = useActiveViewerProductRunId()
+  const [offset, setOffset] = useState(0)
+  useEffect(() => setOffset(0), [productRunId])
+
   const query = useQuery({
-    queryKey: ['viewer-visible-pre-tour-prospects', productRunId],
-    queryFn: () => getViewerVisibleProspects(productRunId ?? ''),
+    queryKey: ['viewer-visible-pre-tour-prospects', productRunId, offset],
+    queryFn: () =>
+      getViewerVisibleProspects(productRunId ?? '', {
+        limit: PAGE_SIZE,
+        offset,
+      }),
     enabled: Boolean(productRunId),
     retry: false,
   })
@@ -71,6 +81,16 @@ export function ViewerNextGenPlayersPage(): JSX.Element {
                   ),
                 },
                 { label: 'Visible pre-Tour prospects', value: query.data.total },
+                {
+                  label: 'Displayed range',
+                  value:
+                    query.data.total === 0
+                      ? '0'
+                      : `${query.data.offset + 1}–${Math.min(
+                          query.data.offset + query.data.prospects.length,
+                          query.data.total
+                        )} of ${query.data.total}`,
+                },
               ]}
             />
           </article>
@@ -102,6 +122,29 @@ export function ViewerNextGenPlayersPage(): JSX.Element {
                   </li>
                 ))}
               </ul>
+              <p className="viewer-active-run-actions" aria-label="Prospect pagination">
+                <button
+                  type="button"
+                  disabled={query.data.offset === 0 || query.isFetching}
+                  onClick={() =>
+                    setOffset(Math.max(0, query.data.offset - query.data.limit))
+                  }
+                >
+                  Previous
+                </button>{' '}
+                <button
+                  type="button"
+                  disabled={
+                    query.data.offset + query.data.prospects.length >=
+                      query.data.total || query.isFetching
+                  }
+                  onClick={() =>
+                    setOffset(query.data.offset + query.data.limit)
+                  }
+                >
+                  Next
+                </button>
+              </p>
               <ViewerStatusMessage>
                 Birth-week visibility is not MSA Tour entry. These players remain
                 outside the normal pro/Tour list until a later authoritative Tour-entry

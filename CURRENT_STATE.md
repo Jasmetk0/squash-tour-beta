@@ -111,6 +111,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   non-executable. At Week 61 the Admin Simulation page renders this preflight,
   separates branch blockers from engine gaps and hides ordinary Week Transition
   review/confirm controls. It does not reuse the legacy MVP rollover service.
+  The first Season Transition write primitive is now implemented separately:
+  `season_closing_ranking.v1` calculates an immutable archived ranking immediately
+  after Week 61 under the outgoing Week 61 policy, and an append-only store binds it
+  to the exact current Official Ranking Week 61 head. Week 61 results can therefore
+  affect the closing order without any Official publication/world-clock mutation.
+  Canonical source resolution, Saved Revision integration, season summary/Closure
+  Marker and atomic Season Transition staging remain open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

@@ -38,6 +38,7 @@ const position = {
   run_id: 'run-a',
   branch_id: 'branch-a',
   current_week: week,
+  current_slot_kind: 'match' as const,
   current_slot_id: 'slot-1',
   slot_ordinal: 1,
   unresolved_group_ids: ['g1', 'g2', 'g3'],
@@ -515,6 +516,7 @@ describe('AuthoritativeSimulationPanel', () => {
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],
@@ -596,6 +598,7 @@ describe('AuthoritativeSimulationPanel', () => {
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],
@@ -636,6 +639,7 @@ describe('AuthoritativeSimulationPanel', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_week: week61,
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],
@@ -679,6 +683,7 @@ describe('AuthoritativeSimulationPanel', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_week: week61,
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],
@@ -744,6 +749,7 @@ describe('AuthoritativeSimulationPanel', () => {
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_week: { season_index: 49, week: 61 },
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],
@@ -819,6 +825,7 @@ describe('AuthoritativeSimulationPanel', () => {
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
+      current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
       unresolved_group_ids: [],

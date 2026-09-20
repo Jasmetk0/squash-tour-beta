@@ -9,6 +9,7 @@ from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
     validate_season_transition_configuration,
 )
+from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     PlayerDevelopmentPolicy,
@@ -33,6 +34,7 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
+from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
     put_completed_context,
     put_sporting,
@@ -118,6 +120,16 @@ def _install_boundary(session, *, season_index=0):
             current_ordinal=week.ordinal,
             ranking_fingerprint=official.fingerprint,
         )
+    )
+    put_lifecycle(
+        session,
+        PlayerLifecycleWeekState(
+            run_id="run",
+            branch_id="branch",
+            week=week,
+            players=(),
+            source_initial_world_fingerprint="world",
+        ),
     )
     development_policy = PlayerDevelopmentPolicy(policy_id="development-outgoing")
     sporting = PlayerSportingWeekState(

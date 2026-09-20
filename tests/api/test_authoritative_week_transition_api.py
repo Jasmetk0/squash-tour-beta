@@ -18,6 +18,10 @@ from beta_engine.domain.calendar.season_weeks import (
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.prospect_sporting_profile import (
+    DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
+    materialize_prospect_sporting_profile,
+)
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
@@ -211,6 +215,100 @@ def prepared_transition(server, name, *, retirement_player=False):
     return run_id, branch_id, command
 
 
+def birth_week_prospect_model(
+    *,
+    run_id: str,
+    target: RankingWeek,
+    identity_seed: str = "identity-seed",
+    canonical_profile: bool = True,
+) -> RunProspectModel:
+    position = season_week_to_calendar_position(2000 + target.season_index, target.week)
+    profile_seed = "profile-seed"
+    development_seed = "development-seed"
+    potential_seed = "potential-seed"
+
+    if canonical_profile:
+        canonical = materialize_prospect_sporting_profile(
+            player_id="prospect-week-2",
+            profile_seed=profile_seed,
+            development_seed=development_seed,
+            potential_seed=potential_seed,
+        )
+        fingerprint = canonical.fingerprint
+        profile_json = {
+            "schema_version": "prospect_profile_v1",
+            "canonical_sporting_profile": canonical.model_dump(mode="json"),
+            "canonical_sporting_profile_fingerprint": fingerprint,
+            "materialization_policy": {
+                "sporting_profile_policy_id": canonical.profile_policy_id,
+                "sporting_profile_policy_fingerprint": canonical.profile_policy_fingerprint,
+            },
+        }
+        development_json = {
+            "schema_version": "prospect_profile_v1",
+            "development_timing": canonical.development_timing,
+            "source_development_seed_digest": canonical.source_development_seed_digest,
+            "sporting_profile_fingerprint": fingerprint,
+        }
+        potential_json = {
+            "schema_version": "prospect_profile_v1",
+            "potential_ovr": canonical.potential_ovr,
+            "potential_identity": canonical.potential_identity,
+            "potential_provenance": canonical.potential_provenance,
+            "source_potential_seed_digest": canonical.source_potential_seed_digest,
+            "sporting_profile_fingerprint": fingerprint,
+        }
+    else:
+        profile_json = {
+            "schema_version": "prospect_profile_v1",
+            "reserved_for_future_attributes": True,
+        }
+        development_json = {
+            "schema_version": "prospect_profile_v1",
+            "reserved_for_future_development": True,
+        }
+        potential_json = {
+            "schema_version": "prospect_profile_v1",
+            "reserved_for_future_potential": True,
+        }
+
+    return RunProspectModel(
+        prospect_id="prospect-week-2",
+        run_id=run_id,
+        world_id="official-world",
+        season_start_year=2000 + target.season_index,
+        season_label=f"{2000 + target.season_index}/{2001 + target.season_index}",
+        season_week=target.week,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+        birth_year=position.calendar_year - 15,
+        birth_year_week=position.year_week,
+        age=15,
+        country_code="CZE",
+        country_name="Czechia",
+        status="prospect",
+        source_type="weekly_15yo_cohort",
+        cohort_policy_version="weekly_15yo_cohort_v1",
+        profile_version="prospect_profile_v1",
+        first_name=None,
+        last_name=None,
+        display_name="CZE Prospect 0001",
+        short_name="CZE Prospect 0001",
+        identity_seed=identity_seed,
+        profile_seed=profile_seed,
+        development_seed=development_seed,
+        potential_seed=potential_seed,
+        trait_seed="trait-seed",
+        profile_json=json.dumps(profile_json),
+        development_json=json.dumps(development_json),
+        potential_json=json.dumps(potential_json),
+        trait_json=json.dumps({
+            "schema_version": "prospect_profile_v1",
+            "reserved_for_future_traits": True,
+        }),
+    )
+
+
 @pytest.mark.pr_critical
 def test_prospect_bridge_inspection_exposes_nonblocking_target_week_profile_readiness(tmp_path):
     path = tmp_path / "prospect-bridge-inspection.db"
@@ -304,7 +402,46 @@ def test_prospect_bridge_inspection_exposes_nonblocking_target_week_profile_read
 
 
 @pytest.mark.pr_critical
-def test_week_transition_activates_birth_week_prospect_without_ranking_or_sporting_leak(tmp_path):
+def test_week_transition_blocks_birth_week_placeholder_sporting_profile(tmp_path):
+    path = tmp_path / "prospect-placeholder-blocker.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect placeholder blocker",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                birth_week_prospect_model(
+                    run_id=run_id,
+                    target=target,
+                    canonical_profile=False,
+                )
+            )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, blocked = _request("POST", root + "/preview", command)
+        assert status == 409, blocked
+        assert "prospect_sporting_profile_unready" in str(blocked)
+
+        with sqlite3.connect(path) as connection:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_lifecycle_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_sporting_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+
+
+@pytest.mark.pr_critical
+def test_week_transition_activates_birth_week_prospect_in_sporting_but_not_ranking(tmp_path):
     path = tmp_path / "prospect-birth-week-transition.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         run_id, branch_id, command = prepared_transition(
@@ -312,52 +449,12 @@ def test_week_transition_activates_birth_week_prospect_without_ranking_or_sporti
             "Prospect birth-week transition",
         )
         target = RankingWeek(season_index=0, week=2)
-        position = season_week_to_calendar_position(2000, target.week)
         with server.app.state.runtime.repository._session_factory.begin() as session:
             session.add(
-                RunProspectModel(
-                    prospect_id="prospect-week-2",
+                birth_week_prospect_model(
                     run_id=run_id,
-                    world_id="official-world",
-                    season_start_year=2000,
-                    season_label="2000/2001",
-                    season_week=2,
-                    calendar_year=position.calendar_year,
-                    year_week=position.year_week,
-                    birth_year=1985,
-                    birth_year_week=position.year_week,
-                    age=15,
-                    country_code="CZE",
-                    country_name="Czechia",
-                    status="prospect",
-                    source_type="weekly_15yo_cohort",
-                    cohort_policy_version="weekly_15yo_cohort_v1",
-                    profile_version="prospect_profile_v1",
-                    first_name=None,
-                    last_name=None,
-                    display_name="CZE Prospect 0001",
-                    short_name="CZE Prospect 0001",
-                    identity_seed="identity-seed",
-                    profile_seed="profile-seed",
-                    development_seed="development-seed",
-                    potential_seed="potential-seed",
-                    trait_seed="trait-seed",
-                    profile_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_attributes": True,
-                    }),
-                    development_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_development": True,
-                    }),
-                    potential_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_potential": True,
-                    }),
-                    trait_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_traits": True,
-                    }),
+                    target=target,
+                    canonical_profile=True,
                 )
             )
 
@@ -403,18 +500,39 @@ def test_week_transition_activates_birth_week_prospect_without_ranking_or_sporti
         assert "prospect-week-2" not in {
             player["player_id"] for player in predecessor_lifecycle["players"]
         }
-        prospect = next(
+        lifecycle_prospect = next(
             player
             for player in lifecycle["players"]
             if player["player_id"] == "prospect-week-2"
         )
-        assert prospect["age"] == 15
-        assert prospect["tour_entry_week"] is None
-        assert prospect["status"] == "active"
-        assert len(prospect["tie_break_token"]) == 64
-        assert "prospect-week-2" not in {
-            player["player_id"] for player in sporting["players"]
-        }
+        assert lifecycle_prospect["age"] == 15
+        assert lifecycle_prospect["tour_entry_week"] is None
+        assert lifecycle_prospect["status"] == "active"
+        assert len(lifecycle_prospect["tie_break_token"]) == 64
+
+        sporting_prospect = next(
+            player
+            for player in sporting["players"]
+            if player["player_id"] == "prospect-week-2"
+        )
+        canonical = materialize_prospect_sporting_profile(
+            player_id="prospect-week-2",
+            profile_seed="profile-seed",
+            development_seed="development-seed",
+            potential_seed="potential-seed",
+        )
+        assert sporting_prospect["attributes"] == [
+            list(attribute) for attribute in canonical.attributes
+        ]
+        assert sporting_prospect["potential_ovr"] == canonical.potential_ovr
+        assert sporting_prospect["development_timing"] == canonical.development_timing
+        defaults = sporting["effective_development_policy"]["bootstrap_policy"]
+        assert sporting_prospect["current_form"] == defaults["default_form"]
+        assert sporting_prospect["long_term_form_norm"] == defaults["default_form_norm"]
+        assert sporting_prospect["match_sharpness"] == defaults["default_match_sharpness"]
+        assert sporting_prospect["long_term_fatigue"] == defaults["default_fatigue"]
+        assert "birth_week_prospect_sporting_adoption.v1" in sporting["stage_provenance"]
+
         assert "prospect-week-2" not in {
             player["player_id"]
             for player in ranking_request["context"]["players"]
@@ -430,52 +548,13 @@ def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
             "Prospect preview stale guard",
         )
         target = RankingWeek(season_index=0, week=2)
-        position = season_week_to_calendar_position(2000, target.week)
         with server.app.state.runtime.repository._session_factory.begin() as session:
             session.add(
-                RunProspectModel(
-                    prospect_id="prospect-week-2",
+                birth_week_prospect_model(
                     run_id=run_id,
-                    world_id="official-world",
-                    season_start_year=2000,
-                    season_label="2000/2001",
-                    season_week=2,
-                    calendar_year=position.calendar_year,
-                    year_week=position.year_week,
-                    birth_year=1985,
-                    birth_year_week=position.year_week,
-                    age=15,
-                    country_code="CZE",
-                    country_name="Czechia",
-                    status="prospect",
-                    source_type="weekly_15yo_cohort",
-                    cohort_policy_version="weekly_15yo_cohort_v1",
-                    profile_version="prospect_profile_v1",
-                    first_name=None,
-                    last_name=None,
-                    display_name="CZE Prospect 0001",
-                    short_name="CZE Prospect 0001",
+                    target=target,
                     identity_seed="identity-seed-before-preview",
-                    profile_seed="profile-seed",
-                    development_seed="development-seed",
-                    potential_seed="potential-seed",
-                    trait_seed="trait-seed",
-                    profile_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_attributes": True,
-                    }),
-                    development_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_development": True,
-                    }),
-                    potential_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_potential": True,
-                    }),
-                    trait_json=json.dumps({
-                        "schema_version": "prospect_profile_v1",
-                        "reserved_for_future_traits": True,
-                    }),
+                    canonical_profile=True,
                 )
             )
 
@@ -486,9 +565,8 @@ def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
         status, preview = _request("POST", root + "/preview", command)
         assert status == 200, preview
 
-        # This field is part of the target lifecycle identity, but the pre-Tour
-        # prospect is intentionally absent from both sporting and Official Ranking.
-        # A ranking-only preview guard would therefore miss this concurrent change.
+        # Birth-week identity contributes to the staged lifecycle while the canonical
+        # profile contributes to target sporting. Neither grants Tour/ranking status.
         with sqlite3.connect(path) as connection:
             connection.execute(
                 "UPDATE run_prospects SET identity_seed=? "
@@ -521,8 +599,6 @@ def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
                 "WHERE target_ordinal=?",
                 (target.ordinal,),
             ).fetchone()[0] == 0
-
-
 
 
 @pytest.mark.pr_critical

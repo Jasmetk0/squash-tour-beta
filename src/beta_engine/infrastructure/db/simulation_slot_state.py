@@ -228,9 +228,12 @@ def _validate_semantics(slots, groups):
         by_week.setdefault(row.week_ordinal, []).append(row)
     for week_slots in by_week.values():
         ordered = sorted(week_slots, key=lambda item: item.slot_ordinal)
-        if [item.slot_ordinal for item in ordered] != list(range(1, len(ordered) + 1)):
+        ordinals = [item.slot_ordinal for item in ordered]
+        if any(ordinal < 1 for ordinal in ordinals) or len(ordinals) != len(
+            set(ordinals)
+        ):
             raise ValueError(
-                "Simulation Slot ordinals must be canonical and contiguous"
+                "Match Simulation Slot ordinals must be unique positive global ordinals"
             )
         predecessor = None
         for row in ordered:

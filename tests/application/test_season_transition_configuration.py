@@ -393,7 +393,7 @@ def test_cross_season_lifecycle_candidate_stages_without_advancing_public_world(
 
 
 @pytest.mark.pr_critical
-def test_cross_season_lifecycle_refuses_to_silently_omit_target_week_prospect(database):
+def test_cross_season_lifecycle_activates_target_week_prospect_as_pre_tour_draft(database):
     with database.begin() as session:
         _install_boundary(session)
         config = resolve_season_transition_configuration(
@@ -428,8 +428,20 @@ def test_cross_season_lifecycle_refuses_to_silently_omit_target_week_prospect(da
         )
         session.flush()
 
-        with pytest.raises(ValueError, match="unbridged Run prospects"):
-            resolve_season_transition_lifecycle(session, config)
+        resolved = resolve_season_transition_lifecycle(session, config)
+        prospect = next(
+            player
+            for player in resolved.target_state.players
+            if player.player_id == "prospect-s1-w1"
+        )
+        assert prospect.age == 15
+        assert prospect.tour_entry_week is None
+        assert prospect.status == "active"
+        assert prospect.origin == "run_prospect:weekly_15yo_cohort:test.v1"
+        assert len(prospect.tie_break_token) == 64
+        assert "prospect-s1-w1" not in {
+            player.player_id for player in resolved.target_state.ranking_roster()
+        }
 
 
 @pytest.mark.pr_critical
@@ -556,7 +568,7 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert preflight.ready_for_execution is True
 
 @pytest.mark.pr_critical
-def test_ordinary_preflight_requires_prospect_bridge_only_when_target_prospect_exists(
+def test_ordinary_preflight_accepts_target_week_pre_tour_draft_prospect(
     database,
     monkeypatch,
 ):
@@ -614,11 +626,10 @@ def test_ordinary_preflight_requires_prospect_bridge_only_when_target_prospect_e
     ).season_transition_preflight(run_id="run", branch_id="branch")
 
     assert preflight.default_closing_ranking_fingerprint is not None
-    assert preflight.default_lifecycle_fingerprint is None
-    assert preflight.default_ranking_fingerprint is None
-    assert preflight.implementation_gaps == (
-        "season_prospect_creation_bridge_not_implemented",
-    )
+    assert preflight.default_sporting_fingerprint is not None
+    assert preflight.default_lifecycle_fingerprint is not None
+    assert preflight.default_ranking_fingerprint is not None
+    assert preflight.implementation_gaps == ()
     assert preflight.state_blockers == ()
-    assert preflight.ready_for_execution is False
+    assert preflight.ready_for_execution is True
 

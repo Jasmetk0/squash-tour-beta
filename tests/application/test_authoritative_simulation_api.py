@@ -303,7 +303,7 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
         assert status == 200
         assert season_preflight["schema_version"] == "authoritative_season_transition_preflight.v1"
         assert season_preflight["completed_week"] == {"season_index": 0, "week": 1}
-        assert season_preflight["target_week"] == {"season_index": 0, "week": 2}
+        assert season_preflight["target_week"] is None
         assert season_preflight["final_season"] is False
         assert "not_at_season_boundary" in season_preflight["state_blockers"]
         assert season_preflight["ready_for_execution"] is False

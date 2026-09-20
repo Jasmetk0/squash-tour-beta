@@ -137,8 +137,17 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   history and all canonical Week-61 owned tournament sources whose first publication
   boundary is Week 1. The write path reuses the existing RankingWeekCommand so result
   history, input manifests and command receipts stay on the canonical ranking path.
-  It still does not create a PublishedOfficialRanking or advance the world clock;
-  those remain part of the future atomic Season Transition commit/public-state step.
+  The staging primitive itself still does not publish or advance the world clock.
+  A new ordinary atomic Season Transition writer now owns that final boundary: inside
+  one caller-owned SQLite transaction it stages the Closing Ranking and Season
+  Summary/Closure Marker, cross-season sporting state, lifecycle and Week-1 Official
+  Ranking, then publishes Week 1, advances the authoritative world head, emits the
+  season-transition World Event and captures the resulting state into a new Saved
+  Revision plus audit event. Exact retries resolve from that Saved Revision/audit
+  identity, and injected failures after staging or publication roll the entire
+  transaction back. The writer refuses any non-empty season reset catalog until a
+  real reset adapter exists, and target-week prospects still fail closed through the
+  separate unresolved Tour-entry/canonical sporting-profile bridge.
   At Week 61 the Admin Simulation page renders the preflight, separates branch
   blockers from engine gaps and hides ordinary Week Transition controls. It does not
   reuse the legacy MVP rollover service.

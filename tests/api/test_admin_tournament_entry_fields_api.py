@@ -15,6 +15,7 @@ from beta_engine.domain.tournaments.application_submission_authority import (
     TournamentApplicationSubmissionAuthority,
 )
 from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
 )

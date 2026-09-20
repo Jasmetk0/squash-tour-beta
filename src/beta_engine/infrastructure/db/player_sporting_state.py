@@ -8,6 +8,9 @@ import json
 from sqlalchemy import delete, select
 
 from beta_engine.domain.players.attribute_catalog import ATTRIBUTE_GROUPS
+from beta_engine.domain.players.prospect_sporting_profile import (
+    validate_persisted_prospect_sporting_profile,
+)
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
@@ -21,6 +24,10 @@ from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import (
     CompletedWeekSportingContextModel,
     PlayerSportingWeekStateModel,
+)
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    prospect_lifecycle_identity,
+    target_week_prospect_rows,
 )
 
 PLAYER_SPORTING_COMPONENT_KEY = "player_sporting_state"
@@ -416,6 +423,122 @@ def stage_sporting_transition(
     )
 
 
+def _json_object(raw: str, *, label: str) -> dict[str, object]:
+    value = json.loads(raw)
+    if not isinstance(value, dict):
+        raise ValueError(f"Persisted prospect {label} payload is not an object")
+    return value
+
+
+def _validated_target_week_prospect_profiles(
+    session,
+    *,
+    run_id: str,
+    target: RankingWeek,
+):
+    validated = []
+    for row in target_week_prospect_rows(session, run_id=run_id, target=target):
+        # Lifecycle and sporting consume the same canonical birth-week identity.
+        prospect_lifecycle_identity(row, target=target)
+        profile = _json_object(row.profile_json, label="profile")
+        development = _json_object(row.development_json, label="development")
+        potential = _json_object(row.potential_json, label="potential")
+        canonical = validate_persisted_prospect_sporting_profile(
+            profile=profile,
+            development=development,
+            potential=potential,
+        )
+        if canonical.player_id != row.prospect_id:
+            raise ValueError(
+                "Persisted prospect sporting profile identity differs from Run prospect"
+            )
+        materialization_policy = profile.get("materialization_policy")
+        if (
+            not isinstance(materialization_policy, dict)
+            or materialization_policy.get("sporting_profile_policy_id")
+            != canonical.profile_policy_id
+            or materialization_policy.get("sporting_profile_policy_fingerprint")
+            != canonical.profile_policy_fingerprint
+        ):
+            raise ValueError(
+                "Persisted prospect materialization policy differs from sporting profile"
+            )
+        validated.append((row, canonical))
+    return tuple(validated)
+
+
+def validate_target_week_prospect_sporting_profiles(
+    session,
+    *,
+    run_id: str,
+    target: RankingWeek,
+) -> tuple[str, ...]:
+    """Fail closed unless every target-week prospect has one coherent persisted profile."""
+
+    return tuple(
+        row.prospect_id
+        for row, _ in _validated_target_week_prospect_profiles(
+            session,
+            run_id=run_id,
+            target=target,
+        )
+    )
+
+
+def append_birth_week_prospect_sporting_records(
+    session,
+    state: PlayerSportingWeekState,
+) -> PlayerSportingWeekState:
+    """Append newly created 15-year-olds after predecessor-week development is complete."""
+
+    additions = []
+    defaults = state.effective_development_policy.bootstrap_policy
+    for row, canonical in _validated_target_week_prospect_profiles(
+        session,
+        run_id=state.run_id,
+        target=state.week,
+    ):
+        additions.append(
+            PlayerSportingRecord(
+                player_id=row.prospect_id,
+                attributes=canonical.attributes,
+                potential_ovr=canonical.potential_ovr,
+                potential_identity=canonical.potential_identity,
+                potential_provenance=canonical.potential_provenance,
+                development_timing=canonical.development_timing,
+                current_form=defaults.default_form,
+                long_term_form_norm=defaults.default_form_norm,
+                match_sharpness=defaults.default_match_sharpness,
+                long_term_fatigue=defaults.default_fatigue,
+            )
+        )
+    if not additions:
+        return state
+
+    existing_ids = {player.player_id for player in state.players}
+    duplicate_ids = sorted(
+        player.player_id for player in additions if player.player_id in existing_ids
+    )
+    if duplicate_ids:
+        raise ValueError(
+            "Birth-week prospect sporting identity already exists: "
+            + ",".join(duplicate_ids)
+        )
+    players = tuple(
+        sorted((*state.players, *additions), key=lambda player: player.player_id)
+    )
+    return state.model_copy(
+        update={
+            "players": players,
+            "stage_provenance": (
+                state.stage_provenance
+                + ";birth_week_prospect_sporting_adoption.v1:"
+                + defaults.policy_id
+            ),
+        }
+    )
+
+
 def transition_sporting(
     session,
     *,
@@ -461,6 +584,9 @@ def transition_sporting(
         terminal_players=terminal_players,
         stage_hook=stage_hook,
     )
+    # Master transition order: develop the completed-week roster first, then create
+    # target-week 15-year-old prospects from their already-frozen profile truth.
+    result = append_birth_week_prospect_sporting_records(session, result)
     result = put_sporting(session, result)
     if stage_hook is not None:
         stage_hook("after_between_week_staging")

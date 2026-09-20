@@ -88,6 +88,7 @@ from beta_engine.infrastructure.db.models import (
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PlayerTourEntryTriggerModel,
     PlayerSportingWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
@@ -130,6 +131,11 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     bootstrap_lifecycle,
     capture_saved_lifecycle,
     restore_saved_lifecycle,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PLAYER_TOUR_ENTRY_COMPONENT_KEY,
+    capture_saved_tour_entry_triggers,
+    restore_saved_tour_entry_triggers,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -3165,6 +3171,25 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player lifecycle state"
                     )
+                has_uncaptured_tour_entry = (
+                    session.scalar(
+                        select(PlayerTourEntryTriggerModel.run_id)
+                        .where(
+                            PlayerTourEntryTriggerModel.run_id == run_id,
+                            PlayerTourEntryTriggerModel.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                )
+                if (
+                    has_uncaptured_tour_entry
+                    and PLAYER_TOUR_ENTRY_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture player Tour-entry triggers"
+                    )
                 has_uncaptured_sporting = session.scalar(
                     select(PlayerSportingWeekStateModel.run_id).where(
                         PlayerSportingWeekStateModel.run_id == run_id,
@@ -3233,6 +3258,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
                         SEASON_CLOSURE_COMPONENT_KEY,
@@ -3242,6 +3268,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
                         SEASON_CLOSURE_COMPONENT_KEY,
@@ -3331,6 +3358,22 @@ class SimulationPersistenceRepository:
                             f"Cannot restore player lifecycle: {exc}"
                         ) from exc
                 if (
+                    PLAYER_TOUR_ENTRY_COMPONENT_KEY in current_content
+                    or PLAYER_TOUR_ENTRY_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_tour_entry_triggers(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore player Tour-entry triggers: {exc}"
+                        ) from exc
+                if (
                     PLAYER_SPORTING_COMPONENT_KEY in current_content
                     or PLAYER_SPORTING_COMPONENT_KEY in target_content
                 ):
@@ -3383,6 +3426,9 @@ class SimulationPersistenceRepository:
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_tour_entry_triggers(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_sporting(
@@ -3810,6 +3856,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_tour_entry_triggers(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_sporting(

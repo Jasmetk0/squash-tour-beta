@@ -307,6 +307,154 @@ def test_effective_draw_authority_tracks_latest_append_only_revision(tmp_path):
 
 
 @pytest.mark.pr_critical
+def test_frozen_main_replacement_preview_commit_and_exact_retry_over_http(tmp_path):
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'frozen-main-replacement.sqlite'}"
+    )
+    with server:
+        run_id, branch_id, _ = _create_run(
+            server, display_name="Frozen Main Replacement HTTP"
+        )
+        event_id = "event"
+        field = _install_entry_field(
+            server,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        root = _root(server, run_id, branch_id, event_id)
+
+        status, committed = _request(
+            "POST",
+            root + "/commit-input",
+            _commit_payload(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="replacement-http-input",
+                expected_field_fingerprint=field.fingerprint,
+                draw_seed=424242,
+            ),
+        )
+        assert status == 200
+        status, _ = _request(
+            "POST",
+            root + "/generate",
+            _generate_payload(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="replacement-http-draw",
+                expected_draw_input_fingerprint=committed["draw_input_fingerprint"],
+            ),
+        )
+        assert status == 200
+
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="replacement-http-process",
+                main_process_window_count=3,
+                qualification_process_window_count=3,
+            )
+
+        preview_request = {
+            "withdrawn_player_id": "C",
+            "unavailable_player_ids": [],
+        }
+        status, preview = _request(
+            "POST",
+            root + "/frozen-main-replacement/preview",
+            preview_request,
+        )
+        assert status == 200, preview
+        assert preview["schema_version"] == (
+            "authoritative_frozen_main_replacement_preview.v1"
+        )
+        assert preview["source"] == "qualification_promotion"
+        assert preview["selected_player_id"] == "B"
+        assert preview["physical_slot_index"] >= 1
+        assert preview["cutoff_status"] == "replacement_open"
+        assert preview["commit_mode"] == "draw_revision"
+        assert len(preview["source_authority_fingerprint"]) == 64
+        assert (
+            preview["source_authority"]["withdrawn_player_id"]
+            == "C"
+        )
+        assert (
+            preview["source_authority"]["selected_player_id"]
+            == "B"
+        )
+
+        commit = {
+            "command_id": "replacement-http-commit",
+            "withdrawn_player_id": "C",
+            "unavailable_player_ids": [],
+            "expected_source_fingerprint": preview[
+                "source_authority_fingerprint"
+            ],
+            "main_process_window_ordinal": 3,
+            "qualification_process_window_ordinal": 3,
+            "repair_draw_seed": None,
+        }
+        stale_status, stale = _request(
+            "POST",
+            root + "/frozen-main-replacement/commit",
+            commit | {"expected_source_fingerprint": "0" * 64},
+        )
+        assert stale_status == 409, stale
+        assert stale["detail"]["code"] == (
+            "frozen_main_replacement_commit_conflict"
+        )
+        assert "changed since preview" in stale["detail"]["message"]
+
+        status, result = _request(
+            "POST",
+            root + "/frozen-main-replacement/commit",
+            commit,
+        )
+        assert status == 201, result
+        assert result["schema_version"] == (
+            "authoritative_frozen_main_replacement_commit.v1"
+        )
+        assert result["source"] == "qualification_promotion"
+        assert result["source_authority_fingerprint"] == (
+            preview["source_authority_fingerprint"]
+        )
+        assert result["draw_revision_sequences"] == [1]
+        assert len(result["draw_revision_fingerprints"]) == 1
+        assert len(result["successor_draw_fingerprint"]) == 64
+
+        # Lost-response retry resolves from immutable revision history even though
+        # the active Draw no longer contains the withdrawn player.
+        assert _request(
+            "POST",
+            root + "/frozen-main-replacement/commit",
+            commit,
+        ) == (201, result)
+
+        status, effective = _request("GET", root + "/effective-authority")
+        assert status == 200
+        main_players = {
+            slot["player_id"]
+            for slot in effective["main"]["slots"]
+            if slot["player_id"] is not None
+        }
+        assert "C" not in main_players
+        assert "B" in main_players
+
+        qualification_players = {
+            slot["player_id"]
+            for bracket in effective["qualification_brackets"]
+            for slot in bracket["slots"]
+            if slot["player_id"] is not None
+        }
+        assert qualification_players == {"E", "F"}
+
+
+@pytest.mark.pr_critical
 def test_canonical_draw_http_fails_closed_on_stale_scope_and_missing_authority(tmp_path):
     server = ApiServer(database_url=f"sqlite:///{tmp_path / 'canonical-draw-guards.sqlite'}")
     with server:

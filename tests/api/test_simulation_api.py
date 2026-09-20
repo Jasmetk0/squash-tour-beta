@@ -1100,146 +1100,82 @@ def test_pre_draw_withdrawal_replacement_endpoints_validate_fold_and_persist(tmp
         assert "already completed" in rejected_after_completion["detail"]
 
 
-def test_late_replacement_endpoints_validate_fold_and_persist(tmp_path) -> None:
-    database_url = f"sqlite:///{tmp_path / 'api-late-replacement.db'}"
+def test_legacy_late_replacement_authoring_endpoints_are_retired(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-late-replacement-retired.db'}"
     with ApiServer(database_url=database_url, expanded_world=True) as server:
         status, _ = _request(
             "POST",
             f"{server.base_url}/runs",
-            {"run_id": "run-late", "seed": 7070, "season": 2027},
+            {"run_id": "run-late-retired", "seed": 7070, "season": 2027},
         )
         assert status == 201
 
-        status, state_payload = _request("GET", f"{server.base_url}/runs/run-late")
-        assert status == 200
-        event_id = None
-        initial_state: dict[str, object] | None = None
-        for event in state_payload["season_state"]["ordered_events"]:
-            status, candidate_state = _request(
-                "GET",
-                f"{server.base_url}/runs/run-late/events/{event['event_id']}/late-replacement",
-            )
-            assert status == 200
-            if candidate_state["eligible"] is True:
-                event_id = event["event_id"]
-                initial_state = candidate_state
-                break
-        assert event_id is not None
-        assert initial_state is not None
-        assert initial_state["remaining_capacity"] >= 1
-        assert initial_state["replaceable_main_draw_players"]
-        withdrawn_player_id = initial_state["replaceable_main_draw_players"][0]["player_id"]
-
-        status, candidates = _request(
-            "GET",
-            f"{server.base_url}/runs/run-late/events/{event_id}/late-replacement-candidates",
+        status, state_payload = _request(
+            "GET", f"{server.base_url}/runs/run-late-retired"
         )
         assert status == 200
-        assert candidates["candidates"]
-        source_order = {"qualification_waitlist": 0, "main_draw_waitlist": 1}
-        sort_tuples = [
+        event_id = state_payload["season_state"]["ordered_events"][0]["event_id"]
+        root = (
+            f"{server.base_url}/runs/run-late-retired/events/{event_id}"
+        )
+
+        for method, path_suffix, payload in (
+            ("GET", "/late-replacement", None),
+            ("GET", "/late-replacement-candidates", None),
             (
-                source_order[item["source"]],
-                10_000 if item["ranking_priority"] is None else item["ranking_priority"],
-                item["player_id"],
-                item["entry_id"],
-            )
-            for item in candidates["candidates"]
-        ]
-        assert sort_tuples == sorted(sort_tuples)
-
-        status, invalid_player = _request(
-            "POST",
-            f"{server.base_url}/runs/run-late/events/{event_id}/late-replacement",
-            {"withdrawn_player_id": "NOT-A-PLAYER"},
-        )
-        assert status == 400
-        assert "was not found" in invalid_player["detail"]
-
-        status, result = _request(
-            "POST",
-            f"{server.base_url}/runs/run-late/events/{event_id}/late-replacement",
-            {"withdrawn_player_id": withdrawn_player_id},
-        )
-        assert status == 200
-        assert result["event_id"] == event_id
-        assert result["withdrawn_player_id"] == withdrawn_player_id
-        assert result["candidate_slot_index"] is not None
-        assert result["replacement_source"] in {"qualification_waitlist", "main_draw_waitlist"}
-        assert "LATE_REPLACEMENT_PLACEHOLDER" in result["replacement_entry_id"] or result["replacement_entry_id"] == result["withdrawn_entry_id"]
-
-        status, history = _request(
-            "GET",
-            f"{server.base_url}/runs/run-late/events/{event_id}/late-replacement-actions",
-        )
-        assert status == 200
-        assert [item["action_sequence"] for item in history["actions"]] == [1]
-        assert history["actions"][0]["action_kind"] == "late_replacement_lucky_loser"
-        assert history["actions"][0]["withdrawn_player_id"] == withdrawn_player_id
-        assert history["actions"][0]["candidate_slot_index"] == result["candidate_slot_index"]
-
-        status, sim_result = _request("POST", f"{server.base_url}/runs/run-late/simulate/next-tournament")
-        assert status == 200
-        main_entries = sim_result["step"]["tournament_result"]["acceptance_list"]["main_draw_entries"]
-        withdrawn_entry = next(entry for entry in main_entries if entry["entry_id"] == result["withdrawn_entry_id"])
-        replacement_entry = next(entry for entry in main_entries if entry["entry_id"] == result["replacement_entry_id"])
-        assert withdrawn_entry["player_id"] is None
-        assert replacement_entry["player_id"] == result["replacement_player_id"]
-
-
-def test_late_replacement_rejects_when_capacity_exhausted(tmp_path) -> None:
-    database_url = f"sqlite:///{tmp_path / 'api-late-capacity.db'}"
-    with ApiServer(database_url=database_url, expanded_world=True) as server:
-        status, _ = _request(
-            "POST",
-            f"{server.base_url}/runs",
-            {"run_id": "run-late-cap", "seed": 7171, "season": 2027},
-        )
-        assert status == 201
-        status, state_payload = _request("GET", f"{server.base_url}/runs/run-late-cap")
-        assert status == 200
-
-        target_event_id = None
-        target_state = None
-        for event in state_payload["season_state"]["ordered_events"]:
-            status, candidate_state = _request(
-                "GET",
-                f"{server.base_url}/runs/run-late-cap/events/{event['event_id']}/late-replacement",
-            )
-            assert status == 200
-            if candidate_state["eligible"]:
-                target_event_id = event["event_id"]
-                target_state = candidate_state
-                break
-        assert target_event_id is not None
-        assert target_state is not None
-
-        capacity = target_state["remaining_capacity"]
-        last_withdrawable_player_id = target_state["replaceable_main_draw_players"][0]["player_id"]
-        for _ in range(capacity):
-            withdrawn_player_id = target_state["replaceable_main_draw_players"][0]["player_id"]
-            last_withdrawable_player_id = withdrawn_player_id
-            status, _ = _request(
                 "POST",
-                f"{server.base_url}/runs/run-late-cap/events/{target_event_id}/late-replacement",
-                {"withdrawn_player_id": withdrawn_player_id},
+                "/late-replacement",
+                {"withdrawn_player_id": "NOT-A-PLAYER"},
+            ),
+        ):
+            if payload is None:
+                retired_status, retired = _request(method, root + path_suffix)
+            else:
+                retired_status, retired = _request(
+                    method, root + path_suffix, payload
+                )
+            assert retired_status == 410, retired
+            assert retired["detail"]["code"] == (
+                "legacy_late_replacement_retired"
             )
-            assert status == 200
-            status, target_state = _request(
-                "GET",
-                f"{server.base_url}/runs/run-late-cap/events/{target_event_id}/late-replacement",
-            )
-            assert status == 200
-        assert target_state["eligible"] is False
-        assert "capacity is exhausted" in (target_state["eligibility_reason"] or "")
+            assert "canonical Tournament Draw" in retired["detail"]["message"]
 
-        status, rejected = _request(
-            "POST",
-            f"{server.base_url}/runs/run-late-cap/events/{target_event_id}/late-replacement",
-            {"withdrawn_player_id": last_withdrawable_player_id},
+        # Historical sidecar audit remains readable even though no new sidecar
+        # action can be authored through the retired HTTP surface.
+        server.app.state.runtime.repository.append_admin_action(
+            run_id="run-late-retired",
+            event_id=event_id,
+            action_kind="late_replacement_lucky_loser",
+            payload={
+                "withdrawn_player_id": "legacy-withdrawn",
+                "replacement_player_id": "legacy-replacement",
+                "replacement_source": "qualification_waitlist",
+                "withdrawn_entry_id": "legacy-main-entry",
+                "replacement_entry_id": "legacy-ll-entry",
+                "candidate_slot_index": 1,
+                "notes": "pre-retirement historical action",
+            },
         )
-        assert status == 400
-        assert "capacity is exhausted" in rejected["detail"]
+        history_status, history = _request(
+            "GET",
+            root + "/late-replacement-actions",
+        )
+        assert history_status == 200
+        assert history["run_id"] == "run-late-retired"
+        assert history["event_id"] == event_id
+        assert len(history["actions"]) == 1
+        assert history["actions"][0] == {
+            "action_sequence": 1,
+            "action_kind": "late_replacement_lucky_loser",
+            "event_id": event_id,
+            "withdrawn_player_id": "legacy-withdrawn",
+            "replacement_player_id": "legacy-replacement",
+            "replacement_source": "qualification_waitlist",
+            "withdrawn_entry_id": "legacy-main-entry",
+            "replacement_entry_id": "legacy-ll-entry",
+            "candidate_slot_index": 1,
+            "notes": "pre-retirement historical action",
+        }
 
 
 def test_next_match_and_next_round_reject_after_finals_phase_begins(tmp_path) -> None:

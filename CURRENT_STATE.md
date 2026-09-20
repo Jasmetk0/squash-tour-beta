@@ -739,6 +739,8 @@ submissions plus first Tour-entry truth, and can project those persisted submiss
 directly into the canonical Tournament Entry Field. The authoritative Run driver also
 has a guarded preview/commit boundary that rebuilds the shared-snapshot Entry batch
 under the expected Branch head and stores the complete Run slot without mutating the
-legacy EntryList registry. Exact eligibility/deadline validation policy remains
-upstream and intentionally unresolved; field capacity still cannot create or revoke
-Tour status.
+legacy EntryList registry. Persisting those decisions reserves the global ordinal;
+chronological completion requires the matching complete validation slot, so later
+Entry/match execution cannot overtake unresolved application validity. Exact
+eligibility/deadline validation policy remains upstream and intentionally unresolved;
+field capacity still cannot create or revoke Tour status.

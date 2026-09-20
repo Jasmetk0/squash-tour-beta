@@ -338,6 +338,19 @@ class PlayerLifecycleWeekStateModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class PlayerTourEntryTriggerModel(Base):
+    """Immutable first formal Tour-entry trigger for one player on one Branch."""
+
+    __tablename__ = "player_tour_entry_triggers"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    player_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    trigger_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class PlayerSportingWeekStateModel(Base):
     """Immutable Run/Branch-owned canonical sporting snapshot at one FAX week."""
     __tablename__ = "player_sporting_week_states"

@@ -52,9 +52,11 @@ class SeasonEntryBatchResult(BaseModel):
 
 @dataclass(slots=True)
 class SeasonEntryBatchService:
-    """Generate one overlapping event cluster from one frozen player snapshot.
+    """Generate one entry-decision event set from one frozen player snapshot.
 
-    Each event is evaluated independently from the same pre-slot sporting/world
+    A single event is the degenerate valid case; when multiple events are supplied
+    they must form one pairwise-overlapping cluster. Each event is evaluated
+    independently from the same pre-slot sporting/world
     snapshot and the resulting entry lists are committed together. A player may be
     provisionally accepted into more than one overlapping event: that is historical
     Entry/Application state, not authority to compete twice. This layer therefore

@@ -362,6 +362,7 @@ def stage_sporting_transition(
     target: RankingWeek,
     target_effective_development_policy: PlayerDevelopmentPolicy | None = None,
     terminal_players=None,
+    stage_hook=None,
 ):
     """Calculate one weekly sporting boundary without persistence.
 
@@ -397,6 +398,8 @@ def stage_sporting_transition(
         player_ages=ages,
         context=context,
     )
+    if stage_hook is not None:
+        stage_hook("after_sporting_development_staging")
     result = between_week_state_update(
         developed,
         context=context,
@@ -450,9 +453,8 @@ def transition_sporting(
         target=target,
         target_effective_development_policy=target_effective_development_policy,
         terminal_players=terminal_players,
+        stage_hook=stage_hook,
     )
-    if stage_hook is not None:
-        stage_hook("after_sporting_development_staging")
     result = put_sporting(session, result)
     if stage_hook is not None:
         stage_hook("after_between_week_staging")

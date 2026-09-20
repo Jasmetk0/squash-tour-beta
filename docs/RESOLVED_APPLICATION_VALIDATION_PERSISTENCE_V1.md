@@ -48,6 +48,19 @@ Ordinary Season Transition and final Season closure use the same ordering.
 Legacy restore is blocked if live validation-slot state exists but the Saved Revision
 does not capture it.
 
+## Explicit Admin operational bridge
+
+The authoritative Simulation workflow may resolve the currently blocking Entry slot
+through an explicit Admin review. The client supplies only one valid/invalid verdict
+per frozen event/player decision, rejection reasons for invalid outcomes, and audit
+provenance. The server reconstructs every authority field from persisted Run state:
+application identity, source slot/decision fingerprints, Main-vs-Qualification window
+and lifecycle NR tie-break evidence. Commit is guarded by the exact current Position,
+Saved Revision head and Entry-slot fingerprint.
+
+This bridge deliberately records a human resolution; it is **not** the missing
+automatic eligibility/deadline validator and does not define those open product rules.
+
 ## Deliberate boundary
 
 This persistence layer still does not implement the actual eligibility/deadline policy.

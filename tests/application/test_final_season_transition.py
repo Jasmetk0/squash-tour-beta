@@ -133,6 +133,7 @@ def _install_final_boundary(session):
             changes_json="[]",
         )
     )
+    session.flush()
 
     policy = OfficialRankingPolicy(policy_id="final-policy", best_n=15)
     official = calculate_official_ranking(

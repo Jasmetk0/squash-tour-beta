@@ -120,8 +120,10 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   published Week 61 head, Week 61 lifecycle roster, frozen Run-owned tournament
   sources and historical result/discipline stores inside the caller transaction.
   The resolver explicitly refuses 2049/50 until its no-next-Week-1 source adapter
-  exists. Saved Revision integration, season summary/Closure Marker and the full
-  atomic Season Transition remain open.
+  exists. Closing Ranking archives now participate in Saved Revision capture/restore
+  through `ranking_revision_state.v6`; restore requires the exact recovered Week-61
+  publication and outgoing policy before archive installation. Season summary/Closure
+  Marker and the full atomic Season Transition remain open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

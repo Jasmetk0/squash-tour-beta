@@ -27,10 +27,15 @@ The topological proposal assigns each dependency layer to the earliest available
 ordinal while skipping persisted entry ordinals. It does not move or invent entry
 slots.
 
-Examples:
+Implemented pre-alpha example:
 
-- entry slot 1 → first match layer gets global slot 2;
-- match layer 1 → entry slot 2 → next match layer gets global slot 3.
+- entry slot 1 → optional entry slot 2 → first match layer gets the next free global slot.
+
+A new Entry slot may only commit after every earlier global ordinal is already complete.
+The current bridge therefore supports a contiguous Entry-decision prefix before match
+schedule adoption. Planning a future Entry slot between already-planned match layers
+requires the later generic multi-kind slot planner/reservation authority and is not
+claimed here.
 
 A manually authored match schedule with slots 1 and 3 is rejected unless slot 2 is an
 actual persisted entry-decision slot.
@@ -43,9 +48,11 @@ When materializing a match slot, the executor therefore chains from the latest e
 **match** checkpoint, not blindly from global ordinal minus one.
 
 If there is no earlier match slot, it starts from the opening sporting week state even
-when one or more earlier global positions are entry slots.
+when one or more earlier global positions are completed Entry slots.
 
-Every skipped ordinal between two match slots must be owned by a persisted entry slot.
+Every skipped ordinal before a match slot must be owned by a completed persisted Entry
+slot. Entry persistence itself requires every earlier global ordinal to be complete,
+so chronology cannot be backfilled out of order.
 
 ## Reservation safety
 
@@ -62,3 +69,4 @@ Chronology is protected before and after match-slot materialization:
 This is not the final generic multi-kind Simulation Slot schema. It is the minimum
 interoperability layer needed to make today's separate entry and match authorities obey
 one real global ordinal sequence without inventing the unresolved full slot taxonomy.
+In particular, future mid-match Entry reservations remain outside this slice.

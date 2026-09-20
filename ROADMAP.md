@@ -306,6 +306,13 @@ present. This is intentionally **not** the prospect/Tour-entry bridge: the curre
 technical contracts still leave Tour-entry activation and canonical sporting-profile
 creation open, so no mutation is exposed until those rules are decided/implemented.
 
+Week 61 now also has a canonical **read-only Season Transition preflight**. It
+freezes the current authoritative Position, Saved Revision head and branch-state
+blockers, distinguishes those from still-missing engine writers, and projects only
+the Master-defined next boundary: next Season Week 1, or final Run closure after
+season 2049/50. The preflight never calls the legacy rollover path and always reports
+execution unavailable in this slice; no Season Transition mutation is claimed.
+
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused
 production-backed acceptance proves four two-player Q sections end-to-end:

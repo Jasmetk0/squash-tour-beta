@@ -62,7 +62,7 @@ remain valid; their numbering is not a mandate to implement them in that order.
 |---|---|---|
 | 0 — synchronize | One canonical Master, clear authority, verified state and next Codex task | Documentation preservation/link checks; no invented product decisions |
 | 1 — source bridge (implemented slice) | Supported real main-draw results/awards become owned Run/Branch sources, feed Official candidate and survive Save/Restore | Real producer + API/SQLite covers preview, rollback, retry, reopen and recovery; broader source types remain guarded |
-| 2 — one true week boundary (implemented expanded slice) | One SQLite owner resolves an explicit owned completed-tournament manifest, develops canonical sporting state, performs provisional between-week updates, derives lifecycle roster, then atomically publishes/advances/audits | Missing/empty sporting evidence fails closed; match-derived state beyond counts and health remain boundaries; matching Run prospects fail closed |
+| 2 — one true week boundary (implemented expanded slice) | One SQLite owner resolves an explicit owned completed-tournament manifest, develops canonical sporting state, performs provisional between-week updates, derives lifecycle roster including birth-week pre-Tour Draft prospects, then atomically publishes/advances/audits | Missing/empty sporting evidence fails closed for the simulation-ready sporting roster; match-derived state beyond counts and health remain boundaries; incomplete prospect sporting profiles remain deferred until an operation actually requires them |
 | 3 — repeated sporting flow | Entries/draw/match/close/ranking consumers use the same scoped timeline across weeks | Multiple weeks without manual DB repair; slot simultaneity, expiry, corrections, historical reads and recovery |
 | 4 — season boundary | Outgoing Season Closing + summary/marker; incoming policy + Week 1; final season terminates without season 51 | Whole season and rollover; outgoing/incoming policy separation, final Run edge, save/reload/replay |
 | 5 — pre-alpha acceptance | Both Master 31.3 flows, including required minimum Reconstruction/player/AI scope | Official season -> next season and empty Run -> two manual players -> standalone match, repeatedly without history damage |
@@ -140,7 +140,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Official Run season `2000/01` starts with Best 15; later seasons initially inherit the previous season's effective Best N while remaining independently configurable.
 - Preserve historical ranking-policy snapshots.
 - **Implemented initial slice:** explicitly adopt the complete production initial pool and an explicit first-season policy into an independent Run/Branch snapshot; derive the initial ranking candidate server-side and preserve both through Save/reopen/restore. See `docs/INITIAL_WORLD_RANKING_INTEGRATION_V1.md`.
-- The supported ordinary transition bootstraps Week 1 lifecycle and canonical sporting state from owned initial-world players, runs provisional historical development and between-week state, advances birthdays/retirement, and derives ranking identity server-side. Match-derived state/health remain open and prospect intake still fails closed. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md` and `docs/AUTHORITATIVE_PLAYER_SPORTING_WEEK_STATE_V1.md`.
+- The supported ordinary transition bootstraps Week 1 lifecycle and canonical sporting state from owned initial-world players, runs provisional historical development and between-week state, advances birthdays/retirement, activates exact target-week Run prospects into lifecycle as pre-Tour Draft identities, and derives ranking identity server-side. Sporting state is allowed to be a simulation-ready subset of lifecycle; Match-derived state/health and full prospect sporting-profile creation remain open. See `docs/AUTHORITATIVE_PLAYER_LIFECYCLE_WEEK_STATE_V1.md` and `docs/AUTHORITATIVE_PLAYER_SPORTING_WEEK_STATE_V1.md`.
 
 ## 8. Match Reconstruction v1
 
@@ -295,28 +295,29 @@ CAS before Week Transition becomes ready. The manual authority endpoint remains 
 compatibility/advanced boundary, not the default canonical UI path. Week 61 continues
 to require Season Transition.
 
-Unbridged target-week prospects still block Week Transition rather than being
-silently omitted, but the blocker is now inspectable through a canonical read-only
-Run/Branch boundary. The engine derives the target calendar/season week from the
-current Official Ranking head, selects the exact Run-scoped blocking prospect rows,
-surfaces cohort/profile versions and explicit placeholder status for attributes,
-development, potential and traits, and fingerprints that blocking set. The Admin
-Simulation page renders the inspection only when `prospect_bridge_missing` is
-present. Birth-week prospect activation is now separated from Tour entry: lifecycle
-can contain pre-Tour identities and Official Ranking filters them until
-`tour_entry_week` exists. The remaining bridge is canonical simulation-valid
-sporting-profile creation; the stored prospect payload still contains placeholders,
-so no birth-week player-state mutation is exposed yet.
+Target-week prospect intake is now canonical rather than a Week Transition
+blocker. The engine selects the exact matching Run-scoped pregeneration rows only
+when their birth week opens, validates the stored birth identity and materializes
+them into branch-owned lifecycle with a deterministic tie-break identity and
+`tour_entry_week=None`. They are therefore absent from earlier lifecycle history
+and from Official Ranking until a later formal Tour-entry event. The existing
+Prospect Bridge inspection is retained only as a read-only profile-readiness
+diagnostic: it fingerprints target-week rows and exposes placeholder
+attributes/development/potential/traits, but reports no transition blocker. Sporting
+state may be a simulation-ready subset of lifecycle, so a pre-Tour Draft prospect
+does not enter weekly development or normal junior match simulation merely because
+it became visible. Full canonical sporting-profile creation remains required before
+an operation that actually needs that sporting state.
 
 Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state
 blockers, distinguishes those from still-missing engine writers, and projects only
 the Master-defined next boundary: next Season Week 1, or final Run closure after
-season 2049/50. The Admin Simulation page now renders that preflight at Week 61,
-shows state blockers and implementation gaps separately, and hides the ordinary Week
-Transition review/confirm controls at that boundary. The preflight never calls the
-legacy rollover path and always reports execution unavailable in this slice; no
-Season Transition mutation is claimed.
+season 2049/50. The Admin Simulation page renders that preflight at Week 61, shows state blockers
+and implementation gaps separately, hides the ordinary Week Transition controls,
+and exposes the reviewed ordinary Season Transition execution path when the
+preflight is ready. The preflight and commit path never call the legacy rollover
+service.
 
 The first Season Transition write primitive now exists below that preflight:
 `season_closing_ranking.v1` is a separate immutable archive snapshot calculated
@@ -384,8 +385,8 @@ bound through the completed-week context, keeping Saved Revision lineage valid.
 The existing-player lifecycle boundary is now staged canonically as well: a
 consecutive Week-61 -> next-season Week-1 transition applies mapped birthdays and
 age-based retirement, preserves lifecycle lineage and can be persisted inside the
-future caller-owned Season transaction. Run prospects due in target Week 1 remain
-explicitly fail-closed rather than being omitted. The incoming Week-1 Official
+future caller-owned Season transaction. Run prospects due in target Week 1 are activated into the staged lifecycle as
+pre-Tour Draft identities and remain outside the staged sporting/ranking rosters. The incoming Week-1 Official
 Ranking can now be resolved read-only and staged through the canonical
 RankingWeekCommand from the incoming policy, exact staged lifecycle roster,
 disciplinary history and Week-61 owned tournament sources. The ordinary atomic
@@ -395,12 +396,13 @@ Week 1; advances the world head; emits the season-transition World Event; and ca
 the complete boundary into a new Saved Revision plus audit event. It is idempotent by
 Saved Revision/audit identity and rollback-tested after partial publication. A
 non-empty reset catalog fails closed until an authoritative reset adapter exists.
-Prospect-free ordinary boundaries can now execute through the reviewed Admin
-flow, and Saved Revision recovery preserves ordinary Season Transition World Events
-through `ranking_revision_state.v7` while keeping Week Transition receipts strict.
-The remaining ordinary season-0–48 content work is now the prospect activation /
-canonical player-state bridge itself; a target week containing an unbridged prospect
-remains fail-closed rather than borrowing placeholder profile data.
+Ordinary boundaries, including a target Week 1 with birth-week prospects, can now
+execute through the reviewed Admin flow. Saved Revision recovery preserves ordinary
+Season Transition World Events through `ranking_revision_state.v7` while keeping
+Week Transition receipts strict. Remaining prospect work is the canonical
+simulation-valid sporting/profile materialization required before Tour competition,
+plus historically scoped Admin/Viewer prospect surfaces; placeholder profile data is
+not promoted into fake 57-attribute sporting state.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

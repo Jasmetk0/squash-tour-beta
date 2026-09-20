@@ -3,6 +3,7 @@ import pytest
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeEntryDecisionSlotCommand,
 )
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import RunBranchModel
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotStore,
@@ -18,7 +19,7 @@ def _command_from_preview(preview, *, command_id="entry-slot"):
         command_id=command_id,
         run_id=preview["run_id"],
         branch_id=preview["branch_id"],
-        expected_week=preview["week"],
+        expected_week=RankingWeek(**preview["week"]),
         expected_revision_id=preview["expected_revision_id"],
         decision_slot_ordinal=preview["decision_slot_ordinal"],
         event_ids=tuple(preview["event_ids"]),

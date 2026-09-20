@@ -81,7 +81,16 @@ lifecycle, stages/publishes ranking, advances world state, writes its World Even
 and receipt, validates, and commits once. Preview calls that exact writer and
 rolls back. Result, receipt, and World Event carry the sporting fingerprint;
 exact retry validates and returns the stored target rather than developing twice.
-The unresolved RunProspect guard remains unchanged.
+For an ordinary supported Week Transition, completed-week development/recovery still
+runs only over the predecessor sporting roster. After that calculation, exact
+target-week Run prospects are loaded from the same birth-week source used by lifecycle,
+their persisted canonical profile/development/potential fingerprints are validated,
+and new `PlayerSportingRecord` values are appended to the target snapshot. Initial
+Form/Sharpness/Fatigue values use the target state's already-persisted provisional
+bootstrap defaults; the resulting concrete values and policy remain inside historical
+sporting state. Placeholder or inconsistent prospect profile evidence fails closed
+before transition commit. These additions do not imply Tour entry or ranking
+membership. Season Transition still needs the same Week-1 parity.
 
 Saved Revisions use a separate `player_sporting_state` component containing the
 validated complete chain. Restore verifies the live saved head before replacing
@@ -95,5 +104,6 @@ unambiguously and fails before mutation.
 
 The projection and development numbers, final OVR weights, Form-from-match,
 Sharpness gains, detailed training, medical simulation, 57-attribute Match
-Engine consumption, prospect/Tour-entry bridge, player AI, Season Transition,
-and final development probability architecture remain unimplemented or open.
+Engine consumption, formal prospect→Tour-entry authority, player AI, birth-week
+sporting parity in Season Transition, and final development probability architecture
+remain unimplemented or open.

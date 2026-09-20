@@ -284,7 +284,7 @@ def _one_player_boundary():
             policy_id="outgoing",
             weekly_change_basis_points=0,
         ),
-        completed_context_fingerprint="bootstrap",
+        completed_context_fingerprint="bootstrap:not-a-completed-week",
         source_initial_world_fingerprint="world",
         stage_provenance="test",
     )

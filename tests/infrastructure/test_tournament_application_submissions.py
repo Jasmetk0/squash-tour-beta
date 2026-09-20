@@ -3,6 +3,7 @@ import pytest
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.application_submission_authority import (
     TournamentApplicationSubmissionAuthority,
+    TournamentApplicationSubmissionBatchAuthority,
 )
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
@@ -24,6 +25,7 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
     capture_saved_application_submissions,
     load_saved_application_submissions,
     record_valid_application_submission,
+    record_valid_application_submission_batch,
     restore_saved_application_submissions,
 )
 
@@ -148,7 +150,7 @@ def test_earlier_or_simultaneous_distinct_submission_cannot_rewrite_first_entry(
             record_valid_application_submission(session, earlier)
         with pytest.raises(
             TournamentApplicationSubmissionConflict,
-            match="simultaneous first-entry authorities",
+            match="simultaneous first-entry authority",
         ):
             record_valid_application_submission(session, simultaneous)
 
@@ -162,6 +164,93 @@ def test_earlier_or_simultaneous_distinct_submission_cannot_rewrite_first_entry(
             branch_id="branch",
             application_id="application-same-slot",
         ) is None
+
+
+@pytest.mark.pr_critical
+def test_same_slot_multi_application_batch_is_order_independent(database):
+    app_a = _submission(
+        application_id="application-a",
+        event_id="event-a",
+        nr_tie_break_token="nr-a",
+    )
+    app_b = _submission(
+        application_id="application-b",
+        event_id="event-b",
+        nr_tie_break_token="nr-b",
+    )
+    batch = TournamentApplicationSubmissionBatchAuthority.from_submissions(
+        (app_b, app_a)
+    )
+
+    with database.begin() as session:
+        result = record_valid_application_submission_batch(session, batch)
+
+        assert result.batch.submissions == (app_a, app_b)
+        assert result.first_tour_entry_triggers == (app_a.to_tour_entry_trigger(),)
+        assert TournamentApplicationSubmissionStore(session).list(
+            run_id="run",
+            branch_id="branch",
+        ) == (app_a, app_b)
+        assert PlayerTourEntryTriggerStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            player_id="prospect-1",
+        ) == app_a.to_tour_entry_trigger()
+
+
+@pytest.mark.pr_critical
+def test_same_slot_batch_creates_one_first_trigger_per_player(database):
+    first = _submission(
+        application_id="application-a",
+        player_id="prospect-1",
+        event_id="event-a",
+    )
+    second = _submission(
+        application_id="application-b",
+        player_id="prospect-2",
+        event_id="event-b",
+        nr_tie_break_token="nr-token-2",
+    )
+    batch = TournamentApplicationSubmissionBatchAuthority.from_submissions(
+        (second, first)
+    )
+
+    with database.begin() as session:
+        result = record_valid_application_submission_batch(session, batch)
+
+        assert tuple(
+            trigger.player_id for trigger in result.first_tour_entry_triggers
+        ) == ("prospect-1", "prospect-2")
+        assert PlayerTourEntryTriggerStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            player_id="prospect-1",
+        ) == first.to_tour_entry_trigger()
+        assert PlayerTourEntryTriggerStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            player_id="prospect-2",
+        ) == second.to_tour_entry_trigger()
+
+
+@pytest.mark.pr_critical
+def test_individual_same_slot_calls_fail_closed_instead_of_using_call_order(database):
+    app_b = _submission(
+        application_id="application-b",
+        event_id="event-b",
+    )
+    app_a = _submission(
+        application_id="application-a",
+        event_id="event-a",
+    )
+
+    with database.begin() as session:
+        record_valid_application_submission(session, app_b)
+        with pytest.raises(
+            TournamentApplicationSubmissionConflict,
+            match="simultaneous first-entry authority",
+        ):
+            record_valid_application_submission(session, app_a)
 
 
 @pytest.mark.pr_critical

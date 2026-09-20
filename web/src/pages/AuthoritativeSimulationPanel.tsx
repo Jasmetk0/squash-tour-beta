@@ -567,6 +567,7 @@ export function AuthoritativeSimulationPanel({
     rankingAuthorityMissing
   )
   const actionPending = nextMatchMutation.isPending || nextSlotMutation.isPending
+  const currentEntrySlot = position?.current_slot_kind === 'entry'
 
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
@@ -600,6 +601,7 @@ export function AuthoritativeSimulationPanel({
           />
           <MetadataList
             items={[
+              { label: 'Slot kind', value: position.current_slot_kind === 'entry' ? 'Entry decision' : position.current_slot_kind === 'match' ? 'Match' : '—' },
               { label: 'Slot ordinal', value: position.slot_ordinal ?? '—' },
               { label: 'Unresolved groups', value: position.unresolved_group_ids.length },
               { label: 'Current slot complete', value: position.current_slot_complete ? 'Yes' : 'No' },
@@ -713,6 +715,11 @@ export function AuthoritativeSimulationPanel({
       {position ? (
         <>
           <h4>Execute current canonical position</h4>
+          {currentEntrySlot ? (
+            <p className="status">
+              The nearest unresolved Simulation Slot is an Entry decision slot. Complete its application validation before match simulation can continue.
+            </p>
+          ) : null}
           {position.eligible_match_ids.length ? (
             <label>
               Eligible match group
@@ -745,14 +752,14 @@ export function AuthoritativeSimulationPanel({
             <button
               type="button"
               onClick={() => nextMatchMutation.mutate()}
-              disabled={!confirmed || !selectedGroupId || actionPending}
+              disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
             >
               Simulate authoritative Next Match
             </button>
             <button
               type="button"
               onClick={() => nextSlotMutation.mutate()}
-              disabled={!confirmed || position.eligible_match_ids.length === 0 || actionPending}
+              disabled={currentEntrySlot || !confirmed || position.eligible_match_ids.length === 0 || actionPending}
             >
               Simulate authoritative Next Slot
             </button>

@@ -393,10 +393,12 @@ Week 1; advances the world head; emits the season-transition World Event; and ca
 the complete boundary into a new Saved Revision plus audit event. It is idempotent by
 Saved Revision/audit identity and rollback-tested after partial publication. A
 non-empty reset catalog fails closed until an authoritative reset adapter exists.
-Remaining ordinary season-0–48 content work is now the prospect/Tour-entry +
-canonical sporting-profile bridge; the current Admin UI still exposes the bridge as
-the remaining engine gap rather than pretending placeholder prospect profiles are
-ready.
+Prospect-free ordinary boundaries can now execute through the reviewed Admin
+flow, and Saved Revision recovery preserves ordinary Season Transition World Events
+through `ranking_revision_state.v7` while keeping Week Transition receipts strict.
+The remaining ordinary season-0–48 content work is now the prospect activation /
+canonical player-state bridge itself; a target week containing an unbridged prospect
+remains fail-closed rather than borrowing placeholder profile data.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

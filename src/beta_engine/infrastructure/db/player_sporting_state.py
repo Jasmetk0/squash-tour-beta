@@ -452,6 +452,20 @@ def _validated_target_week_prospect_profiles(
             raise ValueError(
                 "Persisted prospect sporting profile identity differs from Run prospect"
             )
+        seed_digests = (
+            (row.profile_seed, canonical.source_profile_seed_digest, "profile"),
+            (
+                row.development_seed,
+                canonical.source_development_seed_digest,
+                "development",
+            ),
+            (row.potential_seed, canonical.source_potential_seed_digest, "potential"),
+        )
+        for seed, expected_digest, label in seed_digests:
+            if hashlib.sha256(seed.encode("utf-8")).hexdigest() != expected_digest:
+                raise ValueError(
+                    f"Persisted prospect {label} seed differs from sporting profile"
+                )
         materialization_policy = profile.get("materialization_policy")
         if (
             not isinstance(materialization_policy, dict)

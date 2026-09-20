@@ -141,6 +141,19 @@ class RankingTransitionAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class SeasonTransitionConfigurationModel(Base):
+    """Current authored configuration head for one ordinary Season Transition."""
+
+    __tablename__ = "season_transition_configurations"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class AuthoritativeWorldStateModel(Base):
     """Current clock and published ranking head for one canonical timeline."""
 

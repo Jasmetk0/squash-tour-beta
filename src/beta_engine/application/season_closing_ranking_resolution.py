@@ -20,7 +20,10 @@ from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandi
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
-from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    get_lifecycle,
+    project_lifecycle_tour_entries_through_week,
+)
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
 from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZeroStore
 from beta_engine.infrastructure.db.season_closing_rankings import SeasonClosingRankingStore
@@ -164,7 +167,12 @@ def resolve_canonical_season_closing_ranking(
     )
     if lifecycle is None:
         raise ValueError("Season Closing Ranking requires Week 61 player lifecycle state")
-    players = lifecycle.ranking_roster()
+    effective_lifecycle = project_lifecycle_tour_entries_through_week(
+        session,
+        lifecycle,
+        through_week=completed_week,
+    )
+    players = effective_lifecycle.ranking_roster()
 
     # Frozen Week-61 tournament sources have not passed through ordinary Week
     # Transition ingestion, so materialize them directly in-memory. Persisted result

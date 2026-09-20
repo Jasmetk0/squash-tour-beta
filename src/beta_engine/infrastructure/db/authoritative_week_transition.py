@@ -33,6 +33,7 @@ from beta_engine.infrastructure.db.ranking_week_command import (
     stage_ranking_week_command,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
+    advance_lifecycle_with_completed_tour_entries,
     get_lifecycle,
     transition_lifecycle,
 )
@@ -115,16 +116,25 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
     if lifecycle is None:
         blockers.append("lifecycle_roster_missing")
     elif authority is not None:
-        lifecycle_identity = tuple(
-            (p.player_id, p.tie_break_token, p.tour_entry_week)
-            for p in lifecycle.ranking_roster()
-        )
-        authority_identity = tuple(
-            (p.player_id, p.tie_break_token, p.tour_entry_week)
-            for p in authority.players
-        )
-        if lifecycle_identity != authority_identity:
-            blockers.append("ranking_transition_roster_mismatch")
+        try:
+            target_lifecycle = advance_lifecycle_with_completed_tour_entries(
+                session,
+                predecessor=lifecycle,
+                target=target,
+            )
+        except ValueError:
+            blockers.append("target_lifecycle_invalid")
+        else:
+            lifecycle_identity = tuple(
+                (p.player_id, p.tie_break_token, p.tour_entry_week)
+                for p in target_lifecycle.ranking_roster()
+            )
+            authority_identity = tuple(
+                (p.player_id, p.tie_break_token, p.tour_entry_week)
+                for p in authority.players
+            )
+            if lifecycle_identity != authority_identity:
+                blockers.append("ranking_transition_roster_mismatch")
     return tuple(blockers)
 
 

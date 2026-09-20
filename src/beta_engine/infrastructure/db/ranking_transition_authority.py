@@ -15,7 +15,7 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 from beta_engine.infrastructure.db.player_lifecycle_state import (
-    advance_lifecycle_with_prospects,
+    advance_lifecycle_with_completed_tour_entries,
     get_lifecycle,
 )
 
@@ -93,7 +93,7 @@ def derive_ranking_transition_authority(
             "Ranking transition predecessor player lifecycle snapshot is missing"
         )
 
-    target_roster = advance_lifecycle_with_prospects(
+    target_roster = advance_lifecycle_with_completed_tour_entries(
         session,
         predecessor=lifecycle,
         target=target_week,

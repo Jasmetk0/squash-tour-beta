@@ -182,6 +182,7 @@ beforeEach(() => {
     final_season: false,
     saved_revision_id: 'revision-7',
     draft_version: 4,
+    default_closing_ranking_fingerprint: '0'.repeat(64),
     default_configuration_fingerprint: '6'.repeat(64),
     default_sporting_fingerprint: '7'.repeat(64),
     default_lifecycle_fingerprint: '8'.repeat(64),
@@ -190,7 +191,7 @@ beforeEach(() => {
     state_blockers: [],
     implementation_gaps: [
       'season_prospect_creation_bridge_not_implemented',
-      'season_transition_atomic_writer_not_implemented'
+      'season_prospect_creation_bridge_not_implemented'
     ],
     ready_for_execution: false,
     preflight_fingerprint: '5'.repeat(64)
@@ -662,6 +663,7 @@ describe('AuthoritativeSimulationPanel', () => {
       final_season: true,
       saved_revision_id: 'revision-7',
       draft_version: 4,
+      default_closing_ranking_fingerprint: '0'.repeat(64),
       default_configuration_fingerprint: null,
       default_sporting_fingerprint: null,
       default_lifecycle_fingerprint: null,

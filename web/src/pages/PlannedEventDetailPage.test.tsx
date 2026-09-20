@@ -810,8 +810,11 @@ describe('PlannedEventDetailPage', () => {
     })
 
     renderAt('/runs/run-a/calendar/E1')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Frozen Main withdrawn player')).toHaveValue('P1')
+    )
     fireEvent.click(
-      await screen.findByRole('button', {
+      screen.getByRole('button', {
         name: 'Preview frozen Main replacement'
       })
     )

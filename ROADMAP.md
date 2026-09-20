@@ -340,8 +340,18 @@ and guarded recovery of historical season archives. The final 2049/50 source edg
 canonical Week-61 tournament evidence is frozen as owned source v6 with an
 eligibility ordinal immediately after the last real week, never a fabricated
 2050/51 Week 1. The final Closing Ranking resolver consumes that evidence directly
-while ordinary Official history remains unchanged. Season summary/Closure Marker,
-Run Completed persistence and the full atomic Season Transition remain open.
+while ordinary Official history remains unchanged. The next step-3 kernel now also
+exists without inventing the still-deferred statistic catalogue or Marker storage
+schema: `season_summary.v1` freezes only explicitly registered authoritative
+season-scoped components against the Closing Ranking, and
+`season_closure_marker_candidate.v1` binds that summary, the Closing Ranking and
+the outgoing Official Ranking Policy fingerprint. The current canonical registry is
+deliberately empty because no branch-scoped resettable statistic store is yet an
+authoritative producer; legacy Race snapshots are not promoted into this path.
+The Marker receives its final Saved Revision identity only after that revision is
+staged by the future atomic Season Transition writer, preventing stale closure
+markers across restore/replay. Run Completed persistence and the full atomic Season
+Transition remain open.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

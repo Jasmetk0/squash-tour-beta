@@ -702,7 +702,7 @@ def _driver_command(driver, week, command_id, group_id=None):
     ), position
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_week61_closes_tournament_source_before_season_transition_boundary(tmp_path):
     driver, factory, week = _driver_fixture(
         tmp_path / "week61-close",

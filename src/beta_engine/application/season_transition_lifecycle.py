@@ -14,7 +14,7 @@ from beta_engine.domain.season_transition_configuration import (
     SeasonTransitionConfiguration,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
-    advance_lifecycle_with_prospects,
+    advance_lifecycle_with_completed_tour_entries,
     get_lifecycle,
     put_lifecycle,
 )
@@ -53,7 +53,7 @@ def resolve_season_transition_lifecycle(
     if predecessor is None:
         raise ValueError("Season Transition predecessor lifecycle state is missing")
 
-    target_state = advance_lifecycle_with_prospects(
+    target_state = advance_lifecycle_with_completed_tour_entries(
         session,
         predecessor=predecessor,
         target=configuration.target_week,

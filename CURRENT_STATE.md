@@ -137,11 +137,20 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   history and all canonical Week-61 owned tournament sources whose first publication
   boundary is Week 1. The write path reuses the existing RankingWeekCommand so result
   history, input manifests and command receipts stay on the canonical ranking path.
-  It still does not create a PublishedOfficialRanking or advance the world clock;
-  those remain part of the future atomic Season Transition commit/public-state step.
-  At Week 61 the Admin Simulation page renders the preflight, separates branch
-  blockers from engine gaps and hides ordinary Week Transition controls. It does not
-  reuse the legacy MVP rollover service.
+  The ordinary atomic Season Transition writer is now wired end-to-end. Under one
+  SQLite `BEGIN IMMEDIATE` it stages Closing Ranking + Season Summary/Closure Marker,
+  Week-1 sporting and lifecycle state, the Week-1 Official Ranking through the canonical
+  RankingWeekCommand path, then publishes that Ranking, advances authoritative world
+  time, emits the Season world event and captures the complete result in a new Saved
+  Revision plus audit record. Injected failure after public-state staging rolls the
+  entire transition back, and exact retries are verified from the committed revision.
+  The preflight now also fingerprints the read-only Closing Ranking candidate and only
+  reports the unresolved prospect bridge when target Week 1 actually contains
+  unbridged Run prospects. Prospect-free ordinary boundaries can therefore become
+  executable; boundaries with such prospects remain fail-closed. The Admin Simulation
+  page exposes an explicit review/confirm flow for executable ordinary rollover and
+  still hides ordinary Week Transition controls at Week 61. It does not reuse the
+  legacy MVP rollover service.
   The first Season Transition write primitive is now implemented separately:
   `season_closing_ranking.v1` calculates an immutable archived ranking immediately
   after Week 61 under the outgoing Week 61 policy, and an append-only store binds it
@@ -182,7 +191,9 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   self-references that exact revision, an append-only audit event stores the request
   fingerprint, exact retries return the committed result, and injected failure after
   revision staging rolls every closure write back. No 2050/51 Week 1 or Official
-  Ranking is created. The ordinary seasons 0–48 Season Transition remains open.
+  Ranking is created. Ordinary seasons 0–48 now have the real atomic rollover path;
+  the remaining product blocker is the unresolved prospect/Tour-entry + canonical
+  sporting-profile bridge when a target Week actually contains new prospects.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

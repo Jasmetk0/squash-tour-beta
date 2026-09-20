@@ -932,7 +932,7 @@ export function AuthoritativeSimulationPanel({
         <>
           <h4>Canonical Season Transition preflight</h4>
           <p className="status">
-            Week 61 crosses a season boundary. Ordinary seasons remain blocked until every implementation layer is complete; the final 2049/50 closure becomes executable only when this exact persisted state passes preflight.
+            Week 61 crosses a season boundary. Ordinary rollover becomes executable when this exact persisted state has no branch blocker and no boundary-specific engine gap; the final 2049/50 closure uses its dedicated terminal path.
           </p>
           {seasonTransitionPreflightQuery.isLoading ? (
             <p className="status">Loading Season Transition preflight…</p>
@@ -973,6 +973,10 @@ export function AuthoritativeSimulationPanel({
                     value: seasonTransitionPreflightQuery.data.ready_for_execution ? 'Yes' : 'No'
                   },
                   {
+                    label: 'Closing Ranking candidate',
+                    value: seasonTransitionPreflightQuery.data.default_closing_ranking_fingerprint ?? '—'
+                  },
+                  {
                     label: 'Preflight fingerprint',
                     value: seasonTransitionPreflightQuery.data.preflight_fingerprint
                   }
@@ -992,12 +996,20 @@ export function AuthoritativeSimulationPanel({
                   Current persisted Week 61 state has no additional branch-specific blocker.
                 </p>
               )}
-              <strong>Engine implementation gaps</strong>
-              <ul aria-label="Season Transition implementation gaps">
-                {seasonTransitionPreflightQuery.data.implementation_gaps.map((gap) => (
-                  <li key={gap}>{gap}</li>
-                ))}
-              </ul>
+              {seasonTransitionPreflightQuery.data.implementation_gaps.length ? (
+                <>
+                  <strong>Engine implementation gaps</strong>
+                  <ul aria-label="Season Transition implementation gaps">
+                    {seasonTransitionPreflightQuery.data.implementation_gaps.map((gap) => (
+                      <li key={gap}>{gap}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="status">
+                  No boundary-specific engine implementation gap remains for this transition.
+                </p>
+              )}
               {!seasonTransitionPreflightQuery.data.final_season &&
               seasonTransitionPreflightQuery.data.ready_for_execution &&
               seasonTransitionPreflightQuery.data.target_week ? (

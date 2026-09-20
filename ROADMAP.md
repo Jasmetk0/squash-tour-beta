@@ -292,9 +292,15 @@ target-week roster produced by the canonical lifecycle transition and the predec
 Official Ranking policy. Preview is read-only, confirm is bound to the reviewed
 authority fingerprint, and the authority is then Saved through the ranking revision
 CAS before Week Transition becomes ready. The manual authority endpoint remains a
-compatibility/advanced boundary, not the default canonical UI path. Week 61 continues
-to require Season Transition, and unbridged target-week prospects continue to block
-derivation rather than being silently omitted.
+compatibility/advanced boundary, not the default canonical UI path. Week 61 continues to require Season Transition. A new canonical read-only
+Season Transition preflight now makes that boundary explicit: it reports current
+Branch/Week-61 blockers independently from implementation gaps and validates the
+next Season Week 1 (or final Run-closure) target without mutating state or reusing
+the legacy MVP rollover service. This is intentionally a prerequisite/inspection
+slice only; the Master §6.8 nine-step atomic Season Transition writer is still not
+implemented. Unbridged target-week prospects also remain fail-closed rather than
+being silently promoted to Tour players, because the exact AI timing of their first
+valid Tour entry is still product-open.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

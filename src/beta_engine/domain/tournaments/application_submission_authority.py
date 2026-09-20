@@ -34,7 +34,7 @@ class TournamentApplicationSubmissionAuthority(FrozenInput):
     player_id: str = Field(min_length=1)
     entry_window: EntryWindow
     submission_week: RankingWeek
-    decision_slot_ordinal: int = Field(ge=0)
+    decision_slot_ordinal: int = Field(ge=1)
     nr_tie_break_token: str = Field(min_length=1)
     validation_authority_id: str = Field(min_length=1, max_length=256)
     validation_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -99,7 +99,7 @@ class TournamentApplicationSubmissionBatchAuthority(FrozenInput):
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     submission_week: RankingWeek
-    decision_slot_ordinal: int = Field(ge=0)
+    decision_slot_ordinal: int = Field(ge=1)
     submissions: tuple[TournamentApplicationSubmissionAuthority, ...] = Field(
         min_length=1
     )

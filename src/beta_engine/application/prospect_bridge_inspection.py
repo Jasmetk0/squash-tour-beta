@@ -156,7 +156,6 @@ def inspect_prospect_bridge(
             "prospect_bridge_missing" if prospects else "no_target_week_prospects"
         ),
         "unresolved_contracts": (
-            "tour_entry_activation",
             "canonical_sporting_profile",
         ),
         "prospects": [prospect.model_dump(mode="json") for prospect in prospects],

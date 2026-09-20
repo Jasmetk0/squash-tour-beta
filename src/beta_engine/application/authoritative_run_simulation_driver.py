@@ -32,6 +32,7 @@ from beta_engine.application.run_owned_match_package import (
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
     prepare_canonical_tournament_ranking_sources,
+    prepare_final_season_closing_ranking_results,
     prepare_tournament_ranking_sources,
 )
 from beta_engine.application.season_match_service import (
@@ -2489,15 +2490,17 @@ class AuthoritativeRunSimulationDriver:
                     award_seed=self._stable_seed(package, "awards"),
                     frozen_point_authority=point_authority,
                 )
+            first_publication_week, closing_eligibility_ordinal = (
+                self._ranking_source_boundary(command.expected_week)
+            )
             binding = TournamentRankingBinding(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 edition_id=package.event_id,
                 event_id=package.event_id,
                 completed_week=command.expected_week,
-                first_publication_week=self._ranking_publication_boundary(
-                    command.expected_week
-                ),
+                first_publication_week=first_publication_week,
+                closing_eligibility_ordinal=closing_eligibility_ordinal,
                 validity_weeks=61,
                 ranking_status="ranked",
                 expected_result_fingerprint=(
@@ -2512,37 +2515,61 @@ class AuthoritativeRunSimulationDriver:
                 ),
             )
             if canonical_result is not None and canonical_awards is not None:
-                prepare_canonical_tournament_ranking_sources(
-                    binding,
-                    canonical_result,
-                    canonical_awards,
-                )
-                if canonical_prize_awards is not None:
+                if binding.closing_only:
+                    prepare_final_season_closing_ranking_results(
+                        binding,
+                        canonical_result,
+                        canonical_awards,
+                    )
                     source = OwnedTournamentRankingSource(
-                        schema_version="owned_tournament_ranking_source.v5",
+                        schema_version="owned_tournament_ranking_source.v6",
                         binding=binding,
                         canonical_result=canonical_result,
                         canonical_awards=canonical_awards,
                         canonical_prize_awards=canonical_prize_awards,
                         adopted_by_command_id=command.command_id,
                         provenance_kind=(
-                            "canonical_run_owned_tournament_authorities_and_prize_money"
+                            "canonical_run_owned_tournament_authorities_and_prize_money_final_closing"
+                            if canonical_prize_awards is not None
+                            else "canonical_run_owned_tournament_authorities_final_closing"
                         ),
                     )
                 else:
-                    # Historical adopted authorities before Calendar Event snapshot
-                    # freezing cannot reconstruct prize configuration safely.
-                    source = OwnedTournamentRankingSource(
-                        schema_version="owned_tournament_ranking_source.v4",
-                        binding=binding,
-                        canonical_result=canonical_result,
-                        canonical_awards=canonical_awards,
-                        adopted_by_command_id=command.command_id,
-                        provenance_kind="canonical_run_owned_tournament_authorities",
+                    prepare_canonical_tournament_ranking_sources(
+                        binding,
+                        canonical_result,
+                        canonical_awards,
                     )
+                    if canonical_prize_awards is not None:
+                        source = OwnedTournamentRankingSource(
+                            schema_version="owned_tournament_ranking_source.v5",
+                            binding=binding,
+                            canonical_result=canonical_result,
+                            canonical_awards=canonical_awards,
+                            canonical_prize_awards=canonical_prize_awards,
+                            adopted_by_command_id=command.command_id,
+                            provenance_kind=(
+                                "canonical_run_owned_tournament_authorities_and_prize_money"
+                            ),
+                        )
+                    else:
+                        # Historical adopted authorities before Calendar Event snapshot
+                        # freezing cannot reconstruct prize configuration safely.
+                        source = OwnedTournamentRankingSource(
+                            schema_version="owned_tournament_ranking_source.v4",
+                            binding=binding,
+                            canonical_result=canonical_result,
+                            canonical_awards=canonical_awards,
+                            adopted_by_command_id=command.command_id,
+                            provenance_kind="canonical_run_owned_tournament_authorities",
+                        )
             else:
                 if result is None or awards is None:
                     raise ValueError("Legacy tournament close produced no packages")
+                if binding.closing_only:
+                    raise ValueError(
+                        "Final Season Closing Ranking requires canonical tournament source"
+                    )
                 prepare_tournament_ranking_sources(binding, result, awards)
                 source = OwnedTournamentRankingSource(
                     schema_version="owned_tournament_ranking_source.v1",
@@ -2555,27 +2582,28 @@ class AuthoritativeRunSimulationDriver:
             store.append(source)
 
     @staticmethod
-    def _ranking_publication_boundary(completed_week: RankingWeek) -> RankingWeek:
-        """Return the ordinary ranking boundary after a completed tournament.
-
-        Season Week 61 rolls to the next season's Week 1. The final 2049/50
-        boundary has no next Official Ranking week and therefore remains reserved
-        for the dedicated final-season Closing Ranking source adapter.
-        """
+    def _ranking_source_boundary(
+        completed_week: RankingWeek,
+    ) -> tuple[RankingWeek | None, int | None]:
+        """Return Official publication or final Closing-only eligibility boundary."""
 
         if completed_week.week < 61:
-            return RankingWeek(
-                season_index=completed_week.season_index,
-                week=completed_week.week + 1,
+            return (
+                RankingWeek(
+                    season_index=completed_week.season_index,
+                    week=completed_week.week + 1,
+                ),
+                None,
             )
         if completed_week.season_index < 49:
-            return RankingWeek(
-                season_index=completed_week.season_index + 1,
-                week=1,
+            return (
+                RankingWeek(
+                    season_index=completed_week.season_index + 1,
+                    week=1,
+                ),
+                None,
             )
-        raise ValueError(
-            "final_season_closing_ranking_source_adapter_required"
-        )
+        return None, completed_week.ordinal + 1
 
     @staticmethod
     def _validate_existing_owned_source(existing, command, package, authoritative):
@@ -2612,7 +2640,15 @@ class AuthoritativeRunSimulationDriver:
             }
         if stored_results != expected:
             raise ValueError("Conflicting owned tournament source")
-        if existing.schema_version in {
+        if existing.schema_version == "owned_tournament_ranking_source.v6":
+            if existing.canonical_result is None or existing.canonical_awards is None:
+                raise ValueError("Final Closing tournament source is incomplete")
+            prepare_final_season_closing_ranking_results(
+                existing.binding,
+                existing.canonical_result,
+                existing.canonical_awards,
+            )
+        elif existing.schema_version in {
             "owned_tournament_ranking_source.v3",
             "owned_tournament_ranking_source.v4",
             "owned_tournament_ranking_source.v5",

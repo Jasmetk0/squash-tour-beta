@@ -81,12 +81,12 @@ jobs:
             git diff --name-only "$BASE_SHA" HEAD -- tests |
               grep -E '^tests/.*test_.*\.py$' || true
           )
-          if (( ${#changed_tests[$]} == 0 )); then
+          if (( ${#changed_tests[@]} == 0 )); then
             echo "No backend test files changed in this PR."
             exit 0
           fi
           printf 'Running changed backend tests:\n%s\n' "${changed_tests[*]}"
-          python -m pytest "${changed_tests[$]}" --maxfail=1 --durations=10
+          python -m pytest "${changed_tests[@]}" --maxfail=1 --durations=10
 
   frontend-checks:
     name: Frontend build + critical tests
@@ -128,7 +128,7 @@ jobs:
           )
 
           declare -a tests=()
-          for repo_path in "${changed_files[$]}"; do
+          for repo_path in "${changed_files[@]}"; do
             rel="${repo_path#web/}"
             if [[ "$rel" =~ \.test\.(ts|tsx)$ ]]; then
               tests+=("$rel")
@@ -144,14 +144,14 @@ jobs:
             fi
           done
 
-          if (( ${#tests[$]} == 0 )); then
+          if (( ${#tests[@]} == 0 )); then
             echo "No changed or colocated frontend tests found."
             exit 0
           fi
 
-          mapfile -t unique_tests < <(printf '%s\n' "${tests[$]}" | sort -u)
+          mapfile -t unique_tests < <(printf '%s\n' "${tests[@]}" | sort -u)
           printf 'Running changed/colocated frontend tests:\n%s\n' "${unique_tests[*]}"
-          npm run test -- "${unique_tests[$]}"
+          npm run test -- "${unique_tests[@]}"
       - name: Run web build
         run: npm run build
 

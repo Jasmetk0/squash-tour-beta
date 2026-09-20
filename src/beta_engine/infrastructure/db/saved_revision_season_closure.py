@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import hashlib
-
-from pydantic import Field
+from typing import Literal
 
 from beta_engine.domain.run_revisions import canonical_json
 from beta_engine.domain.season_closure import (
@@ -19,7 +18,9 @@ SEASON_CLOSURE_COMPONENT_KEY = "season_closure"
 class SavedRevisionSeasonClosure(FrozenInput):
     """Closure evidence embedded in the exact Saved Revision it names."""
 
-    schema_version: str = "saved_revision_season_closure.v1"
+    schema_version: Literal["saved_revision_season_closure.v1"] = (
+        "saved_revision_season_closure.v1"
+    )
     summary: object
     marker: object
 

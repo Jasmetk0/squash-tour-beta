@@ -5,6 +5,10 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
+from beta_engine.application.canonical_tournament_points import (
+    build_tournament_point_award_authority,
+)
+from beta_engine.application.ranking_tournament_ingestion import TournamentRankingBinding
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
     validate_season_transition_configuration,
@@ -17,8 +21,14 @@ from beta_engine.application.season_transition_ranking import (
     resolve_season_transition_ranking,
     stage_season_transition_ranking,
 )
-from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
-from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
+from beta_engine.domain.calendar.season_weeks import (
+    age_at_calendar_position,
+    season_week_to_calendar_position,
+)
+from beta_engine.domain.players.lifecycle import (
+    PlayerLifecycleIdentity,
+    PlayerLifecycleWeekState,
+)
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     PlayerDevelopmentPolicy,
@@ -29,6 +39,12 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.tournaments.result_authority import (
+    TournamentPlayerResultAuthority,
+    TournamentResultAuthority,
+)
+from beta_engine.application.season_point_awards_service import FrozenPointAwardAuthority
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -44,6 +60,9 @@ from beta_engine.infrastructure.db.models import (
     RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
+from beta_engine.infrastructure.db.owned_tournament_sources import (
+    OwnedTournamentRankingSourceStore,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     put_lifecycle,
@@ -65,7 +84,7 @@ def database(tmp_path):
     engine.dispose()
 
 
-def _install_boundary(session, *, season_index=0):
+def _install_boundary(session, *, season_index=0, with_players=False):
     week = RankingWeek(season_index=season_index, week=61)
     session.add(
         RunContainerModel(
@@ -113,7 +132,7 @@ def _install_boundary(session, *, season_index=0):
         branch_id="branch",
         week=week,
         policy=ranking_policy,
-        players=(),
+        players=lifecycle.ranking_roster() if with_players else (),
         results=(),
     )
     OfficialRankingCandidateStore(session).append(official, bootstrap=True)
@@ -134,13 +153,35 @@ def _install_boundary(session, *, season_index=0):
             ranking_fingerprint=official.fingerprint,
         )
     )
-    put_lifecycle(
+    lifecycle_players = ()
+    if with_players:
+        position = season_week_to_calendar_position(2000 + season_index, 61)
+        lifecycle_players = tuple(
+            PlayerLifecycleIdentity(
+                player_id=player_id,
+                birth_year=1980,
+                birth_year_week=1,
+                tie_break_token=f"token-{player_id}",
+                tie_break_provenance=f"test:{player_id}",
+                tour_entry_week=RankingWeek(season_index=season_index, week=1),
+                age=age_at_calendar_position(
+                    birth_year=1980,
+                    birth_year_week=1,
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                ),
+                status="active",
+                origin="test",
+            )
+            for player_id in ("A", "B")
+        )
+    lifecycle = put_lifecycle(
         session,
         PlayerLifecycleWeekState(
             run_id="run",
             branch_id="branch",
             week=week,
-            players=(),
+            players=lifecycle_players,
             source_initial_world_fingerprint="world",
         ),
     )
@@ -168,6 +209,64 @@ def _install_boundary(session, *, season_index=0):
         ),
     )
     return week, official, sporting
+
+
+def _install_owned_week61_source(session):
+    completed = RankingWeek(season_index=0, week=61)
+    result = TournamentResultAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="week61-event",
+        completed_week=completed,
+        draw_authority_fingerprint="a" * 64,
+        match_package_fingerprint="b" * 64,
+        champion_player_id="B",
+        finalist_player_id="A",
+        players=(
+            TournamentPlayerResultAuthority(
+                player_id="A",
+                draw_type="main",
+                reached_stage="finalist",
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="B",
+                draw_type="main",
+                reached_stage="champion",
+            ),
+        ),
+        matches=(),
+    )
+    awards = build_tournament_point_award_authority(
+        result=result,
+        point_authority=FrozenPointAwardAuthority(
+            ranking_status="ranked",
+            point_distribution={"champion": 200, "finalist": 100},
+            point_distribution_source="calendar_event.ranking_points_table",
+        ),
+        seed=77,
+    )
+    binding = TournamentRankingBinding(
+        run_id="run",
+        branch_id="branch",
+        edition_id="week61-event",
+        event_id="week61-event",
+        completed_week=completed,
+        first_publication_week=RankingWeek(season_index=1, week=1),
+        validity_weeks=61,
+        ranking_status="ranked",
+        expected_result_fingerprint=result.fingerprint,
+        expected_award_fingerprint=awards.fingerprint,
+    )
+    return OwnedTournamentRankingSourceStore(session).append(
+        OwnedTournamentRankingSource(
+            schema_version="owned_tournament_ranking_source.v4",
+            binding=binding,
+            canonical_result=result,
+            canonical_awards=awards,
+            adopted_by_command_id="close-week61",
+            provenance_kind="canonical_run_owned_tournament_authorities",
+        )
+    )
 
 
 @pytest.mark.pr_critical
@@ -370,6 +469,34 @@ def test_week1_ranking_resolves_and_stages_without_publication_or_clock_advance(
         world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
         assert world.current_ordinal == completed.ordinal
         assert world.ranking_fingerprint == predecessor.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_week1_ranking_consumes_owned_week61_tournament_source(database):
+    with database.begin() as session:
+        _install_boundary(session, with_players=True)
+        _install_owned_week61_source(session)
+        config = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        resolved = resolve_season_transition_ranking(session, config)
+        assert [(row.player_id, row.points) for row in resolved.target_snapshot.rows] == [
+            ("B", 200),
+            ("A", 100),
+        ]
+
+        staged = stage_season_transition_ranking(session, config)
+        assert staged.target_snapshot.fingerprint == resolved.target_snapshot.fingerprint
+        assert (
+            session.get(
+                PublishedOfficialRankingModel,
+                ("run", "branch", config.target_week.ordinal),
+            )
+            is None
+        )
 
 
 @pytest.mark.pr_critical

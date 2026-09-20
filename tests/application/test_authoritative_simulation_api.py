@@ -381,20 +381,21 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
         assert status == 201
         assert retry["adoption"] == "exact_retry"
 
-        decisions = preview["authority"]["decisions"]
+        status, inspected = _request(
+            "GET",
+            root + "/entry-decision-slot/1",
+        )
+        assert status == 200
+        assert inspected["slot_fingerprint"] == preview["slot_fingerprint"]
+        assert inspected["validation_resolved"] is False
+        assert inspected["validation_fingerprint"] is None
+
+        decisions = inspected["authority"]["decisions"]
         assert decisions
-        with server.app.state.runtime.repository._session_factory() as session:
-            lifecycle = get_lifecycle(
-                session,
-                run_id=run_id,
-                branch_id=branch_id,
-                week=week,
-            )
-            assert lifecycle is not None
-            lifecycle_tokens = {
-                player.player_id: player.tie_break_token
-                for player in lifecycle.players
-            }
+        lifecycle_tokens = inspected["identity_tokens"]
+        assert set(lifecycle_tokens) == {
+            decision["player_id"] for decision in decisions
+        }
         validations = []
         for index, decision in enumerate(decisions):
             valid = index == 0
@@ -441,6 +442,17 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
         assert status == 201
         assert validated["valid_submission_count"] == 1
         assert len(validated["first_tour_entry_trigger_fingerprints"]) == 1
+
+        status, resolved_inspection = _request(
+            "GET",
+            root + "/entry-decision-slot/1",
+        )
+        assert status == 200
+        assert resolved_inspection["validation_resolved"] is True
+        assert (
+            resolved_inspection["validation_fingerprint"]
+            == validated["validation_fingerprint"]
+        )
 
         with server.app.state.runtime.repository._session_factory() as session:
             stored = RunEntryDecisionSlotStore(session).list(

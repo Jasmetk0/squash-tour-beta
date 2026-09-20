@@ -623,16 +623,19 @@ class AuthoritativeSlotMatchExecutor:
                 "Global Simulation Slot ordinal already belongs to an entry-decision slot"
             )
         prior = self.session.scalar(
-            select(SimulationSlotModel).where(
+            select(SimulationSlotModel)
+            .where(
                 SimulationSlotModel.run_id == run_id,
                 SimulationSlotModel.branch_id == branch_id,
                 SimulationSlotModel.week_ordinal == week.ordinal,
-                SimulationSlotModel.slot_ordinal == ordinal - 1,
+                SimulationSlotModel.slot_ordinal < ordinal,
             )
+            .order_by(SimulationSlotModel.slot_ordinal.desc())
+            .limit(1)
         )
-        if ordinal > 1 and (prior is None or prior.status != "complete"):
+        if prior is not None and prior.status != "complete":
             raise ValueError(
-                "dependent later slot requires a complete predecessor slot"
+                "later match slot requires the previous match slot to be complete"
             )
         feeder_ids = tuple(
             feeder

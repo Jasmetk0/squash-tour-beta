@@ -120,6 +120,6 @@ def load_saved_revision_season_closure(
         revision_id,
         summary.fingerprint,
         summary.closing_ranking_fingerprint,
-    ):
+    ) or marker.completed_week != summary.completed_week:
         raise ValueError("Saved Revision season closure identity mismatch")
     return component

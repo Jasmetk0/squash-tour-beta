@@ -80,3 +80,16 @@ one lifecycle snapshot:
 This gives the engine one shared semantic kernel for current-week Viewer/Admin
 projection and for folding completed trigger history into a later Week/Season lifecycle
 snapshot. It still does not alter an already-published Official Ranking snapshot.
+
+
+## Current-world read projection
+
+The current-world lifecycle resolver now combines the authoritative world clock, the
+immutable lifecycle snapshot for that week, and persisted Tour-entry trigger history.
+Viewer Next Gen uses this effective projection when no historical week is requested,
+so a newly registered Tour Player leaves the prospect list immediately while the
+published Official Ranking remains unchanged.
+
+An explicit historical week request deliberately continues to use the exact stored
+week-boundary lifecycle snapshot. Slot-aware historical reads are a later Time Machine
+boundary; this slice does not invent an intraweek timestamp for a week-only query.

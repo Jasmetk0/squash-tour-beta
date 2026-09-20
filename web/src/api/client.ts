@@ -108,6 +108,7 @@ import type {
   AdminBranchSimulateWorldTourFinalsRequest,
   AdminBranchSimulateWorldTourFinalsResponse,
   AuthoritativeSimulationPosition,
+  AuthoritativeSeasonTransitionPreflight,
   AuthoritativeWeekScheduleInspection,
   AuthoritativeWeekScheduleProposal,
   AdoptAuthoritativeWeekScheduleProposalPayload,
@@ -1044,6 +1045,38 @@ export async function getProspectBridgeInspection(
     !/^[0-9a-f]{64}$/.test(data.inspection_fingerprint)
   ) {
     throw new Error('Prospect Bridge inspection response is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeSeasonTransitionPreflight(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeSeasonTransitionPreflight> {
+  const data = await request<AuthoritativeSeasonTransitionPreflight>(
+    authoritativeSimulationRoot(runId, branchId) + '/season-transition/preflight'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (data.schema_version !== 'authoritative_season_transition_preflight.v1') {
+    throw new Error('Season Transition preflight has an unsupported schema.')
+  }
+  if (
+    !/^[0-9a-f]{64}$/.test(data.position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preflight_fingerprint)
+  ) {
+    throw new Error('Season Transition preflight fingerprint is invalid.')
+  }
+  if (data.completed_week.week === 61) {
+    if (data.final_season) {
+      if (data.target_week !== null) {
+        throw new Error('Final Season preflight must not open another season.')
+      }
+    } else if (
+      data.target_week?.season_index !== data.completed_week.season_index + 1 ||
+      data.target_week.week !== 1
+    ) {
+      throw new Error('Season Transition preflight has an invalid target Week 1 boundary.')
+    }
   }
   return data
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   adoptAuthoritativeWeekScheduleProposal,
   getAuthoritativeSimulationPosition,
+  getAuthoritativeSeasonTransitionPreflight,
   getProspectBridgeInspection,
   inspectAuthoritativeWeekSchedule,
   previewAuthoritativeSimulationSave,
@@ -86,6 +87,21 @@ export function AuthoritativeSimulationPanel({
     enabled: Boolean(
       enabled &&
       positionQuery.data?.transition_blockers.includes('prospect_bridge_missing')
+    ),
+    retry: false
+  })
+
+  const seasonTransitionPreflightQuery = useQuery({
+    queryKey: [
+      'authoritative-season-transition-preflight',
+      runId,
+      branchId,
+      positionQuery.data?.position_fingerprint
+    ],
+    queryFn: () => getAuthoritativeSeasonTransitionPreflight(runId, branchId),
+    enabled: Boolean(
+      enabled &&
+      positionQuery.data?.current_week.week === 61
     ),
     retry: false
   })
@@ -793,7 +809,82 @@ export function AuthoritativeSimulationPanel({
         </>
       ) : null}
 
-      {position ? (
+      {position?.current_week.week === 61 ? (
+        <>
+          <h4>Canonical Season Transition preflight</h4>
+          <p className="status">
+            Week 61 crosses a season boundary. Canonical execution remains disabled until every current-state blocker and every implementation gap below is resolved.
+          </p>
+          {seasonTransitionPreflightQuery.isLoading ? (
+            <p className="status">Loading Season Transition preflight…</p>
+          ) : null}
+          {seasonTransitionPreflightQuery.error ? (
+            <p className="error">
+              Season Transition preflight failed: {formatApiError(seasonTransitionPreflightQuery.error)}
+            </p>
+          ) : null}
+          {seasonTransitionPreflightQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Completed season boundary',
+                    value: `Season index ${seasonTransitionPreflightQuery.data.completed_week.season_index} · Week ${seasonTransitionPreflightQuery.data.completed_week.week}`
+                  },
+                  {
+                    label: 'Target',
+                    value: seasonTransitionPreflightQuery.data.final_season
+                      ? 'Final Run closure — no next season'
+                      : `Season index ${seasonTransitionPreflightQuery.data.target_week?.season_index} · Week 1`
+                  },
+                  {
+                    label: 'Saved Revision head',
+                    value: seasonTransitionPreflightQuery.data.saved_revision_id ?? '—'
+                  },
+                  {
+                    label: 'State blockers',
+                    value: seasonTransitionPreflightQuery.data.state_blockers.length
+                  },
+                  {
+                    label: 'Implementation gaps',
+                    value: seasonTransitionPreflightQuery.data.implementation_gaps.length
+                  },
+                  {
+                    label: 'Execution available',
+                    value: seasonTransitionPreflightQuery.data.ready_for_execution ? 'Yes' : 'No'
+                  },
+                  {
+                    label: 'Preflight fingerprint',
+                    value: seasonTransitionPreflightQuery.data.preflight_fingerprint
+                  }
+                ]}
+              />
+              {seasonTransitionPreflightQuery.data.state_blockers.length ? (
+                <>
+                  <strong>Current branch blockers</strong>
+                  <ul aria-label="Season Transition state blockers">
+                    {seasonTransitionPreflightQuery.data.state_blockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                </>
+              ) : (
+                <p className="status">
+                  Current persisted Week 61 state has no additional branch-specific blocker.
+                </p>
+              )}
+              <strong>Engine implementation gaps</strong>
+              <ul aria-label="Season Transition implementation gaps">
+                {seasonTransitionPreflightQuery.data.implementation_gaps.map((gap) => (
+                  <li key={gap}>{gap}</li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+        </>
+      ) : null}
+
+      {position && position.current_week.week !== 61 ? (
         <>
           <h4>Canonical Week Transition</h4>
           {!position.week_ready_for_transition ? (

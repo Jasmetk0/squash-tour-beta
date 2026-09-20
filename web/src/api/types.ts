@@ -778,6 +778,21 @@ export type AuthoritativeRankingWeek = {
   week: number
 }
 
+export type AuthoritativeSeasonTransitionPreflight = {
+  schema_version: 'authoritative_season_transition_preflight.v1'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek | null
+  final_season: boolean
+  saved_revision_id: string | null
+  position_fingerprint: string
+  state_blockers: string[]
+  implementation_gaps: string[]
+  ready_for_execution: boolean
+  preflight_fingerprint: string
+}
+
 export type AuthoritativeSimulationPosition = {
   run_id: string
   branch_id: string

@@ -310,8 +310,11 @@ Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state
 blockers, distinguishes those from still-missing engine writers, and projects only
 the Master-defined next boundary: next Season Week 1, or final Run closure after
-season 2049/50. The preflight never calls the legacy rollover path and always reports
-execution unavailable in this slice; no Season Transition mutation is claimed.
+season 2049/50. The Admin Simulation page now renders that preflight at Week 61,
+shows state blockers and implementation gaps separately, and hides the ordinary Week
+Transition review/confirm controls at that boundary. The preflight never calls the
+legacy rollover path and always reports execution unavailable in this slice; no
+Season Transition mutation is claimed.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

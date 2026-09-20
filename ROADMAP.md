@@ -386,10 +386,18 @@ future caller-owned Season transaction. Run prospects due in target Week 1 remai
 explicitly fail-closed rather than being omitted. The incoming Week-1 Official
 Ranking can now be resolved read-only and staged through the canonical
 RankingWeekCommand from the incoming policy, exact staged lifecycle roster,
-disciplinary history and Week-61 owned tournament sources. Staging does not publish
-the Ranking or move the world clock. Remaining ordinary season-0–48 work is the
-prospect/Tour-entry + sporting-profile bridge plus the public-state/atomic rollover
-writer that persists and publishes all selected staging outputs together.
+disciplinary history and Week-61 owned tournament sources. The ordinary atomic
+writer is now wired through the driver, HTTP boundary and Admin confirmation flow:
+one `BEGIN IMMEDIATE` stages Closing Ranking, Season Summary/Closure Marker,
+Week-1 sporting/lifecycle/ranking, then publishes the Official Ranking, advances the
+world clock, emits the Season world event and captures the complete state in a new
+Saved Revision + audit event. Fault injection proves post-publication failure rolls
+everything back, while exact command retry resolves from the committed revision.
+Preflight also fingerprints the Closing Ranking candidate and requires the prospect
+bridge only when target Week 1 actually contains unbridged Run prospects. Remaining
+ordinary season-0–48 work is therefore the prospect/Tour-entry + canonical
+sporting-profile bridge itself; prospect-free boundaries can execute now without
+pretending that bridge has been implemented.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

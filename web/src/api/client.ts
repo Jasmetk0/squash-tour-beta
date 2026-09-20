@@ -15,7 +15,6 @@ import type {
   CountryRecord,
   CountryUpsertPayload,
   AssignWildcardsPayload,
-  ApplyPreDrawWithdrawalPayload,
   CreateRunPayload,
   EventListResponse,
   RunActivityResponse,
@@ -40,9 +39,9 @@ import type {
   LateReplacementActionHistoryResponse,
   PlayerTransitionsResponse,
   PreDrawWithdrawalActionHistoryResponse,
-  PreDrawWithdrawalResultResponse,
-  PreDrawWithdrawalStateResponse,
   CanonicalTournamentEntryFieldState,
+  CanonicalPreDrawWithdrawalPayload,
+  CanonicalPreDrawWithdrawalResult,
   CanonicalTournamentDrawState,
   CanonicalTournamentDrawAuthority,
   CanonicalDrawInputCommitPayload,
@@ -1648,10 +1647,6 @@ export function assignEventWildcards(
   })
 }
 
-export function getEventPreDrawWithdrawalState(runId: string, eventId: string): Promise<PreDrawWithdrawalStateResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal`)
-}
-
 export async function getCanonicalTournamentEntryFieldState(
   runId: string,
   branchId: string,
@@ -1667,6 +1662,30 @@ export async function getCanonicalTournamentEntryFieldState(
     data.event_id !== eventId
   ) {
     throw new Error('Canonical Tournament Entry Field response does not match the requested scope.')
+  }
+  return data
+}
+
+export async function commitCanonicalPreDrawWithdrawal(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalPreDrawWithdrawalPayload
+): Promise<CanonicalPreDrawWithdrawalResult> {
+  const data = await request<CanonicalPreDrawWithdrawalResult>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field/pre-draw-withdrawal`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.schema_version !== 'canonical_pre_draw_withdrawal_result.v1' ||
+    data.run_id !== runId ||
+    data.branch_id !== branchId ||
+    data.event_id !== eventId ||
+    data.command_id !== payload.command_id ||
+    data.predecessor_field_fingerprint !== payload.expected_field_fingerprint ||
+    !/^[0-9a-f]{64}$/.test(data.field_fingerprint)
+  ) {
+    throw new Error('Canonical pre-draw withdrawal response does not match the reviewed field authority.')
   }
   return data
 }
@@ -1848,17 +1867,6 @@ export async function commitCanonicalFrozenMainReplacement(
     throw new Error('Frozen Main replacement commit response is invalid.')
   }
   return data
-}
-
-export function applyEventPreDrawWithdrawal(
-  runId: string,
-  eventId: string,
-  payload: ApplyPreDrawWithdrawalPayload
-): Promise<PreDrawWithdrawalResultResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal`, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  })
 }
 
 export function getEventPreDrawWithdrawalActions(

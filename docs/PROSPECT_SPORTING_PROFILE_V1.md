@@ -68,14 +68,18 @@ historically visible.
 
 ## Still deferred
 
-Persistence alone intentionally does not:
+Persistence alone intentionally does not yet:
 
-- place a birth-week prospect into `player_sporting_week_state`;
-- start weekly development for pre-Tour prospects;
-- create a formal Tour-entry event;
+- place the new birth-week prospect into the target `player_sporting_week_state`;
+- create a formal Tour-entry event or Official Ranking membership;
 - expose hidden attributes, potential or seeds to Viewer;
 - invent the still-placeholder broader hidden trait/profile systems;
 - add junior competition or Next Gen ranking systems.
 
-The next boundary is a guarded sporting-state adoption operation for an operation that
-actually requires the stored canonical sporting truth.
+This missing sporting insertion is not a decision to keep visible prospects outside
+sporting history. Master Week Transition performs completed-week development first
+and only then creates the new 15-year-old prospect. The next implementation boundary
+must therefore append the persisted canonical profile to the **target-week** sporting
+snapshot after predecessor development/between-week updates. The prospect remains
+pre-Tour (`tour_entry_week=None`); its first ordinary weekly development can only be
+evaluated after it has actually existed through a completed week.

@@ -1196,9 +1196,6 @@ export type VisiblePreTourProspect = {
   lifecycle_status: 'active' | 'retired'
   tour_status: 'pre_tour'
   visible_since_week: VisibleProspectWeek
-  source_type: string
-  cohort_policy_version: string
-  profile_version: string
 }
 
 export type VisiblePreTourProspects = {
@@ -1208,6 +1205,8 @@ export type VisiblePreTourProspects = {
   week: VisibleProspectWeek
   lifecycle_fingerprint: string
   total: number
+  limit: number
+  offset: number
   prospects: VisiblePreTourProspect[]
 }
 

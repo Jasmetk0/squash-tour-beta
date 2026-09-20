@@ -8,6 +8,7 @@ import json
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 from beta_engine.domain.tournaments.run_entry_decision_slot import (
     RunEntryDecisionSlotAuthority,
 )
@@ -16,6 +17,7 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     RunEntryDecisionSlotAuthorityModel,
     SimulationSlotModel,
+    WeekSimulationScheduleModel,
 )
 
 
@@ -162,6 +164,24 @@ class RunEntryDecisionSlotStore:
             raise RunEntryDecisionSlotConflict(
                 "Global Simulation Slot ordinal already belongs to a match slot"
             )
+
+        schedule_row = self.session.get(
+            WeekSimulationScheduleModel,
+            (authority.run_id, authority.branch_id, authority.week.ordinal),
+        )
+        if schedule_row is not None:
+            schedule = WeekSimulationSchedule.model_validate_json(
+                schedule_row.payload_json
+            )
+            if schedule.fingerprint != schedule_row.schedule_fingerprint:
+                raise ValueError("Persisted match schedule is corrupt")
+            if any(
+                slot.ordinal == authority.decision_slot_ordinal
+                for slot in schedule.slots
+            ):
+                raise RunEntryDecisionSlotConflict(
+                    "Global Simulation Slot ordinal is reserved by the adopted match schedule"
+                )
 
         _insert(self.session, authority)
         return authority

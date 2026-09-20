@@ -31,6 +31,9 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PlayerTourEntryTriggerStore,
 )
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
 )
@@ -74,7 +77,7 @@ def _slot():
         run_id="run",
         branch_id="branch",
         week=RankingWeek(season_index=0, week=9),
-        decision_slot_ordinal=4,
+        decision_slot_ordinal=1,
         source_entry_batch_fingerprint="a" * 64,
         source_application_decisions_fingerprint="b" * 64,
         source_active_players_fingerprint="c" * 64,
@@ -142,9 +145,30 @@ def _resolved(*, all_invalid=False, policy_fingerprint="f" * 64):
 
 
 @pytest.mark.pr_critical
+def test_validation_commit_requires_exact_persisted_source_entry_slot(database):
+    resolved = _resolved()
+    with database.begin() as session:
+        with pytest.raises(
+            ApplicationValidationSlotConflict,
+            match="requires a persisted Run entry-decision slot",
+        ):
+            record_resolved_application_validation_slot(session, resolved)
+
+        assert ApplicationValidationSlotStore(session).list(
+            run_id="run",
+            branch_id="branch",
+        ) == ()
+        assert TournamentApplicationSubmissionStore(session).list(
+            run_id="run",
+            branch_id="branch",
+        ) == ()
+
+
+@pytest.mark.pr_critical
 def test_resolved_validation_persists_with_submission_and_first_tour_entry(database):
     resolved = _resolved()
     with database.begin() as session:
+        RunEntryDecisionSlotStore(session).append(resolved.slot)
         result = record_resolved_application_validation_slot(session, resolved)
 
         assert result.validation_slot == resolved
@@ -166,7 +190,7 @@ def test_resolved_validation_persists_with_submission_and_first_tour_entry(datab
         )
         assert trigger is not None
         assert trigger.trigger_week == RankingWeek(season_index=0, week=9)
-        assert trigger.decision_slot_ordinal == 4
+        assert trigger.decision_slot_ordinal == 1
         assert PlayerTourEntryTriggerStore(session).get(
             run_id="run",
             branch_id="branch",
@@ -178,6 +202,7 @@ def test_resolved_validation_persists_with_submission_and_first_tour_entry(datab
 def test_exact_retry_is_idempotent(database):
     resolved = _resolved()
     with database.begin() as session:
+        RunEntryDecisionSlotStore(session).append(resolved.slot)
         first = record_resolved_application_validation_slot(session, resolved)
         retry = record_resolved_application_validation_slot(session, resolved)
 
@@ -198,6 +223,7 @@ def test_exact_retry_is_idempotent(database):
 def test_all_invalid_slot_persists_without_submission_or_tour_entry(database):
     resolved = _resolved(all_invalid=True)
     with database.begin() as session:
+        RunEntryDecisionSlotStore(session).append(resolved.slot)
         result = record_resolved_application_validation_slot(session, resolved)
 
         assert result.submission_commit is None
@@ -220,6 +246,7 @@ def test_conflicting_same_slot_fails_before_rewriting_downstream_history(databas
     first = _resolved()
     conflicting = _resolved(policy_fingerprint="0" * 64)
     with database.begin() as session:
+        RunEntryDecisionSlotStore(session).append(first.slot)
         record_resolved_application_validation_slot(session, first)
         with pytest.raises(
             ApplicationValidationSlotConflict,

@@ -17,6 +17,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
     AuthoritativeWalkoverCommand,
+    FinalSeasonTransitionCommand,
 )
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
@@ -98,6 +99,32 @@ def season_transition_preflight(
             status_code=409,
             detail={
                 "code": "season_transition_preflight_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/season-transition/finalize", status_code=201)
+def finalize_final_season(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = FinalSeasonTransitionCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).finalize_final_season(command)
+    except (KeyError, ValueError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "final_season_transition_conflict",
                 "message": str(exc),
             },
         ) from exc

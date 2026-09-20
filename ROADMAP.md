@@ -386,10 +386,17 @@ future caller-owned Season transaction. Run prospects due in target Week 1 remai
 explicitly fail-closed rather than being omitted. The incoming Week-1 Official
 Ranking can now be resolved read-only and staged through the canonical
 RankingWeekCommand from the incoming policy, exact staged lifecycle roster,
-disciplinary history and Week-61 owned tournament sources. Staging does not publish
-the Ranking or move the world clock. Remaining ordinary season-0–48 work is the
-prospect/Tour-entry + sporting-profile bridge plus the public-state/atomic rollover
-writer that persists and publishes all selected staging outputs together.
+disciplinary history and Week-61 owned tournament sources. The ordinary atomic
+rollover writer is now implemented behind the Admin API: one transaction stages the
+Closing Ranking and closure package, sporting, lifecycle and Week-1 Ranking; publishes
+Week 1; advances the world head; emits the season-transition World Event; and captures
+the complete boundary into a new Saved Revision plus audit event. It is idempotent by
+Saved Revision/audit identity and rollback-tested after partial publication. A
+non-empty reset catalog fails closed until an authoritative reset adapter exists.
+Remaining ordinary season-0–48 content work is now the prospect/Tour-entry +
+canonical sporting-profile bridge; the current Admin UI still exposes the bridge as
+the remaining engine gap rather than pretending placeholder prospect profiles are
+ready.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

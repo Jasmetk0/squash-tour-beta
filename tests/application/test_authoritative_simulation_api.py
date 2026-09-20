@@ -450,14 +450,12 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             "command_id": "stale-review-entry-slot-1",
             "expected_position_fingerprint": "0" * 64,
         }
-        assert (
-            _request(
-                "POST",
-                root + "/entry-decision-slot/validation/review",
-                stale_command,
-            )[0]
-            == 409
+        stale_status, stale_response = _request(
+            "POST",
+            root + "/entry-decision-slot/validation/review",
+            stale_command,
         )
+        assert stale_status == 409, stale_response
 
         status, validated = _request(
             "POST",

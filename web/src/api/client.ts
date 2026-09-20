@@ -1406,23 +1406,36 @@ export function getRunTalentPlan(runId: string): Promise<RunTalentPlanSummary> {
 
 
 export function getViewerVisibleProspects(
-  productRunId: string
+  productRunId: string,
+  params: { limit?: number; offset?: number } = {}
 ): Promise<import('./types').VisiblePreTourProspects> {
+  const query = new URLSearchParams()
+  if (typeof params.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params.offset === 'number') query.set('offset', String(params.offset))
+  const suffix = query.size ? `?${query.toString()}` : ''
   return request(
-    `/viewer/runs/${encodeURIComponent(productRunId)}/prospects/next-gen`
+    `/viewer/runs/${encodeURIComponent(productRunId)}/prospects/next-gen${suffix}`
   )
 }
 
 export function getAdminVisibleProspects(
   runId: string,
   branchId: string,
-  target?: { season_index: number; week: number }
+  params: {
+    season_index?: number
+    week?: number
+    limit?: number
+    offset?: number
+  } = {}
 ): Promise<import('./types').VisiblePreTourProspects> {
-  const query = target
-    ? `?season_index=${encodeURIComponent(String(target.season_index))}&week=${encodeURIComponent(String(target.week))}`
-    : ''
+  const query = new URLSearchParams()
+  if (typeof params.season_index === 'number') query.set('season_index', String(params.season_index))
+  if (typeof params.week === 'number') query.set('week', String(params.week))
+  if (typeof params.limit === 'number') query.set('limit', String(params.limit))
+  if (typeof params.offset === 'number') query.set('offset', String(params.offset))
+  const suffix = query.size ? `?${query.toString()}` : ''
   return request(
-    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/prospects/visible${query}`
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/prospects/visible${suffix}`
   )
 }
 

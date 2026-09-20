@@ -31,6 +31,14 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionResult,
     commit_final_season_transition,
 )
+from beta_engine.application.ordinary_season_transition import (
+    OrdinarySeasonTransitionCommand,
+    OrdinarySeasonTransitionResult,
+    commit_ordinary_season_transition,
+)
+from beta_engine.application.season_closing_ranking_resolution import (
+    resolve_canonical_season_closing_ranking,
+)
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
@@ -157,6 +165,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     final_season: bool
     saved_revision_id: str | None
     draft_version: int | None = None
+    default_closing_ranking_fingerprint: str | None = None
     default_configuration_fingerprint: str | None = None
     default_sporting_fingerprint: str | None = None
     default_lifecycle_fingerprint: str | None = None
@@ -241,6 +250,17 @@ class AuthoritativeRunSimulationDriver:
             if at_boundary and not final_season
             else None
         )
+        default_closing = None
+        if at_boundary:
+            try:
+                default_closing = resolve_canonical_season_closing_ranking(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    completed_week=week,
+                )
+            except ValueError:
+                blockers.append("season_closing_ranking_unavailable")
         default_configuration = None
         default_sporting = None
         default_lifecycle = None
@@ -287,7 +307,6 @@ class AuthoritativeRunSimulationDriver:
             if final_season
             else (
                 "season_prospect_creation_bridge_not_implemented",
-                "season_transition_atomic_writer_not_implemented",
             )
         )
         state_blockers = tuple(dict.fromkeys(blockers))
@@ -302,6 +321,9 @@ class AuthoritativeRunSimulationDriver:
             if branch
             else None,
             "draft_version": draft.draft_version if draft else None,
+            "default_closing_ranking_fingerprint": (
+                default_closing.fingerprint if default_closing else None
+            ),
             "default_configuration_fingerprint": (
                 default_configuration.fingerprint if default_configuration else None
             ),
@@ -329,6 +351,9 @@ class AuthoritativeRunSimulationDriver:
             if branch
             else None,
             draft_version=draft.draft_version if draft else None,
+            default_closing_ranking_fingerprint=(
+                default_closing.fingerprint if default_closing else None
+            ),
             default_configuration_fingerprint=(
                 default_configuration.fingerprint if default_configuration else None
             ),
@@ -347,6 +372,53 @@ class AuthoritativeRunSimulationDriver:
             ready_for_execution=ready,
             preflight_fingerprint=fingerprint(body),
         )
+
+    def advance_season(
+        self, command: OrdinarySeasonTransitionCommand
+    ) -> OrdinarySeasonTransitionResult:
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            existing = session.get(
+                BranchSavedRevisionModel,
+                command.season_saved_revision_id,
+            )
+            if existing is not None:
+                return commit_ordinary_season_transition(session, command)
+
+            preflight = self._season_transition_preflight(
+                session, command.run_id, command.branch_id
+            )
+            if preflight.preflight_fingerprint != command.expected_preflight_fingerprint:
+                raise ValueError("season transition preflight is stale")
+            if preflight.final_season or preflight.target_week is None:
+                raise ValueError(
+                    "ordinary Season Transition requires a non-final Week 61 boundary"
+                )
+            if preflight.state_blockers:
+                raise ValueError(
+                    "ordinary Season Transition preflight has state blockers: "
+                    + ", ".join(preflight.state_blockers)
+                )
+            unsupported_gaps = tuple(
+                gap
+                for gap in preflight.implementation_gaps
+                if gap != "season_prospect_creation_bridge_not_implemented"
+            )
+            if unsupported_gaps:
+                raise ValueError(
+                    "ordinary Season Transition has unsupported implementation gaps: "
+                    + ", ".join(unsupported_gaps)
+                )
+            if preflight.saved_revision_id != command.expected_saved_revision_id:
+                raise ValueError("Season Transition Saved Revision head is stale")
+            if preflight.draft_version != command.expected_draft_version:
+                raise ValueError("Season Transition Working Draft version is stale")
+            if (
+                command.configuration.completed_week != preflight.completed_week
+                or command.configuration.target_week != preflight.target_week
+            ):
+                raise ValueError("Season Transition configuration boundary is stale")
+            return commit_ordinary_season_transition(session, command)
 
     def finalize_final_season(
         self, command: FinalSeasonTransitionCommand

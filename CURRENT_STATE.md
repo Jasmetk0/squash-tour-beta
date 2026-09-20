@@ -375,7 +375,13 @@ result exposes predecessor/new field fingerprints plus promotion/backfill deltas
 
 The existing Tournament Draw Input commitment remains the hard lock for new pre-draw
 repairs. The canonical Run/Branch Admin HTTP inspection and mutation routes do not
-reuse or reinterpret the older simulation-run endpoint.
+reuse or reinterpret the older simulation-run endpoint. Planned Event now exposes
+that canonical command directly from the current Branch Entry Field: Admin can choose
+an active Main or Qualification player, commit against the exact field fingerprint,
+and inspect the server-derived promotion/backfill delta. The old simulation-run
+pre-draw GET/POST authoring endpoint returns `410 Gone` and its Commissioner form is
+removed; historical `pre_draw_withdrawal_replacement` sidecar actions remain
+read-only for compatibility/audit.
 
 The current Tournament Draw follow-up removes the single-qualifier topology limit.
 For multiple qualifier spots, canonical Draw Authority v2 now materializes equal,

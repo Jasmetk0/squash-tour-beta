@@ -32,6 +32,7 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
     RankingWeek,
     calculate_official_ranking,
+    load_official_ranking_snapshot,
 )
 from beta_engine.domain.run_containers import WORKING_RUN_STATUS
 from beta_engine.domain.run_revisions import (

@@ -5,6 +5,7 @@ import {
   adoptAuthoritativeWeekScheduleProposal,
   getAuthoritativeSimulationPosition,
   getAuthoritativeSeasonTransitionPreflight,
+  finalizeAuthoritativeFinalSeason,
   getProspectBridgeInspection,
   inspectAuthoritativeWeekSchedule,
   previewAuthoritativeSimulationSave,
@@ -65,6 +66,10 @@ export function AuthoritativeSimulationPanel({
     preview: DerivedRankingTransitionAuthorityPreview
   } | null>(null)
   const [rankingAuthorityCommitted, setRankingAuthorityCommitted] = useState(false)
+  const [finalSeasonCommandId, setFinalSeasonCommandId] = useState(newCommandId)
+  const [finalSeasonRevisionId, setFinalSeasonRevisionId] = useState(newCommandId)
+  const [finalSeasonAuditId, setFinalSeasonAuditId] = useState(newCommandId)
+  const [finalSeasonConfirmed, setFinalSeasonConfirmed] = useState(false)
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -140,6 +145,10 @@ export function AuthoritativeSimulationPanel({
     setRankingAuthorityReason('')
     setRankingAuthorityReview(null)
     setRankingAuthorityCommitted(false)
+    setFinalSeasonCommandId(newCommandId())
+    setFinalSeasonRevisionId(newCommandId())
+    setFinalSeasonAuditId(newCommandId())
+    setFinalSeasonConfirmed(false)
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
@@ -157,6 +166,10 @@ export function AuthoritativeSimulationPanel({
     setRankingAuthorityCommandId(newCommandId())
     setRankingAuthorityReview(null)
     setRankingAuthorityCommitted(false)
+    setFinalSeasonCommandId(newCommandId())
+    setFinalSeasonRevisionId(newCommandId())
+    setFinalSeasonAuditId(newCommandId())
+    setFinalSeasonConfirmed(false)
     setConfirmed(false)
   }, [positionQuery.data?.position_fingerprint])
 
@@ -265,6 +278,48 @@ export function AuthoritativeSimulationPanel({
           queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
           queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
         ])
+      }
+    }
+  })
+
+  const finalSeasonMutation = useMutation({
+    mutationFn: () => {
+      const preflight = seasonTransitionPreflightQuery.data
+      if (
+        !preflight ||
+        !preflight.final_season ||
+        !preflight.ready_for_execution ||
+        !preflight.saved_revision_id ||
+        preflight.draft_version == null
+      ) {
+        throw new Error('Final Season Transition preflight is not executable.')
+      }
+      if (!finalSeasonConfirmed) {
+        throw new Error('Confirm final Run closure before execution.')
+      }
+      return finalizeAuthoritativeFinalSeason(runId, branchId, {
+        command_id: finalSeasonCommandId,
+        expected_preflight_fingerprint: preflight.preflight_fingerprint,
+        expected_saved_revision_id: preflight.saved_revision_id,
+        expected_draft_version: preflight.draft_version,
+        final_saved_revision_id: finalSeasonRevisionId,
+        audit_event_id: finalSeasonAuditId
+      })
+    },
+    onSuccess: async () => {
+      setFinalSeasonConfirmed(false)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['authoritative-season-transition-preflight', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+      ])
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setFinalSeasonConfirmed(false)
+        await refreshCanonicalSimulation()
       }
     }
   })
@@ -813,7 +868,7 @@ export function AuthoritativeSimulationPanel({
         <>
           <h4>Canonical Season Transition preflight</h4>
           <p className="status">
-            Week 61 crosses a season boundary. Canonical execution remains disabled until every current-state blocker and every implementation gap below is resolved.
+            Week 61 crosses a season boundary. Ordinary seasons remain blocked until every implementation layer is complete; the final 2049/50 closure becomes executable only when this exact persisted state passes preflight.
           </p>
           {seasonTransitionPreflightQuery.isLoading ? (
             <p className="status">Loading Season Transition preflight…</p>
@@ -879,6 +934,58 @@ export function AuthoritativeSimulationPanel({
                   <li key={gap}>{gap}</li>
                 ))}
               </ul>
+              {seasonTransitionPreflightQuery.data.final_season &&
+              seasonTransitionPreflightQuery.data.ready_for_execution ? (
+                <>
+                  <p className="status">
+                    Final closure is atomic: Closing Ranking, Season Summary, Closure Marker, final Saved Revision and Run Completed commit together. No 2050/51 Week 1 is created.
+                  </p>
+                  {!finalSeasonConfirmed ? (
+                    <button
+                      type="button"
+                      onClick={() => setFinalSeasonConfirmed(true)}
+                      disabled={finalSeasonMutation.isPending}
+                    >
+                      Review final Run closure
+                    </button>
+                  ) : (
+                    <>
+                      <p className="status">
+                        Confirm permanent completion of this timeline at 2049/50 Week 61. Earlier Saved Revisions remain available for alternative branches.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => finalSeasonMutation.mutate()}
+                        disabled={finalSeasonMutation.isPending}
+                      >
+                        Finalize 2049/50
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFinalSeasonConfirmed(false)}
+                        disabled={finalSeasonMutation.isPending}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  )}
+                  {finalSeasonMutation.error ? (
+                    <p className="error">
+                      Final Run closure failed: {formatApiError(finalSeasonMutation.error)}
+                    </p>
+                  ) : null}
+                  {finalSeasonMutation.data ? (
+                    <MetadataList
+                      items={[
+                        { label: 'Run status', value: finalSeasonMutation.data.run_status },
+                        { label: 'Final Saved Revision', value: finalSeasonMutation.data.saved_revision_id },
+                        { label: 'Closing Ranking', value: finalSeasonMutation.data.closing_ranking_fingerprint },
+                        { label: 'Closure Marker', value: finalSeasonMutation.data.closure_marker_fingerprint }
+                      ]}
+                    />
+                  ) : null}
+                </>
+              ) : null}
             </>
           ) : null}
         </>

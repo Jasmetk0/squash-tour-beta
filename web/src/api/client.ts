@@ -109,6 +109,8 @@ import type {
   AdminBranchSimulateWorldTourFinalsResponse,
   AuthoritativeSimulationPosition,
   AuthoritativeSeasonTransitionPreflight,
+  FinalSeasonTransitionPayload,
+  FinalSeasonTransitionResult,
   AuthoritativeWeekScheduleInspection,
   AuthoritativeWeekScheduleProposal,
   AdoptAuthoritativeWeekScheduleProposalPayload,
@@ -1077,6 +1079,30 @@ export async function getAuthoritativeSeasonTransitionPreflight(
     ) {
       throw new Error('Season Transition preflight has an invalid target Week 1 boundary.')
     }
+  }
+  return data
+}
+
+export async function finalizeAuthoritativeFinalSeason(
+  runId: string,
+  branchId: string,
+  payload: FinalSeasonTransitionPayload
+): Promise<FinalSeasonTransitionResult> {
+  const data = await request<FinalSeasonTransitionResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/season-transition/finalize',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'final_season_transition_result.v1' ||
+    data.run_status !== 'completed' ||
+    data.completed_week.season_index !== 49 ||
+    data.completed_week.week !== 61 ||
+    !/^[0-9a-f]{64}$/.test(data.closing_ranking_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.season_summary_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.closure_marker_fingerprint)
+  ) {
+    throw new Error('Final Season Transition response is invalid.')
   }
   return data
 }

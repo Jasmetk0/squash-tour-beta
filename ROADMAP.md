@@ -356,8 +356,15 @@ Branch-head Saved Revision that contains matching final Season Closure evidence 
 2049/50 Week 61. The transition is idempotent and all other lifecycle/week/evidence
 combinations fail closed. Saved Revision restore accepts this immutable closure
 component, while direct fork from the final closure revision remains guarded until
-identity remapping exists. The remaining work is to create/bind that final revision
-and invoke the lifecycle kernel inside the full atomic Season Transition transaction.
+identity remapping exists. The final 2049/50 path is now wired end-to-end as one
+atomic command: fresh preflight → Closing Ranking → Summary/Marker → complete Saved
+Revision → Working Draft/head advance → Run Completed. The command uses
+`BEGIN IMMEDIATE`, embeds the closure evidence in the exact final revision, records
+an audit request fingerprint for retry identity, and rolls back every staged closure
+write on failure. Final preflight can therefore become executable when its real
+state blockers are empty. Remaining Season Transition work is the ordinary
+season-0–48 path: development/recovery, new-season policy activation, explicit
+season-scoped resets, lifecycle/prospects, Week-1 Official Ranking and public state.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

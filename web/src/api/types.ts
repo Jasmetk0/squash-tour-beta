@@ -786,11 +786,34 @@ export type AuthoritativeSeasonTransitionPreflight = {
   target_week: AuthoritativeRankingWeek | null
   final_season: boolean
   saved_revision_id: string | null
+  draft_version: number | null
   position_fingerprint: string
   state_blockers: string[]
   implementation_gaps: string[]
   ready_for_execution: boolean
   preflight_fingerprint: string
+}
+
+export type FinalSeasonTransitionPayload = {
+  command_id: string
+  expected_preflight_fingerprint: string
+  expected_saved_revision_id: string
+  expected_draft_version: number
+  final_saved_revision_id: string
+  audit_event_id: string
+}
+
+export type FinalSeasonTransitionResult = {
+  schema_version: 'final_season_transition_result.v1'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  saved_revision_id: string
+  closing_ranking_fingerprint: string
+  season_summary_fingerprint: string
+  closure_marker_fingerprint: string
+  draft_version: number
+  run_status: 'completed'
 }
 
 export type AuthoritativeSimulationPosition = {

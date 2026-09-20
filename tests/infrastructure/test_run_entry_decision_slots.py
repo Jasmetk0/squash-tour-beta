@@ -5,11 +5,18 @@ from beta_engine.application.authoritative_slot_matches import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import SimulationMatchEventPlan
+from beta_engine.domain.tournaments.application_validation_authority import (
+    ResolvedApplicationValidationSlot,
+    TournamentApplicationValidationAuthority,
+)
 from beta_engine.domain.tournaments.run_entry_decision_slot import (
     EntryDecisionEvidence,
     RunEntryDecisionSlotAuthority,
 )
 from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
+from beta_engine.infrastructure.db.application_validation_slots import (
+    ApplicationValidationSlotStore,
+)
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
     RunEntryDecisionSlotConflict,
@@ -72,6 +79,35 @@ def _entry_slot(**overrides):
     }
     payload.update(overrides)
     return RunEntryDecisionSlotAuthority(**payload)
+
+
+def _resolve_entry_slot(session, authority):
+    decision = authority.decisions[0]
+    validation = TournamentApplicationValidationAuthority(
+        validation_id=f"validation-{authority.decision_slot_ordinal}",
+        application_id=f"application-{authority.decision_slot_ordinal}",
+        run_id=authority.run_id,
+        branch_id=authority.branch_id,
+        week=authority.week,
+        decision_slot_ordinal=authority.decision_slot_ordinal,
+        source_slot_fingerprint=authority.fingerprint,
+        event_id=decision.event_id,
+        player_id=decision.player_id,
+        entry_window="main" if decision.target == "MAIN" else "qualification",
+        source_decision_fingerprint=decision.source_decision_fingerprint,
+        outcome="invalid",
+        nr_tie_break_token=None,
+        validation_policy_id="test-policy.v1",
+        validation_policy_fingerprint="f" * 64,
+        reasons=("test_invalid",),
+        provenance="entry-slot chronology test",
+    )
+    resolved = ResolvedApplicationValidationSlot(
+        slot=authority,
+        validations=(validation,),
+    )
+    ApplicationValidationSlotStore(session).append(resolved)
+    return resolved
 
 
 def _match_plan(executor, *, ordinal=1):
@@ -143,6 +179,54 @@ def test_entry_slot_then_match_slot_collision_fails_closed(tmp_path):
             match="already belongs to an entry-decision slot",
         ):
             _match_plan(AuthoritativeSlotMatchExecutor(session), ordinal=1)
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_later_entry_slot_requires_prior_entry_validation_completion(tmp_path):
+    session = session_at(tmp_path / "entry-validation-order.sqlite")
+    _ensure_scope(session)
+    try:
+        store = RunEntryDecisionSlotStore(session)
+        first = _entry_slot(decision_slot_ordinal=1)
+        store.append(first)
+
+        second = _entry_slot(
+            decision_slot_ordinal=2,
+            source_entry_batch_fingerprint="e" * 64,
+            source_application_decisions_fingerprint="f" * 64,
+        )
+        with pytest.raises(
+            RunEntryDecisionSlotConflict,
+            match=r"missing completed ordinals \[1\]",
+        ):
+            store.append(second)
+
+        _resolve_entry_slot(session, first)
+        assert store.append(second) == second
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_match_after_entry_slot_requires_validation_completion(tmp_path):
+    session = session_at(tmp_path / "entry-validation-before-match.sqlite")
+    _ensure_scope(session)
+    try:
+        authority = _entry_slot(decision_slot_ordinal=1)
+        RunEntryDecisionSlotStore(session).append(authority)
+        executor = AuthoritativeSlotMatchExecutor(session)
+
+        with pytest.raises(
+            ValueError,
+            match=r"unresolved entry-decision slots: \[1\]",
+        ):
+            _match_plan(executor, ordinal=2)
+
+        _resolve_entry_slot(session, authority)
+        plan = _match_plan(executor, ordinal=2)
+        assert plan.ordinal == 2
     finally:
         session.close()
 

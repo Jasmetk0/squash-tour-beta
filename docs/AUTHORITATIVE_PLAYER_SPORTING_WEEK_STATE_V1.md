@@ -90,7 +90,9 @@ Form/Sharpness/Fatigue values use the target state's already-persisted provision
 bootstrap defaults; the resulting concrete values and policy remain inside historical
 sporting state. Placeholder or inconsistent prospect profile evidence fails closed
 before transition commit. These additions do not imply Tour entry or ranking
-membership. Season Transition still needs the same Week-1 parity.
+membership. Ordinary Season Transition now reuses the same adoption helper after
+Week-61 development/recovery and after installing the incoming Week-1 development
+policy on the staged sporting state.
 
 Saved Revisions use a separate `player_sporting_state` component containing the
 validated complete chain. Restore verifies the live saved head before replacing
@@ -104,6 +106,5 @@ unambiguously and fails before mutation.
 
 The projection and development numbers, final OVR weights, Form-from-match,
 Sharpness gains, detailed training, medical simulation, 57-attribute Match
-Engine consumption, formal prospect→Tour-entry authority, player AI, birth-week
-sporting parity in Season Transition, and final development probability architecture
-remain unimplemented or open.
+Engine consumption, formal prospect→Tour-entry authority, player AI, and final
+development probability architecture remain unimplemented or open.

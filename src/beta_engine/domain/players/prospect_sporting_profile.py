@@ -219,6 +219,41 @@ def materialize_prospect_sporting_profile(
     )
 
 
+def validate_persisted_prospect_sporting_profile(
+    *,
+    profile: dict[str, object],
+    development: dict[str, object],
+    potential: dict[str, object],
+) -> ProspectSportingProfile:
+    """Load one persisted profile only when all frozen cross-section evidence agrees."""
+
+    raw = profile.get("canonical_sporting_profile")
+    fingerprint = profile.get("canonical_sporting_profile_fingerprint")
+    if not isinstance(raw, dict) or not isinstance(fingerprint, str):
+        raise ValueError("Canonical prospect sporting profile evidence is missing")
+
+    canonical = ProspectSportingProfile.model_validate(raw)
+    if canonical.fingerprint != fingerprint:
+        raise ValueError("Canonical prospect sporting profile fingerprint differs")
+    if (
+        development.get("sporting_profile_fingerprint") != fingerprint
+        or development.get("development_timing") != canonical.development_timing
+        or development.get("source_development_seed_digest")
+        != canonical.source_development_seed_digest
+    ):
+        raise ValueError("Persisted prospect development evidence differs from profile")
+    if (
+        potential.get("sporting_profile_fingerprint") != fingerprint
+        or potential.get("potential_ovr") != canonical.potential_ovr
+        or potential.get("potential_identity") != canonical.potential_identity
+        or potential.get("potential_provenance") != canonical.potential_provenance
+        or potential.get("source_potential_seed_digest")
+        != canonical.source_potential_seed_digest
+    ):
+        raise ValueError("Persisted prospect potential evidence differs from profile")
+    return canonical
+
+
 def _seed_digest(seed: str) -> str:
     return hashlib.sha256(seed.encode("utf-8")).hexdigest()
 

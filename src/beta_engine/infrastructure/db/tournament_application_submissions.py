@@ -172,6 +172,31 @@ class TournamentApplicationSubmissionStore:
         ).all()
         return tuple(_load(row) for row in rows)
 
+    def list_for_event(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+    ) -> tuple[TournamentApplicationSubmissionAuthority, ...]:
+        """Return canonical already-valid submissions frozen for one Tournament Edition."""
+
+        self._scope(run_id, branch_id)
+        rows = self.session.scalars(
+            select(TournamentApplicationSubmissionAuthorityModel)
+            .where(
+                TournamentApplicationSubmissionAuthorityModel.run_id == run_id,
+                TournamentApplicationSubmissionAuthorityModel.branch_id == branch_id,
+                TournamentApplicationSubmissionAuthorityModel.event_id == event_id,
+            )
+            .order_by(
+                TournamentApplicationSubmissionAuthorityModel.submission_week_ordinal,
+                TournamentApplicationSubmissionAuthorityModel.decision_slot_ordinal,
+                TournamentApplicationSubmissionAuthorityModel.application_id,
+            )
+        ).all()
+        return tuple(_load(row) for row in rows)
+
     def append(
         self,
         submission: TournamentApplicationSubmissionAuthority,

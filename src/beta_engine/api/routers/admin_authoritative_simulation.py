@@ -146,6 +146,33 @@ def preview_entry_decision_slot(
         ) from exc
 
 
+@router.get("/entry-decision-slot/{decision_slot_ordinal}")
+def inspect_entry_decision_slot(
+    run_id: str,
+    branch_id: str,
+    decision_slot_ordinal: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_entry_decision_slot(
+            run_id=run_id,
+            branch_id=branch_id,
+            decision_slot_ordinal=decision_slot_ordinal,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "entry_decision_slot_inspection_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.post("/entry-decision-slot/commit", status_code=201)
 def commit_entry_decision_slot(
     run_id: str,

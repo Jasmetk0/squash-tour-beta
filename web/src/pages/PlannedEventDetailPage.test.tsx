@@ -7,6 +7,13 @@ import { useState } from 'react'
 import { PlannedEventDetailPage } from './PlannedEventDetailPage'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status = 500) {
+      super(message)
+      this.status = status
+    }
+  },
   getRun: vi.fn(),
   listEvents: vi.fn(),
   getEventWildcards: vi.fn(),

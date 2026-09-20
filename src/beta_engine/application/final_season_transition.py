@@ -188,6 +188,8 @@ def _retry_result(
 def commit_final_season_transition(
     session: Session,
     command: FinalSeasonTransitionCommand,
+    *,
+    fault_at: str | None = None,
 ) -> FinalSeasonTransitionResult:
     """Commit final Week-61 closure inside a caller-owned transaction."""
 
@@ -330,6 +332,8 @@ def commit_final_season_transition(
         )
     )
     session.flush()
+    if fault_at == "after_revision":
+        raise RuntimeError("fault after final closure revision")
 
     claimed = session.execute(
         update(BranchWorkingDraftModel)
@@ -377,6 +381,8 @@ def commit_final_season_transition(
         )
     )
     session.flush()
+    if fault_at == "before_completion":
+        raise RuntimeError("fault before final Run completion")
 
     completion = stage_final_run_completion(
         session,

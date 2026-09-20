@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy import select
 
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeApplicationValidationCommand,
@@ -8,7 +9,7 @@ from beta_engine.domain.tournaments.application_validation_authority import (
     TournamentApplicationValidationAuthority,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.infrastructure.db.models import RunBranchModel
+from beta_engine.infrastructure.db.models import RunBranchModel, SimulationSlotModel
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
@@ -21,6 +22,7 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
 )
 from test_authoritative_slot_matches import (
+    _driver_command,
     _driver_fixture,
     _multi_driver_fixture,
 )
@@ -327,3 +329,56 @@ def test_entry_slot_commit_rejects_stale_branch_head(tmp_path):
             run_id="run",
             branch_id="branch",
         ) == ()
+
+@pytest.mark.pr_critical
+def test_pending_entry_validation_blocks_match_slot_materialization(tmp_path):
+    driver, factory, week, first, second = _multi_driver_fixture(
+        tmp_path / "pending-entry-blocks-match"
+    )
+    _align_compatibility_roster(driver, factory, week)
+    event_ids = tuple(sorted((first.event_id, second.event_id)))
+    preview = driver.preview_entry_decision_slot(
+        run_id="run",
+        branch_id="branch",
+        event_ids=event_ids,
+        decision_slot_ordinal=1,
+        seed=12001,
+    )
+    driver.commit_entry_decision_slot(_command_from_preview(preview))
+
+    proposal = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="schedule-after-entry",
+        expected_week=week,
+        expected_schedule_fingerprint=proposal["schedule_fingerprint"],
+        expected_position_fingerprint=proposal["position_fingerprint"],
+    )
+
+    command, before = _driver_command(driver, week, "blocked-by-entry-validation")
+    assert before.slot_ordinal is not None
+    assert before.slot_ordinal > 1
+    assert "entry_validation_pending" in before.transition_blockers
+
+    with pytest.raises(
+        ValueError,
+        match="nearest unresolved global Simulation Slot is an Entry decision slot",
+    ):
+        driver.simulate_next_slot(command)
+
+    with factory() as session:
+        materialized = tuple(
+            session.scalars(
+                select(SimulationSlotModel).where(
+                    SimulationSlotModel.run_id == "run",
+                    SimulationSlotModel.branch_id == "branch",
+                    SimulationSlotModel.week_ordinal == week.ordinal,
+                )
+            ).all()
+        )
+        assert materialized == ()
+

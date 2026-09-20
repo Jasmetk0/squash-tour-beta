@@ -280,6 +280,7 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
     return week
 
 
+@pytest.mark.pr_critical
 def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     server, package = _server_state(tmp_path)
     legacy_hash = hashlib.sha256(

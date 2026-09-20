@@ -302,9 +302,11 @@ current Official Ranking head, selects the exact Run-scoped blocking prospect ro
 surfaces cohort/profile versions and explicit placeholder status for attributes,
 development, potential and traits, and fingerprints that blocking set. The Admin
 Simulation page renders the inspection only when `prospect_bridge_missing` is
-present. This is intentionally **not** the prospect/Tour-entry bridge: the current
-technical contracts still leave Tour-entry activation and canonical sporting-profile
-creation open, so no mutation is exposed until those rules are decided/implemented.
+present. Birth-week prospect activation is now separated from Tour entry: lifecycle
+can contain pre-Tour identities and Official Ranking filters them until
+`tour_entry_week` exists. The remaining bridge is canonical simulation-valid
+sporting-profile creation; the stored prospect payload still contains placeholders,
+so no birth-week player-state mutation is exposed yet.
 
 Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state

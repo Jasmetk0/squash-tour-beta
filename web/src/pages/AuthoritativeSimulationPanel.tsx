@@ -761,7 +761,7 @@ export function AuthoritativeSimulationPanel({
         <>
           <h4>Prospect Bridge inspection</h4>
           <p className="status">
-            This is a read-only blocker inspection. The current product contract does not yet define Tour-entry activation or a canonical sporting profile for these Run-scoped prospects.
+            This is a read-only blocker inspection. Birth-week visibility does not make a prospect a Tour Player; the remaining blocker is a canonical simulation-valid sporting profile for these Run-scoped prospects.
           </p>
           {prospectBridgeQuery.isLoading ? <p className="status">Loading target-week prospects…</p> : null}
           {prospectBridgeQuery.error ? (

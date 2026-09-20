@@ -72,6 +72,82 @@ def test_year_week_50_occurs_at_mapped_season_week_only():
     assert after.players[0].age == 31
 
 
+def test_pre_tour_player_remains_in_lifecycle_but_is_not_ranked():
+    position = season_week_to_calendar_position(2000, 1)
+    birth_year = birth_year_for_age_at_calendar_position(
+        age=15,
+        birth_year_week=37,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+    )
+    lifecycle = PlayerLifecycleWeekState(
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        source_initial_world_fingerprint="world",
+        players=(
+            PlayerLifecycleIdentity(
+                player_id="prospect",
+                birth_year=birth_year,
+                birth_year_week=37,
+                tie_break_token="prospect-token",
+                tie_break_provenance="prospect identity",
+                tour_entry_week=None,
+                age=15,
+                status="active",
+                retirement_effective_week=None,
+                origin="weekly_15yo_cohort",
+            ),
+            state(age=30).players[0].model_copy(
+                update={"player_id": "tour-player", "tie_break_token": "tour-token"}
+            ),
+        ),
+    )
+
+    assert tuple(player.player_id for player in lifecycle.players) == (
+        "prospect",
+        "tour-player",
+    )
+    assert tuple(player.player_id for player in lifecycle.ranking_roster()) == (
+        "tour-player",
+    )
+
+
+def test_pre_tour_player_stays_pre_tour_across_lifecycle_transition():
+    position = season_week_to_calendar_position(2000, 1)
+    birth_year = birth_year_for_age_at_calendar_position(
+        age=15,
+        birth_year_week=38,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+    )
+    before = PlayerLifecycleWeekState(
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        source_initial_world_fingerprint="world",
+        players=(
+            PlayerLifecycleIdentity(
+                player_id="prospect",
+                birth_year=birth_year,
+                birth_year_week=38,
+                tie_break_token="prospect-token",
+                tie_break_provenance="prospect identity",
+                tour_entry_week=None,
+                age=15,
+                status="active",
+                retirement_effective_week=None,
+                origin="weekly_15yo_cohort",
+            ),
+        ),
+    )
+
+    after = advance_lifecycle(before, RankingWeek(season_index=0, week=2))
+    assert after.players[0].tour_entry_week is None
+    assert after.players[0].age == 16
+    assert after.ranking_roster() == ()
+
+
 def test_birthday_and_retirement_are_effective_in_opened_week():
     after = advance_lifecycle(state(age=45), RankingWeek(season_index=0, week=2))
     player = after.players[0]

@@ -127,10 +127,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Ordinary cross-season lifecycle staging now advances the persisted Week-61 roster
   into next-season Week 1, including canonical calendar-week birthdays and age-based
   retirement, while preserving predecessor lineage and leaving the public world clock
-  untouched. A target-week Run prospect remains fail-closed instead of being silently
-  omitted because Tour-entry activation and canonical prospect sporting profiles are
-  still a separate unresolved bridge. The Season preflight fingerprints the lifecycle
-  candidate whenever that separate prospect bridge is not required.
+  untouched. Lifecycle now explicitly supports pre-Tour identities: a player with no
+  formal `tour_entry_week` remains in historical lifecycle state but is excluded from
+  the Official Ranking roster until a later authoritative entry event. A target-week
+  Run prospect still fails closed because its materialized payload does not yet provide
+  the simulation-valid canonical sporting profile required by the player core; birth-week
+  visibility itself is not Tour entry. The Season preflight fingerprints the lifecycle
+  candidate whenever that separate sporting-profile bridge is not required.
   The next-season Official Ranking is now resolvable and stageable from the same
   frozen Season configuration. The read-only candidate uses the incoming Ranking
   Policy, the exact staged Week-1 lifecycle roster, persisted disciplinary-zero
@@ -147,7 +150,7 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   identity, and injected failures after staging or publication roll the entire
   transaction back. The writer refuses any non-empty season reset catalog until a
   real reset adapter exists, and target-week prospects still fail closed through the
-  separate unresolved Tour-entry/canonical sporting-profile bridge. That gap is now
+  separate unresolved canonical prospect sporting-profile bridge. That gap is now
   boundary-specific: a prospect-free Week-61 boundary can become executable, while a
   target Week 1 that actually contains unbridged Run prospects still fails closed.
   Ordinary Season Transition Saved Revisions use `ranking_revision_state.v7` when

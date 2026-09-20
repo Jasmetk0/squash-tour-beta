@@ -278,7 +278,6 @@ def test_prospect_bridge_inspection_exposes_exact_target_week_blockers_without_m
         assert inspection["bridge_supported"] is False
         assert inspection["blocking_code"] == "prospect_bridge_missing"
         assert inspection["unresolved_contracts"] == [
-            "tour_entry_activation",
             "canonical_sporting_profile",
         ]
         assert len(inspection["inspection_fingerprint"]) == 64

@@ -1064,7 +1064,11 @@ export async function getAuthoritativeSeasonTransitionPreflight(
   }
   if (
     !/^[0-9a-f]{64}$/.test(data.position_fingerprint) ||
-    !/^[0-9a-f]{64}$/.test(data.preflight_fingerprint)
+    !/^[0-9a-f]{64}$/.test(data.preflight_fingerprint) ||
+    (
+      data.default_configuration_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.default_configuration_fingerprint)
+    )
   ) {
     throw new Error('Season Transition preflight fingerprint is invalid.')
   }

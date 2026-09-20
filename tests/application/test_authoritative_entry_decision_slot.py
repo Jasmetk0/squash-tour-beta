@@ -111,6 +111,38 @@ def test_multi_event_entry_slot_uses_one_shared_snapshot_and_canonical_events(tm
 
 
 @pytest.mark.pr_critical
+def test_entry_slot_preview_fails_closed_when_compatibility_roster_drifts(
+    tmp_path,
+    monkeypatch,
+):
+    driver, _, _ = _driver_fixture(tmp_path / "entry-roster-drift")
+    event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
+    active_service = (
+        driver.match_service.draw_service.entry_list_service.active_players_service
+    )
+    original = active_service.get_active_players(season="2000/2001")
+    assert len(original.players) > 1
+    drifted = original.model_copy(update={"players": original.players[:-1]})
+    monkeypatch.setattr(
+        active_service,
+        "get_active_players",
+        lambda *, season: drifted,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="Compatibility Entry AI roster differs",
+    ):
+        driver.preview_entry_decision_slot(
+            run_id="run",
+            branch_id="branch",
+            event_ids=(event_id,),
+            decision_slot_ordinal=1,
+            seed=8111,
+        )
+
+
+@pytest.mark.pr_critical
 def test_entry_slot_commit_rejects_stale_batch_fingerprint_without_persistence(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "stale-entry-batch")
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))

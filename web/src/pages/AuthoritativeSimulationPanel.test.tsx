@@ -9,6 +9,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   getAuthoritativeSeasonTransitionPreflight: vi.fn(),
+  finalizeAuthoritativeFinalSeason: vi.fn(),
   getProspectBridgeInspection: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
@@ -180,11 +181,15 @@ beforeEach(() => {
     target_week: { season_index: 3, week: 1 },
     final_season: false,
     saved_revision_id: 'revision-7',
+    draft_version: 4,
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
     implementation_gaps: [
-      'season_closing_ranking_writer_not_implemented',
-      'season_closure_marker_writer_not_implemented',
+      'new_season_policy_activation_not_implemented',
+      'season_scoped_reset_catalog_not_implemented',
+      'season_boundary_lifecycle_writer_not_implemented',
+      'season_prospect_creation_bridge_not_implemented',
+      'season_week_1_ranking_writer_not_implemented',
       'season_transition_atomic_writer_not_implemented'
     ],
     ready_for_execution: false,
@@ -630,6 +635,72 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })
     ).not.toBeInTheDocument()
+  })
+
+  it('requires explicit confirmation before finalizing 2049/50', async () => {
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_week: { season_index: 49, week: 61 },
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: true,
+      transition_blockers: ['season_transition_required'],
+      terminal_sporting_fingerprint: '3'.repeat(64),
+      position_fingerprint: '4'.repeat(64)
+    })
+    api.getAuthoritativeSeasonTransitionPreflight.mockResolvedValue({
+      schema_version: 'authoritative_season_transition_preflight.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      completed_week: { season_index: 49, week: 61 },
+      target_week: null,
+      final_season: true,
+      saved_revision_id: 'revision-7',
+      draft_version: 4,
+      position_fingerprint: '4'.repeat(64),
+      state_blockers: [],
+      implementation_gaps: [],
+      ready_for_execution: true,
+      preflight_fingerprint: '5'.repeat(64)
+    })
+    api.finalizeAuthoritativeFinalSeason.mockResolvedValue({
+      schema_version: 'final_season_transition_result.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      completed_week: { season_index: 49, week: 61 },
+      saved_revision_id: 'revision-final',
+      closing_ranking_fingerprint: '6'.repeat(64),
+      season_summary_fingerprint: '7'.repeat(64),
+      closure_marker_fingerprint: '8'.repeat(64),
+      draft_version: 5,
+      run_status: 'completed'
+    })
+
+    renderPanel()
+
+    const review = await screen.findByRole('button', { name: 'Review final Run closure' })
+    expect(screen.queryByRole('button', { name: 'Finalize 2049/50' })).not.toBeInTheDocument()
+    await userEvent.click(review)
+    const finalize = await screen.findByRole('button', { name: 'Finalize 2049/50' })
+    await userEvent.click(finalize)
+
+    await waitFor(() => expect(api.finalizeAuthoritativeFinalSeason).toHaveBeenCalledTimes(1))
+    expect(api.finalizeAuthoritativeFinalSeason).toHaveBeenCalledWith(
+      'run-a',
+      'branch-a',
+      expect.objectContaining({
+        expected_preflight_fingerprint: '5'.repeat(64),
+        expected_saved_revision_id: 'revision-7',
+        expected_draft_version: 4
+      })
+    )
+    expect(await screen.findByText('completed')).toBeInTheDocument()
+    expect(screen.getByText('revision-final')).toBeInTheDocument()
   })
 
   it('reviews, confirms and saves one server-derived canonical Week Transition', async () => {

@@ -119,6 +119,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Ordinary season boundaries now resolve/stage that archive directly from the
   published Week 61 head, Week 61 lifecycle roster, frozen Run-owned tournament
   sources and historical result/discipline stores inside the caller transaction.
+  Canonical simulation now closes completed Week-61 tournaments for seasons 0–48
+  before stopping at the season boundary: their immutable ranking sources persist
+  with next Season Week 1 as first publication, the final simulation command succeeds
+  idempotently, and the returned position remains Week 61 with
+  `season_transition_required` rather than advancing the world clock.
   The resolver explicitly refuses 2049/50 until its no-next-Week-1 source adapter
   exists. Closing Ranking archives now participate in Saved Revision capture/restore
   through `ranking_revision_state.v6`; restore requires the exact recovered Week-61

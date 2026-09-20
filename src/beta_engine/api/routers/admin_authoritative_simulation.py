@@ -158,8 +158,8 @@ def commit_entry_decision_slot(
     ],
 ):
     try:
-        command = AuthoritativeEntryDecisionSlotCommand.model_validate(
-            {**payload, "run_id": run_id, "branch_id": branch_id}
+        command = AuthoritativeEntryDecisionSlotCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
         )
         return _driver(runtime, matches, awards).commit_entry_decision_slot(command)
     except ValidationError as exc:
@@ -186,8 +186,8 @@ def commit_application_validation_slot(
     ],
 ):
     try:
-        command = AuthoritativeApplicationValidationCommand.model_validate(
-            {**payload, "run_id": run_id, "branch_id": branch_id}
+        command = AuthoritativeApplicationValidationCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
         )
         return _driver(runtime, matches, awards).commit_application_validation_slot(
             command

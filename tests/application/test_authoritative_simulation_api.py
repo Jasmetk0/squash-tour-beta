@@ -392,6 +392,30 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
 
         decisions = inspected["authority"]["decisions"]
         assert decisions
+
+        # Once an Entry slot owns ordinal 1, canonical Position intentionally stays
+        # hidden until the immutable Week Schedule reserves non-colliding match slots.
+        status, proposed_schedule = _request(
+            "GET",
+            root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed_schedule
+        status, adopted_schedule = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            {
+                "request_id": "entry-validation-schedule",
+                "expected_week": proposed_schedule["schedule"]["week"],
+                "expected_schedule_fingerprint": proposed_schedule[
+                    "schedule_fingerprint"
+                ],
+                "expected_position_fingerprint": proposed_schedule[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted_schedule
+
         status, entry_position = _request("GET", root + "/position")
         assert status == 200
         assert entry_position["current_slot_kind"] == "entry"

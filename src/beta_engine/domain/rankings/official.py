@@ -97,7 +97,15 @@ class OfficialRankingResult(FrozenInput):
     player_id: str = Field(min_length=1)
     source_fingerprint: str = Field(min_length=1)
     completed_week: RankingWeek
-    first_publication_week: RankingWeek
+    first_publication_week: RankingWeek | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
+    closing_eligibility_ordinal: int | None = Field(
+        default=None,
+        ge=1,
+        exclude_if=lambda value: value is None,
+    )
     qualification_points: int = Field(default=0, ge=0)
     main_points: int = Field(default=0, ge=0)
     validity_weeks: int = Field(default=61, ge=1)
@@ -106,9 +114,30 @@ class OfficialRankingResult(FrozenInput):
 
     @model_validator(mode="after")
     def publication_follows_completion(self) -> OfficialRankingResult:
-        if self.first_publication_week.ordinal <= self.completed_week.ordinal:
-            raise ValueError("Official eligibility must follow the completed week")
+        if self.first_publication_week is not None:
+            if self.closing_eligibility_ordinal is not None:
+                raise ValueError(
+                    "Ranking result cannot carry both Official and Closing-only eligibility"
+                )
+            if self.first_publication_week.ordinal <= self.completed_week.ordinal:
+                raise ValueError("Official eligibility must follow the completed week")
+            return self
+        if (
+            self.closing_eligibility_ordinal != self.completed_week.ordinal + 1
+            or self.completed_week != RankingWeek(season_index=49, week=61)
+        ):
+            raise ValueError(
+                "Closing-only eligibility is reserved for final Season Week 61"
+            )
         return self
+
+    @property
+    def eligibility_ordinal(self) -> int:
+        return (
+            self.first_publication_week.ordinal
+            if self.first_publication_week is not None
+            else self.closing_eligibility_ordinal
+        )
 
     @property
     def points(self) -> int:
@@ -179,6 +208,10 @@ class OfficialRankingSnapshot(FrozenInput):
             ):
                 raise ValueError("Counted result profile is not canonical")
             for result in row.counted_results:
+                if result.first_publication_week is None:
+                    raise ValueError(
+                        "Official Ranking cannot contain Closing-only tournament results"
+                    )
                 age = self.week.ordinal - result.first_publication_week.ordinal
                 if not result.ranked or not 0 <= age < result.validity_weeks:
                     raise ValueError("Counted result is not eligible at snapshot week")
@@ -280,6 +313,10 @@ def calculate_official_ranking(
         raise ValueError("One resolved result per Edition/player is required")
     if any(r.player_id not in known_players for r in results):
         raise ValueError("Result references an unknown player")
+    if any(r.first_publication_week is None for r in results):
+        raise ValueError(
+            "Official Ranking cannot consume Closing-only tournament results"
+        )
 
     zeros = tuple(DisciplinaryZero.model_validate_json(z.model_dump_json()) for z in disciplinary_zeros)
     if len({z.zero_id for z in zeros}) != len(zeros):

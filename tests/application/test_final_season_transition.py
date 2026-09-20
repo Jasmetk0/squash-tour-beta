@@ -1,4 +1,3 @@
-import hashlib
 import json
 
 import pytest
@@ -8,16 +7,15 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
+import beta_engine.application.final_season_transition as final_transition
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
     FinalSeasonTransitionCommand,
     commit_final_season_transition,
 )
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
-from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
-    RankingWeek,
     calculate_official_ranking,
 )
 from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS, WORKING_RUN_STATUS
@@ -42,7 +40,6 @@ from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
     OfficialRankingCandidateModel,
-    OfficialRankingCommandModel,
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
@@ -144,68 +141,23 @@ def _install_final_boundary(session):
     session.flush()
 
     policy = OfficialRankingPolicy(policy_id="final-policy", best_n=15)
-    previous = None
-    candidate_rows = []
-    command_rows = []
-    for ordinal in range(FINAL_WEEK.ordinal + 1):
-        week = RankingWeek(
-            season_index=ordinal // 61,
-            week=ordinal % 61 + 1,
-        )
-        snapshot = calculate_official_ranking(
+    official = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=FINAL_WEEK,
+        policy=policy,
+        players=(),
+        results=(),
+    )
+    session.add(
+        OfficialRankingCandidateModel(
             run_id="run",
             branch_id="branch",
-            week=week,
-            policy=policy,
-            players=(),
-            results=(),
-            previous=previous,
+            week_ordinal=FINAL_WEEK.ordinal,
+            fingerprint=official.fingerprint,
+            payload_json=official.model_dump_json(),
         )
-        command_id = f"ranking-{ordinal:04d}"
-        request_json = json.dumps(
-            {
-                "command_id": command_id,
-                "context": {
-                    "run_id": "run",
-                    "branch_id": "branch",
-                    "target_week": week.model_dump(mode="json"),
-                },
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        request_fingerprint = hashlib.sha256(request_json.encode()).hexdigest()
-        manifest = RankingInputManifest(
-            command_request_fingerprint=request_fingerprint,
-            players=(),
-            results=(),
-        )
-        candidate_rows.append(
-            OfficialRankingCandidateModel(
-                run_id="run",
-                branch_id="branch",
-                week_ordinal=ordinal,
-                fingerprint=snapshot.fingerprint,
-                payload_json=snapshot.model_dump_json(),
-            )
-        )
-        command_rows.append(
-            OfficialRankingCommandModel(
-                run_id="run",
-                branch_id="branch",
-                command_id=command_id,
-                request_fingerprint=request_fingerprint,
-                request_payload_json=request_json,
-                target_ordinal=ordinal,
-                snapshot_fingerprint=snapshot.fingerprint,
-                input_manifest_version=1,
-                input_manifest_json=manifest.model_dump_json(),
-            )
-        )
-        previous = snapshot
-    official = previous
-    session.add_all(candidate_rows)
-    session.add_all(command_rows)
+    )
     session.add(
         PublishedOfficialRankingModel(
             run_id="run",
@@ -236,6 +188,25 @@ def _install_final_boundary(session):
     session.flush()
 
 
+def _patch_saved_revision_captures(monkeypatch):
+    calls = []
+
+    def fake_capture(name):
+        def capture(session, payload, *, run_id, branch_id):
+            calls.append((name, run_id, branch_id))
+        return capture
+
+    for name in (
+        "capture_saved_ranking_component",
+        "capture_saved_initial_world",
+        "capture_saved_lifecycle",
+        "capture_saved_sporting",
+        "capture_saved_simulation_slots",
+    ):
+        monkeypatch.setattr(final_transition, name, fake_capture(name))
+    return calls
+
+
 def _command(preflight_fingerprint: str = "a" * 64):
     return FinalSeasonTransitionCommand(
         command_id="close-final-season",
@@ -251,6 +222,7 @@ def _command(preflight_fingerprint: str = "a" * 64):
 
 @pytest.mark.pr_critical
 def test_atomic_final_season_writer_commits_one_complete_final_state(database, monkeypatch):
+    capture_calls = _patch_saved_revision_captures(monkeypatch)
     with database.begin() as session:
         _install_final_boundary(session)
 
@@ -291,6 +263,14 @@ def test_atomic_final_season_writer_commits_one_complete_final_state(database, m
     assert result.completed_week == FINAL_WEEK
     assert result.saved_revision_id == "revision-final"
     assert result.draft_version == 8
+    assert [name for name, _, _ in capture_calls] == [
+        "capture_saved_ranking_component",
+        "capture_saved_initial_world",
+        "capture_saved_lifecycle",
+        "capture_saved_sporting",
+        "capture_saved_simulation_slots",
+    ]
+    assert all((run_id, branch_id) == ("run", "branch") for _, run_id, branch_id in capture_calls)
 
     with database() as session:
         run = session.get(RunContainerModel, "run")
@@ -340,7 +320,8 @@ def test_atomic_final_season_writer_commits_one_complete_final_state(database, m
 
 
 @pytest.mark.pr_critical
-def test_atomic_final_season_writer_rolls_back_everything_after_partial_failure(database):
+def test_atomic_final_season_writer_rolls_back_everything_after_partial_failure(database, monkeypatch):
+    _patch_saved_revision_captures(monkeypatch)
     command = _command()
     with database.begin() as session:
         _install_final_boundary(session)

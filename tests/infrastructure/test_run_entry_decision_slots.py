@@ -273,3 +273,76 @@ def test_saved_revision_rejects_unowned_sparse_match_gap(tmp_path):
     finally:
         session.close()
 
+@pytest.mark.pr_critical
+def test_entry_slot_cannot_overtake_missing_prior_global_slot(tmp_path):
+    session = session_at(tmp_path / "entry-overtake.sqlite")
+    _ensure_scope(session)
+    try:
+        with pytest.raises(
+            RunEntryDecisionSlotConflict,
+            match="missing completed ordinals \[1\]",
+        ):
+            RunEntryDecisionSlotStore(session).append(
+                _entry_slot(decision_slot_ordinal=2)
+            )
+        assert RunEntryDecisionSlotStore(session).list(
+            run_id="run",
+            branch_id="branch",
+        ) == ()
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_saved_revision_rejects_entry_only_global_gap(tmp_path):
+    session = session_at(tmp_path / "saved-entry-only-gap.sqlite")
+    _ensure_scope(session)
+    try:
+        authority = _entry_slot(decision_slot_ordinal=2)
+        payload = {
+            "content": {
+                RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY: {
+                    "fingerprint": "",
+                    "slots": [authority.model_dump(mode="json")],
+                }
+            }
+        }
+        # Rebuild the component through the real capture helper so its fingerprint is
+        # valid, then alter only the chronological ordinal.
+        RunEntryDecisionSlotStore(session).append(
+            _entry_slot(decision_slot_ordinal=1)
+        )
+        captured = {"content": {}}
+        capture_saved_run_entry_decision_slots(
+            session,
+            captured,
+            run_id="run",
+            branch_id="branch",
+        )
+        component = captured["content"][RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY]
+        component["slots"][0]["decision_slot_ordinal"] = 2
+
+        # The component fingerprint must correspond to the tampered semantic payload
+        # before the cross-component chronology validator can inspect chronology.
+        import hashlib
+        import json
+        component["fingerprint"] = hashlib.sha256(
+            json.dumps(
+                component["slots"],
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+
+        with pytest.raises(
+            ValueError,
+            match="global Simulation Slot chronology is not contiguous",
+        ):
+            validate_saved_entry_match_slot_collisions(
+                captured,
+                run_id="run",
+                branch_id="branch",
+            )
+    finally:
+        session.close()
+

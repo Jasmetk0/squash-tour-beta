@@ -80,9 +80,9 @@ This slice deliberately does not implement:
 - Lucky Loser ordering or LL slot creation;
 - Reserve Wild Card / WC repair;
 - per-player first-real-match replacement cutoff;
-- Final Commitment / Week Tournament Lock policy;
-- migration/retirement of the legacy simulation-run pre-draw endpoint and its UI.
+- Final Commitment / Week Tournament Lock policy.
 
-Those remain separate Gate 3 work. The legacy direct-alternate shortcut must stay
+Those remain separate Gate 3 work. Legacy pre-draw authoring retirement is complete.
+The legacy direct-alternate shortcut must stay
 non-authoritative and must not be treated as a substitute for this Run-owned field
 repair.

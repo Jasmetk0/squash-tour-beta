@@ -2262,8 +2262,13 @@ class AuthoritativeRunSimulationDriver:
         lifecycle = get_lifecycle(
             session, run_id=run_id, branch_id=branch_id, week=week
         )
+        sporting = get_sporting(
+            session, run_id=run_id, branch_id=branch_id, week=week
+        )
         if lifecycle is None:
             blockers.append("lifecycle_roster_missing")
+        if sporting is None:
+            blockers.append("sporting_roster_missing")
         if not blockers:
             try:
                 preflight_completed_context_from_authoritative_matches(
@@ -2271,7 +2276,7 @@ class AuthoritativeRunSimulationDriver:
                     run_id=run_id,
                     branch_id=branch_id,
                     completed_week=week,
-                    player_ids=tuple(p.player_id for p in lifecycle.players),
+                    player_ids=tuple(p.player_id for p in sporting.players),
                 )
                 if any(x.binding.completed_week != week for x in owned.values()):
                     raise ValueError()
@@ -2295,7 +2300,6 @@ class AuthoritativeRunSimulationDriver:
                 BranchWorkingDraftModel.branch_id == branch_id
             )
         )
-        sporting = get_sporting(session, run_id=run_id, branch_id=branch_id, week=week)
         transition_authority = session.get(
             RankingTransitionAuthorityModel, (run_id, branch_id, week.ordinal + 1)
         )

@@ -25,6 +25,7 @@ from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleWeekState,
 )
 from beta_engine.domain.rankings.official import (
+    OfficialRankingPlayer,
     OfficialRankingPolicy,
     RankingWeek,
     calculate_official_ranking,
@@ -341,16 +342,16 @@ def test_final_season_closing_source_uses_boundary_ordinal_without_week1(databas
                 week=completed,
                 policy=predecessor.policy,
                 players=(
-                    _lifecycle_player(
-                        "A",
-                        "token-A",
-                        season_index=49,
-                    ).model_copy(),
-                    _lifecycle_player(
-                        "B",
-                        "token-B",
-                        season_index=49,
-                    ).model_copy(),
+                    OfficialRankingPlayer(
+                        player_id="A",
+                        tie_break_token="token-A",
+                        tour_entry_week=RankingWeek(season_index=44, week=1),
+                    ),
+                    OfficialRankingPlayer(
+                        player_id="B",
+                        tie_break_token="token-B",
+                        tour_entry_week=RankingWeek(season_index=44, week=1),
+                    ),
                 ),
                 results=projected,
             )

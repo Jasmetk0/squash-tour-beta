@@ -21,7 +21,7 @@ from typing import Literal
 
 from pydantic import Field, model_validator
 
-from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.season_closing import SeasonClosingRankingSnapshot
 
 
@@ -71,27 +71,16 @@ class SeasonSummarySnapshot(FrozenInput):
     schema_version: Literal["season_summary.v1"] = "season_summary.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
-    completed_week: object
+    completed_week: RankingWeek
     closing_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     statistics_catalog_version: Literal["season_scoped_statistics_registry.v1"] = (
         "season_scoped_statistics_registry.v1"
     )
     season_scoped_statistics: tuple[SeasonScopedStatisticSnapshot, ...] = ()
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_week_type(cls, data):
-        # Local import avoids a second public time type while keeping strict parsing.
-        from beta_engine.domain.rankings.official import RankingWeek
-
-        if isinstance(data, dict) and "completed_week" in data:
-            data = dict(data)
-            data["completed_week"] = RankingWeek.model_validate(data["completed_week"])
-        return data
-
     @model_validator(mode="after")
     def validate_summary(self):
-        if getattr(self.completed_week, "week", None) != 61:
+        if self.completed_week.week != 61:
             raise ValueError("Season Summary requires completed Week 61")
         ids = [item.component_id for item in self.season_scoped_statistics]
         if ids != sorted(set(ids)):
@@ -121,24 +110,14 @@ class SeasonClosureMarkerCandidate(FrozenInput):
     )
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
-    completed_week: object
+    completed_week: RankingWeek
     season_summary_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     closing_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     rule_versions: tuple[ClosureRuleVersionRef, ...]
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_week_type(cls, data):
-        from beta_engine.domain.rankings.official import RankingWeek
-
-        if isinstance(data, dict) and "completed_week" in data:
-            data = dict(data)
-            data["completed_week"] = RankingWeek.model_validate(data["completed_week"])
-        return data
-
     @model_validator(mode="after")
     def validate_marker(self):
-        if getattr(self.completed_week, "week", None) != 61:
+        if self.completed_week.week != 61:
             raise ValueError("Season Closure Marker requires completed Week 61")
         keys = [item.rule_kind for item in self.rule_versions]
         if keys != sorted(set(keys)):
@@ -156,21 +135,11 @@ class SeasonClosureMarker(FrozenInput):
     schema_version: Literal["season_closure_marker.v1"] = "season_closure_marker.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
-    completed_week: object
+    completed_week: RankingWeek
     season_summary_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     closing_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     rule_versions: tuple[ClosureRuleVersionRef, ...]
     final_saved_revision_id: str = Field(min_length=1)
-
-    @model_validator(mode="before")
-    @classmethod
-    def validate_week_type(cls, data):
-        from beta_engine.domain.rankings.official import RankingWeek
-
-        if isinstance(data, dict) and "completed_week" in data:
-            data = dict(data)
-            data["completed_week"] = RankingWeek.model_validate(data["completed_week"])
-        return data
 
     @property
     def fingerprint(self) -> str:

@@ -73,6 +73,7 @@ from beta_engine.domain.simulation_slots import (
     projected_engine_player,
 )
 from beta_engine.infrastructure.db.models import (
+    RunEntryDecisionSlotAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
 )
@@ -613,6 +614,14 @@ class AuthoritativeSlotMatchExecutor:
             ):
                 raise ValueError("Simulation Slot retry conflicts with stored plan")
             return stored
+        entry_slot = self.session.get(
+            RunEntryDecisionSlotAuthorityModel,
+            (run_id, branch_id, week.ordinal, ordinal),
+        )
+        if entry_slot is not None:
+            raise ValueError(
+                "Global Simulation Slot ordinal already belongs to an entry-decision slot"
+            )
         prior = self.session.scalar(
             select(SimulationSlotModel).where(
                 SimulationSlotModel.run_id == run_id,

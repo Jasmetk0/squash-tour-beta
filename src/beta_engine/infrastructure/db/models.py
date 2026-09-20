@@ -308,7 +308,7 @@ class AuthoritativeWeekTransitionReceiptModel(Base):
 
 
 class AuthoritativeWorldEventModel(Base):
-    """Canonical World Event emitted only by a completed Week Transition."""
+    """Canonical World Event emitted only by a completed Week or Season Transition."""
 
     __tablename__ = "authoritative_world_events"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)

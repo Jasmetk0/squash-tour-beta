@@ -645,6 +645,14 @@ Draw revision v12 changes the exact frozen physical slot without transferring WC
 status. Deterministic child command IDs keep all of these mutation routes
 replayable/idempotent across retries.
 
+This orchestrator is now exposed through the canonical Planned Event Admin workflow:
+preview derives the current source authority read-only, commit is bound to its exact
+fingerprint and re-resolves under one immediate transaction, and successful Draw
+repairs refresh the effective Draw/revision history. A `walkover` preview deliberately
+hands off to the existing canonical Simulation W/O command instead of introducing a
+second Draw-side W/O authority. The legacy simulation-run late-replacement controls
+remain compatibility UI and are not the source of this canonical mutation.
+
 The orchestrator intentionally requires Main to be in Draw Freeze; pre-freeze
 full-redraw/cascade routing remains in the existing specialized phase commands.
 The post-Q WC→Lucky-Loser gap is closed with source-bound WC release: revision v13

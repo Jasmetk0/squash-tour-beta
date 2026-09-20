@@ -24,6 +24,8 @@ const api = vi.hoisted(() => ({
   configureCanonicalTournamentDrawProcess: vi.fn(),
   commitCanonicalTournamentDrawInput: vi.fn(),
   generateCanonicalTournamentDraw: vi.fn(),
+  previewCanonicalFrozenMainReplacement: vi.fn(),
+  commitCanonicalFrozenMainReplacement: vi.fn(),
   getEventPreDrawWithdrawalActions: vi.fn(),
   applyEventPreDrawWithdrawal: vi.fn(),
   getEventWildcardCandidates: vi.fn(),
@@ -270,6 +272,38 @@ describe('PlannedEventDetailPage', () => {
         redraw_cutoff_window_ordinal: 2,
         draw_freeze_window_ordinal: 3
       }
+    })
+    api.previewCanonicalFrozenMainReplacement.mockResolvedValue({
+      schema_version: 'authoritative_frozen_main_replacement_preview.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      withdrawn_player_id: 'P2',
+      source: 'qualification_promotion',
+      selected_player_id: 'Q1',
+      physical_slot_index: 2,
+      cutoff_status: 'replacement_open',
+      source_authority_fingerprint: '7'.repeat(64),
+      source_authority: {
+        schema_version: 'tournament_replacement_source.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        event_id: 'E1',
+        withdrawn_player_id: 'P2'
+      },
+      commit_mode: 'draw_revision'
+    })
+    api.commitCanonicalFrozenMainReplacement.mockResolvedValue({
+      schema_version: 'authoritative_frozen_main_replacement_commit.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      withdrawn_player_id: 'P2',
+      source: 'qualification_promotion',
+      source_authority_fingerprint: '7'.repeat(64),
+      draw_revision_sequences: [1],
+      draw_revision_fingerprints: ['8'.repeat(64)],
+      successor_draw_fingerprint: '9'.repeat(64)
     })
     api.getEventPreDrawWithdrawalState.mockResolvedValue({
       run_id: 'run-a',
@@ -649,6 +683,151 @@ describe('PlannedEventDetailPage', () => {
         })
       )
     )
+  })
+
+  it('previews and commits canonical frozen Main replacement against reviewed source fingerprint', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentDrawState.mockResolvedValue({
+      ...(await api.generateCanonicalTournamentDraw()),
+      initial_draw_generated: true,
+      draw_authority_fingerprint: 'c'.repeat(64)
+    })
+    api.getCanonicalTournamentDrawProcessState.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_process_state.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      draw_authority_fingerprint: 'c'.repeat(64),
+      has_qualification: true,
+      configured: true,
+      authority_fingerprint: 'd'.repeat(64),
+      main: {
+        process_window_count: 3,
+        redraw_cutoff_window_ordinal: 2,
+        draw_freeze_window_ordinal: 3
+      },
+      qualification: {
+        process_window_count: 3,
+        redraw_cutoff_window_ordinal: 2,
+        draw_freeze_window_ordinal: 3
+      }
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByText('Frozen Main replacement')).toBeInTheDocument()
+    const player = await screen.findByLabelText('Frozen Main withdrawn player')
+    fireEvent.change(player, { target: { value: 'P2' } })
+    fireEvent.change(screen.getByLabelText('Frozen Main unavailable players'), {
+      target: { value: 'Q9, Q8, Q9' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview frozen Main replacement' }))
+
+    await waitFor(() =>
+      expect(api.previewCanonicalFrozenMainReplacement).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        {
+          withdrawn_player_id: 'P2',
+          unavailable_player_ids: ['Q8', 'Q9']
+        }
+      )
+    )
+    expect(await screen.findByText('qualification_promotion')).toBeInTheDocument()
+    expect(screen.getAllByText('Q1').length).toBeGreaterThan(0)
+
+    fireEvent.change(
+      screen.getByLabelText('Frozen Main Qualification process window'),
+      { target: { value: '2' } }
+    )
+    fireEvent.change(screen.getByLabelText('Frozen Main repair draw seed'), {
+      target: { value: '777' }
+    })
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Commit reviewed frozen Main replacement'
+      })
+    )
+
+    await waitFor(() =>
+      expect(api.commitCanonicalFrozenMainReplacement).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        expect.objectContaining({
+          withdrawn_player_id: 'P2',
+          unavailable_player_ids: ['Q8', 'Q9'],
+          expected_source_fingerprint: '7'.repeat(64),
+          main_process_window_ordinal: 3,
+          qualification_process_window_ordinal: 2,
+          repair_draw_seed: 777
+        })
+      )
+    )
+  })
+
+  it('hands walkover replacement preview back to canonical Simulation instead of mutating Draw', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentDrawState.mockResolvedValue({
+      ...(await api.generateCanonicalTournamentDraw()),
+      initial_draw_generated: true,
+      draw_authority_fingerprint: 'c'.repeat(64)
+    })
+    api.getCanonicalTournamentDrawProcessState.mockResolvedValue({
+      schema_version: 'canonical_tournament_draw_process_state.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      draw_authority_fingerprint: 'c'.repeat(64),
+      has_qualification: true,
+      configured: true,
+      authority_fingerprint: 'd'.repeat(64),
+      main: {
+        process_window_count: 3,
+        redraw_cutoff_window_ordinal: 2,
+        draw_freeze_window_ordinal: 3
+      },
+      qualification: {
+        process_window_count: 3,
+        redraw_cutoff_window_ordinal: 2,
+        draw_freeze_window_ordinal: 3
+      }
+    })
+    api.previewCanonicalFrozenMainReplacement.mockResolvedValue({
+      schema_version: 'authoritative_frozen_main_replacement_preview.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      withdrawn_player_id: 'P1',
+      source: 'walkover',
+      selected_player_id: null,
+      physical_slot_index: 1,
+      cutoff_status: 'walkover_required',
+      source_authority_fingerprint: '6'.repeat(64),
+      source_authority: {},
+      commit_mode: 'walkover_handoff'
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+    await waitFor(() =>
+      expect(screen.getByLabelText('Frozen Main withdrawn player')).toHaveValue('P1')
+    )
+    fireEvent.click(
+      screen.getByRole('button', {
+        name: 'Preview frozen Main replacement'
+      })
+    )
+
+    expect(
+      await screen.findByText(/complete the next consuming match through canonical post-cutoff W\/O in Simulation/i)
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', {
+        name: 'Commit reviewed frozen Main replacement'
+      })
+    ).not.toBeInTheDocument()
+    expect(api.commitCanonicalFrozenMainReplacement).not.toHaveBeenCalled()
   })
 
   it('renders effective successor Draw and append-only revision audit instead of stale initial slots', async () => {

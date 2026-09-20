@@ -1855,6 +1855,58 @@ export type CanonicalDrawProcessConfigurePayload = {
   qualification_process_window_count: number | null
 }
 
+export type CanonicalFrozenMainReplacementSource =
+  | 'walkover'
+  | 'reserve_wild_card'
+  | 'qualification_promotion'
+  | 'lucky_loser_pending'
+  | 'lucky_loser'
+  | 'external_reserve'
+  | 'bye'
+
+export type CanonicalFrozenMainReplacementPreviewRequest = {
+  withdrawn_player_id: string
+  unavailable_player_ids: string[]
+}
+
+export type CanonicalFrozenMainReplacementPreview = {
+  schema_version: 'authoritative_frozen_main_replacement_preview.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  withdrawn_player_id: string
+  source: CanonicalFrozenMainReplacementSource
+  selected_player_id: string | null
+  physical_slot_index: number
+  cutoff_status: 'replacement_open' | 'walkover_required' | 'already_eliminated'
+  source_authority_fingerprint: string
+  source_authority: Record<string, unknown>
+  commit_mode: 'draw_revision' | 'walkover_handoff'
+}
+
+export type CanonicalFrozenMainReplacementCommitPayload = {
+  command_id: string
+  withdrawn_player_id: string
+  unavailable_player_ids: string[]
+  expected_source_fingerprint: string
+  main_process_window_ordinal: number
+  qualification_process_window_ordinal: number | null
+  repair_draw_seed: number | null
+}
+
+export type CanonicalFrozenMainReplacementCommitResult = {
+  schema_version: 'authoritative_frozen_main_replacement_commit.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  withdrawn_player_id: string
+  source: CanonicalFrozenMainReplacementSource
+  source_authority_fingerprint: string
+  draw_revision_sequences: number[]
+  draw_revision_fingerprints: string[]
+  successor_draw_fingerprint: string | null
+}
+
 export type CanonicalTournamentDrawRevisionSummary = {
   sequence: number
   schema_version: string

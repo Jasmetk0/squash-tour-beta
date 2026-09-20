@@ -20,6 +20,8 @@ import {
   configureCanonicalTournamentDrawProcess,
   commitCanonicalTournamentDrawInput,
   generateCanonicalTournamentDraw,
+  previewCanonicalFrozenMainReplacement,
+  commitCanonicalFrozenMainReplacement,
   getEventWildcardActions,
   getEventWildcardCandidates,
   getEventWildcards,
@@ -38,6 +40,7 @@ import {
 import { formatApiError } from '../utils/apiErrors'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
+import type { CanonicalFrozenMainReplacementPreview } from '../api/types'
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
@@ -50,6 +53,12 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
   const [mainProcessWindowCount, setMainProcessWindowCount] = useState('')
   const [qualificationProcessWindowCount, setQualificationProcessWindowCount] = useState('')
+  const [frozenReplacementWithdrawnPlayerId, setFrozenReplacementWithdrawnPlayerId] = useState('')
+  const [frozenReplacementUnavailableInput, setFrozenReplacementUnavailableInput] = useState('')
+  const [frozenReplacementQualificationWindow, setFrozenReplacementQualificationWindow] = useState('')
+  const [frozenReplacementRepairSeed, setFrozenReplacementRepairSeed] = useState('')
+  const [frozenReplacementPreview, setFrozenReplacementPreview] =
+    useState<CanonicalFrozenMainReplacementPreview | null>(null)
   const commissionerQueryKeys = [
     ['wildcards', runId, eventId],
     ['wildcard-candidates', runId, eventId],
@@ -218,6 +227,7 @@ export function PlannedEventDetailPage(): JSX.Element {
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-revisions', runId, activeBranchId, eventId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-process', runId, activeBranchId, eventId] })
     ])
+    setFrozenReplacementPreview(null)
   }
 
   const canonicalDrawInputMutation = useMutation({
@@ -299,6 +309,89 @@ export function PlannedEventDetailPage(): JSX.Element {
     }
   })
 
+  function frozenReplacementUnavailableIds(): string[] {
+    const withdrawn = frozenReplacementWithdrawnPlayerId.trim()
+    const values = frozenReplacementUnavailableInput
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean)
+    const canonical = [...new Set(values)].sort()
+    if (withdrawn && canonical.includes(withdrawn)) {
+      throw new Error('Withdrawn player cannot also be an unavailable replacement.')
+    }
+    return canonical
+  }
+
+  const frozenReplacementPreviewMutation = useMutation({
+    mutationFn: () => {
+      const withdrawn = frozenReplacementWithdrawnPlayerId.trim()
+      if (!withdrawn) throw new Error('Select an active Main Draw player to withdraw.')
+      return previewCanonicalFrozenMainReplacement(runId, activeBranchId, eventId, {
+        withdrawn_player_id: withdrawn,
+        unavailable_player_ids: frozenReplacementUnavailableIds()
+      })
+    },
+    onSuccess: (preview) => {
+      setFrozenReplacementPreview(preview)
+    },
+    onError: () => {
+      setFrozenReplacementPreview(null)
+    }
+  })
+
+  const frozenReplacementCommitMutation = useMutation({
+    mutationFn: () => {
+      const preview = frozenReplacementPreview
+      const process = canonicalDrawProcessQuery.data
+      if (!preview) throw new Error('Review a current frozen Main replacement preview first.')
+      if (preview.commit_mode === 'walkover_handoff') {
+        throw new Error('This vacancy requires the canonical post-cutoff W/O workflow in Simulation.')
+      }
+      if (!process?.configured || !process.main) {
+        throw new Error('Configured canonical Draw process authority is required.')
+      }
+      const qualificationWindow = process.has_qualification
+        ? Number(frozenReplacementQualificationWindow)
+        : null
+      if (
+        process.has_qualification &&
+        (
+          qualificationWindow === null ||
+          !Number.isSafeInteger(qualificationWindow) ||
+          qualificationWindow < 1 ||
+          qualificationWindow > (process.qualification?.process_window_count ?? 0)
+        )
+      ) {
+        throw new Error('Qualification process window must be inside the configured range.')
+      }
+      const repairSeed = frozenReplacementRepairSeed.trim()
+        ? Number(frozenReplacementRepairSeed)
+        : null
+      if (repairSeed !== null && !Number.isSafeInteger(repairSeed)) {
+        throw new Error('Repair draw seed must be an integer when provided.')
+      }
+      const commandId = [
+        'admin-ui-frozen-main-replacement',
+        preview.withdrawn_player_id,
+        preview.source_authority_fingerprint.slice(0, 16)
+      ].join('-').slice(0, 128)
+      return commitCanonicalFrozenMainReplacement(runId, activeBranchId, eventId, {
+        command_id: commandId,
+        withdrawn_player_id: preview.withdrawn_player_id,
+        unavailable_player_ids: frozenReplacementUnavailableIds(),
+        expected_source_fingerprint: preview.source_authority_fingerprint,
+        main_process_window_ordinal: process.main.draw_freeze_window_ordinal,
+        qualification_process_window_ordinal: qualificationWindow,
+        repair_draw_seed: repairSeed
+      })
+    },
+    onSuccess: async () => {
+      setFrozenReplacementPreview(null)
+      setFrozenReplacementUnavailableInput('')
+      await invalidateCanonicalDrawQueries()
+    }
+  })
+
   const seasonState = viewed.historical ? viewed.seasonState : runQuery.data?.season_state
   const orderedEvents = seasonState?.ordered_events ?? []
   const nextEventIndex = seasonState?.next_event_index ?? 0
@@ -329,6 +422,9 @@ export function PlannedEventDetailPage(): JSX.Element {
         : []
     : []
   const canonicalDrawRevisionCount = canonicalDrawRevisionHistoryQuery.data?.revisions.length ?? 0
+  const frozenReplacementMainPlayers = (displayedCanonicalDrawAuthority?.main.slots ?? [])
+    .filter((slot) => slot.player_id !== null)
+    .map((slot) => slot.player_id as string)
   const mainProcessCount = Number(mainProcessWindowCount)
   const qualificationProcessCount = Number(qualificationProcessWindowCount)
   const canConfigureDrawProcess = Boolean(
@@ -343,7 +439,39 @@ export function PlannedEventDetailPage(): JSX.Element {
   useEffect(() => {
     setMainProcessWindowCount('')
     setQualificationProcessWindowCount('')
+    setFrozenReplacementWithdrawnPlayerId('')
+    setFrozenReplacementUnavailableInput('')
+    setFrozenReplacementQualificationWindow('')
+    setFrozenReplacementRepairSeed('')
+    setFrozenReplacementPreview(null)
   }, [runId, activeBranchId, eventId])
+
+  useEffect(() => {
+    const process = canonicalDrawProcessQuery.data
+    if (!process?.configured) return
+    if (process.qualification) {
+      setFrozenReplacementQualificationWindow(
+        String(process.qualification.draw_freeze_window_ordinal)
+      )
+    } else {
+      setFrozenReplacementQualificationWindow('')
+    }
+  }, [canonicalDrawProcessQuery.data?.authority_fingerprint])
+
+  useEffect(() => {
+    if (
+      frozenReplacementWithdrawnPlayerId &&
+      frozenReplacementMainPlayers.includes(frozenReplacementWithdrawnPlayerId)
+    ) {
+      return
+    }
+    setFrozenReplacementWithdrawnPlayerId(frozenReplacementMainPlayers[0] ?? '')
+    setFrozenReplacementPreview(null)
+  }, [canonicalDrawRevisionHistoryQuery.data?.effective_draw_fingerprint, frozenReplacementWithdrawnPlayerId])
+
+  useEffect(() => {
+    setFrozenReplacementPreview(null)
+  }, [frozenReplacementWithdrawnPlayerId, frozenReplacementUnavailableInput])
 
   useEffect(() => {
     const firstCandidateId = wildcardCandidatesQuery.data?.candidates[0]?.player_id ?? ''
@@ -674,6 +802,121 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : null}
               {canonicalDrawProcessMutation.error ? (
                 <p className="error">Draw process configuration failed: {formatApiError(canonicalDrawProcessMutation.error)}</p>
+              ) : null}
+
+              <h4>Frozen Main replacement</h4>
+              <p className="status">
+                Preview the Master source-priority chain from the current effective Draw. Commit is bound to the reviewed source fingerprint; post-cutoff W/O remains owned by canonical Simulation.
+              </p>
+              {canonicalDrawProcessQuery.data?.configured && displayedCanonicalDrawAuthority ? (
+                <div className="grid">
+                  <label>
+                    Withdrawn Main player
+                    <select
+                      aria-label="Frozen Main withdrawn player"
+                      value={frozenReplacementWithdrawnPlayerId}
+                      onChange={(event) => setFrozenReplacementWithdrawnPlayerId(event.target.value)}
+                      disabled={frozenReplacementPreviewMutation.isPending || frozenReplacementCommitMutation.isPending}
+                    >
+                      {frozenReplacementMainPlayers.map((playerId) => (
+                        <option key={playerId} value={playerId}>{playerId}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Unavailable replacement player IDs
+                    <input
+                      aria-label="Frozen Main unavailable players"
+                      value={frozenReplacementUnavailableInput}
+                      onChange={(event) => setFrozenReplacementUnavailableInput(event.target.value)}
+                      placeholder="P001, P002"
+                      disabled={frozenReplacementPreviewMutation.isPending || frozenReplacementCommitMutation.isPending}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => frozenReplacementPreviewMutation.mutate()}
+                    disabled={
+                      !frozenReplacementWithdrawnPlayerId ||
+                      frozenReplacementPreviewMutation.isPending ||
+                      frozenReplacementCommitMutation.isPending
+                    }
+                  >
+                    Preview frozen Main replacement
+                  </button>
+                </div>
+              ) : (
+                <p className="status">Configure Draw process authority before frozen Main replacement review.</p>
+              )}
+              {frozenReplacementPreviewMutation.error ? (
+                <p className="error">
+                  Frozen Main replacement preview failed: {formatApiError(frozenReplacementPreviewMutation.error)}
+                </p>
+              ) : null}
+              {frozenReplacementPreview ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Replacement source', value: frozenReplacementPreview.source },
+                      { label: 'Selected player', value: frozenReplacementPreview.selected_player_id ?? 'None' },
+                      { label: 'Physical Main slot', value: frozenReplacementPreview.physical_slot_index },
+                      { label: 'Player cutoff', value: frozenReplacementPreview.cutoff_status },
+                      { label: 'Source fingerprint', value: frozenReplacementPreview.source_authority_fingerprint }
+                    ]}
+                  />
+                  {frozenReplacementPreview.commit_mode === 'walkover_handoff' ? (
+                    <p className="status">
+                      Replacement cutoff has passed. Do not rewrite the Draw; complete the next consuming match through canonical post-cutoff W/O in Simulation.
+                    </p>
+                  ) : (
+                    <div className="grid">
+                      {canonicalDrawProcessQuery.data?.has_qualification ? (
+                        <label>
+                          Current Qualification process window
+                          <input
+                            aria-label="Frozen Main Qualification process window"
+                            type="number"
+                            min={1}
+                            max={canonicalDrawProcessQuery.data.qualification?.process_window_count ?? undefined}
+                            value={frozenReplacementQualificationWindow}
+                            onChange={(event) => setFrozenReplacementQualificationWindow(event.target.value)}
+                            disabled={frozenReplacementCommitMutation.isPending}
+                          />
+                        </label>
+                      ) : null}
+                      <label>
+                        Repair draw seed (only when the selected Q repair phase requires redraw)
+                        <input
+                          aria-label="Frozen Main repair draw seed"
+                          type="number"
+                          value={frozenReplacementRepairSeed}
+                          onChange={(event) => setFrozenReplacementRepairSeed(event.target.value)}
+                          disabled={frozenReplacementCommitMutation.isPending}
+                        />
+                      </label>
+                      <p className="status">
+                        Main process window is fixed to configured Draw Freeze #{canonicalDrawProcessQuery.data?.main?.draw_freeze_window_ordinal ?? '—'} for this frozen-Main command.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => frozenReplacementCommitMutation.mutate()}
+                        disabled={frozenReplacementCommitMutation.isPending}
+                      >
+                        Commit reviewed frozen Main replacement
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : null}
+              {frozenReplacementCommitMutation.data ? (
+                <p className="status">
+                  Canonical replacement committed via {frozenReplacementCommitMutation.data.source}; Draw revision(s): {frozenReplacementCommitMutation.data.draw_revision_sequences.join(', ') || 'none'}.
+                </p>
+              ) : null}
+              {frozenReplacementCommitMutation.error ? (
+                <p className="error">
+                  Frozen Main replacement commit failed: {formatApiError(frozenReplacementCommitMutation.error)}
+                </p>
               ) : null}
 
               <h4>Effective Draw and append-only history</h4>

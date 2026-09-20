@@ -621,6 +621,16 @@ active WC identities plus released-WC lineage continue to account for the reserv
 WC capacity. Revision history rebuilds these transitions from frozen source authority
 rather than recalculating today's candidate state.
 
+The frozen-Main source chain now has a canonical **Run/Branch Admin review boundary**.
+Planned Event Admin can preview the server-derived replacement source from the current
+effective Draw without mutation, including the selected player, physical slot,
+player-specific cutoff state and exact source-authority fingerprint. A Draw-revision
+commit must present that reviewed fingerprint and the server re-resolves the source
+inside one immediate transaction before dispatch, so stale RWC/Q/LL/reserve state
+fails closed. Exact retries reuse immutable child revision history. When preview
+resolves to post-cutoff W/O, the Draw workflow does not create a competing mutation;
+it explicitly hands execution back to the existing canonical Simulation W/O command.
+
 This unified slice deliberately stops at Main Draw Freeze. After RWC exhaustion, a
 WC slot can now fall through canonically to **pre-Q Qualification promotion, Lucky
 Loser, external reserve or BYE**. For the LL path, Draw revision v13 binds the

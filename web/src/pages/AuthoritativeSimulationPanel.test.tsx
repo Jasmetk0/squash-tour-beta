@@ -9,6 +9,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   getAuthoritativeSeasonTransitionPreflight: vi.fn(),
+  getAdminVisibleProspects: vi.fn(),
   previewAuthoritativeSeasonTransitionConfiguration: vi.fn(),
   advanceAuthoritativeOrdinarySeason: vi.fn(),
   finalizeAuthoritativeFinalSeason: vi.fn(),
@@ -174,6 +175,31 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getAdminVisibleProspects.mockResolvedValue({
+    schema_version: 'visible_pre_tour_prospects.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    lifecycle_fingerprint: '9'.repeat(64),
+    total: 1,
+    limit: 10,
+    offset: 0,
+    prospects: [
+      {
+        player_id: 'prospect-one',
+        display_name: 'CZE Prospect 0001',
+        short_name: 'CZE P.',
+        country_code: 'CZE',
+        country_name: 'Czechia',
+        age: 15,
+        birth_year: 1987,
+        birth_year_week: 53,
+        lifecycle_status: 'active',
+        tour_status: 'pre_tour',
+        visible_since_week: week
+      }
+    ]
+  })
   api.getAuthoritativeSeasonTransitionPreflight.mockResolvedValue({
     schema_version: 'authoritative_season_transition_preflight.v1',
     run_id: 'run-a',
@@ -316,6 +342,33 @@ beforeEach(() => {
 })
 
 describe('AuthoritativeSimulationPanel', () => {
+  it('shows lifecycle-visible pre-Tour prospects read-only for the current branch', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      required: false,
+      schedule: null
+    })
+
+    renderPanel()
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Historically visible pre-Tour prospects',
+      })
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('list', {
+        name: 'Canonical visible pre-Tour prospects',
+      })
+    ).toHaveTextContent('CZE Prospect 0001 · CZE · age 15')
+    expect(api.getAdminVisibleProspects).toHaveBeenCalledWith(
+      'run-a',
+      'branch-a',
+      { limit: 10, offset: 0 }
+    )
+  })
+
+
   it('reviews and adopts the exact dependency-safe topological schedule proposal', async () => {
     renderPanel()
 

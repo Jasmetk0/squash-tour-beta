@@ -136,6 +136,8 @@ function resetApiMocks(): void {
     week: { season_index: 29, week: 1 },
     lifecycle_fingerprint: 'a'.repeat(64),
     total: 0,
+    limit: 50,
+    offset: 0,
     prospects: []
   })
   api.getViewerRankingTable.mockRejectedValue(new Error('Viewer read model unavailable in test'))

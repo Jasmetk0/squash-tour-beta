@@ -17,6 +17,7 @@ from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
+    RankingWeek,
     calculate_official_ranking,
 )
 from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS, WORKING_RUN_STATUS
@@ -40,13 +41,13 @@ from beta_engine.infrastructure.db.models import (
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
+    OfficialRankingCandidateModel,
     OfficialRankingCommandModel,
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
     SeasonClosingRankingModel,
 )
-from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     load_saved_revision_season_closure,
@@ -143,47 +144,68 @@ def _install_final_boundary(session):
     session.flush()
 
     policy = OfficialRankingPolicy(policy_id="final-policy", best_n=15)
-    official = calculate_official_ranking(
-        run_id="run",
-        branch_id="branch",
-        week=FINAL_WEEK,
-        policy=policy,
-        players=(),
-        results=(),
-    )
-    OfficialRankingCandidateStore(session).append(official, bootstrap=True)
-    request_json = json.dumps(
-        {
-            "command_id": "final-ranking-evidence",
-            "context": {
-                "run_id": "run",
-                "branch_id": "branch",
-                "target_week": FINAL_WEEK.model_dump(mode="json"),
-            },
-        },
-        sort_keys=True,
-        separators=(",", ":"),
-    )
-    request_fingerprint = hashlib.sha256(request_json.encode()).hexdigest()
-    manifest = RankingInputManifest(
-        command_request_fingerprint=request_fingerprint,
-        players=(),
-        results=(),
-    )
-    manifest.verify(official, None)
-    session.add(
-        OfficialRankingCommandModel(
+    previous = None
+    candidate_rows = []
+    command_rows = []
+    for ordinal in range(FINAL_WEEK.ordinal + 1):
+        week = RankingWeek(
+            season_index=ordinal // 61,
+            week=ordinal % 61 + 1,
+        )
+        snapshot = calculate_official_ranking(
             run_id="run",
             branch_id="branch",
-            command_id="final-ranking-evidence",
-            request_fingerprint=request_fingerprint,
-            request_payload_json=request_json,
-            target_ordinal=FINAL_WEEK.ordinal,
-            snapshot_fingerprint=official.fingerprint,
-            input_manifest_version=1,
-            input_manifest_json=manifest.model_dump_json(),
+            week=week,
+            policy=policy,
+            players=(),
+            results=(),
+            previous=previous,
         )
-    )
+        command_id = f"ranking-{ordinal:04d}"
+        request_json = json.dumps(
+            {
+                "command_id": command_id,
+                "context": {
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "target_week": week.model_dump(mode="json"),
+                },
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        request_fingerprint = hashlib.sha256(request_json.encode()).hexdigest()
+        manifest = RankingInputManifest(
+            command_request_fingerprint=request_fingerprint,
+            players=(),
+            results=(),
+        )
+        candidate_rows.append(
+            OfficialRankingCandidateModel(
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=ordinal,
+                fingerprint=snapshot.fingerprint,
+                payload_json=snapshot.model_dump_json(),
+            )
+        )
+        command_rows.append(
+            OfficialRankingCommandModel(
+                run_id="run",
+                branch_id="branch",
+                command_id=command_id,
+                request_fingerprint=request_fingerprint,
+                request_payload_json=request_json,
+                target_ordinal=ordinal,
+                snapshot_fingerprint=snapshot.fingerprint,
+                input_manifest_version=1,
+                input_manifest_json=manifest.model_dump_json(),
+            )
+        )
+        previous = snapshot
+    official = previous
+    session.add_all(candidate_rows)
+    session.add_all(command_rows)
     session.add(
         PublishedOfficialRankingModel(
             run_id="run",

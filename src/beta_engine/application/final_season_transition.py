@@ -47,6 +47,9 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     capture_saved_application_submissions,
 )
+from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
+    capture_saved_definitive_wild_card_assignments,
+)
 from beta_engine.infrastructure.db.player_sporting_state import capture_saved_sporting
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     capture_saved_ranking_component,
@@ -289,6 +292,9 @@ def commit_final_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_application_submissions(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_definitive_wild_card_assignments(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_tour_entry_triggers(

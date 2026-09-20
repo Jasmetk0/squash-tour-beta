@@ -90,6 +90,7 @@ from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     PlayerTourEntryTriggerModel,
     TournamentApplicationSubmissionAuthorityModel,
+    DefinitiveWildCardAssignmentAuthorityModel,
     PlayerSportingWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
@@ -142,6 +143,11 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
     TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
     capture_saved_application_submissions,
     restore_saved_application_submissions,
+)
+from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
+    DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
+    capture_saved_definitive_wild_card_assignments,
+    restore_saved_definitive_wild_card_assignments,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -3196,6 +3202,25 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture tournament application submissions"
                     )
+                has_uncaptured_definitive_wc = (
+                    session.scalar(
+                        select(DefinitiveWildCardAssignmentAuthorityModel.run_id)
+                        .where(
+                            DefinitiveWildCardAssignmentAuthorityModel.run_id == run_id,
+                            DefinitiveWildCardAssignmentAuthorityModel.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                )
+                if (
+                    has_uncaptured_definitive_wc
+                    and DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture definitive Wild Card assignments"
+                    )
                 has_uncaptured_tour_entry = (
                     session.scalar(
                         select(PlayerTourEntryTriggerModel.run_id)
@@ -3284,6 +3309,7 @@ class SimulationPersistenceRepository:
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
+                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
@@ -3295,6 +3321,7 @@ class SimulationPersistenceRepository:
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
+                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
@@ -3401,6 +3428,22 @@ class SimulationPersistenceRepository:
                             f"Cannot restore tournament application submissions: {exc}"
                         ) from exc
                 if (
+                    DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY in current_content
+                    or DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_definitive_wild_card_assignments(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore definitive Wild Card assignments: {exc}"
+                        ) from exc
+                if (
                     PLAYER_TOUR_ENTRY_COMPONENT_KEY in current_content
                     or PLAYER_TOUR_ENTRY_COMPONENT_KEY in target_content
                 ):
@@ -3472,6 +3515,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_application_submissions(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_definitive_wild_card_assignments(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_tour_entry_triggers(
@@ -3905,6 +3951,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_application_submissions(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_definitive_wild_card_assignments(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_tour_entry_triggers(

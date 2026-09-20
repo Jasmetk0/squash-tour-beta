@@ -305,7 +305,7 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
 
         status, inspected = _request("GET", root)
         assert status == 200
-        returned_field = TournamentEntryField.model_validate(field)
+        returned_field = TournamentEntryField.model_validate_json(json.dumps(field))
         assert inspected["field_fingerprint"] == returned_field.fingerprint
 
 

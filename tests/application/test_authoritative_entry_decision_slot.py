@@ -360,8 +360,10 @@ def test_pending_entry_validation_blocks_match_slot_materialization(tmp_path):
     )
 
     command, before = _driver_command(driver, week, "blocked-by-entry-validation")
-    assert before.slot_ordinal is not None
-    assert before.slot_ordinal > 1
+    assert before.current_slot_kind == "entry"
+    assert before.slot_ordinal == 1
+    assert before.current_slot_id == f"week-{week.ordinal}:entry-slot:1"
+    assert before.current_slot_complete is False
     assert "entry_validation_pending" in before.transition_blockers
 
     with pytest.raises(
@@ -381,4 +383,46 @@ def test_pending_entry_validation_blocks_match_slot_materialization(tmp_path):
             ).all()
         )
         assert materialized == ()
+
+    validations = tuple(
+        TournamentApplicationValidationAuthority(
+            validation_id=f"resolve-{index + 1}",
+            application_id=f"resolve-application-{index + 1}",
+            run_id="run",
+            branch_id="branch",
+            week=week,
+            decision_slot_ordinal=1,
+            source_slot_fingerprint=preview["slot_fingerprint"],
+            event_id=decision["event_id"],
+            player_id=decision["player_id"],
+            entry_window=(
+                "main" if decision["target"] == "MAIN" else "qualification"
+            ),
+            source_decision_fingerprint=decision["source_decision_fingerprint"],
+            outcome="invalid",
+            nr_tie_break_token=None,
+            validation_policy_id="explicit-test-policy.v1",
+            validation_policy_fingerprint="f" * 64,
+            reasons=("explicit_test_resolution",),
+            provenance="resolve pending Entry slot for chronology test",
+        )
+        for index, decision in enumerate(preview["authority"]["decisions"])
+    )
+    driver.commit_application_validation_slot(
+        AuthoritativeApplicationValidationCommand(
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_revision_id=preview["expected_revision_id"],
+            decision_slot_ordinal=1,
+            expected_entry_slot_fingerprint=preview["slot_fingerprint"],
+            validations=validations,
+        )
+    )
+
+    after = driver.position(run_id="run", branch_id="branch")
+    assert after.current_slot_kind == "match"
+    assert after.slot_ordinal is not None
+    assert after.slot_ordinal > 1
+    assert "entry_validation_pending" not in after.transition_blockers
 

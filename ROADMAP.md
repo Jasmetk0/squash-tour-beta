@@ -350,8 +350,14 @@ deliberately empty because no branch-scoped resettable statistic store is yet an
 authoritative producer; legacy Race snapshots are not promoted into this path.
 The Marker receives its final Saved Revision identity only after that revision is
 staged by the future atomic Season Transition writer, preventing stale closure
-markers across restore/replay. Run Completed persistence and the full atomic Season
-Transition remain open.
+markers across restore/replay. The final-Run lifecycle kernel is now bounded too:
+`working` (plus compatibility `active`) may become `completed` only from a
+Branch-head Saved Revision that contains matching final Season Closure evidence for
+2049/50 Week 61. The transition is idempotent and all other lifecycle/week/evidence
+combinations fail closed. Saved Revision restore accepts this immutable closure
+component, while direct fork from the final closure revision remains guarded until
+identity remapping exists. The remaining work is to create/bind that final revision
+and invoke the lifecycle kernel inside the full atomic Season Transition transaction.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

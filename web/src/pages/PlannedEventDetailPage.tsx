@@ -467,7 +467,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     }
     setFrozenReplacementWithdrawnPlayerId(frozenReplacementMainPlayers[0] ?? '')
     setFrozenReplacementPreview(null)
-  }, [displayedCanonicalDrawAuthority?.fingerprint, frozenReplacementWithdrawnPlayerId])
+  }, [canonicalDrawRevisionHistoryQuery.data?.effective_draw_fingerprint, frozenReplacementWithdrawnPlayerId])
 
   useEffect(() => {
     setFrozenReplacementPreview(null)

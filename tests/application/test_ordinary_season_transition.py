@@ -360,8 +360,20 @@ def test_driver_commits_complete_ordinary_season_transition_and_retry(database, 
         assert draft.base_revision_id == "revision-season-1"
         assert draft.draft_version == 8
 
+        revision_payload = json.loads(revision.payload_json)
+        assert (
+            revision_payload["content"]["ranking_preparation"]["state"]["schema_version"]
+            == "ranking_revision_state.v7"
+        )
+        assert [
+            row["event_kind"]
+            for row in revision_payload["content"]["ranking_preparation"]["state"][
+                "authoritative_transition_state"
+            ]["events"]
+        ] == ["season_transition_completed"]
+
         closure = load_saved_revision_season_closure(
-            json.loads(revision.payload_json),
+            revision_payload,
             run_id="run",
             branch_id="branch",
             revision_id="revision-season-1",

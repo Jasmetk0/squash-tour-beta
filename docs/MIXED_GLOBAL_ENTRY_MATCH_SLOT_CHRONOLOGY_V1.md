@@ -32,6 +32,10 @@ Implemented pre-alpha example:
 - entry slot 1 → optional entry slot 2 → first match layer gets the next free global slot.
 
 A new Entry slot may only commit after every earlier global ordinal is already complete.
+For an Entry ordinal, **complete** means both the persisted decision authority and its
+complete `ResolvedApplicationValidationSlot`; a decision-only slot is reserved but
+still blocks later global execution.
+
 The current bridge therefore supports a contiguous Entry-decision prefix before match
 schedule adoption. Planning a future Entry slot between already-planned match layers
 requires the later generic multi-kind slot planner/reservation authority and is not

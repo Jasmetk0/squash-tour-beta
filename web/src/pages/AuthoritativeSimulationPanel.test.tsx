@@ -676,6 +676,10 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       screen.getByRole('list', { name: 'Season Transition implementation gaps' })
     ).toHaveTextContent('season_prospect_creation_bridge_not_implemented')
+    expect(await screen.findByText('Prospect Bridge inspection')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(api.getProspectBridgeInspection).toHaveBeenCalledWith('run-a', 'branch-a')
+    )
     expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })
@@ -729,6 +733,7 @@ describe('AuthoritativeSimulationPanel', () => {
     renderPanel()
 
     const review = await screen.findByRole('button', { name: 'Review Season Transition' })
+    expect(api.getProspectBridgeInspection).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: 'Advance to next season' })).not.toBeInTheDocument()
     await userEvent.click(review)
     await userEvent.click(await screen.findByRole('button', { name: 'Advance to next season' }))

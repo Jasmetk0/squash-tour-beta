@@ -1,3 +1,4 @@
+import hashlib
 import json
 
 import pytest
@@ -13,6 +14,7 @@ from beta_engine.application.final_season_transition import (
     commit_final_season_transition,
 )
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
+from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
     calculate_official_ranking,
@@ -38,6 +40,7 @@ from beta_engine.infrastructure.db.models import (
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
     BranchWorkingDraftModel,
+    OfficialRankingCommandModel,
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
@@ -149,6 +152,38 @@ def _install_final_boundary(session):
         results=(),
     )
     OfficialRankingCandidateStore(session).append(official, bootstrap=True)
+    request_json = json.dumps(
+        {
+            "command_id": "final-ranking-evidence",
+            "context": {
+                "run_id": "run",
+                "branch_id": "branch",
+                "target_week": FINAL_WEEK.model_dump(mode="json"),
+            },
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    request_fingerprint = hashlib.sha256(request_json.encode()).hexdigest()
+    manifest = RankingInputManifest(
+        command_request_fingerprint=request_fingerprint,
+        players=(),
+        results=(),
+    )
+    manifest.verify(official, None)
+    session.add(
+        OfficialRankingCommandModel(
+            run_id="run",
+            branch_id="branch",
+            command_id="final-ranking-evidence",
+            request_fingerprint=request_fingerprint,
+            request_payload_json=request_json,
+            target_ordinal=FINAL_WEEK.ordinal,
+            snapshot_fingerprint=official.fingerprint,
+            input_manifest_version=1,
+            input_manifest_json=manifest.model_dump_json(),
+        )
+    )
     session.add(
         PublishedOfficialRankingModel(
             run_id="run",

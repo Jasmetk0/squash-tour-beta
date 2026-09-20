@@ -51,14 +51,22 @@ prospect identity, its Run-scoped pregeneration metadata becomes immutable throu
 the persistence/materialization boundary: idempotent identical writes remain valid,
 but normal overwrite/delete cannot retroactively change public identity metadata.
 
-Lifecycle is intentionally broader than canonical sporting state. A pre-Tour Draft
-may remain outside `player_sporting_week_state` while its full simulation-valid
-profile is incomplete, and completed sporting context is exact over the sporting
-roster rather than every lifecycle identity. Consequently birth-week visibility
-does not invent 57 attributes, development/potential values, Tour entry or normal
-junior match simulation. Before a later operation actually requires that sporting
-state—especially competitive Tour use—the canonical sporting/profile bridge must be
-satisfied.
+Lifecycle remains the authority for identity, age, retirement and Tour-entry status,
+while sporting state owns the simulation-valid sports core. For an ordinary supported
+Week Transition, a birth-week Run prospect now enters **both** target lifecycle and
+target sporting history atomically, but through separate validated projections of the
+same Run-scoped source row. The sporting projection is accepted only when the
+persisted canonical 57-attribute profile/development/potential evidence is internally
+consistent; an older placeholder profile blocks that affected Week Transition instead
+of inventing sporting values.
+
+The target-week prospect still has `tour_entry_week=None`, so birth-week creation
+does not create MSA Tour status, Official Ranking membership or tournament entry.
+Completed-week sporting context remains exact over the predecessor sporting roster:
+the newly created prospect did not exist during that completed week and therefore
+receives no retroactive development or match count. Its first ordinary weekly
+development can be evaluated only after it has existed through a completed week.
+Season Transition parity for Week 61 → next-season Week 1 remains a separate follow-up.
 
 The existing `AuthoritativeWeekTransitionRunner` remains the sole
 `BEGIN IMMEDIATE` owner. It validates predecessor lifecycle, stages target state,

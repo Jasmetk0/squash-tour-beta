@@ -1,12 +1,22 @@
 import pytest
 
 from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeApplicationValidationCommand,
     AuthoritativeEntryDecisionSlotCommand,
+)
+from beta_engine.domain.tournaments.application_validation_authority import (
+    TournamentApplicationValidationAuthority,
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import RunBranchModel
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotStore,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PlayerTourEntryTriggerStore,
+)
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
 )
 from test_authoritative_slot_matches import (
     _driver_fixture,
@@ -108,6 +118,84 @@ def test_multi_event_entry_slot_uses_one_shared_snapshot_and_canonical_events(tm
         assert stored.source_application_decisions_fingerprint == (
             preview["application_decisions_fingerprint"]
         )
+
+
+@pytest.mark.pr_critical
+def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "entry-validation-command")
+    event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
+    preview = driver.preview_entry_decision_slot(
+        run_id="run",
+        branch_id="branch",
+        event_ids=(event_id,),
+        decision_slot_ordinal=1,
+        seed=4201,
+    )
+    driver.commit_entry_decision_slot(_command_from_preview(preview))
+    decisions = preview["authority"]["decisions"]
+    assert decisions
+
+    validations = []
+    for index, decision in enumerate(decisions):
+        valid = index == 0
+        validations.append(
+            TournamentApplicationValidationAuthority(
+                validation_id=f"validation-{index + 1}",
+                application_id=f"application-{index + 1}",
+                run_id="run",
+                branch_id="branch",
+                week=week,
+                decision_slot_ordinal=1,
+                source_slot_fingerprint=preview["slot_fingerprint"],
+                event_id=decision["event_id"],
+                player_id=decision["player_id"],
+                entry_window=(
+                    "main" if decision["target"] == "MAIN" else "qualification"
+                ),
+                source_decision_fingerprint=decision[
+                    "source_decision_fingerprint"
+                ],
+                outcome="valid" if valid else "invalid",
+                nr_tie_break_token=f"nr-{index + 1}" if valid else None,
+                validation_policy_id="explicit-test-policy.v1",
+                validation_policy_fingerprint="f" * 64,
+                reasons=() if valid else ("explicit_test_rejection",),
+                provenance="explicit validation command test",
+            )
+        )
+
+    command = AuthoritativeApplicationValidationCommand(
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_revision_id=preview["expected_revision_id"],
+        decision_slot_ordinal=1,
+        expected_entry_slot_fingerprint=preview["slot_fingerprint"],
+        validations=tuple(validations),
+    )
+    result = driver.commit_application_validation_slot(command)
+    assert result["valid_submission_count"] == 1
+    assert result["submission_batch_fingerprint"] is not None
+    assert len(result["first_tour_entry_trigger_fingerprints"]) == 1
+
+    retry = driver.commit_application_validation_slot(command)
+    assert retry == result
+
+    with factory() as session:
+        submissions = TournamentApplicationSubmissionStore(session).list(
+            run_id="run",
+            branch_id="branch",
+        )
+        assert len(submissions) == 1
+        assert submissions[0].player_id == decisions[0]["player_id"]
+        trigger = PlayerTourEntryTriggerStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            player_id=decisions[0]["player_id"],
+        )
+        assert trigger is not None
+        assert trigger.decision_slot_ordinal == 1
+        assert trigger.trigger_week == week
 
 
 @pytest.mark.pr_critical

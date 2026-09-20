@@ -882,6 +882,7 @@ export type AuthoritativeSimulationPosition = {
   run_id: string
   branch_id: string
   current_week: AuthoritativeRankingWeek
+  current_slot_kind: 'entry' | 'match' | null
   current_slot_id: string | null
   slot_ordinal: number | null
   unresolved_group_ids: string[]

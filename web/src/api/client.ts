@@ -1405,6 +1405,28 @@ export function getRunTalentPlan(runId: string): Promise<RunTalentPlanSummary> {
 }
 
 
+export function getViewerVisibleProspects(
+  productRunId: string
+): Promise<import('./types').VisiblePreTourProspects> {
+  return request(
+    `/viewer/runs/${encodeURIComponent(productRunId)}/prospects/next-gen`
+  )
+}
+
+export function getAdminVisibleProspects(
+  runId: string,
+  branchId: string,
+  target?: { season_index: number; week: number }
+): Promise<import('./types').VisiblePreTourProspects> {
+  const query = target
+    ? `?season_index=${encodeURIComponent(String(target.season_index))}&week=${encodeURIComponent(String(target.week))}`
+    : ''
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/prospects/visible${query}`
+  )
+}
+
+
 export function listRunProspects(
   runId: string,
   params?: { country_code?: string; status?: string; season_start_year?: number; season_week?: number; limit?: number; offset?: number }

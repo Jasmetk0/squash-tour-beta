@@ -88,6 +88,7 @@ from beta_engine.infrastructure.db.models import (
     LegacySimulationRunMappingModel,
     InitialWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PlayerTourEntryTriggerModel,
     PlayerSportingWeekStateModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
@@ -130,6 +131,11 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     bootstrap_lifecycle,
     capture_saved_lifecycle,
     restore_saved_lifecycle,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PLAYER_TOUR_ENTRY_COMPONENT_KEY,
+    capture_saved_tour_entry_triggers,
+    restore_saved_tour_entry_triggers,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,

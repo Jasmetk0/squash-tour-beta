@@ -14,10 +14,17 @@ preserving one crucial invariant:
 ## Live collision guard
 
 `RunEntryDecisionSlotStore.append(...)` rejects an entry slot when a persisted match
-slot already owns the same global position.
+slot or chronology-aware canonical WC decision already owns the same global position.
 
-`AuthoritativeSlotMatchExecutor.create_slot(...)` now performs the symmetric check and
-rejects a match slot when a persisted entry-decision slot already owns that position.
+`AuthoritativeSlotMatchExecutor.create_slot(...)` performs the symmetric checks and
+rejects a match slot when a persisted entry-decision or canonical WC-decision slot owns
+that position.
+
+`TournamentWildCardAuthority` v2 freezes its own FAX week/global ordinal. WC resolution
+is complete when that immutable authority is persisted, so later Entry/match slots may
+count the WC ordinal as completed. A WC decision cannot overtake an unresolved earlier
+Entry slot, incomplete match slot, missing ordinal or an ordinal reserved by the adopted
+match schedule.
 
 Thus technical execution order cannot create two different “slot 4” authorities.
 

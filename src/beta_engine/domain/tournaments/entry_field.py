@@ -38,7 +38,7 @@ class TournamentEntryApplication(FrozenInput):
     event_id: str = Field(min_length=1)
     player_id: str = Field(min_length=1)
     entry_window: EntryWindow
-    decision_slot_ordinal: int = Field(ge=0)
+    decision_slot_ordinal: int = Field(ge=1)
     nr_tie_break_token: str = Field(min_length=1)
     eligible: bool = True
 

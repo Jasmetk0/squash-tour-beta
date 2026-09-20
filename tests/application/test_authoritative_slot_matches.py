@@ -3182,7 +3182,6 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
         )
 
 
-@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
     session, executor, _, semifinals, _ = run_semifinals(

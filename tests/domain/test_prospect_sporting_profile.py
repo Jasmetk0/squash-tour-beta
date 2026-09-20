@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+import pytest
+
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.prospect_sporting_profile import (
     DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
     materialize_prospect_sporting_profile,
 )
+
+
+pytestmark = pytest.mark.pr_critical
 
 
 def _profile(**overrides):
@@ -18,7 +23,7 @@ def _profile(**overrides):
     return materialize_prospect_sporting_profile(**payload)
 
 
-def test_profile_is_exact_canonical_57_and_simulation_valid():
+def test_profile_is_exact_canonical_57_and_ready_for_later_sporting_adoption():
     profile = _profile()
 
     assert tuple(name for name, _ in profile.attributes) == CANONICAL_PLAYER_ATTRIBUTES

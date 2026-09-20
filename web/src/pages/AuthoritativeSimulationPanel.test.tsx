@@ -209,7 +209,7 @@ beforeEach(() => {
     run_scoped_source: true,
     bridge_supported: false,
     blocking_code: 'prospect_bridge_missing',
-    unresolved_contracts: ['tour_entry_activation', 'canonical_sporting_profile'],
+    unresolved_contracts: ['canonical_sporting_profile'],
     prospects: [{
       prospect_id: 'prospect-1',
       display_name: 'CZE Prospect 0001',
@@ -594,7 +594,7 @@ describe('AuthoritativeSimulationPanel', () => {
       'placeholders attributes, development, potential, traits'
     )
     expect(
-      screen.getByText('Unresolved contracts: tour_entry_activation, canonical_sporting_profile')
+      screen.getByText('Unresolved contracts: canonical_sporting_profile')
     ).toBeInTheDocument()
     expect(screen.getByText('5'.repeat(64))).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /prospect/i })).not.toBeInTheDocument()

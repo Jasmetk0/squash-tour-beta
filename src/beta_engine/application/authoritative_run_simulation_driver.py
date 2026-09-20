@@ -2304,6 +2304,23 @@ class AuthoritativeRunSimulationDriver:
             ).all()
         )
 
+    @staticmethod
+    def _wc_slot_ordinals(session, run_id, branch_id, week):
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            wild_card_decision_slot_ordinals,
+        )
+
+        return tuple(
+            sorted(
+                wild_card_decision_slot_ordinals(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=week.ordinal,
+                )
+            )
+        )
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)
@@ -2321,6 +2338,9 @@ class AuthoritativeRunSimulationDriver:
             entry_slot_ordinals = self._entry_slot_ordinals(
                 session, run_id, branch_id, week
             )
+            wc_slot_ordinals = self._wc_slot_ordinals(
+                session, run_id, branch_id, week
+            )
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
@@ -2330,10 +2350,12 @@ class AuthoritativeRunSimulationDriver:
                 "week": week.model_dump(mode="json"),
                 "required": (
                     bool(entry_slot_ordinals)
+                    or bool(wc_slot_ordinals)
                     or len(packages) > 1
                     or len(plans) != 3
                 ),
                 "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
+                "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
                 "event_ids": [p.event_id for p in packages],
                 "group_ids": list(plans),
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
@@ -2405,10 +2427,14 @@ class AuthoritativeRunSimulationDriver:
         reserved_entry_ordinals = set(
             self._entry_slot_ordinals(session, run_id, branch_id, week)
         )
+        reserved_wc_ordinals = set(
+            self._wc_slot_ordinals(session, run_id, branch_id, week)
+        )
+        reserved_nonmatch_ordinals = reserved_entry_ordinals | reserved_wc_ordinals
         slots: list[WeekSimulationScheduleSlot] = []
         next_global_ordinal = 1
         for depth_ordinal in sorted(grouped):
-            while next_global_ordinal in reserved_entry_ordinals:
+            while next_global_ordinal in reserved_nonmatch_ordinals:
                 next_global_ordinal += 1
             global_ordinal = next_global_ordinal
             next_global_ordinal += 1
@@ -2870,19 +2896,29 @@ class AuthoritativeRunSimulationDriver:
                 schedule.week,
             )
         )
-        overlap = reserved_entry_ordinals & {
+        reserved_wc_ordinals = set(
+            self._wc_slot_ordinals(
+                session,
+                schedule.run_id,
+                schedule.branch_id,
+                schedule.week,
+            )
+        )
+        reserved_nonmatch_ordinals = reserved_entry_ordinals | reserved_wc_ordinals
+        overlap = reserved_nonmatch_ordinals & {
             slot.ordinal for slot in schedule.slots
         }
         if overlap:
             raise ValueError(
-                "match schedule collides with persisted entry-decision global slot"
+                "match schedule collides with persisted non-match global slot"
             )
         match_ordinals = {slot.ordinal for slot in schedule.slots}
         required_prefix = set(range(1, max(match_ordinals) + 1))
-        unexplained_gaps = required_prefix - match_ordinals - reserved_entry_ordinals
+        unexplained_gaps = required_prefix - match_ordinals - reserved_nonmatch_ordinals
         if unexplained_gaps:
             raise ValueError(
-                "match schedule contains a global-slot gap not owned by an entry-decision slot"
+                "match schedule contains a global-slot gap not owned by an "
+                "entry-decision slot or WC-decision slot"
             )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
@@ -2927,6 +2963,9 @@ class AuthoritativeRunSimulationDriver:
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
         )
+        wc_slot_ordinals = self._wc_slot_ordinals(
+            session, run_id, branch_id, week
+        )
         entry_validation_rows = tuple(
             session.scalars(
                 select(ResolvedApplicationValidationSlotModel)
@@ -2953,6 +2992,7 @@ class AuthoritativeRunSimulationDriver:
             and packages
             and (
                 bool(entry_slot_ordinals)
+                or bool(wc_slot_ordinals)
                 or len(packages) > 1
                 or len(
                     self._topology_for_session(
@@ -2996,6 +3036,7 @@ class AuthoritativeRunSimulationDriver:
         if (
             not authored_slots
             and not entry_slot_ordinals
+            and not wc_slot_ordinals
             and len(packages) == 1
             and len(plans) == 3
         ):
@@ -3062,7 +3103,10 @@ class AuthoritativeRunSimulationDriver:
         if unresolved_entry_ordinals:
             blockers.append("entry_validation_pending")
         if schedule is None and (
-            bool(entry_slot_ordinals) or len(packages) > 1 or len(plans) != 3
+            bool(entry_slot_ordinals)
+            or bool(wc_slot_ordinals)
+            or len(packages) > 1
+            or len(plans) != 3
         ):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
@@ -3120,6 +3164,7 @@ class AuthoritativeRunSimulationDriver:
             "scope": [run_id, branch_id, week.ordinal],
             "schedule": schedule.fingerprint if schedule else None,
             "entry_slot_ordinals": list(entry_slot_ordinals),
+            "wc_slot_ordinals": list(wc_slot_ordinals),
             "entry_validation_slots": [
                 (row.decision_slot_ordinal, row.fingerprint)
                 for row in entry_validation_rows

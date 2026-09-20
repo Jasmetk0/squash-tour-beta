@@ -408,6 +408,56 @@ def test_resolved_wc_rwc_authority_commits_draw_input_v3_and_backfills_q(databas
             )
 
 
+@pytest.mark.pr_critical
+def test_canonical_wc_v2_reserves_exact_global_slot_and_retries(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        week = RankingWeek(season_index=0, week=3)
+        store = TournamentWildCardAuthorityStore(session)
+        authority = store.resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        )
+
+        assert authority.schema_version == "tournament_wild_card_authority.v2"
+        assert authority.decision_week == week
+        assert authority.decision_slot_ordinal == 1
+        assert store.get(run_id="run", branch_id="branch", event_id="event") == authority
+        assert store.resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        ) == authority
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_v2_cannot_skip_missing_global_ordinal(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        with pytest.raises(
+            TournamentWildCardAuthorityConflict,
+            match=r"missing completed ordinals \[1\]",
+        ):
+            TournamentWildCardAuthorityStore(session).resolve(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="canonical-wc-slot-2",
+                original_wild_card_player_ids=("B",),
+                decision_week=RankingWeek(season_index=0, week=3),
+                decision_slot_ordinal=2,
+            )
+
+
 def test_wc_holder_in_qualification_moves_to_wc_and_q_backfills(database):
     with database.begin() as session:
         field = stage_initial_field(session, wild_cards=1)

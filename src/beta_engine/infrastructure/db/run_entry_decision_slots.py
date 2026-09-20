@@ -296,9 +296,7 @@ def validate_saved_entry_match_slot_collisions(
         branch_id=branch_id,
     ) or ()
     simulation = payload.get("content", {}).get(SIMULATION_SLOT_COMPONENT_KEY)
-    if simulation is None:
-        return
-    raw_match_slots = simulation.get("slots", [])
+    raw_match_slots = [] if simulation is None else simulation.get("slots", [])
     if not isinstance(raw_match_slots, list):
         raise ValueError("Saved Simulation Slot component has invalid slot rows")
     match_positions: set[tuple[int, int]] = set()

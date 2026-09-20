@@ -12,6 +12,9 @@ from beta_engine.domain.players.lifecycle import (
     PlayerLifecyclePolicy,
     advance_lifecycle,
 )
+from beta_engine.domain.players.tour_entry_projection import (
+    project_lifecycle_tour_entries,
+)
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
@@ -20,6 +23,9 @@ from beta_engine.domain.calendar.season_weeks import (
 from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     RunProspectModel,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PlayerTourEntryTriggerStore,
 )
 
 PLAYER_LIFECYCLE_COMPONENT_KEY = "player_lifecycle"
@@ -236,6 +242,53 @@ def advance_lifecycle_with_prospects(
     )
 
 
+def project_lifecycle_tour_entries_through_week(
+    session: Session,
+    state: PlayerLifecycleWeekState,
+    *,
+    through_week: RankingWeek,
+) -> PlayerLifecycleWeekState:
+    """Overlay only Tour-entry history completed by the requested boundary.
+
+    The lifecycle state may represent a later target week. Filtering before the pure
+    projection prevents a trigger occurring inside that target week from being sealed
+    into its immutable week-opening snapshot.
+    """
+
+    if through_week.ordinal > state.week.ordinal:
+        raise ValueError("Tour-entry projection boundary cannot be after lifecycle week")
+    triggers = PlayerTourEntryTriggerStore(session).list(
+        run_id=state.run_id,
+        branch_id=state.branch_id,
+    )
+    completed = tuple(
+        trigger
+        for trigger in triggers
+        if trigger.trigger_week.ordinal <= through_week.ordinal
+    )
+    return project_lifecycle_tour_entries(state, completed)
+
+
+def advance_lifecycle_with_completed_tour_entries(
+    session: Session,
+    *,
+    predecessor: PlayerLifecycleWeekState,
+    target: RankingWeek,
+) -> PlayerLifecycleWeekState:
+    """Advance one week and seal Tour entries completed during the predecessor week."""
+
+    advanced = advance_lifecycle_with_prospects(
+        session,
+        predecessor=predecessor,
+        target=target,
+    )
+    return project_lifecycle_tour_entries_through_week(
+        session,
+        advanced,
+        through_week=predecessor.week,
+    )
+
+
 def transition_lifecycle(
     session: Session,
     *,
@@ -253,7 +306,7 @@ def transition_lifecycle(
         )
     return put_lifecycle(
         session,
-        advance_lifecycle_with_prospects(
+        advance_lifecycle_with_completed_tour_entries(
             session,
             predecessor=predecessor,
             target=target,

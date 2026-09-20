@@ -2173,6 +2173,13 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "match schedule collides with persisted entry-decision global slot"
             )
+        match_ordinals = {slot.ordinal for slot in schedule.slots}
+        required_prefix = set(range(1, max(match_ordinals) + 1))
+        unexplained_gaps = required_prefix - match_ordinals - reserved_entry_ordinals
+        if unexplained_gaps:
+            raise ValueError(
+                "match schedule contains a global-slot gap not owned by an entry-decision slot"
+            )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
             authored_sequence

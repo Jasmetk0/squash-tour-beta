@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from beta_engine.domain.players.tour_entry import PlayerTourEntryTrigger
 from beta_engine.domain.tournaments.application_submission_authority import (
     TournamentApplicationSubmissionAuthority,
+    TournamentApplicationSubmissionBatchAuthority,
 )
 from beta_engine.infrastructure.db.models import (
     RunBranchModel,
@@ -38,6 +39,14 @@ class ValidApplicationSubmissionCommit:
 
     submission: TournamentApplicationSubmissionAuthority
     first_tour_entry_trigger: PlayerTourEntryTrigger
+
+
+@dataclass(frozen=True)
+class ValidApplicationSubmissionBatchCommit:
+    """Stable result of one simultaneous entry-decision-slot commit."""
+
+    batch: TournamentApplicationSubmissionBatchAuthority
+    first_tour_entry_triggers: tuple[PlayerTourEntryTrigger, ...]
 
 
 def _component_fingerprint(
@@ -183,59 +192,97 @@ class TournamentApplicationSubmissionStore:
         return submission
 
 
+def record_valid_application_submission_batch(
+    session: Session,
+    batch: TournamentApplicationSubmissionBatchAuthority,
+) -> ValidApplicationSubmissionBatchCommit:
+    """Persist one simultaneous entry-decision-slot batch atomically.
+
+    All submissions are prevalidated before the first write. For a player whose first
+    Tour entry occurs through several simultaneous applications, the lexicographically
+    first application ID is retained only as deterministic trigger provenance. It does
+    not imply priority, causality or an earlier decision inside the slot.
+    """
+
+    submission_store = TournamentApplicationSubmissionStore(session)
+    trigger_store = PlayerTourEntryTriggerStore(session)
+
+    for submission in batch.submissions:
+        existing = submission_store.get(
+            run_id=batch.run_id,
+            branch_id=batch.branch_id,
+            application_id=submission.application_id,
+        )
+        if existing is not None and existing != submission:
+            raise TournamentApplicationSubmissionConflict(
+                "Application ID already has different submission authority"
+            )
+
+    by_player: dict[str, tuple[TournamentApplicationSubmissionAuthority, ...]] = {}
+    for submission in batch.submissions:
+        by_player[submission.player_id] = (
+            *by_player.get(submission.player_id, ()),
+            submission,
+        )
+
+    resolved_triggers: dict[str, PlayerTourEntryTrigger] = {}
+    new_triggers: dict[str, PlayerTourEntryTrigger] = {}
+    for player_id in sorted(by_player):
+        simultaneous = tuple(
+            sorted(by_player[player_id], key=lambda item: item.application_id)
+        )
+        representative = simultaneous[0].to_tour_entry_trigger()
+        proposed = tuple(item.to_tour_entry_trigger() for item in simultaneous)
+        existing = trigger_store.get(
+            run_id=batch.run_id,
+            branch_id=batch.branch_id,
+            player_id=player_id,
+        )
+        if existing is None:
+            resolved_triggers[player_id] = representative
+            new_triggers[player_id] = representative
+            continue
+        if existing.decision_position > batch.decision_position:
+            raise TournamentApplicationSubmissionConflict(
+                "Valid application batch predates persisted first Tour-entry trigger"
+            )
+        if existing.decision_position == batch.decision_position:
+            if existing in proposed:
+                resolved_triggers[player_id] = existing
+                continue
+            raise TournamentApplicationSubmissionConflict(
+                "Distinct simultaneous first-entry authority conflicts with application batch"
+            )
+        resolved_triggers[player_id] = existing
+
+    for submission in batch.submissions:
+        submission_store.append(submission)
+    for player_id in sorted(new_triggers):
+        trigger_store.append(new_triggers[player_id])
+
+    return ValidApplicationSubmissionBatchCommit(
+        batch=batch,
+        first_tour_entry_triggers=tuple(
+            resolved_triggers[player_id] for player_id in sorted(resolved_triggers)
+        ),
+    )
+
+
 def record_valid_application_submission(
     session: Session,
     submission: TournamentApplicationSubmissionAuthority,
 ) -> ValidApplicationSubmissionCommit:
-    """Persist a valid submission and establish first Tour entry in one transaction.
+    """Compatibility wrapper for a slot containing exactly one valid submission.
 
-    Validation of the submission is upstream. This boundary only coordinates canonical
-    persistence. A later valid application remains historical evidence but never
-    replaces an earlier first Tour-entry trigger.
+    Callers that possess multiple decisions from the same entry slot must use the
+    batch writer so technical processing order cannot select first-entry provenance.
     """
 
-    submission_store = TournamentApplicationSubmissionStore(session)
-    existing_submission = submission_store.get(
-        run_id=submission.run_id,
-        branch_id=submission.branch_id,
-        application_id=submission.application_id,
-    )
-    if existing_submission is not None and existing_submission != submission:
-        raise TournamentApplicationSubmissionConflict(
-            "Application ID already has different submission authority"
-        )
-
-    trigger_store = PlayerTourEntryTriggerStore(session)
-    proposed_trigger = submission.to_tour_entry_trigger()
-    existing_trigger = trigger_store.get(
-        run_id=submission.run_id,
-        branch_id=submission.branch_id,
-        player_id=submission.player_id,
-    )
-
-    if existing_trigger is not None:
-        if existing_trigger == proposed_trigger:
-            first_trigger = existing_trigger
-        elif existing_trigger.decision_position > proposed_trigger.decision_position:
-            raise TournamentApplicationSubmissionConflict(
-                "Valid submission predates persisted first Tour-entry trigger"
-            )
-        elif existing_trigger.decision_position == proposed_trigger.decision_position:
-            raise TournamentApplicationSubmissionConflict(
-                "Distinct simultaneous first-entry authorities require slot arbitration"
-            )
-        else:
-            first_trigger = existing_trigger
-    else:
-        first_trigger = proposed_trigger
-
-    stored = submission_store.append(submission)
-    if existing_trigger is None:
-        first_trigger = trigger_store.append(proposed_trigger)
-
+    batch = TournamentApplicationSubmissionBatchAuthority.from_submissions((submission,))
+    committed = record_valid_application_submission_batch(session, batch)
     return ValidApplicationSubmissionCommit(
-        submission=stored,
-        first_tour_entry_trigger=first_trigger,
+        submission=submission,
+        first_tour_entry_trigger=committed.first_tour_entry_triggers[0],
     )
 
 

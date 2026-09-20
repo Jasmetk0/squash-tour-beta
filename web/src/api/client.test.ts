@@ -14,6 +14,8 @@ import {
   getWorldPackageWeeklyIntakePreview,
   getWorldPackageWeeklyIntakeSeasonSchedulePreview,
   getRunWeeklyIntakeCohortSeasonPreview,
+  getViewerVisibleProspects,
+  getAdminVisibleProspects,
   listRunProspects,
   materializeRunProspects,
   listRunContainers,
@@ -792,6 +794,62 @@ describe('world package registry client', () => {
 
     expect(globalThis.fetch).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/runs/run%2Fa/weekly-intake/cohort-season/preview?base_annual_intake_target=200&season_growth_rate=0.015&country_code=GER&region=EUROPE',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+
+  it('reads paged Viewer prospect visibility from the Product Run endpoint', async () => {
+    const responseBody = {
+      schema_version: 'visible_pre_tour_prospects.v1',
+      run_id: 'run/a',
+      branch_id: 'branch-a',
+      week: { season_index: 2, week: 7 },
+      lifecycle_fingerprint: 'a'.repeat(64),
+      total: 1,
+      limit: 50,
+      offset: 0,
+      prospects: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(responseBody), { status: 200 })
+    )
+
+    const result = await getViewerVisibleProspects('run/a', { limit: 50, offset: 0 })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa/prospects/next-gen?limit=50&offset=0',
+      expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
+    )
+    expect(result).toEqual(responseBody)
+  })
+
+  it('reads an exact historical Admin prospect snapshot with paging', async () => {
+    const responseBody = {
+      schema_version: 'visible_pre_tour_prospects.v1',
+      run_id: 'run/a',
+      branch_id: 'branch/a',
+      week: { season_index: 3, week: 11 },
+      lifecycle_fingerprint: 'b'.repeat(64),
+      total: 0,
+      limit: 25,
+      offset: 5,
+      prospects: []
+    }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(responseBody), { status: 200 })
+    )
+
+    const result = await getAdminVisibleProspects('run/a', 'branch/a', {
+      season_index: 3,
+      week: 11,
+      limit: 25,
+      offset: 5
+    })
+
+    expect(globalThis.fetch).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/runs/run%2Fa/branches/branch%2Fa/prospects/visible?season_index=3&week=11&limit=25&offset=5',
       expect.objectContaining({ headers: expect.objectContaining({ 'Content-Type': 'application/json' }) })
     )
     expect(result).toEqual(responseBody)

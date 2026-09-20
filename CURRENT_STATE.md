@@ -742,5 +742,11 @@ under the expected Branch head and stores the complete Run slot without mutating
 legacy EntryList registry. Persisting those decisions reserves the global ordinal;
 chronological completion requires the matching complete validation slot, so later
 Entry/match execution cannot overtake unresolved application validity. Exact
-eligibility/deadline validation policy remains upstream and intentionally unresolved;
-field capacity still cannot create or revoke Tour status.
+eligibility/deadline validation policy remains upstream and intentionally unresolved.
+The Simulation Admin workflow can now inspect the currently blocking persisted Entry
+slot and commit a complete **explicit Admin validation review** using only valid/invalid
+verdicts plus rejection reasons and audit provenance. The server derives application
+IDs, source fingerprints, Main/Q windows and NR tie-break evidence from frozen Run
+truth and CAS-guards the current Position, Branch head and Entry slot before mutation.
+This is an operational pre-alpha bridge, not an invented automatic eligibility or
+deadline policy. Field capacity still cannot create or revoke Tour status.

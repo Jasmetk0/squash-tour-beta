@@ -1142,6 +1142,20 @@ def test_legacy_late_replacement_authoring_endpoints_are_retired(tmp_path) -> No
 
         # Historical sidecar audit remains readable even though no new sidecar
         # action can be authored through the retired HTTP surface.
+        server.app.state.runtime.repository.append_admin_action(
+            run_id="run-late-retired",
+            event_id=event_id,
+            action_kind="late_replacement_lucky_loser",
+            payload={
+                "withdrawn_player_id": "legacy-withdrawn",
+                "replacement_player_id": "legacy-replacement",
+                "replacement_source": "qualification_waitlist",
+                "withdrawn_entry_id": "legacy-main-entry",
+                "replacement_entry_id": "legacy-ll-entry",
+                "candidate_slot_index": 1,
+                "notes": "pre-retirement historical action",
+            },
+        )
         history_status, history = _request(
             "GET",
             root + "/late-replacement-actions",
@@ -1149,7 +1163,19 @@ def test_legacy_late_replacement_authoring_endpoints_are_retired(tmp_path) -> No
         assert history_status == 200
         assert history["run_id"] == "run-late-retired"
         assert history["event_id"] == event_id
-        assert history["actions"] == []
+        assert len(history["actions"]) == 1
+        assert history["actions"][0] == {
+            "action_sequence": 1,
+            "action_kind": "late_replacement_lucky_loser",
+            "event_id": event_id,
+            "withdrawn_player_id": "legacy-withdrawn",
+            "replacement_player_id": "legacy-replacement",
+            "replacement_source": "qualification_waitlist",
+            "withdrawn_entry_id": "legacy-main-entry",
+            "replacement_entry_id": "legacy-ll-entry",
+            "candidate_slot_index": 1,
+            "notes": "pre-retirement historical action",
+        }
 
 
 def test_next_match_and_next_round_reject_after_finals_phase_begins(tmp_path) -> None:

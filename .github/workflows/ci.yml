@@ -113,9 +113,9 @@ jobs:
         shell: bash
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
+          git -C .. fetch --no-tags --depth=1 origin "$BASE_SHA"
           mapfile -t changed_files < <(
-            git diff --name-only "$BASE_SHA" HEAD -- web/src |
+            git -C .. diff --name-only "$BASE_SHA" HEAD -- web/src |
               grep -E '^web/src/.*\.(ts|tsx)      - name: Run web build
         run: npm run build
 

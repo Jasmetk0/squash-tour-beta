@@ -75,7 +75,7 @@ def _resolve_entry_slot(session, authority):
     )
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_topological_match_schedule_skips_persisted_entry_global_ordinal(tmp_path):
     driver, factory, week, _, _ = _multi_driver_fixture(
         tmp_path / "entry-reserved-first"

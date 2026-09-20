@@ -12,6 +12,13 @@ from beta_engine.application.authoritative_pre_draw_withdrawal import (
     CanonicalPreDrawWithdrawalService,
     CanonicalTournamentEntryFieldState,
 )
+from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
+    TournamentEntryFieldCapacity,
+)
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
 
 
 router = APIRouter(
@@ -22,6 +29,45 @@ router = APIRouter(
 
 def _service(runtime: ApiRuntime) -> CanonicalPreDrawWithdrawalService:
     return CanonicalPreDrawWithdrawalService(runtime.repository._session_factory)
+
+
+@router.post(
+    "/from-valid-submissions",
+    status_code=201,
+    response_model=TournamentEntryField,
+)
+def create_entry_field_from_valid_submissions(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentEntryField:
+    try:
+        capacity = TournamentEntryFieldCapacity.model_validate(payload["capacity"])
+        command_id = payload["command_id"]
+        with runtime.repository._session_factory.begin() as session:
+            return TournamentEntryFieldStore(
+                session
+            ).stage_initial_from_persisted_submissions(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                capacity=capacity,
+                command_id=command_id,
+            )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "canonical_entry_field_creation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.get("", response_model=CanonicalTournamentEntryFieldState)

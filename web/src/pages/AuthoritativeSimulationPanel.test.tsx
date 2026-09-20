@@ -527,7 +527,9 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(screen.getByText('CZE Prospect 0001', { exact: false })).toHaveTextContent(
       'placeholders attributes, development, potential, traits'
     )
-    expect(screen.getByText('tour_entry_activation, canonical_sporting_profile')).toBeInTheDocument()
+    expect(
+      screen.getByText('Unresolved contracts: tour_entry_activation, canonical_sporting_profile')
+    ).toBeInTheDocument()
     expect(screen.getByText('5'.repeat(64))).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /prospect/i })).not.toBeInTheDocument()
   })

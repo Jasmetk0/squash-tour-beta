@@ -328,6 +328,11 @@ canonical resolver/stager: it requires the published authoritative Week 61 head,
 uses the Week 61 lifecycle roster, converts frozen Run-owned Week-61 tournament
 sources directly to ranking results, overlays historically resolved result/discipline
 state at next Season Week 1, and appends the archive inside the caller transaction.
+Canonical simulation now reaches that input boundary correctly for seasons 0–48:
+completed Week-61 tournaments freeze their Owned Tournament Ranking Source first,
+with publication boundary set to the following Season Week 1, and only the returned
+simulation position then exposes `season_transition_required`; no ordinary Week
+Transition or world-clock advance occurs.
 It deliberately refuses the final 2049/50 edge because no Season 50 Week 1 exists.
 Saved Revision capture/restore now includes Closing Ranking archives through
 `ranking_revision_state.v6`, preserving exact Week-61 publication/policy binding

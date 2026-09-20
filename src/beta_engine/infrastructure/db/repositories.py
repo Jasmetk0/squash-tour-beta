@@ -9001,6 +9001,10 @@ class SimulationPersistenceRepository:
 
     def upsert_run_prospects(self, records: list[RunProspectRecord]) -> None:
         with self._session_factory.begin() as session:
+            pending_updates: list[tuple[RunProspectModel, dict[str, object]]] = []
+            changed_existing_ids: set[str] = set()
+            changed_run_ids: set[str] = set()
+
             for record in records:
                 statement: Select[tuple[RunProspectModel]] = select(
                     RunProspectModel
@@ -9009,7 +9013,7 @@ class SimulationPersistenceRepository:
                     RunProspectModel.prospect_id == record.prospect_id,
                 )
                 model = session.execute(statement).scalar_one_or_none()
-                payload = dict(
+                payload: dict[str, object] = dict(
                     world_id=record.world_id,
                     season_start_year=record.season_start_year,
                     season_label=record.season_label,
@@ -9047,18 +9051,29 @@ class SimulationPersistenceRepository:
                             **payload,
                         )
                     )
-                else:
-                    changed = any(
-                        getattr(model, key) != value for key, value in payload.items()
+                    continue
+
+                if any(getattr(model, key) != value for key, value in payload.items()):
+                    pending_updates.append((model, payload))
+                    changed_existing_ids.add(record.prospect_id)
+                    changed_run_ids.add(record.run_id)
+
+            if pending_updates:
+                if len(changed_run_ids) != 1:
+                    raise ValueError(
+                        "Run prospect batch mutation must stay inside one Run"
                     )
-                    if changed and self._activated_run_prospect_ids_in_session(
-                        session,
-                        run_id=record.run_id,
-                        prospect_ids={record.prospect_id},
-                    ):
-                        raise ValueError(
-                            "Lifecycle-activated Run prospect metadata is immutable"
-                        )
+                changed_run_id = next(iter(changed_run_ids))
+                protected = self._activated_run_prospect_ids_in_session(
+                    session,
+                    run_id=changed_run_id,
+                    prospect_ids=changed_existing_ids,
+                )
+                if protected:
+                    raise ValueError(
+                        "Lifecycle-activated Run prospect metadata is immutable"
+                    )
+                for model, payload in pending_updates:
                     for key, value in payload.items():
                         setattr(model, key, value)
 

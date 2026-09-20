@@ -23,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI intentionally runs only a compact catastrophic-regression gate plus
-      # tests changed by the PR. The separate "Full Test Suite" retains complete
-      # coverage after merge to buuk and nightly.
+      # Fast CI intentionally runs only a compact catastrophic-regression gate.
+      # Frontend also runs changed/colocated tests. The separate "Full Test Suite"
+      # retains complete coverage after merge to buuk and nightly.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -72,21 +72,6 @@ jobs:
       - name: Run PR critical backend tests
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
-      - name: Run backend tests changed by this PR
-        shell: bash
-        run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          mapfile -t changed_tests < <(
-            git diff --name-only "$BASE_SHA" HEAD -- tests |
-              grep -E '^tests/.*test_.*\.py$' || true
-          )
-          if (( ${#changed_tests[@]} == 0 )); then
-            echo "No backend test files changed in this PR."
-            exit 0
-          fi
-          printf 'Running changed backend tests:\n%s\n' "${changed_tests[*]}"
-          python -m pytest "${changed_tests[@]}" --maxfail=1 --durations=10
 
   frontend-checks:
     name: Frontend build + critical tests

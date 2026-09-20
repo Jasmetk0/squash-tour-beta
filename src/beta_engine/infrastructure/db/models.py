@@ -65,6 +65,28 @@ class OfficialRankingCandidateModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class SeasonClosingRankingModel(Base):
+    """Immutable archived ranking for one completed Run/Branch season."""
+
+    __tablename__ = "season_closing_rankings"
+    __table_args__ = (
+        CheckConstraint(
+            "season_index >= 0 AND season_index < 50",
+            name="ck_season_closing_ranking_season",
+        ),
+        CheckConstraint(
+            "completed_ordinal >= 60 AND completed_ordinal < 3050",
+            name="ck_season_closing_ranking_week",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    completed_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class OfficialRankingResultVersionModel(Base):
     """Immutable source revisions for scoped historical ranking calculation."""
 

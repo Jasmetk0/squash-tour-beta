@@ -422,6 +422,110 @@ def test_week_transition_activates_birth_week_prospect_without_ranking_or_sporti
 
 
 @pytest.mark.pr_critical
+def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
+    path = tmp_path / "prospect-preview-stale.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect preview stale guard",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        position = season_week_to_calendar_position(2000, target.week)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                RunProspectModel(
+                    prospect_id="prospect-week-2",
+                    run_id=run_id,
+                    world_id="official-world",
+                    season_start_year=2000,
+                    season_label="2000/2001",
+                    season_week=2,
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                    birth_year=1985,
+                    birth_year_week=position.year_week,
+                    age=15,
+                    country_code="CZE",
+                    country_name="Czechia",
+                    status="prospect",
+                    source_type="weekly_15yo_cohort",
+                    cohort_policy_version="weekly_15yo_cohort_v1",
+                    profile_version="prospect_profile_v1",
+                    first_name=None,
+                    last_name=None,
+                    display_name="CZE Prospect 0001",
+                    short_name="CZE Prospect 0001",
+                    identity_seed="identity-seed-before-preview",
+                    profile_seed="profile-seed",
+                    development_seed="development-seed",
+                    potential_seed="potential-seed",
+                    trait_seed="trait-seed",
+                    profile_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_attributes": True,
+                    }),
+                    development_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_development": True,
+                    }),
+                    potential_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_potential": True,
+                    }),
+                    trait_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_traits": True,
+                    }),
+                )
+            )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, preview = _request("POST", root + "/preview", command)
+        assert status == 200, preview
+
+        # This field is part of the target lifecycle identity, but the pre-Tour
+        # prospect is intentionally absent from both sporting and Official Ranking.
+        # A ranking-only preview guard would therefore miss this concurrent change.
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE run_prospects SET identity_seed=? "
+                "WHERE run_id=? AND prospect_id=?",
+                ("identity-seed-after-preview", run_id, "prospect-week-2"),
+            )
+            connection.commit()
+
+        mutated = dump(path)
+        mutated_counts = counts(path)
+        status, conflict = confirm(root, command, preview)
+        assert status == 409, conflict
+        assert "inputs changed since preview" in str(conflict)
+        assert dump(path) == mutated
+        assert counts(path) == mutated_counts
+
+        with sqlite3.connect(path) as connection:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_lifecycle_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_sporting_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM official_ranking_commands "
+                "WHERE target_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+
+
+
+
+@pytest.mark.pr_critical
 def test_server_derived_preview_freezes_current_authoritative_transition_request(tmp_path):
     path = tmp_path / "derived-week-transition.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:

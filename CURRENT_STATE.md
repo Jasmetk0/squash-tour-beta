@@ -104,6 +104,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   status, and freezes the blocking set under a stable inspection fingerprint.
   The inspection explicitly reports `bridge_supported=false`; no Tour-entry
   activation or sporting profile is invented.
+  Week 61 now also exposes a **read-only canonical Season Transition preflight**.
+  It freezes current Position/Saved Revision evidence, separates current branch
+  blockers from known missing Season Transition writers, projects the next Season
+  Week 1 target (or final Run closure after 2049/50), and remains explicitly
+  non-executable. It does not reuse the legacy MVP rollover service.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

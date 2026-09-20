@@ -54,6 +54,10 @@ import type {
   CanonicalTournamentDrawProcessState,
   CanonicalDrawProcessConfigurePayload,
   CanonicalTournamentDrawRevisionHistoryState,
+  CanonicalFrozenMainReplacementPreviewRequest,
+  CanonicalFrozenMainReplacementPreview,
+  CanonicalFrozenMainReplacementCommitPayload,
+  CanonicalFrozenMainReplacementCommitResult,
   RunLineageApiResponse,
   RunStatusSummary,
   RunWorldStatus,
@@ -1798,6 +1802,55 @@ export async function configureCanonicalTournamentDrawProcess(
     { method: 'POST', body: JSON.stringify(payload) }
   )
   verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  return data
+}
+
+export async function previewCanonicalFrozenMainReplacement(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalFrozenMainReplacementPreviewRequest
+): Promise<CanonicalFrozenMainReplacementPreview> {
+  const data = await request<CanonicalFrozenMainReplacementPreview>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/frozen-main-replacement/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  if (
+    data.schema_version !== 'authoritative_frozen_main_replacement_preview.v1' ||
+    data.withdrawn_player_id !== payload.withdrawn_player_id ||
+    !/^[0-9a-f]{64}$/.test(data.source_authority_fingerprint) ||
+    data.physical_slot_index < 1
+  ) {
+    throw new Error('Frozen Main replacement preview is invalid.')
+  }
+  return data
+}
+
+export async function commitCanonicalFrozenMainReplacement(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalFrozenMainReplacementCommitPayload
+): Promise<CanonicalFrozenMainReplacementCommitResult> {
+  const data = await request<CanonicalFrozenMainReplacementCommitResult>(
+    canonicalTournamentDrawRoot(runId, branchId, eventId) + '/frozen-main-replacement/commit',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalTournamentDrawScope(runId, branchId, eventId, data)
+  if (
+    data.schema_version !== 'authoritative_frozen_main_replacement_commit.v1' ||
+    data.withdrawn_player_id !== payload.withdrawn_player_id ||
+    data.source_authority_fingerprint !== payload.expected_source_fingerprint ||
+    data.draw_revision_sequences.length !== data.draw_revision_fingerprints.length ||
+    data.draw_revision_fingerprints.some((value) => !/^[0-9a-f]{64}$/.test(value)) ||
+    (
+      data.successor_draw_fingerprint !== null &&
+      !/^[0-9a-f]{64}$/.test(data.successor_draw_fingerprint)
+    )
+  ) {
+    throw new Error('Frozen Main replacement commit response is invalid.')
+  }
   return data
 }
 

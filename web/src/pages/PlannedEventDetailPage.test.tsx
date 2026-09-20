@@ -888,7 +888,7 @@ describe('PlannedEventDetailPage', () => {
     renderAt('/runs/run-a/calendar/E1')
 
     expect(await screen.findByRole('heading', { name: 'Commissioner pre-draw withdrawal replacement' })).toBeInTheDocument()
-    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[1]
+    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
     fireEvent.change(playerSelect, { target: { value: 'P100' } })
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
 
@@ -961,7 +961,7 @@ describe('PlannedEventDetailPage', () => {
 
   it('pre-draw mutation invalidates all commissioner read surfaces', async () => {
     renderAt('/runs/run-a/calendar/E1')
-    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[1]
+    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
     fireEvent.change(playerSelect, { target: { value: 'P100' } })
     fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
 

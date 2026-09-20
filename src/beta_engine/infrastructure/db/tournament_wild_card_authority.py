@@ -8,15 +8,21 @@ import json
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 from beta_engine.domain.tournaments.wild_card_authority import (
     TournamentWildCardAuthority,
     TournamentWildCardAuthorityBuilder,
 )
 from beta_engine.infrastructure.db.models import (
+    ResolvedApplicationValidationSlotModel,
     RunBranchModel,
     RunContainerModel,
+    RunEntryDecisionSlotAuthorityModel,
+    SimulationSlotModel,
     TournamentDrawInputAuthorityModel,
     TournamentWildCardAuthorityModel,
+    WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
 
@@ -29,6 +35,48 @@ def _fingerprint(value: object) -> str:
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
+
+
+def wild_card_decision_slot_ordinals(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    week_ordinal: int,
+) -> set[int]:
+    """Return completed canonical WC-decision ordinals for one FAX week."""
+
+    rows = session.scalars(
+        select(TournamentWildCardAuthorityModel).where(
+            TournamentWildCardAuthorityModel.run_id == run_id,
+            TournamentWildCardAuthorityModel.branch_id == branch_id,
+        )
+    ).all()
+    ordinals: set[int] = set()
+    for row in rows:
+        authority = TournamentWildCardAuthority.model_validate_json(row.payload_json)
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Stored Tournament WC authority chronology is corrupt")
+        if authority.schema_version != "tournament_wild_card_authority.v2":
+            continue
+        if authority.decision_week is None or authority.decision_slot_ordinal is None:
+            raise ValueError("Canonical WC authority v2 is missing global-slot chronology")
+        if authority.decision_week.ordinal != week_ordinal:
+            continue
+        if authority.decision_slot_ordinal in ordinals:
+            raise ValueError("Multiple WC authorities claim the same global Simulation Slot")
+        ordinals.add(authority.decision_slot_ordinal)
+    return ordinals
 
 
 class TournamentWildCardAuthorityStore:
@@ -94,10 +142,99 @@ class TournamentWildCardAuthorityStore:
             original_wild_card_player_ids=authority.original_wild_card_player_ids,
             reserve_wild_card_player_ids=authority.reserve_wild_card_player_ids,
             unavailable_player_ids=authority.unavailable_player_ids,
+            decision_week=authority.decision_week,
+            decision_slot_ordinal=authority.decision_slot_ordinal,
         )
         if rebuilt != authority:
             raise ValueError("Tournament WC authority does not replay from frozen field")
         return authority
+
+    def _validate_global_slot(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        decision_week: RankingWeek,
+        decision_slot_ordinal: int,
+    ) -> None:
+        week_ordinal = decision_week.ordinal
+        existing_wc = wild_card_decision_slot_ordinals(
+            self.session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+        )
+        if decision_slot_ordinal in existing_wc:
+            raise TournamentWildCardAuthorityConflict(
+                "Global Simulation Slot ordinal already belongs to a WC-decision slot"
+            )
+        if self.session.get(
+            RunEntryDecisionSlotAuthorityModel,
+            (run_id, branch_id, week_ordinal, decision_slot_ordinal),
+        ) is not None:
+            raise TournamentWildCardAuthorityConflict(
+                "Global Simulation Slot ordinal already belongs to an entry-decision slot"
+            )
+        match_slot = self.session.scalar(
+            select(SimulationSlotModel).where(
+                SimulationSlotModel.run_id == run_id,
+                SimulationSlotModel.branch_id == branch_id,
+                SimulationSlotModel.week_ordinal == week_ordinal,
+                SimulationSlotModel.slot_ordinal == decision_slot_ordinal,
+            )
+        )
+        if match_slot is not None:
+            raise TournamentWildCardAuthorityConflict(
+                "Global Simulation Slot ordinal already belongs to a match slot"
+            )
+
+        schedule_row = self.session.get(
+            WeekSimulationScheduleModel,
+            (run_id, branch_id, week_ordinal),
+        )
+        if schedule_row is not None:
+            schedule = WeekSimulationSchedule.model_validate_json(schedule_row.payload_json)
+            if schedule.fingerprint != schedule_row.schedule_fingerprint:
+                raise ValueError("Persisted match schedule is corrupt")
+            if any(slot.ordinal == decision_slot_ordinal for slot in schedule.slots):
+                raise TournamentWildCardAuthorityConflict(
+                    "Global Simulation Slot ordinal is reserved by the adopted match schedule"
+                )
+
+        required_prior = set(range(1, decision_slot_ordinal))
+        if not required_prior:
+            return
+        completed_entries = set(
+            self.session.scalars(
+                select(ResolvedApplicationValidationSlotModel.decision_slot_ordinal).where(
+                    ResolvedApplicationValidationSlotModel.run_id == run_id,
+                    ResolvedApplicationValidationSlotModel.branch_id == branch_id,
+                    ResolvedApplicationValidationSlotModel.week_ordinal == week_ordinal,
+                    ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                    < decision_slot_ordinal,
+                )
+            ).all()
+        )
+        completed_matches = set(
+            self.session.scalars(
+                select(SimulationSlotModel.slot_ordinal).where(
+                    SimulationSlotModel.run_id == run_id,
+                    SimulationSlotModel.branch_id == branch_id,
+                    SimulationSlotModel.week_ordinal == week_ordinal,
+                    SimulationSlotModel.slot_ordinal < decision_slot_ordinal,
+                    SimulationSlotModel.status == "complete",
+                )
+            ).all()
+        )
+        completed_prior = completed_entries | completed_matches | {
+            ordinal for ordinal in existing_wc if ordinal < decision_slot_ordinal
+        }
+        if completed_prior != required_prior:
+            missing = sorted(required_prior - completed_prior)
+            raise TournamentWildCardAuthorityConflict(
+                "WC decision slot cannot skip or overtake incomplete global "
+                f"Simulation Slots: missing completed ordinals {missing}"
+            )
 
     def resolve(
         self,
@@ -109,7 +246,11 @@ class TournamentWildCardAuthorityStore:
         original_wild_card_player_ids: tuple[str | None, ...],
         reserve_wild_card_player_ids: tuple[str, ...] = (),
         unavailable_player_ids: tuple[str, ...] = (),
+        decision_week: RankingWeek | None = None,
+        decision_slot_ordinal: int | None = None,
     ) -> TournamentWildCardAuthority:
+        if (decision_week is None) != (decision_slot_ordinal is None):
+            raise ValueError("WC decision chronology requires week and slot ordinal together")
         self._scope(run_id, branch_id, writing=True)
         if self.session.get(
             TournamentDrawInputAuthorityModel,
@@ -136,6 +277,9 @@ class TournamentWildCardAuthorityStore:
             "reserve_wild_card_player_ids": list(reserve_wild_card_player_ids),
             "unavailable_player_ids": sorted(set(unavailable_player_ids)),
         }
+        if decision_week is not None:
+            request["decision_week"] = decision_week.model_dump(mode="json")
+            request["decision_slot_ordinal"] = decision_slot_ordinal
         request_fp = _fingerprint(request)
 
         retry = self.session.scalar(
@@ -160,6 +304,14 @@ class TournamentWildCardAuthorityStore:
                 "Tournament event already has WC authority"
             )
 
+        if decision_week is not None and decision_slot_ordinal is not None:
+            self._validate_global_slot(
+                run_id=run_id,
+                branch_id=branch_id,
+                decision_week=decision_week,
+                decision_slot_ordinal=decision_slot_ordinal,
+            )
+
         authority = TournamentWildCardAuthorityBuilder.build(
             field=field,
             field_sequence=field_sequence,
@@ -167,6 +319,8 @@ class TournamentWildCardAuthorityStore:
             original_wild_card_player_ids=original_wild_card_player_ids,
             reserve_wild_card_player_ids=reserve_wild_card_player_ids,
             unavailable_player_ids=unavailable_player_ids,
+            decision_week=decision_week,
+            decision_slot_ordinal=decision_slot_ordinal,
         )
         self.session.add(
             TournamentWildCardAuthorityModel(

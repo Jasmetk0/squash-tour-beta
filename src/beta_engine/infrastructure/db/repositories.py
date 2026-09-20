@@ -3391,6 +3391,9 @@ class SimulationPersistenceRepository:
                 capture_saved_lifecycle(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                capture_saved_tour_entry_triggers(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
@@ -3816,6 +3819,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_tour_entry_triggers(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_sporting(

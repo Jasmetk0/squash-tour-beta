@@ -475,7 +475,7 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('WORLD').length).toBeGreaterThan(0); expect(screen.getByText('GOLD')).toBeInTheDocument(); expect(screen.getByText('EVENT-A')).toBeInTheDocument()
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
-    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Late-replacement action history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
+    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
     for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
@@ -899,20 +899,20 @@ describe('PlannedEventDetailPage', () => {
     )
   })
 
-  it('renders late-replacement controls, candidates, and submits deterministic one-step action', async () => {
+  it('retires legacy late-replacement controls while preserving read-only history', async () => {
     renderAt('/runs/run-a/calendar/E1')
 
-    expect(await screen.findByRole('heading', { name: 'Commissioner late replacement lucky loser' })).toBeInTheDocument()
-    expect(await screen.findByText('#1 · Player Three (P300) · qualification_waitlist · ranking 3')).toBeInTheDocument()
-    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[0]
-    fireEvent.change(playerSelect, { target: { value: 'P100' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + late-replace' }))
-
-    await waitFor(() =>
-      expect(api.applyEventLateReplacement).toHaveBeenCalledWith('run-a', 'E1', {
-        withdrawn_player_id: 'P100'
-      })
-    )
+    expect(
+      screen.queryByRole('heading', { name: 'Commissioner late replacement lucky loser' })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Withdraw + late-replace' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy late-replacement history' })).toBeInTheDocument()
+    expect(
+      screen.getByText(/Read-only audit of historical sidecar actions/i)
+    ).toBeInTheDocument()
+    expect(api.getEventLateReplacementState).not.toHaveBeenCalled()
+    expect(api.getEventLateReplacementCandidates).not.toHaveBeenCalled()
+    expect(api.applyEventLateReplacement).not.toHaveBeenCalled()
   })
 
   it('assigns wildcard using selected candidate player instead of manual id typing', async () => {
@@ -931,8 +931,8 @@ describe('PlannedEventDetailPage', () => {
     )
     await waitFor(() => {
       expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
+      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
     })
   })
 
@@ -953,9 +953,9 @@ describe('PlannedEventDetailPage', () => {
     expect(await screen.findByText('#1 · pre_draw_withdrawal_replacement · P100 → P200 (main_draw_waitlist)')).toBeInTheDocument()
   })
 
-  it('renders late-replacement history in append-only sequence order', async () => {
+  it('renders legacy late-replacement history in append-only sequence order', async () => {
     renderAt('/runs/run-a/calendar/E1')
-    expect(await screen.findByRole('heading', { name: 'Late-replacement action history' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy late-replacement history' })).toBeInTheDocument()
     expect(await screen.findByText('#1 · late_replacement_lucky_loser · P100 → P300 (qualification_waitlist)')).toBeInTheDocument()
   })
 
@@ -972,28 +972,8 @@ describe('PlannedEventDetailPage', () => {
       expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventPreDrawWithdrawalActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementCandidates.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
     })
   })
 
-  it('late-replacement mutation invalidates all commissioner read surfaces', async () => {
-    renderAt('/runs/run-a/calendar/E1')
-    const playerSelect = (await screen.findAllByLabelText('Main-draw player to withdraw'))[0]
-    fireEvent.change(playerSelect, { target: { value: 'P100' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + late-replace' }))
-
-    await waitFor(() => expect(api.applyEventLateReplacement).toHaveBeenCalled())
-    await waitFor(() => {
-      expect(api.getEventWildcards.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventWildcardCandidates.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventPreDrawWithdrawalActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementState.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementCandidates.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
-    })
-  })
 })

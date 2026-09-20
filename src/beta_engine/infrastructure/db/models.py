@@ -351,6 +351,21 @@ class PlayerTourEntryTriggerModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentApplicationSubmissionAuthorityModel(Base):
+    """Immutable valid MSA Tour tournament application submission authority."""
+
+    __tablename__ = "tournament_application_submission_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    application_id: Mapped[str] = mapped_column(String(256), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    player_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    submission_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    decision_slot_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class PlayerSportingWeekStateModel(Base):
     """Immutable Run/Branch-owned canonical sporting snapshot at one FAX week."""
     __tablename__ = "player_sporting_week_states"

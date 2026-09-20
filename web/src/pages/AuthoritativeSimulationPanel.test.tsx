@@ -12,7 +12,6 @@ const api = vi.hoisted(() => ({
   previewAuthoritativeSeasonTransitionConfiguration: vi.fn(),
   advanceAuthoritativeOrdinarySeason: vi.fn(),
   finalizeAuthoritativeFinalSeason: vi.fn(),
-  getProspectBridgeInspection: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
   proposeAuthoritativeWeekSchedule: vi.fn(),
@@ -191,40 +190,9 @@ beforeEach(() => {
     default_ranking_fingerprint: '9'.repeat(64),
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
-    implementation_gaps: [
-      'season_prospect_creation_bridge_not_implemented'
-    ],
-    ready_for_execution: false,
+    implementation_gaps: [],
+    ready_for_execution: true,
     preflight_fingerprint: '5'.repeat(64)
-  })
-  api.getProspectBridgeInspection.mockResolvedValue({
-    schema_version: 'prospect_bridge_inspection.v1',
-    run_id: 'run-a',
-    branch_id: 'branch-a',
-    completed_week: week,
-    target_week: { season_index: 2, week: 18 },
-    season_start_year: 2002,
-    calendar_year: 2003,
-    year_week: 1,
-    run_scoped_source: true,
-    bridge_supported: false,
-    blocking_code: 'prospect_bridge_missing',
-    unresolved_contracts: ['canonical_sporting_profile'],
-    prospects: [{
-      prospect_id: 'prospect-1',
-      display_name: 'CZE Prospect 0001',
-      country_code: 'CZE',
-      age: 15,
-      status: 'prospect',
-      source_type: 'weekly_15yo_cohort',
-      cohort_policy_version: 'weekly_15yo_cohort_v1',
-      profile_version: 'prospect_profile_v1',
-      profile_placeholder: true,
-      development_placeholder: true,
-      potential_placeholder: true,
-      trait_placeholder: true
-    }],
-    inspection_fingerprint: '5'.repeat(64)
   })
   api.inspectAuthoritativeWeekSchedule.mockResolvedValue(scheduleInspection)
   api.previewAuthoritativeSimulationSave.mockResolvedValue({
@@ -567,39 +535,6 @@ describe('AuthoritativeSimulationPanel', () => {
     )
   })
 
-  it('shows exact read-only Prospect Bridge blockers without offering activation', async () => {
-    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
-      ...scheduleInspection,
-      schedule: proposal.schedule,
-      schedule_fingerprint: proposal.schedule_fingerprint
-    })
-    api.getAuthoritativeSimulationPosition.mockResolvedValue({
-      ...position,
-      current_slot_id: null,
-      slot_ordinal: null,
-      unresolved_group_ids: [],
-      eligible_match_ids: [],
-      blocked_match_ids: [],
-      current_slot_complete: true,
-      supported_tournament_complete: true,
-      week_ready_for_transition: false,
-      transition_blockers: ['prospect_bridge_missing'],
-      terminal_sporting_fingerprint: 'f'.repeat(64),
-      position_fingerprint: '4'.repeat(64)
-    })
-    renderPanel()
-
-    expect(api.getProspectBridgeInspection).not.toHaveBeenCalled()
-    expect(screen.getByText('CZE Prospect 0001', { exact: false })).toHaveTextContent(
-      'placeholders attributes, development, potential, traits'
-    )
-    expect(
-      screen.getByText('Unresolved contracts: canonical_sporting_profile')
-    ).toBeInTheDocument()
-    expect(screen.getByText('5'.repeat(64))).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /prospect/i })).not.toBeInTheDocument()
-  })
-
   it('does not derive Ranking Transition Authority while another transition blocker remains', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,
@@ -618,7 +553,7 @@ describe('AuthoritativeSimulationPanel', () => {
       week_ready_for_transition: false,
       transition_blockers: [
         'ranking_transition_authority_missing',
-        'prospect_bridge_missing'
+        'working_draft_dirty'
       ],
       terminal_sporting_fingerprint: 'f'.repeat(64),
       position_fingerprint: '3'.repeat(64)
@@ -671,12 +606,9 @@ describe('AuthoritativeSimulationPanel', () => {
     )
     expect(screen.getByText('Season index 3 · Week 1')).toBeInTheDocument()
     expect(
-      screen.getByRole('list', { name: 'Season Transition implementation gaps' })
-    ).toHaveTextContent('season_prospect_creation_bridge_not_implemented')
-    expect(await screen.findByText('Prospect Bridge inspection')).toBeInTheDocument()
-    await waitFor(() =>
-      expect(api.getProspectBridgeInspection).toHaveBeenCalledWith('run-a', 'branch-a')
-    )
+      screen.queryByRole('list', { name: 'Season Transition implementation gaps' })
+    ).not.toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Review Season Transition' })).toBeInTheDocument()
     expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Review derived Week Transition' })
@@ -730,7 +662,6 @@ describe('AuthoritativeSimulationPanel', () => {
     renderPanel()
 
     const review = await screen.findByRole('button', { name: 'Review Season Transition' })
-    expect(api.getProspectBridgeInspection).not.toHaveBeenCalled()
     expect(screen.queryByRole('button', { name: 'Advance to next season' })).not.toBeInTheDocument()
     await userEvent.click(review)
     await userEvent.click(await screen.findByRole('button', { name: 'Advance to next season' }))

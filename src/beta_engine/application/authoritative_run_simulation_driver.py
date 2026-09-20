@@ -43,7 +43,6 @@ from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
 from beta_engine.application.season_transition_lifecycle import (
-    SeasonTransitionProspectBridgeRequired,
     resolve_season_transition_lifecycle,
 )
 from beta_engine.application.season_transition_ranking import (
@@ -265,7 +264,6 @@ class AuthoritativeRunSimulationDriver:
         default_sporting = None
         default_lifecycle = None
         default_ranking = None
-        prospect_bridge_required = False
         if target_week is not None:
             try:
                 default_configuration = resolve_season_transition_configuration(
@@ -288,11 +286,6 @@ class AuthoritativeRunSimulationDriver:
                         session,
                         default_configuration,
                     )
-                except SeasonTransitionProspectBridgeRequired:
-                    # Only a boundary that actually contains target-week prospects
-                    # requires the unresolved bridge. Prospect-free boundaries can
-                    # execute without pretending the bridge itself is implemented.
-                    prospect_bridge_required = True
                 except ValueError:
                     blockers.append("season_transition_lifecycle_unavailable")
                 if default_lifecycle is not None:
@@ -303,11 +296,7 @@ class AuthoritativeRunSimulationDriver:
                         )
                     except ValueError:
                         blockers.append("season_transition_ranking_unavailable")
-        implementation_gaps = (
-            ("season_prospect_creation_bridge_not_implemented",)
-            if (not final_season and prospect_bridge_required)
-            else ()
-        )
+        implementation_gaps = ()
         state_blockers = tuple(dict.fromkeys(blockers))
         body = {
             "scope": [run_id, branch_id],
@@ -2273,8 +2262,13 @@ class AuthoritativeRunSimulationDriver:
         lifecycle = get_lifecycle(
             session, run_id=run_id, branch_id=branch_id, week=week
         )
+        sporting = get_sporting(
+            session, run_id=run_id, branch_id=branch_id, week=week
+        )
         if lifecycle is None:
             blockers.append("lifecycle_roster_missing")
+        if sporting is None:
+            blockers.append("sporting_roster_missing")
         if not blockers:
             try:
                 preflight_completed_context_from_authoritative_matches(
@@ -2282,7 +2276,7 @@ class AuthoritativeRunSimulationDriver:
                     run_id=run_id,
                     branch_id=branch_id,
                     completed_week=week,
-                    player_ids=tuple(p.player_id for p in lifecycle.players),
+                    player_ids=tuple(p.player_id for p in sporting.players),
                 )
                 if any(x.binding.completed_week != week for x in owned.values()):
                     raise ValueError()
@@ -2306,7 +2300,6 @@ class AuthoritativeRunSimulationDriver:
                 BranchWorkingDraftModel.branch_id == branch_id
             )
         )
-        sporting = get_sporting(session, run_id=run_id, branch_id=branch_id, week=week)
         transition_authority = session.get(
             RankingTransitionAuthorityModel, (run_id, branch_id, week.ordinal + 1)
         )

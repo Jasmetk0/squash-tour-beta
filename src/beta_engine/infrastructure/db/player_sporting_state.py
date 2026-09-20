@@ -385,12 +385,18 @@ def stage_sporting_transition(
         target_effective_development_policy
         or predecessor.effective_development_policy
     )
-    ages = {player.player_id: player.age for player in lifecycle.players}
-    if set(ages) != {player.player_id for player in development_input.players}:
-        raise ValueError("Player sporting and lifecycle predecessor rosters differ")
-    if {item.player_id for item in context.competitive_match_counts} != set(ages):
+    lifecycle_ages = {player.player_id: player.age for player in lifecycle.players}
+    sporting_ids = {player.player_id for player in development_input.players}
+    if not sporting_ids.issubset(lifecycle_ages):
         raise ValueError(
-            "Completed sporting context must contain exactly the predecessor roster"
+            "Player sporting roster contains identity absent from lifecycle"
+        )
+    ages = {player_id: lifecycle_ages[player_id] for player_id in sporting_ids}
+    if {
+        item.player_id for item in context.competitive_match_counts
+    } != sporting_ids:
+        raise ValueError(
+            "Completed sporting context must contain exactly the predecessor sporting roster"
         )
     developed = weekly_player_development_update(
         development_input,

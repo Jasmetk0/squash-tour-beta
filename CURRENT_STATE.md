@@ -35,7 +35,7 @@ protocol is chapter 36. PR #757 is the latest merged implementation in this audi
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
-| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; owned complete tournament result manifests can resolve completed-match counts | Sporting development then between-week recovery, lifecycle, ranking/publication/event/receipt share the transaction; a missing/empty authoritative sporting context fails closed, while broader match-state updates, slots and prospects remain outside it |
+| Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; owned complete tournament result manifests can resolve completed-match counts | Sporting development then between-week recovery, prospect-aware lifecycle, ranking/publication/event/receipt share the transaction; a missing/empty authoritative sporting context fails closed for the simulation-ready roster, while broader match-state updates and full prospect sporting-profile materialization remain outside it |
 | Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
 | Viewer/downstream | Legacy ranking/Race/Finals paths and Viewer exist | New Official history is not wired through historically faithful public ranking, entries/seeding and Finals |
 | Other pre-alpha scope | Master 31 remains authoritative | Minimum Reconstruction, player development/AI and lifecycle must not be dropped merely because ranking work dominated recent PRs |
@@ -86,9 +86,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   boundary, Admin can now request a **server-derived** Week Transition preview: the
   backend freezes the current Saved Revision head, persisted Ranking Transition
   Authority and all Owned Tournament bindings into the exact canonical command.
-  The UI confirms only that reviewed request through the existing request/ranking
-  fingerprint guards, then reuses the ranking Save CAS to persist the transitioned
-  ranking/world draft as a new recoverable Saved Revision. The client never authors
+  The UI confirms only that reviewed request. Server-side confirm guards the request
+  plus the reviewed Official Ranking, lifecycle and sporting fingerprints inside the
+  same `BEGIN IMMEDIATE`; any preview drift rolls the transition back before commit.
+  The flow then reuses the ranking Save CAS to persist the transitioned ranking/world
+  draft as a new recoverable Saved Revision. The client never authors
   tournament bindings or an authority fingerprint. The immediately preceding
   Ranking Transition Authority prerequisite is now also server-derived for ordinary
   within-season Week Transition: Admin supplies only audit provenance, while the
@@ -96,14 +98,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   predecessor Official Ranking policy, previews the exact authority fingerprint,
   confirms it under CAS, and Saves it through the same ranking revision boundary.
   Missing authority can therefore be resolved from canonical Run truth; stale
-  authority and Week 61 rollover remain fail-closed. Target-week Run prospects also
-  remain fail-closed, but Admin now has a canonical read-only Prospect Bridge
-  inspection: it derives the exact target week from the current Official Ranking
-  head, lists only the Run-scoped prospects that block that boundary, exposes their
-  cohort/profile versions plus placeholder sporting/development/potential/trait
-  status, and freezes the blocking set under a stable inspection fingerprint.
-  The inspection explicitly reports `bridge_supported=false`; no Tour-entry
-  activation or sporting profile is invented.
+  authority and Week 61 rollover remain fail-closed. Target-week Run prospects are
+  now activated exactly when their birth week opens: the transition validates the
+  pregenerated Run row, adds the same stable identity to branch-owned lifecycle with
+  `tour_entry_week=None`, and leaves it out of Official Ranking and sporting state.
+  The existing Prospect Bridge endpoint is now only a read-only profile-readiness
+  diagnostic; it fingerprints the exact target rows and placeholder
+  sporting/development/potential/trait fields but reports no transition blocker.
+  No Tour-entry event or fabricated 57-attribute profile is invented.
   Week 61 exposes a **read-only canonical Season Transition preflight**.
   It freezes current Position/Saved Revision evidence, separates current branch
   blockers from known missing Season Transition writers and projects the next Season
@@ -129,11 +131,13 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   retirement, while preserving predecessor lineage and leaving the public world clock
   untouched. Lifecycle now explicitly supports pre-Tour identities: a player with no
   formal `tour_entry_week` remains in historical lifecycle state but is excluded from
-  the Official Ranking roster until a later authoritative entry event. A target-week
-  Run prospect still fails closed because its materialized payload does not yet provide
-  the simulation-valid canonical sporting profile required by the player core; birth-week
-  visibility itself is not Tour entry. The Season preflight fingerprints the lifecycle
-  candidate whenever that separate sporting-profile bridge is not required.
+  the Official Ranking roster until a later authoritative entry event. Target-week Run
+  prospects are activated exactly when their birth week opens as pre-Tour Draft
+  lifecycle identities; their placeholder profile does not enter the simulation-ready
+  sporting roster and does not block Week/Season Transition. Birth-week visibility is
+  not Tour entry. The Season preflight fingerprints the exact lifecycle candidate,
+  including any target Week-1 Draft prospects, while sporting/ranking fingerprints
+  remain scoped to their respective simulation-ready/Tour populations.
   The next-season Official Ranking is now resolvable and stageable from the same
   frozen Season configuration. The read-only candidate uses the incoming Ranking
   Policy, the exact staged Week-1 lifecycle roster, persisted disciplinary-zero
@@ -149,10 +153,9 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Revision plus audit event. Exact retries resolve from that Saved Revision/audit
   identity, and injected failures after staging or publication roll the entire
   transaction back. The writer refuses any non-empty season reset catalog until a
-  real reset adapter exists, and target-week prospects still fail closed through the
-  separate unresolved canonical prospect sporting-profile bridge. That gap is now
-  boundary-specific: a prospect-free Week-61 boundary can become executable, while a
-  target Week 1 that actually contains unbridged Run prospects still fails closed.
+  real reset adapter exists. Target-week prospects no longer block ordinary rollover:
+  they enter W1 lifecycle as pre-Tour Draft identities while sporting and ranking
+  remain scoped to their respective simulation-ready/Tour populations.
   Ordinary Season Transition Saved Revisions use `ranking_revision_state.v7` when
   their authoritative transition state contains a `season_transition_completed`
   World Event; Week Transition receipt/event pairing stays strict and historical

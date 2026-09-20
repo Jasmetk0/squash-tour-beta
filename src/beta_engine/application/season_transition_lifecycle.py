@@ -5,29 +5,19 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import Field
-from sqlalchemy import select
-
 from beta_engine.application.season_transition_configuration import (
     validate_season_transition_configuration,
 )
-from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
-from beta_engine.domain.players.lifecycle import (
-    PlayerLifecycleWeekState,
-    advance_lifecycle,
-)
+from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.season_transition_configuration import (
     SeasonTransitionConfiguration,
 )
-from beta_engine.infrastructure.db.models import RunProspectModel
 from beta_engine.infrastructure.db.player_lifecycle_state import (
+    advance_lifecycle_with_prospects,
     get_lifecycle,
     put_lifecycle,
 )
-
-
-class SeasonTransitionProspectBridgeRequired(ValueError):
-    """Target Week 1 contains Run prospects without canonical player sporting state."""
 
 
 class SeasonTransitionLifecycleStage(FrozenInput):
@@ -41,40 +31,16 @@ class SeasonTransitionLifecycleStage(FrozenInput):
     target_state: PlayerLifecycleWeekState
 
 
-def _target_prospect_ids(
-    session,
-    configuration: SeasonTransitionConfiguration,
-) -> tuple[str, ...]:
-    position = season_week_to_calendar_position(
-        2000 + configuration.target_week.season_index,
-        configuration.target_week.week,
-    )
-    return tuple(
-        session.scalars(
-            select(RunProspectModel.prospect_id)
-            .where(
-                RunProspectModel.run_id == configuration.run_id,
-                RunProspectModel.season_start_year
-                == 2000 + configuration.target_week.season_index,
-                RunProspectModel.season_week == configuration.target_week.week,
-                RunProspectModel.calendar_year == position.calendar_year,
-                RunProspectModel.year_week == position.year_week,
-            )
-            .order_by(RunProspectModel.prospect_id)
-        )
-    )
-
-
 def resolve_season_transition_lifecycle(
     session,
     configuration: SeasonTransitionConfiguration,
 ) -> SeasonTransitionLifecycleStage:
-    """Calculate existing-player Week-1 lifecycle without persisting it.
+    """Calculate Week-1 lifecycle, including birth-week pre-Tour prospects.
 
-    Birth-week prospect visibility is distinct from formal Tour entry. The remaining
-    fail-closed bridge is canonical player sporting state: this kernel must never
-    silently omit a Run-scoped prospect whose profile still lacks simulation-valid
-    sporting data.
+    Prospect visibility is distinct from formal Tour entry. Target-week prospects are
+    activated into canonical lifecycle with `tour_entry_week=None`; their incomplete
+    sporting profile is allowed to remain outside the sporting snapshot until an
+    operation actually requires simulation-valid sporting data.
     """
 
     configuration = validate_season_transition_configuration(session, configuration)
@@ -87,14 +53,11 @@ def resolve_season_transition_lifecycle(
     if predecessor is None:
         raise ValueError("Season Transition predecessor lifecycle state is missing")
 
-    prospect_ids = _target_prospect_ids(session, configuration)
-    if prospect_ids:
-        raise SeasonTransitionProspectBridgeRequired(
-            "Season Transition target week has unbridged Run prospects: "
-            + ", ".join(prospect_ids)
-        )
-
-    target_state = advance_lifecycle(predecessor, configuration.target_week)
+    target_state = advance_lifecycle_with_prospects(
+        session,
+        predecessor=predecessor,
+        target=configuration.target_week,
+    )
     if (
         target_state.week != configuration.target_week
         or target_state.predecessor_fingerprint != predecessor.fingerprint

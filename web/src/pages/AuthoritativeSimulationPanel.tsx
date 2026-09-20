@@ -8,7 +8,6 @@ import {
   previewAuthoritativeSeasonTransitionConfiguration,
   advanceAuthoritativeOrdinarySeason,
   finalizeAuthoritativeFinalSeason,
-  getProspectBridgeInspection,
   inspectAuthoritativeWeekSchedule,
   previewAuthoritativeSimulationSave,
   proposeAuthoritativeWeekSchedule,
@@ -103,23 +102,6 @@ export function AuthoritativeSimulationPanel({
     enabled: Boolean(
       enabled &&
       positionQuery.data?.current_week.week === 61
-    ),
-    retry: false
-  })
-
-  const prospectBridgeQuery = useQuery({
-    queryKey: [
-      'authoritative-prospect-bridge',
-      runId,
-      branchId,
-      positionQuery.data?.position_fingerprint,
-      seasonTransitionPreflightQuery.data?.preflight_fingerprint
-    ],
-    queryFn: () => getProspectBridgeInspection(runId, branchId),
-    enabled: Boolean(
-      enabled &&
-      positionQuery.data?.current_week.week !== 61 &&
-      positionQuery.data?.transition_blockers.includes('prospect_bridge_missing')
     ),
     retry: false
   })
@@ -753,54 +735,6 @@ export function AuthoritativeSimulationPanel({
           ) : null}
           {saveMutation.error ? (
             <p className="error">Authoritative simulation Save failed: {formatApiError(saveMutation.error)}</p>
-          ) : null}
-        </>
-      ) : null}
-
-      {position?.transition_blockers.includes('prospect_bridge_missing') ? (
-        <>
-          <h4>Prospect Bridge inspection</h4>
-          <p className="status">
-            This is a read-only blocker inspection. Birth-week visibility does not make a prospect a Tour Player; the remaining blocker is a canonical simulation-valid sporting profile for these Run-scoped prospects.
-          </p>
-          {prospectBridgeQuery.isLoading ? <p className="status">Loading target-week prospects…</p> : null}
-          {prospectBridgeQuery.error ? (
-            <p className="error">Prospect Bridge inspection failed: {formatApiError(prospectBridgeQuery.error)}</p>
-          ) : null}
-          {prospectBridgeQuery.data ? (
-            <>
-              <MetadataList
-                items={[
-                  {
-                    label: 'Target week',
-                    value: `Season index ${prospectBridgeQuery.data.target_week.season_index} · Week ${prospectBridgeQuery.data.target_week.week}`
-                  },
-                  { label: 'Blocking prospects', value: prospectBridgeQuery.data.prospects.length },
-                  { label: 'Source ownership', value: prospectBridgeQuery.data.run_scoped_source ? 'Run-scoped' : '—' },
-                  { label: 'Bridge executable', value: prospectBridgeQuery.data.bridge_supported ? 'Yes' : 'No' },
-                  { label: 'Blocking code', value: prospectBridgeQuery.data.blocking_code },
-                  { label: 'Inspection fingerprint', value: prospectBridgeQuery.data.inspection_fingerprint }
-                ]}
-              />
-              <p className="status">
-                Unresolved contracts: {prospectBridgeQuery.data.unresolved_contracts.join(', ')}
-              </p>
-              <ol aria-label="Blocking target-week prospects">
-                {prospectBridgeQuery.data.prospects.map((prospect) => (
-                  <li key={prospect.prospect_id}>
-                    {prospect.display_name} · {prospect.country_code} · age {prospect.age} · {prospect.prospect_id}
-                    {' · profile '}{prospect.profile_version}
-                    {' · placeholders '}
-                    {[
-                      prospect.profile_placeholder ? 'attributes' : null,
-                      prospect.development_placeholder ? 'development' : null,
-                      prospect.potential_placeholder ? 'potential' : null,
-                      prospect.trait_placeholder ? 'traits' : null
-                    ].filter(Boolean).join(', ') || 'none'}
-                  </li>
-                ))}
-              </ol>
-            </>
           ) : null}
         </>
       ) : null}

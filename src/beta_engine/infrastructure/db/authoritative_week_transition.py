@@ -21,7 +21,6 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
-    RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import (
     OfficialRankingCandidateStore,
@@ -48,7 +47,6 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     load_official_ranking_snapshot,
 )
-from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
@@ -117,20 +115,6 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
         )
         if lifecycle_identity != authority_identity:
             blockers.append("ranking_transition_roster_mismatch")
-    position = season_week_to_calendar_position(2000 + target.season_index, target.week)
-    pending = session.scalar(
-        select(RunProspectModel.prospect_id)
-        .where(
-            RunProspectModel.run_id == run_id,
-            RunProspectModel.season_start_year == 2000 + target.season_index,
-            RunProspectModel.season_week == target.week,
-            RunProspectModel.calendar_year == position.calendar_year,
-            RunProspectModel.year_week == position.year_week,
-        )
-        .limit(1)
-    )
-    if pending is not None:
-        blockers.append("prospect_bridge_missing")
     return tuple(blockers)
 
 
@@ -255,7 +239,6 @@ def preview_persisted_week_transition(
         mapping = (
             ("world predecessor", "authoritative_world_head_mismatch"),
             ("roster identity", "ranking_transition_roster_mismatch"),
-            ("prospect", "prospect_bridge_missing"),
             ("Saved Revision", "ranking_transition_authority_stale"),
         )
         return (
@@ -311,13 +294,28 @@ class AuthoritativeWeekTransitionRunner:
         command: AuthoritativeWeekTransitionCommand,
         *,
         expected_ranking_fingerprint=None,
+        expected_lifecycle_fingerprint=None,
+        expected_sporting_fingerprint=None,
     ):
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             result = transition_in_transaction(session, self.awards, command)
             if (
-                expected_ranking_fingerprint is not None
-                and result.official_ranking_fingerprint != expected_ranking_fingerprint
+                (
+                    expected_ranking_fingerprint is not None
+                    and result.official_ranking_fingerprint
+                    != expected_ranking_fingerprint
+                )
+                or (
+                    expected_lifecycle_fingerprint is not None
+                    and result.player_lifecycle_fingerprint
+                    != expected_lifecycle_fingerprint
+                )
+                or (
+                    expected_sporting_fingerprint is not None
+                    and result.player_sporting_fingerprint
+                    != expected_sporting_fingerprint
+                )
             ):
                 raise ValueError("Week Transition inputs changed since preview")
             return result
@@ -485,27 +483,6 @@ def transition_in_transaction(session: Session, awards, command):
     ):
         raise ValueError("Ranking transition authority boundary differs")
 
-    target_position = season_week_to_calendar_position(
-        2000 + command.target_week.season_index, command.target_week.week
-    )
-    pending_prospect = session.scalar(
-        select(RunProspectModel.prospect_id)
-        .where(
-            RunProspectModel.run_id == command.run_id,
-            RunProspectModel.season_start_year
-            == 2000 + command.target_week.season_index,
-            RunProspectModel.season_week == command.target_week.week,
-            RunProspectModel.calendar_year == target_position.calendar_year,
-            RunProspectModel.year_week == target_position.year_week,
-        )
-        .limit(1)
-    )
-    if pending_prospect is not None:
-        raise ValueError(
-            "Target week has Run-scoped prospect intake but no authoritative "
-            "Run/Branch-owned player source bridge"
-        )
-
     shared_blockers = week_transition_readiness_blockers(
         session,
         run_id=command.run_id,
@@ -565,7 +542,17 @@ def transition_in_transaction(session: Session, awards, command):
         raise ValueError(
             "Authoritative predecessor player lifecycle snapshot is missing"
         )
-    player_ids = tuple(player.player_id for player in predecessor_lifecycle.players)
+    predecessor_sporting = get_sporting(
+        session,
+        run_id=command.run_id,
+        branch_id=command.branch_id,
+        week=command.completed_week,
+    )
+    if predecessor_sporting is None:
+        raise ValueError(
+            "Authoritative predecessor player sporting snapshot is missing"
+        )
+    player_ids = tuple(player.player_id for player in predecessor_sporting.players)
     try:
         resolve_completed_context_from_authoritative_matches(
             session,

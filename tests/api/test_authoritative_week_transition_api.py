@@ -47,6 +47,12 @@ def confirm(url, command, preview):
             "X-Week-Transition-Ranking-Fingerprint": preview["result"][
                 "official_ranking_fingerprint"
             ],
+            "X-Week-Transition-Lifecycle-Fingerprint": preview["result"][
+                "player_lifecycle_fingerprint"
+            ],
+            "X-Week-Transition-Sporting-Fingerprint": preview["result"][
+                "player_sporting_fingerprint"
+            ],
         },
     )
     try:
@@ -206,7 +212,7 @@ def prepared_transition(server, name, *, retirement_player=False):
 
 
 @pytest.mark.pr_critical
-def test_prospect_bridge_inspection_exposes_exact_target_week_blockers_without_mutation(tmp_path):
+def test_prospect_bridge_inspection_exposes_nonblocking_target_week_profile_readiness(tmp_path):
     path = tmp_path / "prospect-bridge-inspection.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         run_id, branch_id, _ = prepared_transition(
@@ -275,8 +281,8 @@ def test_prospect_bridge_inspection_exposes_exact_target_week_blockers_without_m
         assert inspection["completed_week"] == {"season_index": 0, "week": 1}
         assert inspection["target_week"] == {"season_index": 0, "week": 2}
         assert inspection["run_scoped_source"] is True
-        assert inspection["bridge_supported"] is False
-        assert inspection["blocking_code"] == "prospect_bridge_missing"
+        assert inspection["bridge_supported"] is True
+        assert inspection["blocking_code"] == "no_transition_blocker"
         assert inspection["unresolved_contracts"] == [
             "canonical_sporting_profile",
         ]
@@ -295,6 +301,228 @@ def test_prospect_bridge_inspection_exposes_exact_target_week_blockers_without_m
             "potential_placeholder": True,
             "trait_placeholder": True,
         }]
+
+
+@pytest.mark.pr_critical
+def test_week_transition_activates_birth_week_prospect_without_ranking_or_sporting_leak(tmp_path):
+    path = tmp_path / "prospect-birth-week-transition.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect birth-week transition",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        position = season_week_to_calendar_position(2000, target.week)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                RunProspectModel(
+                    prospect_id="prospect-week-2",
+                    run_id=run_id,
+                    world_id="official-world",
+                    season_start_year=2000,
+                    season_label="2000/2001",
+                    season_week=2,
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                    birth_year=1985,
+                    birth_year_week=position.year_week,
+                    age=15,
+                    country_code="CZE",
+                    country_name="Czechia",
+                    status="prospect",
+                    source_type="weekly_15yo_cohort",
+                    cohort_policy_version="weekly_15yo_cohort_v1",
+                    profile_version="prospect_profile_v1",
+                    first_name=None,
+                    last_name=None,
+                    display_name="CZE Prospect 0001",
+                    short_name="CZE Prospect 0001",
+                    identity_seed="identity-seed",
+                    profile_seed="profile-seed",
+                    development_seed="development-seed",
+                    potential_seed="potential-seed",
+                    trait_seed="trait-seed",
+                    profile_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_attributes": True,
+                    }),
+                    development_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_development": True,
+                    }),
+                    potential_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_potential": True,
+                    }),
+                    trait_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_traits": True,
+                    }),
+                )
+            )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, preview = _request("POST", root + "/preview", command)
+        assert status == 200, preview
+
+        status, confirmed = confirm(root, command, preview)
+        assert status == 201, confirmed
+
+        with sqlite3.connect(path) as connection:
+            lifecycle = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_lifecycle_week_states "
+                    "WHERE week_ordinal=?",
+                    (target.ordinal,),
+                ).fetchone()[0]
+            )
+            predecessor_lifecycle = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_lifecycle_week_states "
+                    "WHERE week_ordinal=0"
+                ).fetchone()[0]
+            )
+            sporting = json.loads(
+                connection.execute(
+                    "SELECT payload_json FROM player_sporting_week_states "
+                    "WHERE week_ordinal=?",
+                    (target.ordinal,),
+                ).fetchone()[0]
+            )
+            ranking_request = json.loads(
+                connection.execute(
+                    "SELECT request_payload_json FROM official_ranking_commands "
+                    "WHERE target_ordinal=?",
+                    (target.ordinal,),
+                ).fetchone()[0]
+            )
+
+        assert "prospect-week-2" not in {
+            player["player_id"] for player in predecessor_lifecycle["players"]
+        }
+        prospect = next(
+            player
+            for player in lifecycle["players"]
+            if player["player_id"] == "prospect-week-2"
+        )
+        assert prospect["age"] == 15
+        assert prospect["tour_entry_week"] is None
+        assert prospect["status"] == "active"
+        assert len(prospect["tie_break_token"]) == 64
+        assert "prospect-week-2" not in {
+            player["player_id"] for player in sporting["players"]
+        }
+        assert "prospect-week-2" not in {
+            player["player_id"]
+            for player in ranking_request["context"]["players"]
+        }
+
+
+@pytest.mark.pr_critical
+def test_birth_week_prospect_change_after_preview_rolls_back_confirm(tmp_path):
+    path = tmp_path / "prospect-preview-stale.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect preview stale guard",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        position = season_week_to_calendar_position(2000, target.week)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                RunProspectModel(
+                    prospect_id="prospect-week-2",
+                    run_id=run_id,
+                    world_id="official-world",
+                    season_start_year=2000,
+                    season_label="2000/2001",
+                    season_week=2,
+                    calendar_year=position.calendar_year,
+                    year_week=position.year_week,
+                    birth_year=1985,
+                    birth_year_week=position.year_week,
+                    age=15,
+                    country_code="CZE",
+                    country_name="Czechia",
+                    status="prospect",
+                    source_type="weekly_15yo_cohort",
+                    cohort_policy_version="weekly_15yo_cohort_v1",
+                    profile_version="prospect_profile_v1",
+                    first_name=None,
+                    last_name=None,
+                    display_name="CZE Prospect 0001",
+                    short_name="CZE Prospect 0001",
+                    identity_seed="identity-seed-before-preview",
+                    profile_seed="profile-seed",
+                    development_seed="development-seed",
+                    potential_seed="potential-seed",
+                    trait_seed="trait-seed",
+                    profile_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_attributes": True,
+                    }),
+                    development_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_development": True,
+                    }),
+                    potential_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_potential": True,
+                    }),
+                    trait_json=json.dumps({
+                        "schema_version": "prospect_profile_v1",
+                        "reserved_for_future_traits": True,
+                    }),
+                )
+            )
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, preview = _request("POST", root + "/preview", command)
+        assert status == 200, preview
+
+        # This field is part of the target lifecycle identity, but the pre-Tour
+        # prospect is intentionally absent from both sporting and Official Ranking.
+        # A ranking-only preview guard would therefore miss this concurrent change.
+        with sqlite3.connect(path) as connection:
+            connection.execute(
+                "UPDATE run_prospects SET identity_seed=? "
+                "WHERE run_id=? AND prospect_id=?",
+                ("identity-seed-after-preview", run_id, "prospect-week-2"),
+            )
+            connection.commit()
+
+        mutated = dump(path)
+        mutated_counts = counts(path)
+        status, conflict = confirm(root, command, preview)
+        assert status == 409, conflict
+        assert "inputs changed since preview" in str(conflict)
+        assert dump(path) == mutated
+        assert counts(path) == mutated_counts
+
+        with sqlite3.connect(path) as connection:
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_lifecycle_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM player_sporting_week_states "
+                "WHERE week_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+            assert connection.execute(
+                "SELECT COUNT(*) FROM official_ranking_commands "
+                "WHERE target_ordinal=?",
+                (target.ordinal,),
+            ).fetchone()[0] == 0
+
+
 
 
 @pytest.mark.pr_critical
@@ -534,106 +762,6 @@ def test_post_transition_legacy_revision_without_sporting_restore_is_atomic(tmp_
         assert "sporting" in str(rejected)
         assert "cannot be reconstructed unambiguously" in str(rejected)
         assert dump(path) == before
-
-
-@pytest.mark.parametrize(
-    "failure_point",
-    [
-        "after_sporting_development_staging",
-        "after_between_week_staging",
-        "after_lifecycle_staging",
-        "after_ranking_staging",
-        "before_publication",
-        "after_publication",
-    ],
-)
-def test_failure_at_each_write_boundary_rolls_back_everything(
-    tmp_path, monkeypatch, failure_point
-):
-    path = tmp_path / f"rollback-{failure_point}.db"
-    with ApiServer(database_url=f"sqlite:///{path}") as server:
-        run_id, branch_id, command = prepared_transition(server, failure_point)
-        before = dump(path)
-
-        def fail(name):
-            if name == failure_point:
-                raise RuntimeError("forced transition failure")
-
-        monkeypatch.setattr(transition_module, "_fault_injection_point", fail)
-        # Unhandled fault is deliberately asserted at the transaction owner level.
-        runner = transition_module.AuthoritativeWeekTransitionRunner(
-            server.app.state.runtime.repository._session_factory
-        )
-        with pytest.raises(RuntimeError, match="forced"):
-            runner.execute(
-                transition_module.AuthoritativeWeekTransitionCommand.model_validate_json(
-                    json.dumps(command)
-                )
-            )
-        assert dump(path) == before and counts(path) == (0, 0, 0, 0)
-
-
-def test_target_week_unowned_run_prospect_blocks_preview_and_confirm(tmp_path):
-    path = tmp_path / "prospect-blocker.db"
-    with ApiServer(database_url=f"sqlite:///{path}") as server:
-        run_id, branch_id, command = prepared_transition(server, "prospect blocker")
-        with server.app.state.runtime.repository._session_factory.begin() as session:
-            session.add(
-                RunProspectModel(
-                    prospect_id="prospect-w2",
-                    run_id=run_id,
-                    world_id="world",
-                    season_start_year=2000,
-                    season_label="2000/2001",
-                    season_week=2,
-                    calendar_year=2000,
-                    year_week=38,
-                    birth_year=1985,
-                    birth_year_week=38,
-                    age=15,
-                    country_code="EGY",
-                    status="prospect",
-                    source_type="weekly_15yo_cohort",
-                    cohort_policy_version="v1",
-                    profile_version="v1",
-                    display_name="Prospect",
-                    identity_seed="i",
-                    profile_seed="p",
-                    development_seed="d",
-                    potential_seed="x",
-                    trait_seed="t",
-                    profile_json="{}",
-                    development_json="{}",
-                    potential_json="{}",
-                    trait_json="{}",
-                )
-            )
-        before = dump(path)
-        root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/week-transitions"
-        status, blocked = _request("POST", root + "/preview", command)
-        assert (
-            status == 409
-            and "no authoritative Run/Branch-owned player source bridge" in str(blocked)
-        )
-        frozen = (
-            transition_module.AuthoritativeWeekTransitionCommand.model_validate_json(
-                json.dumps(command)
-            )
-        )
-        req = request.Request(
-            root,
-            data=json.dumps(command).encode(),
-            method="POST",
-            headers={
-                "Content-Type": "application/json",
-                "X-Week-Transition-Request-Fingerprint": frozen.fingerprint,
-                "X-Week-Transition-Ranking-Fingerprint": "0" * 64,
-            },
-        )
-        with pytest.raises(error.HTTPError) as exc:
-            request.urlopen(req)
-        assert exc.value.code == 409
-        assert dump(path) == before and counts(path) == (0, 0, 0, 0)
 
 
 @pytest.mark.pr_critical

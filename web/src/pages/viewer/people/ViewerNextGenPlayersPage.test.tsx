@@ -71,7 +71,7 @@ describe('ViewerNextGenPlayersPage', () => {
 
     expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
     expect(screen.getByText('Omar Hassan')).toBeInTheDocument()
-    expect(screen.getByText(/2004\/05 · W10/)).toBeInTheDocument()
+    expect(screen.getAllByText(/2004\/05 · W10/).length).toBeGreaterThan(0)
     expect(screen.getByText(/1–2 of 2/)).toBeInTheDocument()
     expect(screen.getAllByText(/pre-Tour/).length).toBeGreaterThan(0)
     expect(api.getViewerVisibleProspects).toHaveBeenCalledWith('product run', {

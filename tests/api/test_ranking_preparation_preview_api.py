@@ -150,6 +150,51 @@ def test_derived_ranking_transition_authority_preview_confirm_save_and_reopen(tm
         assert status == 201
         base_revision = saved["saved_revision"]["revision_id"]
 
+        # A prospect born in target Week 2 is canonical lifecycle population, but
+        # not yet a Tour Player. Derived ranking authority must therefore stay on
+        # the existing Tour roster instead of blocking or ranking the prospect.
+        from beta_engine.domain.calendar.season_weeks import (
+            season_week_to_calendar_position,
+        )
+        from beta_engine.infrastructure.db.models import RunProspectModel
+
+        target_position = season_week_to_calendar_position(2000, 2)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            session.add(
+                RunProspectModel(
+                    prospect_id="prospect-week-2",
+                    run_id=run_id,
+                    world_id="official-world",
+                    season_start_year=2000,
+                    season_label="2000/2001",
+                    season_week=2,
+                    calendar_year=target_position.calendar_year,
+                    year_week=target_position.year_week,
+                    birth_year=1985,
+                    birth_year_week=target_position.year_week,
+                    age=15,
+                    country_code="CZE",
+                    country_name="Czechia",
+                    status="prospect",
+                    source_type="weekly_15yo_cohort",
+                    cohort_policy_version="weekly_15yo_cohort_v1",
+                    profile_version="prospect_profile_v1",
+                    first_name=None,
+                    last_name=None,
+                    display_name="CZE Prospect 0001",
+                    short_name="CZE Prospect 0001",
+                    identity_seed="identity-seed",
+                    profile_seed="profile-seed",
+                    development_seed="development-seed",
+                    potential_seed="potential-seed",
+                    trait_seed="trait-seed",
+                    profile_json="{}",
+                    development_json="{}",
+                    potential_json="{}",
+                    trait_json="{}",
+                )
+            )
+
         payload = {
             "command_id": "derive-week-2-authority",
             "audit": audit,
@@ -171,6 +216,9 @@ def test_derived_ranking_transition_authority_preview_confirm_save_and_reopen(tm
         assert authority["adopted_by_command_id"] == payload["command_id"]
         assert authority["audit"] == audit
         assert len(authority["players"]) == len(bootstrap["players"])
+        assert "prospect-week-2" not in {
+            player["player_id"] for player in authority["players"]
+        }
         assert len(preview["authority_fingerprint"]) == 64
 
         req = request.Request(

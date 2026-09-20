@@ -166,6 +166,5 @@ def inspect_prospect_bridge(
     ).hexdigest()
     return ProspectBridgeInspection(
         **payload,
-        prospects=tuple(prospects),
         inspection_fingerprint=fingerprint,
     )

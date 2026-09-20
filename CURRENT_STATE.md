@@ -730,4 +730,8 @@ coverage proves both the direct sporting candidate and the complete Season advan
 with a Week-1 prospect. The immediate prospect-profile parity gap is therefore closed
 for ordinary Week and Season boundaries. Formal prospect → Tour Player activation
 remains a separate authority driven by first valid MSA Tour application or definitive
-Wild Card assignment per Master.
+Wild Card assignment per Master. The existing canonical `TournamentEntryApplication`
+is only caller-resolved field-cut evidence and carries no authoritative submission
+week, while the older wildcard Admin action is not the branch-owned lifecycle
+authority. Therefore neither may silently set `tour_entry_week`; the next technical
+slice must first own exact branch-scoped trigger evidence.

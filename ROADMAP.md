@@ -669,5 +669,6 @@ remains available for non-orchestrated legacy repair paths but is no longer the
 orchestrator's source of truth for pre-Q replacement. The undefined
 post-Main-start/all-sources-exhausted policy from Master §15.8 remains unchanged.
 Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
-later Gate 3 work. Legacy simulation-run UI/endpoint retirement remains separate
-Gate 3 work.
+later Gate 3 work. Legacy simulation-run late-replacement UI/authoring endpoint
+retirement is complete; broader retirement of unrelated legacy simulation paths
+remains separate migration work.

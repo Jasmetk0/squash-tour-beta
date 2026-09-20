@@ -39,9 +39,9 @@ def _requested_week(
 def get_admin_visible_prospects(
     run_id: str,
     branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     season_index: int | None = Query(default=None, ge=0, le=49),
     week: int | None = Query(default=None, ge=1, le=61),
-    runtime: Annotated[ApiRuntime, Depends(get_runtime)] = None,  # type: ignore[assignment]
 ) -> VisiblePreTourProspects:
     try:
         target = _requested_week(season_index=season_index, week=week)

@@ -41,6 +41,9 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import capture_saved_lifecycle
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    capture_saved_tour_entry_triggers,
+)
 from beta_engine.infrastructure.db.player_sporting_state import capture_saved_sporting
 from beta_engine.infrastructure.db.saved_revision_rankings import (
     capture_saved_ranking_component,
@@ -280,6 +283,9 @@ def commit_final_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_lifecycle(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_tour_entry_triggers(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_sporting(

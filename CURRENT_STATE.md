@@ -631,6 +631,14 @@ fails closed. Exact retries reuse immutable child revision history. When preview
 resolves to post-cutoff W/O, the Draw workflow does not create a competing mutation;
 it explicitly hands execution back to the existing canonical Simulation W/O command.
 
+The old simulation-run late-replacement authoring surface is now retired. Its
+eligibility, candidate and mutation HTTP endpoints return `410 Gone` and Planned
+Event no longer renders the old Commissioner late-replacement controls. Historical
+`late_replacement_lucky_loser` admin actions remain readable as a read-only audit
+trail so existing saves/history do not lose provenance. The underlying legacy
+sidecar readers remain compatibility code only; new mutations must use the active
+Run/Branch canonical Draw workflow.
+
 This unified slice deliberately stops at Main Draw Freeze. After RWC exhaustion, a
 WC slot can now fall through canonically to **pre-Q Qualification promotion, Lucky
 Loser, external reserve or BYE**. For the LL path, Draw revision v13 binds the

@@ -66,6 +66,21 @@ def _align_compatibility_roster(driver, factory, week):
     active_service._save_registry(registry)
 
 
+def _lifecycle_tokens(factory, week):
+    with factory() as session:
+        lifecycle = get_lifecycle(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=week,
+        )
+        assert lifecycle is not None
+        return {
+            player.player_id: player.tie_break_token
+            for player in lifecycle.players
+        }
+
+
 def _command_from_preview(preview, *, command_id="entry-slot"):
     return AuthoritativeEntryDecisionSlotCommand(
         command_id=command_id,
@@ -179,6 +194,7 @@ def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp
     driver.commit_entry_decision_slot(_command_from_preview(preview))
     decisions = preview["authority"]["decisions"]
     assert decisions
+    lifecycle_tokens = _lifecycle_tokens(factory, week)
 
     validations = []
     for index, decision in enumerate(decisions):
@@ -201,7 +217,9 @@ def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp
                     "source_decision_fingerprint"
                 ],
                 outcome="valid" if valid else "invalid",
-                nr_tie_break_token=f"nr-{index + 1}" if valid else None,
+                nr_tie_break_token=(
+                    lifecycle_tokens[decision["player_id"]] if valid else None
+                ),
                 validation_policy_id="explicit-test-policy.v1",
                 validation_policy_fingerprint="f" * 64,
                 reasons=() if valid else ("explicit_test_rejection",),
@@ -241,6 +259,99 @@ def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp
         assert trigger is not None
         assert trigger.decision_slot_ordinal == 1
         assert trigger.trigger_week == week
+
+
+@pytest.mark.pr_critical
+def test_entry_slot_validation_rejects_forged_lifecycle_tie_break_token(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "entry-validation-token-drift")
+    _align_compatibility_roster(driver, factory, week)
+    event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
+    preview = driver.preview_entry_decision_slot(
+        run_id="run",
+        branch_id="branch",
+        event_ids=(event_id,),
+        decision_slot_ordinal=1,
+        seed=4201,
+    )
+    driver.commit_entry_decision_slot(_command_from_preview(preview))
+    decision = preview["authority"]["decisions"][0]
+
+    validation = TournamentApplicationValidationAuthority(
+        validation_id="forged-token-validation",
+        application_id="forged-token-application",
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        decision_slot_ordinal=1,
+        source_slot_fingerprint=preview["slot_fingerprint"],
+        event_id=decision["event_id"],
+        player_id=decision["player_id"],
+        entry_window=(
+            "main" if decision["target"] == "MAIN" else "qualification"
+        ),
+        source_decision_fingerprint=decision["source_decision_fingerprint"],
+        outcome="valid",
+        nr_tie_break_token="forged-token",
+        validation_policy_id="explicit-test-policy.v1",
+        validation_policy_fingerprint="f" * 64,
+        provenance="forged identity regression",
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="NR tie-break token differs from authoritative lifecycle identity",
+    ):
+        driver.commit_application_validation_slot(
+            AuthoritativeApplicationValidationCommand(
+                run_id="run",
+                branch_id="branch",
+                expected_week=week,
+                expected_revision_id=preview["expected_revision_id"],
+                decision_slot_ordinal=1,
+                expected_entry_slot_fingerprint=preview["slot_fingerprint"],
+                validations=(
+                    validation,
+                    *tuple(
+                        TournamentApplicationValidationAuthority(
+                            validation_id=f"invalid-{index}",
+                            application_id=f"invalid-application-{index}",
+                            run_id="run",
+                            branch_id="branch",
+                            week=week,
+                            decision_slot_ordinal=1,
+                            source_slot_fingerprint=preview["slot_fingerprint"],
+                            event_id=item["event_id"],
+                            player_id=item["player_id"],
+                            entry_window=(
+                                "main"
+                                if item["target"] == "MAIN"
+                                else "qualification"
+                            ),
+                            source_decision_fingerprint=item[
+                                "source_decision_fingerprint"
+                            ],
+                            outcome="invalid",
+                            nr_tie_break_token=None,
+                            validation_policy_id="explicit-test-policy.v1",
+                            validation_policy_fingerprint="f" * 64,
+                            reasons=("not_selected_for_forged_token_test",),
+                            provenance="complete validation coverage",
+                        )
+                        for index, item in enumerate(
+                            preview["authority"]["decisions"][1:], start=2
+                        )
+                    ),
+                ),
+            )
+        )
+
+    with factory() as session:
+        assert TournamentApplicationSubmissionStore(session).list(
+            run_id="run", branch_id="branch"
+        ) == ()
+        assert PlayerTourEntryTriggerStore(session).list(
+            run_id="run", branch_id="branch"
+        ) == ()
 
 
 @pytest.mark.pr_critical

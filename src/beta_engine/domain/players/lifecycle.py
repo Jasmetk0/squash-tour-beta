@@ -119,24 +119,25 @@ class PlayerLifecycleWeekState(FrozenInput):
         ).hexdigest()
 
     def ranking_roster(self) -> tuple[OfficialRankingPlayer, ...]:
-        if any(p.tour_entry_week is None for p in self.players):
-            raise ValueError("Player lifecycle has no authoritative Tour-entry week")
-        roster = []
-        for player in self.players:
-            tour_entry_week = player.tour_entry_week
-            if tour_entry_week is None:  # narrowed after the complete-state guard
-                raise ValueError(
-                    "Player lifecycle has no authoritative Tour-entry week"
-                )
-            roster.append(
-                OfficialRankingPlayer(
-                    player_id=player.player_id,
-                    tie_break_token=player.tie_break_token,
-                    tour_entry_week=tour_entry_week,
-                    retired=player.status == "retired",
-                )
+        """Return only players whose formal MSA Tour entry already exists.
+
+        Lifecycle owns the wider player population, including visible juniors /
+        prospects before their first valid Tour entry. A missing `tour_entry_week`
+        therefore means "pre-Tour", not corrupt lifecycle state. Those identities
+        remain historically present but are intentionally absent from Official
+        Ranking calculation until a later authoritative entry event sets the week.
+        """
+
+        return tuple(
+            OfficialRankingPlayer(
+                player_id=player.player_id,
+                tie_break_token=player.tie_break_token,
+                tour_entry_week=player.tour_entry_week,
+                retired=player.status == "retired",
             )
-        return tuple(roster)
+            for player in self.players
+            if player.tour_entry_week is not None
+        )
 
 
 def advance_lifecycle(

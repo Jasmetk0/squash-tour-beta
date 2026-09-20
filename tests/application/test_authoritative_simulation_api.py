@@ -240,7 +240,15 @@ def _server_state(tmp_path):
     return server, package
 
 
-def _install_owned_state(server, package, run_id, branch_id, additional_packages=()):
+def _install_owned_state(
+    server,
+    package,
+    run_id,
+    branch_id,
+    additional_packages=(),
+    *,
+    align_entry_roster=False,
+):
     ids = tuple(
         dict.fromkeys(
             player_id
@@ -252,6 +260,22 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
             for player_id in (match.top_player_id, match.bottom_player_id)
         )
     )
+    if align_entry_roster:
+        entry_service = server.app.dependency_overrides[
+            get_season_match_service
+        ]().draw_service.entry_list_service
+        active_service = entry_service.active_players_service
+        registry = active_service._load_registry()
+        available = {
+            player.player_id: player
+            for player in registry.players_by_season.get(package.season, [])
+        }
+        assert set(ids) <= set(available)
+        registry.players_by_season[package.season] = [
+            available[player_id] for player_id in sorted(ids)
+        ]
+        active_service._save_registry(registry)
+
     week = RankingWeek(season_index=0, week=package.season_week)
     source = session_at(
         Path(server.app.state.runtime.repository._engine.url.database + ".source"),
@@ -301,7 +325,13 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
         run_id, branch_id, revision = _create_run(
             server, display_name="Authoritative Entry Slot HTTP"
         )
-        week = _install_owned_state(server, package, run_id, branch_id)
+        week = _install_owned_state(
+            server,
+            package,
+            run_id,
+            branch_id,
+            align_entry_roster=True,
+        )
         root = (
             f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
             "/authoritative-simulation"

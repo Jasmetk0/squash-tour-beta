@@ -1,3 +1,4 @@
+import json
 import pytest
 
 from beta_engine.application.season_transition_configuration import (
@@ -12,6 +13,9 @@ from beta_engine.domain.calendar.season_weeks import (
     season_week_to_calendar_position,
 )
 from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.prospect_sporting_profile import (
+    materialize_prospect_sporting_profile,
+)
 from beta_engine.domain.players.lifecycle import (
     PlayerLifecycleIdentity,
     PlayerLifecycleWeekState,
@@ -40,6 +44,7 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
+    RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 from beta_engine.infrastructure.db.player_lifecycle_state import (
@@ -173,6 +178,89 @@ def _install_empty_w61_boundary(session):
     return completed, official, sporting, context
 
 
+def _install_week1_prospect(
+    session,
+    *,
+    canonical_profile: bool = True,
+):
+    target = RankingWeek(season_index=1, week=1)
+    position = season_week_to_calendar_position(2001, 1)
+    profile_seed = "season-profile-seed"
+    development_seed = "season-development-seed"
+    potential_seed = "season-potential-seed"
+
+    if canonical_profile:
+        canonical = materialize_prospect_sporting_profile(
+            player_id="prospect-s1-w1",
+            profile_seed=profile_seed,
+            development_seed=development_seed,
+            potential_seed=potential_seed,
+        )
+        fingerprint = canonical.fingerprint
+        profile_json = {
+            "schema_version": "prospect_profile_v1",
+            "canonical_sporting_profile": canonical.model_dump(mode="json"),
+            "canonical_sporting_profile_fingerprint": fingerprint,
+            "materialization_policy": {
+                "sporting_profile_policy_id": canonical.profile_policy_id,
+                "sporting_profile_policy_fingerprint": canonical.profile_policy_fingerprint,
+            },
+        }
+        development_json = {
+            "schema_version": "prospect_profile_v1",
+            "development_timing": canonical.development_timing,
+            "source_development_seed_digest": canonical.source_development_seed_digest,
+            "sporting_profile_fingerprint": fingerprint,
+        }
+        potential_json = {
+            "schema_version": "prospect_profile_v1",
+            "potential_ovr": canonical.potential_ovr,
+            "potential_identity": canonical.potential_identity,
+            "potential_provenance": canonical.potential_provenance,
+            "source_potential_seed_digest": canonical.source_potential_seed_digest,
+            "sporting_profile_fingerprint": fingerprint,
+        }
+    else:
+        canonical = None
+        profile_json = {"reserved_for_future_attributes": True}
+        development_json = {"reserved_for_future_development": True}
+        potential_json = {"reserved_for_future_potential": True}
+
+    session.add(
+        RunProspectModel(
+            prospect_id="prospect-s1-w1",
+            run_id="run",
+            world_id="fax_official",
+            season_start_year=2001,
+            season_label="2001/02",
+            season_week=1,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+            birth_year=position.calendar_year - 15,
+            birth_year_week=position.year_week,
+            age=15,
+            country_code="EGY",
+            country_name="Egypt",
+            status="prospect",
+            source_type="weekly_15yo_cohort",
+            cohort_policy_version="weekly_15yo_cohort_v1",
+            profile_version="prospect_profile_v1",
+            display_name="EGY Prospect 0001",
+            identity_seed="season-identity-seed",
+            profile_seed=profile_seed,
+            development_seed=development_seed,
+            potential_seed=potential_seed,
+            trait_seed="season-trait-seed",
+            profile_json=json.dumps(profile_json),
+            development_json=json.dumps(development_json),
+            potential_json=json.dumps(potential_json),
+            trait_json=json.dumps({"reserved_for_future_traits": True}),
+        )
+    )
+    session.flush()
+    return canonical
+
+
 @pytest.mark.pr_critical
 def test_cross_season_sporting_uses_outgoing_policy_then_installs_incoming(database):
     with database.begin() as session:
@@ -232,6 +320,61 @@ def test_cross_season_sporting_uses_outgoing_policy_then_installs_incoming(datab
         )
         world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
         assert world.current_ordinal == completed.ordinal
+
+
+@pytest.mark.pr_critical
+def test_cross_season_sporting_adopts_week1_prospect_after_w61_development(database):
+    with database.begin() as session:
+        _, _, predecessor, context = _install_empty_w61_boundary(session)
+        canonical = _install_week1_prospect(session, canonical_profile=True)
+        incoming = PlayerDevelopmentPolicy(
+            policy_id="development-season-1",
+            weekly_change_basis_points=0,
+            form_regression_divisor=9,
+            fatigue_recovery=1,
+        )
+        configuration = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+            target_development_policy=incoming,
+        )
+        staged = resolve_season_transition_sporting(session, configuration)
+
+        assert staged.target_state.predecessor_fingerprint == predecessor.fingerprint
+        assert staged.target_state.completed_context_fingerprint == context.fingerprint
+        assert [player.player_id for player in staged.target_state.players] == [
+            "prospect-s1-w1"
+        ]
+        prospect = staged.target_state.players[0]
+        assert canonical is not None
+        assert prospect.attributes == canonical.attributes
+        assert prospect.potential_ovr == canonical.potential_ovr
+        assert prospect.development_timing == canonical.development_timing
+        defaults = incoming.bootstrap_policy
+        assert prospect.current_form == defaults.default_form
+        assert prospect.long_term_form_norm == defaults.default_form_norm
+        assert prospect.match_sharpness == defaults.default_match_sharpness
+        assert prospect.long_term_fatigue == defaults.default_fatigue
+        assert "birth_week_prospect_sporting_adoption.v1" in staged.target_state.stage_provenance
+
+
+@pytest.mark.pr_critical
+def test_cross_season_sporting_blocks_week1_placeholder_profile(database):
+    with database.begin() as session:
+        _install_empty_w61_boundary(session)
+        _install_week1_prospect(session, canonical_profile=False)
+        configuration = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        with pytest.raises(
+            ValueError,
+            match="Canonical prospect sporting profile evidence is missing",
+        ):
+            resolve_season_transition_sporting(session, configuration)
 
 
 def _one_player_boundary():

@@ -38,9 +38,9 @@ def resolve_season_transition_lifecycle(
     """Calculate Week-1 lifecycle, including birth-week pre-Tour prospects.
 
     Prospect visibility is distinct from formal Tour entry. Target-week prospects are
-    activated into canonical lifecycle with `tour_entry_week=None`; their incomplete
-    sporting profile is allowed to remain outside the sporting snapshot until an
-    operation actually requires simulation-valid sporting data.
+    activated into canonical lifecycle with `tour_entry_week=None`. The sibling
+    sporting stage validates and adopts their persisted simulation-valid profile into
+    the same target Week-1 boundary; lifecycle never infers sporting values itself.
     """
 
     configuration = validate_season_transition_configuration(session, configuration)

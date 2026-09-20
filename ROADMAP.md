@@ -407,13 +407,18 @@ execute through the reviewed Admin flow. Saved Revision recovery preserves ordin
 Season Transition World Events through `ranking_revision_state.v7` while keeping
 Week Transition receipts strict. New prospect materialization now persists the
 canonical 57-attribute sporting-profile kernel before lifecycle activation and binds
-its exact generation-policy fingerprint. Ordinary Week Transition now adopts exact
-birth-week prospects into the target sporting snapshot **after** completed-week
-development while keeping `tour_entry_week=None` and excluding them from Official
-Ranking. The immediate parity gap is the same birth-week sporting insertion in
-Season Transition Week 61 → next-season Week 1. Later formal Tour-entry activation
-remains separate. The historically scoped Admin/Viewer prospect surface is
-implemented from lifecycle truth.
+its exact generation-policy fingerprint. Ordinary Week **and Season** Transition now
+adopt exact birth-week prospects into the target sporting snapshot only after
+completed-week development/recovery, while keeping `tour_entry_week=None` and
+excluding them from Official Ranking. Placeholder/corrupt profile evidence fails
+closed at the affected transition boundary. The next prospect lifecycle authority gap
+is formal Tour-entry activation from the Master-defined trigger (first valid MSA Tour
+application or definitive WC assignment). Do not derive that event from the later
+Tournament Entry Field cut: the current field application payload has no authoritative
+submission week, and the older wildcard action is not branch-owned lifecycle truth.
+Introduce exact branch-scoped submission / definitive-WC trigger evidence first, then
+apply the one-time lifecycle Tour-entry mutation. The historically scoped Admin/Viewer
+prospect surface is implemented from lifecycle truth.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

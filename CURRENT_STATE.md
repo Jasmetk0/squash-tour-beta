@@ -707,3 +707,31 @@ sporting profile after preview invalidate confirm and leave lifecycle, sporting 
 ranking target writes absent. Season Transition Week 61 → next-season Week 1 still
 needs the same sporting-adoption parity, and formal Tour entry remains a later
 separate authority.
+
+
+## Current follow-up after #852
+
+Ordinary Season Transition now has the same Master-aligned birth-week sporting parity
+as ordinary Week Transition. The Week-61 predecessor roster completes development and
+between-week recovery under the outgoing policy, the staged Week-1 state installs the
+incoming development policy, and only then exact Week-1 15-year-old Run prospects are
+validated from their persisted canonical profile and appended to the target sporting
+snapshot.
+
+The sibling lifecycle stage still creates the same identities with
+`tour_entry_week=None`, so these new players remain pre-Tour and absent from the new
+Official Ranking. Canonical profile/development/potential evidence, policy identity and
+stored profile/development/potential seeds must agree; legacy placeholder evidence
+makes the Season sporting candidate unavailable and blocks the atomic Season advance.
+
+The full ordinary Season writer persists that sporting state, lifecycle state, Week-1
+Official Ranking, publication, World Event and Saved Revision atomically. PR-critical
+coverage proves both the direct sporting candidate and the complete Season advance
+with a Week-1 prospect. The immediate prospect-profile parity gap is therefore closed
+for ordinary Week and Season boundaries. Formal prospect → Tour Player activation
+remains a separate authority driven by first valid MSA Tour application or definitive
+Wild Card assignment per Master. The existing canonical `TournamentEntryApplication`
+is only caller-resolved field-cut evidence and carries no authoritative submission
+week, while the older wildcard Admin action is not the branch-owned lifecycle
+authority. Therefore neither may silently set `tour_entry_week`; the next technical
+slice must first own exact branch-scoped trigger evidence.

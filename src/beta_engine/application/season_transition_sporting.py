@@ -25,6 +25,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
     preflight_completed_context_from_authoritative_matches,
     put_completed_context,
+    append_birth_week_prospect_sporting_records,
     put_sporting,
     stage_sporting_transition,
 )
@@ -131,6 +132,9 @@ def resolve_season_transition_sporting(
         target_effective_development_policy=configuration.target_development_policy,
         terminal_players=terminal_players,
     )
+    # Master cross-season order mirrors an ordinary week boundary: W61 development
+    # completes first, then new 15-year-old Week-1 prospects enter sporting history.
+    target_state = append_birth_week_prospect_sporting_records(session, target_state)
 
     applied = target_state.applied_development_policy_fingerprint
     effective = policy_fingerprint(target_state.effective_development_policy)

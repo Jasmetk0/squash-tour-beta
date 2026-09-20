@@ -17,7 +17,11 @@ from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
+from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
+from beta_engine.domain.players.prospect_sporting_profile import (
+    materialize_prospect_sporting_profile,
+)
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     PlayerDevelopmentPolicy,
@@ -28,6 +32,7 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
     RankingWeek,
     calculate_official_ranking,
+    load_official_ranking_snapshot,
 )
 from beta_engine.domain.run_containers import WORKING_RUN_STATUS
 from beta_engine.domain.run_revisions import (
@@ -55,6 +60,7 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
+    RunProspectModel,
     SeasonClosingRankingModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
@@ -309,6 +315,68 @@ def _install_boundary(session):
     return completed
 
 
+def _install_week1_prospect(session):
+    target = RankingWeek(season_index=1, week=1)
+    position = season_week_to_calendar_position(2001, 1)
+    canonical = materialize_prospect_sporting_profile(
+        player_id="prospect-s1-w1",
+        profile_seed="season-profile",
+        development_seed="season-development",
+        potential_seed="season-potential",
+    )
+    fingerprint = canonical.fingerprint
+    session.add(
+        RunProspectModel(
+            prospect_id="prospect-s1-w1",
+            run_id="run",
+            world_id="fax_official",
+            season_start_year=2001,
+            season_label="2001/02",
+            season_week=1,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+            birth_year=position.calendar_year - 15,
+            birth_year_week=position.year_week,
+            age=15,
+            country_code="EGY",
+            country_name="Egypt",
+            status="prospect",
+            source_type="weekly_15yo_cohort",
+            cohort_policy_version="weekly_15yo_cohort_v1",
+            profile_version="prospect_profile_v1",
+            display_name="EGY Prospect 0001",
+            identity_seed="season-identity",
+            profile_seed="season-profile",
+            development_seed="season-development",
+            potential_seed="season-potential",
+            trait_seed="season-trait",
+            profile_json=json.dumps({
+                "canonical_sporting_profile": canonical.model_dump(mode="json"),
+                "canonical_sporting_profile_fingerprint": fingerprint,
+                "materialization_policy": {
+                    "sporting_profile_policy_id": canonical.profile_policy_id,
+                    "sporting_profile_policy_fingerprint": canonical.profile_policy_fingerprint,
+                },
+            }),
+            development_json=json.dumps({
+                "development_timing": canonical.development_timing,
+                "source_development_seed_digest": canonical.source_development_seed_digest,
+                "sporting_profile_fingerprint": fingerprint,
+            }),
+            potential_json=json.dumps({
+                "potential_ovr": canonical.potential_ovr,
+                "potential_identity": canonical.potential_identity,
+                "potential_provenance": canonical.potential_provenance,
+                "source_potential_seed_digest": canonical.source_potential_seed_digest,
+                "sporting_profile_fingerprint": fingerprint,
+            }),
+            trait_json=json.dumps({"reserved_for_future_traits": True}),
+        )
+    )
+    session.flush()
+    return canonical
+
+
 def _position(completed):
     return AuthoritativeSimulationPosition(
         run_id="run",
@@ -346,6 +414,7 @@ def _command(configuration, preflight_fingerprint):
 def test_driver_commits_complete_ordinary_season_transition_and_retry(database, monkeypatch):
     with database.begin() as session:
         completed = _install_boundary(session)
+        canonical_prospect = _install_week1_prospect(session)
 
     monkeypatch.setattr(
         AuthoritativeRunSimulationDriver,
@@ -398,6 +467,30 @@ def test_driver_commits_complete_ordinary_season_transition_and_retry(database, 
         )
         assert lifecycle.fingerprint == result.player_lifecycle_fingerprint
         assert sporting.fingerprint == result.player_sporting_fingerprint
+
+        lifecycle_prospect = next(
+            player
+            for player in lifecycle.players
+            if player.player_id == "prospect-s1-w1"
+        )
+        sporting_prospect = next(
+            player
+            for player in sporting.players
+            if player.player_id == "prospect-s1-w1"
+        )
+        assert lifecycle_prospect.tour_entry_week is None
+        assert sporting_prospect.attributes == canonical_prospect.attributes
+        assert sporting_prospect.potential_ovr == canonical_prospect.potential_ovr
+        assert "prospect-s1-w1" not in {
+            player.player_id
+            for player in load_official_ranking_snapshot(
+                publication.payload_json,
+                expected_fingerprint=publication.snapshot_fingerprint,
+                run_id="run",
+                branch_id="branch",
+                week=result.target_week,
+            ).rows
+        }
 
         revision = session.get(BranchSavedRevisionModel, "revision-season-1")
         branch = session.get(RunBranchModel, "branch")

@@ -572,6 +572,76 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert preflight.ready_for_execution is True
 
 @pytest.mark.pr_critical
+def test_ordinary_preflight_blocks_target_week_placeholder_prospect_profile(
+    database,
+    monkeypatch,
+):
+    with database.begin() as session:
+        completed, _, _ = _install_boundary(session)
+        target_position = season_week_to_calendar_position(2001, 1)
+        session.add(
+            RunProspectModel(
+                prospect_id="prospect-s1-w1",
+                run_id="run",
+                world_id="fax_official",
+                season_start_year=2001,
+                season_label="2001/02",
+                season_week=1,
+                calendar_year=target_position.calendar_year,
+                year_week=target_position.year_week,
+                birth_year=target_position.calendar_year - 15,
+                birth_year_week=target_position.year_week,
+                age=15,
+                country_code="EGY",
+                status="prospect",
+                source_type="weekly_15yo_cohort",
+                cohort_policy_version="weekly_15yo_cohort_v1",
+                profile_version="prospect_profile_v1",
+                display_name="Prospect",
+                identity_seed="identity",
+                profile_seed="profile",
+                development_seed="development",
+                potential_seed="potential",
+                trait_seed="trait",
+                profile_json=json.dumps({"reserved_for_future_attributes": True}),
+                development_json=json.dumps({"reserved_for_future_development": True}),
+                potential_json=json.dumps({"reserved_for_future_potential": True}),
+                trait_json=json.dumps({"reserved_for_future_traits": True}),
+            )
+        )
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=completed,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="a" * 64,
+        position_fingerprint="d" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: position,
+    )
+    preflight = AuthoritativeRunSimulationDriver(
+        database, None, None
+    ).season_transition_preflight(run_id="run", branch_id="branch")
+
+    assert preflight.default_sporting_fingerprint is None
+    assert preflight.default_lifecycle_fingerprint is not None
+    assert "season_transition_sporting_unavailable" in preflight.state_blockers
+    assert preflight.ready_for_execution is False
+
+
+@pytest.mark.pr_critical
 def test_ordinary_preflight_accepts_target_week_pre_tour_draft_prospect(
     database,
     monkeypatch,

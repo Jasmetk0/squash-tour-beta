@@ -252,30 +252,60 @@ def _install_boundary(session):
         )
     )
 
-    completed_context = CompletedWeekSportingContext(
-        run_id="run",
-        branch_id="branch",
-        completed_week=completed,
-        competitive_match_counts=(),
-        source_fingerprints=(),
-        provenance="explicit empty ordinary-season transition test context",
+    development_policy = PlayerDevelopmentPolicy(
+        policy_id="season-0-development"
     )
-    put_completed_context(session, completed_context)
-    put_sporting(
+    sporting = put_sporting(
         session,
         PlayerSportingWeekState(
             run_id="run",
             branch_id="branch",
-            week=completed,
+            week=RankingWeek(season_index=0, week=1),
             players=(),
-            effective_development_policy=PlayerDevelopmentPolicy(
-                policy_id="season-0-development"
-            ),
-            completed_context_fingerprint=completed_context.fingerprint,
+            effective_development_policy=development_policy,
+            completed_context_fingerprint="bootstrap:not-a-completed-week",
             source_initial_world_fingerprint="world",
-            stage_provenance="test",
+            stage_provenance="test-bootstrap",
         ),
     )
+    for completed_week_number in range(1, 62):
+        sporting_week = RankingWeek(
+            season_index=0,
+            week=completed_week_number,
+        )
+        context = put_completed_context(
+            session,
+            CompletedWeekSportingContext(
+                run_id="run",
+                branch_id="branch",
+                completed_week=sporting_week,
+                competitive_match_counts=(),
+                source_fingerprints=(),
+                provenance=f"explicit empty test context week {completed_week_number}",
+            ),
+        )
+        if completed_week_number == 61:
+            break
+        target_week = RankingWeek(
+            season_index=0,
+            week=completed_week_number + 1,
+        )
+        sporting = put_sporting(
+            session,
+            PlayerSportingWeekState(
+                run_id="run",
+                branch_id="branch",
+                week=target_week,
+                players=(),
+                effective_development_policy=development_policy,
+                applied_development_policy_id=development_policy.policy_id,
+                completed_context_fingerprint=context.fingerprint,
+                source_initial_world_fingerprint="world",
+                predecessor_fingerprint=sporting.fingerprint,
+                stage_provenance="test-week-transition",
+            ),
+        )
+    assert sporting.week == completed
     return completed
 
 

@@ -752,14 +752,13 @@ def test_week61_closes_tournament_source_before_season_transition_boundary(tmp_p
         ) == 1
 
 
-def test_final_season_tournament_publication_boundary_remains_fail_closed():
-    with pytest.raises(
-        ValueError,
-        match="final_season_closing_ranking_source_adapter_required",
-    ):
-        AuthoritativeRunSimulationDriver._ranking_publication_boundary(
-            RankingWeek(season_index=49, week=61)
-        )
+def test_final_season_tournament_boundary_is_closing_only():
+    completed = RankingWeek(season_index=49, week=61)
+    publication, closing_ordinal = (
+        AuthoritativeRunSimulationDriver._ranking_source_boundary(completed)
+    )
+    assert publication is None
+    assert closing_ordinal == completed.ordinal + 1
 
 
 def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):

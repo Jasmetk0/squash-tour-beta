@@ -86,9 +86,11 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   boundary, Admin can now request a **server-derived** Week Transition preview: the
   backend freezes the current Saved Revision head, persisted Ranking Transition
   Authority and all Owned Tournament bindings into the exact canonical command.
-  The UI confirms only that reviewed request through the existing request/ranking
-  fingerprint guards, then reuses the ranking Save CAS to persist the transitioned
-  ranking/world draft as a new recoverable Saved Revision. The client never authors
+  The UI confirms only that reviewed request. Server-side confirm guards the request
+  plus the reviewed Official Ranking, lifecycle and sporting fingerprints inside the
+  same `BEGIN IMMEDIATE`; any preview drift rolls the transition back before commit.
+  The flow then reuses the ranking Save CAS to persist the transitioned ranking/world
+  draft as a new recoverable Saved Revision. The client never authors
   tournament bindings or an authority fingerprint. The immediately preceding
   Ranking Transition Authority prerequisite is now also server-derived for ordinary
   within-season Week Transition: Admin supplies only audit provenance, while the

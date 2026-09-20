@@ -201,6 +201,82 @@ class AuthoritativeApplicationValidationCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID = (
+    "explicit_admin_application_validation.v1"
+)
+EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT = fingerprint(
+    {
+        "policy_id": EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID,
+        "resolution_mode": "explicit_admin_review",
+        "automatic_eligibility_rules": False,
+        "automatic_deadline_rules": False,
+    }
+)
+
+
+class AuthoritativeApplicationValidationReview(FrozenInput):
+    """Minimal Admin verdict over one frozen Entry decision.
+
+    The browser supplies only the reviewed outcome and, for rejection, canonical
+    reasons. Scope, source evidence, application identity and NR tie-break truth are
+    reconstructed from persisted Run state by the server.
+    """
+
+    event_id: str = Field(min_length=1)
+    player_id: str = Field(min_length=1)
+    outcome: Literal["valid", "invalid"]
+    reasons: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_review(self):
+        if any(not reason.strip() or reason != reason.strip() for reason in self.reasons):
+            raise ValueError("Application validation review reasons must be trimmed and non-blank")
+        if self.reasons != tuple(sorted(set(self.reasons))):
+            raise ValueError("Application validation review reasons must be unique and canonical")
+        if self.outcome == "valid" and self.reasons:
+            raise ValueError("Valid explicit application review must not carry rejection reasons")
+        if self.outcome == "invalid" and not self.reasons:
+            raise ValueError("Invalid explicit application review requires at least one reason")
+        return self
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return (self.event_id, self.player_id)
+
+
+class AuthoritativeExplicitApplicationValidationCommand(FrozenInput):
+    """CAS-guarded explicit Admin resolution of the current Entry slot."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    decision_slot_ordinal: int = Field(ge=1)
+    expected_entry_slot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=128)
+    reason: str = Field(min_length=1, max_length=512)
+    reviews: tuple[AuthoritativeApplicationValidationReview, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_command(self):
+        if self.operator_label != self.operator_label.strip():
+            raise ValueError("Application validation operator label must be trimmed")
+        if self.reason != self.reason.strip():
+            raise ValueError("Application validation audit reason must be trimmed")
+        keys = tuple(review.key for review in self.reviews)
+        if keys != tuple(sorted(keys)):
+            raise ValueError("Application validation reviews must use canonical event/player order")
+        if len(set(keys)) != len(keys):
+            raise ValueError("Application validation reviews contain duplicate decisions")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class _AdoptedTournamentEvidence(FrozenInput):
     """One immutable tournament entry inside adopted week authority."""
 
@@ -622,6 +698,187 @@ class AuthoritativeRunSimulationDriver:
                 "decision_slot_ordinal": command.decision_slot_ordinal,
                 "entry_slot_fingerprint": slot.fingerprint,
                 "validation_fingerprint": committed.validation_slot.fingerprint,
+                "valid_submission_count": (
+                    0 if submission is None else len(submission.batch.submissions)
+                ),
+                "submission_batch_fingerprint": (
+                    None if submission is None else submission.batch.fingerprint
+                ),
+                "first_tour_entry_trigger_fingerprints": (
+                    []
+                    if submission is None
+                    else [
+                        item.fingerprint
+                        for item in submission.first_tour_entry_triggers
+                    ]
+                ),
+            }
+
+    def commit_explicit_application_validation_slot(
+        self,
+        command: AuthoritativeExplicitApplicationValidationCommand,
+    ) -> dict:
+        """Resolve the current Entry slot from minimal explicit Admin verdicts.
+
+        This intentionally does not invent an eligibility/deadline algorithm. The
+        persisted Entry decision slot and lifecycle state remain the source of every
+        authority field except the Admin-reviewed valid/invalid verdict and rejection
+        reason.
+        """
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Explicit application validation week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Explicit application validation Branch head is stale")
+
+            position = self._position(session, command.run_id, command.branch_id)
+            if position.position_fingerprint != command.expected_position_fingerprint:
+                raise ValueError("Explicit application validation Position is stale")
+            if (
+                position.current_slot_kind != "entry"
+                or position.slot_ordinal != command.decision_slot_ordinal
+            ):
+                raise ValueError(
+                    "Explicit application validation must resolve the current Entry slot"
+                )
+
+            slot = RunEntryDecisionSlotStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            if slot is None:
+                raise ValueError("Explicit application validation Entry slot is missing")
+            if slot.fingerprint != command.expected_entry_slot_fingerprint:
+                raise ValueError("Explicit application validation Entry slot is stale")
+
+            decisions = {
+                (decision.event_id, decision.player_id): decision
+                for decision in slot.decisions
+            }
+            review_keys = tuple(review.key for review in command.reviews)
+            if set(review_keys) != set(decisions):
+                raise ValueError(
+                    "Explicit application validation must review every frozen decision exactly once"
+                )
+
+            lifecycle = get_lifecycle(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+            )
+            if lifecycle is None:
+                raise ValueError(
+                    "Explicit application validation requires authoritative lifecycle identity"
+                )
+            identities = {player.player_id: player for player in lifecycle.players}
+
+            validations: list[TournamentApplicationValidationAuthority] = []
+            for review in command.reviews:
+                decision = decisions[review.key]
+                identity = identities.get(decision.player_id)
+                if identity is None:
+                    raise ValueError(
+                        "Explicit application validation player is missing from lifecycle identity"
+                    )
+                if review.outcome == "valid" and not identity.tie_break_token:
+                    raise ValueError(
+                        "Valid explicit application review requires lifecycle NR tie-break token"
+                    )
+
+                stable_identity = fingerprint(
+                    {
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "week_ordinal": week.ordinal,
+                        "decision_slot_ordinal": command.decision_slot_ordinal,
+                        "source_slot_fingerprint": slot.fingerprint,
+                        "event_id": decision.event_id,
+                        "player_id": decision.player_id,
+                        "source_decision_fingerprint": (
+                            decision.source_decision_fingerprint
+                        ),
+                    }
+                )
+                validations.append(
+                    TournamentApplicationValidationAuthority(
+                        validation_id=f"explicit-admin:{stable_identity}",
+                        application_id=f"application:{stable_identity}",
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=week,
+                        decision_slot_ordinal=command.decision_slot_ordinal,
+                        source_slot_fingerprint=slot.fingerprint,
+                        event_id=decision.event_id,
+                        player_id=decision.player_id,
+                        entry_window=(
+                            "main"
+                            if decision.target == "MAIN"
+                            else "qualification"
+                        ),
+                        source_decision_fingerprint=(
+                            decision.source_decision_fingerprint
+                        ),
+                        outcome=review.outcome,
+                        nr_tie_break_token=(
+                            identity.tie_break_token
+                            if review.outcome == "valid"
+                            else None
+                        ),
+                        validation_policy_id=(
+                            EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID
+                        ),
+                        validation_policy_fingerprint=(
+                            EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT
+                        ),
+                        reasons=review.reasons,
+                        provenance=(
+                            "explicit_admin_application_validation.v1; "
+                            f"operator={command.operator_label}; reason={command.reason}"
+                        ),
+                    )
+                )
+
+            validation_tuple = tuple(validations)
+            self._validate_application_identity_tokens(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                validations=validation_tuple,
+            )
+            resolved = ResolvedApplicationValidationSlot(
+                slot=slot,
+                validations=validation_tuple,
+            )
+            committed = record_resolved_application_validation_slot(session, resolved)
+            submission = committed.submission_commit
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "entry_slot_fingerprint": slot.fingerprint,
+                "validation_fingerprint": committed.validation_slot.fingerprint,
+                "validation_mode": "explicit_admin_review.v1",
+                "validation_policy_id": (
+                    EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_ID
+                ),
+                "validation_policy_fingerprint": (
+                    EXPLICIT_ADMIN_APPLICATION_VALIDATION_POLICY_FINGERPRINT
+                ),
                 "valid_submission_count": (
                     0 if submission is None else len(submission.batch.submissions)
                 ),

@@ -674,8 +674,10 @@ cross-section fingerprints. Legacy/hand-authored placeholder rows still report
 This remains diagnostic only and does not block Week Transition.
 
 No existing lifecycle-activated prospect is rewritten: the #848 immutability guard
-still rejects changed metadata after historical visibility. Persistence likewise does
-not place pre-Tour prospects into `player_sporting_week_state`, start normal weekly
-development, create Tour entry, or expose hidden sporting truth to Viewer. The next
-boundary is guarded adoption of already-persisted sporting truth when a later
-operation actually requires it.
+still rejects changed metadata after historical visibility. This persistence slice
+alone still does not place birth-week prospects into `player_sporting_week_state`,
+create Tour entry, or expose hidden sporting truth to Viewer. That missing birth-week
+sporting adoption is an implementation gap, not a product rule: Master Week
+Transition creates new 15-year-old prospects after completed-week development, and
+the next slice must add their already-persisted simulation-valid sporting core to the
+new target-week sporting snapshot without granting Tour status or ranking membership.

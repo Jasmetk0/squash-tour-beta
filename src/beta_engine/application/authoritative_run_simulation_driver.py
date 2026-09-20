@@ -88,6 +88,7 @@ from beta_engine.infrastructure.db.models import (
     RankingTransitionAuthorityModel,
     RunBranchModel,
     RunContainerModel,
+    RunEntryDecisionSlotAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     TournamentDrawAuthorityModel,
@@ -1583,6 +1584,22 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("adopted week schedule is corrupt")
         return value
 
+    @staticmethod
+    def _entry_slot_ordinals(session, run_id, branch_id, week):
+        return tuple(
+            session.scalars(
+                select(RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal)
+                .where(
+                    RunEntryDecisionSlotAuthorityModel.run_id == run_id,
+                    RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
+                    RunEntryDecisionSlotAuthorityModel.week_ordinal == week.ordinal,
+                )
+                .order_by(
+                    RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                )
+            ).all()
+        )
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)
@@ -1597,6 +1614,9 @@ class AuthoritativeRunSimulationDriver:
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
             ) if packages else {}
+            entry_slot_ordinals = self._entry_slot_ordinals(
+                session, run_id, branch_id, week
+            )
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
@@ -1604,7 +1624,12 @@ class AuthoritativeRunSimulationDriver:
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "week": week.model_dump(mode="json"),
-                "required": len(packages) > 1 or len(plans) != 3,
+                "required": (
+                    bool(entry_slot_ordinals)
+                    or len(packages) > 1
+                    or len(plans) != 3
+                ),
+                "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
                 "event_ids": [p.event_id for p in packages],
                 "group_ids": list(plans),
                 "schedule": schedule.model_dump(mode="json") if schedule else None,
@@ -1673,9 +1698,17 @@ class AuthoritativeRunSimulationDriver:
         for group_id, ordinal in depth_cache.items():
             grouped.setdefault(ordinal, []).append(group_id)
 
+        reserved_entry_ordinals = set(
+            self._entry_slot_ordinals(session, run_id, branch_id, week)
+        )
         slots: list[WeekSimulationScheduleSlot] = []
-        for ordinal in sorted(grouped):
-            group_ids = tuple(sorted(grouped[ordinal]))
+        next_global_ordinal = 1
+        for depth_ordinal in sorted(grouped):
+            while next_global_ordinal in reserved_entry_ordinals:
+                next_global_ordinal += 1
+            global_ordinal = next_global_ordinal
+            next_global_ordinal += 1
+            group_ids = tuple(sorted(grouped[depth_ordinal]))
             known_players: dict[str, str] = {}
             for group_id in group_ids:
                 plan = plans[group_id]
@@ -1701,7 +1734,7 @@ class AuthoritativeRunSimulationDriver:
                     known_players[player_id] = group_id
             slots.append(
                 WeekSimulationScheduleSlot(
-                    ordinal=ordinal,
+                    ordinal=global_ordinal,
                     group_ids=group_ids,
                 )
             )
@@ -2125,6 +2158,21 @@ class AuthoritativeRunSimulationDriver:
             packages,
             week=schedule.week,
         )
+        reserved_entry_ordinals = set(
+            self._entry_slot_ordinals(
+                session,
+                schedule.run_id,
+                schedule.branch_id,
+                schedule.week,
+            )
+        )
+        overlap = reserved_entry_ordinals & {
+            slot.ordinal for slot in schedule.slots
+        }
+        if overlap:
+            raise ValueError(
+                "match schedule collides with persisted entry-decision global slot"
+            )
         authored_sequence = tuple(g for slot in schedule.slots for g in slot.group_ids)
         if len(authored_sequence) != len(set(authored_sequence)) or set(
             authored_sequence
@@ -2165,11 +2213,15 @@ class AuthoritativeRunSimulationDriver:
             )
         )
         schedule = self._schedule(session, run_id, branch_id, week)
+        entry_slot_ordinals = self._entry_slot_ordinals(
+            session, run_id, branch_id, week
+        )
         if (
             schedule is None
             and packages
             and (
-                len(packages) > 1
+                bool(entry_slot_ordinals)
+                or len(packages) > 1
                 or len(
                     self._topology_for_session(
                         session, run_id, branch_id, packages, week=week
@@ -2209,7 +2261,12 @@ class AuthoritativeRunSimulationDriver:
         )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
-        if not authored_slots and len(packages) == 1 and len(plans) == 3:
+        if (
+            not authored_slots
+            and not entry_slot_ordinals
+            and len(packages) == 1
+            and len(plans) == 3
+        ):
             matches = sorted(
                 packages[0].main_draw_matches,
                 key=lambda m: (m.round_number, m.bracket_position),
@@ -2251,7 +2308,9 @@ class AuthoritativeRunSimulationDriver:
             else None
         )
         blockers = []
-        if schedule is None and (len(packages) > 1 or len(plans) != 3):
+        if schedule is None and (
+            bool(entry_slot_ordinals) or len(packages) > 1 or len(plans) != 3
+        ):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
@@ -2307,6 +2366,7 @@ class AuthoritativeRunSimulationDriver:
         body = {
             "scope": [run_id, branch_id, week.ordinal],
             "schedule": schedule.fingerprint if schedule else None,
+            "entry_slot_ordinals": list(entry_slot_ordinals),
             "proposed_schedule_requirement": [p.event_id for p in packages],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)

@@ -668,7 +668,9 @@ seed-cascade / freeze phase for the Q-side repair. The older generic field resol
 remains available for non-orchestrated legacy repair paths but is no longer the
 orchestrator's source of truth for pre-Q replacement. The undefined
 post-Main-start/all-sources-exhausted policy from Master §15.8 remains unchanged.
-Auto-BYE-only Qualification terminals and group-Qualification LL ordering remain
-later Gate 3 work. Legacy simulation-run late-replacement UI/authoring endpoint
-retirement is complete; broader retirement of unrelated legacy simulation paths
-remains separate migration work.
+Bracket-Qualification auto-BYE terminals are already covered by Lucky Loser order v2;
+group-Qualification LL cross-group tie-break ordering remains later Gate 3 work.
+Legacy simulation-run late-replacement and pre-draw-withdrawal UI/authoring endpoint
+retirement are complete. Their historical sidecar action logs remain read-only;
+broader retirement of unrelated legacy simulation paths remains separate migration
+work.

@@ -3,12 +3,11 @@ import { FormEvent, useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
-  applyEventPreDrawWithdrawal,
   assignEventWildcards,
   getEventLateReplacementActions,
   getEventPreDrawWithdrawalActions,
-  getEventPreDrawWithdrawalState,
   getCanonicalTournamentEntryFieldState,
+  commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
   getCanonicalTournamentEffectiveDrawAuthority,
@@ -45,7 +44,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const viewed = useAdminViewedSeasonState()
   const [slotIndexInput, setSlotIndexInput] = useState('1')
   const [selectedPlayerId, setSelectedPlayerId] = useState('')
-  const [withdrawnPlayerId, setWithdrawnPlayerId] = useState('')
+  const [canonicalPreDrawWithdrawnPlayerId, setCanonicalPreDrawWithdrawnPlayerId] = useState('')
   const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
   const [mainProcessWindowCount, setMainProcessWindowCount] = useState('')
   const [qualificationProcessWindowCount, setQualificationProcessWindowCount] = useState('')
@@ -59,7 +58,6 @@ export function PlannedEventDetailPage(): JSX.Element {
     ['wildcards', runId, eventId],
     ['wildcard-candidates', runId, eventId],
     ['wildcard-actions', runId, eventId],
-    ['pre-draw-withdrawal-state', runId, eventId],
     ['pre-draw-withdrawal-actions', runId, eventId],
     ['late-replacement-actions', runId, eventId]
   ] as const
@@ -101,12 +99,6 @@ export function PlannedEventDetailPage(): JSX.Element {
   const wildcardActionsQuery = useQuery({
     queryKey: ['wildcard-actions', runId, eventId],
     queryFn: () => getEventWildcardActions(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
-    retry: false
-  })
-  const preDrawWithdrawalStateQuery = useQuery({
-    queryKey: ['pre-draw-withdrawal-state', runId, eventId],
-    queryFn: () => getEventPreDrawWithdrawalState(runId, eventId),
     enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
@@ -190,11 +182,6 @@ export function PlannedEventDetailPage(): JSX.Element {
       }),
     onSuccess: invalidateCommissionerQueries
   })
-  const preDrawWithdrawalMutation = useMutation({
-    mutationFn: (values: { withdrawnPlayerId: string }) =>
-      applyEventPreDrawWithdrawal(runId, eventId, { withdrawn_player_id: values.withdrawnPlayerId }),
-    onSuccess: invalidateCommissionerQueries
-  })
   async function invalidateCanonicalDrawQueries(): Promise<void> {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] }),
@@ -206,6 +193,44 @@ export function PlannedEventDetailPage(): JSX.Element {
     ])
     setFrozenReplacementPreview(null)
   }
+
+  const canonicalPreDrawWithdrawalMutation = useMutation({
+    mutationFn: () => {
+      const field = canonicalEntryFieldQuery.data
+      const withdrawn = canonicalPreDrawWithdrawnPlayerId.trim()
+      if (!field) {
+        throw new Error('Canonical Tournament Entry Field is required before pre-draw withdrawal.')
+      }
+      if (field.pre_draw_repair_locked_by_draw_input) {
+        throw new Error('Canonical pre-draw withdrawal is locked after Draw Input commitment.')
+      }
+      const activePlayers = new Set([
+        ...field.direct_main_player_ids,
+        ...field.qualification_player_ids
+      ])
+      if (!withdrawn || !activePlayers.has(withdrawn)) {
+        throw new Error('Select an active canonical Entry Field player to withdraw.')
+      }
+      const commandId = [
+        'admin-ui-pre-draw-withdrawal',
+        field.field_fingerprint.slice(0, 16),
+        withdrawn
+      ].join('-').slice(0, 128)
+      return commitCanonicalPreDrawWithdrawal(runId, activeBranchId, eventId, {
+        schema_version: 'canonical_pre_draw_withdrawal_command.v1',
+        command_id: commandId,
+        run_id: runId,
+        branch_id: activeBranchId,
+        event_id: eventId,
+        expected_field_fingerprint: field.field_fingerprint,
+        withdrawn_player_ids: [withdrawn]
+      })
+    },
+    onSuccess: async () => {
+      setCanonicalPreDrawWithdrawnPlayerId('')
+      await invalidateCanonicalDrawQueries()
+    }
+  })
 
   const canonicalDrawInputMutation = useMutation({
     mutationFn: () => {
@@ -414,6 +439,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   )
 
   useEffect(() => {
+    setCanonicalPreDrawWithdrawnPlayerId('')
     setMainProcessWindowCount('')
     setQualificationProcessWindowCount('')
     setFrozenReplacementWithdrawnPlayerId('')
@@ -456,25 +482,12 @@ export function PlannedEventDetailPage(): JSX.Element {
       setSelectedPlayerId(firstCandidateId)
     }
   }, [wildcardCandidatesQuery.data, selectedPlayerId])
-  useEffect(() => {
-    const firstWithdrawableId = preDrawWithdrawalStateQuery.data?.withdrawable_main_draw_players[0]?.player_id ?? ''
-    if (!withdrawnPlayerId && firstWithdrawableId) {
-      setWithdrawnPlayerId(firstWithdrawableId)
-    }
-  }, [preDrawWithdrawalStateQuery.data, withdrawnPlayerId])
-
   function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const slotIndex = Number(slotIndexInput)
     if (!Number.isFinite(slotIndex) || slotIndex < 1 || !selectedPlayerId.trim()) return
     wildcardMutation.mutate({ slotIndex, playerId: selectedPlayerId.trim() })
   }
-  function handlePreDrawWithdrawalSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
-    if (!withdrawnPlayerId.trim()) return
-    preDrawWithdrawalMutation.mutate({ withdrawnPlayerId: withdrawnPlayerId.trim() })
-  }
-
   if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
@@ -626,6 +639,67 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : (
                 <p className="status">No Main Draw geometry warnings.</p>
               )}
+              <div className="grid">
+                <label>
+                  Canonical Entry Field player to withdraw
+                  <select
+                    value={canonicalPreDrawWithdrawnPlayerId}
+                    onChange={(event) => setCanonicalPreDrawWithdrawnPlayerId(event.target.value)}
+                    disabled={canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input}
+                  >
+                    <option value="">Select player</option>
+                    {canonicalEntryFieldQuery.data.direct_main_player_ids.length > 0 ? (
+                      <optgroup label="Main">
+                        {canonicalEntryFieldQuery.data.direct_main_player_ids.map((playerId) => (
+                          <option key={`main-${playerId}`} value={playerId}>
+                            Main · {playerId}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                    {canonicalEntryFieldQuery.data.qualification_player_ids.length > 0 ? (
+                      <optgroup label="Qualification">
+                        {canonicalEntryFieldQuery.data.qualification_player_ids.map((playerId) => (
+                          <option key={`qualification-${playerId}`} value={playerId}>
+                            Qualification · {playerId}
+                          </option>
+                        ))}
+                      </optgroup>
+                    ) : null}
+                  </select>
+                </label>
+                <p className="status">
+                  Commit is bound to field fingerprint {canonicalEntryFieldQuery.data.field_fingerprint}. The server
+                  rebalances Main/Qualification from the frozen Tournament Ranking Snapshot.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => canonicalPreDrawWithdrawalMutation.mutate()}
+                  disabled={
+                    canonicalPreDrawWithdrawalMutation.isPending ||
+                    canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input ||
+                    !canonicalPreDrawWithdrawnPlayerId
+                  }
+                >
+                  Commit canonical pre-draw withdrawal
+                </button>
+                {canonicalEntryFieldQuery.data.pre_draw_repair_locked_by_draw_input ? (
+                  <p className="status">Pre-draw repair is locked because canonical Draw Input is already committed.</p>
+                ) : null}
+                {canonicalPreDrawWithdrawalMutation.error ? (
+                  <p className="error">
+                    Canonical pre-draw withdrawal failed: {formatApiError(canonicalPreDrawWithdrawalMutation.error)}
+                  </p>
+                ) : null}
+                {canonicalPreDrawWithdrawalMutation.data ? (
+                  <p className="status">
+                    Canonical field advanced to version {canonicalPreDrawWithdrawalMutation.data.field_sequence}. Withdrew{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.newly_withdrawn_player_ids.join(', ') || '—'}; promoted to Main{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.promoted_to_main_player_ids.join(', ') || 'none'}; Qualification backfill{' '}
+                    {canonicalPreDrawWithdrawalMutation.data.qualification_backfill_player_ids.join(', ') || 'none'}.
+                  </p>
+                ) : null}
+              </div>
             </>
           ) : null}
         </SectionCard>
@@ -1019,65 +1093,11 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Commissioner pre-draw withdrawal replacement">
-          {preDrawWithdrawalStateQuery.isLoading ? <p className="status">Loading pre-draw withdrawal state...</p> : null}
-          {preDrawWithdrawalStateQuery.error ? (
-            <p className="error">Failed to load pre-draw withdrawal state: {formatApiError(preDrawWithdrawalStateQuery.error)}</p>
-          ) : null}
-          {preDrawWithdrawalStateQuery.data ? (
-            <>
-              <MetadataList
-                items={[
-                  { label: 'Action allowed', value: preDrawWithdrawalStateQuery.data.eligible ? 'Yes' : 'No' },
-                  { label: 'Eligibility note', value: preDrawWithdrawalStateQuery.data.eligibility_reason ?? 'Eligible' },
-                  {
-                    label: 'Withdrawable players',
-                    value: preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.length
-                  }
-                ]}
-              />
-              {preDrawWithdrawalStateQuery.data.eligible ? (
-                <form onSubmit={handlePreDrawWithdrawalSubmit}>
-                  <label>
-                    Main-draw player to withdraw
-                    <select value={withdrawnPlayerId} onChange={(e) => setWithdrawnPlayerId(e.target.value)}>
-                      <option value="">Select player</option>
-                      {preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.map((player) => (
-                        <option key={`${player.player_id}-${player.entry_id}`} value={player.player_id}>
-                          {player.player_name} ({player.player_id}) · {player.country_code}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={
-                      preDrawWithdrawalMutation.isPending ||
-                      !withdrawnPlayerId ||
-                      preDrawWithdrawalStateQuery.data.withdrawable_main_draw_players.length === 0
-                    }
-                  >
-                    Withdraw + auto-replace
-                  </button>
-                </form>
-              ) : null}
-              {preDrawWithdrawalMutation.error ? (
-                <p className="error">Pre-draw withdrawal failed: {formatApiError(preDrawWithdrawalMutation.error)}</p>
-              ) : null}
-              {preDrawWithdrawalMutation.data ? (
-                <p className="status">
-                  Last action: withdrew {preDrawWithdrawalMutation.data.withdrawn_player_id} and auto-replaced with{' '}
-                  {preDrawWithdrawalMutation.data.replacement_player_id} ({preDrawWithdrawalMutation.data.replacement_source}).
-                </p>
-              ) : null}
-            </>
-          ) : null}
-        </SectionCard>
-      ) : null}
-
-      {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Pre-draw withdrawal action history">
-          {preDrawWithdrawalActionsQuery.isLoading ? <p className="status">Loading pre-draw withdrawal history...</p> : null}
+        <SectionCard title="Legacy pre-draw withdrawal history">
+          <p className="status">
+            Read-only audit of historical simulation-run sidecar actions. New pre-draw withdrawals use the active Branch canonical Tournament Entry Field workflow above.
+          </p>
+          {preDrawWithdrawalActionsQuery.isLoading ? <p className="status">Loading legacy pre-draw withdrawal history...</p> : null}
           {preDrawWithdrawalActionsQuery.error ? (
             <p className="error">
               Failed to load pre-draw withdrawal history: {formatApiError(preDrawWithdrawalActionsQuery.error)}

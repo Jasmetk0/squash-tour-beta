@@ -58,6 +58,16 @@ This is intentionally separate from the legacy `/runs/{run_id}/events/.../pre-dr
 surface, whose identity belongs to the older simulation-run namespace and whose
 direct-replacement semantics are not canonical Run/Branch authority.
 
+The canonical command is now exposed in Planned Event under **Canonical Main Draw
+preflight**. Admin selects an active Main or Qualification player from the current
+Run/Branch field; the client binds the command to the exact current field fingerprint
+and the server remains the only rebalance authority.
+
+The legacy simulation-run pre-draw authoring surface is retired. Its GET/POST
+`.../pre-draw-withdrawal` endpoints return `410 Gone`, and the old Commissioner
+mutation form is no longer rendered. Existing
+`.../pre-draw-withdrawal-actions` history remains read-only for old saves and audit.
+
 ## Hard boundary
 
 This command is **pre-draw only**. Once `TournamentDrawInputAuthority` is committed,
@@ -70,9 +80,9 @@ This slice deliberately does not implement:
 - Lucky Loser ordering or LL slot creation;
 - Reserve Wild Card / WC repair;
 - per-player first-real-match replacement cutoff;
-- Final Commitment / Week Tournament Lock policy;
-- migration/retirement of the legacy simulation-run pre-draw endpoint and its UI.
+- Final Commitment / Week Tournament Lock policy.
 
-Those remain separate Gate 3 work. The legacy direct-alternate shortcut must stay
+Those remain separate Gate 3 work. Legacy pre-draw authoring retirement is complete.
+The legacy direct-alternate shortcut must stay
 non-authoritative and must not be treated as a substitute for this Run-owned field
 repair.

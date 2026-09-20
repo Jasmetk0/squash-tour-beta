@@ -129,8 +129,15 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   Week 1, never enters Official ranking history, and feeds the final Season Closing
   Ranking directly. Closing Ranking archives participate in Saved Revision capture/restore
   through `ranking_revision_state.v6`; restore requires the exact recovered Week-61
-  publication and outgoing policy before archive installation. Season summary/Closure
-  Marker and the full atomic Season Transition remain open.
+  publication and outgoing policy before archive installation. A new immutable
+  step-3 closure package now freezes a `season_summary.v1` against that Closing
+  Ranking and builds a lightweight Closure Marker candidate bound to the summary,
+  Closing Ranking and outgoing Official Ranking Policy fingerprint. The current
+  season-scoped statistics registry is explicitly empty rather than fabricating
+  zero-valued Race/counter data from legacy stores. Final Marker identity is not
+  persisted early: it binds to a Saved Revision only after that revision has been
+  staged inside the future atomic Season Transition transaction. Run Completed and
+  the full atomic Season Transition remain open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

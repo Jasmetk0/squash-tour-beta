@@ -9048,6 +9048,17 @@ class SimulationPersistenceRepository:
                         )
                     )
                 else:
+                    changed = any(
+                        getattr(model, key) != value for key, value in payload.items()
+                    )
+                    if changed and self._activated_run_prospect_ids_in_session(
+                        session,
+                        run_id=record.run_id,
+                        prospect_ids={record.prospect_id},
+                    ):
+                        raise ValueError(
+                            "Lifecycle-activated Run prospect metadata is immutable"
+                        )
                     for key, value in payload.items():
                         setattr(model, key, value)
 
@@ -9058,6 +9069,15 @@ class SimulationPersistenceRepository:
         if not prospect_ids:
             return
         with self._session_factory.begin() as session:
+            protected = self._activated_run_prospect_ids_in_session(
+                session,
+                run_id=run_id,
+                prospect_ids=set(prospect_ids),
+            )
+            if protected:
+                raise ValueError(
+                    "Lifecycle-activated Run prospect metadata is immutable"
+                )
             session.query(RunProspectModel).filter(
                 RunProspectModel.run_id == run_id,
                 RunProspectModel.prospect_id.in_(prospect_ids),
@@ -9105,6 +9125,43 @@ class SimulationPersistenceRepository:
                 for model in session.execute(statement).scalars().all()
             ]
 
+    @staticmethod
+    def _activated_run_prospect_ids_in_session(
+        session: Session,
+        *,
+        run_id: str,
+        prospect_ids: set[str],
+    ) -> set[str]:
+        if not prospect_ids:
+            return set()
+
+        found: set[str] = set()
+        statement = (
+            select(PlayerLifecycleWeekStateModel.payload_json)
+            .where(PlayerLifecycleWeekStateModel.run_id == run_id)
+            .order_by(PlayerLifecycleWeekStateModel.week_ordinal.desc())
+        )
+        for payload_json in session.execute(statement).scalars():
+            payload = json.loads(payload_json)
+            players = payload.get("players", [])
+            if not isinstance(players, list):
+                continue
+            for player in players:
+                if not isinstance(player, dict):
+                    continue
+                player_id = player.get("player_id")
+                origin = player.get("origin")
+                if (
+                    isinstance(player_id, str)
+                    and player_id in prospect_ids
+                    and isinstance(origin, str)
+                    and origin.startswith("run_prospect:")
+                ):
+                    found.add(player_id)
+            if found == prospect_ids:
+                break
+        return found
+
     def list_activated_run_prospect_ids(
         self,
         *,
@@ -9114,36 +9171,12 @@ class SimulationPersistenceRepository:
         """Return prospect ids already frozen into any branch lifecycle snapshot."""
 
         wanted = {prospect_id for prospect_id in prospect_ids if prospect_id}
-        if not wanted:
-            return set()
-
-        found: set[str] = set()
         with self._session_factory() as session:
-            statement = (
-                select(PlayerLifecycleWeekStateModel.payload_json)
-                .where(PlayerLifecycleWeekStateModel.run_id == run_id)
-                .order_by(PlayerLifecycleWeekStateModel.week_ordinal.desc())
+            return self._activated_run_prospect_ids_in_session(
+                session,
+                run_id=run_id,
+                prospect_ids=wanted,
             )
-            for payload_json in session.execute(statement).scalars():
-                payload = json.loads(payload_json)
-                players = payload.get("players", [])
-                if not isinstance(players, list):
-                    continue
-                for player in players:
-                    if not isinstance(player, dict):
-                        continue
-                    player_id = player.get("player_id")
-                    origin = player.get("origin")
-                    if (
-                        isinstance(player_id, str)
-                        and player_id in wanted
-                        and isinstance(origin, str)
-                        and origin.startswith("run_prospect:")
-                    ):
-                        found.add(player_id)
-                if found == wanted:
-                    break
-        return found
 
     def count_run_prospects(
         self,

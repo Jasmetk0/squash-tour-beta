@@ -184,12 +184,12 @@ beforeEach(() => {
     draft_version: 4,
     default_configuration_fingerprint: '6'.repeat(64),
     default_sporting_fingerprint: '7'.repeat(64),
+    default_lifecycle_fingerprint: '8'.repeat(64),
+    default_ranking_fingerprint: '9'.repeat(64),
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
     implementation_gaps: [
-      'season_boundary_lifecycle_writer_not_implemented',
       'season_prospect_creation_bridge_not_implemented',
-      'season_week_1_ranking_writer_not_implemented',
       'season_transition_atomic_writer_not_implemented'
     ],
     ready_for_execution: false,
@@ -664,6 +664,8 @@ describe('AuthoritativeSimulationPanel', () => {
       draft_version: 4,
       default_configuration_fingerprint: null,
       default_sporting_fingerprint: null,
+      default_lifecycle_fingerprint: null,
+      default_ranking_fingerprint: null,
       position_fingerprint: '4'.repeat(64),
       state_blockers: [],
       implementation_gaps: [],

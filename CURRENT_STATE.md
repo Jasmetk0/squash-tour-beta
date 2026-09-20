@@ -131,6 +131,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   omitted because Tour-entry activation and canonical prospect sporting profiles are
   still a separate unresolved bridge. The Season preflight fingerprints the lifecycle
   candidate whenever that separate prospect bridge is not required.
+  The next-season Official Ranking is now resolvable and stageable from the same
+  frozen Season configuration. The read-only candidate uses the incoming Ranking
+  Policy, the exact staged Week-1 lifecycle roster, persisted disciplinary-zero
+  history and all canonical Week-61 owned tournament sources whose first publication
+  boundary is Week 1. The write path reuses the existing RankingWeekCommand so result
+  history, input manifests and command receipts stay on the canonical ranking path.
+  It still does not create a PublishedOfficialRanking or advance the world clock;
+  those remain part of the future atomic Season Transition commit/public-state step.
   At Week 61 the Admin Simulation page renders the preflight, separates branch
   blockers from engine gaps and hides ordinary Week Transition controls. It does not
   reuse the legacy MVP rollover service.

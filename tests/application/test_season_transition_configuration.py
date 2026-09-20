@@ -123,36 +123,6 @@ def _install_boundary(session, *, season_index=0, with_players=False):
     )
     session.flush()
 
-    ranking_policy = OfficialRankingPolicy(
-        policy_id="season-outgoing-ranking",
-        best_n=15,
-    )
-    official = calculate_official_ranking(
-        run_id="run",
-        branch_id="branch",
-        week=week,
-        policy=ranking_policy,
-        players=lifecycle.ranking_roster() if with_players else (),
-        results=(),
-    )
-    OfficialRankingCandidateStore(session).append(official, bootstrap=True)
-    session.add(
-        PublishedOfficialRankingModel(
-            run_id="run",
-            branch_id="branch",
-            week_ordinal=week.ordinal,
-            snapshot_fingerprint=official.fingerprint,
-            payload_json=official.model_dump_json(),
-        )
-    )
-    session.add(
-        AuthoritativeWorldStateModel(
-            run_id="run",
-            branch_id="branch",
-            current_ordinal=week.ordinal,
-            ranking_fingerprint=official.fingerprint,
-        )
-    )
     lifecycle_players = ()
     if with_players:
         position = season_week_to_calendar_position(2000 + season_index, 61)
@@ -185,6 +155,38 @@ def _install_boundary(session, *, season_index=0, with_players=False):
             source_initial_world_fingerprint="world",
         ),
     )
+
+    ranking_policy = OfficialRankingPolicy(
+        policy_id="season-outgoing-ranking",
+        best_n=15,
+    )
+    official = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        policy=ranking_policy,
+        players=lifecycle.ranking_roster(),
+        results=(),
+    )
+    OfficialRankingCandidateStore(session).append(official, bootstrap=True)
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=week.ordinal,
+            snapshot_fingerprint=official.fingerprint,
+            payload_json=official.model_dump_json(),
+        )
+    )
+    session.add(
+        AuthoritativeWorldStateModel(
+            run_id="run",
+            branch_id="branch",
+            current_ordinal=week.ordinal,
+            ranking_fingerprint=official.fingerprint,
+        )
+    )
+
     development_policy = PlayerDevelopmentPolicy(policy_id="development-outgoing")
     sporting = PlayerSportingWeekState(
         run_id="run",

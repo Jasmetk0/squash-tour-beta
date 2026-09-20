@@ -21,6 +21,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
 from beta_engine.application.season_match_service import SeasonMatchService
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 
@@ -34,6 +35,26 @@ def _driver(runtime, matches, awards):
     return AuthoritativeRunSimulationDriver(
         runtime.repository._session_factory, matches, awards
     )
+
+
+@router.get("/prospect-bridge")
+def prospect_bridge(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        with runtime.repository._session_factory() as session:
+            return inspect_prospect_bridge(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "prospect_bridge_inspection_conflict", "message": str(exc)},
+        ) from exc
 
 
 @router.get("/position")

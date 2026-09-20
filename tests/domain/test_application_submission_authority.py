@@ -4,6 +4,7 @@ from pydantic import ValidationError
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.application_submission_authority import (
     TournamentApplicationSubmissionAuthority,
+    TournamentApplicationSubmissionBatchAuthority,
 )
 
 
@@ -78,3 +79,35 @@ def test_submission_rejects_missing_validation_or_malformed_decision_evidence():
         _submission(decision_slot_ordinal=-1)
     with pytest.raises(ValidationError):
         _submission(entry_window="wild_card")
+
+@pytest.mark.pr_critical
+def test_application_batch_canonicalizes_input_order_without_creating_priority():
+    a = _submission(application_id="app-a", event_id="event-a")
+    b = _submission(application_id="app-b", event_id="event-b")
+    first = TournamentApplicationSubmissionBatchAuthority.from_submissions((b, a))
+    second = TournamentApplicationSubmissionBatchAuthority.from_submissions((a, b))
+
+    assert first == second
+    assert first.fingerprint == second.fingerprint
+    assert tuple(item.application_id for item in first.submissions) == ("app-a", "app-b")
+    assert first.representative_first_applications() == (a,)
+
+
+@pytest.mark.pr_critical
+def test_application_batch_rejects_mixed_scope_or_decision_slot():
+    baseline = _submission(application_id="app-a")
+    with pytest.raises(ValidationError, match="Run/Branch"):
+        TournamentApplicationSubmissionBatchAuthority.from_submissions(
+            (baseline, _submission(application_id="app-b", branch_id="other"))
+        )
+    with pytest.raises(ValidationError, match="decision slot"):
+        TournamentApplicationSubmissionBatchAuthority.from_submissions(
+            (
+                baseline,
+                _submission(
+                    application_id="app-b",
+                    decision_slot_ordinal=6,
+                ),
+            )
+        )
+

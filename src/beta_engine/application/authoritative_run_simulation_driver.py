@@ -469,6 +469,43 @@ class AuthoritativeRunSimulationDriver:
                 "adoption": "exact_retry" if existing == stored else "committed",
             }
 
+    def _validate_application_identity_tokens(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        validations: tuple[TournamentApplicationValidationAuthority, ...],
+    ) -> None:
+        """Bind application validation identity to canonical lifecycle truth."""
+
+        lifecycle = get_lifecycle(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if lifecycle is None:
+            raise ValueError(
+                "Application validation requires authoritative lifecycle identity"
+            )
+        identities = {player.player_id: player for player in lifecycle.players}
+        for validation in validations:
+            identity = identities.get(validation.player_id)
+            if identity is None:
+                raise ValueError(
+                    "Application validation player is missing from lifecycle identity"
+                )
+            if (
+                validation.nr_tie_break_token is not None
+                and validation.nr_tie_break_token != identity.tie_break_token
+            ):
+                raise ValueError(
+                    "Application validation NR tie-break token differs from "
+                    "authoritative lifecycle identity"
+                )
+
     def commit_application_validation_slot(
         self,
         command: AuthoritativeApplicationValidationCommand,
@@ -501,6 +538,13 @@ class AuthoritativeRunSimulationDriver:
             if slot.fingerprint != command.expected_entry_slot_fingerprint:
                 raise ValueError("Application validation Entry slot is stale")
 
+            self._validate_application_identity_tokens(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                validations=command.validations,
+            )
             resolved = ResolvedApplicationValidationSlot(
                 slot=slot,
                 validations=command.validations,

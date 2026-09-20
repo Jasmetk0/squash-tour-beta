@@ -313,7 +313,7 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             {
                 "event_ids": [package.event_id],
                 "decision_slot_ordinal": 1,
-                "seed": 5151,
+                "seed": 4201,
             },
         )
         assert status == 200
@@ -350,6 +350,53 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
         )
         assert status == 201
         assert retry["adoption"] == "exact_retry"
+
+        decisions = preview["authority"]["decisions"]
+        assert decisions
+        validations = []
+        for index, decision in enumerate(decisions):
+            valid = index == 0
+            validations.append(
+                {
+                    "validation_id": f"http-validation-{index + 1}",
+                    "application_id": f"http-application-{index + 1}",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "week": preview["week"],
+                    "decision_slot_ordinal": 1,
+                    "source_slot_fingerprint": preview["slot_fingerprint"],
+                    "event_id": decision["event_id"],
+                    "player_id": decision["player_id"],
+                    "entry_window": (
+                        "main"
+                        if decision["target"] == "MAIN"
+                        else "qualification"
+                    ),
+                    "source_decision_fingerprint": decision[
+                        "source_decision_fingerprint"
+                    ],
+                    "outcome": "valid" if valid else "invalid",
+                    "nr_tie_break_token": "http-nr-1" if valid else None,
+                    "validation_policy_id": "http-explicit-policy.v1",
+                    "validation_policy_fingerprint": "f" * 64,
+                    "reasons": [] if valid else ["explicit_http_rejection"],
+                    "provenance": "HTTP explicit validation test",
+                }
+            )
+        status, validated = _request(
+            "POST",
+            root + "/entry-decision-slot/validation/commit",
+            {
+                "expected_week": preview["week"],
+                "expected_revision_id": revision,
+                "decision_slot_ordinal": 1,
+                "expected_entry_slot_fingerprint": preview["slot_fingerprint"],
+                "validations": validations,
+            },
+        )
+        assert status == 201
+        assert validated["valid_submission_count"] == 1
+        assert len(validated["first_tour_entry_trigger_fingerprints"]) == 1
 
         with server.app.state.runtime.repository._session_factory() as session:
             stored = RunEntryDecisionSlotStore(session).list(

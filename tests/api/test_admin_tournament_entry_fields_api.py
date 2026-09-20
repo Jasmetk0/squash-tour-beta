@@ -304,7 +304,8 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
 
         status, inspected = _request("GET", root)
         assert status == 200
-        assert inspected["field_fingerprint"] == field["fingerprint"]
+        returned_field = TournamentEntryField.model_validate(field)
+        assert inspected["field_fingerprint"] == returned_field.fingerprint
 
 
 def test_canonical_entry_field_state_withdrawal_and_retry_over_http(tmp_path):

@@ -17,7 +17,10 @@ from beta_engine.domain.calendar.season_weeks import (
     age_at_calendar_position,
     season_week_to_calendar_position,
 )
-from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
+from beta_engine.infrastructure.db.models import (
+    PlayerLifecycleWeekStateModel,
+    RunProspectModel,
+)
 
 PLAYER_LIFECYCLE_COMPONENT_KEY = "player_lifecycle"
 
@@ -120,6 +123,119 @@ def bootstrap_lifecycle(
     )
 
 
+def _target_week_prospect_rows(
+    session: Session,
+    *,
+    run_id: str,
+    target: RankingWeek,
+):
+    season_start_year = 2000 + target.season_index
+    position = season_week_to_calendar_position(season_start_year, target.week)
+    return tuple(
+        session.scalars(
+            select(RunProspectModel)
+            .where(
+                RunProspectModel.run_id == run_id,
+                RunProspectModel.season_start_year == season_start_year,
+                RunProspectModel.season_week == target.week,
+                RunProspectModel.calendar_year == position.calendar_year,
+                RunProspectModel.year_week == position.year_week,
+            )
+            .order_by(RunProspectModel.prospect_id)
+        )
+    )
+
+
+def _prospect_lifecycle_identity(row, *, target: RankingWeek) -> PlayerLifecycleIdentity:
+    season_start_year = 2000 + target.season_index
+    position = season_week_to_calendar_position(season_start_year, target.week)
+    if row.age != 15:
+        raise ValueError("Birth-week Run prospect must materialize at age 15")
+    if (row.birth_year_week, row.calendar_year, row.year_week) != (
+        position.year_week,
+        position.calendar_year,
+        position.year_week,
+    ):
+        raise ValueError("Run prospect birth identity differs from target calendar week")
+    expected_age = age_at_calendar_position(
+        birth_year=row.birth_year,
+        birth_year_week=row.birth_year_week,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+    )
+    if expected_age != 15:
+        raise ValueError("Run prospect birth identity does not resolve to age 15")
+    if row.status != "prospect":
+        raise ValueError("Birth-week Run prospect has unsupported lifecycle status")
+
+    provenance = json.dumps(
+        {
+            "kind": "run_prospect_birth_week",
+            "run_id": row.run_id,
+            "prospect_id": row.prospect_id,
+            "birth_year": row.birth_year,
+            "birth_year_week": row.birth_year_week,
+            "identity_seed": row.identity_seed,
+            "source_type": row.source_type,
+            "cohort_policy_version": row.cohort_policy_version,
+            "profile_version": row.profile_version,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return PlayerLifecycleIdentity(
+        player_id=row.prospect_id,
+        birth_year=row.birth_year,
+        birth_year_week=row.birth_year_week,
+        tie_break_token=hashlib.sha256(provenance.encode()).hexdigest(),
+        tie_break_provenance=provenance,
+        tour_entry_week=None,
+        age=15,
+        status="active",
+        retirement_effective_week=None,
+        origin=f"run_prospect:{row.source_type}:{row.profile_version}",
+    )
+
+
+def advance_lifecycle_with_prospects(
+    session: Session,
+    *,
+    predecessor: PlayerLifecycleWeekState,
+    target: RankingWeek,
+) -> PlayerLifecycleWeekState:
+    """Advance lifecycle and activate exactly the prospects born in the target week.
+
+    Materialized future prospects are technical seed records only. They become part of
+    branch-owned canonical lifecycle at their birth week, with no implied Tour entry.
+    A pre-Tour prospect may intentionally have no canonical sporting record yet.
+    """
+
+    advanced = advance_lifecycle(predecessor, target)
+    existing_ids = {player.player_id for player in advanced.players}
+    additions = []
+    for row in _target_week_prospect_rows(
+        session,
+        run_id=predecessor.run_id,
+        target=target,
+    ):
+        if row.prospect_id in existing_ids:
+            raise ValueError("Run prospect identity already exists in predecessor lifecycle")
+        additions.append(_prospect_lifecycle_identity(row, target=target))
+        existing_ids.add(row.prospect_id)
+
+    return PlayerLifecycleWeekState(
+        run_id=advanced.run_id,
+        branch_id=advanced.branch_id,
+        week=advanced.week,
+        players=tuple(
+            sorted((*advanced.players, *additions), key=lambda player: player.player_id)
+        ),
+        source_initial_world_fingerprint=advanced.source_initial_world_fingerprint,
+        predecessor_fingerprint=advanced.predecessor_fingerprint,
+        policy=advanced.policy,
+    )
+
+
 def transition_lifecycle(
     session: Session,
     *,
@@ -135,7 +251,14 @@ def transition_lifecycle(
         raise ValueError(
             "Authoritative predecessor player lifecycle snapshot is missing"
         )
-    return put_lifecycle(session, advance_lifecycle(predecessor, target))
+    return put_lifecycle(
+        session,
+        advance_lifecycle_with_prospects(
+            session,
+            predecessor=predecessor,
+            target=target,
+        ),
+    )
 
 
 def capture_saved_lifecycle(session, payload, *, run_id, branch_id):

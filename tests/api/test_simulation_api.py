@@ -1869,6 +1869,7 @@ def test_run_prospects_endpoint_is_read_only_and_filterable(tmp_path) -> None:
         assert unmatched["prospects"] == []
 
 
+@pytest.mark.pr_critical
 def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'materialize.db'}"
     with ApiServer(database_url=database_url) as server:

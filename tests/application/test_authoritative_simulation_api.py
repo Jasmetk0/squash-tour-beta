@@ -176,6 +176,12 @@ def confirm(url, command, preview):
             "X-Week-Transition-Ranking-Fingerprint": preview["result"][
                 "official_ranking_fingerprint"
             ],
+            "X-Week-Transition-Lifecycle-Fingerprint": preview["result"][
+                "player_lifecycle_fingerprint"
+            ],
+            "X-Week-Transition-Sporting-Fingerprint": preview["result"][
+                "player_sporting_fingerprint"
+            ],
         },
     )
     with request.urlopen(req) as response:

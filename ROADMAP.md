@@ -371,10 +371,17 @@ outgoing policies, while the preview API may supply explicit incoming overrides.
 The reset registry is deliberately empty until a real branch-scoped resettable
 season-stat producer exists; empty means reset nothing, not fabricate zero values.
 The ordinary preflight fingerprints this default configuration and no longer lists
-policy activation or reset-catalog construction as missing kernels. Remaining
-ordinary season-0–48 work is development/recovery integration, lifecycle/prospects,
-Week-1 Official Ranking/public state and the atomic rollover commit that activates
-the selected configuration.
+policy activation or reset-catalog construction as missing kernels. Cross-season
+sporting staging is now implemented too: Week-61 development and between-week
+recovery are calculated under the outgoing effective Development Policy, while the
+resulting next-season Week-1 sporting snapshot installs the selected incoming policy.
+The preflight binds that exact default W1 sporting fingerprint. The shared weekly
+sporting staging path also preserves the persisted weekly predecessor fingerprint
+when terminal in-week match state is used; terminal match evidence remains separately
+bound through the completed-week context, keeping Saved Revision lineage valid.
+Remaining ordinary season-0–48 work is lifecycle/prospects, Week-1 Official
+Ranking/public state and the atomic rollover commit that persists all selected
+staging outputs together.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

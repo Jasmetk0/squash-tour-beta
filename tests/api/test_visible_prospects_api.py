@@ -14,6 +14,11 @@ from beta_engine.domain.players.lifecycle import (
 )
 from beta_engine.domain.players.tour_entry import PlayerTourEntryTrigger
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.infrastructure.db.engine import (
+    DatabaseSettings,
+    create_session_factory,
+    create_sqlite_engine,
+)
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
     PlayerLifecycleWeekStateModel,
@@ -44,6 +49,17 @@ def _canonical_run(server: ApiServer, run_id: str = "run") -> tuple[str, str]:
     )
     assert status == 200
     return branch_id, checkpoint["checkpoint_id"]
+
+
+@contextmanager
+def _database_session(path):
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{path}"))
+    factory = create_session_factory(engine)
+    try:
+        with factory.begin() as session:
+            yield session
+    finally:
+        engine.dispose()
 
 
 def _prospect_row(
@@ -117,7 +133,7 @@ def test_viewer_next_gen_uses_lifecycle_visibility_and_never_future_pregeneratio
         week_one = RankingWeek(season_index=0, week=1)
         week_two = RankingWeek(season_index=0, week=2)
 
-        with server.app.state.runtime.repository._session_factory.begin() as session:
+        with _database_session(path) as session:
             opening = put_lifecycle(
                 session,
                 PlayerLifecycleWeekState(
@@ -249,7 +265,7 @@ def test_current_viewer_stops_exposing_prospect_after_midweek_tour_entry_but_his
         branch_id, _ = _canonical_run(server)
         week = RankingWeek(season_index=0, week=2)
 
-        with server.app.state.runtime.repository._session_factory.begin() as session:
+        with _database_session(path) as session:
             put_lifecycle(
                 session,
                 PlayerLifecycleWeekState(
@@ -332,7 +348,7 @@ def test_viewer_next_gen_fails_closed_without_canonical_world_or_metadata(tmp_pa
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         branch_id, _ = _canonical_run(server)
         week = RankingWeek(season_index=0, week=1)
-        with server.app.state.runtime.repository._session_factory.begin() as session:
+        with _database_session(path) as session:
             put_lifecycle(
                 session,
                 PlayerLifecycleWeekState(
@@ -349,7 +365,7 @@ def test_viewer_next_gen_fails_closed_without_canonical_world_or_metadata(tmp_pa
             f"{server.base_url}/viewer/runs/run/prospects/next-gen",
         )[0] == 409
 
-        with server.app.state.runtime.repository._session_factory.begin() as session:
+        with _database_session(path) as session:
             session.add(
                 AuthoritativeWorldStateModel(
                     run_id="run",

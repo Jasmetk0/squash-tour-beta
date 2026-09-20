@@ -286,16 +286,8 @@ class AuthoritativeRunSimulationDriver:
 
             # Preview must also fail on already-owned global chronology instead of
             # advertising a proposal that commit can never accept.
-            existing = RunEntryDecisionSlotStore(session).get(
-                run_id=run_id,
-                branch_id=branch_id,
-                week_ordinal=week.ordinal,
-                decision_slot_ordinal=decision_slot_ordinal,
-            )
-            if existing is not None and existing != authority:
-                raise ValueError(
-                    "Entry decision preview conflicts with persisted slot authority"
-                )
+            store = RunEntryDecisionSlotStore(session)
+            existing = store.validate_candidate(authority)
 
             return {
                 "run_id": run_id,

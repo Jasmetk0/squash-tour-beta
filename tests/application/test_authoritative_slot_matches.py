@@ -1686,7 +1686,7 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
             )
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
     """Run-owned Ranking -> Field -> Draw drives all fifteen canonical matches."""
     from test_season_entry_list_service import make_service

@@ -134,10 +134,12 @@ class RunEntryDecisionSlotStore:
         ).all()
         return tuple(_load(row) for row in rows)
 
-    def append(
+    def validate_candidate(
         self,
         authority: RunEntryDecisionSlotAuthority,
-    ) -> RunEntryDecisionSlotAuthority:
+    ) -> RunEntryDecisionSlotAuthority | None:
+        """Validate exact retry/collision/chronology without mutating persistence."""
+
         self._scope(authority.run_id, authority.branch_id, writing=True)
         existing = self.get(
             run_id=authority.run_id,
@@ -183,6 +185,51 @@ class RunEntryDecisionSlotStore:
                     "Global Simulation Slot ordinal is reserved by the adopted match schedule"
                 )
 
+        required_prior = set(range(1, authority.decision_slot_ordinal))
+        if required_prior:
+            completed_entry_ordinals = set(
+                self.session.scalars(
+                    select(
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                    ).where(
+                        RunEntryDecisionSlotAuthorityModel.run_id == authority.run_id,
+                        RunEntryDecisionSlotAuthorityModel.branch_id == authority.branch_id,
+                        RunEntryDecisionSlotAuthorityModel.week_ordinal
+                        == authority.week.ordinal,
+                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        < authority.decision_slot_ordinal,
+                    )
+                ).all()
+            )
+            completed_match_ordinals = set(
+                self.session.scalars(
+                    select(SimulationSlotModel.slot_ordinal).where(
+                        SimulationSlotModel.run_id == authority.run_id,
+                        SimulationSlotModel.branch_id == authority.branch_id,
+                        SimulationSlotModel.week_ordinal == authority.week.ordinal,
+                        SimulationSlotModel.slot_ordinal
+                        < authority.decision_slot_ordinal,
+                        SimulationSlotModel.status == "complete",
+                    )
+                ).all()
+            )
+            completed_prior = completed_entry_ordinals | completed_match_ordinals
+            if completed_prior != required_prior:
+                missing = sorted(required_prior - completed_prior)
+                raise RunEntryDecisionSlotConflict(
+                    "Entry decision slot cannot skip or overtake incomplete global "
+                    f"Simulation Slots: missing completed ordinals {missing}"
+                )
+
+        return None
+
+    def append(
+        self,
+        authority: RunEntryDecisionSlotAuthority,
+    ) -> RunEntryDecisionSlotAuthority:
+        existing = self.validate_candidate(authority)
+        if existing is not None:
+            return existing
         _insert(self.session, authority)
         return authority
 
@@ -291,6 +338,18 @@ def validate_saved_entry_match_slot_collisions(
             raise ValueError(
                 "Saved match chronology contains a global-slot gap not owned "
                 "by an entry-decision slot"
+            )
+
+    all_weeks = {week for week, _ in (match_positions | entry_positions)}
+    for week_ordinal in sorted(all_weeks):
+        global_ordinals = {
+            ordinal
+            for week, ordinal in (match_positions | entry_positions)
+            if week == week_ordinal
+        }
+        if global_ordinals != set(range(1, max(global_ordinals) + 1)):
+            raise ValueError(
+                "Saved global Simulation Slot chronology is not contiguous"
             )
 
 

@@ -2367,8 +2367,9 @@ class AuthoritativeRunSimulationDriver:
         )
 
     def _advance_or_close(self, session, command, packages, *, fault_at=None):
-        if command.expected_week.week == 61:
-            raise ValueError("season_transition_required")
+        # Tournament close is distinct from Week/Season Transition. Week 61 must
+        # still freeze completed tournament sources before the season boundary can
+        # consume them; _position() separately exposes season_transition_required.
         executor = AuthoritativeSlotMatchExecutor(session)
         loaded = {
             g.group_id: executor._load_group(g)
@@ -2494,9 +2495,8 @@ class AuthoritativeRunSimulationDriver:
                 edition_id=package.event_id,
                 event_id=package.event_id,
                 completed_week=command.expected_week,
-                first_publication_week=RankingWeek(
-                    season_index=command.expected_week.season_index,
-                    week=command.expected_week.week + 1,
+                first_publication_week=self._ranking_publication_boundary(
+                    command.expected_week
                 ),
                 validity_weeks=61,
                 ranking_status="ranked",
@@ -2553,6 +2553,29 @@ class AuthoritativeRunSimulationDriver:
                     provenance_kind="explicit_legacy_tournament_adoption",
                 )
             store.append(source)
+
+    @staticmethod
+    def _ranking_publication_boundary(completed_week: RankingWeek) -> RankingWeek:
+        """Return the ordinary ranking boundary after a completed tournament.
+
+        Season Week 61 rolls to the next season's Week 1. The final 2049/50
+        boundary has no next Official Ranking week and therefore remains reserved
+        for the dedicated final-season Closing Ranking source adapter.
+        """
+
+        if completed_week.week < 61:
+            return RankingWeek(
+                season_index=completed_week.season_index,
+                week=completed_week.week + 1,
+            )
+        if completed_week.season_index < 49:
+            return RankingWeek(
+                season_index=completed_week.season_index + 1,
+                week=1,
+            )
+        raise ValueError(
+            "final_season_closing_ranking_source_adapter_required"
+        )
 
     @staticmethod
     def _validate_existing_owned_source(existing, command, package, authoritative):

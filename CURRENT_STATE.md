@@ -147,10 +147,16 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   identity, and injected failures after staging or publication roll the entire
   transaction back. The writer refuses any non-empty season reset catalog until a
   real reset adapter exists, and target-week prospects still fail closed through the
-  separate unresolved Tour-entry/canonical sporting-profile bridge.
-  At Week 61 the Admin Simulation page renders the preflight, separates branch
-  blockers from engine gaps and hides ordinary Week Transition controls. It does not
-  reuse the legacy MVP rollover service.
+  separate unresolved Tour-entry/canonical sporting-profile bridge. That gap is now
+  boundary-specific: a prospect-free Week-61 boundary can become executable, while a
+  target Week 1 that actually contains unbridged Run prospects still fails closed.
+  Ordinary Season Transition Saved Revisions use `ranking_revision_state.v7` when
+  their authoritative transition state contains a `season_transition_completed`
+  World Event; Week Transition receipt/event pairing stays strict and historical
+  v4-v6 bundles retain their prior meaning. At Week 61 the Admin Simulation page
+  renders the preflight, exposes an explicit Review → Advance flow for executable
+  ordinary rollover, separates branch blockers from engine gaps and hides ordinary
+  Week Transition controls. It does not reuse the legacy MVP rollover service.
   The first Season Transition write primitive is now implemented separately:
   `season_closing_ranking.v1` calculates an immutable archived ranking immediately
   after Week 61 under the outgoing Week 61 policy, and an append-only store binds it
@@ -191,7 +197,9 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   self-references that exact revision, an append-only audit event stores the request
   fingerprint, exact retries return the committed result, and injected failure after
   revision staging rolls every closure write back. No 2050/51 Week 1 or Official
-  Ranking is created. The ordinary seasons 0–48 Season Transition remains open.
+  Ranking is created. Ordinary seasons 0–48 now have the atomic backend + Admin
+  rollover path; the remaining content blocker is prospect activation into canonical
+  player state when a target week actually contains new prospects.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

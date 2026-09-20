@@ -15,6 +15,9 @@ from beta_engine.infrastructure.db.ranking_transition_authority import RankingTr
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
+from beta_engine.infrastructure.db.season_closing_rankings import (
+    SeasonClosingRankingStore,
+)
 from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel, AuthoritativeWeekTransitionReceiptModel,
     AuthoritativeWorldEventModel)
@@ -74,11 +77,19 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
     frozen_tournament_rankings = tuple(
         value for value in tournament_ranking_authorities if value is not None
     )
+    season_closing_rankings = SeasonClosingRankingStore(session).history(
+        run_id=run_id,
+        branch_id=branch_id,
+    )
     return RankingRevisionState(
         schema_version=(
-            "ranking_revision_state.v5"
-            if frozen_tournament_rankings
-            else "ranking_revision_state.v4"
+            "ranking_revision_state.v6"
+            if season_closing_rankings
+            else (
+                "ranking_revision_state.v5"
+                if frozen_tournament_rankings
+                else "ranking_revision_state.v4"
+            )
         ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
@@ -86,6 +97,7 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
         tournament_sources=tuple(value for value in tournament_sources if value is not None),
         transition_authorities=tuple(value for value in authorities if value is not None),
         tournament_ranking_snapshot_authorities=frozen_tournament_rankings,
+        season_closing_rankings=season_closing_rankings,
         authoritative_transition_state=transition_state,
     )
 
@@ -120,6 +132,7 @@ def install_ranking_revision_state(
         or current.tournament_sources
         or current.transition_authorities
         or current.tournament_ranking_snapshot_authorities
+        or current.season_closing_rankings
     ):
         raise ValueError("Ranking restore target is not empty and differs from saved state")
     run = session.get(RunContainerModel, run_id)
@@ -166,9 +179,12 @@ def install_ranking_revision_state(
                 session.add(AuthoritativeWeekTransitionReceiptModel(**row))
             for row in transition["events"]:
                 session.add(AuthoritativeWorldEventModel(**row))
-            # Tournament Ranking Snapshot authority must resolve only against
-            # already restored immutable Official Ranking publications.
+            # Restored archive authorities must resolve only against already
+            # restored immutable Official Ranking publications.
             session.flush()
+        closing_rankings = SeasonClosingRankingStore(session)
+        for ranking in state.season_closing_rankings:
+            closing_rankings.install_restored(ranking)
         tournament_rankings = TournamentRankingSnapshotAuthorityStore(session)
         for authority in state.tournament_ranking_snapshot_authorities:
             tournament_rankings.append(authority)

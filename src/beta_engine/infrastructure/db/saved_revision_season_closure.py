@@ -54,11 +54,11 @@ class SavedRevisionSeasonClosure(FrozenInput):
     def parsed_summary(self):
         from beta_engine.domain.season_closure import SeasonSummarySnapshot
 
-        return SeasonSummarySnapshot.model_validate(self.summary)
+        return SeasonSummarySnapshot.model_validate_json(canonical_json(self.summary))
 
     @property
     def parsed_marker(self):
-        return SeasonClosureMarker.model_validate(self.marker)
+        return SeasonClosureMarker.model_validate_json(canonical_json(self.marker))
 
     @property
     def fingerprint(self) -> str:

@@ -9,6 +9,11 @@ from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
     validate_season_transition_configuration,
 )
+from beta_engine.application.season_transition_lifecycle import (
+    resolve_season_transition_lifecycle,
+    stage_season_transition_lifecycle,
+)
+from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
@@ -32,9 +37,13 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     RunBranchModel,
     RunContainerModel,
+    RunProspectModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
-from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
+from beta_engine.infrastructure.db.player_lifecycle_state import (
+    get_lifecycle,
+    put_lifecycle,
+)
 from beta_engine.infrastructure.db.player_sporting_state import (
     put_completed_context,
     put_sporting,
@@ -248,6 +257,77 @@ def test_final_season_has_no_incoming_configuration(database):
 
 
 @pytest.mark.pr_critical
+def test_cross_season_lifecycle_candidate_stages_without_advancing_public_world(database):
+    with database.begin() as session:
+        completed, _, _ = _install_boundary(session)
+        config = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+        resolved = resolve_season_transition_lifecycle(session, config)
+
+        assert resolved.target_state.week == RankingWeek(season_index=1, week=1)
+        assert (
+            resolved.target_state.predecessor_fingerprint
+            == resolved.predecessor_lifecycle_fingerprint
+        )
+
+        staged = stage_season_transition_lifecycle(session, config)
+        installed = get_lifecycle(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week=config.target_week,
+        )
+        assert installed is not None
+        assert installed.fingerprint == staged.target_state.fingerprint
+
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert world.current_ordinal == completed.ordinal
+
+
+@pytest.mark.pr_critical
+def test_cross_season_lifecycle_refuses_to_silently_omit_target_week_prospect(database):
+    with database.begin() as session:
+        _install_boundary(session)
+        config = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+        position = season_week_to_calendar_position(2001, 1)
+        session.add(
+            RunProspectModel(
+                prospect_id="prospect-s1-w1",
+                run_id="run",
+                world_id="fax_official",
+                season_start_year=2001,
+                season_label="2001/02",
+                season_week=1,
+                calendar_year=position.calendar_year,
+                year_week=position.year_week,
+                birth_year=1986,
+                birth_year_week=position.year_week,
+                age=15,
+                country_code="EGY",
+                cohort_policy_version="test.v1",
+                profile_version="test.v1",
+                display_name="Prospect",
+                identity_seed="identity",
+                profile_seed="profile",
+                development_seed="development",
+                potential_seed="potential",
+                trait_seed="trait",
+            )
+        )
+        session.flush()
+
+        with pytest.raises(ValueError, match="unbridged Run prospects"):
+            resolve_season_transition_lifecycle(session, config)
+
+
+@pytest.mark.pr_critical
 def test_ordinary_preflight_fingerprints_default_configuration(database, monkeypatch):
     with database.begin() as session:
         completed, _, _ = _install_boundary(session)
@@ -289,10 +369,11 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert preflight.default_configuration_fingerprint == expected.fingerprint
     assert preflight.default_sporting_fingerprint is not None
     assert len(preflight.default_sporting_fingerprint) == 64
+    assert preflight.default_lifecycle_fingerprint is not None
+    assert len(preflight.default_lifecycle_fingerprint) == 64
     assert "new_season_policy_activation_not_implemented" not in preflight.implementation_gaps
     assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
     assert preflight.implementation_gaps == (
-        "season_boundary_lifecycle_writer_not_implemented",
         "season_prospect_creation_bridge_not_implemented",
         "season_week_1_ranking_writer_not_implemented",
         "season_transition_atomic_writer_not_implemented",

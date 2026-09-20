@@ -138,7 +138,20 @@ def test_age_helper_and_lifecycle_integrity():
         )
 
 
-def test_season_transition_fails_closed():
-    before = state(season_week=61)
-    with pytest.raises(ValueError, match="ordinary same-season"):
+def test_season_transition_advances_contiguous_lifecycle():
+    before = state(age=45, birthday=37, season_week=61)
+    after = advance_lifecycle(before, RankingWeek(season_index=1, week=1))
+    player = after.players[0]
+    assert after.week == RankingWeek(season_index=1, week=1)
+    assert after.predecessor_fingerprint == before.fingerprint
+    assert (player.age, player.status, player.retirement_effective_week) == (
+        46,
+        "retired",
+        RankingWeek(season_index=1, week=1),
+    )
+
+
+def test_lifecycle_nonconsecutive_transition_fails_closed():
+    before = state(season_week=60)
+    with pytest.raises(ValueError, match="only consecutive"):
         advance_lifecycle(before, RankingWeek(season_index=1, week=1))

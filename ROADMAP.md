@@ -379,7 +379,12 @@ The preflight binds that exact default W1 sporting fingerprint. The shared weekl
 sporting staging path also preserves the persisted weekly predecessor fingerprint
 when terminal in-week match state is used; terminal match evidence remains separately
 bound through the completed-week context, keeping Saved Revision lineage valid.
-Remaining ordinary season-0–48 work is lifecycle/prospects, Week-1 Official
+The existing-player lifecycle boundary is now staged canonically as well: a
+consecutive Week-61 -> next-season Week-1 transition applies mapped birthdays and
+age-based retirement, preserves lifecycle lineage and can be persisted inside the
+future caller-owned Season transaction. Run prospects due in target Week 1 remain
+explicitly fail-closed rather than being omitted. Remaining ordinary season-0–48
+work is the prospect/Tour-entry + sporting-profile bridge, Week-1 Official
 Ranking/public state and the atomic rollover commit that persists all selected
 staging outputs together.
 

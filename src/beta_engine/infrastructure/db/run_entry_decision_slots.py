@@ -15,6 +15,7 @@ from beta_engine.domain.tournaments.run_entry_decision_slot import (
 from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
+    ResolvedApplicationValidationSlotModel,
     RunEntryDecisionSlotAuthorityModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
@@ -190,13 +191,15 @@ class RunEntryDecisionSlotStore:
             completed_entry_ordinals = set(
                 self.session.scalars(
                     select(
-                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
                     ).where(
-                        RunEntryDecisionSlotAuthorityModel.run_id == authority.run_id,
-                        RunEntryDecisionSlotAuthorityModel.branch_id == authority.branch_id,
-                        RunEntryDecisionSlotAuthorityModel.week_ordinal
+                        ResolvedApplicationValidationSlotModel.run_id
+                        == authority.run_id,
+                        ResolvedApplicationValidationSlotModel.branch_id
+                        == authority.branch_id,
+                        ResolvedApplicationValidationSlotModel.week_ordinal
                         == authority.week.ordinal,
-                        RunEntryDecisionSlotAuthorityModel.decision_slot_ordinal
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
                         < authority.decision_slot_ordinal,
                     )
                 ).all()

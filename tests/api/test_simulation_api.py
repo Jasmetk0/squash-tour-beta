@@ -1027,77 +1027,80 @@ def test_commissioner_wildcard_assignment_endpoints_validate_and_persist(tmp_pat
         assert "completed events" in rejected_after_start["detail"]
 
 
-def test_pre_draw_withdrawal_replacement_endpoints_validate_fold_and_persist(tmp_path) -> None:
-    database_url = f"sqlite:///{tmp_path / 'api-pre-draw.db'}"
+@pytest.mark.pr_critical
+def test_legacy_pre_draw_withdrawal_authoring_endpoints_are_retired(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'api-pre-draw-retired.db'}"
     with ApiServer(database_url=database_url) as server:
         status, _ = _request(
             "POST",
             f"{server.base_url}/runs",
-            {"run_id": "run-pre-draw", "seed": 6060, "season": 2027},
+            {"run_id": "run-pre-draw-retired", "seed": 6060, "season": 2027},
         )
         assert status == 201
 
-        status, state_payload = _request("GET", f"{server.base_url}/runs/run-pre-draw")
+        status, state_payload = _request(
+            "GET", f"{server.base_url}/runs/run-pre-draw-retired"
+        )
         assert status == 200
         event_id = state_payload["season_state"]["ordered_events"][0]["event_id"]
+        root = (
+            f"{server.base_url}/runs/run-pre-draw-retired/events/{event_id}"
+        )
 
-        status, initial_state = _request(
+        for method, payload in (
+            ("GET", None),
+            ("POST", {"withdrawn_player_id": "NOT-A-PLAYER"}),
+        ):
+            if payload is None:
+                retired_status, retired = _request(
+                    method, root + "/pre-draw-withdrawal"
+                )
+            else:
+                retired_status, retired = _request(
+                    method,
+                    root + "/pre-draw-withdrawal",
+                    payload,
+                )
+            assert retired_status == 410, retired
+            assert retired["detail"]["code"] == (
+                "legacy_pre_draw_withdrawal_retired"
+            )
+            assert "canonical Tournament Entry Field" in retired["detail"]["message"]
+
+        # Keep pre-retirement sidecar history readable for old saves and audit.
+        server.app.state.runtime.repository.append_admin_action(
+            run_id="run-pre-draw-retired",
+            event_id=event_id,
+            action_kind="pre_draw_withdrawal_replacement",
+            payload={
+                "withdrawn_player_id": "legacy-withdrawn",
+                "replacement_player_id": "legacy-replacement",
+                "replacement_source": "main_draw_waitlist",
+                "withdrawn_entry_id": "legacy-main-entry",
+                "replacement_entry_id": "legacy-placeholder-entry",
+                "notes": "pre-retirement historical action",
+            },
+        )
+        history_status, history = _request(
             "GET",
-            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
+            root + "/pre-draw-withdrawal-actions",
         )
-        assert status == 200
-        assert initial_state["run_id"] == "run-pre-draw"
-        assert initial_state["event_id"] == event_id
-        assert initial_state["eligible"] is True
-        assert initial_state["withdrawable_main_draw_players"]
-        withdrawn_player_id = initial_state["withdrawable_main_draw_players"][0]["player_id"]
-
-        status, invalid_player = _request(
-            "POST",
-            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
-            {"withdrawn_player_id": "NOT-A-PLAYER"},
-        )
-        assert status == 400
-        assert "was not found" in invalid_player["detail"]
-
-        status, result = _request(
-            "POST",
-            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
-            {"withdrawn_player_id": withdrawn_player_id},
-        )
-        assert status == 200
-        assert result["event_id"] == event_id
-        assert result["withdrawn_player_id"] == withdrawn_player_id
-        assert result["replacement_source"] in {"main_draw_waitlist", "qualification_waitlist"}
-        assert result["withdrawn_entry_id"]
-        assert result["replacement_entry_id"]
-
-        status, history = _request(
-            "GET",
-            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal-actions",
-        )
-        assert status == 200
-        assert [item["action_sequence"] for item in history["actions"]] == [1]
-        assert history["actions"][0]["action_kind"] == "pre_draw_withdrawal_replacement"
-        assert history["actions"][0]["withdrawn_player_id"] == withdrawn_player_id
-        assert history["actions"][0]["replacement_player_id"] == result["replacement_player_id"]
-        assert history["actions"][0]["notes"] is None
-
-        status, sim_result = _request("POST", f"{server.base_url}/runs/run-pre-draw/simulate/next-tournament")
-        assert status == 200
-        main_entries = sim_result["step"]["tournament_result"]["acceptance_list"]["main_draw_entries"]
-        withdrawn_entry = next(entry for entry in main_entries if entry["entry_id"] == result["withdrawn_entry_id"])
-        replacement_entry = next(entry for entry in main_entries if entry["entry_id"] == result["replacement_entry_id"])
-        assert withdrawn_entry["player_id"] is None
-        assert replacement_entry["player_id"] == result["replacement_player_id"]
-
-        status, rejected_after_completion = _request(
-            "POST",
-            f"{server.base_url}/runs/run-pre-draw/events/{event_id}/pre-draw-withdrawal",
-            {"withdrawn_player_id": withdrawn_player_id},
-        )
-        assert status == 400
-        assert "already completed" in rejected_after_completion["detail"]
+        assert history_status == 200
+        assert history["run_id"] == "run-pre-draw-retired"
+        assert history["event_id"] == event_id
+        assert history["actions"] == [
+            {
+                "action_sequence": 1,
+                "action_kind": "pre_draw_withdrawal_replacement",
+                "event_id": event_id,
+                "withdrawn_player_id": "legacy-withdrawn",
+                "replacement_player_id": "legacy-replacement",
+                "replacement_source": "main_draw_waitlist",
+                "withdrawn_entry_id": "legacy-main-entry",
+                "replacement_entry_id": "legacy-placeholder-entry",
+                "notes": "pre-retirement historical action",
+            }
+        ]
 
 
 def test_legacy_late_replacement_authoring_endpoints_are_retired(tmp_path) -> None:

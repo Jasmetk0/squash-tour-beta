@@ -9,7 +9,9 @@ from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
     validate_season_transition_configuration,
 )
+from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.sporting import (
+    CompletedWeekSportingContext,
     PlayerDevelopmentPolicy,
     PlayerSportingWeekState,
 )
@@ -32,7 +34,11 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
-from beta_engine.infrastructure.db.player_sporting_state import put_sporting
+from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
+from beta_engine.infrastructure.db.player_sporting_state import (
+    put_completed_context,
+    put_sporting,
+)
 
 
 @pytest.fixture
@@ -115,6 +121,16 @@ def _install_boundary(session, *, season_index=0):
             ranking_fingerprint=official.fingerprint,
         )
     )
+    put_lifecycle(
+        session,
+        PlayerLifecycleWeekState(
+            run_id="run",
+            branch_id="branch",
+            week=week,
+            players=(),
+            source_initial_world_fingerprint="world",
+        ),
+    )
     development_policy = PlayerDevelopmentPolicy(policy_id="development-outgoing")
     sporting = PlayerSportingWeekState(
         run_id="run",
@@ -127,6 +143,17 @@ def _install_boundary(session, *, season_index=0):
         stage_provenance="test",
     )
     put_sporting(session, sporting)
+    put_completed_context(
+        session,
+        CompletedWeekSportingContext(
+            run_id="run",
+            branch_id="branch",
+            completed_week=week,
+            competitive_match_counts=(),
+            source_fingerprints=(),
+            provenance="explicit empty W61 test context",
+        ),
+    )
     return week, official, sporting
 
 
@@ -260,6 +287,8 @@ def test_ordinary_preflight_fingerprints_default_configuration(database, monkeyp
     assert preflight.final_season is False
     assert preflight.target_week == RankingWeek(season_index=1, week=1)
     assert preflight.default_configuration_fingerprint == expected.fingerprint
+    assert preflight.default_sporting_fingerprint is not None
+    assert len(preflight.default_sporting_fingerprint) == 64
     assert "new_season_policy_activation_not_implemented" not in preflight.implementation_gaps
     assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
     assert preflight.implementation_gaps == (

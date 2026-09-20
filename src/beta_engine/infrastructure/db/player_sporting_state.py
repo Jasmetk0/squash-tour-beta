@@ -354,6 +354,62 @@ def bootstrap_sporting(session, world, policy: PlayerDevelopmentPolicy | None = 
     )
 
 
+def stage_sporting_transition(
+    *,
+    predecessor: PlayerSportingWeekState,
+    context: CompletedWeekSportingContext,
+    lifecycle,
+    target: RankingWeek,
+    target_effective_development_policy: PlayerDevelopmentPolicy | None = None,
+    terminal_players=None,
+    stage_hook=None,
+):
+    """Calculate one weekly sporting boundary without persistence.
+
+    Development and between-week recovery always use the completed week's effective
+    policy. Only the resulting target snapshot installs the target effective policy.
+
+    predecessor_fingerprint remains the identity of the persisted weekly
+    predecessor. A terminal in-week match state is separately bound through the
+    CompletedWeekSportingContext terminal fingerprint, so Saved Revision weekly
+    lineage stays valid.
+    """
+
+    lineage_predecessor_fingerprint = predecessor.fingerprint
+    development_input = (
+        predecessor.model_copy(update={"players": tuple(terminal_players)})
+        if terminal_players is not None
+        else predecessor
+    )
+    target_effective_development_policy = (
+        target_effective_development_policy
+        or predecessor.effective_development_policy
+    )
+    ages = {player.player_id: player.age for player in lifecycle.players}
+    if set(ages) != {player.player_id for player in development_input.players}:
+        raise ValueError("Player sporting and lifecycle predecessor rosters differ")
+    if {item.player_id for item in context.competitive_match_counts} != set(ages):
+        raise ValueError(
+            "Completed sporting context must contain exactly the predecessor roster"
+        )
+    developed = weekly_player_development_update(
+        development_input,
+        target=target,
+        player_ages=ages,
+        context=context,
+    )
+    if stage_hook is not None:
+        stage_hook("after_sporting_development_staging")
+    result = between_week_state_update(
+        developed,
+        context=context,
+        target_effective_development_policy=target_effective_development_policy,
+    )
+    return result.model_copy(
+        update={"predecessor_fingerprint": lineage_predecessor_fingerprint}
+    )
+
+
 def transition_sporting(
     session,
     *,
@@ -375,6 +431,7 @@ def transition_sporting(
     context = get_completed_context(
         session, run_id=run_id, branch_id=branch_id, completed_week=completed
     )
+    terminal_players = None
     if context.terminal_sporting_fingerprint:
         from beta_engine.application.authoritative_slot_matches import (
             AuthoritativeSlotMatchExecutor,
@@ -388,30 +445,17 @@ def transition_sporting(
             or terminal.fingerprint != context.terminal_sporting_fingerprint
         ):
             raise ValueError("Completed sporting context terminal head mismatch")
-        predecessor = predecessor.model_copy(update={"players": terminal.players})
-    target_effective_development_policy = (
-        target_effective_development_policy or predecessor.effective_development_policy
+        terminal_players = terminal.players
+    result = stage_sporting_transition(
+        predecessor=predecessor,
+        context=context,
+        lifecycle=lifecycle,
+        target=target,
+        target_effective_development_policy=target_effective_development_policy,
+        terminal_players=terminal_players,
+        stage_hook=stage_hook,
     )
-    ages = {player.player_id: player.age for player in lifecycle.players}
-    if set(ages) != {player.player_id for player in predecessor.players}:
-        raise ValueError("Player sporting and lifecycle predecessor rosters differ")
-    if {item.player_id for item in context.competitive_match_counts} != set(ages):
-        raise ValueError(
-            "Completed sporting context must contain exactly the predecessor roster"
-        )
-    developed = weekly_player_development_update(
-        predecessor, target=target, player_ages=ages, context=context
-    )
-    if stage_hook is not None:
-        stage_hook("after_sporting_development_staging")
-    result = put_sporting(
-        session,
-        between_week_state_update(
-            developed,
-            context=context,
-            target_effective_development_policy=target_effective_development_policy,
-        ),
-    )
+    result = put_sporting(session, result)
     if stage_hook is not None:
         stage_hook("after_between_week_staging")
     return result

@@ -183,6 +183,7 @@ beforeEach(() => {
     saved_revision_id: 'revision-7',
     draft_version: 4,
     default_configuration_fingerprint: '6'.repeat(64),
+    default_sporting_fingerprint: '7'.repeat(64),
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
     implementation_gaps: [
@@ -662,6 +663,7 @@ describe('AuthoritativeSimulationPanel', () => {
       saved_revision_id: 'revision-7',
       draft_version: 4,
       default_configuration_fingerprint: null,
+      default_sporting_fingerprint: null,
       position_fingerprint: '4'.repeat(64),
       state_blockers: [],
       implementation_gaps: [],

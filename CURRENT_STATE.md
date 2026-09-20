@@ -116,9 +116,17 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   outgoing supported policies; the Admin API can preview explicit incoming
   overrides without mutation. The reset registry is currently intentionally empty
   because there is still no authoritative branch-scoped resettable season-stat
-  producer. At Week 61 the Admin Simulation page renders the preflight, separates
-  branch blockers from engine gaps and hides ordinary Week Transition controls. It
-  does not reuse the legacy MVP rollover service.
+  producer. A dedicated ordinary cross-season sporting kernel now resolves and can
+  stage the next Season Week-1 sporting snapshot without advancing lifecycle or the
+  public world: development plus recovery still use the outgoing Week-61 effective
+  Development Policy, and only the resulting Week-1 state installs the selected
+  incoming policy. The Season preflight fingerprints this exact default sporting
+  candidate. The common weekly sporting path also fixes terminal-match lineage:
+  target snapshots now retain the persisted weekly predecessor fingerprint, while
+  terminal match state remains independently bound by CompletedWeekSportingContext.
+  At Week 61 the Admin Simulation page renders the preflight, separates branch
+  blockers from engine gaps and hides ordinary Week Transition controls. It does not
+  reuse the legacy MVP rollover service.
   The first Season Transition write primitive is now implemented separately:
   `season_closing_ranking.v1` calculates an immutable archived ranking immediately
   after Week 61 under the outgoing Week 61 policy, and an append-only store binds it

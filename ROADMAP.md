@@ -650,8 +650,11 @@ preview derives the current source authority read-only, commit is bound to its e
 fingerprint and re-resolves under one immediate transaction, and successful Draw
 repairs refresh the effective Draw/revision history. A `walkover` preview deliberately
 hands off to the existing canonical Simulation W/O command instead of introducing a
-second Draw-side W/O authority. The legacy simulation-run late-replacement controls
-remain compatibility UI and are not the source of this canonical mutation.
+second Draw-side W/O authority. The legacy simulation-run late-replacement authoring
+surface is now retired: Planned Event no longer exposes its Commissioner controls,
+and its eligibility/candidate/mutation endpoints return `410 Gone`. Historical
+sidecar action history stays readable for audit/replay compatibility; no new legacy
+late-replacement action can be authored through HTTP.
 
 The orchestrator intentionally requires Main to be in Draw Freeze; pre-freeze
 full-redraw/cascade routing remains in the existing specialized phase commands.

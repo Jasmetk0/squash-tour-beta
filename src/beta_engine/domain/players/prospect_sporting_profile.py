@@ -56,7 +56,7 @@ class ProspectSportingProfilePolicy(BaseModel):
 
 
 class ProspectSportingProfile(BaseModel):
-    """Immutable canonical sporting truth prepared for one generated prospect."""
+    """Immutable canonical 57-attribute profile prepared for one generated prospect."""
 
     model_config = ConfigDict(frozen=True)
 
@@ -111,7 +111,7 @@ def materialize_prospect_sporting_profile(
     potential_seed: str,
     policy: ProspectSportingProfilePolicy = DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
 ) -> ProspectSportingProfile:
-    """Derive deterministic hidden sporting truth without mutating world state."""
+    """Derive deterministic hidden profile truth without mutating world state."""
 
     for label, value in (
         ("player_id", player_id),

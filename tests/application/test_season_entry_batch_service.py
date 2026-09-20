@@ -153,3 +153,52 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
             event_ids=[first_id, second_id],
             request=request.model_copy(update={"dry_run": False}),
         )
+
+@pytest.mark.pr_critical
+def test_single_event_entry_decision_batch_preserves_complete_pre_cut_evidence(tmp_path):
+    service = make_service(tmp_path)
+    write_active(tmp_path / "active.json", count=40)
+    event_id = service.calendar_service._load_registry().calendars_by_season[
+        "2000/2001"
+    ].events[0].event_id
+
+    result = SeasonEntryBatchService(service).generate_overlapping_entry_lists(
+        event_ids=[event_id],
+        request=EntryBatchGenerateRequest(
+            seed=123,
+            dry_run=True,
+            max_alternates=0,
+            include_not_entered=False,
+        ),
+    )
+
+    assert result.metadata.event_ids == (event_id,)
+    assert result.metadata.dry_run is True
+    assert result.metadata.persisted is False
+    assert result.application_decisions
+    assert {
+        decision.event_id for decision in result.application_decisions
+    } == {event_id}
+    assert len(result.metadata.application_decisions_fingerprint) == 64
+    assert len(result.metadata.build_fingerprint) == 64
+    assert not (tmp_path / "entries.json").exists()
+
+
+@pytest.mark.pr_critical
+def test_entry_decision_batch_rejects_empty_or_duplicate_event_ids(tmp_path):
+    service = make_service(tmp_path)
+    batch = SeasonEntryBatchService(service)
+    request = EntryBatchGenerateRequest(seed=123, dry_run=True)
+
+    with pytest.raises(ValueError, match="at least one unique event ID"):
+        batch.generate_overlapping_entry_lists(event_ids=[], request=request)
+
+    event_id = service.calendar_service._load_registry().calendars_by_season[
+        "2000/2001"
+    ].events[0].event_id
+    with pytest.raises(ValueError, match="at least one unique event ID"):
+        batch.generate_overlapping_entry_lists(
+            event_ids=[event_id, event_id],
+            request=request,
+        )
+

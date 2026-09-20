@@ -195,6 +195,9 @@ def test_saved_revision_roundtrip_restores_closing_archive_atomically(database):
                 ranking_fingerprint=predecessor.fingerprint,
             )
         )
+        # The production restore path flushes recovered publications before archive
+        # installation. This fixture uses autoflush=False, so mirror that boundary.
+        session.flush()
         SeasonClosingRankingStore(session).install_restored(closing)
 
         payload = {"content": {}}

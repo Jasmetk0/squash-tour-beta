@@ -1,6 +1,10 @@
 import pytest
 from sqlalchemy import select
 
+from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeRunSimulationDriver,
+    AuthoritativeSimulationPosition,
+)
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
     validate_season_transition_configuration,
@@ -214,3 +218,55 @@ def test_final_season_has_no_incoming_configuration(database):
                 run_id="run",
                 branch_id="branch",
             )
+
+
+@pytest.mark.pr_critical
+def test_ordinary_preflight_fingerprints_default_configuration(database, monkeypatch):
+    with database.begin() as session:
+        completed, _, _ = _install_boundary(session)
+        expected = resolve_season_transition_configuration(
+            session,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=completed,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="a" * 64,
+        position_fingerprint="b" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preflight = driver.season_transition_preflight(
+        run_id="run",
+        branch_id="branch",
+    )
+
+    assert preflight.final_season is False
+    assert preflight.target_week == RankingWeek(season_index=1, week=1)
+    assert preflight.default_configuration_fingerprint == expected.fingerprint
+    assert "new_season_policy_activation_not_implemented" not in preflight.implementation_gaps
+    assert "season_scoped_reset_catalog_not_implemented" not in preflight.implementation_gaps
+    assert preflight.implementation_gaps == (
+        "season_boundary_lifecycle_writer_not_implemented",
+        "season_prospect_creation_bridge_not_implemented",
+        "season_week_1_ranking_writer_not_implemented",
+        "season_transition_atomic_writer_not_implemented",
+    )
+    assert preflight.state_blockers == ()
+    assert preflight.ready_for_execution is False

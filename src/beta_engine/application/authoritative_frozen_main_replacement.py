@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+from typing import Literal
 
-from beta_engine.domain.rankings.official import RankingWeek
+from pydantic import Field, model_validator
+
+from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.tournaments.replacement_source_authority import (
     TournamentReplacementSource,
     TournamentReplacementSourceAuthority,
@@ -27,6 +30,53 @@ from beta_engine.infrastructure.db.tournament_walkover_authority import (
 
 class AuthoritativeFrozenMainReplacementConflict(ValueError):
     pass
+
+
+class AuthoritativeFrozenMainReplacementRequest(FrozenInput):
+    withdrawn_player_id: str = Field(min_length=1)
+    unavailable_player_ids: tuple[str, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_unavailable(self):
+        if self.unavailable_player_ids != tuple(sorted(set(self.unavailable_player_ids))):
+            raise ValueError(
+                "Frozen Main replacement unavailable player IDs must be canonical and unique"
+            )
+        if self.withdrawn_player_id in self.unavailable_player_ids:
+            raise ValueError(
+                "Withdrawn player must not also be listed as an unavailable replacement"
+            )
+        return self
+
+
+class AuthoritativeFrozenMainReplacementCommitCommand(
+    AuthoritativeFrozenMainReplacementRequest
+):
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str = Field(min_length=1)
+    branch_id: str = Field(min_length=1)
+    event_id: str = Field(min_length=1)
+    expected_source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    main_process_window_ordinal: int = Field(ge=1)
+    qualification_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
+
+
+class AuthoritativeFrozenMainReplacementPreview(FrozenInput):
+    schema_version: Literal["authoritative_frozen_main_replacement_preview.v1"] = (
+        "authoritative_frozen_main_replacement_preview.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    withdrawn_player_id: str
+    source: TournamentReplacementSource
+    selected_player_id: str | None = None
+    physical_slot_index: int
+    cutoff_status: str
+    source_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_authority: TournamentReplacementSourceAuthority
+    commit_mode: Literal["draw_revision", "walkover_handoff"]
 
 
 @dataclass(frozen=True)
@@ -53,6 +103,40 @@ class AuthoritativeFrozenMainReplacement:
 
     def __init__(self, session):
         self.session = session
+
+    def preview(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        withdrawn_player_id: str,
+        unavailable_player_ids: tuple[str, ...] = (),
+    ) -> AuthoritativeFrozenMainReplacementPreview:
+        source = TournamentReplacementSourceAuthorityStore(self.session).resolve(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            unavailable_player_ids=tuple(sorted(set(unavailable_player_ids))),
+        )
+        return AuthoritativeFrozenMainReplacementPreview(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_id=withdrawn_player_id,
+            source=source.source,
+            selected_player_id=source.selected_player_id,
+            physical_slot_index=source.physical_slot_index,
+            cutoff_status=source.replacement_cutoff_authority.status,
+            source_authority_fingerprint=source.fingerprint,
+            source_authority=source,
+            commit_mode=(
+                "walkover_handoff"
+                if source.source == "walkover"
+                else "draw_revision"
+            ),
+        )
 
     def _retry_from_history(
         self,
@@ -129,6 +213,7 @@ class AuthoritativeFrozenMainReplacement:
         qualification_process_window_ordinal: int | None = None,
         repair_draw_seed: int | None = None,
         unavailable_player_ids: tuple[str, ...] = (),
+        expected_source_fingerprint: str | None = None,
         walkover_week: RankingWeek | None = None,
         walkover_slot_id: str | None = None,
         walkover_group_id: str | None = None,
@@ -149,6 +234,13 @@ class AuthoritativeFrozenMainReplacement:
             withdrawn_player_id=withdrawn_player_id,
             unavailable_player_ids=tuple(sorted(set(unavailable_player_ids))),
         )
+        if (
+            expected_source_fingerprint is not None
+            and source.fingerprint != expected_source_fingerprint
+        ):
+            raise AuthoritativeFrozenMainReplacementConflict(
+                "Frozen Main replacement source changed since preview"
+            )
         draw = TournamentDrawAuthorityStore(self.session).get(
             run_id=run_id,
             branch_id=branch_id,

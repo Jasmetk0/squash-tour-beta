@@ -440,6 +440,33 @@ def test_week_transition_blocks_birth_week_placeholder_sporting_profile(tmp_path
 
 
 @pytest.mark.pr_critical
+def test_week_transition_blocks_birth_week_seed_profile_mismatch(tmp_path):
+    path = tmp_path / "prospect-seed-profile-mismatch.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        run_id, branch_id, command = prepared_transition(
+            server,
+            "Prospect seed/profile mismatch",
+        )
+        target = RankingWeek(season_index=0, week=2)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            prospect = birth_week_prospect_model(
+                run_id=run_id,
+                target=target,
+                canonical_profile=True,
+            )
+            prospect.profile_seed = "tampered-profile-seed"
+            session.add(prospect)
+
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "week-transitions"
+        )
+        status, blocked = _request("POST", root + "/preview", command)
+        assert status == 409, blocked
+        assert "prospect_sporting_profile_unready" in str(blocked)
+
+
+@pytest.mark.pr_critical
 def test_week_transition_activates_birth_week_prospect_in_sporting_but_not_ranking(tmp_path):
     path = tmp_path / "prospect-birth-week-transition.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:

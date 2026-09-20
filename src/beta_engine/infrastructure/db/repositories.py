@@ -9002,8 +9002,7 @@ class SimulationPersistenceRepository:
     def upsert_run_prospects(self, records: list[RunProspectRecord]) -> None:
         with self._session_factory.begin() as session:
             pending_updates: list[tuple[RunProspectModel, dict[str, object]]] = []
-            changed_existing_ids: set[str] = set()
-            changed_run_ids: set[str] = set()
+            changed_existing_ids_by_run: dict[str, set[str]] = {}
 
             for record in records:
                 statement: Select[tuple[RunProspectModel]] = select(
@@ -9055,24 +9054,21 @@ class SimulationPersistenceRepository:
 
                 if any(getattr(model, key) != value for key, value in payload.items()):
                     pending_updates.append((model, payload))
-                    changed_existing_ids.add(record.prospect_id)
-                    changed_run_ids.add(record.run_id)
+                    changed_existing_ids_by_run.setdefault(record.run_id, set()).add(
+                        record.prospect_id
+                    )
 
             if pending_updates:
-                if len(changed_run_ids) != 1:
-                    raise ValueError(
-                        "Run prospect batch mutation must stay inside one Run"
+                for changed_run_id, changed_ids in changed_existing_ids_by_run.items():
+                    protected = self._activated_run_prospect_ids_in_session(
+                        session,
+                        run_id=changed_run_id,
+                        prospect_ids=changed_ids,
                     )
-                changed_run_id = next(iter(changed_run_ids))
-                protected = self._activated_run_prospect_ids_in_session(
-                    session,
-                    run_id=changed_run_id,
-                    prospect_ids=changed_existing_ids,
-                )
-                if protected:
-                    raise ValueError(
-                        "Lifecycle-activated Run prospect metadata is immutable"
-                    )
+                    if protected:
+                        raise ValueError(
+                            "Lifecycle-activated Run prospect metadata is immutable"
+                        )
                 for model, payload in pending_updates:
                     for key, value in payload.items():
                         setattr(model, key, value)

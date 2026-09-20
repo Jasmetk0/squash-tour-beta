@@ -315,14 +315,7 @@ def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
         assert season_preflight["final_season"] is False
         assert "not_at_season_boundary" in season_preflight["state_blockers"]
         assert season_preflight["ready_for_execution"] is False
-        assert (
-            "season_prospect_creation_bridge_not_implemented"
-            in season_preflight["implementation_gaps"]
-        )
-        assert (
-            "season_transition_atomic_writer_not_implemented"
-            not in season_preflight["implementation_gaps"]
-        )
+        assert season_preflight["implementation_gaps"] == []
         assert len(season_preflight["preflight_fingerprint"]) == 64
         assert Path(
             server.app.state.runtime.repository._engine.url.database

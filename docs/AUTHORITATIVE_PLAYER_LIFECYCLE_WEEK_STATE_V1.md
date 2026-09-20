@@ -46,7 +46,10 @@ calendar/season birth week, Week/Season Transition validates its age/birth ident
 and copies that stable player identity into the target branch lifecycle. The
 resulting player is a pre-Tour Draft with `tour_entry_week=None`; its deterministic
 ranking tie-break token is derived from stored prospect identity provenance. Earlier
-lifecycle snapshots do not contain it.
+lifecycle snapshots do not contain it. Once any branch lifecycle contains that
+prospect identity, its Run-scoped pregeneration metadata becomes immutable through
+the persistence/materialization boundary: idempotent identical writes remain valid,
+but normal overwrite/delete cannot retroactively change public identity metadata.
 
 Lifecycle is intentionally broader than canonical sporting state. A pre-Tour Draft
 may remain outside `player_sporting_week_state` while its full simulation-valid

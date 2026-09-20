@@ -3,6 +3,10 @@ import json
 import pytest
 from sqlalchemy import select
 
+from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeRunSimulationDriver,
+    AuthoritativeSimulationPosition,
+)
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
     FinalSeasonTransitionCommand,
@@ -175,12 +179,12 @@ def _install_final_boundary(session):
     session.flush()
 
 
-def _command():
+def _command(preflight_fingerprint: str = "a" * 64):
     return FinalSeasonTransitionCommand(
         command_id="close-final-season",
         run_id="run",
         branch_id="branch",
-        expected_preflight_fingerprint="a" * 64,
+        expected_preflight_fingerprint=preflight_fingerprint,
         expected_saved_revision_id="revision-before-final",
         expected_draft_version=7,
         final_saved_revision_id="revision-final",
@@ -189,15 +193,47 @@ def _command():
 
 
 @pytest.mark.pr_critical
-def test_atomic_final_season_writer_commits_one_complete_final_state(database):
-    command = _command()
+def test_atomic_final_season_writer_commits_one_complete_final_state(database, monkeypatch):
     with database.begin() as session:
         _install_final_boundary(session)
-        result = commit_final_season_transition(session, command)
-        assert result.run_status == COMPLETED_RUN_STATUS
-        assert result.completed_week == FINAL_WEEK
-        assert result.saved_revision_id == "revision-final"
-        assert result.draft_version == 8
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preflight = driver.season_transition_preflight(run_id="run", branch_id="branch")
+    assert preflight.final_season is True
+    assert preflight.target_week is None
+    assert preflight.state_blockers == ()
+    assert preflight.implementation_gaps == ()
+    assert preflight.ready_for_execution is True
+    assert preflight.saved_revision_id == "revision-before-final"
+    assert preflight.draft_version == 7
+
+    command = _command(preflight.preflight_fingerprint)
+    result = driver.finalize_final_season(command)
+    assert result.run_status == COMPLETED_RUN_STATUS
+    assert result.completed_week == FINAL_WEEK
+    assert result.saved_revision_id == "revision-final"
+    assert result.draft_version == 8
 
     with database() as session:
         run = session.get(RunContainerModel, "run")

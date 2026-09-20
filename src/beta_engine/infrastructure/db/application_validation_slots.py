@@ -17,6 +17,9 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
 )
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     ValidApplicationSubmissionBatchCommit,
     record_valid_application_submission_batch,
@@ -180,6 +183,21 @@ def record_resolved_application_validation_slot(
     resolved: ResolvedApplicationValidationSlot,
 ) -> ResolvedApplicationValidationCommit:
     """Persist complete validation truth and downstream valid submissions atomically."""
+
+    source_slot = RunEntryDecisionSlotStore(session).get(
+        run_id=resolved.slot.run_id,
+        branch_id=resolved.slot.branch_id,
+        week_ordinal=resolved.slot.week.ordinal,
+        decision_slot_ordinal=resolved.slot.decision_slot_ordinal,
+    )
+    if source_slot is None:
+        raise ApplicationValidationSlotConflict(
+            "Application validation requires a persisted Run entry-decision slot"
+        )
+    if source_slot != resolved.slot:
+        raise ApplicationValidationSlotConflict(
+            "Application validation source slot differs from persisted Run authority"
+        )
 
     store = ApplicationValidationSlotStore(session)
     existing = store.get(

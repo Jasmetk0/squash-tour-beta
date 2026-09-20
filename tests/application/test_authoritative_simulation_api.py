@@ -383,6 +383,18 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
 
         decisions = preview["authority"]["decisions"]
         assert decisions
+        with server.app.state.runtime.repository._session_factory() as session:
+            lifecycle = get_lifecycle(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+            assert lifecycle is not None
+            lifecycle_tokens = {
+                player.player_id: player.tie_break_token
+                for player in lifecycle.players
+            }
         validations = []
         for index, decision in enumerate(decisions):
             valid = index == 0
@@ -406,7 +418,9 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
                         "source_decision_fingerprint"
                     ],
                     "outcome": "valid" if valid else "invalid",
-                    "nr_tie_break_token": "http-nr-1" if valid else None,
+                    "nr_tie_break_token": (
+                        lifecycle_tokens[decision["player_id"]] if valid else None
+                    ),
                     "validation_policy_id": "http-explicit-policy.v1",
                     "validation_policy_fingerprint": "f" * 64,
                     "reasons": [] if valid else ["explicit_http_rejection"],

@@ -119,7 +119,11 @@ class SeasonClosingRankingStore:
         snapshot = SeasonClosingRankingSnapshot.model_validate_json(
             snapshot.model_dump_json()
         )
-        self._scope(snapshot.run_id, snapshot.branch_id, writing=True)
+        self._scope(snapshot.run_id, snapshot.branch_id)
+        run = self.session.get(RunContainerModel, snapshot.run_id)
+        branch = self.session.get(RunBranchModel, snapshot.branch_id)
+        if run.read_only or branch.read_only:
+            raise ValueError("Restored Season Closing Ranking scope is read-only")
         season_index = snapshot.completed_week.season_index
         existing = self.get(
             run_id=snapshot.run_id,

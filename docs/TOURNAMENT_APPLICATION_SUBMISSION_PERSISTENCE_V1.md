@@ -23,3 +23,24 @@ transaction.
 
 The submission history is captured in Saved Revisions and restored before Tour-entry
 triggers so recovered trigger evidence cannot point at missing application truth.
+
+
+## Entry decision slot batching
+
+Master requires every player decision inside one entry decision slot to read the same
+pre-slot snapshot and become visible together. The canonical write boundary is
+therefore now `TournamentApplicationSubmissionBatchAuthority`, not technical
+per-application call order.
+
+A batch has one Run/Branch, FAX week and global decision-slot ordinal. All contained
+valid submissions must share that exact boundary and are stored together.
+
+If one pre-Tour player submits several first applications in the same slot, all are
+historically simultaneous. The lexicographically first application ID is used only as
+stable `PlayerTourEntryTrigger` provenance; it does not imply sporting priority,
+causality or an earlier decision. Reversing input order therefore produces the same
+batch fingerprint and first-entry truth.
+
+The single-submission writer remains a compatibility wrapper for slots containing one
+valid application. Calling it repeatedly for distinct simultaneous first applications
+fails closed rather than letting call order decide provenance.

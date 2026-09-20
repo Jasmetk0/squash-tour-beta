@@ -815,7 +815,7 @@ export function AuthoritativeSimulationPanel({
         </>
       ) : null}
 
-      {position ? (
+      {position && position.current_week.week !== 61 ? (
         <>
           <h4>Canonical Week Transition</h4>
           {!position.week_ready_for_transition ? (

@@ -75,6 +75,7 @@ class RankingWeekCommand(FrozenInput):
                 raise ValueError("Correction and ranking command scope mismatch")
             if (
                 correction.effective_week != context.target_week
+                or correction.result.first_publication_week is None
                 or correction.result.first_publication_week.ordinal
                 >= context.target_week.ordinal
                 or correction.previous_fingerprint is None

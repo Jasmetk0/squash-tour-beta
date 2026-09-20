@@ -1336,7 +1336,7 @@ Status type values are limited to:
 | `/viewer/players` | Players Hub | Players | existing_needs_cleanup | Existing top-level players page should become player spotlight hub. |
 | `/viewer/players/all` | All Players | Players | existing_needs_cleanup | Existing run player list can inform fields. |
 | `/viewer/players/active` | Active Players | Players | new_data_page | Selected-context active player list. |
-| `/viewer/players/next-gen` | Prospects / Next Gen | Players | new_placeholder | U23/prospect scaffold. |
+| `/viewer/players/next-gen` | Prospects / Next Gen | Players | new_data_page | Canonical pre-Tour list from the selected Viewer Branch lifecycle; future pregenerated cohorts remain hidden. |
 | `/viewer/players/retired` | Retired Players | Players | new_placeholder | Historical archive scaffold. |
 | `/viewer/players/compare` | Compare Players | Players / H2H | shared_shortcut | Shared destination from Players and H2H. |
 | `/viewer/countries` | Countries Hub | Countries | existing_needs_cleanup | Existing countries/world data needs sports-facing hub. |

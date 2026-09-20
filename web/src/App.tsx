@@ -30,7 +30,7 @@ import {
   ViewerRaceSnapshotDetailPage
 } from './pages/viewer/rankings'
 import { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './pages/viewer/tour'
-import { ViewerPlayersPage, ViewerCountriesPage } from './pages/viewer/people'
+import { ViewerPlayersPage, ViewerCountriesPage, ViewerNextGenPlayersPage } from './pages/viewer/people'
 import { ViewerSearchPage, ViewerH2HPage, ViewerPlayerComparisonPage, ViewerMatchPredictorPage } from './pages/viewer/explore'
 import { ViewerHistoryPage } from './pages/viewer/history'
 import { ViewerRecordsPage, ViewerStatsPage } from './pages/viewer/stats'
@@ -200,7 +200,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/players" element={<ViewerPlayersPage />} />
         <Route path="viewer/players/all" element={<ViewerPlayersDeferredPage kind="all" />} />
         <Route path="viewer/players/active" element={<ViewerPlayersDeferredPage kind="active" />} />
-        <Route path="viewer/players/next-gen" element={<ViewerPlayersDeferredPage kind="next-gen" />} />
+        <Route path="viewer/players/next-gen" element={<ViewerNextGenPlayersPage />} />
         <Route path="viewer/players/retired" element={<ViewerPlayersDeferredPage kind="retired" />} />
         <Route path="viewer/players/compare" element={<ViewerPlayerComparisonPage />} />
         <Route path="viewer/countries" element={<ViewerCountriesPage />} />

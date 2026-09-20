@@ -9001,6 +9001,9 @@ class SimulationPersistenceRepository:
 
     def upsert_run_prospects(self, records: list[RunProspectRecord]) -> None:
         with self._session_factory.begin() as session:
+            pending_updates: list[tuple[RunProspectModel, dict[str, object]]] = []
+            changed_existing_ids_by_run: dict[str, set[str]] = {}
+
             for record in records:
                 statement: Select[tuple[RunProspectModel]] = select(
                     RunProspectModel
@@ -9009,7 +9012,7 @@ class SimulationPersistenceRepository:
                     RunProspectModel.prospect_id == record.prospect_id,
                 )
                 model = session.execute(statement).scalar_one_or_none()
-                payload = dict(
+                payload: dict[str, object] = dict(
                     world_id=record.world_id,
                     season_start_year=record.season_start_year,
                     season_label=record.season_label,
@@ -9047,7 +9050,26 @@ class SimulationPersistenceRepository:
                             **payload,
                         )
                     )
-                else:
+                    continue
+
+                if any(getattr(model, key) != value for key, value in payload.items()):
+                    pending_updates.append((model, payload))
+                    changed_existing_ids_by_run.setdefault(record.run_id, set()).add(
+                        record.prospect_id
+                    )
+
+            if pending_updates:
+                for changed_run_id, changed_ids in changed_existing_ids_by_run.items():
+                    protected = self._activated_run_prospect_ids_in_session(
+                        session,
+                        run_id=changed_run_id,
+                        prospect_ids=changed_ids,
+                    )
+                    if protected:
+                        raise ValueError(
+                            "Lifecycle-activated Run prospect metadata is immutable"
+                        )
+                for model, payload in pending_updates:
                     for key, value in payload.items():
                         setattr(model, key, value)
 
@@ -9058,6 +9080,15 @@ class SimulationPersistenceRepository:
         if not prospect_ids:
             return
         with self._session_factory.begin() as session:
+            protected = self._activated_run_prospect_ids_in_session(
+                session,
+                run_id=run_id,
+                prospect_ids=set(prospect_ids),
+            )
+            if protected:
+                raise ValueError(
+                    "Lifecycle-activated Run prospect metadata is immutable"
+                )
             session.query(RunProspectModel).filter(
                 RunProspectModel.run_id == run_id,
                 RunProspectModel.prospect_id.in_(prospect_ids),
@@ -9104,6 +9135,59 @@ class SimulationPersistenceRepository:
                 self._to_run_prospect_record(model)
                 for model in session.execute(statement).scalars().all()
             ]
+
+    @staticmethod
+    def _activated_run_prospect_ids_in_session(
+        session: Session,
+        *,
+        run_id: str,
+        prospect_ids: set[str],
+    ) -> set[str]:
+        if not prospect_ids:
+            return set()
+
+        found: set[str] = set()
+        statement = (
+            select(PlayerLifecycleWeekStateModel.payload_json)
+            .where(PlayerLifecycleWeekStateModel.run_id == run_id)
+            .order_by(PlayerLifecycleWeekStateModel.week_ordinal.desc())
+        )
+        for payload_json in session.execute(statement).scalars():
+            payload = json.loads(payload_json)
+            players = payload.get("players", [])
+            if not isinstance(players, list):
+                continue
+            for player in players:
+                if not isinstance(player, dict):
+                    continue
+                player_id = player.get("player_id")
+                origin = player.get("origin")
+                if (
+                    isinstance(player_id, str)
+                    and player_id in prospect_ids
+                    and isinstance(origin, str)
+                    and origin.startswith("run_prospect:")
+                ):
+                    found.add(player_id)
+            if found == prospect_ids:
+                break
+        return found
+
+    def list_activated_run_prospect_ids(
+        self,
+        *,
+        run_id: str,
+        prospect_ids: list[str] | tuple[str, ...] | set[str],
+    ) -> set[str]:
+        """Return prospect ids already frozen into any branch lifecycle snapshot."""
+
+        wanted = {prospect_id for prospect_id in prospect_ids if prospect_id}
+        with self._session_factory() as session:
+            return self._activated_run_prospect_ids_in_session(
+                session,
+                run_id=run_id,
+                prospect_ids=wanted,
+            )
 
     def count_run_prospects(
         self,

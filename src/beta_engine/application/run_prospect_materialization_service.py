@@ -114,6 +114,15 @@ class RunProspectMaterializationService:
         conflicts = sorted(set(payload_conflicts + [record.prospect_id for record in stale_records]))
         if conflicts and not overwrite:
             raise RunProspectMaterializationConflictError(conflicts)
+        if overwrite and conflicts:
+            activated_conflicts = sorted(
+                self.repository.list_activated_run_prospect_ids(
+                    run_id=run_id,
+                    prospect_ids=conflicts,
+                )
+            )
+            if activated_conflicts:
+                raise RunProspectMaterializationConflictError(activated_conflicts)
 
         to_upsert = [record for record in expected if overwrite or record.prospect_id not in existing_by_id]
         self.repository.upsert_run_prospects(to_upsert)

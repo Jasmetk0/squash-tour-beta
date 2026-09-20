@@ -44,7 +44,6 @@ export const viewerRankingDeferredConfigs: Record<
 export type ViewerPlayersDeferredKind =
   | 'all'
   | 'active'
-  | 'next-gen'
   | 'retired'
 
 export const viewerPlayersDeferredConfigs: Record<
@@ -60,11 +59,6 @@ export const viewerPlayersDeferredConfigs: Record<
     title: 'Active Players',
     deferredCopy:
       'No active-player list is shown until a real player status read model exists.',
-  },
-  'next-gen': {
-    title: 'Prospects / Next Gen',
-    deferredCopy:
-      'No prospects list is shown until a real Next Gen player read model exists.',
   },
   retired: {
     title: 'Retired Players',

@@ -1,10 +1,17 @@
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import text
 
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationRunInfo, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.repositories import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 from beta_engine.application.season_models import SeasonState
+from beta_engine.domain.players.lifecycle import (
+    PlayerLifecycleIdentity,
+    PlayerLifecycleWeekState,
+)
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 
 
 def _repository(tmp_path):
@@ -63,6 +70,70 @@ def test_upsert_is_idempotent_and_does_not_mutate_active_state_or_rankings(tmp_p
     assert repository.list_generated_player_provenance(run_id="run-p") == []
     assert repository.count_ranking_snapshots(run_id="run-p") == 0
     assert repository.count_race_snapshots(run_id="run-p") == 0
+
+
+def _activate_prospect(
+    repository: SimulationPersistenceRepository,
+    record: RunProspectRecord,
+) -> None:
+    week = RankingWeek(
+        season_index=record.season_start_year - 2000,
+        week=record.season_week,
+    )
+    with repository._session_factory.begin() as session:
+        put_lifecycle(
+            session,
+            PlayerLifecycleWeekState(
+                run_id=record.run_id,
+                branch_id="branch",
+                week=week,
+                players=(
+                    PlayerLifecycleIdentity(
+                        player_id=record.prospect_id,
+                        birth_year=record.birth_year,
+                        birth_year_week=record.birth_year_week,
+                        tie_break_token="a" * 64,
+                        tie_break_provenance="activated prospect immutability test",
+                        tour_entry_week=None,
+                        age=record.age,
+                        status="active",
+                        retirement_effective_week=None,
+                        origin=(
+                            f"run_prospect:{record.source_type}:"
+                            f"{record.profile_version}"
+                        ),
+                    ),
+                ),
+                source_initial_world_fingerprint="prospect-immutability-test",
+            ),
+        )
+
+
+def test_repository_rejects_mutating_or_deleting_activated_prospect_metadata(tmp_path):
+    repository, _ = _repository(tmp_path)
+    record = _record()
+    repository.upsert_run_prospects([record])
+    _activate_prospect(repository, record)
+
+    with pytest.raises(ValueError, match="metadata is immutable"):
+        repository.upsert_run_prospects(
+            [
+                RunProspectRecord(
+                    **(record.__dict__ | {"display_name": "Changed after visibility"})
+                )
+            ]
+        )
+
+    with pytest.raises(ValueError, match="metadata is immutable"):
+        repository.delete_run_prospects_by_ids(
+            run_id=record.run_id,
+            prospect_ids=[record.prospect_id],
+        )
+
+    assert repository.get_run_prospect(
+        run_id=record.run_id,
+        prospect_id=record.prospect_id,
+    ) == record
 
 
 def test_deterministic_prospect_id_is_stable_and_input_sensitive():
@@ -140,6 +211,55 @@ def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     repaired = service.materialize_15yo_cohort(run_id="run-i", base_annual_intake_target=2, country_code="GER", overwrite=True)
     assert repaired.conflict_count == 1
     assert repository.get_run_prospect(run_id="run-i", prospect_id=record.prospect_id).display_name != "Tampered Prospect"
+
+
+def test_materialization_overwrite_cannot_rewrite_activated_prospect(tmp_path):
+    repository, engine = _repository(tmp_path)
+    repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-activated", season=2027, seed=1)
+    )
+    service = _materialization_service(repository)
+    service.materialize_15yo_cohort(
+        run_id="run-activated",
+        base_annual_intake_target=2,
+        country_code="GER",
+    )
+    record = repository.list_run_prospects(
+        run_id="run-activated",
+        country_code="GER",
+        limit=None,
+    )[0]
+    _activate_prospect(repository, record)
+
+    # Simulate external corruption/policy drift below the repository contract.
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE run_prospects SET display_name=:name "
+                "WHERE run_id=:run_id AND prospect_id=:prospect_id"
+            ),
+            {
+                "name": "Changed after visibility",
+                "run_id": record.run_id,
+                "prospect_id": record.prospect_id,
+            },
+        )
+
+    with pytest.raises(RunProspectMaterializationConflictError) as exc:
+        service.materialize_15yo_cohort(
+            run_id="run-activated",
+            base_annual_intake_target=2,
+            country_code="GER",
+            overwrite=True,
+        )
+    assert exc.value.conflicts == [record.prospect_id]
+    assert (
+        repository.get_run_prospect(
+            run_id=record.run_id,
+            prospect_id=record.prospect_id,
+        ).display_name
+        == "Changed after visibility"
+    )
 
 
 def test_materialization_policy_conflict_removes_only_stale_scope_records_on_overwrite(tmp_path):

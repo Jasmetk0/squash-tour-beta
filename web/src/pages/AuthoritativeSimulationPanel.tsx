@@ -5,6 +5,7 @@ import {
   adoptAuthoritativeWeekScheduleProposal,
   getAuthoritativeSimulationPosition,
   getAuthoritativeSeasonTransitionPreflight,
+  getAdminVisibleProspects,
   previewAuthoritativeSeasonTransitionConfiguration,
   advanceAuthoritativeOrdinarySeason,
   finalizeAuthoritativeFinalSeason,
@@ -91,6 +92,23 @@ export function AuthoritativeSimulationPanel({
     enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
+  const visibleProspectsQuery = useQuery({
+    queryKey: [
+      'admin-visible-pre-tour-prospects',
+      runId,
+      branchId,
+      positionQuery.data?.current_week.season_index,
+      positionQuery.data?.current_week.week
+    ],
+    queryFn: () =>
+      getAdminVisibleProspects(runId, branchId, {
+        limit: 10,
+        offset: 0
+      }),
+    enabled: Boolean(enabled && positionQuery.data),
+    retry: false
+  })
+
   const seasonTransitionPreflightQuery = useQuery({
     queryKey: [
       'authoritative-season-transition-preflight',
@@ -593,6 +611,43 @@ export function AuthoritativeSimulationPanel({
               { label: 'Saved Revision head', value: savedRevisionId ?? '—' }
             ]}
           />
+          <h4>Historically visible pre-Tour prospects</h4>
+          {visibleProspectsQuery.isLoading ? (
+            <p className="status">Loading lifecycle-visible prospects…</p>
+          ) : null}
+          {visibleProspectsQuery.error ? (
+            <p className="error">
+              Prospect visibility unavailable: {formatApiError(visibleProspectsQuery.error)}
+            </p>
+          ) : null}
+          {visibleProspectsQuery.data ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Visible prospect count', value: visibleProspectsQuery.data.total },
+                  {
+                    label: 'Lifecycle week',
+                    value: `Season index ${visibleProspectsQuery.data.week.season_index} · Week ${visibleProspectsQuery.data.week.week}`
+                  },
+                  {
+                    label: 'Returned',
+                    value: visibleProspectsQuery.data.prospects.length
+                  }
+                ]}
+              />
+              {visibleProspectsQuery.data.prospects.length ? (
+                <ul aria-label="Canonical visible pre-Tour prospects">
+                  {visibleProspectsQuery.data.prospects.map((prospect) => (
+                    <li key={prospect.player_id}>
+                      {prospect.display_name} · {prospect.country_code} · age {prospect.age}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="status">No pre-Tour prospects are visible in this lifecycle week.</p>
+              )}
+            </>
+          ) : null}
         </>
       ) : null}
 

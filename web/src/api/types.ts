@@ -1179,6 +1179,38 @@ export type RunProspectListResponse = {
 }
 
 
+export type VisibleProspectWeek = {
+  season_index: number
+  week: number
+}
+
+export type VisiblePreTourProspect = {
+  player_id: string
+  display_name: string
+  short_name: string | null
+  country_code: string
+  country_name: string | null
+  age: number
+  birth_year: number
+  birth_year_week: number
+  lifecycle_status: 'active' | 'retired'
+  tour_status: 'pre_tour'
+  visible_since_week: VisibleProspectWeek
+}
+
+export type VisiblePreTourProspects = {
+  schema_version: 'visible_pre_tour_prospects.v1'
+  run_id: string
+  branch_id: string
+  week: VisibleProspectWeek
+  lifecycle_fingerprint: string
+  total: number
+  limit: number
+  offset: number
+  prospects: VisiblePreTourProspect[]
+}
+
+
 export type MaterializeRunProspectsRequest = {
   base_annual_intake_target?: number
   season_growth_rate?: number

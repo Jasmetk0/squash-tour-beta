@@ -54,6 +54,7 @@ const api = vi.hoisted(() => ({
   listRuns: vi.fn(),
   listRunContainers: vi.fn(),
   getViewerOfficialRunContext: vi.fn(),
+  getViewerVisibleProspects: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
@@ -128,6 +129,17 @@ function resetApiMocks(): void {
     current_event_sequence: null,
     resolution_version: 'viewer_official_branch_v1'
   }))
+  api.getViewerVisibleProspects.mockResolvedValue({
+    schema_version: 'visible_pre_tour_prospects.v1',
+    run_id: 'run-a',
+    branch_id: 'run-a-official',
+    week: { season_index: 29, week: 1 },
+    lifecycle_fingerprint: 'a'.repeat(64),
+    total: 0,
+    limit: 50,
+    offset: 0,
+    prospects: []
+  })
   api.getViewerRankingTable.mockRejectedValue(new Error('Viewer read model unavailable in test'))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
@@ -2552,7 +2564,6 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     const routes = [
       ['/viewer/players/all', 'All Players'],
       ['/viewer/players/active', 'Active Players'],
-      ['/viewer/players/next-gen', 'Prospects / Next Gen'],
       ['/viewer/players/retired', 'Retired Players']
     ] as const
 
@@ -2577,7 +2588,6 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     const routes = [
       ['/viewer/players/all', 'All Players', 'No full player directory is shown until a real player directory read model exists.'],
       ['/viewer/players/active', 'Active Players', 'No active-player list is shown until a real player status read model exists.'],
-      ['/viewer/players/next-gen', 'Prospects / Next Gen', 'No prospects list is shown until a real Next Gen player read model exists.'],
       ['/viewer/players/retired', 'Retired Players', 'No retired-player list is shown until a real player career-status read model exists.']
     ] as const
 

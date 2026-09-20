@@ -307,7 +307,13 @@ attributes/development/potential/traits, but reports no transition blocker. Spor
 state may be a simulation-ready subset of lifecycle, so a pre-Tour Draft prospect
 does not enter weekly development or normal junior match simulation merely because
 it became visible. Full canonical sporting-profile creation remains required before
-an operation that actually needs that sporting state.
+an operation that actually needs that sporting state. A branch-aware prospect read
+model now uses exact lifecycle history as the visibility authority: Admin may inspect
+an exact historical week and Viewer exposes only the current selected Viewer Branch
+pre-Tour population. Future pregenerated cohorts and seed/profile internals are not
+Viewer data. Once a prospect becomes lifecycle-visible on any branch, the backing
+public identity metadata is immutable under normal prospect materialization so later
+overwrite cannot rewrite historical Viewer identity.
 
 Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state
@@ -401,8 +407,9 @@ execute through the reviewed Admin flow. Saved Revision recovery preserves ordin
 Season Transition World Events through `ranking_revision_state.v7` while keeping
 Week Transition receipts strict. Remaining prospect work is the canonical
 simulation-valid sporting/profile materialization required before Tour competition,
-plus historically scoped Admin/Viewer prospect surfaces; placeholder profile data is
-not promoted into fake 57-attribute sporting state.
+plus later Tour-entry activation; the historically scoped Admin/Viewer prospect
+surface is now implemented from lifecycle truth. Placeholder profile data is not
+promoted into fake 57-attribute sporting state.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

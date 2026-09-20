@@ -413,7 +413,11 @@ completed-week development/recovery, while keeping `tour_entry_week=None` and
 excluding them from Official Ranking. Placeholder/corrupt profile evidence fails
 closed at the affected transition boundary. The next prospect lifecycle authority gap
 is formal Tour-entry activation from the Master-defined trigger (first valid MSA Tour
-application or definitive WC assignment). The historically scoped Admin/Viewer
+application or definitive WC assignment). Do not derive that event from the later
+Tournament Entry Field cut: the current field application payload has no authoritative
+submission week, and the older wildcard action is not branch-owned lifecycle truth.
+Introduce exact branch-scoped submission / definitive-WC trigger evidence first, then
+apply the one-time lifecycle Tour-entry mutation. The historically scoped Admin/Viewer
 prospect surface is implemented from lifecycle truth.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the

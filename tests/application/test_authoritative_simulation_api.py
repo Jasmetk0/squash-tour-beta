@@ -450,6 +450,14 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
         assert validated["valid_submission_count"] == 1
         assert len(validated["first_tour_entry_trigger_fingerprints"]) == 1
 
+        # A lost HTTP response is safe to retry even though successful validation
+        # advances canonical Position beyond the Entry slot.
+        assert _request(
+            "POST",
+            root + "/entry-decision-slot/validation/review",
+            review_command,
+        ) == (201, validated)
+
         status, resolved_inspection = _request(
             "GET",
             root + "/entry-decision-slot/1",

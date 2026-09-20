@@ -42,6 +42,7 @@ def accepted_ids(entry_list):
     }
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path):
     service = make_service(tmp_path)

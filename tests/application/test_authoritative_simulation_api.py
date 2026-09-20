@@ -27,6 +27,9 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
     put_sporting,
 )
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
+)
 
 from test_authoritative_slot_matches import session_at, _multi_driver_fixture
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
@@ -284,6 +287,79 @@ def _install_owned_state(server, package, run_id, branch_id, additional_packages
             ),
         )
     return week
+
+
+@pytest.mark.pr_critical
+def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_path):
+    server, package = _server_state(tmp_path / "entry-slot-http")
+    entry_service = server.app.dependency_overrides[
+        get_season_match_service
+    ]().draw_service.entry_list_service
+    before_registry = entry_service._load_registry().model_dump(mode="json")
+
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server, display_name="Authoritative Entry Slot HTTP"
+        )
+        week = _install_owned_state(server, package, run_id, branch_id)
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            "/authoritative-simulation"
+        )
+
+        status, preview = _request(
+            "POST",
+            root + "/entry-decision-slot/preview",
+            {
+                "event_ids": [package.event_id],
+                "decision_slot_ordinal": 1,
+                "seed": 5151,
+            },
+        )
+        assert status == 200
+        assert preview["week"] == week.model_dump(mode="json")
+        assert preview["event_ids"] == [package.event_id]
+        assert preview["expected_revision_id"] == revision
+        assert preview["decision_slot_ordinal"] == 1
+        assert preview["persisted"] is False
+        assert preview["decision_count"] == len(preview["authority"]["decisions"])
+
+        command = {
+            "command_id": "entry-slot-1",
+            "expected_week": preview["week"],
+            "expected_revision_id": preview["expected_revision_id"],
+            "decision_slot_ordinal": preview["decision_slot_ordinal"],
+            "event_ids": preview["event_ids"],
+            "seed": preview["seed"],
+            "expected_entry_batch_fingerprint": preview["entry_batch_fingerprint"],
+            "expected_slot_fingerprint": preview["slot_fingerprint"],
+        }
+        status, committed = _request(
+            "POST",
+            root + "/entry-decision-slot/commit",
+            command,
+        )
+        assert status == 201
+        assert committed["adoption"] == "committed"
+        assert committed["slot_fingerprint"] == preview["slot_fingerprint"]
+
+        status, retry = _request(
+            "POST",
+            root + "/entry-decision-slot/commit",
+            command,
+        )
+        assert status == 201
+        assert retry["adoption"] == "exact_retry"
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            stored = RunEntryDecisionSlotStore(session).list(
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+            assert len(stored) == 1
+            assert stored[0].fingerprint == preview["slot_fingerprint"]
+
+    assert entry_service._load_registry().model_dump(mode="json") == before_registry
 
 
 @pytest.mark.pr_critical

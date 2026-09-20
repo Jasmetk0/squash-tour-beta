@@ -639,3 +639,21 @@ define it. Auto-BYE-only Q terminals and group-Qualification LL ordering remain
 later edges. See
 `docs/MASTER_CLASSIC_BRACKET_GEOMETRY_V2.md` and
 `docs/CANONICAL_PRE_DRAW_WITHDRAWAL_V1.md`.
+
+## Current follow-up after #849
+
+The first canonical **prospect sporting-profile kernel** now exists as a pure,
+versioned domain boundary. From the already-owned hidden prospect profile,
+development and potential seeds it deterministically derives all 57 canonical
+`0..200` attributes, a hidden potential identity/value and development timing under
+`prospect-sporting-profile.provisional.v1`. The result carries the exact policy
+fingerprint and only seed digests; raw hidden seeds are not copied into the profile
+payload.
+
+This does **not** yet make a birth-week prospect part of
+`player_sporting_week_state`. Lifecycle visibility therefore remains independent
+from sporting participation: a pre-Tour Draft does not start ordinary weekly
+development, junior match simulation, Official Ranking or Tour competition merely
+because the hidden profile kernel can now be derived. Persistence into newly
+pregenerated prospect metadata and the later guarded adoption/Tour-entry boundary
+remain separate follow-ups. See `docs/PROSPECT_SPORTING_PROFILE_V1.md`.

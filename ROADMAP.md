@@ -405,11 +405,12 @@ non-empty reset catalog fails closed until an authoritative reset adapter exists
 Ordinary boundaries, including a target Week 1 with birth-week prospects, can now
 execute through the reviewed Admin flow. Saved Revision recovery preserves ordinary
 Season Transition World Events through `ranking_revision_state.v7` while keeping
-Week Transition receipts strict. Remaining prospect work is the canonical
-simulation-valid sporting/profile materialization required before Tour competition,
-plus later Tour-entry activation; the historically scoped Admin/Viewer prospect
-surface is now implemented from lifecycle truth. Placeholder profile data is not
-promoted into fake 57-attribute sporting state.
+Week Transition receipts strict. Remaining prospect work now has a first pure canonical 57-attribute
+sporting-profile generation kernel, but persistence/adoption is still required before
+Tour competition. Later formal Tour-entry activation remains separate; the
+historically scoped Admin/Viewer prospect surface is implemented from lifecycle truth.
+Placeholder profile data is not promoted into fake sporting state, and birth-week
+visibility alone still does not opt a prospect into weekly sporting development.
 
 The canonical authority now supports equal `Q1..Qn` bracket sections and the
 execution/result pipeline preserves all corresponding promotions. A focused

@@ -190,7 +190,6 @@ beforeEach(() => {
     position_fingerprint: '4'.repeat(64),
     state_blockers: [],
     implementation_gaps: [
-      'season_prospect_creation_bridge_not_implemented',
       'season_prospect_creation_bridge_not_implemented'
     ],
     ready_for_execution: false,

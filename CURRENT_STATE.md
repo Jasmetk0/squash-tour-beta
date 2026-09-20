@@ -136,8 +136,16 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   season-scoped statistics registry is explicitly empty rather than fabricating
   zero-valued Race/counter data from legacy stores. Final Marker identity is not
   persisted early: it binds to a Saved Revision only after that revision has been
-  staged inside the future atomic Season Transition transaction. Run Completed and
-  the full atomic Season Transition remain open.
+  staged inside the future atomic Season Transition transaction. A final-Run
+  lifecycle kernel now also exists: canonical `working` and legacy `active`
+  product-container states may transition to `completed` only when the Branch head
+  is a Saved Revision carrying matching Season Closure evidence for 2049/50 Week 61.
+  Exact retries are idempotent; `archived`, non-final weeks, missing closure evidence
+  and non-head revisions fail closed. Final closure evidence is a Saved Revision
+  component; restore may read it, while direct forking from that final closure
+  revision remains blocked until branch/revision identity remapping is implemented.
+  The full atomic Season Transition command that creates that revision and invokes
+  this completion kernel remains open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

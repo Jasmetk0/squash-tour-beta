@@ -1,4 +1,4 @@
-"""Read-only inspection of RunProspects blocking canonical Week Transition."""
+"""Read-only target-week prospect profile-readiness inspection."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ class ProspectBridgeInspection(BaseModel):
     calendar_year: int
     year_week: int
     run_scoped_source: bool = True
-    bridge_supported: bool = False
+    bridge_supported: bool = True
     blocking_code: str
     unresolved_contracts: tuple[str, ...]
     prospects: tuple[ProspectBridgeItem, ...]
@@ -151,9 +151,9 @@ def inspect_prospect_bridge(
         "calendar_year": position.calendar_year,
         "year_week": position.year_week,
         "run_scoped_source": True,
-        "bridge_supported": False,
+        "bridge_supported": True,
         "blocking_code": (
-            "prospect_bridge_missing" if prospects else "no_target_week_prospects"
+            "no_transition_blocker" if prospects else "no_target_week_prospects"
         ),
         "unresolved_contracts": (
             "canonical_sporting_profile",

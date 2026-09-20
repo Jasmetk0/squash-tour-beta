@@ -126,6 +126,23 @@ class _AdoptedTournamentEvidence(FrozenInput):
     )
 
 
+class AuthoritativeSeasonTransitionPreflight(FrozenInput):
+    schema_version: Literal["authoritative_season_transition_preflight.v1"] = (
+        "authoritative_season_transition_preflight.v1"
+    )
+    run_id: str
+    branch_id: str
+    completed_week: RankingWeek
+    target_week: RankingWeek | None
+    final_season: bool
+    saved_revision_id: str | None
+    position_fingerprint: str
+    state_blockers: tuple[str, ...] = ()
+    implementation_gaps: tuple[str, ...] = ()
+    ready_for_execution: bool = False
+    preflight_fingerprint: str
+
+
 class AuthoritativeSimulationPosition(FrozenInput):
     run_id: str
     branch_id: str
@@ -154,6 +171,96 @@ class AuthoritativeRunSimulationDriver:
     ) -> AuthoritativeSimulationPosition:
         with self.factory() as session:
             return self._position(session, run_id, branch_id)
+
+    def season_transition_preflight(
+        self, *, run_id: str, branch_id: str
+    ) -> AuthoritativeSeasonTransitionPreflight:
+        with self.factory() as session:
+            position = self._position(session, run_id, branch_id)
+            week = position.current_week
+            branch = session.get(RunBranchModel, branch_id)
+            draft = session.scalar(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.branch_id == branch_id
+                )
+            )
+            blockers = [
+                item
+                for item in position.transition_blockers
+                if item != "season_transition_required"
+            ]
+            if week.week != 61:
+                blockers.append("not_at_season_boundary")
+            if branch is None or draft is None or branch.run_id != run_id:
+                blockers.append("run_branch_scope_missing")
+            else:
+                if branch.read_only or branch.status != "active":
+                    blockers.append("run_branch_not_writable")
+                if draft.status != "clean":
+                    blockers.append("working_draft_dirty")
+                if (
+                    not branch.saved_head_revision_id
+                    or draft.base_revision_id != branch.saved_head_revision_id
+                ):
+                    blockers.append("saved_revision_head_mismatch")
+
+            final_season = week.season_index == 49
+            target_week = (
+                None
+                if final_season
+                else RankingWeek(season_index=week.season_index + 1, week=1)
+            )
+            implementation_gaps = (
+                (
+                    "season_closing_ranking_writer_not_implemented",
+                    "season_summary_freeze_not_implemented",
+                    "season_closure_marker_writer_not_implemented",
+                    "final_run_closure_writer_not_implemented",
+                    "season_transition_atomic_writer_not_implemented",
+                )
+                if final_season
+                else (
+                    "season_closing_ranking_writer_not_implemented",
+                    "season_summary_freeze_not_implemented",
+                    "season_closure_marker_writer_not_implemented",
+                    "new_season_policy_activation_not_implemented",
+                    "season_scoped_reset_catalog_not_implemented",
+                    "season_boundary_lifecycle_writer_not_implemented",
+                    "season_prospect_creation_bridge_not_implemented",
+                    "season_week_1_ranking_writer_not_implemented",
+                    "season_transition_atomic_writer_not_implemented",
+                )
+            )
+            state_blockers = tuple(dict.fromkeys(blockers))
+            body = {
+                "scope": [run_id, branch_id],
+                "completed_week": week.model_dump(mode="json"),
+                "target_week": target_week.model_dump(mode="json")
+                if target_week
+                else None,
+                "final_season": final_season,
+                "saved_revision_id": branch.saved_head_revision_id
+                if branch
+                else None,
+                "position_fingerprint": position.position_fingerprint,
+                "state_blockers": state_blockers,
+                "implementation_gaps": implementation_gaps,
+            }
+            return AuthoritativeSeasonTransitionPreflight(
+                run_id=run_id,
+                branch_id=branch_id,
+                completed_week=week,
+                target_week=target_week,
+                final_season=final_season,
+                saved_revision_id=branch.saved_head_revision_id
+                if branch
+                else None,
+                position_fingerprint=position.position_fingerprint,
+                state_blockers=state_blockers,
+                implementation_gaps=implementation_gaps,
+                ready_for_execution=False,
+                preflight_fingerprint=fingerprint(body),
+            )
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

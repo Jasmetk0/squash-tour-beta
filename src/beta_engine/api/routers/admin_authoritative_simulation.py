@@ -244,8 +244,8 @@ def review_application_validation_slot(
     ],
 ):
     try:
-        command = AuthoritativeExplicitApplicationValidationCommand.model_validate(
-            {**payload, "run_id": run_id, "branch_id": branch_id}
+        command = AuthoritativeExplicitApplicationValidationCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
         )
         return _driver(
             runtime, matches, awards

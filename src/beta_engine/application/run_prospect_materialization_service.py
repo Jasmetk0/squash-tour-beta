@@ -7,6 +7,10 @@ import hashlib
 import json
 
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
+from beta_engine.domain.players.prospect_sporting_profile import (
+    DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
+    materialize_prospect_sporting_profile,
+)
 from beta_engine.infrastructure.db import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 
 COHORT_POLICY_VERSION = "weekly_15yo_cohort_v1"
@@ -175,6 +179,14 @@ class RunProspectMaterializationService:
                         profile_version=PROFILE_VERSION, cohort_policy_version=COHORT_POLICY_VERSION,
                     )
                     seeds = {kind: _stable_seed(prospect_id, preview.run_id, preview.world_id, PROFILE_VERSION, kind) for kind in ("identity", "profile", "development", "potential", "trait")}
+                    sporting_profile = materialize_prospect_sporting_profile(
+                        player_id=prospect_id,
+                        profile_seed=seeds["profile"],
+                        development_seed=seeds["development"],
+                        potential_seed=seeds["potential"],
+                    )
+                    sporting_profile_payload = sporting_profile.model_dump(mode="json")
+                    sporting_profile_fingerprint = sporting_profile.fingerprint
                     display_name = f"{allocation.country_code} Prospect {local_sequence:04d}"
                     records.append(RunProspectRecord(
                         prospect_id=prospect_id, run_id=preview.run_id, world_id=preview.world_id, season_start_year=preview.season_start_year,
@@ -188,12 +200,31 @@ class RunProspectMaterializationService:
                             "schema_version": PROFILE_VERSION,
                             "profile_version": PROFILE_VERSION,
                             "generated_by": SOURCE_TYPE,
-                            "reserved_for_future_attributes": True,
+                            "canonical_sporting_profile": sporting_profile_payload,
+                            "canonical_sporting_profile_fingerprint": sporting_profile_fingerprint,
                             "materialization_policy": policy,
                         },
-                        development_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_development": True},
-                        potential_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_potential": True},
-                        trait_json={"schema_version": PROFILE_VERSION, "profile_version": PROFILE_VERSION, "reserved_for_future_traits": True},
+                        development_json={
+                            "schema_version": PROFILE_VERSION,
+                            "profile_version": PROFILE_VERSION,
+                            "development_timing": sporting_profile.development_timing,
+                            "source_development_seed_digest": sporting_profile.source_development_seed_digest,
+                            "sporting_profile_fingerprint": sporting_profile_fingerprint,
+                        },
+                        potential_json={
+                            "schema_version": PROFILE_VERSION,
+                            "profile_version": PROFILE_VERSION,
+                            "potential_ovr": sporting_profile.potential_ovr,
+                            "potential_identity": sporting_profile.potential_identity,
+                            "potential_provenance": sporting_profile.potential_provenance,
+                            "source_potential_seed_digest": sporting_profile.source_potential_seed_digest,
+                            "sporting_profile_fingerprint": sporting_profile_fingerprint,
+                        },
+                        trait_json={
+                            "schema_version": PROFILE_VERSION,
+                            "profile_version": PROFILE_VERSION,
+                            "reserved_for_future_traits": True,
+                        },
                     ))
         return records
 
@@ -223,6 +254,8 @@ class RunProspectMaterializationService:
             "filtered_country_codes": country_codes,
             "profile_version": PROFILE_VERSION,
             "cohort_policy_version": COHORT_POLICY_VERSION,
+            "sporting_profile_policy_id": DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY.policy_id,
+            "sporting_profile_policy_fingerprint": DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY.fingerprint,
         }
         fingerprint_payload = json.dumps(policy, sort_keys=True, separators=(",", ":"))
         return policy | {"policy_fingerprint": hashlib.sha256(fingerprint_payload.encode("utf-8")).hexdigest()[:32]}

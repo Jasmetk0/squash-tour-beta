@@ -10,6 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
+from beta_engine.domain.players.prospect_sporting_profile import (
+    validate_persisted_prospect_sporting_profile,
+)
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import RunBranchModel, RunProspectModel
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
@@ -60,6 +63,23 @@ def _placeholder(payload: dict[str, object], *keys: str) -> bool:
     return any(payload.get(key) is True for key in keys)
 
 
+def _canonical_sporting_profile_ready(
+    *,
+    profile: dict[str, object],
+    development: dict[str, object],
+    potential: dict[str, object],
+) -> bool:
+    try:
+        validate_persisted_prospect_sporting_profile(
+            profile=profile,
+            development=development,
+            potential=potential,
+        )
+    except ValueError:
+        return False
+    return True
+
+
 def inspect_prospect_bridge(
     session: Session,
     *,
@@ -107,11 +127,19 @@ def inspect_prospect_bridge(
     )
 
     prospects: list[ProspectBridgeItem] = []
+    sporting_profile_readiness: list[bool] = []
     for row in rows:
         profile = _json(row.profile_json)
         development = _json(row.development_json)
         potential = _json(row.potential_json)
         traits = _json(row.trait_json)
+        sporting_profile_readiness.append(
+            _canonical_sporting_profile_ready(
+                profile=profile,
+                development=development,
+                potential=potential,
+            )
+        )
         prospects.append(
             ProspectBridgeItem(
                 prospect_id=row.prospect_id,
@@ -156,7 +184,9 @@ def inspect_prospect_bridge(
             "no_transition_blocker" if prospects else "no_target_week_prospects"
         ),
         "unresolved_contracts": (
-            "canonical_sporting_profile",
+            ("canonical_sporting_profile",)
+            if prospects and not all(sporting_profile_readiness)
+            else ()
         ),
         "prospects": [prospect.model_dump(mode="json") for prospect in prospects],
     }

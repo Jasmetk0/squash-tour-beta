@@ -657,3 +657,27 @@ development, junior match simulation, Official Ranking or Tour competition merel
 because the hidden profile kernel can now be derived. Persistence into newly
 pregenerated prospect metadata and the later guarded adoption/Tour-entry boundary
 remain separate follow-ups. See `docs/PROSPECT_SPORTING_PROFILE_V1.md`.
+
+
+## Current follow-up after #850
+
+New 15-year-old cohort materialization now persists the #849 canonical sporting
+profile **before** lifecycle activation. Each new Run prospect stores the complete
+`prospect_sporting_profile.v1` payload and fingerprint together with
+fingerprint-bound development/potential summaries. The materialization policy also
+binds the exact sporting-profile policy identity, so replay cannot silently switch to
+a newer calibration.
+
+Prospect Bridge inspection validates the persisted canonical payload and its
+cross-section fingerprints. Legacy/hand-authored placeholder rows still report
+`canonical_sporting_profile` as unresolved; correctly persisted new rows do not.
+This remains diagnostic only and does not block Week Transition.
+
+No existing lifecycle-activated prospect is rewritten: the #848 immutability guard
+still rejects changed metadata after historical visibility. This persistence slice
+alone still does not place birth-week prospects into `player_sporting_week_state`,
+create Tour entry, or expose hidden sporting truth to Viewer. That missing birth-week
+sporting adoption is an implementation gap, not a product rule: Master Week
+Transition creates new 15-year-old prospects after completed-week development, and
+the next slice must add their already-persisted simulation-valid sporting core to the
+new target-week sporting snapshot without granting Tour status or ranking membership.

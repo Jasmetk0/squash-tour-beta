@@ -49,17 +49,37 @@ profile is internally correlated rather than 57 unrelated random numbers.
 All numeric ranges remain tuneable. Changing them later requires a new policy identity;
 old materialized profile fingerprints must keep their historical meaning.
 
-## Deferred integration
+## Persistence integration
 
-This kernel intentionally does not yet:
+New `weekly_15yo_cohort_v1` materialization now derives this profile at the same
+deterministic boundary as the prospect seeds and persists the complete canonical
+payload inside the Run-scoped prospect metadata before lifecycle activation.
 
-- rewrite existing `run_prospects` rows;
-- place a birth-week prospect into `player_sporting_week_state`;
-- start weekly development for pre-Tour prospects;
-- create a formal Tour-entry event;
+The stored `profile_json` keeps the full `prospect_sporting_profile.v1` payload
+and its fingerprint. `development_json` and `potential_json` carry redundant
+fingerprint-bound summaries so a later consumer can fail closed if the persisted
+sections disagree. The materialization-policy fingerprint now also binds the exact
+sporting-profile policy id and fingerprint.
+
+Existing historical placeholder rows are not silently rewritten. Re-materializing a
+different unused row remains an explicit conflict/overwrite operation, while #848's
+lifecycle-activated metadata immutability prevents overwrite once the identity is
+historically visible.
+
+## Still deferred
+
+Persistence alone intentionally does not yet:
+
+- place the new birth-week prospect into the target `player_sporting_week_state`;
+- create a formal Tour-entry event or Official Ranking membership;
 - expose hidden attributes, potential or seeds to Viewer;
+- invent the still-placeholder broader hidden trait/profile systems;
 - add junior competition or Next Gen ranking systems.
 
-The next integration slice can persist this canonical profile for newly generated
-prospects before lifecycle activation, then add a guarded adoption boundary for the
-first operation that truly requires sporting state.
+This missing sporting insertion is not a decision to keep visible prospects outside
+sporting history. Master Week Transition performs completed-week development first
+and only then creates the new 15-year-old prospect. The next implementation boundary
+must therefore append the persisted canonical profile to the **target-week** sporting
+snapshot after predecessor development/between-week updates. The prospect remains
+pre-Tour (`tour_entry_week=None`); its first ordinary weekly development can only be
+evaluated after it has actually existed through a completed week.

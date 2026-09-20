@@ -42,6 +42,8 @@ def get_admin_visible_prospects(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     season_index: int | None = Query(default=None, ge=0, le=49),
     week: int | None = Query(default=None, ge=1, le=61),
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
 ) -> VisiblePreTourProspects:
     try:
         target = _requested_week(season_index=season_index, week=week)
@@ -51,6 +53,8 @@ def get_admin_visible_prospects(
                 run_id=run_id,
                 branch_id=branch_id,
                 week=target,
+                limit=limit,
+                offset=offset,
             )
     except ValueError as exc:
         raise HTTPException(
@@ -66,6 +70,8 @@ def get_admin_visible_prospects(
 def get_viewer_visible_prospects(
     product_run_id: str,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    limit: int = Query(default=100, ge=1, le=500),
+    offset: int = Query(default=0, ge=0),
 ) -> VisiblePreTourProspects:
     try:
         context = runtime.repository.get_viewer_official_run_context(
@@ -76,6 +82,8 @@ def get_viewer_visible_prospects(
                 session,
                 run_id=product_run_id,
                 branch_id=context.official_branch_id,
+                limit=limit,
+                offset=offset,
             )
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(

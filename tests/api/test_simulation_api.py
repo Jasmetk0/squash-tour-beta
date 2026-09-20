@@ -1,4 +1,6 @@
 from __future__ import annotations
+
+import pytest
 from tests.support.world_packages import load_simulation_test_countries, materialize_test_world_package
 
 from collections import Counter

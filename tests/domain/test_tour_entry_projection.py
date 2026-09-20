@@ -21,18 +21,20 @@ def _player(
     week=RankingWeek(season_index=0, week=20),
     tour_entry_week=None,
     retirement_effective_week=None,
+    birth_year=1985,
+    birth_year_week=10,
 ):
     position = season_week_to_calendar_position(2000 + week.season_index, week.week)
     return PlayerLifecycleIdentity(
         player_id=player_id,
-        birth_year=1985,
-        birth_year_week=10,
+        birth_year=birth_year,
+        birth_year_week=birth_year_week,
         tie_break_token=f"token-{player_id}",
         tie_break_provenance="test",
         tour_entry_week=tour_entry_week,
         age=age_at_calendar_position(
-            birth_year=1985,
-            birth_year_week=10,
+            birth_year=birth_year,
+            birth_year_week=birth_year_week,
             calendar_year=position.calendar_year,
             year_week=position.year_week,
         ),
@@ -153,7 +155,16 @@ def test_projection_rejects_conflicting_or_invalid_effective_history():
 def test_projection_rejects_pre_15_and_post_retirement_triggers():
     early_week = RankingWeek(season_index=0, week=5)
     later_week = RankingWeek(season_index=0, week=20)
-    later_state = _state(week=later_week, players=(_player(week=later_week),))
+    later_state = _state(
+        week=later_week,
+        players=(
+            _player(
+                week=later_week,
+                birth_year=1985,
+                birth_year_week=50,
+            ),
+        ),
+    )
     with pytest.raises(ValueError, match="15th birthday"):
         project_lifecycle_tour_entries(
             later_state,

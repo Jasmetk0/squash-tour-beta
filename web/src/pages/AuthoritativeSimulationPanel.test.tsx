@@ -8,6 +8,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
+  getAuthoritativeSeasonTransitionPreflight: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
   proposeAuthoritativeWeekSchedule: vi.fn(),
@@ -170,6 +171,24 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getAuthoritativeSeasonTransitionPreflight.mockResolvedValue({
+    schema_version: 'authoritative_season_transition_preflight.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    completed_week: { season_index: 2, week: 61 },
+    target_week: { season_index: 3, week: 1 },
+    final_season: false,
+    saved_revision_id: 'revision-7',
+    position_fingerprint: '4'.repeat(64),
+    state_blockers: [],
+    implementation_gaps: [
+      'season_closing_ranking_writer_not_implemented',
+      'season_closure_marker_writer_not_implemented',
+      'season_transition_atomic_writer_not_implemented'
+    ],
+    ready_for_execution: false,
+    preflight_fingerprint: '5'.repeat(64)
+  })
   api.inspectAuthoritativeWeekSchedule.mockResolvedValue(scheduleInspection)
   api.previewAuthoritativeSimulationSave.mockResolvedValue({
     run_id: 'run-a',
@@ -572,6 +591,48 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(await screen.findByText('Week Transition is not ready. Resolve the canonical blockers shown above before advancing world time.')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Review derived Week Transition' })).not.toBeInTheDocument()
     expect(api.previewDerivedAuthoritativeWeekTransition).not.toHaveBeenCalled()
+  })
+
+  it('shows read-only Season Transition preflight at Week 61 and hides ordinary Week Transition actions', async () => {
+    const week61 = { season_index: 2, week: 61 }
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      week: week61,
+      schedule: {
+        ...proposal.schedule,
+        week: week61
+      },
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeSimulationPosition.mockResolvedValue({
+      ...position,
+      current_week: week61,
+      current_slot_id: null,
+      slot_ordinal: null,
+      unresolved_group_ids: [],
+      eligible_match_ids: [],
+      blocked_match_ids: [],
+      current_slot_complete: true,
+      supported_tournament_complete: true,
+      week_ready_for_transition: false,
+      transition_blockers: ['season_transition_required'],
+      terminal_sporting_fingerprint: '3'.repeat(64),
+      position_fingerprint: '4'.repeat(64)
+    })
+    renderPanel()
+
+    expect(await screen.findByText('Canonical Season Transition preflight')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(api.getAuthoritativeSeasonTransitionPreflight).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    expect(screen.getByText('Season index 3 · Week 1')).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Season Transition implementation gaps' }))
+      .toHaveTextContent('season_transition_atomic_writer_not_implemented')
+    expect(screen.queryByText('Canonical Week Transition')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Review derived Week Transition' })).not.toBeInTheDocument()
   })
 
   it('does not query or mutate canonical simulation when the target Branch is blocked', async () => {

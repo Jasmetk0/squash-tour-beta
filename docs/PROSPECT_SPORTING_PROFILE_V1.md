@@ -83,3 +83,21 @@ must therefore append the persisted canonical profile to the **target-week** spo
 snapshot after predecessor development/between-week updates. The prospect remains
 pre-Tour (`tour_entry_week=None`); its first ordinary weekly development can only be
 evaluated after it has actually existed through a completed week.
+
+
+## Ordinary Week Transition adoption
+
+The ordinary authoritative Week Transition now consumes this persisted profile at the
+Master-defined birth-week boundary. Development and between-week recovery first run
+over only the completed-week sporting roster. The target-week prospect is then
+validated from persisted Run metadata and appended to the new target sporting
+snapshot with the target state's stored provisional initial Form/Sharpness/Fatigue
+defaults.
+
+This does not retroactively develop the prospect before its 15th birthday and does
+not set `tour_entry_week`. The Official Ranking roster therefore remains unchanged.
+A target prospect with only legacy placeholder profile data now blocks the affected
+ordinary Week Transition with `prospect_sporting_profile_unready`.
+
+Week 61 → next-season Week 1 still requires the same adoption parity in the Season
+Transition path.

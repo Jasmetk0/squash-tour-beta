@@ -42,6 +42,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     resolve_completed_context_from_authoritative_matches,
     resolve_completed_context_from_owned_sources,
     transition_sporting,
+    validate_target_week_prospect_sporting_profiles,
 )
 from beta_engine.domain.rankings.official import (
     RankingWeek,
@@ -99,6 +100,15 @@ def week_transition_readiness_blockers(session, *, run_id, branch_id, completed_
         or world.ranking_fingerprint != predecessor.fingerprint
     ):
         blockers.append("authoritative_world_head_mismatch")
+    try:
+        validate_target_week_prospect_sporting_profiles(
+            session,
+            run_id=run_id,
+            target=target,
+        )
+    except ValueError:
+        blockers.append("prospect_sporting_profile_unready")
+
     lifecycle = get_lifecycle(
         session, run_id=run_id, branch_id=branch_id, week=completed_week
     )

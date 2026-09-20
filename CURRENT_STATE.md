@@ -681,3 +681,29 @@ sporting adoption is an implementation gap, not a product rule: Master Week
 Transition creates new 15-year-old prospects after completed-week development, and
 the next slice must add their already-persisted simulation-valid sporting core to the
 new target-week sporting snapshot without granting Tour status or ranking membership.
+
+
+## Current follow-up after #851
+
+Ordinary authoritative Week Transition now implements the Master birth-week sporting
+boundary for new 15-year-old Run prospects. Completed-week development and
+between-week recovery still operate only on the predecessor sporting roster. After
+that calculation, the transition loads exact target-week prospect rows, validates the
+same birth identity used by lifecycle plus the #850 persisted canonical
+57-attribute/development/potential evidence, and appends new `PlayerSportingRecord`
+values to the target snapshot before commit.
+
+The prospect simultaneously enters target lifecycle as a pre-Tour Draft with
+`tour_entry_week=None`. It therefore remains absent from the Official Ranking
+request and receives no retroactive development for the completed week. Initial
+Form/Sharpness/Fatigue use the target sporting state's historically persisted
+provisional bootstrap defaults. Legacy/placeholder or internally inconsistent
+sporting-profile evidence now blocks only the affected Week Transition with
+`prospect_sporting_profile_unready`; the Prospect Bridge inspection reports the
+same blocker.
+
+Preview/confirm remains atomic. Changes to birth identity or to a coherent hidden
+sporting profile after preview invalidate confirm and leave lifecycle, sporting and
+ranking target writes absent. Season Transition Week 61 → next-season Week 1 still
+needs the same sporting-adoption parity, and formal Tour entry remains a later
+separate authority.

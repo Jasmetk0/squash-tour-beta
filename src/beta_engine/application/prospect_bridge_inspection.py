@@ -181,7 +181,13 @@ def inspect_prospect_bridge(
         "run_scoped_source": True,
         "bridge_supported": True,
         "blocking_code": (
-            "no_transition_blocker" if prospects else "no_target_week_prospects"
+            "no_target_week_prospects"
+            if not prospects
+            else (
+                "no_transition_blocker"
+                if all(sporting_profile_readiness)
+                else "prospect_sporting_profile_unready"
+            )
         ),
         "unresolved_contracts": (
             ("canonical_sporting_profile",)

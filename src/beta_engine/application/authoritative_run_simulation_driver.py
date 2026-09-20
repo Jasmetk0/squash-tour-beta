@@ -143,6 +143,7 @@ class AuthoritativeSeasonTransitionPreflight(FrozenInput):
     target_week: RankingWeek | None
     final_season: bool
     saved_revision_id: str | None
+    draft_version: int | None = None
     position_fingerprint: str
     state_blockers: tuple[str, ...] = ()
     implementation_gaps: tuple[str, ...] = ()
@@ -246,6 +247,7 @@ class AuthoritativeRunSimulationDriver:
             "saved_revision_id": branch.saved_head_revision_id
             if branch
             else None,
+            "draft_version": draft.draft_version if draft else None,
             "position_fingerprint": position.position_fingerprint,
             "state_blockers": state_blockers,
             "implementation_gaps": implementation_gaps,
@@ -260,6 +262,7 @@ class AuthoritativeRunSimulationDriver:
             saved_revision_id=branch.saved_head_revision_id
             if branch
             else None,
+            draft_version=draft.draft_version if draft else None,
             position_fingerprint=position.position_fingerprint,
             state_blockers=state_blockers,
             implementation_gaps=implementation_gaps,
@@ -295,6 +298,8 @@ class AuthoritativeRunSimulationDriver:
                 )
             if preflight.saved_revision_id != command.expected_saved_revision_id:
                 raise ValueError("final season closure Saved Revision head is stale")
+            if preflight.draft_version != command.expected_draft_version:
+                raise ValueError("final season closure Working Draft version is stale")
             return commit_final_season_transition(session, command)
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):

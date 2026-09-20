@@ -146,7 +146,17 @@ def resolve_canonical_season_closing_ranking(
         branch_id=branch_id,
         week=target_week,
     ):
-        resolved[(result.edition_id, result.player_id)] = result
+        key = (result.edition_id, result.player_id)
+        owned_result = resolved.get(key)
+        if result.completed_week == completed_week and owned_result is None:
+            raise ValueError(
+                "Week 61 ranking result has no matching owned tournament source"
+            )
+        if owned_result is not None and owned_result != result:
+            raise ValueError(
+                "Persisted Week 61 ranking result conflicts with owned tournament source"
+            )
+        resolved[key] = result
 
     zeros = OfficialRankingZeroStore(session).resolve(
         run_id=run_id,

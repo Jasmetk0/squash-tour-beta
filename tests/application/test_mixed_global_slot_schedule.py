@@ -4,11 +4,18 @@ import pytest
 from sqlalchemy import select
 
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule
+from beta_engine.domain.tournaments.application_validation_authority import (
+    ResolvedApplicationValidationSlot,
+    TournamentApplicationValidationAuthority,
+)
 from beta_engine.domain.tournaments.run_entry_decision_slot import (
     EntryDecisionEvidence,
     RunEntryDecisionSlotAuthority,
 )
 from beta_engine.infrastructure.db.models import SimulationSlotModel
+from beta_engine.infrastructure.db.application_validation_slots import (
+    ApplicationValidationSlotStore,
+)
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotConflict,
     RunEntryDecisionSlotStore,
@@ -39,13 +46,44 @@ def _entry_slot(week, *, ordinal):
     )
 
 
+def _resolve_entry_slot(session, authority):
+    decision = authority.decisions[0]
+    validation = TournamentApplicationValidationAuthority(
+        validation_id=f"validation-{authority.decision_slot_ordinal}",
+        application_id=f"application-{authority.decision_slot_ordinal}",
+        run_id=authority.run_id,
+        branch_id=authority.branch_id,
+        week=authority.week,
+        decision_slot_ordinal=authority.decision_slot_ordinal,
+        source_slot_fingerprint=authority.fingerprint,
+        event_id=decision.event_id,
+        player_id=decision.player_id,
+        entry_window="main",
+        source_decision_fingerprint=decision.source_decision_fingerprint,
+        outcome="invalid",
+        nr_tie_break_token=None,
+        validation_policy_id="test-policy.v1",
+        validation_policy_fingerprint="f" * 64,
+        reasons=("test_invalid",),
+        provenance="mixed chronology test",
+    )
+    ApplicationValidationSlotStore(session).append(
+        ResolvedApplicationValidationSlot(
+            slot=authority,
+            validations=(validation,),
+        )
+    )
+
+
 @pytest.mark.pr_critical
 def test_topological_match_schedule_skips_persisted_entry_global_ordinal(tmp_path):
     driver, factory, week, _, _ = _multi_driver_fixture(
         tmp_path / "entry-reserved-first"
     )
     with factory.begin() as session:
-        RunEntryDecisionSlotStore(session).append(_entry_slot(week, ordinal=1))
+        authority = _entry_slot(week, ordinal=1)
+        RunEntryDecisionSlotStore(session).append(authority)
+        _resolve_entry_slot(session, authority)
 
     inspected = driver.inspect_schedule(run_id="run", branch_id="branch")
     assert inspected["required"] is True
@@ -127,7 +165,9 @@ def test_multiple_leading_entry_slots_shift_first_match_layer(tmp_path):
     )
     with factory.begin() as session:
         store = RunEntryDecisionSlotStore(session)
-        store.append(_entry_slot(week, ordinal=1))
+        first = _entry_slot(week, ordinal=1)
+        store.append(first)
+        _resolve_entry_slot(session, first)
         second = _entry_slot(week, ordinal=2).model_copy(
             update={
                 "source_entry_batch_fingerprint": "e" * 64,

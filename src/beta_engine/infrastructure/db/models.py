@@ -517,6 +517,8 @@ class RunContainerModel(Base):
     timeline_start_season: Mapped[int] = mapped_column(Integer, nullable=False)
     timeline_end_season: Mapped[int] = mapped_column(Integer, nullable=False)
     official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Compatibility default for historical/direct DB construction. Canonical new
+    # Run creation explicitly persists product lifecycle status "working".
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 

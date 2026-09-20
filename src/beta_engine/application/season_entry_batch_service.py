@@ -67,9 +67,9 @@ class SeasonEntryBatchService:
     def generate_overlapping_entry_lists(
         self, *, event_ids: list[str], request: EntryBatchGenerateRequest
     ) -> SeasonEntryBatchResult:
-        if len(event_ids) < 2 or len(set(event_ids)) != len(event_ids):
+        if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
-                "overlapping Entry batch requires at least two unique event IDs"
+                "Entry decision batch requires at least one unique event ID"
             )
         ordered_event_ids = tuple(sorted(event_ids))
         service = self.entry_list_service

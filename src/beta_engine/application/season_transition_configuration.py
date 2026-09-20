@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
-
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -24,9 +21,6 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 from beta_engine.infrastructure.db.player_sporting_state import get_sporting
-from beta_engine.infrastructure.db.season_transition_configuration import (
-    SeasonTransitionConfigurationStore,
-)
 
 
 def _current_boundary(
@@ -181,54 +175,4 @@ def validate_season_transition_configuration(
         raise ValueError("Season Transition configuration is stale")
     return SeasonTransitionConfiguration.model_validate_json(
         configuration.model_dump_json()
-    )
-
-
-def adopt_season_transition_configuration(
-    session: Session,
-    *,
-    run_id: str,
-    branch_id: str,
-    command_id: str,
-    expected_configuration_fingerprint: str | None = None,
-    target_ranking_policy: OfficialRankingPolicy | None = None,
-    target_development_policy: PlayerDevelopmentPolicy | None = None,
-) -> SeasonTransitionConfiguration:
-    """Resolve current W61 truth and install one CAS-protected configuration head."""
-
-    command_id = command_id.strip()
-    if not command_id:
-        raise ValueError("Season Transition configuration command_id is required")
-    candidate = resolve_season_transition_configuration(
-        session,
-        run_id=run_id,
-        branch_id=branch_id,
-        target_ranking_policy=target_ranking_policy,
-        target_development_policy=target_development_policy,
-    )
-    validate_season_transition_configuration(session, candidate)
-    request = {
-        "run_id": run_id,
-        "branch_id": branch_id,
-        "command_id": command_id,
-        "expected_configuration_fingerprint": expected_configuration_fingerprint,
-        "target_ranking_policy": (
-            target_ranking_policy.model_dump(mode="json")
-            if target_ranking_policy is not None
-            else None
-        ),
-        "target_development_policy": (
-            target_development_policy.model_dump(mode="json")
-            if target_development_policy is not None
-            else None
-        ),
-    }
-    request_fingerprint = hashlib.sha256(
-        json.dumps(request, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
-    return SeasonTransitionConfigurationStore(session).put(
-        candidate,
-        command_id=command_id,
-        request_fingerprint=request_fingerprint,
-        expected_fingerprint=expected_configuration_fingerprint,
     )

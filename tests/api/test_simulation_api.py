@@ -1068,7 +1068,12 @@ def test_legacy_pre_draw_withdrawal_authoring_endpoints_are_retired(tmp_path) ->
             assert "canonical Tournament Entry Field" in retired["detail"]["message"]
 
         # Keep pre-retirement sidecar history readable for old saves and audit.
-        server.app.state.runtime.repository.append_admin_action(
+        engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+        repository = SimulationPersistenceRepository(
+            engine=engine,
+            session_factory=create_session_factory(engine),
+        )
+        repository.append_admin_action(
             run_id="run-pre-draw-retired",
             event_id=event_id,
             action_kind="pre_draw_withdrawal_replacement",

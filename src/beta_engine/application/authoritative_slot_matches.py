@@ -73,6 +73,7 @@ from beta_engine.domain.simulation_slots import (
     projected_engine_player,
 )
 from beta_engine.infrastructure.db.models import (
+    ResolvedApplicationValidationSlotModel,
     RunEntryDecisionSlotAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -658,6 +659,28 @@ class AuthoritativeSlotMatchExecutor:
             if missing_ordinals != reserved_entry_ordinals:
                 raise ValueError(
                     "match slot skips a global ordinal not owned by an entry-decision slot"
+                )
+            resolved_entry_ordinals = set(
+                self.session.scalars(
+                    select(
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                    ).where(
+                        ResolvedApplicationValidationSlotModel.run_id == run_id,
+                        ResolvedApplicationValidationSlotModel.branch_id == branch_id,
+                        ResolvedApplicationValidationSlotModel.week_ordinal
+                        == week.ordinal,
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                        >= gap_start,
+                        ResolvedApplicationValidationSlotModel.decision_slot_ordinal
+                        < ordinal,
+                    )
+                ).all()
+            )
+            if resolved_entry_ordinals != missing_ordinals:
+                unresolved = sorted(missing_ordinals - resolved_entry_ordinals)
+                raise ValueError(
+                    "match slot cannot pass unresolved entry-decision slots: "
+                    f"{unresolved}"
                 )
         feeder_ids = tuple(
             feeder

@@ -55,7 +55,7 @@ from test_authoritative_slot_matches import _driver_command, session_at
 from test_season_entry_list_service import make_service
 
 
-pytestmark = pytest.mark.pr_critical
+pytestmark = pytest.mark.smoke
 
 
 def test_four_q_sections_execute_into_main_and_close_with_additive_points(tmp_path):

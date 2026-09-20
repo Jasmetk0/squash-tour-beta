@@ -52,7 +52,7 @@ from test_authoritative_slot_matches import _driver_command, session_at
 from test_season_entry_list_service import make_service
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_thirteen_player_canonical_main_draw_closes_with_three_byes(tmp_path):
     """13 entrants use a 16-slot binary DAG, three BYEs and 12 played matches."""
     root = tmp_path / "canonical-thirteen"

@@ -95,7 +95,7 @@ def test_simulation_rejects_non_writable_scope_before_any_write(tmp_path, scope)
         assert session.scalars(select(OwnedTournamentRankingSourceModel)).all() == []
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_terminal_walkover_closes_canonical_tournament_with_stage_points(
     tmp_path,
     monkeypatch,

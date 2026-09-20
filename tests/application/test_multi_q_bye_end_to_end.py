@@ -55,7 +55,7 @@ from test_authoritative_slot_matches import _driver_command, session_at
 from test_season_entry_list_service import make_service
 
 
-pytestmark = pytest.mark.pr_critical
+pytestmark = pytest.mark.smoke
 
 
 def test_multi_q_byes_promote_into_main_with_per_draw_point_unlocks(tmp_path):

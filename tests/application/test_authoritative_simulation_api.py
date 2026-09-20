@@ -502,7 +502,7 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
     assert entry_service._load_registry().model_dump(mode="json") == before_registry
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     server, package = _server_state(tmp_path)
     legacy_hash = hashlib.sha256(

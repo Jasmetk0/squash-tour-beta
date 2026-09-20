@@ -23,8 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Fast CI intentionally runs only a tiny catastrophic-regression gate.
-      # The separate "Full Test Suite" runs all tests after merge to buuk and nightly.
+      # Fast CI intentionally runs only a compact catastrophic-regression gate.
+      # Frontend also runs changed/colocated tests. The separate "Full Test Suite"
+      # retains complete coverage after merge to buuk and nightly.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -63,7 +64,7 @@ jobs:
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
-        # Smoke tests need production dependencies and pytest, but not the heavier
+        # PR tests need production dependencies and pytest, but not the heavier
         # dev-only Ruff/httpx extras. The full workflow still installs all dev extras.
         run: python -m pip install -e . pytest
       - name: Compile backend source
@@ -89,23 +90,53 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install web dependencies
         run: npm ci
-      - name: Run broad critical frontend tests
+      - name: Run stable critical frontend baseline
         run: |
           npm run test -- \
-            src/App.module17.test.tsx \
             src/test/faxReferenceFixture.test.ts \
             src/components/Layout.test.tsx \
             src/pages/admin/AdminHomePage.test.tsx \
             src/viewer/ViewerProductRunRouteContext.test.tsx \
-            src/pages/TalentPreviewPage.test.tsx \
-            src/pages/AdminSeasonsPage.test.tsx \
-            src/pages/TournamentTemplatesPage.test.tsx \
-            src/pages/RunPage.test.tsx \
             src/pages/AdminRankingCandidatesPage.test.tsx \
             src/pages/RankingPreparationPanel.test.tsx \
             src/pages/RankingSavePanel.test.tsx \
             src/api/rankingPreparation.test.ts \
             src/pages/AdminRunBranchesPage.test.tsx
+      - name: Run frontend tests changed by this PR
+        shell: bash
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          git -C .. fetch --no-tags --depth=1 origin "$BASE_SHA"
+          mapfile -t changed_files < <(
+            git -C .. diff --name-only "$BASE_SHA" HEAD -- web/src |
+              grep -E '^web/src/.*\.(ts|tsx)$' || true
+          )
+
+          declare -a tests=()
+          for repo_path in "${changed_files[@]}"; do
+            rel="${repo_path#web/}"
+            if [[ "$rel" =~ \.test\.(ts|tsx)$ ]]; then
+              tests+=("$rel")
+              continue
+            fi
+
+            if [[ "$rel" == *.tsx ]]; then
+              candidate="${rel%.tsx}.test.tsx"
+              [[ -f "$candidate" ]] && tests+=("$candidate")
+            elif [[ "$rel" == *.ts ]]; then
+              candidate="${rel%.ts}.test.ts"
+              [[ -f "$candidate" ]] && tests+=("$candidate")
+            fi
+          done
+
+          if (( ${#tests[@]} == 0 )); then
+            echo "No changed or colocated frontend tests found."
+            exit 0
+          fi
+
+          mapfile -t unique_tests < <(printf '%s\n' "${tests[@]}" | sort -u)
+          printf 'Running changed/colocated frontend tests:\n%s\n' "${unique_tests[*]}"
+          npm run test -- "${unique_tests[@]}"
       - name: Run web build
         run: npm run build
 

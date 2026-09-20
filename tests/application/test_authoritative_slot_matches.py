@@ -702,7 +702,7 @@ def _driver_command(driver, week, command_id, group_id=None):
     ), position
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_week61_closes_tournament_source_before_season_transition_boundary(tmp_path):
     driver, factory, week = _driver_fixture(
         tmp_path / "week61-close",
@@ -1686,7 +1686,7 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
             )
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
     """Run-owned Ranking -> Field -> Draw drives all fifteen canonical matches."""
     from test_season_entry_list_service import make_service
@@ -3045,7 +3045,6 @@ def test_player_replacement_cutoff_uses_committed_real_match_receipts(tmp_path):
         )
 
 
-@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_post_cutoff_walkover_commits_group_without_sporting_effects(
     tmp_path, monkeypatch
@@ -3182,7 +3181,6 @@ def test_post_cutoff_walkover_commits_group_without_sporting_effects(
         )
 
 
-@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
     session, executor, _, semifinals, _ = run_semifinals(

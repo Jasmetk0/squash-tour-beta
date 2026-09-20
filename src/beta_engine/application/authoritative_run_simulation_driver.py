@@ -240,6 +240,7 @@ class AuthoritativeSimulationPosition(FrozenInput):
     run_id: str
     branch_id: str
     current_week: RankingWeek
+    current_slot_kind: Literal["entry", "match"] | None = None
     current_slot_id: str | None
     slot_ordinal: int | None
     unresolved_group_ids: tuple[str, ...]
@@ -2647,16 +2648,19 @@ class AuthoritativeRunSimulationDriver:
             if current is not None
             else (next_spec.ordinal if next_spec is not None else None)
         )
-        entry_validation_pending = (
-            target_match_ordinal is not None
-            and any(
-                ordinal < target_match_ordinal
-                for ordinal in unresolved_entry_ordinals
+        pending_entry_ordinal = (
+            min(unresolved_entry_ordinals) if unresolved_entry_ordinals else None
+        )
+        entry_is_current = (
+            pending_entry_ordinal is not None
+            and (
+                target_match_ordinal is None
+                or pending_entry_ordinal < target_match_ordinal
             )
         )
         eligible_groups = (
             ()
-            if entry_validation_pending
+            if entry_is_current
             else tuple(
                 g for g in unresolved if set(self._plan_feeders(plans[g])) <= done
             )
@@ -2743,6 +2747,12 @@ class AuthoritativeRunSimulationDriver:
                 (row.decision_slot_ordinal, row.fingerprint)
                 for row in entry_validation_rows
             ],
+            "current_slot_kind": "entry" if entry_is_current else (
+                "match" if target_match_ordinal is not None else None
+            ),
+            "current_slot_ordinal": (
+                pending_entry_ordinal if entry_is_current else target_match_ordinal
+            ),
             "proposed_schedule_requirement": [p.event_id for p in packages],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
@@ -2804,24 +2814,35 @@ class AuthoritativeRunSimulationDriver:
             run_id=run_id,
             branch_id=branch_id,
             current_week=week,
-            current_slot_id=current.slot_id
-            if current
-            else (
-                (
-                    f"week-{week.ordinal}:slot:{next_spec.ordinal}"
-                    if schedule
-                    else f"{packages[0].event_id}:slot:{next_spec.ordinal}"
-                )
-                if next_spec
-                else None
+            current_slot_kind=(
+                "entry"
+                if entry_is_current
+                else ("match" if target_match_ordinal is not None else None)
             ),
-            slot_ordinal=current.slot_ordinal
-            if current
-            else (next_spec.ordinal if next_spec else None),
-            unresolved_group_ids=unresolved,
+            current_slot_id=(
+                f"week-{week.ordinal}:entry-slot:{pending_entry_ordinal}"
+                if entry_is_current
+                else (
+                    current.slot_id
+                    if current
+                    else (
+                        (
+                            f"week-{week.ordinal}:slot:{next_spec.ordinal}"
+                            if schedule
+                            else f"{packages[0].event_id}:slot:{next_spec.ordinal}"
+                        )
+                        if next_spec
+                        else None
+                    )
+                )
+            ),
+            slot_ordinal=(
+                pending_entry_ordinal if entry_is_current else target_match_ordinal
+            ),
+            unresolved_group_ids=(() if entry_is_current else unresolved),
             eligible_match_ids=tuple(plans[g].match_id for g in eligible_groups),
             blocked_match_ids=tuple(plans[g].match_id for g in blocked_groups),
-            current_slot_complete=not unresolved,
+            current_slot_complete=(False if entry_is_current else not unresolved),
             supported_tournament_complete=bool(packages) and all(owned.values()),
             week_ready_for_transition=ready,
             transition_blockers=tuple(blockers),
@@ -2831,7 +2852,7 @@ class AuthoritativeRunSimulationDriver:
 
     def _ensure_current_slot(self, session, command, packages):
         pos = self._position(session, command.run_id, command.branch_id)
-        if "entry_validation_pending" in pos.transition_blockers:
+        if pos.current_slot_kind == "entry":
             raise ValueError(
                 "nearest unresolved global Simulation Slot is an Entry decision slot "
                 "awaiting complete application validation"

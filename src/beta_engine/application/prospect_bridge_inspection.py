@@ -10,7 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
-from beta_engine.domain.players.prospect_sporting_profile import ProspectSportingProfile
+from beta_engine.domain.players.prospect_sporting_profile import (
+    validate_persisted_prospect_sporting_profile,
+)
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.models import RunBranchModel, RunProspectModel
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
@@ -67,27 +69,15 @@ def _canonical_sporting_profile_ready(
     development: dict[str, object],
     potential: dict[str, object],
 ) -> bool:
-    raw = profile.get("canonical_sporting_profile")
-    fingerprint = profile.get("canonical_sporting_profile_fingerprint")
-    if not isinstance(raw, dict) or not isinstance(fingerprint, str):
-        return False
     try:
-        canonical = ProspectSportingProfile.model_validate(raw)
+        validate_persisted_prospect_sporting_profile(
+            profile=profile,
+            development=development,
+            potential=potential,
+        )
     except ValueError:
         return False
-    return (
-        canonical.fingerprint == fingerprint
-        and development.get("sporting_profile_fingerprint") == fingerprint
-        and development.get("development_timing") == canonical.development_timing
-        and development.get("source_development_seed_digest")
-        == canonical.source_development_seed_digest
-        and potential.get("sporting_profile_fingerprint") == fingerprint
-        and potential.get("potential_ovr") == canonical.potential_ovr
-        and potential.get("potential_identity") == canonical.potential_identity
-        and potential.get("potential_provenance") == canonical.potential_provenance
-        and potential.get("source_potential_seed_digest")
-        == canonical.source_potential_seed_digest
-    )
+    return True
 
 
 def inspect_prospect_bridge(

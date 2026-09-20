@@ -204,11 +204,12 @@ class AuthoritativeRunSimulationDriver:
                 ):
                     blockers.append("saved_revision_head_mismatch")
 
-            final_season = week.season_index == 49
+            at_boundary = week.week == 61
+            final_season = at_boundary and week.season_index == 49
             target_week = (
-                None
-                if final_season
-                else RankingWeek(season_index=week.season_index + 1, week=1)
+                RankingWeek(season_index=week.season_index + 1, week=1)
+                if at_boundary and not final_season
+                else None
             )
             implementation_gaps = (
                 (

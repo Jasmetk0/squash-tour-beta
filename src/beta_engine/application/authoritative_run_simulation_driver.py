@@ -221,7 +221,7 @@ class AuthoritativeRunSimulationDriver:
                 )
                 if final_season
                 else (
-                    "season_closing_ranking_writer_not_implemented",
+                    "season_closing_ranking_transition_stage_not_implemented",
                     "season_summary_freeze_not_implemented",
                     "season_closure_marker_writer_not_implemented",
                     "new_season_policy_activation_not_implemented",

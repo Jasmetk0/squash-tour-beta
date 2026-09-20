@@ -155,9 +155,9 @@ def stage_ranking_week_command(
             ):
                 raise ValueError("Authoritative ranking transition inputs changed")
             from beta_engine.infrastructure.db.player_lifecycle_state import (
+                advance_lifecycle_with_prospects,
                 get_lifecycle,
             )
-            from beta_engine.domain.players.lifecycle import advance_lifecycle
 
             predecessor_lifecycle = get_lifecycle(
                 session,
@@ -169,8 +169,10 @@ def stage_ranking_week_command(
                 raise ValueError(
                     "Authoritative predecessor player lifecycle snapshot is missing"
                 )
-            derived_players = advance_lifecycle(
-                predecessor_lifecycle, context.target_week
+            derived_players = advance_lifecycle_with_prospects(
+                session,
+                predecessor=predecessor_lifecycle,
+                target=context.target_week,
             ).ranking_roster()
             authority_identity = tuple(
                 (p.player_id, p.tie_break_token, p.tour_entry_week)

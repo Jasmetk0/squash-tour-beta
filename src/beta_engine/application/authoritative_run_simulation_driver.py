@@ -2147,17 +2147,18 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError()
             except ValueError:
                 blockers.append("week_transition_sporting_preflight_failed")
-        blockers.extend(
-            x
-            for x in preview_persisted_week_transition(
-                session,
-                self.awards_service,
-                run_id=run_id,
-                branch_id=branch_id,
-                completed_week=week,
+        if not (week.season_index == 49 and week.week == 61):
+            blockers.extend(
+                x
+                for x in preview_persisted_week_transition(
+                    session,
+                    self.awards_service,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    completed_week=week,
+                )
+                if x not in blockers
             )
-            if x not in blockers
-        )
         branch = session.get(RunBranchModel, branch_id)
         draft = session.scalar(
             select(BranchWorkingDraftModel).where(

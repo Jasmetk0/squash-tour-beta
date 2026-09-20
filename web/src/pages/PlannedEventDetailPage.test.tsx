@@ -14,8 +14,8 @@ const api = vi.hoisted(() => ({
   getEventLateReplacementCandidates: vi.fn(),
   getEventLateReplacementActions: vi.fn(),
   applyEventLateReplacement: vi.fn(),
-  getEventPreDrawWithdrawalState: vi.fn(),
   getCanonicalTournamentEntryFieldState: vi.fn(),
+  commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
   getCanonicalTournamentEffectiveDrawAuthority: vi.fn(),
@@ -27,7 +27,6 @@ const api = vi.hoisted(() => ({
   previewCanonicalFrozenMainReplacement: vi.fn(),
   commitCanonicalFrozenMainReplacement: vi.fn(),
   getEventPreDrawWithdrawalActions: vi.fn(),
-  applyEventPreDrawWithdrawal: vi.fn(),
   getEventWildcardCandidates: vi.fn(),
   getEventWildcardActions: vi.fn(),
   assignEventWildcards: vi.fn()
@@ -305,22 +304,6 @@ describe('PlannedEventDetailPage', () => {
       draw_revision_fingerprints: ['8'.repeat(64)],
       successor_draw_fingerprint: '9'.repeat(64)
     })
-    api.getEventPreDrawWithdrawalState.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      eligible: true,
-      eligibility_reason: null,
-      withdrawable_main_draw_players: [
-        {
-          player_id: 'P100',
-          player_name: 'Player Main',
-          country_code: 'EGY',
-          country_name: 'Egypt',
-          entry_id: 'E1:P100:MAIN',
-          acceptance_status: 'DIRECT_ACCEPTANCE'
-        }
-      ]
-    })
     api.getEventLateReplacementState.mockResolvedValue({
       run_id: 'run-a',
       event_id: 'E1',
@@ -386,16 +369,22 @@ describe('PlannedEventDetailPage', () => {
       eligibility_reason: null,
       remaining_capacity: 1
     })
-    api.applyEventPreDrawWithdrawal.mockResolvedValue({
+    api.commitCanonicalPreDrawWithdrawal.mockResolvedValue({
+      schema_version: 'canonical_pre_draw_withdrawal_result.v1',
+      command_id: 'admin-ui-pre-draw-withdrawal-aaaaaaaaaaaaaaaa-P2',
       run_id: 'run-a',
+      branch_id: 'branch-a',
       event_id: 'E1',
-      withdrawn_player_id: 'P100',
-      replacement_player_id: 'P200',
-      replacement_source: 'main_draw_waitlist',
-      withdrawn_entry_id: 'E1:P100:MAIN',
-      replacement_entry_id: 'E1:WITHDRAWAL_PLACEHOLDER:1',
-      eligible: true,
-      eligibility_reason: null
+      field_sequence: 2,
+      predecessor_field_fingerprint: 'a'.repeat(64),
+      field_fingerprint: 'e'.repeat(64),
+      newly_withdrawn_player_ids: ['P2'],
+      promoted_to_main_player_ids: ['Q1'],
+      qualification_backfill_player_ids: [],
+      direct_main_player_ids: ['P1', 'P3', 'Q1'],
+      qualification_player_ids: ['Q2'],
+      below_qualification_cut_player_ids: [],
+      withdrawn_player_ids: ['P2']
     })
     api.getEventPreDrawWithdrawalActions.mockResolvedValue({
       run_id: 'run-a',
@@ -475,8 +464,8 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('WORLD').length).toBeGreaterThan(0); expect(screen.getByText('GOLD')).toBeInTheDocument(); expect(screen.getByText('EVENT-A')).toBeInTheDocument()
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
-    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Pre-draw withdrawal action history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
-    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalState', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
+    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Legacy pre-draw withdrawal history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
+    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
 
@@ -884,19 +873,33 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getByText('Latest effective successor Draw')).toBeInTheDocument()
   })
 
-  it('renders pre-draw withdrawal controls and submits deterministic one-step action', async () => {
+  it('uses canonical Branch pre-draw withdrawal and retires legacy controls', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
     renderAt('/runs/run-a/calendar/E1')
 
-    expect(await screen.findByRole('heading', { name: 'Commissioner pre-draw withdrawal replacement' })).toBeInTheDocument()
-    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
-    fireEvent.change(playerSelect, { target: { value: 'P100' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
+    expect(await screen.findByRole('heading', { name: 'Canonical Main Draw preflight' })).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Commissioner pre-draw withdrawal replacement' })
+    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Withdraw + auto-replace' })).not.toBeInTheDocument()
+
+    const playerSelect = await screen.findByLabelText('Canonical Entry Field player to withdraw')
+    fireEvent.change(playerSelect, { target: { value: 'P2' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Commit canonical pre-draw withdrawal' }))
 
     await waitFor(() =>
-      expect(api.applyEventPreDrawWithdrawal).toHaveBeenCalledWith('run-a', 'E1', {
-        withdrawn_player_id: 'P100'
+      expect(api.commitCanonicalPreDrawWithdrawal).toHaveBeenCalledWith('run-a', 'branch-a', 'E1', {
+        schema_version: 'canonical_pre_draw_withdrawal_command.v1',
+        command_id: 'admin-ui-pre-draw-withdrawal-aaaaaaaaaaaaaaaa-P2',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        event_id: 'E1',
+        expected_field_fingerprint: 'a'.repeat(64),
+        withdrawn_player_ids: ['P2']
       })
     )
+    expect(await screen.findByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).toBeInTheDocument()
+    expect(screen.getByText(/Read-only audit of historical simulation-run sidecar actions/i)).toBeInTheDocument()
   })
 
   it('retires legacy late-replacement controls while preserving read-only history', async () => {
@@ -930,7 +933,6 @@ describe('PlannedEventDetailPage', () => {
       })
     )
     await waitFor(() => {
-      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
       expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
     })
@@ -947,9 +949,9 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getByRole('link', { name: 'Open run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
   })
 
-  it('renders pre-draw withdrawal history in append-only sequence order', async () => {
+  it('renders legacy pre-draw withdrawal history in append-only sequence order', async () => {
     renderAt('/runs/run-a/calendar/E1')
-    expect(await screen.findByRole('heading', { name: 'Pre-draw withdrawal action history' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).toBeInTheDocument()
     expect(await screen.findByText('#1 · pre_draw_withdrawal_replacement · P100 → P200 (main_draw_waitlist)')).toBeInTheDocument()
   })
 
@@ -959,21 +961,6 @@ describe('PlannedEventDetailPage', () => {
     expect(await screen.findByText('#1 · late_replacement_lucky_loser · P100 → P300 (qualification_waitlist)')).toBeInTheDocument()
   })
 
-  it('pre-draw mutation invalidates all commissioner read surfaces', async () => {
-    renderAt('/runs/run-a/calendar/E1')
-    const playerSelect = await screen.findByLabelText('Main-draw player to withdraw')
-    fireEvent.change(playerSelect, { target: { value: 'P100' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Withdraw + auto-replace' }))
 
-    await waitFor(() => expect(api.applyEventPreDrawWithdrawal).toHaveBeenCalled())
-    await waitFor(() => {
-      expect(api.getEventWildcards.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventWildcardCandidates.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventPreDrawWithdrawalState.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventPreDrawWithdrawalActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
-    })
-  })
 
 })

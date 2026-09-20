@@ -90,6 +90,7 @@ from beta_engine.infrastructure.db.models import (
     PlayerLifecycleWeekStateModel,
     PlayerTourEntryTriggerModel,
     TournamentApplicationSubmissionAuthorityModel,
+    RunEntryDecisionSlotAuthorityModel,
     ResolvedApplicationValidationSlotModel,
     DefinitiveWildCardAssignmentAuthorityModel,
     PlayerSportingWeekStateModel,
@@ -139,6 +140,12 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PLAYER_TOUR_ENTRY_COMPONENT_KEY,
     capture_saved_tour_entry_triggers,
     restore_saved_tour_entry_triggers,
+)
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
+    capture_saved_run_entry_decision_slots,
+    restore_saved_run_entry_decision_slots,
+    validate_saved_entry_match_slot_collisions,
 )
 from beta_engine.infrastructure.db.application_validation_slots import (
     APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
@@ -3189,6 +3196,25 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player lifecycle state"
                     )
+                has_uncaptured_run_entry_slots = (
+                    session.scalar(
+                        select(RunEntryDecisionSlotAuthorityModel.run_id)
+                        .where(
+                            RunEntryDecisionSlotAuthorityModel.run_id == run_id,
+                            RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                )
+                if (
+                    has_uncaptured_run_entry_slots
+                    and RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY
+                    not in state.saved_revision.payload.get("content", {})
+                ):
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture Run entry-decision slots"
+                    )
                 has_uncaptured_application_validation = (
                     session.scalar(
                         select(ResolvedApplicationValidationSlotModel.run_id)
@@ -3333,6 +3359,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
                         APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
                         TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
                         DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
@@ -3346,6 +3373,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         INITIAL_WORLD_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
                         APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
                         TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
                         DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
@@ -3437,6 +3465,37 @@ class SimulationPersistenceRepository:
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player lifecycle: {exc}"
+                        ) from exc
+                try:
+                    validate_saved_entry_match_slot_collisions(
+                        state.saved_revision.payload,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                    )
+                    validate_saved_entry_match_slot_collisions(
+                        target_revision.payload,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                    )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        f"Cannot restore global entry/match slot chronology: {exc}"
+                    ) from exc
+                if (
+                    RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY in current_content
+                    or RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_run_entry_decision_slots(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore Run entry-decision slots: {exc}"
                         ) from exc
                 if (
                     APPLICATION_VALIDATION_SLOT_COMPONENT_KEY in current_content
@@ -3555,6 +3614,9 @@ class SimulationPersistenceRepository:
                 # immutable legacy target. The new restore revision must describe
                 # the actual post-restore state, without rewriting that target.
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_run_entry_decision_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_application_validation_slots(
@@ -3994,6 +4056,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_run_entry_decision_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_application_validation_slots(

@@ -69,6 +69,19 @@ def wild_card_decision_slot_ordinals(
             raise ValueError("Stored Tournament WC authority chronology is corrupt")
         if authority.schema_version != "tournament_wild_card_authority.v2":
             continue
+        history = TournamentEntryFieldStore(session).history(
+            run_id=row.run_id,
+            branch_id=row.branch_id,
+            event_id=row.event_id,
+        )
+        if (
+            not history
+            or len(history) != row.field_sequence
+            or history[-1].fingerprint != row.entry_field_fingerprint
+        ):
+            raise ValueError(
+                "Canonical WC authority no longer references terminal Entry Field"
+            )
         if authority.decision_week is None or authority.decision_slot_ordinal is None:
             raise ValueError("Canonical WC authority v2 is missing global-slot chronology")
         if authority.decision_week.ordinal != week_ordinal:

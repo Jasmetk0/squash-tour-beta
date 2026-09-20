@@ -144,8 +144,14 @@ is named. Ranking detail: [completion checklist](docs/RANKING_COMPLETION_STATUS.
   and non-head revisions fail closed. Final closure evidence is a Saved Revision
   component; restore may read it, while direct forking from that final closure
   revision remains blocked until branch/revision identity remapping is implemented.
-  The full atomic Season Transition command that creates that revision and invokes
-  this completion kernel remains open.
+  Final 2049/50 closure now has a real atomic command: a fresh final preflight can
+  commit Closing Ranking → Season Summary/Closure Marker → complete Saved Revision →
+  clean Working Draft base/head update → Run `completed` under one SQLite
+  `BEGIN IMMEDIATE`. The revision payload already records `completed`, the Marker
+  self-references that exact revision, an append-only audit event stores the request
+  fingerprint, exact retries return the committed result, and injected failure after
+  revision staging rolls every closure write back. No 2050/51 Week 1 or Official
+  Ranking is created. The ordinary seasons 0–48 Season Transition remains open.
   The legacy branch-simulation controls remain explicitly labeled compatibility
   actions for higher-level Next Round/Week/Tournament/Season commands; those are not
   claimed to be canonical equivalents yet.

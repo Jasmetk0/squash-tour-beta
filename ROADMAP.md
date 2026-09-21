@@ -283,9 +283,14 @@ slots, while a durable parent command executes them through deterministic,
 resumable Next Slot children and fails closed on schedule/head/chronology drift.
 The canonical Simulation Admin UI now exposes this as a reviewed two-step action and
 preserves the same parent command ID across ordinary response-loss retry.
-Higher-level Next Round / Next Week / Next Tournament / Full Season controls remain
-compatibility actions until they are composed from canonical boundaries rather than
-legacy iteration order. See `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`.
+**Next Round is now canonical**: it derives the current event/phase/round identity
+from the adopted V2 schedule, freezes the exact global chronology horizon through the
+last remaining target match, reports interleaved transit matches, resumes through
+deterministic Next Slot children and fails closed on process-slot or chronology drift.
+Next Week / Next Tournament / Full Season remain compatibility actions until they are
+composed from canonical boundaries rather than legacy iteration order. See
+`docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md` and
+`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

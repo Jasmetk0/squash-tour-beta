@@ -1103,3 +1103,10 @@ PR-critical coverage joins the Branch fork and restore work into one specialized
 Fork replay no longer permits Lucky Loser or replacement-source nested fingerprints to survive merely because a generic recursive retarget did not recognize them. Branch-owned Draw/Input/Ranking/WC/result/Q-bracket evidence now requires exact source->target mappings.
 
 LL v2 auto-BYE evidence is rebuilt before LL-order terminal fingerprints so the target order owns the target auto-BYE evidence hash rather than a stale source hash. Source-bound pre-Q promotion is covered through Saved Revision capture, target Branch remap/materialization and idempotent retry. Remaining recovery work should emphasize broader real-match LL vacancy/fill acceptance and then return to pre-alpha product delivery.
+
+
+### Real Qualification-receipt LL fork acceptance
+
+Lucky Loser Branch-fork hardening now includes a PR-critical end-to-end acceptance with actual Qualification match execution and persisted result receipts. The test covers canonical Q semifinal/final execution -> LL order resolution -> vacancy/fill -> Saved Revision fork remap -> target materialization -> target result-fingerprint rebinding -> exact retry.
+
+This closes the mocked-evidence gap for the current LL fork path. Follow-up work can return to broader pre-alpha product slices unless new fork/recovery regressions appear.

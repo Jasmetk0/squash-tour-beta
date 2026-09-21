@@ -124,7 +124,7 @@ def _retarget_frozen_evidence(
             return fingerprint_map.get(node, node)
         return node
 
-    payload = remap(value.model_dump(mode="json"))
+    payload = remap(value.model_dump(mode="python"))
     return type(value).model_validate(payload)
 
 

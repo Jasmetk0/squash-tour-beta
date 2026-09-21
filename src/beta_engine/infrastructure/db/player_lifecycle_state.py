@@ -374,6 +374,50 @@ def load_saved_lifecycle(payload, *, run_id, branch_id):
     return states
 
 
+
+def remap_saved_lifecycle_component(
+    payload,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+):
+    """Rebuild a complete Saved Revision lifecycle chain for a forked Branch."""
+    source = load_saved_lifecycle(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if source is None:
+        return None
+
+    remapped = []
+    previous = None
+    for state in source:
+        target = PlayerLifecycleWeekState.model_validate_json(
+            state.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "predecessor_fingerprint": (
+                        previous.fingerprint if previous is not None else None
+                    ),
+                }
+            ).model_dump_json()
+        )
+        remapped.append(target)
+        previous = target
+
+    body = [state.model_dump(mode="json") for state in remapped]
+    fingerprint = hashlib.sha256(
+        json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    return {
+        "fingerprint": fingerprint,
+        "states": body,
+    }
+
+
+
 def restore_saved_lifecycle(
     session, *, current_payload, target_payload, run_id, branch_id
 ):

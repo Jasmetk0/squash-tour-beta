@@ -1243,3 +1243,36 @@ atomically with ranking history.
 Week/Season Transition receipts and World Events remain fail-closed because they carry
 player lifecycle/sporting or Season Closing fingerprints that cannot be truthfully
 rebuilt by the ranking-only Saved Revision slice yet.
+
+
+## Branch fork: player lifecycle Saved Revision remap
+
+Ranking-bearing materialized Branch forks can now carry the complete
+`player_lifecycle` Saved Revision component. The fork path validates the source
+component, rebuilds every immutable lifecycle snapshot for the target Branch, rewires
+the predecessor fingerprint chain to target-local fingerprints, writes the rebuilt
+component into the target materialized Saved Revision, and installs the same lifecycle
+history into target Branch persistence in the fork transaction.
+
+Player roster, lifecycle policy, age/status/Tour-entry evidence and shared InitialWorld
+provenance remain unchanged. Only Branch-owned identity and predecessor fingerprints
+are rebuilt.
+
+Player sporting history remains guarded for the next slice because its completed-week
+contexts also reference branch-owned tournament/match-effect evidence that must be
+mapped rather than copied.
+
+
+## Branch fork: player sporting v1 Saved Revision remap
+
+The same materialized Branch-fork path now also supports `player_sporting_state`
+history when its completed-week contexts use the v1 OwnedTournamentRankingSource
+evidence model. Source tournament fingerprints are rebound through the already-remapped
+ranking tournament sources; each completed-week context is then rebuilt for the target
+Branch, and every sporting snapshot is rebuilt against the new target context and
+predecessor fingerprints. The target component and persisted sporting/context rows are
+installed atomically with the fork.
+
+v2 sporting contexts sourced from the authoritative Simulation Slot match/effect ledger
+remain fail-closed. Their terminal sporting and match-effect fingerprints belong to
+separate Branch-owned authorities that are not yet fork-remapped.

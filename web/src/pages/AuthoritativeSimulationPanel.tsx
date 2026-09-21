@@ -444,11 +444,16 @@ export function AuthoritativeSimulationPanel({
     onSuccess: (value) => {
       setProposal(value)
       setProposalRequestId(newCommandId())
+      setManualScheduleDraft(seedMatchDayScheduleDraft(value.schedule))
+      setManualScheduleRequestId(newCommandId())
+      setManualScheduleReview(null)
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
         setProposal(null)
         setProposalRequestId('')
+        setManualScheduleDraft({})
+        setManualScheduleReview(null)
         await refreshCanonicalSimulation()
       }
     }
@@ -474,6 +479,60 @@ export function AuthoritativeSimulationPanel({
       if ((error as { status?: number }).status === 409) {
         setProposal(null)
         setProposalRequestId('')
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const manualSchedulePreviewMutation = useMutation({
+    mutationFn: async () => {
+      if (!proposal) {
+        throw new Error('Build the canonical Match Day proposal before editing it.')
+      }
+      const schedule = editedMatchDaySchedule(
+        proposal.schedule,
+        manualScheduleDraft
+      )
+      const preview = await previewAuthoritativeWeekSchedule(
+        runId,
+        branchId,
+        { schedule }
+      )
+      return { schedule, preview }
+    },
+    onSuccess: (review) => setManualScheduleReview(review),
+    onError: async (error) => {
+      setManualScheduleReview(null)
+      if ((error as { status?: number }).status === 409) {
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const manualScheduleAdoptMutation = useMutation({
+    mutationFn: () => {
+      if (!manualScheduleReview) {
+        throw new Error('Review the edited Match Day schedule before adoption.')
+      }
+      return adoptAuthoritativeWeekSchedule(runId, branchId, {
+        request_id: manualScheduleRequestId,
+        schedule: manualScheduleReview.schedule,
+        expected_position_fingerprint:
+          manualScheduleReview.preview.position_fingerprint
+      })
+    },
+    onSuccess: async () => {
+      setProposal(null)
+      setProposalRequestId('')
+      setManualScheduleDraft({})
+      setManualScheduleRequestId(newCommandId())
+      setManualScheduleReview(null)
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setManualScheduleReview(null)
         await refreshCanonicalSimulation()
       }
     }

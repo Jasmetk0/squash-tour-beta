@@ -181,5 +181,5 @@ def test_empty_run_two_manual_players_can_play_one_saved_standalone_match(tmp_pa
     content = saved.saved_revision.payload["content"]
     assert "initial_world" in content
     assert "player_lifecycle" in content
-    assert "player_sporting" in content
+    assert "player_sporting_state" in content
     assert "simulation_slot_match_state" in content

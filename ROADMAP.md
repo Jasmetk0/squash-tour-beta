@@ -1037,3 +1037,14 @@ materialized fork transaction as sporting + Slot core.
 Next: remap the Draw/Entry Field/Wild Card authority chain so canonical adopted
 tournament authority v6 can be rebuilt too. Simulation command receipts remain a
 separate schema-by-schema follow-up.
+
+
+### Branch identity remapping: Tournament Ranking Snapshot authority
+
+Tournament Ranking Snapshot authority is now part of the supported ranking-bearing
+Branch-fork state. It is rebound to the exact target Official Ranking publication at the
+same week rather than copying the source snapshot.
+
+Next dependency chain:
+Tournament Ranking Snapshot -> Entry Field -> Wild Card -> Draw Input -> Draw ->
+Draw Revision / Draw Process -> canonical Adopted Tournament Authority v6.

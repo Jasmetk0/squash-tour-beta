@@ -142,6 +142,9 @@ from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority impor
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_walkover_authority import (
     TournamentWalkoverAuthorityStore,
 )
@@ -3945,6 +3948,19 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         )
     )
     session.flush()
+    source_draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-draw",
+        command_id="generate-draw",
+    )
+    source_process = TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-draw",
+        command_id="configure-process",
+        main_process_window_count=3,
+    )
 
     payload = {"content": {}}
     capture_saved_sporting(
@@ -3974,15 +3990,35 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
     component = remapped.simulation_component
     target_field_row = component["entry_fields"][0]
     target_wc_row = component["wild_card_authorities"][0]
-    target_draw_row = component["draw_inputs"][0]
+    target_draw_input_row = component["draw_inputs"][0]
+    target_draw_row = component["draw_authorities"][0]
+    target_process_row = component["draw_process_authorities"][0]
     assert target_field_row["branch_id"] == "target"
     assert target_wc_row["branch_id"] == "target"
+    assert target_draw_input_row["branch_id"] == "target"
     assert target_draw_row["branch_id"] == "target"
+    assert target_process_row["branch_id"] == "target"
     assert target_field_row["field_fingerprint"] != source_field.fingerprint
     assert target_wc_row["authority_fingerprint"] != source_wc.fingerprint
-    assert target_draw_row["authority_fingerprint"] != source_draw_input.fingerprint
     assert (
-        target_draw_row["ranking_authority_fingerprint"]
+        target_draw_input_row["authority_fingerprint"]
+        != source_draw_input.fingerprint
+    )
+    assert target_draw_row["authority_fingerprint"] != source_draw.fingerprint
+    assert target_process_row["authority_fingerprint"] != source_process.fingerprint
+    assert (
+        target_draw_input_row["ranking_authority_fingerprint"]
         == target_ranking_authority.fingerprint
     )
-    assert target_draw_row["entry_field_fingerprint"] == target_field_row["field_fingerprint"]
+    assert (
+        target_draw_input_row["entry_field_fingerprint"]
+        == target_field_row["field_fingerprint"]
+    )
+    assert (
+        target_draw_row["draw_input_fingerprint"]
+        == target_draw_input_row["authority_fingerprint"]
+    )
+    assert (
+        target_process_row["draw_authority_fingerprint"]
+        == target_draw_row["authority_fingerprint"]
+    )

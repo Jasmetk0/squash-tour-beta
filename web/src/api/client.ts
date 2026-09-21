@@ -125,6 +125,9 @@ import type {
   FinalSeasonTransitionResult,
   AuthoritativeWeekScheduleInspection,
   AuthoritativeWeekScheduleProposal,
+  AuthoritativeWeekScheduleManualPreview,
+  PreviewAuthoritativeWeekSchedulePayload,
+  AdoptAuthoritativeWeekSchedulePayload,
   AdoptAuthoritativeWeekScheduleProposalPayload,
   AuthoritativeWeekScheduleAdoptionResult,
   AuthoritativeSimulationCommandPayload,
@@ -1362,6 +1365,41 @@ export async function proposeAuthoritativeWeekSchedule(
   if (data.schedule.run_id !== runId || data.schedule.branch_id !== branchId) {
     throw new Error('Authoritative schedule proposal does not match the requested Run/Branch.')
   }
+  return data
+}
+
+export async function previewAuthoritativeWeekSchedule(
+  runId: string,
+  branchId: string,
+  payload: PreviewAuthoritativeWeekSchedulePayload
+): Promise<AuthoritativeWeekScheduleManualPreview> {
+  const data = await request<AuthoritativeWeekScheduleManualPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (data.schedule.run_id !== runId || data.schedule.branch_id !== branchId) {
+    throw new Error('Manual Match Day schedule preview scope mismatch.')
+  }
+  if (
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.position_fingerprint)
+  ) {
+    throw new Error('Manual Match Day schedule preview fingerprints are invalid.')
+  }
+  return data
+}
+
+export async function adoptAuthoritativeWeekSchedule(
+  runId: string,
+  branchId: string,
+  payload: AdoptAuthoritativeWeekSchedulePayload
+): Promise<AuthoritativeWeekScheduleAdoptionResult> {
+  const data = await request<AuthoritativeWeekScheduleAdoptionResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  const scope = 'run_id' in data ? data : data.schedule
+  verifyAuthoritativeSimulationScope(runId, branchId, scope)
   return data
 }
 

@@ -1324,6 +1324,116 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
 
 
 @pytest.mark.pr_critical
+def test_manual_match_day_schedule_can_split_round_without_breaking_feeders(tmp_path):
+    driver, _, week, first, _ = _multi_driver_fixture(
+        tmp_path / "manual-match-day-split"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    automatic = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    first_roots = sorted(
+        (
+            match
+            for match in first.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
+    first_final = next(
+        match
+        for match in first.main_draw_matches
+        if match.round_number == 2
+    )
+    moved_root_id = first_roots[-1].match_id
+
+    def retime(day_overrides: dict[str, int]) -> WeekSimulationSchedule:
+        rows = []
+        for slot in automatic.slots:
+            group_id = slot.group_ids[0]
+            rows.append(
+                (
+                    day_overrides.get(
+                        group_id,
+                        slot.match_day_ordinal,
+                    ),
+                    slot.match_order,
+                    slot.ordinal,
+                    group_id,
+                    slot,
+                )
+            )
+        rows.sort(key=lambda row: (row[0], row[1], row[2], row[3]))
+        ordinal_pool = sorted(slot.ordinal for slot in automatic.slots)
+        next_order: dict[int, int] = {}
+        slots = []
+        for index, (day, _, _, _, slot) in enumerate(rows):
+            assert day is not None
+            match_order = next_order.get(day, 0) + 1
+            next_order[day] = match_order
+            slots.append(
+                slot.model_copy(
+                    update={
+                        "ordinal": ordinal_pool[index],
+                        "match_day_ordinal": day,
+                        "match_order": match_order,
+                    }
+                )
+            )
+        return automatic.model_copy(update={"slots": tuple(slots)})
+
+    invalid = retime(
+        {
+            moved_root_id: 2,
+            first_final.match_id: 2,
+        }
+    )
+    with pytest.raises(
+        ValueError,
+        match="strictly later slot|later Match Day",
+    ):
+        driver.preview_schedule(invalid)
+
+    manual = retime(
+        {
+            moved_root_id: 2,
+            first_final.match_id: 3,
+        }
+    )
+    preview = driver.preview_schedule(manual)
+    assert preview["schedule_fingerprint"] == manual.fingerprint
+    assert manual.fingerprint != automatic.fingerprint
+    assert {
+        slot.match_day_ordinal
+        for slot in manual.slots
+        if slot.group_ids[0] in {match.match_id for match in first_roots}
+    } == {1, 2}
+    assert next(
+        slot.match_day_ordinal
+        for slot in manual.slots
+        if slot.group_ids[0] == first_final.match_id
+    ) == 3
+
+    adopted = driver.adopt_schedule(
+        manual,
+        request_id="manual-match-day-split",
+        expected_position_fingerprint=preview["position_fingerprint"],
+    )
+    assert adopted["schedule_fingerprint"] == manual.fingerprint
+    assert (
+        driver.adopt_schedule(
+            manual,
+            request_id="manual-match-day-split",
+            expected_position_fingerprint=preview["position_fingerprint"],
+        )["adoption"]
+        == "exact_retry"
+    )
+
+
+@pytest.mark.pr_critical
 def test_match_day_v2_same_day_matches_use_sequential_sporting_snapshots(tmp_path):
     driver, factory, week, _, _ = _multi_driver_fixture(
         tmp_path / "match-day-sequential-snapshots"

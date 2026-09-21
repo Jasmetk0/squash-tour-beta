@@ -1135,6 +1135,22 @@ export type AuthoritativeWeekScheduleProposal = {
   persisted: false
 }
 
+export type AuthoritativeWeekScheduleManualPreview = {
+  schedule: AuthoritativeWeekSchedule
+  schedule_fingerprint: string
+  position_fingerprint: string
+}
+
+export type PreviewAuthoritativeWeekSchedulePayload = {
+  schedule: AuthoritativeWeekSchedule
+}
+
+export type AdoptAuthoritativeWeekSchedulePayload = {
+  request_id: string
+  schedule: AuthoritativeWeekSchedule
+  expected_position_fingerprint: string
+}
+
 export type AdoptAuthoritativeWeekScheduleProposalPayload = {
   request_id: string
   expected_week: AuthoritativeRankingWeek

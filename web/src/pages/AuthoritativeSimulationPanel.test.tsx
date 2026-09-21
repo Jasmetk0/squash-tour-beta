@@ -21,6 +21,8 @@ const api = vi.hoisted(() => ({
   inspectAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
   proposeAuthoritativeWeekSchedule: vi.fn(),
+  previewAuthoritativeWeekSchedule: vi.fn(),
+  adoptAuthoritativeWeekSchedule: vi.fn(),
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
@@ -112,6 +114,30 @@ const proposal = {
   position_fingerprint: 'd'.repeat(64),
   provenance: 'match_day_schedule_hard_constraints.v1; one competitive match per global Simulation Slot',
   persisted: false as const
+}
+
+const editedSchedule = {
+  ...proposal.schedule,
+  slots: [
+    {
+      ...proposal.schedule.slots[0],
+      ordinal: 1,
+      match_day_ordinal: 1,
+      match_order: 1
+    },
+    {
+      ...proposal.schedule.slots[1],
+      ordinal: 2,
+      match_day_ordinal: 2,
+      match_order: 1
+    },
+    {
+      ...proposal.schedule.slots[2],
+      ordinal: 3,
+      match_day_ordinal: 3,
+      match_order: 1
+    }
+  ]
 }
 
 const transitionPreview = {
@@ -412,6 +438,16 @@ beforeEach(() => {
     simulation_fingerprint: 'e'.repeat(64)
   })
   api.proposeAuthoritativeWeekSchedule.mockResolvedValue(proposal)
+  api.previewAuthoritativeWeekSchedule.mockResolvedValue({
+    schedule: editedSchedule,
+    schedule_fingerprint: 'e'.repeat(64),
+    position_fingerprint: 'f'.repeat(64)
+  })
+  api.adoptAuthoritativeWeekSchedule.mockResolvedValue({
+    ...scheduleInspection,
+    schedule: editedSchedule,
+    schedule_fingerprint: 'e'.repeat(64)
+  })
   api.adoptAuthoritativeWeekScheduleProposal.mockResolvedValue({
     ...scheduleInspection,
     schedule: proposal.schedule,
@@ -776,6 +812,68 @@ describe('AuthoritativeSimulationPanel', () => {
           expected_week: week,
           expected_schedule_fingerprint: 'c'.repeat(64),
           expected_position_fingerprint: 'd'.repeat(64)
+        })
+      )
+    )
+  })
+
+  it('reviews and adopts an exact manually edited Match Day schedule', async () => {
+    renderPanel()
+
+    await userEvent.click(
+      await screen.findByRole('button', {
+        name: 'Build Match Day schedule proposal'
+      })
+    )
+
+    const g2Day = await screen.findByLabelText('Match Day g2')
+    await userEvent.clear(g2Day)
+    await userEvent.type(g2Day, '2')
+
+    const g3Day = screen.getByLabelText('Match Day g3')
+    await userEvent.clear(g3Day)
+    await userEvent.type(g3Day, '3')
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Review edited Match Day schedule'
+      })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeWeekSchedule).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          schedule: editedSchedule
+        }
+      )
+    )
+    expect(
+      await screen.findByText('Reviewed schedule fingerprint')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed edited Match Day schedule'
+      })
+    ).toHaveTextContent(
+      'Day 2 · #1 · global slot 2 · event-b · main R1: g2'
+    )
+
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Adopt reviewed edited Match Day schedule'
+      })
+    )
+
+    await waitFor(() =>
+      expect(api.adoptAuthoritativeWeekSchedule).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          request_id: expect.any(String),
+          schedule: editedSchedule,
+          expected_position_fingerprint: 'f'.repeat(64)
         })
       )
     )

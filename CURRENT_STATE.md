@@ -1462,3 +1462,12 @@ The current canonical proposal derives hard constraints from frozen tournament t
 - Admin preview/adoption remains immutable, CAS-guarded and exact-retryable; Branch fork and Saved Revision handling preserve the V2 metadata.
 
 This is deliberately the **single-week pre-alpha Match Day foundation**, not the finished generic tournament scheduler. Calendar-spanning multi-week Round Schedule ranges, explicit rest-day ranges beyond the current next-round/day rule, court allocation, cross-event travel/acclimatization, carryover optimization and fairness scoring remain follow-up policy/optimization work. See `docs/MATCH_DAY_SCHEDULE_V1.md`.
+
+
+## Manual Match Day Schedule editor
+
+Simulation Admin can now branch from the canonical `week_simulation_schedule.v2` proposal into an explicit manual Match Day review flow before adoption. Admin edits only Match Day and within-day priority; event/phase/round/group identity remains frozen from the canonical proposal. The client reuses the proposal's already-reserved global ordinal pool, then the server revalidates the edited schedule against the same hard constraints used for automatic proposals.
+
+The manual preview is non-persistent and returns a schedule fingerprint plus a position fingerprint bound to both current canonical simulation state and the exact edited schedule. Commit therefore adopts only the reviewed payload; any later edit or concurrent simulation change makes the review stale. Backend PR-critical coverage proves that one round can be deliberately split across multiple Match Days while feeder dependencies still require a later dependent day.
+
+This is the decided Admin-edit foundation from Master §13.4. Automatic lexicographic fair-rest optimization, carryover from the previous week, schedule-quality scoring and minimal-range reflow after later withdrawals/replacements remain follow-up work.

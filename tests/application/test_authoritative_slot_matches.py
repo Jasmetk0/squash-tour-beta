@@ -4405,6 +4405,27 @@ def test_draw_revision_restore_round_trip_and_retry_are_identity_stable(tmp_path
         event_id="event-restore-retry",
     ).count() == 2
 
+    second_row = session.scalar(
+        select(TournamentDrawRevisionModel).where(
+            TournamentDrawRevisionModel.run_id == "run",
+            TournamentDrawRevisionModel.branch_id == "branch",
+            TournamentDrawRevisionModel.event_id == "event-restore-retry",
+            TournamentDrawRevisionModel.sequence == 2,
+        )
+    )
+    assert second_row is not None
+    valid_request_fingerprint = second_row.request_fingerprint
+    second_row.request_fingerprint = "f" * 64
+    session.flush()
+    with pytest.raises(ValueError, match="request identity is corrupt"):
+        store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+        )
+    second_row.request_fingerprint = valid_request_fingerprint
+    session.flush()
+
     restored_payload = {"content": {}}
     capture_saved_simulation_slots(
         session,

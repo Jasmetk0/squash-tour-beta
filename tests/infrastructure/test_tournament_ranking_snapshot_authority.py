@@ -8,7 +8,10 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
-from beta_engine.domain.rankings.revision_state import RankingRevisionState
+from beta_engine.domain.rankings.revision_state import (
+    RankingRevisionEntry,
+    RankingRevisionState,
+)
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
@@ -26,6 +29,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.ranking_revision_state import (
     capture_ranking_revision_state,
+)
+from beta_engine.infrastructure.db.ranking_fork_remap import (
+    _remap_tournament_ranking_snapshot_authorities,
 )
 from beta_engine.infrastructure.db.ranking_state_restore import (
     restore_ranking_revision_state,
@@ -238,3 +244,50 @@ def test_revision_restore_preserves_exact_event_ranking_authority(database):
             select(TournamentRankingSnapshotAuthorityModel)
         ).all()
         assert len(rows) == 1
+
+
+@pytest.mark.pr_critical
+def test_branch_fork_remaps_tournament_ranking_snapshot_to_target_publication():
+    source_snapshot = ranking()
+    target_snapshot = source_snapshot.model_copy(update={"branch_id": "target"})
+    source_entry = RankingRevisionEntry(
+        snapshot=source_snapshot,
+        inputs={
+            "players": (),
+            "results": (),
+            "disciplinary_zeros": (),
+            "zeros_from_history": False,
+            "command_request_fingerprint": "0" * 64,
+        },
+        receipts=(),
+    )
+    target_entry = RankingRevisionEntry(
+        snapshot=target_snapshot,
+        inputs=source_entry.inputs,
+        receipts=(),
+    )
+    source_authority = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-a",
+        ranking_week=source_snapshot.week,
+        ranking_snapshot=source_snapshot,
+        adopted_by_command_id="adopt-a",
+    )
+
+    remapped, mapping = _remap_tournament_ranking_snapshot_authorities(
+        (source_authority,),
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        source_entries=(source_entry,),
+        target_entries=(target_entry,),
+    )
+
+    assert len(remapped) == 1
+    target_authority = remapped[0]
+    assert target_authority.branch_id == "target"
+    assert target_authority.ranking_snapshot == target_snapshot
+    assert target_authority.ranking_snapshot_fingerprint == target_snapshot.fingerprint
+    assert target_authority.fingerprint != source_authority.fingerprint
+    assert mapping[source_authority.fingerprint] == target_authority

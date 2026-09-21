@@ -111,3 +111,16 @@ player AI, and final development probability architecture remain unimplemented o
 open. Formal prospect→Tour-entry trigger authority itself is now branch-owned and
 persisted for valid application submissions and definitive WC/RWC assignments, with
 current lifecycle projection and later boundary sealing.
+
+
+## Branch-fork identity
+
+Materialized Branch forks now support saved sporting history whose completed-week
+contexts are v1 tournament-source evidence. Every source tournament fingerprint must
+have an exact target mapping from the ranking fork. The context is rebuilt for the
+target Branch, then the sporting state chain is rebuilt against the resulting target
+context and predecessor fingerprints and installed with the target Saved Revision.
+
+v2 contexts remain guarded because their terminal sporting checkpoint and individual
+match-effect fingerprints are owned by the separate authoritative Simulation Slot
+ledger and must not be copied across Branch identity.

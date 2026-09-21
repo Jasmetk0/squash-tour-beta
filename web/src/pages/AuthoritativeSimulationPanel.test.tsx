@@ -28,6 +28,8 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextSlot: vi.fn(),
   previewAuthoritativeNextMatchDay: vi.fn(),
   simulateAuthoritativeNextMatchDay: vi.fn(),
+  previewAuthoritativeNextRound: vi.fn(),
+  simulateAuthoritativeNextRound: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -151,6 +153,53 @@ const matchDayResult = {
     unresolved_group_ids: ['g3'],
     blocked_match_ids: [],
     position_fingerprint: '1'.repeat(64)
+  },
+  adoption: 'committed' as const
+}
+
+const roundPreview = {
+  schema_version: 'authoritative_round_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  round_identity: {
+    event_id: 'event-a',
+    draw_phase: 'main' as const,
+    round_number: 1
+  },
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 3],
+  target_group_ids: ['g1', 'g3'],
+  horizon_slot_ordinals: [1, 2, 3],
+  transit_slot_ordinals: [2],
+  transit_group_ids: ['g2'],
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  preview_fingerprint: '8'.repeat(64)
+}
+
+const roundResult = {
+  schema_version: 'authoritative_round_result.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  round_identity: roundPreview.round_identity,
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 3],
+  target_group_ids: ['g1', 'g3'],
+  horizon_slot_ordinals: [1, 2, 3],
+  transit_slot_ordinals: [2],
+  transit_group_ids: ['g2'],
+  child_command_ids: ['round-slot:one', 'round-slot:two', 'round-slot:three'],
+  completed_slot_count: 3,
+  position: {
+    ...position,
+    current_slot_id: 'slot-4',
+    slot_ordinal: 4,
+    eligible_match_ids: ['g4'],
+    unresolved_group_ids: ['g4'],
+    blocked_match_ids: [],
+    position_fingerprint: '2'.repeat(64)
   },
   adoption: 'committed' as const
 }
@@ -597,6 +646,8 @@ beforeEach(() => {
   })
   api.previewAuthoritativeNextMatchDay.mockResolvedValue(matchDayPreview)
   api.simulateAuthoritativeNextMatchDay.mockResolvedValue(matchDayResult)
+  api.previewAuthoritativeNextRound.mockResolvedValue(roundPreview)
+  api.simulateAuthoritativeNextRound.mockResolvedValue(roundResult)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1129,6 +1180,76 @@ describe('AuthoritativeSimulationPanel', () => {
     )
     expect(
       api.simulateAuthoritativeNextMatchDay.mock.calls[1][2].command_id
+    ).toBe(firstCommand.command_id)
+  })
+
+  it('reviews transit chronology and safely retries the exact canonical Next Round command', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextRound
+      .mockRejectedValueOnce(new Error('network response lost'))
+      .mockResolvedValueOnce(roundResult)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Next Round' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeNextRound).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    expect(
+      await screen.findByRole('heading', { name: /Reviewed canonical Round/ })
+    ).toHaveTextContent('event-a')
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Round target matches'
+      })
+    ).toHaveTextContent('Target slot 1: g1')
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Round target matches'
+      })
+    ).toHaveTextContent('Target slot 3: g3')
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Round transit matches'
+      })
+    ).toHaveTextContent('Transit slot 2: g2')
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const commit = screen.getByRole('button', {
+      name: 'Simulate reviewed authoritative Next Round'
+    })
+    await userEvent.click(commit)
+
+    expect(
+      await screen.findByText(
+        'Authoritative Next Round failed: network response lost'
+      )
+    ).toBeInTheDocument()
+    const firstCommand = api.simulateAuthoritativeNextRound.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      expected_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7'
+    })
+    expect(firstCommand).not.toHaveProperty('run_id')
+    expect(firstCommand).not.toHaveProperty('branch_id')
+
+    await userEvent.click(commit)
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextRound).toHaveBeenCalledTimes(2)
+    )
+    expect(
+      api.simulateAuthoritativeNextRound.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
   })
 

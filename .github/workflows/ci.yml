@@ -23,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # During pre-alpha construction Fast CI runs only tests changed by the PR
-      # (plus frontend colocated tests). The complete suite stays manual until
-      # the final pre-alpha acceptance gate.
+      # Fast CI intentionally runs only a compact catastrophic-regression gate.
+      # Frontend also runs changed/colocated tests. The separate "Full Test Suite"
+      # retains complete coverage after merge to buuk and nightly.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -39,17 +39,20 @@ jobs:
               - 'tests/**'
               - 'pyproject.toml'
               - 'requirements*.txt'
+              - '.github/workflows/**'
             frontend:
+              # Canonical World Package changes affect API contracts consumed by the UI.
               - 'config/world_packages/**'
               - 'web/**'
               - 'web/package.json'
               - 'web/package-lock.json'
+              - '.github/workflows/**'
             docs_only:
               - 'docs/**'
               - '**/*.md'
 
   backend-tests:
-    name: Backend PR-specific tests
+    name: Backend PR critical
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
@@ -61,29 +64,17 @@ jobs:
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
+        # PR tests need production dependencies and pytest, but not the heavier
+        # dev-only Ruff/httpx extras. The full workflow still installs all dev extras.
         run: python -m pip install -e . pytest
       - name: Compile backend source
         run: python -m compileall -q src
-      - name: Run backend tests changed by this PR
-        shell: bash
+      - name: Run PR critical backend tests
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          git fetch --no-tags --depth=1 origin "$BASE_SHA"
-          mapfile -t tests < <(
-            git diff --name-only "$BASE_SHA" HEAD -- tests |
-              grep -E '^tests/(.*/)?test_.*\.py$' || true
-          )
-
-          if (( ${#tests[@]} == 0 )); then
-            echo "No changed backend test files found; compile check is sufficient for this PR."
-            exit 0
-          fi
-
-          printf 'Running PR-specific backend tests:\n%s\n' "${tests[*]}"
-          python -m pytest "${tests[@]}" --maxfail=1 --durations=10
+          python -m pytest -m pr_critical --maxfail=1 --durations=10
 
   frontend-checks:
-    name: Frontend PR-specific tests + build
+    name: Frontend build + critical tests
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -99,6 +90,18 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install web dependencies
         run: npm ci
+      - name: Run stable critical frontend baseline
+        run: |
+          npm run test -- \
+            src/test/faxReferenceFixture.test.ts \
+            src/components/Layout.test.tsx \
+            src/pages/admin/AdminHomePage.test.tsx \
+            src/viewer/ViewerProductRunRouteContext.test.tsx \
+            src/pages/AdminRankingCandidatesPage.test.tsx \
+            src/pages/RankingPreparationPanel.test.tsx \
+            src/pages/RankingSavePanel.test.tsx \
+            src/api/rankingPreparation.test.ts \
+            src/pages/AdminRunBranchesPage.test.tsx
       - name: Run frontend tests changed by this PR
         shell: bash
         run: |
@@ -143,5 +146,7 @@ jobs:
     if: needs.changes.outputs.docs_only == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
     runs-on: ubuntu-latest
     steps:
+      # Docs-only changes intentionally skip expensive backend/frontend jobs.
       - name: Docs-only change detected
-        run: echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."
+        run: |
+          echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."

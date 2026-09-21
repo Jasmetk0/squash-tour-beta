@@ -73,10 +73,13 @@ def wild_card_decision_slot_ordinals(
             row.authority_fingerprint,
         ):
             raise ValueError("Stored Tournament WC authority chronology is corrupt")
-        if authority.schema_version != "tournament_wild_card_authority.v2":
+        if authority.schema_version not in {
+            "tournament_wild_card_authority.v2",
+            "tournament_wild_card_authority.v3",
+        }:
             continue
         if authority.decision_week is None or authority.decision_slot_ordinal is None:
-            raise ValueError("Canonical WC authority v2 is missing global-slot chronology")
+            raise ValueError("Chronology-aware WC authority is missing global-slot chronology")
         if authority.decision_week.ordinal != week_ordinal:
             continue
         if authority.decision_slot_ordinal in ordinals:

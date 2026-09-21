@@ -266,7 +266,31 @@ export function AuthoritativeSimulationPanel({
     setEntryValidationOperator('')
     setEntryValidationReason('')
     setEntryValidationDrafts({})
+    setWeekLockCommandId(newCommandId())
+    setWeekLockOperator('')
+    setWeekLockReason('')
+    setWeekLockSelections({})
+    setWeekLockReview(null)
   }, [runId, branchId, savedRevisionId])
+
+  useEffect(() => {
+    const inspection = weekLockQuery.data
+    setWeekLockReview(null)
+    setWeekLockCommandId(newCommandId())
+    if (!inspection || inspection.lock_status !== 'required') {
+      setWeekLockSelections({})
+      return
+    }
+    const next: Record<string, string> = {}
+    for (const conflict of inspection.conflicts) {
+      next[conflict.player_id] = ''
+    }
+    setWeekLockSelections(next)
+  }, [
+    weekLockQuery.data?.position_fingerprint,
+    weekLockQuery.data?.authority_fingerprint,
+    weekLockQuery.data?.lock_status
+  ])
 
   useEffect(() => {
     const eligible = positionQuery.data?.eligible_match_ids ?? []
@@ -328,7 +352,9 @@ export function AuthoritativeSimulationPanel({
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] })
+      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }
 

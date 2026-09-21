@@ -258,7 +258,7 @@ def session_at(
                 )
             ),
             effective_development_policy=PlayerDevelopmentPolicy(),
-            completed_context_fingerprint="bootstrap",
+            completed_context_fingerprint="bootstrap:not-a-completed-week",
             source_initial_world_fingerprint=world.fingerprint,
             stage_provenance="test",
         ),

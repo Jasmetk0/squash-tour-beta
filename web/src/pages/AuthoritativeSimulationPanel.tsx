@@ -472,6 +472,9 @@ export function AuthoritativeSimulationPanel({
     onSuccess: async () => {
       setProposal(null)
       setProposalRequestId('')
+      setManualScheduleDraft({})
+      setManualScheduleReview(null)
+      setManualScheduleRequestId(newCommandId())
       setConfirmed(false)
       await refreshCanonicalSimulation()
     },
@@ -479,6 +482,8 @@ export function AuthoritativeSimulationPanel({
       if ((error as { status?: number }).status === 409) {
         setProposal(null)
         setProposalRequestId('')
+        setManualScheduleDraft({})
+        setManualScheduleReview(null)
         await refreshCanonicalSimulation()
       }
     }

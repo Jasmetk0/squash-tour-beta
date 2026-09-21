@@ -1156,7 +1156,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Frozen WC revision lacks repair authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_replacement_source_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1234,7 +1234,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Frozen ordinary fallback lacks replacement-source authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_replacement_source_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1297,7 +1297,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Source-bound pre-Q revision lacks replacement-source authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_replacement_source_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1401,7 +1401,7 @@ def remap_coupled_player_slot_history(
                     )
                 source_replacement = source_revision.replacement_source_authority
                 target_replacement = (
-                    _retarget_frozen_evidence(
+                    _retarget_replacement_source_authority(
                         source_replacement,
                         target_branch_id=target_branch_id,
                         fingerprint_map=frozen_map,
@@ -1416,7 +1416,7 @@ def remap_coupled_player_slot_history(
                     frozen_map[source_replacement.fingerprint] = (
                         target_replacement.fingerprint
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_lucky_loser_vacancy_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1492,7 +1492,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Lucky Loser fill revision lacks fill authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_lucky_loser_fill_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,

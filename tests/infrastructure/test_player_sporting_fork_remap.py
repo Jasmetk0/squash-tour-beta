@@ -114,18 +114,60 @@ def test_v1_sporting_history_missing_evidence_mapping_fails_closed():
         )
 
 
-def test_v2_match_effect_sporting_history_stays_fail_closed():
+def test_v2_match_effect_sporting_history_rebinds_all_external_evidence():
+    payload, source_states, source_context = _source_payload(
+        schema_version="completed_week_sporting_context.v2"
+    )
+
+    component = remap_saved_sporting_component(
+        payload,
+        run_id="run",
+        source_branch_id="source",
+        target_branch_id="target",
+        source_fingerprint_map={
+            "source-tournament-fingerprint": "target-slot-result-fingerprint"
+        },
+        terminal_sporting_fingerprint_map={
+            "a" * 64: "c" * 64,
+        },
+        match_effect_fingerprint_map={
+            "b" * 64: "d" * 64,
+        },
+    )
+
+    assert component is not None
+    target_payload = {"content": {PLAYER_SPORTING_COMPONENT_KEY: component}}
+    bundle = load_saved_sporting_bundle(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert bundle is not None
+    target_states, target_contexts = bundle
+    target_context = target_contexts[0]
+    assert target_context.schema_version == "completed_week_sporting_context.v2"
+    assert target_context.source_fingerprints == ("target-slot-result-fingerprint",)
+    assert target_context.terminal_sporting_fingerprint == "c" * 64
+    assert target_context.match_effect_fingerprints == ("d" * 64,)
+    assert target_context.fingerprint != source_context.fingerprint
+    assert target_states[1].completed_context_fingerprint == target_context.fingerprint
+    assert target_states[1].predecessor_fingerprint == target_states[0].fingerprint
+    assert target_states[0].fingerprint != source_states[0].fingerprint
+    assert target_states[1].fingerprint != source_states[1].fingerprint
+
+
+def test_v2_match_effect_sporting_history_missing_slot_mapping_fails_closed():
     payload, _, _ = _source_payload(
         schema_version="completed_week_sporting_context.v2"
     )
 
-    with pytest.raises(ValueError, match="does not yet support v2"):
+    with pytest.raises(ValueError, match="Simulation Slot evidence without a target fork mapping"):
         remap_saved_sporting_component(
             payload,
             run_id="run",
             source_branch_id="source",
             target_branch_id="target",
             source_fingerprint_map={
-                "source-tournament-fingerprint": "target-tournament-fingerprint"
+                "source-tournament-fingerprint": "target-slot-result-fingerprint"
             },
         )

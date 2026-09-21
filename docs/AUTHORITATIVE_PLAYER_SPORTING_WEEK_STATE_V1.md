@@ -124,3 +124,14 @@ context and predecessor fingerprints and installed with the target Saved Revisio
 v2 contexts remain guarded because their terminal sporting checkpoint and individual
 match-effect fingerprints are owned by the separate authoritative Simulation Slot
 ledger and must not be copied across Branch identity.
+
+
+## Branch-fork v2 evidence contract
+
+`completed_week_sporting_context.v2` can now be rebuilt for a target Branch when the
+Simulation Slot authority layer supplies exact target fingerprints for its result
+sources, terminal sporting checkpoint and every match effect. The remapper rewrites all
+three evidence classes and then rebuilds the target context and sporting state chain.
+
+The contract is deliberately fail-closed: a partial evidence map is not accepted and no
+source v2 fingerprint is silently preserved across Branch identity.

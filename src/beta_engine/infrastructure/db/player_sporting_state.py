@@ -762,12 +762,14 @@ def remap_saved_sporting_component(
     source_branch_id: str,
     target_branch_id: str,
     source_fingerprint_map: dict[str, str],
+    terminal_sporting_fingerprint_map: dict[str, str] | None = None,
+    match_effect_fingerprint_map: dict[str, str] | None = None,
 ):
     """Rebuild sporting history whose completed-week evidence can be mapped exactly.
 
-    v1 contexts are backed by OwnedTournamentRankingSource fingerprints, for which the
-    ranking fork already has target equivalents. v2 match/effect-ledger contexts remain
-    fail-closed until those separate authorities are fork-remapped too.
+    v1 contexts are backed by OwnedTournamentRankingSource fingerprints. v2 contexts
+    additionally require exact target mappings for their terminal sporting checkpoint
+    and every match-effect fingerprint. No v2 evidence is copied unchanged.
     """
     bundle = load_saved_sporting_bundle(
         payload,
@@ -779,11 +781,9 @@ def remap_saved_sporting_component(
     source_states, source_contexts = bundle
 
     remapped_contexts = []
+    terminal_sporting_fingerprint_map = terminal_sporting_fingerprint_map or {}
+    match_effect_fingerprint_map = match_effect_fingerprint_map or {}
     for context in source_contexts:
-        if context.schema_version != "completed_week_sporting_context.v1":
-            raise ValueError(
-                "Sporting Branch fork does not yet support v2 match/effect evidence"
-            )
         try:
             mapped_sources = tuple(
                 sorted(source_fingerprint_map[value] for value in context.source_fingerprints)
@@ -792,13 +792,33 @@ def remap_saved_sporting_component(
             raise ValueError(
                 "Saved sporting context references evidence without a target fork mapping"
             ) from exc
+
+        updates = {
+            "branch_id": target_branch_id,
+            "source_fingerprints": mapped_sources,
+        }
+        if context.schema_version == "completed_week_sporting_context.v2":
+            if context.terminal_sporting_fingerprint is None:
+                raise ValueError("Saved sporting v2 context is missing terminal evidence")
+            try:
+                updates["terminal_sporting_fingerprint"] = (
+                    terminal_sporting_fingerprint_map[
+                        context.terminal_sporting_fingerprint
+                    ]
+                )
+                updates["match_effect_fingerprints"] = tuple(
+                    sorted(
+                        match_effect_fingerprint_map[value]
+                        for value in context.match_effect_fingerprints
+                    )
+                )
+            except KeyError as exc:
+                raise ValueError(
+                    "Saved sporting v2 context references Simulation Slot evidence without a target fork mapping"
+                ) from exc
+
         target_context = CompletedWeekSportingContext.model_validate_json(
-            context.model_copy(
-                update={
-                    "branch_id": target_branch_id,
-                    "source_fingerprints": mapped_sources,
-                }
-            ).model_dump_json()
+            context.model_copy(update=updates).model_dump_json()
         )
         remapped_contexts.append(target_context)
 

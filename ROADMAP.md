@@ -975,3 +975,15 @@ chain is rebuilt and installed atomically with lifecycle/ranking fork state.
 Remaining sporting identity work is specifically v2 Simulation Slot match/effect
 evidence. Once those authorities are remapped, Week Transition receipt/event
 fingerprints can be rebuilt from target ranking + lifecycle + sporting histories.
+
+
+### Branch identity remapping: sporting v2 evidence contract
+
+The sporting remapper now has the complete target-side contract required by
+Simulation Slot identity remapping: result-source, terminal-checkpoint and match-effect
+fingerprint maps. This removes sporting-chain ambiguity from the remaining work.
+
+Next: make the Simulation Slot Saved Revision adapter rebuild its branch-bound plans,
+protected match inputs, effects and terminal checkpoints and emit those maps. After that
+the same fork path can preserve v2 sporting state and Week Transition receipt/event
+evidence.

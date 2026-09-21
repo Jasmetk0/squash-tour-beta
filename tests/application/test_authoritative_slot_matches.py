@@ -3641,3 +3641,87 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
         for effect in result.effects
     }
     assert target_simulation["slots"][0]["slot_start_fingerprint"] != plan.slot_start_fingerprint
+
+
+@pytest.mark.pr_critical
+def test_coupled_fork_remaps_week_schedule_and_legacy_adopted_authority(tmp_path):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "fork-schedule-authority"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="fork-schedule",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+
+    with factory.begin() as session:
+        _, source_authority_fp = driver._authority_package(
+            session,
+            "run",
+            "branch",
+            week,
+            adopt=True,
+        )
+
+    with factory() as session:
+        payload = {"content": {}}
+        capture_saved_sporting(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        capture_saved_simulation_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        source_component = payload["content"]["simulation_slot_match_state"]
+        assert source_component["schedules"]
+        assert source_component["authorities"]
+        assert not source_component.get("commands")
+
+    remapped = remap_coupled_player_slot_history(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+    )
+
+    assert remapped is not None
+    target_component = remapped.simulation_component
+    target_schedule_row = target_component["schedules"][0]
+    target_authority_row = target_component["authorities"][0]
+
+    assert target_schedule_row["branch_id"] == "target"
+    assert (
+        target_schedule_row["schedule_fingerprint"]
+        != source_component["schedules"][0]["schedule_fingerprint"]
+    )
+    assert (
+        target_schedule_row["request_fingerprint"]
+        != source_component["schedules"][0]["request_fingerprint"]
+    )
+    target_schedule = WeekSimulationSchedule.model_validate_json(
+        target_schedule_row["payload_json"]
+    )
+    assert target_schedule.branch_id == "target"
+    assert target_schedule.slots == WeekSimulationSchedule.model_validate_json(
+        source_component["schedules"][0]["payload_json"]
+    ).slots
+
+    assert target_authority_row["branch_id"] == "target"
+    assert target_authority_row["authority_fingerprint"] != source_authority_fp
+    assert (
+        target_authority_row["package_json"]
+        == source_component["authorities"][0]["package_json"]
+    )

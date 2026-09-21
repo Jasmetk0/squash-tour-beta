@@ -2133,6 +2133,78 @@ class SimulationPersistenceRepository:
                 # Force all uniqueness checks before the transaction commits so
                 # every failure rolls back the complete aggregate.
                 session.flush()
+
+                if materialize_fork_root:
+                    assert remapped_ranking is not None
+                    assert materialized_fork_revision_id is not None
+                    installed = install_ranking_revision_state(
+                        session,
+                        remapped_ranking.model_dump_json(),
+                        expected_fingerprint=remapped_ranking.fingerprint,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                    )
+                    if installed.fingerprint != remapped_ranking.fingerprint:
+                        raise SavedRevisionBranchForkConflictError(
+                            "remapped ranking state did not install exactly"
+                        )
+
+                    target_payload = viewer_branch_saved_revision_payload(
+                        base_payload=source_revision.payload,
+                        run_id=run_id,
+                        display_name=run.display_name or run_id,
+                        run_status=run.status,
+                        timeline_start_season=run.timeline_start_season,
+                        timeline_end_season=run.timeline_end_season,
+                        branch_id=branch_id,
+                        branch_display_name=created_display_name,
+                        branch_status="active",
+                        forked_from_branch_id=source_branch_id,
+                        forked_from_saved_revision_id=source_revision_id,
+                        viewer_branch_id=saved_viewer_branch_id(source_revision.payload),
+                    )
+                    target_payload["content"][RANKING_COMPONENT_KEY] = {
+                        "fingerprint": remapped_ranking.fingerprint,
+                        "state": remapped_ranking.model_dump(mode="json"),
+                    }
+                    summary = {
+                        "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+                        "summary": (
+                            f"Forked Branch from {source_revision_id} with remapped "
+                            "bootstrap ranking identity"
+                        ),
+                        "source_branch_id": source_branch_id,
+                        "source_saved_revision_id": source_revision_id,
+                        "ranking_fingerprint": remapped_ranking.fingerprint,
+                    }
+                    sequence = source_revision.sequence + 1
+                    revision_hash = saved_revision_content_hash(
+                        revision_id=materialized_fork_revision_id,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        sequence=sequence,
+                        parent_revision_id=source_revision_id,
+                        kind=BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+                        payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                        payload=target_payload,
+                        change_summary=summary,
+                    )
+                    session.add(
+                        BranchSavedRevisionModel(
+                            revision_id=materialized_fork_revision_id,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            sequence=sequence,
+                            parent_revision_id=source_revision_id,
+                            kind=BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+                            payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                            content_hash_algorithm=CONTENT_HASH_ALGORITHM,
+                            content_hash=revision_hash,
+                            payload_json=_to_json(target_payload),
+                            change_summary_json=_to_json(summary),
+                        )
+                    )
+                    session.flush()
         except IntegrityError as exc:
             message = str(exc.orig).lower()
             if "display_name" in message:
@@ -2551,21 +2623,58 @@ class SimulationPersistenceRepository:
                         "the source Saved Revision is not part of the selected Branch history"
                     )
 
-                if RANKING_COMPONENT_KEY in source_revision.payload.get("content", {}):
+                source_content = source_revision.payload.get("content", {})
+                if not isinstance(source_content, dict):
                     raise SavedRevisionBranchForkConflictError(
-                        "Branch creation from ranking-bearing Saved Revisions requires "
-                        "ranking identity remapping, which is not yet supported"
+                        "the source Saved Revision content is invalid"
                     )
-                if INITIAL_WORLD_COMPONENT_KEY in source_revision.payload.get(
-                    "content", {}
-                ):
+
+                remapped_ranking = None
+                materialize_fork_root = RANKING_COMPONENT_KEY in source_content
+                if materialize_fork_root:
+                    if materialized_fork_revision_id is None:
+                        raise SavedRevisionBranchForkConflictError(
+                            "ranking-bearing fork requires a materialized fork revision id"
+                        )
+                    unsupported_content = set(source_content) - {
+                        RANKING_COMPONENT_KEY,
+                        RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+                    }
+                    if unsupported_content:
+                        raise SavedRevisionBranchForkConflictError(
+                            "ranking-bearing fork currently cannot remap additional "
+                            "Branch-owned Saved Revision components: "
+                            + ", ".join(sorted(unsupported_content))
+                        )
+                    try:
+                        source_ranking = load_saved_ranking_component(
+                            source_revision.payload,
+                            run_id=run_id,
+                            branch_id=source_branch_id,
+                        )
+                        if source_ranking is None:
+                            raise ValueError("ranking component is missing")
+                        remapped_ranking = remap_bootstrap_ranking_state_for_branch(
+                            source_ranking,
+                            run_id=run_id,
+                            source_branch_id=source_branch_id,
+                            target_branch_id=branch_id,
+                        )
+                    except (ValueError, RankingForkRemapUnsupportedError) as exc:
+                        raise SavedRevisionBranchForkConflictError(
+                            f"ranking-bearing fork cannot be remapped safely: {exc}"
+                        ) from exc
+                elif materialized_fork_revision_id is not None:
+                    raise SavedRevisionBranchForkConflictError(
+                        "materialized fork revision id was supplied for a shared-history fork"
+                    )
+
+                if INITIAL_WORLD_COMPONENT_KEY in source_content:
                     raise SavedRevisionBranchForkConflictError(
                         "Branch creation from initial-world Saved Revisions requires "
                         "player snapshot identity remapping, which is not yet supported"
                     )
-                if SEASON_CLOSURE_COMPONENT_KEY in source_revision.payload.get(
-                    "content", {}
-                ):
+                if SEASON_CLOSURE_COMPONENT_KEY in source_content:
                     raise SavedRevisionBranchForkConflictError(
                         "Branch creation from final Season Closure revisions requires "
                         "closure identity remapping; branch from an earlier Saved Revision"
@@ -2598,6 +2707,11 @@ class SimulationPersistenceRepository:
                         f"reserved in Run {run_id!r}"
                     )
 
+                fork_head_revision_id = (
+                    materialized_fork_revision_id
+                    if materialize_fork_root
+                    else source_revision_id
+                )
                 session.add(
                     RunBranchModel(
                         branch_id=branch_id,
@@ -2609,7 +2723,7 @@ class SimulationPersistenceRepository:
                         forked_from_branch_id=source_branch_id,
                         forked_from_checkpoint_id=None,
                         forked_from_saved_revision_id=source_revision_id,
-                        saved_head_revision_id=source_revision_id,
+                        saved_head_revision_id=fork_head_revision_id,
                         head_checkpoint_id=None,
                         legacy_simulation_run_id=None,
                         metadata_json="{}",
@@ -2634,7 +2748,7 @@ class SimulationPersistenceRepository:
                         draft_id=working_draft_id,
                         run_id=run_id,
                         branch_id=branch_id,
-                        base_revision_id=source_revision_id,
+                        base_revision_id=fork_head_revision_id,
                         status=CLEAN_WORKING_DRAFT_STATUS,
                         change_count=0,
                         draft_version=0,

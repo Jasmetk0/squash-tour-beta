@@ -3157,10 +3157,15 @@ class SimulationPersistenceRepository:
                     saved_content=current_saved_content,
                 )
                 if missing_coverage:
-                    labels = ", ".join(item.label for item in missing_coverage)
+                    if len(missing_coverage) == 1:
+                        detail = missing_coverage[0].label
+                    else:
+                        detail = "all live state: " + ", ".join(
+                            item.label for item in missing_coverage
+                        )
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture "
-                        f"live state: {labels}"
+                        + detail
                     )
 
                 transient_blockers = active_transient_restore_blockers(

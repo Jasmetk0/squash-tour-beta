@@ -188,6 +188,10 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
     bootstrap_sporting,
     capture_saved_sporting,
+    load_saved_sporting_bundle,
+    put_completed_context,
+    put_sporting,
+    remap_saved_sporting_component,
     restore_saved_sporting,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
@@ -2613,6 +2617,7 @@ class SimulationPersistenceRepository:
                         RANKING_COMPONENT_KEY,
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
+                        PLAYER_SPORTING_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2792,6 +2797,36 @@ class SimulationPersistenceRepository:
                         )
                         for lifecycle_state in remapped_lifecycle_states or ():
                             put_lifecycle(session, lifecycle_state)
+                    source_to_target_tournament_fingerprint = {
+                        source.fingerprint: target.fingerprint
+                        for source, target in zip(
+                            source_ranking.tournament_sources,
+                            remapped_ranking.tournament_sources,
+                            strict=True,
+                        )
+                    }
+                    remapped_sporting_component = remap_saved_sporting_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        source_fingerprint_map=source_to_target_tournament_fingerprint,
+                    )
+                    if remapped_sporting_component is not None:
+                        target_payload["content"][PLAYER_SPORTING_COMPONENT_KEY] = (
+                            remapped_sporting_component
+                        )
+                        remapped_sporting_bundle = load_saved_sporting_bundle(
+                            target_payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                        assert remapped_sporting_bundle is not None
+                        sporting_states, sporting_contexts = remapped_sporting_bundle
+                        for sporting_context in sporting_contexts:
+                            put_completed_context(session, sporting_context)
+                        for sporting_state in sporting_states:
+                            put_sporting(session, sporting_state)
                     summary = {
                         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
                         "summary": (

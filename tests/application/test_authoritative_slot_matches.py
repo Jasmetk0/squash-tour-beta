@@ -117,6 +117,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     transition_sporting,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
+    _live_component_with_saved_shape,
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
@@ -4376,15 +4377,19 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         branch_id="target",
     )
 
-    installed_fork_root = {"content": {}}
-    capture_saved_simulation_slots(
+    fork_component = _live_component_with_saved_shape(
         session,
-        installed_fork_root,
         run_id="run",
         branch_id="target",
+        shape_hint=remapped.simulation_component,
     )
-    fork_component = installed_fork_root["content"]["simulation_slot_match_state"]
+    assert fork_component is not None
     assert fork_component["fingerprint"] == remapped.simulation_component["fingerprint"]
+    installed_fork_root = {
+        "content": {
+            "simulation_slot_match_state": fork_component,
+        }
+    }
     target_history = TournamentDrawRevisionStore(session).history(
         run_id="run",
         branch_id="target",
@@ -4466,22 +4471,17 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         event_id="event-fork-mixed",
     ).count() == 1
 
-    recaptured = {"content": {}}
-    capture_saved_simulation_slots(
+    recaptured = _live_component_with_saved_shape(
         session,
-        recaptured,
         run_id="run",
         branch_id="target",
+        shape_hint=fork_component,
     )
-    assert (
-        recaptured["content"]["simulation_slot_match_state"]["fingerprint"]
-        == fork_component["fingerprint"]
-    )
+    assert recaptured is not None
+    assert recaptured["fingerprint"] == fork_component["fingerprint"]
     assert (
         json.loads(
-            recaptured["content"]["simulation_slot_match_state"][
-                "draw_revisions"
-            ][0]["payload_json"]
+            recaptured["draw_revisions"][0]["payload_json"]
         )["branch_id"]
         == "target"
     )

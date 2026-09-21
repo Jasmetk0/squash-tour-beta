@@ -1112,3 +1112,20 @@ the source Branch remains unchanged. Multi-week ranking history, InitialWorld-bo
 ranking, tournament/zero/transition authorities, Season Closing state and other
 Branch-owned components still fail closed pending dedicated remap adapters. See
 `docs/BOOTSTRAP_RANKING_BRANCH_FORK_REMAP_V1.md`.
+
+
+## Ranking-bearing Branch fork: source-free multi-week remap
+
+The ranking fork adapter now extends beyond bootstrap-only Week 1. A complete consecutive
+source-free Official Ranking history (Week 1..N) can be materialized for a new Branch by
+replaying every stored canonical ranking command with only the Branch identity changed.
+
+Each original command must still exactly match its frozen ranking manifest. Target
+snapshot fingerprints, request fingerprints and the full previous-fingerprint lineage
+are recalculated for the new Branch. A PR-critical acceptance proves a source Week 1–3
+history forks into an independent target Week 1–3 history, then the target alone advances
+and Saves Week 4 while source history remains unchanged.
+
+Tournament/result/correction history, zero history, authoritative transition inputs,
+InitialWorld binding, publication/Season Closing evidence and other unsupported
+Branch-owned components remain fail-closed.

@@ -263,6 +263,23 @@ def test_saved_revision_restore_api_requires_confirmation_and_returns_checkpoint
             "explicit_confirmation": False,
         }
 
+        status_code, preflight = _request(
+            "GET",
+            restore_url + "-preflight",
+        )
+        assert status_code == 200
+        assert preflight == {
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "target_saved_revision_id": initial_revision_id,
+            "saved_head_revision_id": saved_revision_id,
+            "draft_version": saved["working_draft"]["draft_version"],
+            "current_viewer_branch_id": fork_id,
+            "target_viewer_branch_id": branch_id,
+            "can_restore": True,
+            "blockers": [],
+        }
+
         status_code, unconfirmed = _request("POST", restore_url, restore_request)
         assert status_code == 409
         assert (
@@ -420,6 +437,18 @@ def test_saved_revision_restore_api_rejects_uncaptured_ranking(tmp_path) -> None
                 "VALUES (:run_id, :branch_id, 0, :fingerprint, :payload)"
             ), dict(run_id=run_id, branch_id=branch_id, fingerprint="0" * 64, payload="broken"))
         history_url = f"{root}/branches/{branch_id}/saved-revisions"
+        status, preflight = _request(
+            "GET",
+            f"{history_url}/{initial_id}/restore-preflight",
+        )
+        assert status == 200
+        assert preflight["can_restore"] is False
+        assert any(
+            blocker["code"] == "uncaptured_live_state"
+            and "ranking preparation state" in blocker["message"]
+            for blocker in preflight["blockers"]
+        )
+
         before = _request("GET", history_url)
         draft_before = _request("GET", draft_url)
         status, result = _request("POST", f"{history_url}/{initial_id}/restore", {

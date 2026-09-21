@@ -4228,6 +4228,33 @@ def test_lucky_loser_auto_bye_order_retargets_derived_terminal_identity():
 
 
 @pytest.mark.pr_critical
+def test_lucky_loser_v2_rejects_detached_auto_bye_terminal_fingerprint():
+    source_auto = TournamentLuckyLoserAutoByeTerminalEvidence(
+        match_id="q-terminal",
+        section_id="Q1",
+        winner_player_id="q-winner",
+        qualification_bracket_fingerprint="a" * 64,
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="auto-BYE terminal fingerprint differs from embedded evidence",
+    ):
+        TournamentLuckyLoserOrderAuthority(
+            schema_version="tournament_lucky_loser_order.v2",
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            draw_authority_fingerprint="b" * 64,
+            tournament_ranking_authority_fingerprint="c" * 64,
+            qualification_terminal_match_ids=("q-terminal",),
+            qualification_terminal_result_fingerprints=("d" * 64,),
+            qualification_auto_bye_terminals=(source_auto,),
+            candidates=(),
+        )
+
+
+@pytest.mark.pr_critical
 def test_lucky_loser_order_fails_closed_when_nested_result_mapping_is_missing():
     source_auto = TournamentLuckyLoserAutoByeTerminalEvidence(
         match_id="q-terminal",

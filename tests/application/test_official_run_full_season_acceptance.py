@@ -311,6 +311,8 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 sim_root + "/simulate-next-slot",
                 {
                     "command_id": f"official-full-season-week-1-slot-{slot_index}",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
                     "expected_week": position["current_week"],
                     "expected_position_fingerprint": position[
                         "position_fingerprint"

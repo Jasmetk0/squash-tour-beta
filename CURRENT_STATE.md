@@ -1059,3 +1059,19 @@ still revalidates everything under `BEGIN IMMEDIATE`, so a stale preflight fails
 Coverage-registry blockers, transient authoring blockers and unsupported legacy-backed
 Run/Branch state are visible before opening the confirmation dialog. See
 `docs/SAVED_REVISION_RESTORE_PREFLIGHT_V1.md`.
+
+
+## Saved Revision history pagination and comparison
+
+The validated Saved Revision history read model now supports stable cursor pagination
+from the newest reachable history toward older shared/local ancestry. Pages use an
+exclusive `before_sequence` cursor and remain chronological inside each page.
+
+Admin can also compare any two loaded/reachable Saved Revisions read-only. The backend
+reports Run/Branch metadata changes plus Saved Revision component status
+(`added/removed/changed/unchanged`) and deterministic before/after fingerprints.
+Comparison performs no domain interpretation and no mutation.
+
+The Saved Revision History UI loads the newest page first, can fetch older pages, and
+renders comparison results for two loaded revisions. See
+`docs/SAVED_REVISION_HISTORY_PAGINATION_COMPARISON_V1.md`.

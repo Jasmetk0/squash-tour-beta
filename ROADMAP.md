@@ -819,3 +819,14 @@ history UI must use server-derived blocker diagnostics and expected head/draft/V
 identities rather than reproduce recovery rules in the client. Confirm remains the sole
 mutation boundary and repeats all checks under the writer lock. This strengthens the
 Gate 4/5 save-load/recovery path without changing product policy.
+
+
+### Saved Revision history pagination + comparison
+
+The section 11 history follow-up now includes stable newest-to-older cursor pagination
+and a generic read-only comparison for two reachable Saved Revisions. Comparison
+surfaces Run/Branch metadata changes and component-level added/removed/changed/unchanged
+status with deterministic fingerprints. No sporting semantics are inferred by the diff.
+
+This closes the explicit pagination/general-comparison foundation item; complete
+sporting-world restore remains a separate follow-up.

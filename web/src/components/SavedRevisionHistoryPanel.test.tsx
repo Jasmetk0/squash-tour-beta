@@ -14,6 +14,7 @@ const api = vi.hoisted(() => {
   }
   return {
     ApiError,
+    compareSavedRevisions: vi.fn(),
     createRunBranchFromSavedRevision: vi.fn(),
     getSavedRevision: vi.fn(),
     getSavedRevisionRecoveryActivity: vi.fn(),
@@ -97,7 +98,10 @@ const history = {
   run_id: run.run_id,
   branch_id: branch.branch_id,
   saved_head_revision_id: 'revision-two',
-  saved_revisions: revisions
+  saved_revisions: revisions,
+  total_count: 2,
+  has_more_older: false,
+  next_before_sequence: null
 }
 
 const detail = {
@@ -147,6 +151,18 @@ beforeEach(() => {
     audit_events: []
   })
   api.getSavedRevision.mockResolvedValue(detail)
+  api.compareSavedRevisions.mockResolvedValue({
+    run_id: run.run_id,
+    branch_id: branch.branch_id,
+    saved_head_revision_id: 'revision-two',
+    from_revision: revisions[1],
+    to_revision: revisions[0],
+    run_changes: {
+      viewer_branch_id: { before: 'branch-two', after: branch.branch_id }
+    },
+    branch_changes: {},
+    components: []
+  })
   api.getSavedRevisionRestorePreflight.mockResolvedValue({
     run_id: run.run_id,
     branch_id: branch.branch_id,
@@ -452,4 +468,69 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument()
     expect(api.restoreSavedRevision).toHaveBeenCalledTimes(1)
   })
+
+  it('loads older Saved Revisions through the stable pagination cursor', async () => {
+    const revisionThree = {
+      ...revisions[1],
+      revision_id: 'revision-three',
+      sequence: 3,
+      parent_revision_id: 'revision-two',
+      kind: 'branch_restore',
+      is_branch_head: true
+    }
+    api.listSavedRevisionHistory
+      .mockResolvedValueOnce({
+        run_id: run.run_id,
+        branch_id: branch.branch_id,
+        saved_head_revision_id: 'revision-three',
+        saved_revisions: [revisions[1], revisionThree],
+        total_count: 3,
+        has_more_older: true,
+        next_before_sequence: 2
+      })
+      .mockResolvedValueOnce({
+        run_id: run.run_id,
+        branch_id: branch.branch_id,
+        saved_head_revision_id: 'revision-three',
+        saved_revisions: [revisions[0]],
+        total_count: 3,
+        has_more_older: false,
+        next_before_sequence: null
+      })
+
+    renderPanel()
+
+    expect(await screen.findByRole('button', { name: /Revision 2:/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Revision 1:/ })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Load older revisions' }))
+
+    expect(await screen.findByRole('button', { name: /Revision 1:/ })).toBeInTheDocument()
+    expect(api.listSavedRevisionHistory).toHaveBeenNthCalledWith(
+      2,
+      run.run_id,
+      branch.branch_id,
+      { limit: 50, beforeSequence: 2 }
+    )
+  })
+
+  it('compares two loaded Saved Revisions read-only', async () => {
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
+
+    const compareSelect = await screen.findByLabelText('Compare selected revision with')
+    await userEvent.selectOptions(compareSelect, 'revision-two')
+
+    await waitFor(() => expect(api.compareSavedRevisions).toHaveBeenCalledTimes(1))
+    expect(api.compareSavedRevisions).toHaveBeenCalledWith(
+      run.run_id,
+      branch.branch_id,
+      'revision-two',
+      'revision-one'
+    )
+    const comparison = await screen.findByLabelText('Saved Revision comparison')
+    expect(comparison).toHaveTextContent('viewer_branch_id')
+    expect(comparison).toHaveTextContent('Changed components')
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+
 })

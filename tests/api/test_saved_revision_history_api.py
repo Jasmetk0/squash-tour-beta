@@ -142,6 +142,50 @@ def test_saved_revision_history_api_supports_historical_branching(tmp_path) -> N
             True,
         ]
 
+        status_code, newest_page = _request(
+            "GET",
+            history_url + "?limit=1",
+        )
+        assert status_code == 200
+        assert newest_page["total_count"] == 2
+        assert newest_page["has_more_older"] is True
+        assert newest_page["next_before_sequence"] == 2
+        assert [item["revision_id"] for item in newest_page["saved_revisions"]] == [
+            saved_revision_id,
+        ]
+
+        status_code, older_page = _request(
+            "GET",
+            history_url + "?limit=1&before_sequence=2",
+        )
+        assert status_code == 200
+        assert older_page["total_count"] == 2
+        assert older_page["has_more_older"] is False
+        assert older_page["next_before_sequence"] is None
+        assert [item["revision_id"] for item in older_page["saved_revisions"]] == [
+            initial_revision_id,
+        ]
+
+        status_code, comparison = _request(
+            "GET",
+            history_url
+            + "/compare?"
+            + parse.urlencode(
+                {
+                    "from_revision_id": initial_revision_id,
+                    "to_revision_id": saved_revision_id,
+                }
+            ),
+        )
+        assert status_code == 200
+        assert comparison["run_id"] == run_id
+        assert comparison["branch_id"] == fork_id
+        assert comparison["from_revision"]["revision_id"] == initial_revision_id
+        assert comparison["to_revision"]["revision_id"] == saved_revision_id
+        assert comparison["branch_changes"] == {}
+        assert "viewer_branch_id" in comparison["run_changes"]
+        assert comparison["components"] == []
+
         status_code, detail = _request(
             "GET",
             f"{history_url}/{initial_revision_id}",

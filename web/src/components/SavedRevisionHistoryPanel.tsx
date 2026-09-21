@@ -1,7 +1,8 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 
 import {
+  compareSavedRevisions,
   createRunBranchFromSavedRevision,
   getSavedRevision,
   getSavedRevisionRecoveryActivity,
@@ -13,7 +14,8 @@ import type {
   RestoreSavedRevisionResponse,
   RunBranch,
   RunContainer,
-  SavedRevisionHistoryDetail
+  SavedRevisionHistoryDetail,
+  SavedRevisionHistoryResponse
 } from '../api/types'
 import { formatApiError } from '../utils/apiErrors'
 import { EmptyState, JsonPayloadBlock, MetadataList, SectionCard } from './RunScopedUi'
@@ -43,6 +45,7 @@ export function SavedRevisionHistoryPanel({
   const queryClient = useQueryClient()
   const [requestedBranchId, setRequestedBranchId] = useState('')
   const [selectedRevisionId, setSelectedRevisionId] = useState('')
+  const [comparisonRevisionId, setComparisonRevisionId] = useState('')
   const [newBranchName, setNewBranchName] = useState('')
   const [restoreReview, setRestoreReview] = useState<RestoreReview | null>(null)
   const [typedConfirmation, setTypedConfirmation] = useState('')
@@ -54,12 +57,28 @@ export function SavedRevisionHistoryPanel({
     : branches[0]?.branch_id ?? ''
   const branch = branches.find((candidate) => candidate.branch_id === branchId)
 
-  const historyQuery = useQuery({
+  const historyQuery = useInfiniteQuery({
     queryKey: ['saved-revision-history', runId, branchId],
-    queryFn: () => listSavedRevisionHistory(runId, branchId),
+    queryFn: ({ pageParam }) =>
+      listSavedRevisionHistory(runId, branchId, {
+        limit: 50,
+        ...(pageParam === undefined ? {} : { beforeSequence: pageParam })
+      }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (lastPage) =>
+      lastPage.has_more_older ? lastPage.next_before_sequence ?? undefined : undefined,
     enabled: Boolean(runId && branchId)
   })
-  const history = historyQuery.data
+  const history: SavedRevisionHistoryResponse | undefined = historyQuery.data
+    ? {
+        run_id: historyQuery.data.pages[0].run_id,
+        branch_id: historyQuery.data.pages[0].branch_id,
+        saved_head_revision_id: historyQuery.data.pages[0].saved_head_revision_id,
+        saved_revisions: [...historyQuery.data.pages]
+          .reverse()
+          .flatMap((page) => page.saved_revisions)
+      }
+    : undefined
   const historyIdentityIsValid = Boolean(
     history && history.run_id === runId && history.branch_id === branchId
   )
@@ -108,6 +127,40 @@ export function SavedRevisionHistoryPanel({
       detail.run_id === runId &&
       detail.branch_id === branchId &&
       detail.revision_id === selectedRevisionId
+  )
+
+  const comparisonEntry = history?.saved_revisions.find(
+    (revision) => revision.revision_id === comparisonRevisionId
+  )
+  const comparisonQuery = useQuery({
+    queryKey: [
+      'saved-revision-comparison',
+      runId,
+      branchId,
+      comparisonRevisionId,
+      selectedRevisionId
+    ],
+    queryFn: () =>
+      compareSavedRevisions(
+        runId,
+        branchId,
+        comparisonRevisionId,
+        selectedRevisionId
+      ),
+    enabled: Boolean(
+      detailIdentityIsValid &&
+        comparisonEntry &&
+        comparisonRevisionId &&
+        comparisonRevisionId !== selectedRevisionId
+    )
+  })
+  const comparison = comparisonQuery.data
+  const comparisonIdentityIsValid = Boolean(
+    comparison &&
+      comparison.run_id === runId &&
+      comparison.branch_id === branchId &&
+      comparison.from_revision.revision_id === comparisonRevisionId &&
+      comparison.to_revision.revision_id === selectedRevisionId
   )
 
   const restorePreflightQuery = useQuery({
@@ -210,6 +263,7 @@ export function SavedRevisionHistoryPanel({
   function selectBranch(nextBranchId: string): void {
     setRequestedBranchId(nextBranchId)
     setSelectedRevisionId('')
+    setComparisonRevisionId('')
     setNewBranchName('')
     setRestoreReview(null)
     setRestoreNotice(null)
@@ -219,6 +273,7 @@ export function SavedRevisionHistoryPanel({
 
   function selectRevision(revisionId: string): void {
     setSelectedRevisionId(revisionId)
+    setComparisonRevisionId('')
     setNewBranchName('')
     setRestoreReview(null)
     setRestoreNotice(null)
@@ -305,6 +360,15 @@ export function SavedRevisionHistoryPanel({
               </li>
             ))}
           </ol>
+          {historyQuery.hasNextPage && (
+            <button
+              type="button"
+              disabled={historyQuery.isFetchingNextPage}
+              onClick={() => historyQuery.fetchNextPage()}
+            >
+              {historyQuery.isFetchingNextPage ? 'Loading older revisions...' : 'Load older revisions'}
+            </button>
+          )}
 
           <div>
             {!selectedRevisionId && (
@@ -342,6 +406,81 @@ export function SavedRevisionHistoryPanel({
                   emptyText="No Saved Revision payload is available."
                   payload={detail.payload}
                 />
+
+                <section aria-label="Saved Revision comparison">
+                  <h4>Compare revisions</h4>
+                  <label>
+                    Compare from
+                    <select
+                      aria-label="Compare selected revision with"
+                      value={comparisonRevisionId}
+                      onChange={(event) => setComparisonRevisionId(event.target.value)}
+                    >
+                      <option value="">Choose another loaded revision</option>
+                      {history.saved_revisions
+                        .filter((revision) => revision.revision_id !== selectedRevisionId)
+                        .map((revision) => (
+                          <option key={revision.revision_id} value={revision.revision_id}>
+                            Revision {revision.sequence}: {revision.kind}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  {comparisonQuery.isLoading && (
+                    <p className="status">Comparing Saved Revisions...</p>
+                  )}
+                  {comparisonQuery.error && (
+                    <p className="error">
+                      Failed to compare Saved Revisions: {formatApiError(comparisonQuery.error)}
+                    </p>
+                  )}
+                  {comparison && !comparisonIdentityIsValid && (
+                    <p className="error">Saved Revision comparison identity is inconsistent.</p>
+                  )}
+                  {comparisonIdentityIsValid && comparison && (
+                    <div>
+                      <MetadataList
+                        items={[
+                          {
+                            label: 'From',
+                            value: `Revision ${comparison.from_revision.sequence} · ${comparison.from_revision.revision_id}`
+                          },
+                          {
+                            label: 'To',
+                            value: `Revision ${comparison.to_revision.sequence} · ${comparison.to_revision.revision_id}`
+                          },
+                          {
+                            label: 'Changed components',
+                            value: String(
+                              comparison.components.filter((item) => item.status !== 'unchanged').length
+                            )
+                          }
+                        ]}
+                      />
+                      <JsonPayloadBlock
+                        title="Run metadata changes"
+                        emptyText="No Run metadata changed."
+                        payload={comparison.run_changes}
+                      />
+                      <JsonPayloadBlock
+                        title="Branch metadata changes"
+                        emptyText="No Branch metadata changed."
+                        payload={comparison.branch_changes}
+                      />
+                      {comparison.components.length === 0 ? (
+                        <EmptyState message="Neither revision contains Saved Revision components." />
+                      ) : (
+                        <ul aria-label="Saved Revision component comparison">
+                          {comparison.components.map((item) => (
+                            <li key={item.component_key}>
+                              <strong>{item.component_key}</strong>: {item.status}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </section>
 
                 <div className="saved-revision-actions">
                   <form

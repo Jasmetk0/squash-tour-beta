@@ -598,6 +598,30 @@ export type SavedRevisionHistoryResponse = {
   saved_revisions: SavedRevisionHistoryEntry[]
 }
 
+export type SavedRevisionHistoryPageResponse = SavedRevisionHistoryResponse & {
+  total_count: number
+  has_more_older: boolean
+  next_before_sequence: number | null
+}
+
+export type SavedRevisionComponentComparison = {
+  component_key: string
+  status: 'added' | 'removed' | 'changed' | 'unchanged'
+  before_fingerprint: string | null
+  after_fingerprint: string | null
+}
+
+export type SavedRevisionComparison = {
+  run_id: string
+  branch_id: string
+  saved_head_revision_id: string
+  from_revision: SavedRevisionHistoryEntry
+  to_revision: SavedRevisionHistoryEntry
+  run_changes: Record<string, { before: unknown; after: unknown }>
+  branch_changes: Record<string, { before: unknown; after: unknown }>
+  components: SavedRevisionComponentComparison[]
+}
+
 export type SavedRevisionRecoveryCheckpoint = {
   checkpoint_id: string
   run_id: string

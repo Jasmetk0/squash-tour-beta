@@ -3,7 +3,7 @@
 Legacy ``/runs`` remains the season-attempt API in R1.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from beta_engine.api.deps import (
     get_run_branch_creation_service,
@@ -27,6 +27,9 @@ from beta_engine.api.schemas import (
     SavedRevisionHistoryDetailResponse,
     SavedRevisionHistoryEntryResponse,
     SavedRevisionHistoryListResponse,
+    SavedRevisionHistoryPageResponse,
+    SavedRevisionComponentComparisonResponse,
+    SavedRevisionComparisonResponse,
     SavedRevisionAuditEventResponse,
     SavedRevisionRecoveryActivityResponse,
     SavedRevisionRecoveryCheckpointResponse,
@@ -227,19 +230,59 @@ def _revision_history_entry_response(
 
 
 def _revision_history_response(
-    record: BranchSavedRevisionHistoryRecord,
-) -> SavedRevisionHistoryListResponse:
+    record,
+) -> SavedRevisionHistoryListResponse | SavedRevisionHistoryPageResponse:
+    saved_revisions = [
+        _revision_history_entry_response(
+            revision,
+            requested_branch_id=record.branch_id,
+            saved_head_revision_id=record.saved_head_revision_id,
+        )
+        for revision in record.saved_revisions
+    ]
+    if hasattr(record, "total_count"):
+        return SavedRevisionHistoryPageResponse(
+            run_id=record.run_id,
+            branch_id=record.branch_id,
+            saved_head_revision_id=record.saved_head_revision_id,
+            saved_revisions=saved_revisions,
+            total_count=record.total_count,
+            has_more_older=record.has_more_older,
+            next_before_sequence=record.next_before_sequence,
+        )
     return SavedRevisionHistoryListResponse(
         run_id=record.run_id,
         branch_id=record.branch_id,
         saved_head_revision_id=record.saved_head_revision_id,
-        saved_revisions=[
-            _revision_history_entry_response(
-                revision,
-                requested_branch_id=record.branch_id,
-                saved_head_revision_id=record.saved_head_revision_id,
+        saved_revisions=saved_revisions,
+    )
+
+
+def _revision_comparison_response(record) -> SavedRevisionComparisonResponse:
+    return SavedRevisionComparisonResponse(
+        run_id=record.run_id,
+        branch_id=record.branch_id,
+        saved_head_revision_id=record.saved_head_revision_id,
+        from_revision=_revision_history_entry_response(
+            record.from_revision,
+            requested_branch_id=record.branch_id,
+            saved_head_revision_id=record.saved_head_revision_id,
+        ),
+        to_revision=_revision_history_entry_response(
+            record.to_revision,
+            requested_branch_id=record.branch_id,
+            saved_head_revision_id=record.saved_head_revision_id,
+        ),
+        run_changes=record.run_changes,
+        branch_changes=record.branch_changes,
+        components=[
+            SavedRevisionComponentComparisonResponse(
+                component_key=item.component_key,
+                status=item.status,
+                before_fingerprint=item.before_fingerprint,
+                after_fingerprint=item.after_fingerprint,
             )
-            for revision in record.saved_revisions
+            for item in record.components
         ],
     )
 
@@ -483,18 +526,25 @@ def save_working_draft(
 
 @router.get(
     "/{run_id}/branches/{branch_id}/saved-revisions",
-    response_model=SavedRevisionHistoryListResponse,
+    response_model=SavedRevisionHistoryPageResponse,
 )
 def list_saved_revision_history(
     run_id: str,
     branch_id: str,
+    limit: int = Query(default=50, ge=1, le=200),
+    before_sequence: int | None = Query(default=None, ge=1),
     service: RunSavedRevisionHistoryService = Depends(
         get_run_saved_revision_history_service
     ),
-) -> SavedRevisionHistoryListResponse:
+) -> SavedRevisionHistoryPageResponse:
     try:
         return _revision_history_response(
-            service.list_history(run_id=run_id, branch_id=branch_id)
+            service.list_history(
+                run_id=run_id,
+                branch_id=branch_id,
+                limit=limit,
+                before_sequence=before_sequence,
+            )
         )
     except (
         SavedRevisionHistoryNotFoundError,
@@ -524,6 +574,37 @@ def get_saved_revision_recovery_activity(
         RunSavedRevisionRecoveryActivityConflictError,
     ) as exc:
         _raise_saved_revision_recovery_activity_http_error(exc)
+        raise AssertionError("unreachable")
+
+
+@router.get(
+    "/{run_id}/branches/{branch_id}/saved-revisions/compare",
+    response_model=SavedRevisionComparisonResponse,
+)
+def compare_saved_revisions(
+    run_id: str,
+    branch_id: str,
+    from_revision_id: str = Query(min_length=1, max_length=128),
+    to_revision_id: str = Query(min_length=1, max_length=128),
+    service: RunSavedRevisionHistoryService = Depends(
+        get_run_saved_revision_history_service
+    ),
+) -> SavedRevisionComparisonResponse:
+    try:
+        return _revision_comparison_response(
+            service.compare_revisions(
+                run_id=run_id,
+                branch_id=branch_id,
+                from_revision_id=from_revision_id,
+                to_revision_id=to_revision_id,
+            )
+        )
+    except (
+        SavedRevisionHistoryNotFoundError,
+        SavedRevisionHistoryConflictError,
+        ValueError,
+    ) as exc:
+        _raise_saved_revision_history_http_error(exc)
         raise AssertionError("unreachable")
 
 

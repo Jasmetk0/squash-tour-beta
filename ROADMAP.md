@@ -901,6 +901,14 @@ rebound to the target Branch and all dependent fingerprints are recalculated bef
 ranking result versions are re-derived. Trusted fork installation accepts these
 remapped tournament sources into otherwise empty target ranking storage.
 
-Legacy v1-v3 tournament sources, final Closing-only v6 sources, later corrections over
-canonical tournament editions, and transition/publication/Season Closing state remain
-guarded follow-ups rather than inferred behavior.
+Legacy v1-v3 tournament sources, final Closing-only v6 sources, and
+transition/publication/Season Closing state remain guarded follow-ups rather than
+inferred behavior.
+
+
+### Ranking identity remapping: tournament correction chains
+
+Later `RankingResultVersion` corrections over canonical tournament-backed results are
+now supported by Branch forks. The source predecessor chain is verified exactly, then
+each correction is rebuilt against the corresponding target-Branch predecessor
+fingerprint. Broken or detached correction history remains fail-closed.

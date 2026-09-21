@@ -1082,3 +1082,10 @@ Remaining revision work is repair-specific: post-draw WC/RWC repair, Lucky Loser
 The Branch-fork revision path now covers the full currently modeled Draw Revision family set in one chronological source→target lineage: ordinary full-redraw/seed-cascade/Draw-Freeze withdrawal plus frozen RWC repair, Lucky Loser vacancy/fill, frozen ordinary fallback and source-bound pre-Q promotion.
 
 Specialized frozen evidence is retargeted through one accumulated fingerprint graph and domain-validated before canonical revision builders recreate target Draw state. Revised Draw/Input/Field/revision identities are then added back into the graph for later revisions and Adopted Tournament Authority v6. Follow-up work should emphasize mixed-chain regression coverage, restore/retry equivalence and any future Master-defined revision kinds rather than splitting the present authority families again.
+
+
+### Draw Revision restore / retry identity hardening
+
+Saved Revision recovery now verifies Draw Revision payload scope and reconstructs canonical request identity for the complete modeled repair-kind set during history replay. This closes the gap between immutable revision payload identity and command-request identity.
+
+PR-critical coverage exercises a mixed revision chain across capture -> additional live mutation -> restore -> exact command retry, plus fail-closed payload-scope and request-fingerprint corruption. Follow-up hardening can move to longer specialized mixed chains and materialized fork -> restore equivalence rather than basic retry semantics.

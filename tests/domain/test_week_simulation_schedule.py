@@ -40,7 +40,19 @@ def test_week_schedule_v1_fingerprint_stays_historically_identical():
             {"ordinal": 2, "group_ids": ["g3"]},
         ],
     }
+    assert schedule.canonical_payload() == historical_payload
     assert schedule.fingerprint == fingerprint(historical_payload)
+    assert fingerprint(
+        {
+            "request_id": "historical-request",
+            "schedule": schedule.canonical_payload(),
+        }
+    ) == fingerprint(
+        {
+            "request_id": "historical-request",
+            "schedule": historical_payload,
+        }
+    )
 
 
 @pytest.mark.pr_critical

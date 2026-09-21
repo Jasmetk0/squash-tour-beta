@@ -891,3 +891,16 @@ and stored correction commands are deterministically rebuilt for the target Bran
 The remaining tournament layer is `OwnedTournamentRankingSource` plus canonical
 Tournament Result / Point Award / Prize Money authority fingerprints. That authority
 bundle remains fail-closed until its dedicated adapter is implemented.
+
+
+### Ranking identity remapping: canonical tournament authorities
+
+Branch-fork remapping now includes canonical `OwnedTournamentRankingSource` v4/v5
+authority bundles. Result, Point Award and optional Prize Money authorities are
+rebound to the target Branch and all dependent fingerprints are recalculated before
+ranking result versions are re-derived. Trusted fork installation accepts these
+remapped tournament sources into otherwise empty target ranking storage.
+
+Legacy v1-v3 tournament sources, final Closing-only v6 sources, later corrections over
+canonical tournament editions, and transition/publication/Season Closing state remain
+guarded follow-ups rather than inferred behavior.

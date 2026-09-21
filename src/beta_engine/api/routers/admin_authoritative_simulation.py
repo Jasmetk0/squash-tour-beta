@@ -19,6 +19,8 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
+    AuthoritativeMatchReconstructionPreviewRequest,
+    AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
     FinalSeasonTransitionCommand,
     OrdinarySeasonTransitionCommand,
@@ -502,6 +504,82 @@ def _mutate(run_id, branch_id, payload, runtime, matches, awards, *, slot):
         raise HTTPException(
             status_code=409,
             detail={"code": "authoritative_simulation_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/match-reconstruction/state")
+def match_reconstruction_state(
+    run_id: str,
+    branch_id: str,
+    group_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_match_reconstruction(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "match_reconstruction_state_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/match-reconstruction/preview")
+def preview_match_reconstruction(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        reconstruction = AuthoritativeMatchReconstructionPreviewRequest.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).preview_match_reconstruction(
+            reconstruction
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "match_reconstruction_preview_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/match-reconstruction/commit", status_code=201)
+def commit_match_reconstruction(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeMatchReconstructionCommitCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).commit_match_reconstruction(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "match_reconstruction_commit_conflict", "message": str(exc)},
         ) from exc
 
 

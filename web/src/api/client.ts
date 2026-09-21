@@ -1314,10 +1314,10 @@ export async function previewWeekTournamentLock(
   if (
     data.persisted !== false ||
     !/^[0-9a-f]{64}$/.test(data.authority_fingerprint) ||
-    data.authority.fingerprint !== undefined
+    data.authority.run_id !== runId ||
+    data.authority.branch_id !== branchId
   ) {
-    // Pydantic computed properties are not serialized as ordinary fields. The
-    // response-level fingerprint is the canonical review anchor.
+    throw new Error('Week Tournament Lock preview response is invalid.')
   }
   return data
 }

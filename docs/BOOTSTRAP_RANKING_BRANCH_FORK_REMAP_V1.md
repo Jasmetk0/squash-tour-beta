@@ -6,10 +6,11 @@ A Branch created from a ranking-bearing Saved Revision cannot safely share that 
 as its own head because Official Ranking snapshots, command receipts and fingerprints are
 bound to the source Branch identity.
 
-This adapter now supports the safely reconstructible **source-free Official Ranking
-history** case: Week 1 bootstrap followed by any consecutive sequence of weekly ranking
-commands whose frozen inputs contain no tournament results, corrections, disciplinary
-zeros, transition authority, InitialWorld binding, or publication/archive authority.
+This adapter now supports the safely reconstructible **result-free Official Ranking
+history** case, including versioned disciplinary-zero decisions: Week 1 bootstrap followed by any consecutive sequence of weekly ranking
+commands whose frozen inputs contain no tournament results or corrections. Versioned
+disciplinary-zero history is remapped explicitly; transition authority, InitialWorld
+binding, and publication/archive authority remain unsupported.
 
 ## Supported source
 
@@ -64,3 +65,20 @@ historical authorities are Branch-bound. No generic string replacement is used.
 
 This is a technical ranking identity remapping slice. It does not define new ranking,
 discipline, tournament, lifecycle, or Tour-entry policy.
+
+
+## Disciplinary-zero remapping
+
+For result-free histories, `ranking_revision_state.zero_sources` is part of the
+materialized fork adapter. Every zero version is rebuilt with the target Branch identity.
+Its `previous_fingerprint` points to the fingerprint of the corresponding target
+predecessor rather than the source predecessor.
+
+Stored command `zero_versions` batches are matched to the immutable source zero history
+by source fingerprint and replaced with their exact target counterparts. Resolved zero
+inputs in command context and frozen manifests are similarly rebound to the target
+Branch. The adapter then recalculates every ranking snapshot against those remapped
+decisions.
+
+This remaps persistence identity only. It does not decide when sanctions exist, their
+duration, or any future automatic disciplinary policy.

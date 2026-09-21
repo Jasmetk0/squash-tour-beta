@@ -751,7 +751,7 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
     )
 
     with server:
-        run_id, branch_id, _ = _create_run(
+        run_id, branch_id, revision = _create_run(
             server,
             display_name="HTTP topological proposal",
         )
@@ -820,6 +820,38 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
             retry["schedule_fingerprint"]
             == proposed["schedule_fingerprint"]
         )
+
+        status, day_preview = _request(
+            "GET",
+            root + "/next-match-day/preview",
+        )
+        assert status == 200, day_preview
+        assert day_preview["match_day_ordinal"] == 1
+        assert len(day_preview["target_slot_ordinals"]) == 4
+        assert day_preview["expected_revision_id"] == revision
+
+        day_command = {
+            "command_id": "http-next-match-day-1",
+            "expected_week": day_preview["week"],
+            "expected_position_fingerprint": day_preview[
+                "expected_position_fingerprint"
+            ],
+            "expected_revision_id": day_preview["expected_revision_id"],
+        }
+        status, day_result = _request(
+            "POST",
+            root + "/simulate-next-match-day",
+            day_command,
+        )
+        assert status == 201, day_result
+        assert day_result["match_day_ordinal"] == 1
+        assert day_result["completed_slot_count"] == 4
+        assert day_result["position"]["current_slot_kind"] == "match"
+        assert _request(
+            "POST",
+            root + "/simulate-next-match-day",
+            day_command,
+        ) == (201, day_result)
 
         status, immutable = _request(
             "POST",

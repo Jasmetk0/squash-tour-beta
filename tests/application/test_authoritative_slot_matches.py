@@ -1867,7 +1867,13 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     schedule = WeekSimulationSchedule.model_validate_json(
         json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
     )
-    assert [len(slot.group_ids) for slot in schedule.slots] == [4, 2, 1]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
+    assert len(schedule.slots) == 7
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
+    assert [
+        sum(slot.match_day_ordinal == day for slot in schedule.slots)
+        for day in (1, 2, 3)
+    ] == [4, 2, 1]
     preview = driver.preview_schedule(schedule)
     assert preview["position_fingerprint"] == proposed["position_fingerprint"]
     driver.adopt_schedule(
@@ -1897,7 +1903,7 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         saved = {"content": {}}
         capture_saved_simulation_slots(db, saved, run_id="run", branch_id="branch")
         saved_component = saved["content"]["simulation_slot_match_state"]
-        assert len(saved_component["groups"]) == 4
+        assert len(saved_component["groups"]) == 1
     reopened = AuthoritativeRunSimulationDriver(factory, matches, awards)
     assert (
         reopened.position(run_id="run", branch_id="branch").position_fingerprint
@@ -1920,18 +1926,24 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         slots = db.scalars(
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        opening_groups = [g for g in groups if g.slot_id == slots[0].slot_id]
-        assert (
-            len(
-                {
-                    AuthoritativeSlotMatchExecutor._load_group(
-                        g
-                    ).authoritative_input.slot_start_fingerprint
-                    for g in opening_groups
-                }
-            )
-            == 1
-        )
+        assert len(slots) == 7
+        first_day_slot_ids = {
+            f"{package.event_id}:slot:{slot.ordinal}"
+            for slot in schedule.slots
+            if slot.match_day_ordinal == 1
+        }
+        first_day_groups = [
+            group for group in groups if group.slot_id in first_day_slot_ids
+        ]
+        assert len(first_day_groups) == 4
+        assert len(
+            {
+                AuthoritativeSlotMatchExecutor._load_group(
+                    group
+                ).authoritative_input.slot_start_fingerprint
+                for group in first_day_groups
+            }
+        ) == 4
         executor = AuthoritativeSlotMatchExecutor(db)
         for group in groups:
             stored = AuthoritativeSlotMatchExecutor._load_group(group)
@@ -2150,7 +2162,13 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
     schedule = WeekSimulationSchedule.model_validate_json(
         json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
     )
-    assert [len(slot.group_ids) for slot in schedule.slots] == [8, 4, 2, 1]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
+    assert len(schedule.slots) == 15
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
+    assert [
+        sum(slot.match_day_ordinal == day for slot in schedule.slots)
+        for day in (1, 2, 3, 4)
+    ] == [8, 4, 2, 1]
 
     adopted = driver.adopt_topological_schedule_proposal(
         run_id="run",
@@ -2200,22 +2218,35 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
         slots = db.scalars(
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        assert len(slots) == 4
-        opening_groups = [
-            group for group in groups if group.slot_id == slots[0].slot_id
-        ]
-        assert len(opening_groups) == 8
-        assert (
+        assert len(slots) == 15
+        assert all(
             len(
-                {
-                    AuthoritativeSlotMatchExecutor._load_group(
-                        group
-                    ).authoritative_input.slot_start_fingerprint
-                    for group in opening_groups
-                }
+                [
+                    group
+                    for group in groups
+                    if group.slot_id == slot.slot_id
+                ]
             )
             == 1
+            for slot in slots
         )
+        first_day_slot_ids = {
+            f"{event.event_id}:slot:{slot.ordinal}"
+            for slot in schedule.slots
+            if slot.match_day_ordinal == 1
+        }
+        opening_groups = [
+            group for group in groups if group.slot_id in first_day_slot_ids
+        ]
+        assert len(opening_groups) == 8
+        assert len(
+            {
+                AuthoritativeSlotMatchExecutor._load_group(
+                    group
+                ).authoritative_input.slot_start_fingerprint
+                for group in opening_groups
+            }
+        ) == 8
 
 
 def test_real_eight_player_pre_adoption_entry_draw_match_mutation_fails_closed(

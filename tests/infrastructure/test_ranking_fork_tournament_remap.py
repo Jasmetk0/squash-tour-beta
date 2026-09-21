@@ -286,7 +286,7 @@ def test_noncanonical_or_final_closing_tournament_sources_stay_fail_closed(
         )
 
 
-def test_correction_over_canonical_tournament_source_stays_fail_closed():
+def test_correction_over_canonical_tournament_source_remaps_predecessor_chain():
     source = _canonical_source(with_prize_money=False)
     (
         _,
@@ -312,12 +312,57 @@ def test_correction_over_canonical_tournament_source_stays_fail_closed():
         result=initial.result.model_copy(update={"main_points": 125}),
     )
 
+    remapped, by_source_fingerprint = _remap_result_sources(
+        (initial, correction),
+        run_id="run-one",
+        source_branch_id="branch-source",
+        target_branch_id="branch-target",
+        tournament_version_map=version_map,
+        tournament_editions=tournament_editions,
+    )
+
+    target_initial, target_correction = remapped
+    assert target_initial.branch_id == "branch-target"
+    assert target_correction.branch_id == "branch-target"
+    assert target_initial.fingerprint != initial.fingerprint
+    assert target_correction.fingerprint != correction.fingerprint
+    assert target_correction.previous_fingerprint == target_initial.fingerprint
+    assert target_correction.result.main_points == 125
+    assert by_source_fingerprint[correction.fingerprint] == target_correction
+
+
+def test_canonical_tournament_correction_with_broken_source_predecessor_fails_closed():
+    source = _canonical_source(with_prize_money=False)
+    (
+        _,
+        _,
+        version_map,
+        tournament_editions,
+    ) = _remap_tournament_sources(
+        (source,),
+        run_id="run-one",
+        source_branch_id="branch-source",
+        target_branch_id="branch-target",
+    )
+    initial = prepare_canonical_tournament_ranking_sources(
+        source.binding,
+        source.canonical_result,
+        source.canonical_awards,
+    )[0]
+    broken = RankingResultVersion(
+        run_id="run-one",
+        branch_id="branch-source",
+        effective_week=RankingWeek(season_index=0, week=3),
+        previous_fingerprint="f" * 64,
+        result=initial.result.model_copy(update={"main_points": 125}),
+    )
+
     with pytest.raises(
         RankingForkRemapUnsupportedError,
-        match="corrections over canonical tournament sources",
+        match="predecessor differs from source history",
     ):
         _remap_result_sources(
-            (initial, correction),
+            (initial, broken),
             run_id="run-one",
             source_branch_id="branch-source",
             target_branch_id="branch-target",

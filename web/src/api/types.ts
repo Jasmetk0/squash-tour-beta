@@ -1020,6 +1020,104 @@ export type AuthoritativeSimulationCommandPayload = {
   group_id?: string
 }
 
+export type MatchReconstructionGameScore = {
+  player_a_points: number
+  player_b_points: number
+}
+
+export type MatchReconstructionConstraints = {
+  winner_player_id?: string | null
+  player_a_sets_won?: number | null
+  player_b_sets_won?: number | null
+  exact_game_scores?: MatchReconstructionGameScore[]
+}
+
+export type AuthoritativeMatchReconstructionState = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  expected_revision_id: string
+  position_fingerprint: string
+  slot_id: string
+  slot_start_fingerprint: string
+  group_id: string
+  event_id: string
+  match_id: string
+  player_a_id: string
+  player_b_id: string
+}
+
+export type AuthoritativeMatchReconstructionPreviewPayload = {
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  group_id: string
+  candidate_count: number
+  constraints: MatchReconstructionConstraints
+}
+
+export type AuthoritativeMatchReconstructionCandidate = {
+  candidate_fingerprint: string
+  attempt_ordinal: number
+  seed: number
+  result_fingerprint: string
+  authoritative_input_fingerprint: string
+  winner_player_id: string
+  player_a_id: string
+  player_b_id: string
+  sets_won: Record<string, number>
+  game_scores: MatchReconstructionGameScore[]
+  match_elapsed_seconds: number | null
+  detail: MatchResult
+}
+
+export type AuthoritativeMatchReconstructionPreview = {
+  schema_version: 'authoritative_match_reconstruction_preview.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  slot_id: string
+  slot_start_fingerprint: string
+  group_id: string
+  event_id: string
+  match_id: string
+  player_a_id: string
+  player_b_id: string
+  candidate_count_requested: number
+  candidate_count_found: number
+  attempted_scenarios: number
+  search_complete: boolean
+  constraints: MatchReconstructionConstraints
+  candidates: AuthoritativeMatchReconstructionCandidate[]
+  warnings: string[]
+  preview_fingerprint: string
+}
+
+export type AuthoritativeMatchReconstructionCommitPayload =
+  AuthoritativeMatchReconstructionPreviewPayload & {
+    command_id: string
+    expected_preview_fingerprint: string
+    selected_candidate_fingerprint: string
+    operator_label: string
+    audit_reason: string
+  }
+
+export type AuthoritativeMatchReconstructionCommitResult = {
+  schema_version: 'authoritative_match_reconstruction_commit.v1'
+  run_id: string
+  branch_id: string
+  group_id: string
+  match_id: string
+  candidate_fingerprint: string
+  result_fingerprint: string
+  preview_fingerprint: string
+  operator_label: string
+  audit_reason: string
+  authority_fingerprint: string
+  position: AuthoritativeSimulationPosition
+  adoption: 'committed' | 'exact_retry'
+}
+
 export type AuthoritativeSimulationSavePreview = {
   run_id?: string
   branch_id?: string

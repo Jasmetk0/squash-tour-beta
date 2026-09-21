@@ -19,6 +19,10 @@ from beta_engine.application.authoritative_slot_matches import (
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
+    AuthoritativeMatchReconstructionPreviewRequest,
+    AuthoritativeMatchReconstructionCommitCommand,
+    MatchReconstructionConstraints,
+    MatchReconstructionGameScore,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
@@ -608,6 +612,175 @@ def _driver_fixture(path, *, season_week=None):
         factory,
         week,
     )
+
+
+
+@pytest.mark.pr_critical
+def test_match_reconstruction_preview_is_read_only_and_selected_candidate_commits(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "reconstruction")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.eligible_match_ids[0]
+    state = driver.inspect_match_reconstruction(
+        run_id="run", branch_id="branch", group_id=group_id
+    )
+    assert state["player_a_id"] != state["player_b_id"]
+
+    with factory() as session:
+        before_groups = len(session.scalars(select(SimulationEventGroupModel)).all())
+        before_slots = len(session.scalars(select(SimulationSlotModel)).all())
+        before_adopted = len(session.scalars(select(AdoptedTournamentAuthorityModel)).all())
+
+    winner_preview = driver.preview_match_reconstruction(
+        AuthoritativeMatchReconstructionPreviewRequest(
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            candidate_count=2,
+            constraints=MatchReconstructionConstraints(
+                winner_player_id=state["player_a_id"]
+            ),
+        )
+    )
+    assert winner_preview["candidate_count_found"] == 2
+    assert all(
+        candidate["winner_player_id"] == state["player_a_id"]
+        for candidate in winner_preview["candidates"]
+    )
+
+    with factory() as session:
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups
+        assert len(session.scalars(select(SimulationSlotModel)).all()) == before_slots
+        assert (
+            len(session.scalars(select(AdoptedTournamentAuthorityModel)).all())
+            == before_adopted
+        )
+
+    source = winner_preview["candidates"][0]
+    exact_scores = tuple(
+        MatchReconstructionGameScore(**score) for score in source["game_scores"]
+    )
+    exact_preview = driver.preview_match_reconstruction(
+        AuthoritativeMatchReconstructionPreviewRequest(
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            candidate_count=1,
+            constraints=MatchReconstructionConstraints(
+                winner_player_id=source["winner_player_id"],
+                player_a_sets_won=source["sets_won"][source["player_a_id"]],
+                player_b_sets_won=source["sets_won"][source["player_b_id"]],
+                exact_game_scores=exact_scores,
+            ),
+        )
+    )
+    assert exact_preview["candidate_count_found"] == 1
+    selected = exact_preview["candidates"][0]
+    assert selected["game_scores"] == source["game_scores"]
+
+    command = AuthoritativeMatchReconstructionCommitCommand(
+        command_id="reconstruct-sf",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+        candidate_count=1,
+        constraints=MatchReconstructionConstraints(
+            winner_player_id=selected["winner_player_id"],
+            player_a_sets_won=selected["sets_won"][selected["player_a_id"]],
+            player_b_sets_won=selected["sets_won"][selected["player_b_id"]],
+            exact_game_scores=tuple(
+                MatchReconstructionGameScore(**score)
+                for score in selected["game_scores"]
+            ),
+        ),
+        expected_preview_fingerprint=exact_preview["preview_fingerprint"],
+        selected_candidate_fingerprint=selected["candidate_fingerprint"],
+        operator_label="Commissioner",
+        audit_reason="Reconstruct reviewed historical score",
+    )
+    committed = driver.commit_match_reconstruction(command)
+    assert committed["adoption"] == "committed"
+    assert committed["candidate_fingerprint"] == selected["candidate_fingerprint"]
+    assert committed["result_fingerprint"] == selected["result_fingerprint"]
+    assert driver.commit_match_reconstruction(command) == committed
+
+    with factory() as session:
+        rows = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(rows) == 1
+        payload = json.loads(rows[0].payload_json)
+        assert payload["match_reconstruction"]["candidate_fingerprint"] == selected[
+            "candidate_fingerprint"
+        ]
+        assert payload["match_reconstruction"]["operator_label"] == "Commissioner"
+
+
+@pytest.mark.pr_critical
+def test_match_reconstruction_rejects_stale_preview_and_impossible_winner(tmp_path):
+    driver, _, week = _driver_fixture(tmp_path / "reconstruction-conflicts")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.eligible_match_ids[0]
+
+    with pytest.raises(ValueError, match="not one of the frozen match participants"):
+        driver.preview_match_reconstruction(
+            AuthoritativeMatchReconstructionPreviewRequest(
+                run_id="run",
+                branch_id="branch",
+                expected_week=week,
+                expected_position_fingerprint=opening.position_fingerprint,
+                expected_revision_id="revision",
+                group_id=group_id,
+                candidate_count=1,
+                constraints=MatchReconstructionConstraints(
+                    winner_player_id="not-a-participant"
+                ),
+            )
+        )
+
+    state = driver.inspect_match_reconstruction(
+        run_id="run", branch_id="branch", group_id=group_id
+    )
+    preview = driver.preview_match_reconstruction(
+        AuthoritativeMatchReconstructionPreviewRequest(
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            candidate_count=1,
+            constraints=MatchReconstructionConstraints(
+                winner_player_id=state["player_a_id"]
+            ),
+        )
+    )
+    selected = preview["candidates"][0]
+    stale = AuthoritativeMatchReconstructionCommitCommand(
+        command_id="stale-reconstruction",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+        candidate_count=1,
+        constraints=MatchReconstructionConstraints(
+            winner_player_id=state["player_a_id"]
+        ),
+        expected_preview_fingerprint="0" * 64,
+        selected_candidate_fingerprint=selected["candidate_fingerprint"],
+        operator_label="Commissioner",
+        audit_reason="stale preview check",
+    )
+    with pytest.raises(ValueError, match="preview is stale"):
+        driver.commit_match_reconstruction(stale)
 
 
 def _multi_driver_fixture(path):

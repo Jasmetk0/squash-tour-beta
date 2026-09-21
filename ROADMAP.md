@@ -144,11 +144,13 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 
 ## 8. Match Reconstruction v1
 
-- Add Admin **Match Reconstruction** where manually supplied facts are hard constraints.
-- Let Admin choose candidate count and inspect compact summaries plus complete read-only candidate detail.
-- Candidate generation must not mutate authoritative history.
-- Only an explicitly selected candidate may become history, with validation and provenance/audit.
-- Keep candidate-generation probability architecture, session retention and exact compact-card design at their unresolved status.
+- **Implemented minimum canonical slice:** Admin **Match Reconstruction** treats manually supplied winner, exact match score and exact game scores as hard constraints on the current eligible Run/Branch match.
+- Admin chooses candidate count and can inspect compact summaries plus complete read-only canonical Match Result detail.
+- Candidate generation reuses the canonical Match Engine / Simulation Slot executor and rolls all preview staging back, so preview does not mutate authoritative history.
+- Only an explicitly selected candidate may become history; commit re-derives the reviewed candidate under current week / Position / Saved Revision guards, requires exact result replay and persists reconstruction provenance plus operator/audit reason.
+- Bounded natural search may return fewer candidates with a warning; it does not force an answer.
+- Keep candidate probability architecture, p/δ/α policy, forcing, nearest-match search, complete constraint catalog, session retention and final compact-card/dedicated-page design at their unresolved status.
+- See `docs/MATCH_RECONSTRUCTION_V1.md`.
 
 ## 9. Events, notifications and historical MSA content
 

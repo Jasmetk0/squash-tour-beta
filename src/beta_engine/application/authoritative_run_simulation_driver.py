@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field, model_validator
 from sqlalchemy import select, text
@@ -144,6 +144,97 @@ class AuthoritativeSimulationCommand(FrozenInput):
     @property
     def fingerprint(self) -> str:
         return fingerprint(self.model_dump(mode="json"))
+
+
+
+class MatchReconstructionGameScore(FrozenInput):
+    """Exact game score in frozen player-A / player-B order."""
+
+    player_a_points: int = Field(ge=0)
+    player_b_points: int = Field(ge=0)
+
+
+class MatchReconstructionConstraints(FrozenInput):
+    """Deliberately small hard-constraint catalog for minimum pre-alpha reconstruction."""
+
+    winner_player_id: str | None = Field(default=None, min_length=1)
+    player_a_sets_won: int | None = Field(default=None, ge=0)
+    player_b_sets_won: int | None = Field(default=None, ge=0)
+    exact_game_scores: tuple[MatchReconstructionGameScore, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_minimum_catalog(self):
+        one_sets_value = (self.player_a_sets_won is None) != (
+            self.player_b_sets_won is None
+        )
+        if one_sets_value:
+            raise ValueError(
+                "exact match score requires both player_a_sets_won and player_b_sets_won"
+            )
+        if (
+            self.winner_player_id is None
+            and self.player_a_sets_won is None
+            and not self.exact_game_scores
+        ):
+            raise ValueError("at least one reconstruction hard constraint is required")
+        if (
+            self.exact_game_scores
+            and self.player_a_sets_won is not None
+            and self.player_b_sets_won is not None
+            and len(self.exact_game_scores)
+            != self.player_a_sets_won + self.player_b_sets_won
+        ):
+            raise ValueError(
+                "exact game-score count must equal the exact match-score set count"
+            )
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeMatchReconstructionPreviewRequest(FrozenInput):
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    candidate_count: int = Field(default=10, ge=1, le=20)
+    constraints: MatchReconstructionConstraints
+
+
+class AuthoritativeMatchReconstructionCommitCommand(
+    AuthoritativeMatchReconstructionPreviewRequest
+):
+    command_id: str = Field(min_length=1, max_length=128)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    selected_candidate_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    operator_label: str = Field(min_length=1, max_length=200)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("reconstruction operator and audit reason must be non-empty")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+    def preview_request(self) -> AuthoritativeMatchReconstructionPreviewRequest:
+        return AuthoritativeMatchReconstructionPreviewRequest(
+            run_id=self.run_id,
+            branch_id=self.branch_id,
+            expected_week=self.expected_week,
+            expected_position_fingerprint=self.expected_position_fingerprint,
+            expected_revision_id=self.expected_revision_id,
+            group_id=self.group_id,
+            candidate_count=self.candidate_count,
+            constraints=self.constraints,
+        )
 
 
 class AuthoritativeWalkoverCommand(FrozenInput):
@@ -1136,6 +1227,406 @@ class AuthoritativeRunSimulationDriver:
             if preflight.draft_version != command.expected_draft_version:
                 raise ValueError("final season closure Working Draft version is stale")
             return commit_final_season_transition(session, command)
+
+    @staticmethod
+    def _reconstruction_game_scores(result) -> tuple[tuple[int, int], ...]:
+        scores: list[tuple[int, int]] = []
+        for set_result in result.sets:
+            if set_result.winner_player_id == result.player_a_id:
+                scores.append((set_result.winner_games, set_result.loser_games))
+            else:
+                scores.append((set_result.loser_games, set_result.winner_games))
+        return tuple(scores)
+
+    @classmethod
+    def _reconstruction_matches_constraints(
+        cls, result, constraints: MatchReconstructionConstraints
+    ) -> bool:
+        # The minimum V1 catalog reconstructs completed competitive matches only.
+        if result.retired_player_id is not None:
+            return False
+        if (
+            constraints.winner_player_id is not None
+            and result.winner_player_id != constraints.winner_player_id
+        ):
+            return False
+        if constraints.player_a_sets_won is not None:
+            if result.sets_won.get(result.player_a_id, 0) != constraints.player_a_sets_won:
+                return False
+            if result.sets_won.get(result.player_b_id, 0) != constraints.player_b_sets_won:
+                return False
+        if constraints.exact_game_scores:
+            expected = tuple(
+                (score.player_a_points, score.player_b_points)
+                for score in constraints.exact_game_scores
+            )
+            if cls._reconstruction_game_scores(result) != expected:
+                return False
+        return True
+
+    @staticmethod
+    def _reconstruction_candidate_fingerprint(
+        *,
+        request: AuthoritativeMatchReconstructionPreviewRequest,
+        slot_start_fingerprint: str,
+        seed: int,
+        attempt_ordinal: int,
+        result_fingerprint: str,
+    ) -> str:
+        return fingerprint(
+            {
+                "schema": "match_reconstruction_candidate.v1",
+                "scope": [
+                    request.run_id,
+                    request.branch_id,
+                    request.expected_week.ordinal,
+                    request.group_id,
+                ],
+                "position": request.expected_position_fingerprint,
+                "slot_start": slot_start_fingerprint,
+                "constraints": request.constraints.model_dump(mode="json"),
+                "seed": seed,
+                "attempt_ordinal": attempt_ordinal,
+                "result_fingerprint": result_fingerprint,
+            }
+        )
+
+    def _build_match_reconstruction_preview(
+        self,
+        session,
+        request: AuthoritativeMatchReconstructionPreviewRequest,
+        packages,
+    ) -> dict[str, Any]:
+        current = self._position(session, request.run_id, request.branch_id)
+        eligible_groups = self._eligible_groups(session, current, packages)
+        if request.group_id not in eligible_groups:
+            raise ValueError(
+                "reconstruction target is completed, blocked, or outside the current slot"
+            )
+        slot, plan, event, package, players = self._group_execution_context(
+            session, request, packages, request.group_id
+        )
+        if (
+            request.constraints.winner_player_id is not None
+            and request.constraints.winner_player_id not in players
+        ):
+            raise ValueError(
+                "reconstruction winner constraint is not one of the frozen match participants"
+            )
+
+        max_sets = 5
+        needed_sets = max_sets // 2 + 1
+        if request.constraints.player_a_sets_won is not None:
+            a_sets = request.constraints.player_a_sets_won
+            b_sets = request.constraints.player_b_sets_won or 0
+            if (
+                max(a_sets, b_sets) != needed_sets
+                or min(a_sets, b_sets) >= needed_sets
+                or a_sets + b_sets > max_sets
+            ):
+                raise ValueError(
+                    "reconstruction exact match score is not a completed best-of-five result"
+                )
+
+        attempt_budget = min(400, max(40, request.candidate_count * 20))
+        seed_anchor = (
+            f"match-reconstruction-v1|{request.run_id}|{request.branch_id}|"
+            f"{request.expected_week.ordinal}|{plan.slot_start_fingerprint}|"
+            f"{request.group_id}"
+        )
+        candidates: list[dict[str, Any]] = []
+        attempted = 0
+        for attempt_ordinal in range(1, attempt_budget + 1):
+            attempted = attempt_ordinal
+            seed = int(
+                hashlib.sha256(
+                    f"{seed_anchor}|{attempt_ordinal}".encode()
+                ).hexdigest()[:15],
+                16,
+            )
+            savepoint = session.begin_nested()
+            try:
+                staged = self._execute_group(
+                    session,
+                    request,
+                    packages,
+                    request.group_id,
+                    seed_override=seed,
+                )
+                result_payload = staged.result.model_dump(mode="json")
+                result_fingerprint = staged.result_fingerprint
+                authoritative_input_fingerprint = staged.authoritative_input.fingerprint
+            finally:
+                savepoint.rollback()
+
+            if not self._reconstruction_matches_constraints(
+                staged.result, request.constraints
+            ):
+                continue
+            candidate_fingerprint = self._reconstruction_candidate_fingerprint(
+                request=request,
+                slot_start_fingerprint=plan.slot_start_fingerprint,
+                seed=seed,
+                attempt_ordinal=attempt_ordinal,
+                result_fingerprint=result_fingerprint,
+            )
+            candidates.append(
+                {
+                    "candidate_fingerprint": candidate_fingerprint,
+                    "attempt_ordinal": attempt_ordinal,
+                    "seed": seed,
+                    "result_fingerprint": result_fingerprint,
+                    "authoritative_input_fingerprint": authoritative_input_fingerprint,
+                    "winner_player_id": result_payload["winner_player_id"],
+                    "player_a_id": result_payload["player_a_id"],
+                    "player_b_id": result_payload["player_b_id"],
+                    "sets_won": result_payload["sets_won"],
+                    "game_scores": [
+                        {"player_a_points": a, "player_b_points": b}
+                        for a, b in self._reconstruction_game_scores(staged.result)
+                    ],
+                    "match_elapsed_seconds": (
+                        result_payload.get("timeline_log", {}) or {}
+                    ).get("total_elapsed_seconds"),
+                    "detail": result_payload,
+                }
+            )
+            if len(candidates) >= request.candidate_count:
+                break
+
+        preview_fingerprint = fingerprint(
+            {
+                "schema": "authoritative_match_reconstruction_preview.v1",
+                "request": request.model_dump(mode="json"),
+                "slot_start_fingerprint": plan.slot_start_fingerprint,
+                "event_id": event.event_id,
+                "match_id": event.match_id,
+                "players": list(players),
+                "attempted": attempted,
+                "candidate_fingerprints": [
+                    item["candidate_fingerprint"] for item in candidates
+                ],
+            }
+        )
+        return {
+            "schema_version": "authoritative_match_reconstruction_preview.v1",
+            "run_id": request.run_id,
+            "branch_id": request.branch_id,
+            "week": request.expected_week.model_dump(mode="json"),
+            "slot_id": slot.slot_id,
+            "slot_start_fingerprint": plan.slot_start_fingerprint,
+            "group_id": request.group_id,
+            "event_id": package.event_id,
+            "match_id": event.match_id,
+            "player_a_id": players[0],
+            "player_b_id": players[1],
+            "candidate_count_requested": request.candidate_count,
+            "candidate_count_found": len(candidates),
+            "attempted_scenarios": attempted,
+            "search_complete": len(candidates) == request.candidate_count,
+            "constraints": request.constraints.model_dump(mode="json"),
+            "candidates": candidates,
+            "warnings": (
+                []
+                if len(candidates) == request.candidate_count
+                else [
+                    "Natural deterministic search did not fill the requested candidate count "
+                    "within the bounded pre-alpha attempt budget. Forcing, nearest-match "
+                    "search and probability estimates remain intentionally unsupported."
+                ]
+            ),
+            "preview_fingerprint": preview_fingerprint,
+        }
+
+    def inspect_match_reconstruction(
+        self, *, run_id: str, branch_id: str, group_id: str
+    ) -> dict[str, Any]:
+        """Read the current frozen match identity without persisting preview staging."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            position = self._position(session, run_id, branch_id)
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or not branch.saved_head_revision_id:
+                raise ValueError("Match Reconstruction requires a saved Branch head")
+            command = AuthoritativeSimulationCommand(
+                command_id="match-reconstruction-inspection",
+                run_id=run_id,
+                branch_id=branch_id,
+                expected_week=position.current_week,
+                expected_position_fingerprint=position.position_fingerprint,
+                expected_revision_id=branch.saved_head_revision_id,
+                group_id=group_id,
+            )
+            packages, _ = self._authority_package(
+                session, run_id, branch_id, position.current_week, adopt=True
+            )
+            self._ensure_current_slot(session, command, packages)
+            current = self._position(session, run_id, branch_id)
+            if group_id not in self._eligible_groups(session, current, packages):
+                raise ValueError(
+                    "reconstruction target is completed, blocked, or outside the current slot"
+                )
+            slot, plan, event, package, players = self._group_execution_context(
+                session, command, packages, group_id
+            )
+            payload = {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": position.current_week.model_dump(mode="json"),
+                "expected_revision_id": branch.saved_head_revision_id,
+                "position_fingerprint": position.position_fingerprint,
+                "slot_id": slot.slot_id,
+                "slot_start_fingerprint": plan.slot_start_fingerprint,
+                "group_id": group_id,
+                "event_id": package.event_id,
+                "match_id": event.match_id,
+                "player_a_id": players[0],
+                "player_b_id": players[1],
+            }
+            session.rollback()
+            return payload
+
+    def preview_match_reconstruction(
+        self, request: AuthoritativeMatchReconstructionPreviewRequest
+    ) -> dict[str, Any]:
+        """Generate deterministic matching candidates in a transaction that is rolled back."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, request.run_id, request.branch_id)
+            before = self._position(session, request.run_id, request.branch_id)
+            self._validate_expected(session, request, before)
+            packages, _ = self._authority_package(
+                session,
+                request.run_id,
+                request.branch_id,
+                request.expected_week,
+                adopt=True,
+            )
+            self._ensure_current_slot(session, request, packages)
+            preview = self._build_match_reconstruction_preview(
+                session, request, packages
+            )
+            session.rollback()
+            return preview
+
+    def commit_match_reconstruction(
+        self, command: AuthoritativeMatchReconstructionCommitCommand
+    ) -> dict[str, Any]:
+        """Re-derive reviewed candidates and atomically commit only the explicit selection."""
+
+        request_fp = fingerprint(
+            {"mode": "match_reconstruction", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "reconstruction command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("reconstruction command receipt is incomplete")
+                return json.loads(receipt.result_json)
+
+            before = self._position(session, command.run_id, command.branch_id)
+            self._validate_expected(session, command, before)
+            packages, authority_fp = self._authority_package(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+                adopt=True,
+            )
+            self._ensure_current_slot(session, command, packages)
+            preview = self._build_match_reconstruction_preview(
+                session, command.preview_request(), packages
+            )
+            if preview["preview_fingerprint"] != command.expected_preview_fingerprint:
+                raise ValueError("Match Reconstruction preview is stale")
+            selected = next(
+                (
+                    item
+                    for item in preview["candidates"]
+                    if item["candidate_fingerprint"]
+                    == command.selected_candidate_fingerprint
+                ),
+                None,
+            )
+            if selected is None:
+                raise ValueError(
+                    "selected Match Reconstruction candidate is absent from reviewed preview"
+                )
+
+            staged = self._execute_group(
+                session,
+                command,
+                packages,
+                command.group_id,
+                seed_override=selected["seed"],
+            )
+            if staged.result_fingerprint != selected["result_fingerprint"]:
+                raise ValueError("selected reconstruction candidate did not replay exactly")
+
+            group_row = session.get(
+                SimulationEventGroupModel,
+                (
+                    command.run_id,
+                    command.branch_id,
+                    command.expected_week.ordinal,
+                    preview["slot_id"],
+                    command.group_id,
+                ),
+            )
+            if group_row is None:
+                raise ValueError("committed reconstruction group receipt is missing")
+            group_payload = json.loads(group_row.payload_json)
+            group_payload["match_reconstruction"] = {
+                "schema_version": "match_reconstruction_commit_audit.v1",
+                "preview_fingerprint": preview["preview_fingerprint"],
+                "candidate_fingerprint": selected["candidate_fingerprint"],
+                "constraints": command.constraints.model_dump(mode="json"),
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+            }
+            group_row.payload_json = json.dumps(
+                group_payload, sort_keys=True, separators=(",", ":")
+            )
+
+            self._advance_or_close(session, command, packages)
+            after = self._position(session, command.run_id, command.branch_id)
+            payload = {
+                "schema_version": "authoritative_match_reconstruction_commit.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "group_id": command.group_id,
+                "match_id": preview["match_id"],
+                "candidate_fingerprint": selected["candidate_fingerprint"],
+                "result_fingerprint": staged.result_fingerprint,
+                "preview_fingerprint": preview["preview_fingerprint"],
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+                "authority_fingerprint": authority_fp,
+                "position": after.model_dump(mode="json"),
+                "adoption": "committed",
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")
@@ -3349,8 +3840,10 @@ class AuthoritativeRunSimulationDriver:
             if e.match_id in position.eligible_match_ids
         )
 
-    def _execute_group(self, session, command, packages, group_id):
+    def _group_execution_context(self, session, command, packages, group_id):
         pos = self._position(session, command.run_id, command.branch_id)
+        if pos.current_slot_id is None:
+            raise ValueError("current authoritative match slot is missing")
         slot = session.get(
             SimulationSlotModel,
             (
@@ -3360,8 +3853,13 @@ class AuthoritativeRunSimulationDriver:
                 pos.current_slot_id,
             ),
         )
+        if slot is None:
+            raise ValueError("current authoritative Simulation Slot disappeared")
         plan = AuthoritativeSlotMatchExecutor._load_plan(slot)
-        event = next(e for e in plan.match_events if e.group_id == group_id)
+        try:
+            event = next(e for e in plan.match_events if e.group_id == group_id)
+        except StopIteration as exc:
+            raise ValueError("target match group is not planned in the current slot") from exc
         package = next(p for p in packages if p.event_id == event.event_id)
         if event.participant_sources:
             players = tuple(
@@ -3398,6 +3896,16 @@ class AuthoritativeRunSimulationDriver:
                 ).result.winner_player_id
                 for f in event.feeder_group_ids
             )
+        if len(players) != 2:
+            raise ValueError("supported reconstruction requires exactly two participants")
+        return slot, plan, event, package, players
+
+    def _execute_group(
+        self, session, command, packages, group_id, *, seed_override: int | None = None
+    ):
+        slot, plan, event, package, players = self._group_execution_context(
+            session, command, packages, group_id
+        )
         authority_fp = self._authority_package(
             session,
             command.run_id,
@@ -3405,13 +3913,17 @@ class AuthoritativeRunSimulationDriver:
             command.expected_week,
             adopt=False,
         )[1]
-        seed = int(
-            hashlib.sha256(
-                f"{command.run_id}|{command.branch_id}|{command.expected_week.ordinal}|{authority_fp}|{group_id}".encode()
-            ).hexdigest()[:15],
-            16,
+        seed = (
+            seed_override
+            if seed_override is not None
+            else int(
+                hashlib.sha256(
+                    f"{command.run_id}|{command.branch_id}|{command.expected_week.ordinal}|{authority_fp}|{group_id}".encode()
+                ).hexdigest()[:15],
+                16,
+            )
         )
-        AuthoritativeSlotMatchExecutor(session).execute_match_group(
+        return AuthoritativeSlotMatchExecutor(session).execute_match_group(
             run_id=command.run_id,
             branch_id=command.branch_id,
             week=command.expected_week,

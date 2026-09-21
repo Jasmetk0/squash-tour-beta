@@ -41,6 +41,8 @@ from beta_engine.infrastructure.db.models import (
     PublishedOfficialRankingModel,
     PlayerSportingWeekStateModel,
     SimulationEventGroupModel,
+    SimulationSlotModel,
+    AdoptedTournamentAuthorityModel,
 )
 from sqlalchemy import select
 from test_season_point_awards_service import make_points_service
@@ -500,6 +502,91 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             assert stored[0].fingerprint == preview["slot_fingerprint"]
 
     assert entry_service._load_registry().model_dump(mode="json") == before_registry
+
+
+@pytest.mark.pr_critical
+def test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact(tmp_path):
+    server, package = _server_state(tmp_path / "match-reconstruction-http")
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server, display_name="Match Reconstruction HTTP"
+        )
+        week = _install_owned_state(server, package, run_id, branch_id)
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "authoritative-simulation"
+        )
+        status, opening = _request("GET", root + "/position")
+        assert status == 200
+        group_id = opening["eligible_match_ids"][0]
+
+        status, target = _request(
+            "GET",
+            root + f"/match-reconstruction/state?group_id={group_id}",
+        )
+        assert status == 200
+        assert target["group_id"] == group_id
+        assert target["player_a_id"] != target["player_b_id"]
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            before = (
+                len(session.scalars(select(SimulationEventGroupModel)).all()),
+                len(session.scalars(select(SimulationSlotModel)).all()),
+                len(session.scalars(select(AdoptedTournamentAuthorityModel)).all()),
+            )
+
+        preview_payload = {
+            "expected_week": week.model_dump(mode="json"),
+            "expected_position_fingerprint": opening["position_fingerprint"],
+            "expected_revision_id": revision,
+            "group_id": group_id,
+            "candidate_count": 1,
+            "constraints": {"winner_player_id": target["player_a_id"]},
+        }
+        status, preview = _request(
+            "POST", root + "/match-reconstruction/preview", preview_payload
+        )
+        assert status == 200, preview
+        assert preview["candidate_count_found"] == 1
+        selected = preview["candidates"][0]
+        assert selected["winner_player_id"] == target["player_a_id"]
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            after_preview = (
+                len(session.scalars(select(SimulationEventGroupModel)).all()),
+                len(session.scalars(select(SimulationSlotModel)).all()),
+                len(session.scalars(select(AdoptedTournamentAuthorityModel)).all()),
+            )
+        assert after_preview == before
+
+        command = preview_payload | {
+            "command_id": "http-reconstruction",
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+            "selected_candidate_fingerprint": selected["candidate_fingerprint"],
+            "operator_label": "Commissioner",
+            "audit_reason": "Reviewed manual historical result",
+        }
+        status, committed = _request(
+            "POST", root + "/match-reconstruction/commit", command
+        )
+        assert status == 201, committed
+        assert committed["candidate_fingerprint"] == selected["candidate_fingerprint"]
+        assert committed["result_fingerprint"] == selected["result_fingerprint"]
+        assert _request("POST", root + "/match-reconstruction/commit", command) == (
+            201,
+            committed,
+        )
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            rows = session.scalars(select(SimulationEventGroupModel)).all()
+            assert len(rows) == 1
+            payload = json.loads(rows[0].payload_json)
+            assert payload["match_reconstruction"]["preview_fingerprint"] == preview[
+                "preview_fingerprint"
+            ]
+            assert payload["match_reconstruction"]["audit_reason"] == (
+                "Reviewed manual historical result"
+            )
 
 
 @pytest.mark.smoke

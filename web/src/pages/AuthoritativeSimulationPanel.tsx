@@ -17,6 +17,9 @@ import {
   saveAuthoritativeSimulation,
   simulateAuthoritativeNextMatch,
   simulateAuthoritativeNextSlot,
+  inspectAuthoritativeMatchReconstruction,
+  previewAuthoritativeMatchReconstruction,
+  commitAuthoritativeMatchReconstruction,
   previewDerivedAuthoritativeWeekTransition,
   confirmAuthoritativeWeekTransition,
   previewRankingSave,
@@ -28,6 +31,9 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeApplicationValidationReview,
+  AuthoritativeMatchReconstructionPreview,
+  AuthoritativeMatchReconstructionPreviewPayload,
+  MatchReconstructionConstraints,
   DerivedAuthoritativeWeekTransitionPreview
 } from '../api/types'
 import { newCommandId } from '../admin/branchSimulation'
@@ -64,6 +70,18 @@ export function AuthoritativeSimulationPanel({
   const enabled = Boolean(runId && branchId && savedRevisionId && !blockedReason)
   const [selectedGroupId, setSelectedGroupId] = useState('')
   const [confirmed, setConfirmed] = useState(false)
+  const [reconstructionCandidateCount, setReconstructionCandidateCount] = useState('10')
+  const [reconstructionWinnerId, setReconstructionWinnerId] = useState('')
+  const [reconstructionMatchScore, setReconstructionMatchScore] = useState('')
+  const [reconstructionGameScores, setReconstructionGameScores] = useState('')
+  const [reconstructionOperator, setReconstructionOperator] = useState('')
+  const [reconstructionReason, setReconstructionReason] = useState('')
+  const [reconstructionCommandId, setReconstructionCommandId] = useState(newCommandId)
+  const [reconstructionReview, setReconstructionReview] = useState<{
+    payload: AuthoritativeMatchReconstructionPreviewPayload
+    preview: AuthoritativeMatchReconstructionPreview
+  } | null>(null)
+  const [selectedReconstructionCandidate, setSelectedReconstructionCandidate] = useState('')
   const [proposal, setProposal] = useState<AuthoritativeWeekScheduleProposal | null>(null)
   const [proposalRequestId, setProposalRequestId] = useState('')
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
@@ -109,6 +127,17 @@ export function AuthoritativeSimulationPanel({
     enabled: enabled && scheduleAllowsPosition,
     retry: false
   })
+  const reconstructionStateQuery = useQuery({
+    queryKey: ['authoritative-match-reconstruction-state', runId, branchId, selectedGroupId],
+    queryFn: () => inspectAuthoritativeMatchReconstruction(runId, branchId, selectedGroupId),
+    enabled: Boolean(
+      enabled &&
+      positionQuery.data?.current_slot_kind === 'match' &&
+      selectedGroupId
+    ),
+    retry: false
+  })
+
   const currentEntrySlotOrdinal =
     positionQuery.data?.current_slot_kind === 'entry'
       ? positionQuery.data.slot_ordinal
@@ -187,6 +216,15 @@ export function AuthoritativeSimulationPanel({
     setSelectedGroupId('')
     setNextMatchCommandId(newCommandId())
     setNextSlotCommandId(newCommandId())
+    setReconstructionCandidateCount('10')
+    setReconstructionWinnerId('')
+    setReconstructionMatchScore('')
+    setReconstructionGameScores('')
+    setReconstructionOperator('')
+    setReconstructionReason('')
+    setReconstructionCommandId(newCommandId())
+    setReconstructionReview(null)
+    setSelectedReconstructionCandidate('')
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
@@ -258,6 +296,9 @@ export function AuthoritativeSimulationPanel({
   useEffect(() => {
     if (!selectedGroupId) return
     setNextMatchCommandId(newCommandId())
+    setReconstructionCommandId(newCommandId())
+    setReconstructionReview(null)
+    setSelectedReconstructionCandidate('')
     setConfirmed(false)
   }, [selectedGroupId])
 
@@ -342,6 +383,112 @@ export function AuthoritativeSimulationPanel({
           queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
           queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
         ])
+      }
+    }
+  })
+
+  function reconstructionConstraints(): MatchReconstructionConstraints {
+    const constraints: MatchReconstructionConstraints = {}
+    const winner = reconstructionWinnerId.trim()
+    if (winner) constraints.winner_player_id = winner
+
+    const matchScore = reconstructionMatchScore.trim()
+    if (matchScore) {
+      const match = /^(\d+)\s*[-:]\s*(\d+)$/.exec(matchScore)
+      if (!match) throw new Error('Match score must use A-B form, for example 3-1.')
+      constraints.player_a_sets_won = Number(match[1])
+      constraints.player_b_sets_won = Number(match[2])
+    }
+
+    const gameScores = reconstructionGameScores.trim()
+    if (gameScores) {
+      constraints.exact_game_scores = gameScores.split(',').map((item) => {
+        const match = /^(\d+)\s*[-:]\s*(\d+)$/.exec(item.trim())
+        if (!match) throw new Error('Game scores must use comma-separated A-B values, for example 11-7, 8-11, 11-9, 11-6.')
+        return {
+          player_a_points: Number(match[1]),
+          player_b_points: Number(match[2])
+        }
+      })
+    }
+
+    if (
+      !constraints.winner_player_id &&
+      constraints.player_a_sets_won == null &&
+      !constraints.exact_game_scores?.length
+    ) {
+      throw new Error('Add at least one hard reconstruction constraint.')
+    }
+    return constraints
+  }
+
+  const reconstructionPreviewMutation = useMutation({
+    mutationFn: async () => {
+      const position = positionQuery.data
+      if (!position || !savedRevisionId || !selectedGroupId) {
+        throw new Error('Current canonical match position is required.')
+      }
+      const candidateCount = Number(reconstructionCandidateCount)
+      if (!Number.isInteger(candidateCount) || candidateCount < 1 || candidateCount > 20) {
+        throw new Error('Candidate count must be an integer from 1 to 20.')
+      }
+      const payload: AuthoritativeMatchReconstructionPreviewPayload = {
+        expected_week: position.current_week,
+        expected_position_fingerprint: position.position_fingerprint,
+        expected_revision_id: savedRevisionId,
+        group_id: selectedGroupId,
+        candidate_count: candidateCount,
+        constraints: reconstructionConstraints()
+      }
+      const preview = await previewAuthoritativeMatchReconstruction(runId, branchId, payload)
+      return { payload, preview }
+    },
+    onSuccess: (review) => {
+      setReconstructionReview(review)
+      setSelectedReconstructionCandidate(review.preview.candidates[0]?.candidate_fingerprint ?? '')
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setReconstructionReview(null)
+        setSelectedReconstructionCandidate('')
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const reconstructionCommitMutation = useMutation({
+    mutationFn: () => {
+      if (!reconstructionReview) throw new Error('Generate and review reconstruction candidates first.')
+      if (!selectedReconstructionCandidate) throw new Error('Select one reconstruction candidate.')
+      const operator = reconstructionOperator.trim()
+      const auditReason = reconstructionReason.trim()
+      if (!operator || !auditReason) throw new Error('Operator label and audit reason are required.')
+      return commitAuthoritativeMatchReconstruction(runId, branchId, {
+        ...reconstructionReview.payload,
+        command_id: reconstructionCommandId,
+        expected_preview_fingerprint: reconstructionReview.preview.preview_fingerprint,
+        selected_candidate_fingerprint: selectedReconstructionCandidate,
+        operator_label: operator,
+        audit_reason: auditReason
+      })
+    },
+    onSuccess: async (result) => {
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      setReconstructionReview(null)
+      setSelectedReconstructionCandidate('')
+      setReconstructionOperator('')
+      setReconstructionReason('')
+      setReconstructionCommandId(newCommandId())
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setReconstructionReview(null)
+        setSelectedReconstructionCandidate('')
+        await refreshCanonicalSimulation()
       }
     }
   })
@@ -699,6 +846,8 @@ export function AuthoritativeSimulationPanel({
   const actionPending =
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
+    reconstructionPreviewMutation.isPending ||
+    reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending
   const currentEntrySlot = position?.current_slot_kind === 'entry'
   const entryInspection = entrySlotQuery.data
@@ -1012,6 +1161,177 @@ export function AuthoritativeSimulationPanel({
           ) : (
             <EmptyState message="No currently eligible competitive match group." />
           )}
+          {position.current_slot_kind === 'match' && selectedGroupId ? (
+            <>
+              <h4>Minimum Match Reconstruction</h4>
+              <p className="status">
+                Preview is read-only. Winner, exact match score and exact game scores are hard constraints.
+                Candidate probability, forcing and nearest-match search are intentionally not inferred in this first version.
+              </p>
+              {reconstructionStateQuery.isLoading ? (
+                <p className="status">Loading frozen reconstruction target…</p>
+              ) : null}
+              {reconstructionStateQuery.error ? (
+                <p className="error">
+                  Reconstruction target unavailable: {formatApiError(reconstructionStateQuery.error)}
+                </p>
+              ) : null}
+              {reconstructionStateQuery.data ? (
+                <MetadataList
+                  items={[
+                    { label: 'Match', value: reconstructionStateQuery.data.match_id },
+                    { label: 'Player A', value: reconstructionStateQuery.data.player_a_id },
+                    { label: 'Player B', value: reconstructionStateQuery.data.player_b_id },
+                    { label: 'Frozen slot start', value: reconstructionStateQuery.data.slot_start_fingerprint }
+                  ]}
+                />
+              ) : null}
+              {!reconstructionReview ? (
+                <>
+                  <label>
+                    Candidate count
+                    <input
+                      aria-label="Reconstruction candidate count"
+                      type="number"
+                      min={1}
+                      max={20}
+                      value={reconstructionCandidateCount}
+                      onChange={(event) => setReconstructionCandidateCount(event.target.value)}
+                      disabled={reconstructionPreviewMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    Winner player ID (optional)
+                    <input
+                      aria-label="Reconstruction winner player ID"
+                      value={reconstructionWinnerId}
+                      placeholder={reconstructionStateQuery.data?.player_a_id ?? 'player ID'}
+                      onChange={(event) => setReconstructionWinnerId(event.target.value)}
+                      disabled={reconstructionPreviewMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    Exact match score A-B (optional)
+                    <input
+                      aria-label="Reconstruction exact match score"
+                      value={reconstructionMatchScore}
+                      placeholder="3-1"
+                      onChange={(event) => setReconstructionMatchScore(event.target.value)}
+                      disabled={reconstructionPreviewMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    Exact game scores A-B (optional)
+                    <input
+                      aria-label="Reconstruction exact game scores"
+                      value={reconstructionGameScores}
+                      placeholder="11-7, 8-11, 11-9, 11-6"
+                      onChange={(event) => setReconstructionGameScores(event.target.value)}
+                      disabled={reconstructionPreviewMutation.isPending}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => reconstructionPreviewMutation.mutate()}
+                    disabled={!reconstructionStateQuery.data || reconstructionPreviewMutation.isPending}
+                  >
+                    Generate matching scenarios
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className="status">
+                    Found {reconstructionReview.preview.candidate_count_found} of{' '}
+                    {reconstructionReview.preview.candidate_count_requested} requested candidate(s) after{' '}
+                    {reconstructionReview.preview.attempted_scenarios} deterministic scenario(s).
+                  </p>
+                  {reconstructionReview.preview.warnings.map((warning) => (
+                    <p key={warning} className="status">{warning}</p>
+                  ))}
+                  <ul aria-label="Match Reconstruction candidates">
+                    {reconstructionReview.preview.candidates.map((candidate, index) => (
+                      <li key={candidate.candidate_fingerprint}>
+                        <label>
+                          <input
+                            type="radio"
+                            name="reconstruction-candidate"
+                            aria-label={`Select reconstruction candidate ${index + 1}`}
+                            checked={selectedReconstructionCandidate === candidate.candidate_fingerprint}
+                            onChange={() => setSelectedReconstructionCandidate(candidate.candidate_fingerprint)}
+                          />
+                          Candidate {index + 1}: {candidate.winner_player_id} ·{' '}
+                          {candidate.sets_won[candidate.player_a_id]}-{candidate.sets_won[candidate.player_b_id]} ·{' '}
+                          {candidate.game_scores.map((score) => `${score.player_a_points}-${score.player_b_points}`).join(', ')}
+                        </label>
+                        <details>
+                          <summary>Complete read-only candidate detail</summary>
+                          <pre>{JSON.stringify(candidate.detail, null, 2)}</pre>
+                        </details>
+                      </li>
+                    ))}
+                  </ul>
+                  <label>
+                    Reconstruction operator
+                    <input
+                      aria-label="Reconstruction operator"
+                      value={reconstructionOperator}
+                      onChange={(event) => setReconstructionOperator(event.target.value)}
+                      disabled={reconstructionCommitMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    Reconstruction audit reason
+                    <textarea
+                      aria-label="Reconstruction audit reason"
+                      value={reconstructionReason}
+                      onChange={(event) => setReconstructionReason(event.target.value)}
+                      disabled={reconstructionCommitMutation.isPending}
+                    />
+                  </label>
+                  <div className="quick-actions">
+                    <button
+                      type="button"
+                      onClick={() => reconstructionCommitMutation.mutate()}
+                      disabled={
+                        !selectedReconstructionCandidate ||
+                        !reconstructionOperator.trim() ||
+                        !reconstructionReason.trim() ||
+                        reconstructionCommitMutation.isPending
+                      }
+                    >
+                      Select this reconstruction
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setReconstructionReview(null)
+                        setSelectedReconstructionCandidate('')
+                        setReconstructionCommandId(newCommandId())
+                      }}
+                      disabled={reconstructionCommitMutation.isPending}
+                    >
+                      Edit constraints and regenerate
+                    </button>
+                  </div>
+                </>
+              )}
+              {reconstructionPreviewMutation.error ? (
+                <p className="error">
+                  Match Reconstruction preview failed: {formatApiError(reconstructionPreviewMutation.error)}
+                </p>
+              ) : null}
+              {reconstructionCommitMutation.error ? (
+                <p className="error">
+                  Match Reconstruction commit failed: {formatApiError(reconstructionCommitMutation.error)}
+                </p>
+              ) : null}
+              {reconstructionCommitMutation.data ? (
+                <p className="status">
+                  Selected reconstruction committed: {reconstructionCommitMutation.data.result_fingerprint}.
+                </p>
+              ) : null}
+            </>
+          ) : null}
           <label>
             <input
               aria-label="Confirm authoritative simulation"

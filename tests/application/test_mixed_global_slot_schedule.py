@@ -283,6 +283,7 @@ def test_manual_sparse_match_schedule_rejects_unowned_global_gap(tmp_path):
     )
     canonical = WeekSimulationSchedule.model_validate_json(json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":")))
     sparse = WeekSimulationSchedule(
+        schema_version=canonical.schema_version,
         run_id=canonical.run_id,
         branch_id=canonical.branch_id,
         week=canonical.week,

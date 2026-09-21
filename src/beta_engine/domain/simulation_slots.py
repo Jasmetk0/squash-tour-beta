@@ -23,18 +23,24 @@ def fingerprint(value: object) -> str:
 
 
 class WeekSimulationScheduleSlot(FrozenInput):
-    """One explicitly authored global slot; ordering is the tuple/ordinal only."""
+    """One global match slot, optionally bound to Match Day chronology."""
 
     ordinal: int = Field(ge=1)
     group_ids: tuple[str, ...] = Field(min_length=1)
+    match_day_ordinal: int | None = Field(default=None, ge=1)
+    match_order: int | None = Field(default=None, ge=1)
+    event_id: str | None = Field(default=None, min_length=1)
+    draw_phase: Literal["qualification", "main"] | None = None
+    round_number: int | None = Field(default=None, ge=1)
 
 
 class WeekSimulationSchedule(FrozenInput):
-    """Immutable Run/Branch/week authority over cross-event chronology."""
+    """Immutable Run/Branch/week authority over global and Match Day chronology."""
 
-    schema_version: Literal["week_simulation_schedule.v1"] = (
-        "week_simulation_schedule.v1"
-    )
+    schema_version: Literal[
+        "week_simulation_schedule.v1",
+        "week_simulation_schedule.v2",
+    ] = "week_simulation_schedule.v1"
     run_id: str
     branch_id: str
     week: RankingWeek
@@ -50,11 +56,81 @@ class WeekSimulationSchedule(FrozenInput):
         groups = tuple(group for slot in self.slots for group in slot.group_ids)
         if len(groups) != len(set(groups)):
             raise ValueError("schedule contains a duplicate group")
+
+        if self.schema_version == "week_simulation_schedule.v1":
+            if any(
+                value is not None
+                for slot in self.slots
+                for value in (
+                    slot.match_day_ordinal,
+                    slot.match_order,
+                    slot.event_id,
+                    slot.draw_phase,
+                    slot.round_number,
+                )
+            ):
+                raise ValueError(
+                    "historical Week Simulation Schedule v1 cannot carry Match Day metadata"
+                )
+            return self
+
+        for slot in self.slots:
+            if len(slot.group_ids) != 1:
+                raise ValueError(
+                    "Week Simulation Schedule v2 requires exactly one competitive group "
+                    "per global match slot"
+                )
+            if any(
+                value is None
+                for value in (
+                    slot.match_day_ordinal,
+                    slot.match_order,
+                    slot.event_id,
+                    slot.draw_phase,
+                    slot.round_number,
+                )
+            ):
+                raise ValueError(
+                    "Week Simulation Schedule v2 requires complete Match Day metadata"
+                )
+
+        by_day: dict[int, list[int]] = {}
+        for slot in self.slots:
+            assert slot.match_day_ordinal is not None
+            assert slot.match_order is not None
+            by_day.setdefault(slot.match_day_ordinal, []).append(slot.match_order)
+        days = tuple(sorted(by_day))
+        if days != tuple(range(1, max(days) + 1)):
+            raise ValueError("Match Day ordinals must be contiguous from one")
+        for day, orders in by_day.items():
+            if sorted(orders) != list(range(1, len(orders) + 1)):
+                raise ValueError(
+                    f"Match Day {day} match order must be contiguous from one"
+                )
         return self
+
+    def canonical_payload(self) -> dict:
+        """Return the exact version-owned payload used by identity/request hashing."""
+
+        if self.schema_version == "week_simulation_schedule.v1":
+            return {
+                "schema_version": "week_simulation_schedule.v1",
+                "run_id": self.run_id,
+                "branch_id": self.branch_id,
+                "week": self.week.model_dump(mode="json"),
+                "slots": [
+                    {
+                        "ordinal": slot.ordinal,
+                        "group_ids": list(slot.group_ids),
+                    }
+                    for slot in self.slots
+                ],
+            }
+        return self.model_dump(mode="json")
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self.model_dump(mode="json"))
+        return fingerprint(self.canonical_payload())
 
 
 class CanonicalMatchInputProjectionPolicy(FrozenInput):

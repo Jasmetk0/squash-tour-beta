@@ -375,7 +375,7 @@ export function AuthoritativeSimulationPanel({
 
   const adoptMutation = useMutation({
     mutationFn: () => {
-      if (!proposal || !proposalRequestId) throw new Error('Review a current topological schedule proposal first.')
+      if (!proposal || !proposalRequestId) throw new Error('Review the current Match Day schedule proposal first.')
       return adoptAuthoritativeWeekScheduleProposal(runId, branchId, {
         request_id: proposalRequestId,
         expected_week: proposal.schedule.week,
@@ -1249,20 +1249,24 @@ export function AuthoritativeSimulationPanel({
           {schedule ? (
             <ol aria-label="Adopted authoritative week schedule">
               {schedule.slots.map((slot) => (
-                <li key={slot.ordinal}>Slot {slot.ordinal}: {slot.group_ids.join(', ')}</li>
+                <li key={slot.ordinal}>
+                  {slot.match_day_ordinal != null
+                    ? `Day ${slot.match_day_ordinal} · #${slot.match_order} · global slot ${slot.ordinal} · ${slot.event_id} · ${slot.draw_phase} R${slot.round_number}: ${slot.group_ids.join(', ')}`
+                    : `Legacy global slot ${slot.ordinal}: ${slot.group_ids.join(', ')}`}
+                </li>
               ))}
             </ol>
           ) : scheduleQuery.data.required ? (
             <>
               <p className="status">
-                Canonical Position and match execution stay locked until this required immutable Week Schedule is adopted.
+                Canonical Position and match execution stay locked until this immutable Match Day / global-slot schedule is adopted.
               </p>
               <button
                 type="button"
                 onClick={() => proposalMutation.mutate()}
                 disabled={proposalMutation.isPending || adoptMutation.isPending}
               >
-                Build topological schedule proposal
+                Build Match Day schedule proposal
               </button>
               {proposalMutation.error ? (
                 <p className="error">Schedule proposal failed: {formatApiError(proposalMutation.error)}</p>
@@ -1272,7 +1276,11 @@ export function AuthoritativeSimulationPanel({
                   <p className="status">{proposal.provenance}</p>
                   <ol aria-label="Proposed authoritative week schedule">
                     {proposal.schedule.slots.map((slot) => (
-                      <li key={slot.ordinal}>Slot {slot.ordinal}: {slot.group_ids.join(', ')}</li>
+                      <li key={slot.ordinal}>
+                  {slot.match_day_ordinal != null
+                    ? `Day ${slot.match_day_ordinal} · #${slot.match_order} · global slot ${slot.ordinal} · ${slot.event_id} · ${slot.draw_phase} R${slot.round_number}: ${slot.group_ids.join(', ')}`
+                    : `Legacy global slot ${slot.ordinal}: ${slot.group_ids.join(', ')}`}
+                </li>
                     ))}
                   </ol>
                   <button
@@ -1280,7 +1288,7 @@ export function AuthoritativeSimulationPanel({
                     onClick={() => adoptMutation.mutate()}
                     disabled={adoptMutation.isPending || !proposalRequestId}
                   >
-                    Adopt reviewed topological schedule
+                    Adopt reviewed Match Day schedule
                   </button>
                 </>
               ) : null}

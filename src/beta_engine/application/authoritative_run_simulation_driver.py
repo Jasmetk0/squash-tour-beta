@@ -3529,12 +3529,23 @@ class AuthoritativeRunSimulationDriver:
                     or bool(wc_slot_ordinals)
                     or len(packages) > 1
                     or len(plans) != 3
+                    or any(
+                        self._canonical_draw_binding(
+                            session,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            week=week,
+                            event_id=package.event_id,
+                        )
+                        is not None
+                        for package in packages
+                    )
                 ),
                 "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
                 "event_ids": [p.event_id for p in packages],
                 "group_ids": list(plans),
-                "schedule": schedule.model_dump(mode="json") if schedule else None,
+                "schedule": schedule.canonical_payload() if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
             }
@@ -3546,7 +3557,8 @@ class AuthoritativeRunSimulationDriver:
         run_id: str,
         branch_id: str,
     ) -> tuple[WeekSimulationSchedule, str]:
-        """Build one read-only dependency-safe proposal inside the caller scope."""
+        """Build the first-version Match Day schedule from canonical topology."""
+
         week = self._current_week(session, run_id, branch_id)
         if self._schedule(session, run_id, branch_id, week) is not None:
             raise ValueError("week schedule is already adopted and immutable")
@@ -3563,6 +3575,7 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "Week Tournament Lock state is inconsistent with current Entry Fields"
             )
+
         packages = self._packages(
             week,
             session=session,
@@ -3577,55 +3590,84 @@ class AuthoritativeRunSimulationDriver:
                 "week has no authoritative tournament groups to schedule"
             )
 
-        depth_cache: dict[str, int] = {}
-        visiting: set[str] = set()
-
-        def depth(group_id: str) -> int:
-            if group_id in depth_cache:
-                return depth_cache[group_id]
-            if group_id in visiting:
-                raise ValueError("week topology contains a feeder cycle")
-            if group_id not in plans:
-                raise ValueError("week topology references a missing feeder group")
-            visiting.add(group_id)
-            feeders = self._plan_feeders(plans[group_id])
-            if any(feeder not in plans for feeder in feeders):
-                raise ValueError(
-                    "week topology references a feeder outside the authoritative graph"
+        match_meta: dict[str, tuple[str, str, int, int]] = {}
+        qualification_rounds_by_event: dict[str, int] = {}
+        for package in packages:
+            for match in package.qualification_matches + package.main_draw_matches:
+                if match.match_id not in plans:
+                    continue
+                draw_phase = (
+                    "qualification"
+                    if match.draw_type == "qualification"
+                    else "main"
                 )
-            value = (
-                1
-                if not feeders
-                else 1 + max(depth(feeder) for feeder in feeders)
+                if draw_phase == "qualification":
+                    qualification_rounds_by_event[package.event_id] = max(
+                        qualification_rounds_by_event.get(package.event_id, 0),
+                        match.round_number,
+                    )
+                if match.match_id in match_meta:
+                    raise ValueError(
+                        "Match Day schedule contains duplicate canonical match identity"
+                    )
+                match_meta[match.match_id] = (
+                    package.event_id,
+                    draw_phase,
+                    match.round_number,
+                    match.bracket_position,
+                )
+        if set(match_meta) != set(plans):
+            missing = sorted(set(plans) - set(match_meta))
+            raise ValueError(
+                "Match Day schedule cannot resolve canonical match metadata: "
+                + ", ".join(missing)
             )
-            visiting.remove(group_id)
-            depth_cache[group_id] = value
-            return value
 
+        day_by_group: dict[str, int] = {}
         for group_id in sorted(plans):
-            depth(group_id)
+            event_id, draw_phase, round_number, _ = match_meta[group_id]
+            qualification_rounds = qualification_rounds_by_event.get(event_id, 0)
+            day_by_group[group_id] = (
+                round_number
+                if draw_phase == "qualification"
+                else qualification_rounds + round_number
+            )
 
-        grouped: dict[int, list[str]] = {}
-        for group_id, ordinal in depth_cache.items():
-            grouped.setdefault(ordinal, []).append(group_id)
+        for group_id, plan in plans.items():
+            for feeder in self._plan_feeders(plan):
+                if feeder not in plans:
+                    raise ValueError(
+                        "week topology references a feeder outside the authoritative graph"
+                    )
+                if day_by_group[feeder] >= day_by_group[group_id]:
+                    raise ValueError(
+                        "Match Day schedule requires every feeder match on an earlier day"
+                    )
 
-        reserved_entry_ordinals = set(
+        by_day: dict[int, list[str]] = {}
+        for group_id, day in day_by_group.items():
+            by_day.setdefault(day, []).append(group_id)
+
+        reserved_nonmatch_ordinals = set(
             self._entry_slot_ordinals(session, run_id, branch_id, week)
-        )
-        reserved_wc_ordinals = set(
-            self._wc_slot_ordinals(session, run_id, branch_id, week)
-        )
-        reserved_nonmatch_ordinals = reserved_entry_ordinals | reserved_wc_ordinals
+        ) | set(self._wc_slot_ordinals(session, run_id, branch_id, week))
+
         slots: list[WeekSimulationScheduleSlot] = []
         next_global_ordinal = 1
-        for depth_ordinal in sorted(grouped):
-            while next_global_ordinal in reserved_nonmatch_ordinals:
-                next_global_ordinal += 1
-            global_ordinal = next_global_ordinal
-            next_global_ordinal += 1
-            group_ids = tuple(sorted(grouped[depth_ordinal]))
-            known_players: dict[str, str] = {}
-            for group_id in group_ids:
+        for match_day_ordinal in sorted(by_day):
+            ordered_groups = sorted(
+                by_day[match_day_ordinal],
+                key=lambda group_id: (
+                    match_meta[group_id][0],
+                    0 if match_meta[group_id][1] == "qualification" else 1,
+                    match_meta[group_id][2],
+                    match_meta[group_id][3],
+                    group_id,
+                ),
+            )
+
+            known_player_owner: dict[str, str] = {}
+            for group_id in ordered_groups:
                 plan = plans[group_id]
                 direct_ids = (
                     tuple(plan.direct_player_ids or ())
@@ -3637,24 +3679,35 @@ class AuthoritativeRunSimulationDriver:
                     )
                 )
                 for player_id in direct_ids:
-                    prior_group = known_players.get(player_id)
-                    if prior_group is not None:
+                    prior = known_player_owner.get(player_id)
+                    if prior is not None:
                         raise ValueError(
-                            "topological schedule proposal found one directly known "
-                            "player in multiple independent groups of the same slot; "
-                            "commitment/Week Tournament Lock authority must resolve "
-                            f"the conflict before chronology ({player_id}: "
-                            f"{prior_group}, {group_id})"
+                            "Match Day schedule found one directly known player in "
+                            "multiple matches on the same day; Week Tournament Lock "
+                            "or tournament chronology must resolve the conflict "
+                            f"({player_id}: {prior}, {group_id})"
                         )
-                    known_players[player_id] = group_id
-            slots.append(
-                WeekSimulationScheduleSlot(
-                    ordinal=global_ordinal,
-                    group_ids=group_ids,
+                    known_player_owner[player_id] = group_id
+
+            for match_order, group_id in enumerate(ordered_groups, start=1):
+                while next_global_ordinal in reserved_nonmatch_ordinals:
+                    next_global_ordinal += 1
+                event_id, draw_phase, round_number, _ = match_meta[group_id]
+                slots.append(
+                    WeekSimulationScheduleSlot(
+                        ordinal=next_global_ordinal,
+                        group_ids=(group_id,),
+                        match_day_ordinal=match_day_ordinal,
+                        match_order=match_order,
+                        event_id=event_id,
+                        draw_phase=draw_phase,
+                        round_number=round_number,
+                    )
                 )
-            )
+                next_global_ordinal += 1
 
         schedule = WeekSimulationSchedule(
+            schema_version="week_simulation_schedule.v2",
             run_id=run_id,
             branch_id=branch_id,
             week=week,
@@ -3676,18 +3729,21 @@ class AuthoritativeRunSimulationDriver:
         position_fingerprint: str,
     ) -> dict:
         return {
-            "schedule": schedule.model_dump(mode="json"),
+            "schedule": schedule.canonical_payload(),
             "schedule_fingerprint": schedule.fingerprint,
             "position_fingerprint": position_fingerprint,
             "provenance": (
-                "earliest_dependency_safe_topological_proposal_v1; "
-                "not Match Day timing or Final Commitment authority"
+                "match_day_schedule_hard_constraints.v1; "
+                "one competitive match per global Simulation Slot; "
+                "Qualification before Main; feeder next-day minimum; "
+                "deterministic within-day order; "
+                "carryover/travel/fairness optimization remains follow-up"
             ),
             "persisted": False,
         }
 
     def propose_topological_schedule(self, *, run_id: str, branch_id: str):
-        """Propose earliest dependency-safe Simulation Slots from canonical topology."""
+        """Propose hard-constraint Match Day chronology from canonical topology."""
         with self.factory() as session:
             self._require_writable_scope(session, run_id, branch_id)
             schedule, position_fingerprint = (
@@ -3712,7 +3768,7 @@ class AuthoritativeRunSimulationDriver:
         expected_schedule_fingerprint: str,
         expected_position_fingerprint: str,
     ):
-        """Atomically rebuild and adopt the exact current topological proposal."""
+        """Atomically rebuild and adopt the exact current Match Day proposal."""
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, run_id, branch_id)
@@ -3729,7 +3785,7 @@ class AuthoritativeRunSimulationDriver:
                 request_fp = fingerprint(
                     {
                         "request_id": request_id,
-                        "schedule": stored.model_dump(mode="json"),
+                        "schedule": stored.canonical_payload(),
                     }
                 )
                 if (
@@ -3738,7 +3794,7 @@ class AuthoritativeRunSimulationDriver:
                     and stored.fingerprint == expected_schedule_fingerprint
                 ):
                     return {
-                        "schedule": stored.model_dump(mode="json"),
+                        "schedule": stored.canonical_payload(),
                         "schedule_fingerprint": stored.fingerprint,
                         "adoption": "exact_retry",
                     }
@@ -3754,14 +3810,14 @@ class AuthoritativeRunSimulationDriver:
                 )
             )
             if schedule.fingerprint != expected_schedule_fingerprint:
-                raise ValueError("topological schedule proposal is stale")
+                raise ValueError("Match Day schedule proposal is stale")
             if position_fingerprint != expected_position_fingerprint:
                 raise ValueError("simulation position is stale")
 
             request_fp = fingerprint(
                 {
                     "request_id": request_id,
-                    "schedule": schedule.model_dump(mode="json"),
+                    "schedule": schedule.canonical_payload(),
                 }
             )
             session.add(
@@ -3788,7 +3844,7 @@ class AuthoritativeRunSimulationDriver:
         expected_position_fingerprint: str,
     ):
         request_fp = fingerprint(
-            {"request_id": request_id, "schedule": schedule.model_dump(mode="json")}
+            {"request_id": request_id, "schedule": schedule.canonical_payload()}
         )
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -3809,7 +3865,7 @@ class AuthoritativeRunSimulationDriver:
                     and row.request_fingerprint == request_fp
                 ):
                     return {
-                        "schedule": schedule.model_dump(mode="json"),
+                        "schedule": schedule.canonical_payload(),
                         "schedule_fingerprint": schedule.fingerprint,
                         "adoption": "exact_retry",
                     }
@@ -3876,7 +3932,7 @@ class AuthoritativeRunSimulationDriver:
                 ),
             )
             return {
-                "schedule": schedule.model_dump(mode="json"),
+                "schedule": schedule.canonical_payload(),
                 "schedule_fingerprint": schedule.fingerprint,
                 "position_fingerprint": fingerprint(
                     {
@@ -4118,6 +4174,115 @@ class AuthoritativeRunSimulationDriver:
                         "dependent groups require a strictly later slot than feeders"
                     )
 
+        if schedule.schema_version == "week_simulation_schedule.v2":
+            match_meta: dict[str, tuple[str, str, int]] = {}
+            known_players: dict[str, tuple[str, ...]] = {}
+            qualification_groups_by_event: dict[str, list[str]] = {}
+            main_groups_by_event: dict[str, list[str]] = {}
+            for package in packages:
+                for match in package.qualification_matches + package.main_draw_matches:
+                    if match.match_id not in plans:
+                        continue
+                    draw_phase = (
+                        "qualification"
+                        if match.draw_type == "qualification"
+                        else "main"
+                    )
+                    match_meta[match.match_id] = (
+                        package.event_id,
+                        draw_phase,
+                        match.round_number,
+                    )
+                    plan = plans[match.match_id]
+                    direct_ids = (
+                        tuple(plan.direct_player_ids or ())
+                        if plan.participant_sources is None
+                        else tuple(
+                            source.removeprefix("player:")
+                            for source in plan.participant_sources
+                            if source.startswith("player:")
+                        )
+                    )
+                    known_players[match.match_id] = direct_ids
+                    target = (
+                        qualification_groups_by_event
+                        if draw_phase == "qualification"
+                        else main_groups_by_event
+                    )
+                    target.setdefault(package.event_id, []).append(match.match_id)
+
+            if set(match_meta) != set(plans):
+                raise ValueError(
+                    "Match Day schedule metadata does not cover canonical match topology"
+                )
+
+            day_of: dict[str, int] = {}
+            order_by_day: dict[int, list[tuple[int, int, str]]] = {}
+            player_by_day: dict[int, dict[str, str]] = {}
+            for slot in schedule.slots:
+                group_id = slot.group_ids[0]
+                expected_event, expected_phase, expected_round = match_meta[group_id]
+                if (
+                    slot.event_id,
+                    slot.draw_phase,
+                    slot.round_number,
+                ) != (
+                    expected_event,
+                    expected_phase,
+                    expected_round,
+                ):
+                    raise ValueError(
+                        "Match Day schedule metadata differs from canonical match evidence"
+                    )
+                assert slot.match_day_ordinal is not None
+                assert slot.match_order is not None
+                day_of[group_id] = slot.match_day_ordinal
+                order_by_day.setdefault(slot.match_day_ordinal, []).append(
+                    (slot.match_order, slot.ordinal, group_id)
+                )
+                owners = player_by_day.setdefault(slot.match_day_ordinal, {})
+                for player_id in known_players[group_id]:
+                    prior = owners.get(player_id)
+                    if prior is not None:
+                        raise ValueError(
+                            "Match Day schedule assigns one directly known player "
+                            "to multiple matches on the same day "
+                            f"({player_id}: {prior}, {group_id})"
+                        )
+                    owners[player_id] = group_id
+
+            for day, values in order_by_day.items():
+                ordered = sorted(values)
+                if [order for order, _, _ in ordered] != list(
+                    range(1, len(ordered) + 1)
+                ):
+                    raise ValueError(
+                        f"Match Day {day} match order is not contiguous"
+                    )
+                ordinals = [global_ordinal for _, global_ordinal, _ in ordered]
+                if ordinals != sorted(ordinals):
+                    raise ValueError(
+                        "Match Day match order must follow global Simulation Slot order"
+                    )
+
+            for group_id, plan in plans.items():
+                for feeder in self._plan_feeders(plan):
+                    if day_of[feeder] >= day_of[group_id]:
+                        raise ValueError(
+                            "dependent match must start on a later Match Day than its feeder"
+                        )
+
+            for event_id, q_groups in qualification_groups_by_event.items():
+                main_groups = main_groups_by_event.get(event_id, [])
+                if not main_groups:
+                    continue
+                if max(day_of[group] for group in q_groups) >= min(
+                    day_of[group] for group in main_groups
+                ):
+                    raise ValueError(
+                        "Qualification must finish before Main Draw starts"
+                    )
+
     @staticmethod
     def _plan_feeders(plan):
         if plan.participant_sources:
@@ -4205,6 +4370,17 @@ class AuthoritativeRunSimulationDriver:
                     )
                 )
                 != 3
+                or any(
+                    self._canonical_draw_binding(
+                        session,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week=week,
+                        event_id=package.event_id,
+                    )
+                    is not None
+                    for package in packages
+                )
             )
             and not allow_missing_schedule
         ):
@@ -4340,6 +4516,17 @@ class AuthoritativeRunSimulationDriver:
             or bool(wc_slot_ordinals)
             or len(packages) > 1
             or len(plans) != 3
+            or any(
+                self._canonical_draw_binding(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    event_id=package.event_id,
+                )
+                is not None
+                for package in packages
+            )
         ):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
@@ -4570,7 +4757,12 @@ class AuthoritativeRunSimulationDriver:
             group_ids=spec.group_ids,
             match_events=selected,
             dependency_ids=tuple(f for p in selected for f in self._plan_feeders(p)),
-            provenance=f"adopted-authority:{authority_fp};week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'}",
+            provenance=(
+                f"adopted-authority:{authority_fp};"
+                f"week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'};"
+                f"match-day:{getattr(spec, 'match_day_ordinal', None) or 'legacy'};"
+                f"match-order:{getattr(spec, 'match_order', None) or 'legacy'}"
+            ),
         )
 
     def _eligible_groups(self, session, position, packages):

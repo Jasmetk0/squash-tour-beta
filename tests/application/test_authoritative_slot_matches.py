@@ -1278,9 +1278,11 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     )
 
     assert proposed["persisted"] is False
-    assert "not Match Day timing" in proposed["provenance"]
+    assert "match_day_schedule_hard_constraints.v1" in proposed["provenance"]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
     assert schedule.week == week
-    assert len(schedule.slots) == 2
+    assert len(schedule.slots) == 6
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
 
     first_roots = {
         match.match_id
@@ -1292,12 +1294,16 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
         for match in second.main_draw_matches
         if match.round_number == 1
     }
-    assert set(schedule.slots[0].group_ids) == first_roots | second_roots
-    assert set(schedule.slots[1].group_ids) == {
+    day_one = [slot for slot in schedule.slots if slot.match_day_ordinal == 1]
+    day_two = [slot for slot in schedule.slots if slot.match_day_ordinal == 2]
+    assert {slot.group_ids[0] for slot in day_one} == first_roots | second_roots
+    assert [slot.match_order for slot in day_one] == [1, 2, 3, 4]
+    assert {slot.group_ids[0] for slot in day_two} == {
         match.match_id
         for match in (*first.main_draw_matches, *second.main_draw_matches)
         if match.round_number == 2
     }
+    assert [slot.match_order for slot in day_two] == [1, 2]
 
     preview = driver.preview_schedule(schedule)
     assert preview["schedule_fingerprint"] == proposed["schedule_fingerprint"]
@@ -1315,6 +1321,66 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     assert repeated["schedule"] == proposed["schedule"]
     assert repeated["schedule_fingerprint"] == proposed["schedule_fingerprint"]
     assert repeated["position_fingerprint"] == proposed["position_fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_match_day_v2_same_day_matches_use_sequential_sporting_snapshots(tmp_path):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "match-day-sequential-snapshots"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    day_one = [
+        slot for slot in schedule.slots if slot.match_day_ordinal == 1
+    ]
+    assert len(day_one) >= 2
+    assert day_one[0].match_order == 1
+    assert day_one[1].match_order == 2
+
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="match-day-sequential-snapshots",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+
+    first_command, first_position = _driver_command(
+        driver, week, "match-day-first"
+    )
+    assert first_position.slot_ordinal == day_one[0].ordinal
+    driver.simulate_next_slot(first_command)
+
+    second_command, second_position = _driver_command(
+        driver, week, "match-day-second"
+    )
+    assert second_position.slot_ordinal == day_one[1].ordinal
+    driver.simulate_next_slot(second_command)
+
+    with factory() as session:
+        groups = session.scalars(
+            select(SimulationEventGroupModel)
+            .where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+            .order_by(SimulationEventGroupModel.slot_id)
+        ).all()
+        assert len(groups) == 2
+        starts = [
+            AuthoritativeSlotMatchExecutor._load_group(
+                group
+            ).authoritative_input.slot_start_fingerprint
+            for group in groups
+        ]
+        assert starts[0] != starts[1]
 
 
 @pytest.mark.pr_critical
@@ -1392,17 +1458,25 @@ def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
     driver, _, _, first, _ = _multi_driver_fixture(
         tmp_path / "proposal-conflict"
     )
+    roots = sorted(
+        (
+            match
+            for match in first.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
     plans = {
-        "conflict-a": SimulationMatchEventPlan(
-            group_id="conflict-a",
+        roots[0].match_id: SimulationMatchEventPlan(
+            group_id=roots[0].match_id,
             event_id=first.event_id,
-            match_id="conflict-a",
+            match_id=roots[0].match_id,
             participant_sources=("player:shared", "player:left"),
         ),
-        "conflict-b": SimulationMatchEventPlan(
-            group_id="conflict-b",
+        roots[1].match_id: SimulationMatchEventPlan(
+            group_id=roots[1].match_id,
             event_id=first.event_id,
-            match_id="conflict-b",
+            match_id=roots[1].match_id,
             participant_sources=("player:shared", "player:right"),
         ),
     }
@@ -1414,7 +1488,7 @@ def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
 
     with pytest.raises(
         ValueError,
-        match="commitment/Week Tournament Lock authority must resolve",
+        match="multiple matches on the same day",
     ):
         driver.propose_topological_schedule(
             run_id="run",
@@ -1853,7 +1927,13 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
     schedule = WeekSimulationSchedule.model_validate_json(
         json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
     )
-    assert [len(slot.group_ids) for slot in schedule.slots] == [4, 2, 1]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
+    assert len(schedule.slots) == 7
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
+    assert [
+        sum(slot.match_day_ordinal == day for slot in schedule.slots)
+        for day in (1, 2, 3)
+    ] == [4, 2, 1]
     preview = driver.preview_schedule(schedule)
     assert preview["position_fingerprint"] == proposed["position_fingerprint"]
     driver.adopt_schedule(
@@ -1883,7 +1963,7 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         saved = {"content": {}}
         capture_saved_simulation_slots(db, saved, run_id="run", branch_id="branch")
         saved_component = saved["content"]["simulation_slot_match_state"]
-        assert len(saved_component["groups"]) == 4
+        assert len(saved_component["groups"]) == 1
     reopened = AuthoritativeRunSimulationDriver(factory, matches, awards)
     assert (
         reopened.position(run_id="run", branch_id="branch").position_fingerprint
@@ -1906,18 +1986,29 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
         slots = db.scalars(
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        opening_groups = [g for g in groups if g.slot_id == slots[0].slot_id]
-        assert (
-            len(
-                {
-                    AuthoritativeSlotMatchExecutor._load_group(
-                        g
-                    ).authoritative_input.slot_start_fingerprint
-                    for g in opening_groups
-                }
-            )
-            == 1
-        )
+        assert len(slots) == 7
+        first_day_ordinals = {
+            slot.ordinal
+            for slot in schedule.slots
+            if slot.match_day_ordinal == 1
+        }
+        first_day_slot_ids = {
+            slot.slot_id
+            for slot in slots
+            if slot.slot_ordinal in first_day_ordinals
+        }
+        first_day_groups = [
+            group for group in groups if group.slot_id in first_day_slot_ids
+        ]
+        assert len(first_day_groups) == 4
+        assert len(
+            {
+                AuthoritativeSlotMatchExecutor._load_group(
+                    group
+                ).authoritative_input.slot_start_fingerprint
+                for group in first_day_groups
+            }
+        ) == 4
         executor = AuthoritativeSlotMatchExecutor(db)
         for group in groups:
             stored = AuthoritativeSlotMatchExecutor._load_group(group)
@@ -2136,7 +2227,13 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
     schedule = WeekSimulationSchedule.model_validate_json(
         json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
     )
-    assert [len(slot.group_ids) for slot in schedule.slots] == [8, 4, 2, 1]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
+    assert len(schedule.slots) == 15
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
+    assert [
+        sum(slot.match_day_ordinal == day for slot in schedule.slots)
+        for day in (1, 2, 3, 4)
+    ] == [8, 4, 2, 1]
 
     adopted = driver.adopt_topological_schedule_proposal(
         run_id="run",
@@ -2186,22 +2283,40 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
         slots = db.scalars(
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        assert len(slots) == 4
-        opening_groups = [
-            group for group in groups if group.slot_id == slots[0].slot_id
-        ]
-        assert len(opening_groups) == 8
-        assert (
+        assert len(slots) == 15
+        assert all(
             len(
-                {
-                    AuthoritativeSlotMatchExecutor._load_group(
-                        group
-                    ).authoritative_input.slot_start_fingerprint
-                    for group in opening_groups
-                }
+                [
+                    group
+                    for group in groups
+                    if group.slot_id == slot.slot_id
+                ]
             )
             == 1
+            for slot in slots
         )
+        first_day_ordinals = {
+            slot.ordinal
+            for slot in schedule.slots
+            if slot.match_day_ordinal == 1
+        }
+        first_day_slot_ids = {
+            slot.slot_id
+            for slot in slots
+            if slot.slot_ordinal in first_day_ordinals
+        }
+        opening_groups = [
+            group for group in groups if group.slot_id in first_day_slot_ids
+        ]
+        assert len(opening_groups) == 8
+        assert len(
+            {
+                AuthoritativeSlotMatchExecutor._load_group(
+                    group
+                ).authoritative_input.slot_start_fingerprint
+                for group in opening_groups
+            }
+        ) == 8
 
 
 def test_real_eight_player_pre_adoption_entry_draw_match_mutation_fails_closed(

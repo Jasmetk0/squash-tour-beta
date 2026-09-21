@@ -190,8 +190,8 @@ def _complete_empty_week(
     )
     assert status == 201, completed
     assert completed["competitive_match_count"] == 0
-    # Keep the completed evidence in the clean Working Draft. The same week's
-    # ranking-authority Save persists it before Week Transition executes.
+    # Keep the completed evidence in the clean Working Draft. The next explicit
+    # acceptance checkpoint Save persists it together with the accumulated world.
     return revision
 
 

@@ -123,6 +123,14 @@ from beta_engine.infrastructure.db.run_entry_decision_slots import (
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
+from beta_engine.infrastructure.db.week_tournament_lock import (
+    WeekTournamentLockStore,
+    derive_week_tournament_lock_authority,
+    resolve_week_tournament_lock_evidence,
+)
 from beta_engine.infrastructure.db.tournament_walkover_authority import (
     TournamentWalkoverAuthorityStore,
 )
@@ -313,6 +321,52 @@ class AuthoritativeEntryDecisionSlotCommand(FrozenInput):
     @property
     def fingerprint(self) -> str:
         return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeWeekTournamentLockSelection(FrozenInput):
+    player_id: str = Field(min_length=1)
+    selected_event_id: str = Field(min_length=1)
+
+
+class AuthoritativeWeekTournamentLockPreviewRequest(FrozenInput):
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    selections: tuple[AuthoritativeWeekTournamentLockSelection, ...] = Field(
+        min_length=1
+    )
+
+    @model_validator(mode="after")
+    def validate_lock_request(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or operator != self.operator_label:
+            raise ValueError("Week Tournament Lock operator label must be trimmed")
+        if not reason or reason != self.audit_reason:
+            raise ValueError("Week Tournament Lock audit reason must be trimmed")
+        players = tuple(item.player_id for item in self.selections)
+        if players != tuple(sorted(set(players))):
+            raise ValueError(
+                "Week Tournament Lock selections must use canonical unique player order"
+            )
+        return self
+
+    @property
+    def selections_by_player(self) -> dict[str, str]:
+        return {
+            item.player_id: item.selected_event_id for item in self.selections
+        }
+
+
+class AuthoritativeWeekTournamentLockCommitCommand(
+    AuthoritativeWeekTournamentLockPreviewRequest
+):
+    expected_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
 class AuthoritativeApplicationValidationCommand(FrozenInput):

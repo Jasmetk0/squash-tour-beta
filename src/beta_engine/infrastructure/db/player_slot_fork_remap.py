@@ -222,6 +222,7 @@ def remap_coupled_player_slot_history(
     source_draw_by_event: dict[str, TournamentDrawAuthority] = {}
     target_process_by_event: dict[str, TournamentDrawProcessAuthority] = {}
     target_draw_fingerprint_map: dict[str, str] = {}
+    target_frozen_fingerprint_map: dict[str, str] = {}
 
     source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
     for row in source_entry_rows:
@@ -339,6 +340,13 @@ def remap_coupled_player_slot_history(
             for app in TournamentEntryFieldStore._load_row(ordered[-1])[1]
         )
         target_ranking_by_event[event_id] = target_authority
+        target_frozen_fingerprint_map[source_authority_fingerprint] = (
+            target_authority.fingerprint
+        )
+        for source_row, target_field in zip(ordered, target_fields, strict=True):
+            target_frozen_fingerprint_map[source_row.field_fingerprint] = (
+                target_field.fingerprint
+            )
 
     for row in source_wc_rows:
         source_authority = TournamentWildCardAuthority.model_validate_json(
@@ -401,6 +409,9 @@ def remap_coupled_player_slot_history(
             )
         )
         target_wc_by_event[row.event_id] = target_authority
+        target_frozen_fingerprint_map[row.authority_fingerprint] = (
+            target_authority.fingerprint
+        )
 
     for row in source_draw_input_rows:
         source_draw_input = TournamentDrawInputAuthority.model_validate_json(
@@ -453,6 +464,9 @@ def remap_coupled_player_slot_history(
             )
         )
         target_draw_input_by_event[row.event_id] = target_draw_input
+        target_frozen_fingerprint_map[row.authority_fingerprint] = (
+            target_draw_input.fingerprint
+        )
 
     for row in source_draw_rows:
         source_draw = TournamentDrawAuthority.model_validate_json(row.payload_json)
@@ -491,6 +505,7 @@ def remap_coupled_player_slot_history(
         source_draw_by_event[row.event_id] = source_draw
         target_draw_by_event[row.event_id] = target_draw
         target_draw_fingerprint_map[source_draw.fingerprint] = target_draw.fingerprint
+        target_frozen_fingerprint_map[source_draw.fingerprint] = target_draw.fingerprint
 
     for row in source_draw_process_rows:
         source_process = TournamentDrawProcessAuthority.model_validate_json(
@@ -541,6 +556,9 @@ def remap_coupled_player_slot_history(
             )
         )
         target_process_by_event[row.event_id] = target_process
+        target_frozen_fingerprint_map[row.authority_fingerprint] = (
+            target_process.fingerprint
+        )
 
     source_schedules = [
         WeekSimulationScheduleModel(**value)

@@ -2630,6 +2630,7 @@ class SimulationPersistenceRepository:
                             run_id=run_id,
                             source_branch_id=source_branch_id,
                             target_branch_id=branch_id,
+                            target_base_revision_id=materialized_fork_revision_id,
                         )
                     except (ValueError, RankingForkRemapUnsupportedError) as exc:
                         raise SavedRevisionBranchForkConflictError(

@@ -1008,3 +1008,15 @@ This prevents a legacy/component-less Saved Revision from restoring while newer 
 WC/process/revision rows remain in the database as future state. The restore aborts
 before mutation instead. Focused regression coverage proves all three omitted authority
 types fail closed and create no restore revision/checkpoint.
+
+
+## Saved Revision restore: orphan completed-week sporting context guard
+
+Restore preflight now treats `CompletedWeekSportingContext` rows as canonical live
+sporting state even when no `PlayerSportingWeekState` row is present. Because the
+Saved Revision sporting component owns both the player-state chain and completed-week
+contexts, a context-only live row cannot be allowed to survive a restore whose current
+Saved Revision has no sporting component.
+
+The restore now fails closed before mutation in that inconsistent/legacy state. Focused
+regression coverage verifies that no restore revision or safety checkpoint is created.

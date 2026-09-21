@@ -3733,14 +3733,17 @@ class AuthoritativeRunSimulationDriver:
             "schedule_fingerprint": schedule.fingerprint,
             "position_fingerprint": position_fingerprint,
             "provenance": (
-                "earliest_dependency_safe_topological_proposal_v1; "
-                "not Match Day timing or Final Commitment authority"
+                "match_day_schedule_hard_constraints.v1; "
+                "one competitive match per global Simulation Slot; "
+                "Qualification before Main; feeder next-day minimum; "
+                "deterministic within-day order; "
+                "carryover/travel/fairness optimization remains follow-up"
             ),
             "persisted": False,
         }
 
     def propose_topological_schedule(self, *, run_id: str, branch_id: str):
-        """Propose earliest dependency-safe Simulation Slots from canonical topology."""
+        """Propose hard-constraint Match Day chronology from canonical topology."""
         with self.factory() as session:
             self._require_writable_scope(session, run_id, branch_id)
             schedule, position_fingerprint = (
@@ -3765,7 +3768,7 @@ class AuthoritativeRunSimulationDriver:
         expected_schedule_fingerprint: str,
         expected_position_fingerprint: str,
     ):
-        """Atomically rebuild and adopt the exact current topological proposal."""
+        """Atomically rebuild and adopt the exact current Match Day proposal."""
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, run_id, branch_id)
@@ -3807,7 +3810,7 @@ class AuthoritativeRunSimulationDriver:
                 )
             )
             if schedule.fingerprint != expected_schedule_fingerprint:
-                raise ValueError("topological schedule proposal is stale")
+                raise ValueError("Match Day schedule proposal is stale")
             if position_fingerprint != expected_position_fingerprint:
                 raise ValueError("simulation position is stale")
 

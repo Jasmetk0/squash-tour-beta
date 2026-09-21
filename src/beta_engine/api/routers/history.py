@@ -4,8 +4,6 @@ from beta_engine.api.deps import get_simulation_api_service
 from beta_engine.api.schemas import (
     RunActivityResponse,
     RunActivityItemResponse,
-    WildcardAssignRequest,
-    WildcardStateApiResponse,
     WildcardActionHistoryApiResponse,
     PreDrawWithdrawalActionHistoryApiResponse,
     LateReplacementActionHistoryApiResponse,
@@ -14,7 +12,6 @@ from beta_engine.api.schemas import (
     FinalsQualificationResponse,
     FinalsResultResponse,
     FinalsSummaryApiResponse,
-    WildcardCandidatesApiResponse,
     NextSeasonPlayersResponse,
     PlayerTransitionsResponse,
     RaceSnapshotListResponse,
@@ -53,7 +50,6 @@ from beta_engine.application.api_services import (
     RunTalentPlanSummary,
     RunWorldStatus,
     SimulationApiService,
-    WildcardAssignment,
 )
 
 router = APIRouter(prefix="/runs/{run_id}", tags=["history"])
@@ -351,57 +347,33 @@ def get_completed_event(run_id: str, event_id: str, service: SimulationApiServic
     return EventRecordResponse.model_validate(event.__dict__)
 
 
-@router.get("/events/{event_id}/wildcards", response_model=WildcardStateApiResponse)
-def get_event_wildcard_state(
-    run_id: str,
-    event_id: str,
-    service: SimulationApiService = Depends(get_simulation_api_service),
-) -> WildcardStateApiResponse:
-    try:
-        state = service.get_wildcard_state(run_id=run_id, event_id=event_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return WildcardStateApiResponse.model_validate(state, from_attributes=True)
+def _legacy_wildcard_authoring_retired() -> None:
+    raise HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail={
+            "code": "legacy_wildcard_authoring_retired",
+            "message": (
+                "Legacy simulation-run wildcard authoring is retired. "
+                "Use the active Run/Branch canonical WC/RWC review and commit workflow. "
+                "Historical wildcard action history remains read-only."
+            ),
+        },
+    )
 
 
-@router.post("/events/{event_id}/wildcards", response_model=WildcardStateApiResponse)
-def assign_event_wildcards(
-    run_id: str,
-    event_id: str,
-    payload: WildcardAssignRequest,
-    service: SimulationApiService = Depends(get_simulation_api_service),
-) -> WildcardStateApiResponse:
-    try:
-        state = service.assign_wildcards(
-            run_id=run_id,
-            event_id=event_id,
-            assignments=[
-                WildcardAssignment(slot_index=assignment.slot_index, player_id=assignment.player_id)
-                for assignment in payload.assignments
-            ],
-        )
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return WildcardStateApiResponse.model_validate(state, from_attributes=True)
+@router.get("/events/{event_id}/wildcards")
+def get_event_wildcard_state(run_id: str, event_id: str) -> None:
+    _legacy_wildcard_authoring_retired()
 
 
-@router.get("/events/{event_id}/wildcard-candidates", response_model=WildcardCandidatesApiResponse)
-def list_event_wildcard_candidates(
-    run_id: str,
-    event_id: str,
-    service: SimulationApiService = Depends(get_simulation_api_service),
-) -> WildcardCandidatesApiResponse:
-    try:
-        candidates = service.get_wildcard_candidates(run_id=run_id, event_id=event_id)
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return WildcardCandidatesApiResponse.model_validate(candidates, from_attributes=True)
+@router.post("/events/{event_id}/wildcards")
+def assign_event_wildcards(run_id: str, event_id: str) -> None:
+    _legacy_wildcard_authoring_retired()
+
+
+@router.get("/events/{event_id}/wildcard-candidates")
+def list_event_wildcard_candidates(run_id: str, event_id: str) -> None:
+    _legacy_wildcard_authoring_retired()
 
 
 @router.get("/events/{event_id}/wildcard-actions", response_model=WildcardActionHistoryApiResponse)

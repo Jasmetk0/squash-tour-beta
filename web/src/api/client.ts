@@ -14,7 +14,6 @@ import type {
   TalentClassYearPreviewResponse,
   CountryRecord,
   CountryUpsertPayload,
-  AssignWildcardsPayload,
   CreateRunPayload,
   EventListResponse,
   RunActivityResponse,
@@ -139,9 +138,12 @@ import type {
   SeasonStateResponse,
   HistoricalBranchSeasonStateResponse,
   SimulateResponse,
-  WildcardCandidatesResponse,
   WildcardActionHistoryResponse,
-  WildcardStateResponse,
+  CanonicalWildCardState,
+  CanonicalWildCardReviewPayload,
+  CanonicalWildCardPreview,
+  CanonicalWildCardCommitPayload,
+  CanonicalWildCardCommitResult,
   WorldPackage,
   WorldPackageClonePayload,
   WorldPackageCloneResponse,
@@ -1624,27 +1626,73 @@ export function getEvent(runId: string, eventId: string): Promise<EventRecord> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}`)
 }
 
-export function getEventWildcards(runId: string, eventId: string): Promise<WildcardStateResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcards`)
-}
-
-export function getEventWildcardCandidates(runId: string, eventId: string): Promise<WildcardCandidatesResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcard-candidates`)
-}
-
 export function getEventWildcardActions(runId: string, eventId: string): Promise<WildcardActionHistoryResponse> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcard-actions`)
 }
 
-export function assignEventWildcards(
+function canonicalWildCardRoot(runId: string, branchId: string, eventId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/wild-cards`
+}
+
+function verifyCanonicalWildCardScope(
   runId: string,
+  branchId: string,
   eventId: string,
-  payload: AssignWildcardsPayload
-): Promise<WildcardStateResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcards`, {
-    method: 'POST',
-    body: JSON.stringify(payload)
-  })
+  data: { run_id: string; branch_id: string; event_id: string }
+): void {
+  if (data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId) {
+    throw new Error('Canonical WC response does not match the requested scope.')
+  }
+}
+
+export async function getCanonicalWildCardState(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalWildCardState> {
+  const data = await request<CanonicalWildCardState>(canonicalWildCardRoot(runId, branchId, eventId))
+  verifyCanonicalWildCardScope(runId, branchId, eventId, data)
+  if (data.schema_version !== 'authoritative_wild_card_assignment_state.v1') {
+    throw new Error('Canonical WC state has an unsupported schema.')
+  }
+  return data
+}
+
+export async function previewCanonicalWildCardAssignment(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalWildCardReviewPayload
+): Promise<CanonicalWildCardPreview> {
+  const data = await request<CanonicalWildCardPreview>(
+    canonicalWildCardRoot(runId, branchId, eventId) + '/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalWildCardScope(runId, branchId, eventId, data)
+  if (data.schema_version !== 'authoritative_wild_card_assignment_preview.v1') {
+    throw new Error('Canonical WC preview has an unsupported schema.')
+  }
+  return data
+}
+
+export async function commitCanonicalWildCardAssignment(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CanonicalWildCardCommitPayload
+): Promise<CanonicalWildCardCommitResult> {
+  const data = await request<CanonicalWildCardCommitResult>(
+    canonicalWildCardRoot(runId, branchId, eventId) + '/commit',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyCanonicalWildCardScope(runId, branchId, eventId, data)
+  if (
+    data.schema_version !== 'authoritative_wild_card_assignment_commit.v1' ||
+    data.proposal_fingerprint !== payload.expected_proposal_fingerprint
+  ) {
+    throw new Error('Canonical WC commit does not match the reviewed proposal.')
+  }
+  return data
 }
 
 export async function getCanonicalTournamentEntryFieldState(

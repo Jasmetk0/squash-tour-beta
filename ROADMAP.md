@@ -691,3 +691,23 @@ triggers, expose the review/commit flow in Planned Event Admin, then retire the 
 simulation-run wildcard mutation endpoint while keeping historical action data
 read-only. This step must not invent Final Commitment / Week Tournament Lock policy.
 
+The canonical **transaction-owning WC Admin boundary** is now implemented on top of
+the global-slot chronology. Since Master still defers automatic WC eligibility and RWC
+list construction/order, the current pre-alpha policy is explicitly identified as an
+Admin review rather than an engine eligibility algorithm. The review freezes operator,
+reason, terminal Entry Field, exact FAX week/global slot, original WC nominations,
+ordered RWC identities and unavailable identities in
+`TournamentWildCardAuthority v3`; historical v1/v2 fingerprints stay stable.
+
+Preview is non-mutating. Commit CAS-checks the reviewed proposal and Branch/world
+position under one immediate transaction, persists canonical WC resolution, derives
+all definitive active WC/RWC assignments, and records first Tour-entry triggers through
+the shared branch-owned trigger store. Planned Event uses this active Run/Branch flow.
+Legacy simulation-run wildcard state/candidate/mutation endpoints are retired with
+`410 Gone`, while historical wildcard action logs remain read-only.
+
+This closes the legacy WC-authoring migration without deciding the still-open Master
+questions. A later policy slice may replace the explicit Admin review with a canonical
+automatic eligibility/order authority only after those rules are specified. Final
+Commitment / Week Tournament Lock timing is likewise still not invented here.
+

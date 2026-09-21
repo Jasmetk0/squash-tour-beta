@@ -37,7 +37,16 @@ The persisted v2 WC authority is itself a completed non-match decision slot: Ent
 match slot writers reject the same position, later global slots may count the WC ordinal
 as completed, and Saved Revision collision checks include v2 WC positions.
 
-This remains a pure domain boundary. The next application/API slice must derive the
-current week/slot from authoritative Run position, resolve WC/RWC authority and record
-all resulting definitive assignments plus first Tour-entry triggers atomically; clients
-must not invent chronology.
+The application/API boundary now derives the current week and next global slot from
+Run/Branch-owned state, previews the complete WC/RWC resolution without mutation and
+commits it under an immediate transaction together with every definitive assignment and
+the shared first Tour-entry trigger store. Clients cannot author chronology.
+
+Because exact WC eligibility and RWC-list construction/order are still open in Master
+§15.1, the active pre-alpha writer uses `TournamentWildCardAuthority v3` to freeze an
+explicit Admin-reviewed nomination/order plus policy identity, operator label and audit
+reason. This is intentionally not presented as automatic eligibility. Historical v1/v2
+fingerprints remain unchanged.
+
+Legacy simulation-run WC state/candidate/mutation HTTP routes are retired; historical
+wildcard action rows remain readable for audit/replay compatibility.

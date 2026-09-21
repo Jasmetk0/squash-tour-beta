@@ -804,3 +804,33 @@ authoritative Position, resolves canonical WC/RWC authority, records every resul
 definitive assignment plus first Tour-entry trigger atomically, exposes it in Planned
 Event Admin, and only then retires the remaining legacy wildcard authoring surface.
 
+## Current follow-up after #875
+
+The chronology foundation now has a transaction-owning **canonical WC/RWC Admin
+workflow**. Because Master §15.1 still leaves exact WC eligibility and construction /
+ordering of the RWC list open, the pre-alpha boundary does not invent an automatic
+selector. Planned Event Admin records an explicit reviewed WC nomination and ordered
+RWC list with operator + audit reason under
+`explicit_admin_wild_card_selection.v1`.
+
+`TournamentWildCardAuthority v3` freezes that review together with the terminal
+Tournament Entry Field, exact current FAX week and next global Simulation Slot. v1 and
+v2 fingerprints remain historically compatible. Preview is read-only; commit
+re-derives and CAS-checks Branch head, week, global slot and complete proposal
+fingerprint under `BEGIN IMMEDIATE`. The canonical WC builder still owns the
+Master-decided Direct Acceptance rule: an original WC holder who is already Direct is
+released from WC and the next usable player in the reviewed RWC order is consumed.
+
+One successful commit atomically persists the WC authority and every active
+`DefinitiveWildCardAssignmentAuthority`; those assignments use the existing shared
+first-entry store so the first valid WC/RWC assignment can create the player's first
+`PlayerTourEntryTrigger` in the same transaction. Unfilled WC slots and mere presence
+in the RWC order still do not create Tour status.
+
+Planned Event now uses the canonical Run/Branch state → preview → commit flow. The old
+simulation-run wildcard state, candidate and mutation endpoints return `410 Gone`.
+Historical `assign_wildcards` admin-action history remains readable as a read-only
+audit trail for old saves. Automatic WC eligibility, automatic RWC ordering and
+Final Commitment / Week Tournament Lock placement remain unresolved Master policy and
+are not inferred by this bridge.
+

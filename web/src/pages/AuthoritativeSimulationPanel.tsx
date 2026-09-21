@@ -972,7 +972,9 @@ export function AuthoritativeSimulationPanel({
     nextSlotMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
-    entryValidationMutation.isPending
+    entryValidationMutation.isPending ||
+    weekLockPreviewMutation.isPending ||
+    weekLockCommitMutation.isPending
   const currentEntrySlot = position?.current_slot_kind === 'entry'
   const entryInspection = entrySlotQuery.data
   const entryValidationReady = Boolean(
@@ -993,6 +995,19 @@ export function AuthoritativeSimulationPanel({
       )
     })
   )
+
+  const weekLockReady = Boolean(
+    weekLockQuery.data?.lock_status === 'required' &&
+    weekLockOperator.trim() &&
+    weekLockReason.trim() &&
+    weekLockQuery.data.conflicts.length > 0 &&
+    weekLockQuery.data.conflicts.every((conflict) =>
+      conflict.eligible_event_ids.includes(
+        weekLockSelections[conflict.player_id] ?? ''
+      )
+    )
+  )
+
 
   return (
     <SectionCard title="Canonical authoritative sporting simulation">

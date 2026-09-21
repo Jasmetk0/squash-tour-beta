@@ -121,6 +121,8 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
 )
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     SEASON_CLOSURE_COMPONENT_KEY,
+    load_saved_revision_season_closure,
+    rebind_saved_revision_season_closure,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     INITIAL_WORLD_COMPONENT_KEY,
@@ -3594,6 +3596,30 @@ class SimulationPersistenceRepository:
                             f"Cannot restore Simulation Slot state: {exc}"
                         ) from exc
 
+                # Season closure is embedded evidence rather than a separate live
+                # table. Validate both historical identities before copying target
+                # content; the new restore revision must then rebind the marker to
+                # its own immutable revision id.
+                try:
+                    if SEASON_CLOSURE_COMPONENT_KEY in current_content:
+                        load_saved_revision_season_closure(
+                            state.saved_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            revision_id=state.saved_revision.revision_id,
+                        )
+                    if SEASON_CLOSURE_COMPONENT_KEY in target_content:
+                        load_saved_revision_season_closure(
+                            target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            revision_id=target_revision.revision_id,
+                        )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        f"Cannot restore season closure evidence: {exc}"
+                    ) from exc
+
                 payload = viewer_branch_saved_revision_payload(
                     base_payload=target_revision.payload,
                     run_id=run_id,
@@ -3637,6 +3663,19 @@ class SimulationPersistenceRepository:
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                if SEASON_CLOSURE_COMPONENT_KEY in target_content:
+                    try:
+                        rebind_saved_revision_season_closure(
+                            payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            source_revision_id=target_revision.revision_id,
+                            target_revision_id=restore_saved_revision_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot rebind season closure evidence: {exc}"
+                        ) from exc
                 summary = branch_restore_saved_revision_change_summary(
                     previous_head_revision_id=previous_head_revision_id,
                     target_saved_revision_id=target_saved_revision_id,

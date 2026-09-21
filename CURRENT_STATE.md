@@ -1225,3 +1225,21 @@ detached authority history fails closed.
 
 Authoritative publication/world state, Tournament Ranking Snapshot authority and Season
 Closing archives are still outside this fork slice and remain fail-closed.
+
+
+## Ranking-bearing Branch fork: Official publication + world-head remap
+
+The fork remapper now carries the authoritative Official Ranking publication lineage
+and current world ranking head across Branch identity when that transition state
+contains publication/world evidence only. Every source publication must exactly match
+the frozen source ranking entry for its week; the publication is then rebuilt from the
+already remapped target ranking snapshot, producing the target snapshot fingerprint and
+payload. The authoritative world head is rebound to the target Branch and the target
+fingerprint at the same current ordinal.
+
+Trusted empty-fork installation now accepts and restores this publication/world bundle
+atomically with ranking history.
+
+Week/Season Transition receipts and World Events remain fail-closed because they carry
+player lifecycle/sporting or Season Closing fingerprints that cannot be truthfully
+rebuilt by the ranking-only Saved Revision slice yet.

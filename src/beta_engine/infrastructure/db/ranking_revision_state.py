@@ -162,10 +162,15 @@ def install_ranking_revision_state(
         raise ValueError("Ranking restore target is read-only")
 
     if allow_empty_fork_target and branch.forked_from_branch_id is not None:
+        transition = state.authoritative_transition_state
+        unsupported_transition_audit = (
+            transition is not None
+            and (transition["receipts"] or transition["events"])
+        )
         if (
             state.tournament_ranking_snapshot_authorities
             or state.season_closing_rankings
-            or state.authoritative_transition_state is not None
+            or unsupported_transition_audit
             or not state.entries
             or state.entries[0].snapshot.week.ordinal != 0
             or any(
@@ -175,7 +180,7 @@ def install_ranking_revision_state(
             )
         ):
             raise ValueError(
-                "Trusted fork install supports complete ranking history without publication/world/Season Closing authorities"
+                "Trusted fork install supports ranking history plus publication/world head, without transition receipts/events or Season Closing authorities"
             )
         row_models = (
             OfficialRankingCandidateModel,
@@ -224,6 +229,7 @@ def install_ranking_revision_state(
         or current.transition_authorities
         or current.tournament_ranking_snapshot_authorities
         or current.season_closing_rankings
+        or current.authoritative_transition_state is not None
     ):
         raise ValueError("Ranking restore target is not empty and differs from saved state")
     with session.begin_nested():

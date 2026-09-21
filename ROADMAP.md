@@ -939,3 +939,15 @@ This closes the transition-authority + ranking-command identity layer. Remaining
 authority work is the published authoritative world: Official Ranking publications,
 world head, transition receipts/events, Tournament Ranking Snapshot authorities and
 Season Closing archives.
+
+
+### Ranking identity remapping: Official publications and world head
+
+Official Ranking publication rows and the authoritative world ranking head can now be
+forked together with ranking history. Source publication payloads are verified against
+the frozen source candidate lineage, then rebuilt from target Branch ranking snapshots;
+the world head follows the target publication fingerprint at the same ordinal.
+
+Remaining authoritative transition work is intentionally narrower: Week/Season
+Transition receipts and World Events require lifecycle/sporting and Season Closing
+identity remapping before they can be preserved without fabricating evidence.

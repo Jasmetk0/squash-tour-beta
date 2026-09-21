@@ -37,6 +37,100 @@ class RankingForkRemapUnsupportedError(ValueError):
     """Raised when a ranking bundle is outside the supported fork-remap slice."""
 
 
+def _remap_publication_world_state(
+    state: dict | None,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    source_entries: tuple[RankingRevisionEntry, ...],
+    target_entries: tuple[RankingRevisionEntry, ...],
+) -> dict | None:
+    """Rebind publication rows and world head to target ranking snapshot identity.
+
+    Week/Season Transition receipts and World Events are intentionally excluded here:
+    those carry lifecycle/sporting or Season Closing evidence outside the ranking-only
+    fork bundle and must be remapped together with those owning authorities.
+    """
+    if state is None:
+        return None
+    if state["receipts"] or state["events"]:
+        raise RankingForkRemapUnsupportedError(
+            "Authoritative transition receipts/events require lifecycle/sporting remapping first"
+        )
+
+    source_by_ordinal = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in source_entries
+    }
+    target_by_ordinal = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in target_entries
+    }
+    publications: list[dict] = []
+    for row in state["publications"]:
+        if (row["run_id"], row["branch_id"]) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Official Ranking publication scope does not match the source Branch"
+            )
+        ordinal = row["week_ordinal"]
+        source_snapshot = source_by_ordinal.get(ordinal)
+        target_snapshot = target_by_ordinal.get(ordinal)
+        if source_snapshot is None or target_snapshot is None:
+            raise RankingForkRemapUnsupportedError(
+                "Official Ranking publication has no matching ranking history entry"
+            )
+        if (
+            row["snapshot_fingerprint"] != source_snapshot.fingerprint
+            or row["payload_json"] != source_snapshot.model_dump_json()
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Official Ranking publication differs from frozen source ranking history"
+            )
+        publications.append(
+            {
+                "run_id": run_id,
+                "branch_id": target_branch_id,
+                "week_ordinal": ordinal,
+                "snapshot_fingerprint": target_snapshot.fingerprint,
+                "payload_json": target_snapshot.model_dump_json(),
+            }
+        )
+
+    world = state["world"]
+    target_world = None
+    if world is not None:
+        if (world["run_id"], world["branch_id"]) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Authoritative world scope does not match the source Branch"
+            )
+        target_snapshot = target_by_ordinal.get(world["current_ordinal"])
+        source_snapshot = source_by_ordinal.get(world["current_ordinal"])
+        if (
+            source_snapshot is None
+            or target_snapshot is None
+            or world["ranking_fingerprint"] != source_snapshot.fingerprint
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Authoritative world head differs from frozen source ranking history"
+            )
+        if not publications or publications[-1]["week_ordinal"] != world["current_ordinal"]:
+            raise RankingForkRemapUnsupportedError(
+                "Authoritative world head is not the latest Official Ranking publication"
+            )
+        target_world = {
+            "run_id": run_id,
+            "branch_id": target_branch_id,
+            "current_ordinal": world["current_ordinal"],
+            "ranking_fingerprint": target_snapshot.fingerprint,
+        }
+
+    return {
+        "world": target_world,
+        "publications": publications,
+        "receipts": [],
+        "events": [],
+    }
+
+
 def _remap_transition_authorities(
     authorities: tuple[RankingTransitionAuthority, ...],
     *,
@@ -442,10 +536,9 @@ def remap_source_free_ranking_state_for_branch(
     if (
         source.tournament_ranking_snapshot_authorities
         or source.season_closing_rankings
-        or source.authoritative_transition_state is not None
     ):
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support publication/world/Season Closing authorities"
+            "Ranking-bearing fork does not yet support Tournament Ranking Snapshot/Season Closing authorities"
         )
     if source.transition_authorities and target_base_revision_id is None:
         raise RankingForkRemapUnsupportedError(
@@ -799,15 +892,26 @@ def remap_source_free_ranking_state_for_branch(
             "Saved transition authorities are not completely owned by stored ranking commands"
         )
 
+    remapped_entries_tuple = tuple(remapped_entries)
+    remapped_transition_state = _remap_publication_world_state(
+        source.authoritative_transition_state,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        source_entries=source.entries,
+        target_entries=remapped_entries_tuple,
+    )
+
     return RankingRevisionState(
         schema_version="ranking_revision_state.v4",
         run_id=run_id,
         branch_id=target_branch_id,
-        entries=tuple(remapped_entries),
+        entries=remapped_entries_tuple,
         sources=remapped_result_sources,
         zero_sources=remapped_zero_sources,
         tournament_sources=remapped_tournament_sources,
         transition_authorities=remapped_transition_authorities,
+        authoritative_transition_state=remapped_transition_state,
     )
 
 

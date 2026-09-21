@@ -94,6 +94,7 @@ from beta_engine.infrastructure.db.models import (
     ResolvedApplicationValidationSlotModel,
     DefinitiveWildCardAssignmentAuthorityModel,
     PlayerSportingWeekStateModel,
+    CompletedWeekSportingContextModel,
     RaceSnapshotModel,
     RankingSnapshotModel,
     RunGeneratedPlayerProvenanceModel,
@@ -3296,12 +3297,21 @@ class SimulationPersistenceRepository:
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player Tour-entry triggers"
                     )
-                has_uncaptured_sporting = session.scalar(
-                    select(PlayerSportingWeekStateModel.run_id).where(
-                        PlayerSportingWeekStateModel.run_id == run_id,
-                        PlayerSportingWeekStateModel.branch_id == branch_id,
-                    ).limit(1)
-                ) is not None
+                has_uncaptured_sporting = any(
+                    session.scalar(
+                        select(model.run_id)
+                        .where(
+                            model.run_id == run_id,
+                            model.branch_id == branch_id,
+                        )
+                        .limit(1)
+                    )
+                    is not None
+                    for model in (
+                        PlayerSportingWeekStateModel,
+                        CompletedWeekSportingContextModel,
+                    )
+                )
                 if has_uncaptured_sporting and PLAYER_SPORTING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
                     raise SavedRevisionRestoreUnsupportedError(
                         "restore is blocked because the Saved Revision does not capture player sporting state"

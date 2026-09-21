@@ -199,6 +199,12 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
+from beta_engine.infrastructure.db.player_slot_fork_remap import (
+    remap_coupled_player_slot_history,
+)
+from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
+    SimulationSlotForkRemapUnsupportedError,
+)
 from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
     SUPPORTED_CONTENT_KEYS,
     active_transient_restore_blockers,
@@ -2618,6 +2624,7 @@ class SimulationPersistenceRepository:
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
+                        SIMULATION_SLOT_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2805,12 +2812,44 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
-                    remapped_sporting_component = remap_saved_sporting_component(
-                        source_revision.payload,
-                        run_id=run_id,
-                        source_branch_id=source_branch_id,
-                        target_branch_id=branch_id,
-                        source_fingerprint_map=source_to_target_tournament_fingerprint,
+                    coupled_player_slot = None
+                    if SIMULATION_SLOT_COMPONENT_KEY in source_content:
+                        try:
+                            coupled_player_slot = remap_coupled_player_slot_history(
+                                source_revision.payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                                v1_source_fingerprint_map=(
+                                    source_to_target_tournament_fingerprint
+                                ),
+                            )
+                        except (
+                            ValueError,
+                            SimulationSlotForkRemapUnsupportedError,
+                        ) as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "Simulation Slot/player sporting fork cannot be "
+                                f"remapped safely: {exc}"
+                            ) from exc
+                        if coupled_player_slot is None:
+                            raise SavedRevisionBranchForkConflictError(
+                                "Simulation Slot Saved Revision requires captured "
+                                "player sporting history for Branch remapping"
+                            )
+
+                    remapped_sporting_component = (
+                        coupled_player_slot.sporting_component
+                        if coupled_player_slot is not None
+                        else remap_saved_sporting_component(
+                            source_revision.payload,
+                            run_id=run_id,
+                            source_branch_id=source_branch_id,
+                            target_branch_id=branch_id,
+                            source_fingerprint_map=(
+                                source_to_target_tournament_fingerprint
+                            ),
+                        )
                     )
                     if remapped_sporting_component is not None:
                         target_payload["content"][PLAYER_SPORTING_COMPONENT_KEY] = (
@@ -2827,6 +2866,24 @@ class SimulationPersistenceRepository:
                             put_completed_context(session, sporting_context)
                         for sporting_state in sporting_states:
                             put_sporting(session, sporting_state)
+
+                    if coupled_player_slot is not None:
+                        target_payload["content"][SIMULATION_SLOT_COMPONENT_KEY] = (
+                            coupled_player_slot.simulation_component
+                        )
+                        try:
+                            restore_saved_simulation_slots(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped Simulation Slot core could not be installed: "
+                                f"{exc}"
+                            ) from exc
                     summary = {
                         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
                         "summary": (

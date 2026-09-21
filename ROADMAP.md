@@ -1013,3 +1013,15 @@ The adapter emits the full fingerprint maps needed by sporting v2. Remaining Sim
 Slot work is now the auxiliary authority tree (simulation commands/schedules, adopted
 tournament authority, entry field, WC/draw input/draw/revision/process authorities) and
 then wiring this completed core directly into materialized Branch-fork installation.
+
+
+### Materialized Branch fork: coupled sporting v2 + Slot core
+
+The materialized fork transaction now consumes the completed Slot-core fingerprint maps
+directly while rebuilding sporting v2 week by week, then installs both target components
+atomically. This removes the previous circular dependency between later-week sporting
+snapshots and completed Slot evidence.
+
+Remaining Simulation Slot fork work is the auxiliary authority tree: simulation
+commands/schedules, adopted tournament authority, entry-field/WC/draw input/draw
+revision/process identities, plus walkover-group remapping.

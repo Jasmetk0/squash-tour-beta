@@ -26,6 +26,8 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
+  previewAuthoritativeNextMatchDay: vi.fn(),
+  simulateAuthoritativeNextMatchDay: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -114,6 +116,43 @@ const proposal = {
   position_fingerprint: 'd'.repeat(64),
   provenance: 'match_day_schedule_hard_constraints.v1; one competitive match per global Simulation Slot',
   persisted: false as const
+}
+
+const matchDayPreview = {
+  schema_version: 'authoritative_match_day_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  match_day_ordinal: 1,
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 2],
+  target_group_ids: ['g1', 'g2'],
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  preview_fingerprint: '7'.repeat(64)
+}
+
+const matchDayResult = {
+  schema_version: 'authoritative_match_day_result.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  match_day_ordinal: 1,
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 2],
+  target_group_ids: ['g1', 'g2'],
+  child_command_ids: ['match-day-slot:one', 'match-day-slot:two'],
+  completed_slot_count: 2,
+  position: {
+    ...position,
+    current_slot_id: 'slot-3',
+    slot_ordinal: 3,
+    eligible_match_ids: ['g3'],
+    unresolved_group_ids: ['g3'],
+    blocked_match_ids: [],
+    position_fingerprint: '1'.repeat(64)
+  },
+  adoption: 'committed' as const
 }
 
 const editedSchedule = {
@@ -556,6 +595,8 @@ beforeEach(() => {
     blocked_match_ids: [],
     position_fingerprint: '1'.repeat(64)
   })
+  api.previewAuthoritativeNextMatchDay.mockResolvedValue(matchDayPreview)
+  api.simulateAuthoritativeNextMatchDay.mockResolvedValue(matchDayResult)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1027,6 +1068,68 @@ describe('AuthoritativeSimulationPanel', () => {
       expected_revision_id: 'revision-7'
     })
     expect(payload).not.toHaveProperty('group_id')
+  })
+
+  it('reviews and safely retries the exact canonical Next Match Day command', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextMatchDay
+      .mockRejectedValueOnce(new Error('network response lost'))
+      .mockResolvedValueOnce(matchDayResult)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Next Match Day' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeNextMatchDay).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    expect(
+      await screen.findByRole('heading', { name: 'Reviewed canonical Match Day 1' })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('list', { name: 'Reviewed authoritative Match Day' })
+    ).toHaveTextContent('Global slot 1: g1')
+    expect(
+      screen.getByRole('list', { name: 'Reviewed authoritative Match Day' })
+    ).toHaveTextContent('Global slot 2: g2')
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const commit = screen.getByRole('button', {
+      name: 'Simulate reviewed authoritative Match Day'
+    })
+    await userEvent.click(commit)
+
+    expect(
+      await screen.findByText(
+        'Authoritative Next Match Day failed: network response lost'
+      )
+    ).toBeInTheDocument()
+    const firstCommand =
+      api.simulateAuthoritativeNextMatchDay.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      expected_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7'
+    })
+    expect(firstCommand).not.toHaveProperty('run_id')
+    expect(firstCommand).not.toHaveProperty('branch_id')
+
+    await userEvent.click(commit)
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextMatchDay).toHaveBeenCalledTimes(2)
+    )
+    expect(
+      api.simulateAuthoritativeNextMatchDay.mock.calls[1][2].command_id
+    ).toBe(firstCommand.command_id)
   })
 
   it('reviews the current Entry slot with minimal explicit Admin verdicts', async () => {

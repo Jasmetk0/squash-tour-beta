@@ -150,6 +150,9 @@ class TournamentWildCardAuthorityStore:
             unavailable_player_ids=authority.unavailable_player_ids,
             decision_week=authority.decision_week,
             decision_slot_ordinal=authority.decision_slot_ordinal,
+            selection_policy_id=authority.selection_policy_id,
+            operator_label=authority.operator_label,
+            audit_reason=authority.audit_reason,
         )
         if rebuilt != authority:
             raise ValueError("Tournament WC authority does not replay from frozen field")
@@ -254,9 +257,15 @@ class TournamentWildCardAuthorityStore:
         unavailable_player_ids: tuple[str, ...] = (),
         decision_week: RankingWeek | None = None,
         decision_slot_ordinal: int | None = None,
+        selection_policy_id: str | None = None,
+        operator_label: str | None = None,
+        audit_reason: str | None = None,
     ) -> TournamentWildCardAuthority:
         if (decision_week is None) != (decision_slot_ordinal is None):
             raise ValueError("WC decision chronology requires week and slot ordinal together")
+        audit = (selection_policy_id, operator_label, audit_reason)
+        if any(value is not None for value in audit) and any(value is None for value in audit):
+            raise ValueError("WC Admin review audit must be supplied as one complete set")
         self._scope(run_id, branch_id, writing=True)
         if self.session.get(
             TournamentDrawInputAuthorityModel,
@@ -286,6 +295,10 @@ class TournamentWildCardAuthorityStore:
         if decision_week is not None:
             request["decision_week"] = decision_week.model_dump(mode="json")
             request["decision_slot_ordinal"] = decision_slot_ordinal
+        if selection_policy_id is not None:
+            request["selection_policy_id"] = selection_policy_id
+            request["operator_label"] = operator_label
+            request["audit_reason"] = audit_reason
         request_fp = _fingerprint(request)
 
         retry = self.session.scalar(
@@ -327,6 +340,9 @@ class TournamentWildCardAuthorityStore:
             unavailable_player_ids=unavailable_player_ids,
             decision_week=decision_week,
             decision_slot_ordinal=decision_slot_ordinal,
+            selection_policy_id=selection_policy_id,
+            operator_label=operator_label,
+            audit_reason=audit_reason,
         )
         self.session.add(
             TournamentWildCardAuthorityModel(

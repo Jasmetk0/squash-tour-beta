@@ -74,6 +74,8 @@ import type {
   CreateRunBranchFromSavedRevisionRequest,
   ViewerBranchWorkingDraft,
   SavedRevisionHistoryResponse,
+  SavedRevisionHistoryPageResponse,
+  SavedRevisionComparison,
   SavedRevisionRecoveryActivityResponse,
   SavedRevisionHistoryDetail,
   RestoreSavedRevisionRequest,
@@ -940,10 +942,32 @@ export function getBranchWorkingDraft(
 
 export function listSavedRevisionHistory(
   runId: string,
-  branchId: string
-): Promise<SavedRevisionHistoryResponse> {
+  branchId: string,
+  options?: { limit?: number; beforeSequence?: number }
+): Promise<SavedRevisionHistoryPageResponse> {
+  const query = new URLSearchParams()
+  if (options?.limit !== undefined) query.set('limit', String(options.limit))
+  if (options?.beforeSequence !== undefined) {
+    query.set('before_sequence', String(options.beforeSequence))
+  }
+  const suffix = query.size ? `?${query.toString()}` : ''
   return request(
-    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions`
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions${suffix}`
+  )
+}
+
+export function compareSavedRevisions(
+  runId: string,
+  branchId: string,
+  fromRevisionId: string,
+  toRevisionId: string
+): Promise<SavedRevisionComparison> {
+  const query = new URLSearchParams({
+    from_revision_id: fromRevisionId,
+    to_revision_id: toRevisionId
+  })
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions/compare?${query.toString()}`
   )
 }
 

@@ -158,7 +158,7 @@ class TournamentWildCardAuthorityStore:
             raise ValueError("Tournament WC authority does not replay from frozen field")
         return authority
 
-    def _validate_global_slot(
+    def validate_global_slot(
         self,
         *,
         run_id: str,
@@ -324,7 +324,7 @@ class TournamentWildCardAuthorityStore:
             )
 
         if decision_week is not None and decision_slot_ordinal is not None:
-            self._validate_global_slot(
+            self.validate_global_slot(
                 run_id=run_id,
                 branch_id=branch_id,
                 decision_week=decision_week,

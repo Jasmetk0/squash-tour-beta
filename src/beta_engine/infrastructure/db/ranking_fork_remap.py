@@ -423,6 +423,7 @@ def remap_source_free_ranking_state_for_branch(
     run_id: str,
     source_branch_id: str,
     target_branch_id: str,
+    target_base_revision_id: str | None = None,
 ) -> RankingRevisionState:
     """Rebuild one result-free ranking lineage, including versioned zero history.
 
@@ -439,14 +440,32 @@ def remap_source_free_ranking_state_for_branch(
             "Ranking-bearing fork requires a complete Week-1 ranking root"
         )
     if (
-        source.transition_authorities
-        or source.tournament_ranking_snapshot_authorities
+        source.tournament_ranking_snapshot_authorities
         or source.season_closing_rankings
         or source.authoritative_transition_state is not None
     ):
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support transition/publication authorities"
+            "Ranking-bearing fork does not yet support publication/world/Season Closing authorities"
         )
+    if source.transition_authorities and target_base_revision_id is None:
+        raise RankingForkRemapUnsupportedError(
+            "Transition-bearing ranking fork requires the target materialized Saved Revision id"
+        )
+
+    remapped_transition_authorities, transition_by_source_fingerprint = (
+        _remap_transition_authorities(
+            source.transition_authorities,
+            run_id=run_id,
+            source_branch_id=source_branch_id,
+            target_branch_id=target_branch_id,
+            target_base_revision_id=target_base_revision_id or "",
+        )
+        if source.transition_authorities
+        else ((), {})
+    )
+    source_transition_by_fingerprint = {
+        authority.fingerprint: authority for authority in source.transition_authorities
+    }
 
     (
         remapped_tournament_sources,
@@ -478,6 +497,7 @@ def remap_source_free_ranking_state_for_branch(
     )
     referenced_zero_fingerprints: set[str] = set()
     referenced_tournament_editions: set[str] = set()
+    referenced_transition_fingerprints: set[str] = set()
 
     remapped_entries: list[RankingRevisionEntry] = []
     previous = None
@@ -606,13 +626,39 @@ def remap_source_free_ranking_state_for_branch(
                 raise RankingForkRemapUnsupportedError(
                     "Ranking weekly command does not exactly match frozen evidence"
                 )
-            if (
-                original.audit is not None
-                or original.authority_fingerprint is not None
-                or original.context.discipline == "resolved_zeros"
-            ):
+            if original.context.discipline == "resolved_zeros":
                 raise RankingForkRemapUnsupportedError(
-                    "Ranking weekly fork does not yet support audited or transition-authority commands"
+                    "Ranking weekly fork supports only none/stored_zeros discipline"
+                )
+            target_authority = None
+            if original.authority_fingerprint is None:
+                if original.audit is not None:
+                    raise RankingForkRemapUnsupportedError(
+                        "Audited ranking command is missing its transition authority"
+                    )
+            else:
+                source_authority = source_transition_by_fingerprint.get(
+                    original.authority_fingerprint
+                )
+                target_authority = transition_by_source_fingerprint.get(
+                    original.authority_fingerprint
+                )
+                if source_authority is None or target_authority is None:
+                    raise RankingForkRemapUnsupportedError(
+                        "Ranking command transition authority is not owned by the Saved Revision"
+                    )
+                if (
+                    source_authority.completed_week != original.context.completed_week
+                    or source_authority.target_week != original.context.target_week
+                    or source_authority.players != original.context.players
+                    or source_authority.policy != original.context.policy
+                    or source_authority.audit != original.audit
+                ):
+                    raise RankingForkRemapUnsupportedError(
+                        "Ranking command transition authority does not match frozen command evidence"
+                    )
+                referenced_transition_fingerprints.add(
+                    original.authority_fingerprint
                 )
             if previous is None or original.context.completed_week != previous.week:
                 raise RankingForkRemapUnsupportedError(
@@ -653,6 +699,11 @@ def remap_source_free_ranking_state_for_branch(
                         "zero_versions": command_zero_versions,
                         "corrections": command_corrections,
                         "tournaments": tuple(command_tournaments),
+                        "authority_fingerprint": (
+                            target_authority.fingerprint
+                            if target_authority is not None
+                            else None
+                        ),
                     }
                 ).model_dump_json()
             )
@@ -740,6 +791,13 @@ def remap_source_free_ranking_state_for_branch(
         raise RankingForkRemapUnsupportedError(
             "Saved tournament sources are not completely owned by stored ranking commands"
         )
+    source_transition_fingerprints = {
+        authority.fingerprint for authority in source.transition_authorities
+    }
+    if referenced_transition_fingerprints != source_transition_fingerprints:
+        raise RankingForkRemapUnsupportedError(
+            "Saved transition authorities are not completely owned by stored ranking commands"
+        )
 
     return RankingRevisionState(
         schema_version="ranking_revision_state.v4",
@@ -749,6 +807,7 @@ def remap_source_free_ranking_state_for_branch(
         sources=remapped_result_sources,
         zero_sources=remapped_zero_sources,
         tournament_sources=remapped_tournament_sources,
+        transition_authorities=remapped_transition_authorities,
     )
 
 

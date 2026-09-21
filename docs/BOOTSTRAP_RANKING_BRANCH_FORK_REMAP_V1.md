@@ -110,3 +110,22 @@ new Branch-scoped version chain.
 
 `OwnedTournamentRankingSource` and canonical tournament authorities remain outside
 this adapter and continue to fail closed.
+
+
+## Transition-backed weekly ranking history
+
+The materialized ranking fork now also supports stored `RankingTransitionAuthority`
+history and the audited `RankingWeekCommand` receipts that adopted it.
+
+The target materialized fork-root Saved Revision id is passed into the ranking remapper.
+Each transition authority is rebuilt for the target Branch and that real target
+`base_revision_id`; weekly commands then replace the source
+`authority_fingerprint` with the corresponding target authority fingerprint before
+their request fingerprints and ranking snapshots are recalculated.
+
+The source authority must match the command's frozen completed/target boundary, roster,
+policy and audit, and every saved authority must be referenced by stored ranking
+history. Detached or mismatched authority state fails closed.
+
+This does not yet remap authoritative publication/world state, Tournament Ranking
+Snapshot authority, or Season Closing archives.

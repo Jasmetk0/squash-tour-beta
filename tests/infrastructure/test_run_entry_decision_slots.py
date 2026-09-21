@@ -238,7 +238,7 @@ def test_saved_revision_rejects_wc_entry_global_slot_collision(tmp_path):
             branch_id="branch",
         )
         wc = TournamentWildCardAuthority(
-            schema_version="tournament_wild_card_authority.v2",
+            schema_version="tournament_wild_card_authority.v3",
             run_id="run",
             branch_id="branch",
             event_id="wc-event",
@@ -247,6 +247,9 @@ def test_saved_revision_rejects_wc_entry_global_slot_collision(tmp_path):
             field_sequence=1,
             decision_week=WEEK,
             decision_slot_ordinal=1,
+            selection_policy_id="explicit_admin_wild_card_selection.v1",
+            operator_label="Commissioner",
+            audit_reason="Saved Revision v3 collision regression",
             original_wild_card_player_ids=(None,),
             slots=(TournamentWildCardSlotResolution(wildcard_index=1, source="unfilled"),),
             adjusted_qualification_player_ids=(),

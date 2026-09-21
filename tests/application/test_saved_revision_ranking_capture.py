@@ -140,7 +140,7 @@ def test_bootstrap_ranking_revision_forks_with_target_branch_identity_and_can_di
 
     target_live = repo.get_branch_revision_state(branch_id="branch-three")
     assert target_live.saved_head_revision_id == "revision-fork-root"
-    assert target_live.working_draft.base_saved_revision_id == "revision-fork-root"
+    assert target_live.working_draft.base_revision_id == "revision-fork-root"
 
     target_runner = RankingWeekCommandRunner(repo._session_factory)
     target_runner.execute(

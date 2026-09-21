@@ -212,7 +212,7 @@ def _roots(server: ApiServer, run_id: str, branch_id: str) -> tuple[str, str, st
     return ranking_root, transition_root, sim_root
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     tmp_path,
 ):

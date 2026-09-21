@@ -7,9 +7,12 @@ from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     PlayerSportingWeekState,
 )
+from beta_engine.domain.simulation_slots import WeekSimulationSchedule, fingerprint
 from beta_engine.infrastructure.db.models import (
+    AdoptedTournamentAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -64,7 +67,13 @@ def remap_coupled_player_slot_history(
     if source_bundle is None or source_slot_component is None:
         return None
 
-    auxiliary = set(source_slot_component) - {"fingerprint", "slots", "groups"}
+    auxiliary = set(source_slot_component) - {
+        "fingerprint",
+        "slots",
+        "groups",
+        "authorities",
+        "schedules",
+    }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
     }
@@ -73,6 +82,109 @@ def remap_coupled_player_slot_history(
             "Coupled player/Slot fork does not yet support auxiliary authorities: "
             + ", ".join(sorted(nonempty_auxiliary))
         )
+
+    source_schedules = [
+        WeekSimulationScheduleModel(**value)
+        for value in source_slot_component.get("schedules", [])
+    ]
+    target_schedules: list[WeekSimulationScheduleModel] = []
+    for row in source_schedules:
+        schedule = WeekSimulationSchedule.model_validate_json(row.payload_json)
+        if (
+            schedule.run_id,
+            schedule.branch_id,
+            schedule.week.ordinal,
+            schedule.fingerprint,
+        ) != (
+            run_id,
+            source_branch_id,
+            row.week_ordinal,
+            row.schedule_fingerprint,
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Saved Week Simulation Schedule identity is corrupt"
+            )
+        target_schedule = WeekSimulationSchedule.model_validate_json(
+            schedule.model_copy(update={"branch_id": target_branch_id}).model_dump_json()
+        )
+        target_request_fingerprint = fingerprint(
+            {
+                "request_id": row.request_id,
+                "schedule": target_schedule.model_dump(mode="json"),
+            }
+        )
+        target_schedules.append(
+            WeekSimulationScheduleModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                week_ordinal=row.week_ordinal,
+                request_id=row.request_id,
+                request_fingerprint=target_request_fingerprint,
+                schedule_fingerprint=target_schedule.fingerprint,
+                payload_json=target_schedule.model_dump_json(),
+            )
+        )
+
+    source_authorities = [
+        AdoptedTournamentAuthorityModel(**value)
+        for value in source_slot_component.get("authorities", [])
+    ]
+    target_authorities: list[AdoptedTournamentAuthorityModel] = []
+    if source_authorities:
+        from beta_engine.application.authoritative_run_simulation_driver import (
+            AuthoritativeRunSimulationDriver,
+        )
+
+        for row in source_authorities:
+            items = AuthoritativeRunSimulationDriver._decode_adopted_authority(
+                row.package_json
+            )
+            if any(item.draw_authority_fingerprint is not None for item in items):
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Adopted Tournament authority references Draw evidence without a target mapping"
+                )
+            week = next(
+                (
+                    state.week
+                    for state in source_bundle[0]
+                    if state.week.ordinal == row.week_ordinal
+                ),
+                None,
+            )
+            if week is None:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Adopted Tournament authority week has no saved sporting state"
+                )
+            source_fingerprint = (
+                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+                    run_id,
+                    source_branch_id,
+                    week,
+                    items,
+                )
+            )
+            if source_fingerprint != row.authority_fingerprint:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Saved Adopted Tournament authority fingerprint is corrupt"
+                )
+            target_fingerprint = (
+                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+                    run_id,
+                    target_branch_id,
+                    week,
+                    items,
+                )
+            )
+            target_authorities.append(
+                AdoptedTournamentAuthorityModel(
+                    run_id=run_id,
+                    branch_id=target_branch_id,
+                    week_ordinal=row.week_ordinal,
+                    event_id=row.event_id,
+                    authority_fingerprint=target_fingerprint,
+                    package_json=row.package_json,
+                )
+            )
 
     source_states, source_contexts = source_bundle
     context_by_week = {
@@ -239,9 +351,11 @@ def remap_coupled_player_slot_history(
     merged_simulation_component = simulation_component(
         target_slots,
         target_groups,
+        authorities=target_authorities,
         include_commands=False,
-        include_authorities=False,
-        include_schedules=False,
+        include_authorities="authorities" in source_slot_component,
+        schedules=target_schedules,
+        include_schedules="schedules" in source_slot_component,
         include_entry_fields=False,
         include_wild_card_authorities=False,
         include_draw_inputs=False,

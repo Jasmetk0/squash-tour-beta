@@ -46,3 +46,21 @@ The first pre-alpha release gate must at minimum include:
 - the complete regression suite, not only PR-selected tests.
 
 Future release-specific checks may be added without changing this basic policy.
+
+
+## Hard rule for sharing PRs with the user
+
+A pull request must **not** be sent to the user as ready to review/merge, and its link
+must not be surfaced as the next merge action, until every required check for that PR
+has completed successfully.
+
+Concretely:
+
+- queued or in-progress required checks are not green;
+- any failed, cancelled or timed-out required check blocks sharing the PR for merge;
+- after a fix, verify the checks on the **latest PR head commit**, not an older run;
+- only when all required checks on that latest head are green may the PR be presented
+  to the user as ready to merge.
+
+The assistant may continue repairing the PR privately while checks are red. The user
+should only receive the PR as a mergeable handoff after this green-only gate is met.

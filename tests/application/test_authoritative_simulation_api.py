@@ -873,6 +873,107 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
         assert "already adopted" in conflict["detail"]["message"]
 
 
+@pytest.mark.pr_critical
+def test_authoritative_next_round_preview_and_commit_over_http(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(
+        tmp_path / "next-round-http-source"
+    )
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'next-round-http.sqlite'}"
+    )
+    server.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    server.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server,
+            display_name="HTTP canonical Next Round",
+        )
+        _install_owned_state(
+            server,
+            first,
+            run_id,
+            branch_id,
+            additional_packages=(second,),
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "authoritative-simulation"
+        )
+        status, proposed = _request("GET", root + "/week-schedule/proposal")
+        assert status == 200, proposed
+        adoption = {
+            "request_id": "next-round-http-schedule",
+            "expected_week": proposed["schedule"]["week"],
+            "expected_schedule_fingerprint": proposed[
+                "schedule_fingerprint"
+            ],
+            "expected_position_fingerprint": proposed[
+                "position_fingerprint"
+            ],
+        }
+        status, adopted = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            adoption,
+        )
+        assert status == 201, adopted
+
+        status, preview = _request("GET", root + "/next-round/preview")
+        assert status == 200, preview
+        assert preview["schema_version"] == "authoritative_round_preview.v1"
+        assert preview["expected_revision_id"] == revision
+        assert preview["target_slot_ordinals"]
+        assert preview["horizon_slot_ordinals"]
+        assert (
+            preview["horizon_slot_ordinals"][0]
+            == preview["target_slot_ordinals"][0]
+        )
+        assert (
+            preview["horizon_slot_ordinals"][-1]
+            == preview["target_slot_ordinals"][-1]
+        )
+        assert preview["round_identity"]["draw_phase"] in {
+            "qualification",
+            "main",
+        }
+        assert preview["round_identity"]["round_number"] >= 1
+
+        command = {
+            "command_id": "http-next-round-1",
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview[
+                "expected_position_fingerprint"
+            ],
+            "expected_revision_id": preview["expected_revision_id"],
+        }
+        status, result = _request(
+            "POST",
+            root + "/simulate-next-round",
+            command,
+        )
+        assert status == 201, result
+        assert result["schema_version"] == "authoritative_round_result.v1"
+        assert result["round_identity"] == preview["round_identity"]
+        assert result["target_slot_ordinals"] == preview["target_slot_ordinals"]
+        assert (
+            result["horizon_slot_ordinals"]
+            == preview["horizon_slot_ordinals"]
+        )
+        assert result["completed_slot_count"] == len(
+            preview["horizon_slot_ordinals"]
+        )
+        assert _request(
+            "POST",
+            root + "/simulate-next-round",
+            command,
+        ) == (201, result)
+
+
 @pytest.mark.smoke
 def test_multi_event_schedule_preview_adopt_stale_and_exact_retry_over_http(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(tmp_path / "multi-source")

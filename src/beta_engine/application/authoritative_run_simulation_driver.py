@@ -4160,6 +4160,115 @@ class AuthoritativeRunSimulationDriver:
                         "dependent groups require a strictly later slot than feeders"
                     )
 
+        if schedule.schema_version == "week_simulation_schedule.v2":
+            match_meta: dict[str, tuple[str, str, int]] = {}
+            known_players: dict[str, tuple[str, ...]] = {}
+            qualification_groups_by_event: dict[str, list[str]] = {}
+            main_groups_by_event: dict[str, list[str]] = {}
+            for package in packages:
+                for match in package.qualification_matches + package.main_draw_matches:
+                    if match.match_id not in plans:
+                        continue
+                    draw_phase = (
+                        "qualification"
+                        if match.draw_type == "qualification"
+                        else "main"
+                    )
+                    match_meta[match.match_id] = (
+                        package.event_id,
+                        draw_phase,
+                        match.round_number,
+                    )
+                    plan = plans[match.match_id]
+                    direct_ids = (
+                        tuple(plan.direct_player_ids or ())
+                        if plan.participant_sources is None
+                        else tuple(
+                            source.removeprefix("player:")
+                            for source in plan.participant_sources
+                            if source.startswith("player:")
+                        )
+                    )
+                    known_players[match.match_id] = direct_ids
+                    target = (
+                        qualification_groups_by_event
+                        if draw_phase == "qualification"
+                        else main_groups_by_event
+                    )
+                    target.setdefault(package.event_id, []).append(match.match_id)
+
+            if set(match_meta) != set(plans):
+                raise ValueError(
+                    "Match Day schedule metadata does not cover canonical match topology"
+                )
+
+            day_of: dict[str, int] = {}
+            order_by_day: dict[int, list[tuple[int, int, str]]] = {}
+            player_by_day: dict[int, dict[str, str]] = {}
+            for slot in schedule.slots:
+                group_id = slot.group_ids[0]
+                expected_event, expected_phase, expected_round = match_meta[group_id]
+                if (
+                    slot.event_id,
+                    slot.draw_phase,
+                    slot.round_number,
+                ) != (
+                    expected_event,
+                    expected_phase,
+                    expected_round,
+                ):
+                    raise ValueError(
+                        "Match Day schedule metadata differs from canonical match evidence"
+                    )
+                assert slot.match_day_ordinal is not None
+                assert slot.match_order is not None
+                day_of[group_id] = slot.match_day_ordinal
+                order_by_day.setdefault(slot.match_day_ordinal, []).append(
+                    (slot.match_order, slot.ordinal, group_id)
+                )
+                owners = player_by_day.setdefault(slot.match_day_ordinal, {})
+                for player_id in known_players[group_id]:
+                    prior = owners.get(player_id)
+                    if prior is not None:
+                        raise ValueError(
+                            "Match Day schedule assigns one directly known player "
+                            "to multiple matches on the same day "
+                            f"({player_id}: {prior}, {group_id})"
+                        )
+                    owners[player_id] = group_id
+
+            for day, values in order_by_day.items():
+                ordered = sorted(values)
+                if [order for order, _, _ in ordered] != list(
+                    range(1, len(ordered) + 1)
+                ):
+                    raise ValueError(
+                        f"Match Day {day} match order is not contiguous"
+                    )
+                ordinals = [global_ordinal for _, global_ordinal, _ in ordered]
+                if ordinals != sorted(ordinals):
+                    raise ValueError(
+                        "Match Day match order must follow global Simulation Slot order"
+                    )
+
+            for group_id, plan in plans.items():
+                for feeder in self._plan_feeders(plan):
+                    if day_of[feeder] >= day_of[group_id]:
+                        raise ValueError(
+                            "dependent match must start on a later Match Day than its feeder"
+                        )
+
+            for event_id, q_groups in qualification_groups_by_event.items():
+                main_groups = main_groups_by_event.get(event_id, [])
+                if not main_groups:
+                    continue
+                if max(day_of[group] for group in q_groups) >= min(
+                    day_of[group] for group in main_groups
+                ):
+                    raise ValueError(
+                        "Qualification must finish before Main Draw starts"
+                    )
+
     @staticmethod
     def _plan_feeders(plan):
         if plan.participant_sources:

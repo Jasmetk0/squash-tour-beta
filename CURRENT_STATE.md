@@ -1428,3 +1428,12 @@ A PR-critical mixed-history scenario now freezes a full-redraw withdrawal follow
 Simulation Slot / tournament-authority installation now finishes with a full post-install recapture and fingerprint comparison. A restore or materialized Branch fork therefore succeeds only when the live installed Simulation Slot component is exactly the canonical target Saved Revision component after all Entry Field, WC/RWC, Draw Input, Draw, Draw Process and Draw Revision histories have replayed.
 
 PR-critical coverage now spans a specialized frozen Reserve Wild Card repair on the source Branch, source-to-target Branch remap, exact target installation, a later second live RWC repair on the target Branch, restore back to the materialized fork root, and retry of the restored original RWC command. The target revision lineage remains target-owned, chronological and fingerprint-stable, while source and target revision fingerprints remain distinct.
+
+
+## Branch fork: strict Lucky Loser / pre-Q frozen evidence remap
+
+Specialized Draw Revision fork replay now treats Lucky Loser and replacement-source evidence as an explicit branch-owned authority graph rather than relying on permissive recursive string replacement. Draw, Draw Input, Ranking, Wild Card, played-result, Qualification bracket and derived auto-BYE terminal fingerprints must all resolve through a target mapping or the fork fails closed.
+
+Lucky Loser v2 auto-BYE terminals are rebuilt first against the target Qualification bracket. Their derived evidence fingerprints are then recalculated and used to rebuild `qualification_terminal_result_fingerprints`, preventing a target LL order from retaining the source Branch's auto-BYE evidence hash. LL candidate elimination results, vacancy cutoff/start evidence, fill order evidence and source-bound replacement authorities are rebuilt against the same target graph.
+
+PR-critical coverage exercises the derived auto-BYE fingerprint correction, explicit failure on missing LL result mappings, direct replacement-source rebinding, and a full source-bound pre-Q promotion Saved Revision -> Branch remap -> target materialization -> exact revision retry flow.

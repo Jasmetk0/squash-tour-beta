@@ -373,8 +373,8 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             reopened, run_id, branch_id
         )
         loaded = _request("GET", sim_root + "/position")[1]
-        assert loaded["current_week"] == saved_before_reopen["current_week"]
-        assert loaded["position_fingerprint"] == saved_before_reopen["position_fingerprint"]
+        assert loaded["current_week"] == before_reopen["current_week"]
+        assert loaded["position_fingerprint"] == before_reopen["position_fingerprint"]
         revision = head_before_reopen
 
         for week in range(31, 61):

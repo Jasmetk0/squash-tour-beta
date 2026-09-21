@@ -4459,7 +4459,7 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
         withdrawn_player_id=withdrawn,
         main_process_window_ordinal=3,
         qualification_process_window_ordinal=3,
-        repair_draw_seed=991133,
+        repair_draw_seed=None,
     )
     assert source_result.source == "qualification_promotion"
     assert len(source_result.draw_revisions) == 1

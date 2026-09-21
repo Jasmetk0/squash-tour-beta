@@ -120,6 +120,11 @@ import type {
   AdoptAuthoritativeWeekScheduleProposalPayload,
   AuthoritativeWeekScheduleAdoptionResult,
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeMatchReconstructionState,
+  AuthoritativeMatchReconstructionPreviewPayload,
+  AuthoritativeMatchReconstructionPreview,
+  AuthoritativeMatchReconstructionCommitPayload,
+  AuthoritativeMatchReconstructionCommitResult,
   AuthoritativeSimulationSavePreview,
   AuthoritativeSimulationSavePayload,
   AuthoritativeSimulationSaveResponse,
@@ -1271,6 +1276,47 @@ export async function adoptAuthoritativeWeekScheduleProposal(
   )
   const scope = 'run_id' in data ? data : data.schedule
   verifyAuthoritativeSimulationScope(runId, branchId, scope)
+  return data
+}
+
+export async function inspectAuthoritativeMatchReconstruction(
+  runId: string,
+  branchId: string,
+  groupId: string
+): Promise<AuthoritativeMatchReconstructionState> {
+  const data = await request<AuthoritativeMatchReconstructionState>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-reconstruction/state?group_id=' +
+      encodeURIComponent(groupId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function previewAuthoritativeMatchReconstruction(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeMatchReconstructionPreviewPayload
+): Promise<AuthoritativeMatchReconstructionPreview> {
+  const data = await request<AuthoritativeMatchReconstructionPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/match-reconstruction/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function commitAuthoritativeMatchReconstruction(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeMatchReconstructionCommitPayload
+): Promise<AuthoritativeMatchReconstructionCommitResult> {
+  const data = await request<AuthoritativeMatchReconstructionCommitResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/match-reconstruction/commit',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   return data
 }
 

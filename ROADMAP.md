@@ -830,3 +830,15 @@ status with deterministic fingerprints. No sporting semantics are inferred by th
 
 This closes the explicit pagination/general-comparison foundation item; complete
 sporting-world restore remains a separate follow-up.
+
+
+### Sporting-world recovery: Run prospect source fidelity
+
+The shared Run prospect catalog now has versioned Saved Revision reference snapshots and
+an explicit Save boundary. Historical Branch restore validates this Run-scoped source
+rather than mutating it, so one Branch cannot rewind prospect metadata used by another
+Branch. Current and target source drift fails closed before restore mutation.
+
+This advances the section 11 complete sporting-world recovery follow-up. Remaining work
+still includes broader world-state/identity recovery and ranking-bearing fork identity
+remapping; this slice does not promote unresolved Tour-entry/product policy.

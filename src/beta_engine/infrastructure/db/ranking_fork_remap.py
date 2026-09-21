@@ -536,10 +536,9 @@ def remap_source_free_ranking_state_for_branch(
     if (
         source.tournament_ranking_snapshot_authorities
         or source.season_closing_rankings
-        or source.authoritative_transition_state is not None
     ):
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support publication/world/Season Closing authorities"
+            "Ranking-bearing fork does not yet support Tournament Ranking Snapshot/Season Closing authorities"
         )
     if source.transition_authorities and target_base_revision_id is None:
         raise RankingForkRemapUnsupportedError(
@@ -893,15 +892,26 @@ def remap_source_free_ranking_state_for_branch(
             "Saved transition authorities are not completely owned by stored ranking commands"
         )
 
+    remapped_entries_tuple = tuple(remapped_entries)
+    remapped_transition_state = _remap_publication_world_state(
+        source.authoritative_transition_state,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        source_entries=source.entries,
+        target_entries=remapped_entries_tuple,
+    )
+
     return RankingRevisionState(
         schema_version="ranking_revision_state.v4",
         run_id=run_id,
         branch_id=target_branch_id,
-        entries=tuple(remapped_entries),
+        entries=remapped_entries_tuple,
         sources=remapped_result_sources,
         zero_sources=remapped_zero_sources,
         tournament_sources=remapped_tournament_sources,
         transition_authorities=remapped_transition_authorities,
+        authoritative_transition_state=remapped_transition_state,
     )
 
 

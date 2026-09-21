@@ -25,6 +25,8 @@ from beta_engine.domain.tournaments.result_authority import (
     TournamentPlayerResultAuthority,
     TournamentResultAuthority,
 )
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.infrastructure.db.ranking_fork_remap import (
     RankingForkRemapUnsupportedError,
     _remap_result_sources,

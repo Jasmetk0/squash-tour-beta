@@ -20,6 +20,13 @@ from beta_engine.domain.tournaments.draw_process_authority import (
     TournamentDrawProcessAuthority,
     TournamentDrawProcessAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.draw_revision_authority import (
+    TournamentDrawRevision,
+    TournamentDrawRevisionBuilder,
+)
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryField,
@@ -39,6 +46,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
     TournamentDrawProcessAuthorityModel,
+    TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
@@ -60,6 +68,9 @@ from beta_engine.infrastructure.db.tournament_draw_input_authority import (
 from beta_engine.infrastructure.db.tournament_draw_process_authority import (
     TournamentDrawProcessAuthorityStore,
     _fingerprint as draw_process_request_fingerprint,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    _fp as draw_revision_request_fingerprint,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -130,6 +141,7 @@ def remap_coupled_player_slot_history(
         "draw_inputs",
         "draw_authorities",
         "draw_process_authorities",
+        "draw_revisions",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -160,16 +172,25 @@ def remap_coupled_player_slot_history(
         TournamentDrawProcessAuthorityModel(**value)
         for value in source_slot_component.get("draw_process_authorities", [])
     ]
+    source_draw_revision_rows = [
+        TournamentDrawRevisionModel(**value)
+        for value in source_slot_component.get("draw_revisions", [])
+    ]
 
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
     target_draw_rows: list[TournamentDrawAuthorityModel] = []
     target_draw_process_rows: list[TournamentDrawProcessAuthorityModel] = []
+    target_draw_revision_rows: list[TournamentDrawRevisionModel] = []
     target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
+    target_apps_by_event: dict[str, tuple[TournamentEntryApplication, ...]] = {}
+    target_ranking_by_event: dict[str, TournamentRankingSnapshotAuthority] = {}
     target_wc_by_event: dict[str, TournamentWildCardAuthority] = {}
     target_draw_input_by_event: dict[str, TournamentDrawInputAuthority] = {}
     target_draw_by_event: dict[str, TournamentDrawAuthority] = {}
+    source_draw_by_event: dict[str, TournamentDrawAuthority] = {}
+    target_process_by_event: dict[str, TournamentDrawProcessAuthority] = {}
     target_draw_fingerprint_map: dict[str, str] = {}
 
     source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
@@ -281,6 +302,13 @@ def remap_coupled_player_slot_history(
             target_fields.append(target_field)
             previous_target = target_field
         target_fields_by_event[event_id] = tuple(target_fields)
+        target_apps_by_event[event_id] = tuple(
+            TournamentEntryApplication.model_validate_json(
+                app.model_copy(update={"branch_id": target_branch_id}).model_dump_json()
+            )
+            for app in TournamentEntryFieldStore._load_row(ordered[-1])[1]
+        )
+        target_ranking_by_event[event_id] = target_authority
 
     for row in source_wc_rows:
         source_authority = TournamentWildCardAuthority.model_validate_json(
@@ -430,6 +458,7 @@ def remap_coupled_player_slot_history(
                 payload_json=target_draw.model_dump_json(),
             )
         )
+        source_draw_by_event[row.event_id] = source_draw
         target_draw_by_event[row.event_id] = target_draw
         target_draw_fingerprint_map[source_draw.fingerprint] = target_draw.fingerprint
 
@@ -481,6 +510,7 @@ def remap_coupled_player_slot_history(
                 payload_json=target_process.model_dump_json(),
             )
         )
+        target_process_by_event[row.event_id] = target_process
 
     source_schedules = [
         WeekSimulationScheduleModel(**value)

@@ -3663,10 +3663,12 @@ class AuthoritativeRunSimulationDriver:
                         self._plan_feeders(plans[group_id]),
                         scheduled_position_by_group,
                     ),
-                    match_meta[group_id][0],
-                    0 if match_meta[group_id][1] == "qualification" else 1,
-                    match_meta[group_id][2],
-                    match_meta[group_id][3],
+                    self._deterministic_schedule_tiebreak(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week=week,
+                        group_id=group_id,
+                    ),
                     group_id,
                 ),
             )
@@ -3760,6 +3762,28 @@ class AuthoritativeRunSimulationDriver:
         return max(scheduled_position_by_group[feeder_id] for feeder_id in feeder_ids)
 
     @staticmethod
+    def _deterministic_schedule_tiebreak(
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        group_id: str,
+    ) -> str:
+        """Stable pseudo-random tie-break for otherwise equally fair matches.
+
+        Master §13.4 forbids ranking/seed/bracket position from creating a rest
+        advantage and reserves deterministic randomness for equal valid variants.
+        The final order is persisted in WeekSimulationSchedule; this token only
+        makes proposal rebuilding reproducible before adoption.
+        """
+
+        payload = (
+            "match_day_schedule_tiebreak.v1|"
+            f"{run_id}|{branch_id}|{week.ordinal}|{group_id}"
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    @staticmethod
     def _topological_schedule_proposal_payload(
         schedule: WeekSimulationSchedule,
         *,
@@ -3770,10 +3794,11 @@ class AuthoritativeRunSimulationDriver:
             "schedule_fingerprint": schedule.fingerprint,
             "position_fingerprint": position_fingerprint,
             "provenance": (
-                "match_day_schedule_fair_rest.v1; "
+                "match_day_schedule_fair_rest.v2; "
                 "one competitive match per global Simulation Slot; "
                 "Qualification before Main; feeder next-day minimum; "
-                "fair-rest feeder chronology before deterministic tie-breaks; "
+                "fair-rest feeder chronology; deterministic hash tie-break for "
+                "otherwise equal valid variants; "
                 "carryover/minimal-reflow/travel optimization remains follow-up"
             ),
             "persisted": False,

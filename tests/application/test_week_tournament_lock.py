@@ -135,6 +135,12 @@ def test_week_tournament_lock_atomically_repairs_unselected_field_and_restores(t
     ]
     assert "Final Commitment" not in str(inspection)
 
+    with pytest.raises(ValueError, match="Week Tournament Lock must resolve"):
+        driver.propose_topological_schedule(
+            run_id="run",
+            branch_id="branch",
+        )
+
     before_payload = {"content": {}}
     with factory() as session:
         capture_saved_simulation_slots(
@@ -186,6 +192,12 @@ def test_week_tournament_lock_atomically_repairs_unselected_field_and_restores(t
         }
     ]
     assert driver.commit_week_tournament_lock(command) == result
+
+    unlocked_schedule = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert unlocked_schedule["persisted"] is False
 
     with factory() as session:
         field_store = TournamentEntryFieldStore(session)

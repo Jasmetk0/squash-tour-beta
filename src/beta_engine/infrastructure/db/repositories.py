@@ -184,6 +184,13 @@ from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
     active_transient_restore_blockers,
     missing_component_coverage,
 )
+from beta_engine.infrastructure.db.run_prospect_source_state import (
+    RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+    capture_run_prospect_source_snapshot,
+    capture_saved_run_prospect_source,
+    load_saved_run_prospect_source,
+    validate_live_run_prospect_source_against_saved,
+)
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
@@ -3700,6 +3707,9 @@ class SimulationPersistenceRepository:
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id
+                )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
@@ -4154,6 +4164,9 @@ class SimulationPersistenceRepository:
                 )
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id
                 )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id

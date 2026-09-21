@@ -377,6 +377,8 @@ def _component(
     include_draw_process_authorities=False,
     draw_revisions=(),
     include_draw_revisions=False,
+    week_tournament_locks=(),
+    include_week_tournament_locks=False,
 ):
     _validate_semantics(slots, groups)
     _validate_entry_field_rows(entry_fields)
@@ -385,6 +387,7 @@ def _component(
     _validate_draw_authority_rows_shape(draw_authorities)
     _validate_draw_process_rows_shape(draw_process_authorities)
     _validate_draw_revision_rows_shape(draw_revisions)
+    _validate_week_tournament_lock_rows_shape(week_tournament_locks)
     body = {
         "slots": [
             {
@@ -534,6 +537,19 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in draw_process_authorities
+        ]
+    if include_week_tournament_locks:
+        body["week_tournament_locks"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "week_ordinal": row.week_ordinal,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in week_tournament_locks
         ]
     if include_schedules:
         body["schedules"] = [

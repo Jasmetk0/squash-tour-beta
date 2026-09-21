@@ -925,3 +925,17 @@ This is the identity foundation only. Full transition-bearing Branch forks remai
 guarded until materialized fork-root Saved Revision identity, weekly command authority
 references, and authoritative publication/world state are rebound together in one
 atomic fork path.
+
+
+### Ranking identity remapping: transition-backed weekly commands
+
+Transition-bearing ranking preparation history now forks across Branch identity using
+the actual target materialized Saved Revision id. `RankingTransitionAuthority` records
+are rebound to the target fork root, stored audited weekly ranking commands are rebound
+to the resulting target authority fingerprints, and the complete request/snapshot
+lineage is recalculated before trusted installation.
+
+This closes the transition-authority + ranking-command identity layer. Remaining
+authority work is the published authoritative world: Official Ranking publications,
+world head, transition receipts/events, Tournament Ranking Snapshot authorities and
+Season Closing archives.

@@ -153,27 +153,32 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PLAYER_TOUR_ENTRY_COMPONENT_KEY,
     capture_saved_tour_entry_triggers,
+    load_saved_tour_entry_triggers,
     restore_saved_tour_entry_triggers,
 )
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
     capture_saved_run_entry_decision_slots,
+    load_saved_run_entry_decision_slots,
     restore_saved_run_entry_decision_slots,
     validate_saved_entry_match_slot_collisions,
 )
 from beta_engine.infrastructure.db.application_validation_slots import (
     APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
     capture_saved_application_validation_slots,
+    load_saved_application_validation_slots,
     restore_saved_application_validation_slots,
 )
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
     capture_saved_application_submissions,
+    load_saved_application_submissions,
     restore_saved_application_submissions,
 )
 from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
     DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
     capture_saved_definitive_wild_card_assignments,
+    load_saved_definitive_wild_card_assignments,
     restore_saved_definitive_wild_card_assignments,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
@@ -2567,9 +2572,44 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionBranchForkConflictError(
                             "ranking-bearing fork requires a materialized fork revision id"
                         )
+                    fork_safe_empty_components: set[str] = set()
+                    empty_component_loaders = (
+                        (
+                            RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
+                            load_saved_run_entry_decision_slots,
+                        ),
+                        (
+                            APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
+                            load_saved_application_validation_slots,
+                        ),
+                        (
+                            TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
+                            load_saved_application_submissions,
+                        ),
+                        (
+                            DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
+                            load_saved_definitive_wild_card_assignments,
+                        ),
+                        (
+                            PLAYER_TOUR_ENTRY_COMPONENT_KEY,
+                            load_saved_tour_entry_triggers,
+                        ),
+                    )
+                    for component_key, loader in empty_component_loaders:
+                        if component_key not in source_content:
+                            continue
+                        loaded = loader(
+                            source_revision.payload,
+                            run_id=run_id,
+                            branch_id=source_branch_id,
+                        )
+                        if loaded == ():
+                            fork_safe_empty_components.add(component_key)
+
                     unsupported_content = set(source_content) - {
                         RANKING_COMPONENT_KEY,
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+                        *fork_safe_empty_components,
                     }
                     if unsupported_content:
                         raise SavedRevisionBranchForkConflictError(

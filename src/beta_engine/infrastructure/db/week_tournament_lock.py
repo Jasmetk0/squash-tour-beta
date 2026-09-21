@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 import hashlib
 import json
 
@@ -26,6 +27,33 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 
 class WeekTournamentLockConflict(ValueError):
     """Week Tournament Lock identity or current field evidence changed."""
+
+
+@dataclass(frozen=True)
+class WeekTournamentLockCommit:
+    authority: WeekTournamentLockAuthority
+    exact_retry: bool
+
+
+def _request(
+    *,
+    week: RankingWeek,
+    event_ids: tuple[str, ...] | list[str],
+    selections: dict[str, str],
+    command_id: str,
+    operator_label: str,
+    audit_reason: str,
+) -> dict:
+    return {
+        "week": week.model_dump(mode="json"),
+        "event_ids": list(sorted(set(event_ids))),
+        "selections": {
+            player_id: selections[player_id] for player_id in sorted(selections)
+        },
+        "command_id": command_id,
+        "operator_label": operator_label,
+        "audit_reason": audit_reason,
+    }
 
 
 def _fp(value: object) -> str:
@@ -186,8 +214,37 @@ class WeekTournamentLockStore:
         operator_label: str,
         audit_reason: str,
         expected_authority_fingerprint: str,
-    ) -> WeekTournamentLockAuthority:
+    ) -> WeekTournamentLockCommit:
         self._scope(run_id, branch_id, writing=True)
+        request_fp = _fp(
+            _request(
+                week=week,
+                event_ids=event_ids,
+                selections=selections,
+                command_id=command_id,
+                operator_label=operator_label,
+                audit_reason=audit_reason,
+            )
+        )
+        existing = self.session.get(
+            WeekTournamentLockAuthorityModel,
+            (run_id, branch_id, week.ordinal),
+        )
+        if existing is not None:
+            loaded = self._load(existing)
+            if (
+                existing.command_id == command_id
+                and existing.request_fingerprint == request_fp
+                and loaded.fingerprint == expected_authority_fingerprint
+            ):
+                return WeekTournamentLockCommit(
+                    authority=loaded,
+                    exact_retry=True,
+                )
+            raise WeekTournamentLockConflict(
+                "Week Tournament Lock is already immutable for this week"
+            )
+
         authority = derive_week_tournament_lock_authority(
             self.session,
             run_id=run_id,
@@ -203,32 +260,6 @@ class WeekTournamentLockStore:
             raise WeekTournamentLockConflict(
                 "Week Tournament Lock changed since preview"
             )
-        request = {
-            "week": week.model_dump(mode="json"),
-            "event_ids": list(sorted(set(event_ids))),
-            "selections": {
-                player_id: selections[player_id] for player_id in sorted(selections)
-            },
-            "command_id": command_id,
-            "operator_label": operator_label,
-            "audit_reason": audit_reason,
-        }
-        request_fp = _fp(request)
-        existing = self.session.get(
-            WeekTournamentLockAuthorityModel,
-            (run_id, branch_id, week.ordinal),
-        )
-        if existing is not None:
-            loaded = self._load(existing)
-            if (
-                existing.command_id == command_id
-                and existing.request_fingerprint == request_fp
-                and loaded == authority
-            ):
-                return loaded
-            raise WeekTournamentLockConflict(
-                "Week Tournament Lock is already immutable for this week"
-            )
         self.session.add(
             WeekTournamentLockAuthorityModel(
                 run_id=run_id,
@@ -241,4 +272,7 @@ class WeekTournamentLockStore:
             )
         )
         self.session.flush()
-        return authority
+        return WeekTournamentLockCommit(
+            authority=authority,
+            exact_retry=False,
+        )

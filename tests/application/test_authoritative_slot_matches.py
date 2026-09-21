@@ -1278,9 +1278,11 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     )
 
     assert proposed["persisted"] is False
-    assert "not Match Day timing" in proposed["provenance"]
+    assert "match_day_schedule_hard_constraints.v1" in proposed["provenance"]
+    assert schedule.schema_version == "week_simulation_schedule.v2"
     assert schedule.week == week
-    assert len(schedule.slots) == 2
+    assert len(schedule.slots) == 6
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
 
     first_roots = {
         match.match_id
@@ -1292,12 +1294,16 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
         for match in second.main_draw_matches
         if match.round_number == 1
     }
-    assert set(schedule.slots[0].group_ids) == first_roots | second_roots
-    assert set(schedule.slots[1].group_ids) == {
+    day_one = [slot for slot in schedule.slots if slot.match_day_ordinal == 1]
+    day_two = [slot for slot in schedule.slots if slot.match_day_ordinal == 2]
+    assert {slot.group_ids[0] for slot in day_one} == first_roots | second_roots
+    assert [slot.match_order for slot in day_one] == [1, 2, 3, 4]
+    assert {slot.group_ids[0] for slot in day_two} == {
         match.match_id
         for match in (*first.main_draw_matches, *second.main_draw_matches)
         if match.round_number == 2
     }
+    assert [slot.match_order for slot in day_two] == [1, 2]
 
     preview = driver.preview_schedule(schedule)
     assert preview["schedule_fingerprint"] == proposed["schedule_fingerprint"]
@@ -1392,17 +1398,25 @@ def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
     driver, _, _, first, _ = _multi_driver_fixture(
         tmp_path / "proposal-conflict"
     )
+    roots = sorted(
+        (
+            match
+            for match in first.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
     plans = {
-        "conflict-a": SimulationMatchEventPlan(
-            group_id="conflict-a",
+        roots[0].match_id: SimulationMatchEventPlan(
+            group_id=roots[0].match_id,
             event_id=first.event_id,
-            match_id="conflict-a",
+            match_id=roots[0].match_id,
             participant_sources=("player:shared", "player:left"),
         ),
-        "conflict-b": SimulationMatchEventPlan(
-            group_id="conflict-b",
+        roots[1].match_id: SimulationMatchEventPlan(
+            group_id=roots[1].match_id,
             event_id=first.event_id,
-            match_id="conflict-b",
+            match_id=roots[1].match_id,
             participant_sources=("player:shared", "player:right"),
         ),
     }
@@ -1414,7 +1428,7 @@ def test_topological_schedule_proposal_fails_on_parallel_known_player_conflict(
 
     with pytest.raises(
         ValueError,
-        match="commitment/Week Tournament Lock authority must resolve",
+        match="multiple matches on the same day",
     ):
         driver.propose_topological_schedule(
             run_id="run",

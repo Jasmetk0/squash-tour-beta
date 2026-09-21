@@ -21,6 +21,9 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
+  inspectAuthoritativeMatchReconstruction: vi.fn(),
+  previewAuthoritativeMatchReconstruction: vi.fn(),
+  commitAuthoritativeMatchReconstruction: vi.fn(),
   saveAuthoritativeSimulation: vi.fn(),
   previewDerivedAuthoritativeWeekTransition: vi.fn(),
   confirmAuthoritativeWeekTransition: vi.fn(),
@@ -291,6 +294,93 @@ beforeEach(() => {
     schedule_fingerprint: proposal.schedule_fingerprint,
     adoption: 'adopted_topological_proposal'
   })
+  api.inspectAuthoritativeMatchReconstruction.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    expected_revision_id: 'revision-7',
+    position_fingerprint: 'a'.repeat(64),
+    slot_id: 'slot-1',
+    slot_start_fingerprint: '2'.repeat(64),
+    group_id: 'g1',
+    event_id: 'event-a',
+    match_id: 'match-g1',
+    player_a_id: 'P001',
+    player_b_id: 'P002'
+  })
+  api.previewAuthoritativeMatchReconstruction.mockResolvedValue({
+    schema_version: 'authoritative_match_reconstruction_preview.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    slot_id: 'slot-1',
+    slot_start_fingerprint: '2'.repeat(64),
+    group_id: 'g1',
+    event_id: 'event-a',
+    match_id: 'match-g1',
+    player_a_id: 'P001',
+    player_b_id: 'P002',
+    candidate_count_requested: 2,
+    candidate_count_found: 1,
+    attempted_scenarios: 3,
+    search_complete: false,
+    constraints: { winner_player_id: 'P001' },
+    candidates: [{
+      candidate_fingerprint: '3'.repeat(64),
+      attempt_ordinal: 3,
+      seed: 123,
+      result_fingerprint: '4'.repeat(64),
+      authoritative_input_fingerprint: '5'.repeat(64),
+      winner_player_id: 'P001',
+      player_a_id: 'P001',
+      player_b_id: 'P002',
+      sets_won: { P001: 3, P002: 1 },
+      game_scores: [
+        { player_a_points: 11, player_b_points: 7 },
+        { player_a_points: 8, player_b_points: 11 },
+        { player_a_points: 11, player_b_points: 9 },
+        { player_a_points: 11, player_b_points: 6 }
+      ],
+      match_elapsed_seconds: 2100,
+      detail: {
+        match_id: 'match-g1',
+        winner_player_id: 'P001',
+        loser_player_id: 'P002',
+        player_a_id: 'P001',
+        player_b_id: 'P002',
+        best_of: 5,
+        games_to: 11,
+        win_by: 2,
+        sets: [],
+        sets_won: { P001: 3, P002: 1 },
+        termination_reason: 'COMPLETED',
+        retired_player_id: null,
+        retired_at_set_start: null
+      }
+    }],
+    warnings: ['Natural deterministic search returned one candidate.'],
+    preview_fingerprint: '6'.repeat(64)
+  })
+  api.commitAuthoritativeMatchReconstruction.mockResolvedValue({
+    schema_version: 'authoritative_match_reconstruction_commit.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    group_id: 'g1',
+    match_id: 'match-g1',
+    candidate_fingerprint: '3'.repeat(64),
+    result_fingerprint: '4'.repeat(64),
+    preview_fingerprint: '6'.repeat(64),
+    operator_label: 'Commissioner',
+    audit_reason: 'Reviewed historical result',
+    authority_fingerprint: '7'.repeat(64),
+    position: {
+      ...position,
+      eligible_match_ids: ['g2'],
+      unresolved_group_ids: ['g2', 'g3'],
+      position_fingerprint: 'f'.repeat(64)
+    },
+    adoption: 'committed'
+  })
   api.simulateAuthoritativeNextMatch.mockResolvedValue({
     ...position,
     eligible_match_ids: ['g2'],
@@ -473,6 +563,73 @@ describe('AuthoritativeSimulationPanel', () => {
           expected_position_fingerprint: 'a'.repeat(64),
           expected_revision_id: 'revision-7',
           group_id: 'g2'
+        })
+      )
+    )
+  })
+
+  it('previews hard-constrained Match Reconstruction candidates and commits only the selected one', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    renderPanel()
+
+    await screen.findByText('Minimum Match Reconstruction')
+    await waitFor(() =>
+      expect(api.inspectAuthoritativeMatchReconstruction).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'g1'
+      )
+    )
+
+    await userEvent.clear(screen.getByLabelText('Reconstruction candidate count'))
+    await userEvent.type(screen.getByLabelText('Reconstruction candidate count'), '2')
+    await userEvent.type(screen.getByLabelText('Reconstruction winner player ID'), 'P001')
+    await userEvent.click(screen.getByRole('button', { name: 'Generate matching scenarios' }))
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeMatchReconstruction).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          expected_week: week,
+          expected_position_fingerprint: 'a'.repeat(64),
+          expected_revision_id: 'revision-7',
+          group_id: 'g1',
+          candidate_count: 2,
+          constraints: { winner_player_id: 'P001' }
+        }
+      )
+    )
+
+    expect(await screen.findByRole('list', { name: 'Match Reconstruction candidates' }))
+      .toHaveTextContent('Candidate 1: P001 · 3-1 · 11-7, 8-11, 11-9, 11-6')
+    await userEvent.type(screen.getByLabelText('Reconstruction operator'), 'Commissioner')
+    await userEvent.type(
+      screen.getByLabelText('Reconstruction audit reason'),
+      'Reviewed historical result'
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Select this reconstruction' }))
+
+    await waitFor(() =>
+      expect(api.commitAuthoritativeMatchReconstruction).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          command_id: expect.any(String),
+          expected_week: week,
+          expected_position_fingerprint: 'a'.repeat(64),
+          expected_revision_id: 'revision-7',
+          group_id: 'g1',
+          candidate_count: 2,
+          constraints: { winner_player_id: 'P001' },
+          expected_preview_fingerprint: '6'.repeat(64),
+          selected_candidate_fingerprint: '3'.repeat(64),
+          operator_label: 'Commissioner',
+          audit_reason: 'Reviewed historical result'
         })
       )
     )
@@ -887,9 +1044,16 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('requires explicit confirmation before finalizing 2049/50', async () => {
+    const finalWeek = { season_index: 49, week: 61 }
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      week: finalWeek,
+      schedule: { ...proposal.schedule, week: finalWeek },
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
-      current_week: { season_index: 49, week: 61 },
+      current_week: finalWeek,
       current_slot_kind: null,
       current_slot_id: null,
       slot_ordinal: null,
@@ -907,7 +1071,7 @@ describe('AuthoritativeSimulationPanel', () => {
       schema_version: 'authoritative_season_transition_preflight.v1',
       run_id: 'run-a',
       branch_id: 'branch-a',
-      completed_week: { season_index: 49, week: 61 },
+      completed_week: finalWeek,
       target_week: null,
       final_season: true,
       saved_revision_id: 'revision-7',

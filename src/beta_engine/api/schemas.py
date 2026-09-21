@@ -312,6 +312,25 @@ class RestoreSavedRevisionRequest(BaseModel):
     explicit_confirmation: bool
 
 
+class SavedRevisionRestorePreflightBlockerResponse(BaseModel):
+    code: str
+    message: str
+
+
+class SavedRevisionRestorePreflightResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    target_saved_revision_id: str
+    saved_head_revision_id: str
+    draft_version: int
+    current_viewer_branch_id: str
+    target_viewer_branch_id: str | None = None
+    can_restore: bool
+    blockers: list[SavedRevisionRestorePreflightBlockerResponse] = Field(
+        default_factory=list
+    )
+
+
 class SavedRevisionRestoreCheckpointResponse(BaseModel):
     checkpoint_id: str
     saved_revision_id: str

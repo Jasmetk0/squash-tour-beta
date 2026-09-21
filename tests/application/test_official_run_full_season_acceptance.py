@@ -35,13 +35,13 @@ AUDIT = {
 }
 
 
-def _custom_player(player_id: str, index: int) -> dict:
+def _custom_player(player_id: str, index: int, country_code: str) -> dict:
     ability = 72 + index
     potential = 84 + index
     return {
         "player_id": player_id,
         "name": f"Official Player {index + 1}",
-        "country_code": "USA",
+        "country_code": country_code,
         "birth_year": 1977 + index,
         "birth_year_week": 8 + index,
         "current_ability": ability,
@@ -238,11 +238,15 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     assert len(participant_ids) == 4
 
     with server:
+        status, countries = _request("GET", server.base_url + "/world/countries")
+        assert status == 200, countries
+        country_code = countries["countries"][0]["code"]
+
         for index, player_id in enumerate(participant_ids):
             status, created = _request(
                 "POST",
                 server.base_url + "/admin/players/custom",
-                _custom_player(player_id, index),
+                _custom_player(player_id, index, country_code),
             )
             assert status == 200, created
 

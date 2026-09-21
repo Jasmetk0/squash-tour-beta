@@ -617,14 +617,6 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
-    week_tournament_locks = session.scalars(
-        select(WeekTournamentLockAuthorityModel)
-        .where(
-            WeekTournamentLockAuthorityModel.run_id == run_id,
-            WeekTournamentLockAuthorityModel.branch_id == branch_id,
-        )
-        .order_by(WeekTournamentLockAuthorityModel.week_ordinal)
-    ).all()
     entry_fields = session.scalars(
         select(TournamentEntryFieldVersionModel)
         .where(
@@ -1148,6 +1140,14 @@ def _live_component_with_saved_shape(
             WeekSimulationScheduleModel.branch_id == branch_id,
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
+    ).all()
+    week_tournament_locks = session.scalars(
+        select(WeekTournamentLockAuthorityModel)
+        .where(
+            WeekTournamentLockAuthorityModel.run_id == run_id,
+            WeekTournamentLockAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(WeekTournamentLockAuthorityModel.week_ordinal)
     ).all()
     entry_fields = session.scalars(
         select(TournamentEntryFieldVersionModel)

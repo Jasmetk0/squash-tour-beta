@@ -4065,6 +4065,45 @@ class SimulationPersistenceRepository:
                 and branch.status == "active",
             }
 
+    def preview_run_prospect_source_save(
+        self, *, run_id: str, branch_id: str
+    ) -> dict:
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            live = capture_run_prospect_source_snapshot(session, run_id=run_id)
+            saved = load_saved_run_prospect_source(
+                state.saved_revision.payload,
+                run_id=run_id,
+            )
+            changed = (
+                live is not None
+                and (saved is None or saved.fingerprint != live.fingerprint)
+            )
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "run_prospect_source_fingerprint": (
+                    live.fingerprint if live is not None else None
+                ),
+                "prospect_count": len(live.records) if live is not None else 0,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not run.read_only
+                and not branch.read_only
+                and branch.status == "active",
+            }
+
     def save_viewer_branch_selection_atomically(
         self,
         *,
@@ -4076,6 +4115,7 @@ class SimulationPersistenceRepository:
         expected_ranking_fingerprint: str | None = None,
         expected_initial_world_fingerprint: str | None = None,
         expected_simulation_fingerprint: str | None = None,
+        expected_run_prospect_source_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
@@ -4083,6 +4123,7 @@ class SimulationPersistenceRepository:
             expected_ranking_fingerprint is not None
             or expected_initial_world_fingerprint is not None
             or expected_simulation_fingerprint is not None
+            or expected_run_prospect_source_fingerprint is not None
         )
         ranking_only = expected_ranking_fingerprint is not None
         revision_kind = (
@@ -4094,7 +4135,11 @@ class SimulationPersistenceRepository:
                 else (
                     "authoritative_simulation"
                     if expected_simulation_fingerprint
-                    else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                    else (
+                        "run_prospect_source"
+                        if expected_run_prospect_source_fingerprint
+                        else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                    )
                 )
             )
         )
@@ -4303,6 +4348,33 @@ class SimulationPersistenceRepository:
                         "kind": "authoritative_simulation",
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
+                    }
+                elif expected_run_prospect_source_fingerprint is not None:
+                    component = payload["content"].get(
+                        RUN_PROSPECT_SOURCE_COMPONENT_KEY
+                    )
+                    if (
+                        component is None
+                        or component["fingerprint"]
+                        != expected_run_prospect_source_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Run prospect source changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            RUN_PROSPECT_SOURCE_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Run prospect source is already saved"
+                        )
+                    summary = {
+                        "kind": "run_prospect_source",
+                        "summary": "Saved Run prospect source",
+                        "run_prospect_source_fingerprint": component["fingerprint"],
+                        "prospect_count": len(component["records"]),
                     }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(

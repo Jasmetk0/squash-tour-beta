@@ -112,6 +112,7 @@ from beta_engine.infrastructure.db.models import (
     SimulationEventGroupModel,
     SimulationSlotModel,
     TournamentDrawAuthorityModel,
+    TournamentEntryFieldVersionModel,
     WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.owned_tournament_sources import (
@@ -2208,6 +2209,55 @@ class AuthoritativeRunSimulationDriver:
         if not eligible_groups:
             raise ValueError("current slot has no unresolved eligible match")
         return eligible_groups
+
+    def _week_tournament_lock_event_ids(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> tuple[str, ...]:
+        has_fields = session.scalar(
+            select(TournamentEntryFieldVersionModel.event_id)
+            .where(
+                TournamentEntryFieldVersionModel.run_id == run_id,
+                TournamentEntryFieldVersionModel.branch_id == branch_id,
+            )
+            .limit(1)
+        )
+        if has_fields is None:
+            return ()
+
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        calendar = self.awards_service.calendar_service.get_calendar(
+            season=season
+        ).calendar
+        if calendar is None:
+            raise ValueError(
+                "Week Tournament Lock requires the season Calendar authority"
+            )
+        field_store = TournamentEntryFieldStore(session)
+        event_ids = []
+        for event in calendar.events:
+            start = event.start_season_week or event.season_week
+            end = event.end_season_week or start
+            if not start <= week.week <= end:
+                continue
+            if field_store.latest(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            ) is not None:
+                event_ids.append(event.event_id)
+        return tuple(sorted(event_ids))
+
+    @staticmethod
+    def _week_lock_field_command_id(command_id: str, event_id: str) -> str:
+        digest = hashlib.sha256(
+            f"{command_id}|{event_id}".encode()
+        ).hexdigest()[:24]
+        return f"week-lock-field:{digest}"
 
     def _empty_week_calendar_evidence(self, week: RankingWeek):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"

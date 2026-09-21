@@ -1686,6 +1686,118 @@ export type AssignWildcardsPayload = {
   }>
 }
 
+export type CanonicalWildCardSlotResolution = {
+  wildcard_index: number
+  original_player_id: string | null
+  active_player_id: string | null
+  source: 'original_wc' | 'reserve_wc' | 'unfilled'
+  reserve_ordinal: number | null
+  released_because_direct_acceptance: boolean
+}
+
+export type CanonicalWildCardAuthority = {
+  schema_version:
+    | 'tournament_wild_card_authority.v1'
+    | 'tournament_wild_card_authority.v2'
+    | 'tournament_wild_card_authority.v3'
+  run_id: string
+  branch_id: string
+  event_id: string
+  resolved_by_command_id: string
+  entry_field_fingerprint: string
+  field_sequence: number
+  decision_week: AuthoritativeRankingWeek | null
+  decision_slot_ordinal: number | null
+  selection_policy_id: string | null
+  operator_label: string | null
+  audit_reason: string | null
+  original_wild_card_player_ids: Array<string | null>
+  reserve_wild_card_player_ids: string[]
+  unavailable_player_ids: string[]
+  slots: CanonicalWildCardSlotResolution[]
+  adjusted_qualification_player_ids: string[]
+  adjusted_below_qualification_cut_player_ids: string[]
+}
+
+export type CanonicalDefinitiveWildCardAssignment = {
+  schema_version: 'definitive_wild_card_assignment_authority.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  player_id: string
+  wildcard_index: number
+  assignment_source: 'original_wc' | 'reserve_wc'
+  reserve_ordinal: number | null
+  assignment_week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  source_wild_card_command_id: string
+  source_wild_card_authority_fingerprint: string
+  source_entry_field_fingerprint: string
+  source_field_sequence: number
+  provenance: string
+}
+
+export type CanonicalWildCardState = {
+  schema_version: 'authoritative_wild_card_assignment_state.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  authority: CanonicalWildCardAuthority | null
+  definitive_assignments: CanonicalDefinitiveWildCardAssignment[]
+}
+
+export type CanonicalWildCardReviewPayload = {
+  command_id: string
+  original_wild_card_player_ids: Array<string | null>
+  reserve_wild_card_player_ids: string[]
+  unavailable_player_ids: string[]
+  operator_label: string
+  reason: string
+}
+
+export type CanonicalWildCardPreview = {
+  schema_version: 'authoritative_wild_card_assignment_preview.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  expected_revision_id: string
+  selection_policy_id: string
+  selection_policy_fingerprint: string
+  entry_field_fingerprint: string
+  field_sequence: number
+  authority: CanonicalWildCardAuthority
+  definitive_assignments: CanonicalDefinitiveWildCardAssignment[]
+  first_tour_entry_source_player_ids: string[]
+  persisted: boolean
+  proposal_fingerprint: string
+}
+
+export type CanonicalWildCardCommitPayload = CanonicalWildCardReviewPayload & {
+  expected_week: AuthoritativeRankingWeek
+  expected_revision_id: string
+  expected_decision_slot_ordinal: number
+  expected_proposal_fingerprint: string
+}
+
+export type CanonicalWildCardCommitResult = {
+  schema_version: 'authoritative_wild_card_assignment_commit.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  week: AuthoritativeRankingWeek
+  decision_slot_ordinal: number
+  proposal_fingerprint: string
+  authority: CanonicalWildCardAuthority
+  assignment_results: Array<{
+    assignment: CanonicalDefinitiveWildCardAssignment
+    first_tour_entry_trigger_fingerprint: string
+    assignment_is_first_tour_entry_source: boolean
+  }>
+  adoption: 'committed' | 'exact_retry'
+}
+
 export type MainBracketDiagnostic = {
   severity: 'warning'
   code: 'odd_main_entrant_count' | 'majority_first_round_byes' | 'large_main_draw_over_64'

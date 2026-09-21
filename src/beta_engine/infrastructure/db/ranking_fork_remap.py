@@ -9,13 +9,18 @@ archive authorities remains fail-closed until dedicated remap adapters exist.
 
 from __future__ import annotations
 
+import hashlib
 import json
 
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.application.ranking_week_command import RankingWeekCommand
+from beta_engine.application.ranking_tournament_ingestion import (
+    prepare_canonical_tournament_ranking_sources,
+)
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import calculate_official_ranking
 from beta_engine.domain.rankings.result_history import RankingResultVersion
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
@@ -31,12 +36,195 @@ class RankingForkRemapUnsupportedError(ValueError):
     """Raised when a ranking bundle is outside the supported fork-remap slice."""
 
 
+def _hash(value: object) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()
+    ).hexdigest()
+
+
+def _remap_point_awards(authority, *, target_branch_id: str, result_fingerprint: str):
+    awards = []
+    for award in authority.awards:
+        payload = {
+            "schema_version": (
+                "tournament_player_point_award_authority.v3"
+                if award.qualification_point_stage is not None
+                else (
+                    "tournament_player_point_award_authority.v2"
+                    if award.point_stage is not None
+                    else "tournament_player_point_award_authority.v1"
+                )
+            ),
+            "event_id": authority.event_id,
+            "seed": authority.seed,
+            "player_id": award.player_id,
+            "reached_stage": award.reached_stage,
+            "qualifier": award.qualifier,
+            "seed_number": award.seed_number,
+            "ranking_points_awarded": award.ranking_points_awarded,
+            "race_points_awarded": award.race_points_awarded,
+            "source_tournament_result_fingerprint": result_fingerprint,
+            "source_player_result_fingerprint": award.source_player_result_fingerprint,
+        }
+        if award.point_stage is not None:
+            payload["point_stage"] = award.point_stage
+        if award.qualification_point_stage is not None:
+            payload["qualification_point_stage"] = award.qualification_point_stage
+            payload["qualification_points_awarded"] = award.qualification_points_awarded
+        awards.append(
+            award.model_copy(update={"award_fingerprint": _hash(payload)})
+        )
+    return authority.__class__.model_validate_json(
+        authority.model_copy(
+            update={
+                "branch_id": target_branch_id,
+                "tournament_result_fingerprint": result_fingerprint,
+                "awards": tuple(awards),
+            }
+        ).model_dump_json()
+    )
+
+
+def _remap_prize_awards(authority, *, target_branch_id: str, result_fingerprint: str):
+    awards = []
+    for award in authority.awards:
+        award_fingerprint = _hash(
+            {
+                "schema_version": "tournament_player_prize_money_award_authority.v1",
+                "event_id": authority.event_id,
+                "player_id": award.player_id,
+                "reached_stage": award.reached_stage,
+                "payout_status": award.payout_status,
+                "amount": award.amount,
+                "currency": award.currency,
+                "source_tournament_result_fingerprint": result_fingerprint,
+                "source_player_result_fingerprint": award.source_player_result_fingerprint,
+                "edition_prize_money_config_fingerprint": authority.edition_prize_money_config_fingerprint,
+            }
+        )
+        awards.append(
+            award.model_copy(update={"award_fingerprint": award_fingerprint})
+        )
+    return authority.__class__.model_validate_json(
+        authority.model_copy(
+            update={
+                "branch_id": target_branch_id,
+                "tournament_result_fingerprint": result_fingerprint,
+                "awards": tuple(awards),
+            }
+        ).model_dump_json()
+    )
+
+
+def _remap_tournament_sources(
+    sources: tuple[OwnedTournamentRankingSource, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+) -> tuple[
+    tuple[OwnedTournamentRankingSource, ...],
+    dict[str, OwnedTournamentRankingSource],
+    dict[str, RankingResultVersion],
+    set[str],
+]:
+    remapped_sources: list[OwnedTournamentRankingSource] = []
+    by_edition: dict[str, OwnedTournamentRankingSource] = {}
+    result_version_map: dict[str, RankingResultVersion] = {}
+    tournament_editions: set[str] = set()
+
+    for source in sources:
+        binding = source.binding
+        if (binding.run_id, binding.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Owned tournament source scope does not match the source Branch"
+            )
+        if source.schema_version not in {
+            "owned_tournament_ranking_source.v4",
+            "owned_tournament_ranking_source.v5",
+        }:
+            raise RankingForkRemapUnsupportedError(
+                "Ranking fork supports only canonical v4/v5 tournament sources"
+            )
+        if source.canonical_result is None or source.canonical_awards is None:
+            raise RankingForkRemapUnsupportedError(
+                "Canonical tournament source authority bundle is incomplete"
+            )
+
+        target_result = source.canonical_result.__class__.model_validate_json(
+            source.canonical_result.model_copy(
+                update={"branch_id": target_branch_id}
+            ).model_dump_json()
+        )
+        target_awards = _remap_point_awards(
+            source.canonical_awards,
+            target_branch_id=target_branch_id,
+            result_fingerprint=target_result.fingerprint,
+        )
+        target_prize = None
+        if source.canonical_prize_awards is not None:
+            target_prize = _remap_prize_awards(
+                source.canonical_prize_awards,
+                target_branch_id=target_branch_id,
+                result_fingerprint=target_result.fingerprint,
+            )
+        target_binding = binding.model_copy(
+            update={
+                "branch_id": target_branch_id,
+                "expected_result_fingerprint": target_result.fingerprint,
+                "expected_award_fingerprint": target_awards.fingerprint,
+            }
+        )
+        target_source = OwnedTournamentRankingSource.model_validate_json(
+            source.model_copy(
+                update={
+                    "binding": target_binding,
+                    "canonical_result": target_result,
+                    "canonical_awards": target_awards,
+                    "canonical_prize_awards": target_prize,
+                }
+            ).model_dump_json()
+        )
+
+        original_versions = prepare_canonical_tournament_ranking_sources(
+            source.binding,
+            source.canonical_result,
+            source.canonical_awards,
+        )
+        target_versions = prepare_canonical_tournament_ranking_sources(
+            target_source.binding,
+            target_result,
+            target_awards,
+        )
+        if len(original_versions) != len(target_versions):
+            raise RankingForkRemapUnsupportedError(
+                "Canonical tournament ranking projection changed during remap"
+            )
+        for original_version, target_version in zip(
+            original_versions, target_versions, strict=True
+        ):
+            result_version_map[original_version.fingerprint] = target_version
+
+        tournament_editions.add(binding.edition_id)
+        by_edition[binding.edition_id] = target_source
+        remapped_sources.append(target_source)
+
+    return (
+        tuple(remapped_sources),
+        by_edition,
+        result_version_map,
+        tournament_editions,
+    )
+
+
 def _remap_result_sources(
     source_versions: tuple[RankingResultVersion, ...],
     *,
     run_id: str,
     source_branch_id: str,
     target_branch_id: str,
+    tournament_version_map: dict[str, RankingResultVersion] | None = None,
+    tournament_editions: set[str] | None = None,
 ) -> tuple[
     tuple[RankingResultVersion, ...],
     dict[str, RankingResultVersion],
@@ -44,6 +232,8 @@ def _remap_result_sources(
     remapped: list[RankingResultVersion] = []
     by_source_fingerprint: dict[str, RankingResultVersion] = {}
     latest_by_key: dict[tuple[str, str], RankingResultVersion] = {}
+    tournament_version_map = tournament_version_map or {}
+    tournament_editions = tournament_editions or set()
 
     for version in source_versions:
         if (version.run_id, version.branch_id) != (run_id, source_branch_id):
@@ -51,16 +241,29 @@ def _remap_result_sources(
                 "Ranking result source scope does not match the source Branch"
             )
         key = (version.result.edition_id, version.result.player_id)
-        previous = latest_by_key.get(key)
-        remapped_version = RankingResultVersion(
+        canonical_tournament_version = tournament_version_map.get(version.fingerprint)
+        if canonical_tournament_version is not None:
+            remapped_version = canonical_tournament_version
+            previous = latest_by_key.get(key)
+            if previous is not None or version.previous_fingerprint is not None:
+                raise RankingForkRemapUnsupportedError(
+                    "Canonical tournament source must be the first version for its player"
+                )
+        elif version.result.edition_id in tournament_editions:
+            raise RankingForkRemapUnsupportedError(
+                "Ranking fork does not yet support corrections over canonical tournament sources"
+            )
+        else:
+            previous = latest_by_key.get(key)
+            remapped_version = RankingResultVersion(
             run_id=run_id,
             branch_id=target_branch_id,
             effective_week=version.effective_week,
             result=version.result,
-            previous_fingerprint=(
-                previous.fingerprint if previous is not None else None
-            ),
-        )
+                previous_fingerprint=(
+                    previous.fingerprint if previous is not None else None
+                ),
+            )
         by_source_fingerprint[version.fingerprint] = remapped_version
         latest_by_key[key] = remapped_version
         remapped.append(remapped_version)

@@ -183,6 +183,7 @@ from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
     SUPPORTED_CONTENT_KEYS,
     active_transient_restore_blockers,
     missing_component_coverage,
+    missing_run_scoped_reference_coverage,
 )
 from beta_engine.infrastructure.db.run_prospect_source_state import (
     RUN_PROSPECT_SOURCE_COMPONENT_KEY,
@@ -3190,6 +3191,37 @@ class SimulationPersistenceRepository:
                     + ".",
                 )
 
+            missing_run_sources = missing_run_scoped_reference_coverage(
+                session,
+                run_id=run_id,
+                saved_content=current_content,
+            )
+            for coverage in missing_run_sources:
+                block(
+                    "uncaptured_run_reference_state",
+                    "Current Saved Revision does not capture live "
+                    + coverage.label
+                    + ".",
+                )
+
+            if RUN_PROSPECT_SOURCE_COMPONENT_KEY in current_content:
+                try:
+                    validate_live_run_prospect_source_against_saved(
+                        session,
+                        state.saved_revision.payload,
+                        run_id=run_id,
+                    )
+                except ValueError as exc:
+                    block("run_prospect_source_mismatch", str(exc))
+            try:
+                validate_live_run_prospect_source_against_saved(
+                    session,
+                    target_revision.payload,
+                    run_id=run_id,
+                )
+            except ValueError as exc:
+                block("target_run_prospect_source_mismatch", str(exc))
+
             for transient in active_transient_restore_blockers(
                 session,
                 run_id=run_id,
@@ -3391,6 +3423,18 @@ class SimulationPersistenceRepository:
                         + detail
                     )
 
+                missing_run_sources = missing_run_scoped_reference_coverage(
+                    session,
+                    run_id=run_id,
+                    saved_content=current_saved_content,
+                )
+                if missing_run_sources:
+                    labels = ", ".join(item.label for item in missing_run_sources)
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture "
+                        f"shared Run source state: {labels}"
+                    )
+
                 transient_blockers = active_transient_restore_blockers(
                     session,
                     run_id=run_id,
@@ -3437,6 +3481,23 @@ class SimulationPersistenceRepository:
                         "restore is blocked because the Saved Revision does not yet "
                         "capture the complete sporting or legacy-backed Run state"
                     )
+
+                try:
+                    if RUN_PROSPECT_SOURCE_COMPONENT_KEY in current_content:
+                        validate_live_run_prospect_source_against_saved(
+                            session,
+                            state.saved_revision.payload,
+                            run_id=run_id,
+                        )
+                    validate_live_run_prospect_source_against_saved(
+                        session,
+                        target_revision.payload,
+                        run_id=run_id,
+                    )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        f"Cannot restore Run prospect source evidence: {exc}"
+                    ) from exc
 
                 try:
                     restored_viewer_branch_id = saved_viewer_branch_id(

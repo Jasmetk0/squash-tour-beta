@@ -54,9 +54,11 @@ Saved Revisions capture entry-decision slots before application-validation resul
 6. first Tour-entry triggers;
 7. later sporting / match-slot state.
 
-Before restore, both current and target Saved Revisions are checked for collisions
-between the entry-slot component and the match-slot component. A historical snapshot
-that claims the same global position for both kinds fails closed.
+Before restore, both current and target Saved Revisions are checked across all three
+currently separate global-slot owners: Entry decisions, chronology-aware WC decisions
+and match slots. A historical snapshot that claims the same Run/Branch/week/ordinal for
+more than one kind fails closed. Historical WC v1 authorities carry no global slot and
+therefore remain outside this chronology without being rewritten.
 
 ## Persistence identity
 
@@ -74,4 +76,4 @@ Exact retry is idempotent. A different authority for the same global position co
 This is deliberately an interoperability bridge, not the final generic Simulation Slot
 schema. A later refactor may unify entry, match, announcement, commitment and other slot
 event kinds under one generalized slot plan. Until that exists, this slice prevents the
-separate entry and match persistence paths from diverging chronologically.
+separate Entry, WC-decision and match persistence paths from diverging chronologically.

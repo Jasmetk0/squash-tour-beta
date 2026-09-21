@@ -170,11 +170,19 @@ def install_ranking_revision_state(
             or state.tournament_ranking_snapshot_authorities
             or state.season_closing_rankings
             or state.authoritative_transition_state is not None
-            or len(state.entries) != 1
+            or not state.entries
             or state.entries[0].snapshot.week.ordinal != 0
+            or any(
+                entry.snapshot.week.ordinal != index
+                or entry.inputs.results
+                or entry.inputs.disciplinary_zeros
+                or entry.inputs.zeros_from_history
+                or len(entry.receipts) != 1
+                for index, entry in enumerate(state.entries)
+            )
         ):
             raise ValueError(
-                "Trusted fork install supports bootstrap-only ranking state"
+                "Trusted fork install supports only complete source-free ranking history"
             )
         row_models = (
             OfficialRankingCandidateModel,

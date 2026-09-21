@@ -6,8 +6,10 @@ A Branch created from a ranking-bearing Saved Revision cannot safely share that 
 as its own head because Official Ranking snapshots, command receipts and fingerprints are
 bound to the source Branch identity.
 
-This slice removes the blanket rejection for the first safely reconstructible case:
-**bootstrap-only Official Ranking history**.
+This adapter now supports the safely reconstructible **source-free Official Ranking
+history** case: Week 1 bootstrap followed by any consecutive sequence of weekly ranking
+commands whose frozen inputs contain no tournament results, corrections, disciplinary
+zeros, transition authority, InitialWorld binding, or publication/archive authority.
 
 ## Supported source
 
@@ -16,13 +18,14 @@ The source Saved Revision may contain:
 - `ranking_preparation`;
 - optional shared Run-scoped `run_prospect_source` evidence.
 
-The ranking bundle must contain exactly one Week-1 candidate produced by one stored
-`initial_ranking.v1` command. It must have no tournament result sources, zero history,
-transition authorities, Tournament Ranking Snapshot authorities, Season Closing
-Ranking archives, authoritative Week/Season Transition state, or InitialWorld binding.
+The ranking bundle must start with one Week-1 candidate produced by one stored
+`initial_ranking.v1` command. Every later candidate must be the immediately following
+week and must have exactly one stored canonical `RankingWeekCommand` receipt.
 
-The stored bootstrap command must exactly match the frozen manifest, policy and target
-week. This is verified before any write.
+Every command is revalidated against its frozen manifest, target week, policy and roster.
+The chain must contain no tournament result sources, corrections, zero history,
+transition authorities, Tournament Ranking Snapshot authorities, Season Closing Ranking
+archives, authoritative Week/Season Transition state, or InitialWorld binding.
 
 ## Materialized fork root
 
@@ -32,9 +35,10 @@ head directly at the source revision.
 Instead, in one transaction it:
 
 1. validates the source revision and lineage;
-2. rebuilds the bootstrap command for the target Branch identity;
-3. recalculates the Week-1 Official Ranking snapshot and request fingerprint;
-4. installs the remapped ranking state in target-Branch ranking storage;
+2. rebuilds the Week-1 bootstrap and every later source-free weekly command for the
+   target Branch identity;
+3. recalculates the complete Official Ranking fingerprint chain in order;
+4. installs the remapped multi-week ranking state in target-Branch ranking storage;
 5. creates a new target-owned `branch_fork_materialized` Saved Revision whose parent
    is the selected source Saved Revision;
 6. bases the new clean Working Draft on that new fork-root revision.
@@ -50,7 +54,7 @@ ranking history.
 
 ## Fail-closed boundaries
 
-Multi-week ranking history and any ranking bundle containing historical result sources,
+Any ranking bundle containing historical result sources,
 disciplinary-zero history, tournament sources, transition authorities, Week/Season
 Transition publication state, Season Closing Ranking, InitialWorld-bound bootstrap
 evidence, or other Branch-owned Saved Revision components remains rejected.

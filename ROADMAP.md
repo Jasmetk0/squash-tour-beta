@@ -856,3 +856,15 @@ remains unchanged. Full ranking-bearing fork support remains open for multi-week
 histories, tournament/zero/transition authorities, InitialWorld-linked state and
 Season Closing evidence; each requires an explicit identity-remap adapter rather than
 generic payload rewriting.
+
+
+### Ranking identity remapping: source-free multi-week chain
+
+The ranking-bearing fork adapter now reconstructs a complete consecutive source-free
+Week 1..N Official Ranking chain, not only its bootstrap root. Every stored command and
+manifest is revalidated, Branch-bound request/snapshot fingerprints are recalculated,
+and the target materialized fork root owns the resulting independent ranking lineage.
+
+Remaining adapters are the genuinely source-bearing cases: tournament/correction result
+history, disciplinary-zero history, transition/publication authorities, InitialWorld-
+linked ranking and Season Closing evidence.

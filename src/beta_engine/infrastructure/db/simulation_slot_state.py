@@ -697,6 +697,26 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({row.event_id for row in draw_revisions}):
             revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    week_tournament_locks = session.scalars(
+        select(WeekTournamentLockAuthorityModel)
+        .where(
+            WeekTournamentLockAuthorityModel.run_id == run_id,
+            WeekTournamentLockAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(WeekTournamentLockAuthorityModel.week_ordinal)
+    ).all()
+    if week_tournament_locks:
+        from beta_engine.infrastructure.db.week_tournament_lock import (
+            WeekTournamentLockStore,
+        )
+
+        lock_store = WeekTournamentLockStore(session)
+        for row in week_tournament_locks:
+            lock_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=row.week_ordinal,
+            )
     draw_process_authorities = session.scalars(
         select(TournamentDrawProcessAuthorityModel)
         .where(
@@ -725,6 +745,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or draw_authorities
         or draw_process_authorities
         or draw_revisions
+        or week_tournament_locks
     ):
         payload["content"][COMPONENT_KEY] = _component(
             slots,
@@ -744,6 +765,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_draw_process_authorities=bool(draw_process_authorities),
             draw_revisions=draw_revisions,
             include_draw_revisions=bool(draw_revisions),
+            week_tournament_locks=week_tournament_locks,
+            include_week_tournament_locks=bool(week_tournament_locks),
         )
 
 
@@ -762,6 +785,7 @@ def _load(payload, *, run_id, branch_id):
         "draw_authorities",
         "draw_process_authorities",
         "draw_revisions",
+        "week_tournament_locks",
     }
     if not required <= set(component) or set(component) - required - optional:
         raise ValueError("Invalid Saved Revision simulation-slot component")
@@ -813,6 +837,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("draw_revisions", [])
         ],
         include_draw_revisions="draw_revisions" in component,
+        week_tournament_locks=[
+            WeekTournamentLockAuthorityModel(**value)
+            for value in component.get("week_tournament_locks", [])
+        ],
+        include_week_tournament_locks="week_tournament_locks" in component,
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
@@ -832,6 +861,7 @@ def _load(payload, *, run_id, branch_id):
                 "draw_authorities",
                 "draw_process_authorities",
                 "draw_revisions",
+                "week_tournament_locks",
             }
         )
         for value in component[kind]

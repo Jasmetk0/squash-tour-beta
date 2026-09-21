@@ -3554,6 +3554,15 @@ class AuthoritativeRunSimulationDriver:
         current = self._position(
             session, run_id, branch_id, allow_missing_schedule=True
         )
+        if "week_tournament_lock_missing" in current.transition_blockers:
+            raise ValueError(
+                "Week Tournament Lock must resolve overlapping accepted players "
+                "before Week Schedule proposal"
+            )
+        if "week_tournament_lock_conflict_after_lock" in current.transition_blockers:
+            raise ValueError(
+                "Week Tournament Lock state is inconsistent with current Entry Fields"
+            )
         packages = self._packages(
             week,
             session=session,
@@ -4142,6 +4151,26 @@ class AuthoritativeRunSimulationDriver:
         wc_slot_ordinals = self._wc_slot_ordinals(
             session, run_id, branch_id, week
         )
+        lock_event_ids = self._week_tournament_lock_event_ids(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if lock_event_ids:
+            _, current_lock_conflicts = resolve_week_tournament_lock_evidence(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_ids=lock_event_ids,
+            )
+        else:
+            current_lock_conflicts = {}
+        week_tournament_lock = WeekTournamentLockStore(session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week.ordinal,
+        )
         entry_validation_rows = tuple(
             session.scalars(
                 select(ResolvedApplicationValidationSlotModel)
@@ -4302,6 +4331,10 @@ class AuthoritativeRunSimulationDriver:
         blockers = []
         if unresolved_entry_ordinals:
             blockers.append("entry_validation_pending")
+        if current_lock_conflicts and week_tournament_lock is None:
+            blockers.append("week_tournament_lock_missing")
+        elif current_lock_conflicts and week_tournament_lock is not None:
+            blockers.append("week_tournament_lock_conflict_after_lock")
         if explicit_empty_context is None and schedule is None and (
             bool(entry_slot_ordinals)
             or bool(wc_slot_ordinals)
@@ -4359,6 +4392,15 @@ class AuthoritativeRunSimulationDriver:
             "schedule": schedule.fingerprint if schedule else None,
             "entry_slot_ordinals": list(entry_slot_ordinals),
             "wc_slot_ordinals": list(wc_slot_ordinals),
+            "week_tournament_lock": (
+                week_tournament_lock.fingerprint
+                if week_tournament_lock is not None
+                else None
+            ),
+            "week_tournament_lock_conflicts": [
+                [player_id, list(current_lock_conflicts[player_id])]
+                for player_id in sorted(current_lock_conflicts)
+            ],
             "entry_validation_slots": [
                 (row.decision_slot_ordinal, row.fingerprint)
                 for row in entry_validation_rows

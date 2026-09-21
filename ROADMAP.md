@@ -105,7 +105,7 @@ Consider an integration checkpoint after 5–10 significant PRs or a major subsy
 - Model each week as a variable chronological sequence of **Simulation Slots**.
 - Events in the same slot use one common pre-slot snapshot and must not become order-dependent.
 - **Implemented Match Day foundation:** automatically derived tournament schedules now use `week_simulation_schedule.v2`; each competitive match gets its own global slot plus immutable Match Day / within-day order metadata, so same-day tournament matches execute sequentially and later matches see current sporting state. Historical v1 schedules remain compatible.
-- Keep the current V2 scheduler deliberately hard-constraint-only: Qualification-before-Main, feeder on an earlier day, directly-known player max one match/day, deterministic order and Entry/WC global-slot reservations. Multi-week Round Schedule spans, courts and travel/rest/carryover/fairness optimization remain follow-ups.
+- Keep the current V2 scheduler deliberately hard-constraint-only: Qualification-before-Main, feeder on an earlier day, directly-known player max one match/day, deterministic order and Entry/WC global-slot reservations. Multi-week Round Schedule spans, courts and travel/rest/carryover/fairness optimization remain follow-ups. See `docs/MATCH_DAY_SCHEDULE_V1.md`.
 - Support `Simulate Next Slot` and split `Simulate Next Match` semantics.
 - Implement **Season Transition** as the Week 61 → Week 1 special boundary with atomic seasonal-policy activation, scoped resets and a lightweight Season Closure Marker.
 

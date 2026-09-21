@@ -12,11 +12,17 @@ from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.official_ranking_transition import RankingTransitionContext
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.run_branch_creation_service import RunBranchCreationService
-from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
+from beta_engine.domain.rankings.official import (
+    DisciplinaryZero,
+    OfficialRankingPlayer,
+    OfficialRankingPolicy,
+    RankingWeek,
+)
 from beta_engine.infrastructure.db import WorkingDraftConflictError, SavedRevisionBranchForkConflictError, SavedRevisionHistoryConflictError
 from beta_engine.infrastructure.db.models import BranchRevisionAuditEventModel, BranchSavedRevisionModel, OfficialRankingCandidateModel
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 from beta_engine.infrastructure.db.saved_revision_rankings import load_saved_ranking_component
+from beta_engine.domain.rankings.zero_history import RankingZeroVersion
 
 
 @pytest.fixture
@@ -340,6 +346,170 @@ def test_source_free_multiweek_ranking_fork_rebuilds_full_lineage_and_diverges(p
     assert reloaded.get_branch_revision_state(
         branch_id="branch-four"
     ).saved_head_revision_id == "revision-branch-four-week-four"
+
+
+@pytest.mark.pr_critical
+def test_zero_bearing_ranking_fork_remaps_zero_chain_and_can_diverge(tmp_path):
+    path = tmp_path / "saved-ranking-zero-fork.db"
+    repo = _repository(f"sqlite:///{path}")
+    _run_with_saved_viewer_change(repo)
+
+    week_one = RankingWeek(season_index=0, week=1)
+    week_two = RankingWeek(season_index=0, week=2)
+    player = OfficialRankingPlayer(
+        player_id="player-a",
+        tie_break_token="token-a",
+        tour_entry_week=week_one,
+    )
+    source_zero = RankingZeroVersion(
+        effective_week=week_one,
+        previous_fingerprint=None,
+        zero=DisciplinaryZero(
+            zero_id="zero-a",
+            run_id="run-one",
+            branch_id="branch-one",
+            player_id="player-a",
+            source_fingerprint="decision-one",
+            effective_week=week_one,
+            duration_weeks=3,
+        ),
+    )
+
+    runner = RankingWeekCommandRunner(repo._session_factory)
+    runner.execute(
+        RankingBootstrapCommand(
+            command_id="bootstrap-zero",
+            run_id="run-one",
+            branch_id="branch-one",
+            policy=OfficialRankingPolicy(policy_id="policy"),
+            players=(player,),
+            discipline="stored_zeros",
+            zero_versions=(source_zero,),
+        )
+    )
+
+    source_preview = repo.preview_ranking_save(
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    source_saved = RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory("revision-zero-source", "audit-zero-source"),
+    ).save_ranking(
+        run_id="run-one",
+        branch_id="branch-one",
+        expected_draft_version=source_preview["draft_version"],
+        expected_ranking_fingerprint=source_preview["ranking_fingerprint"],
+    )
+
+    source_state = load_saved_ranking_component(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_state is not None
+    assert len(source_state.zero_sources) == 1
+
+    created = RunBranchCreationService(
+        repository=repo,
+        id_factory=_id_factory(
+            "branch-zero",
+            "draft-zero",
+            "revision-zero-fork-root",
+        ),
+    ).create_from_saved_revision(
+        run_id="run-one",
+        source_branch_id="branch-one",
+        source_saved_revision_id=source_saved.saved_revision.revision_id,
+        display_name="Zero Ranking Fork",
+    )
+    assert created.saved_head_revision_id == "revision-zero-fork-root"
+
+    fork_root = repo.get_branch_saved_revision(
+        revision_id="revision-zero-fork-root"
+    )
+    assert fork_root is not None
+    target_state = load_saved_ranking_component(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-zero",
+    )
+    assert target_state is not None
+    assert len(target_state.zero_sources) == 1
+    target_zero = target_state.zero_sources[0]
+    assert target_zero.zero.branch_id == "branch-zero"
+    assert target_zero.fingerprint != source_zero.fingerprint
+    assert target_state.entries[0].inputs.zeros_from_history is True
+    assert (
+        target_state.entries[0].inputs.disciplinary_zeros[0].branch_id
+        == "branch-zero"
+    )
+
+    target_zero_correction = RankingZeroVersion(
+        effective_week=week_two,
+        previous_fingerprint=target_zero.fingerprint,
+        zero=target_zero.zero.model_copy(
+            update={
+                "source_fingerprint": "decision-two",
+                "duration_weeks": 1,
+            }
+        ),
+    )
+    target_runner = RankingWeekCommandRunner(repo._session_factory)
+    target_runner.execute(
+        RankingWeekCommand(
+            command_id="target-zero-week-two",
+            tournaments=(),
+            zero_versions=(target_zero_correction,),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-zero",
+                completed_week=week_one,
+                target_week=week_two,
+                policy=OfficialRankingPolicy(policy_id="policy"),
+                players=(player,),
+                discipline="stored_zeros",
+            ),
+        )
+    )
+    target_preview = repo.preview_ranking_save(
+        run_id="run-one",
+        branch_id="branch-zero",
+    )
+    target_saved = RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory(
+            "revision-zero-target-week-two",
+            "audit-zero-target",
+        ),
+    ).save_ranking(
+        run_id="run-one",
+        branch_id="branch-zero",
+        expected_draft_version=target_preview["draft_version"],
+        expected_ranking_fingerprint=target_preview["ranking_fingerprint"],
+    )
+    target_after = load_saved_ranking_component(
+        target_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-zero",
+    )
+    assert target_after is not None
+    assert len(target_after.zero_sources) == 2
+
+    source_after = load_saved_ranking_component(
+        repo.get_branch_saved_revision(
+            revision_id=source_saved.saved_revision.revision_id
+        ).payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_after is not None
+    assert len(source_after.zero_sources) == 1
+
+    reloaded = _repository(f"sqlite:///{path}")
+    assert reloaded.get_branch_revision_state(
+        branch_id="branch-zero"
+    ).saved_head_revision_id == "revision-zero-target-week-two"
 
 
 @pytest.mark.parametrize("damage", ["hash", "scope", "shape"])

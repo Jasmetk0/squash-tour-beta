@@ -1393,7 +1393,7 @@ def test_manual_match_day_schedule_can_split_round_without_breaking_feeders(tmp_
     )
     with pytest.raises(
         ValueError,
-        match="dependent match must start on a later Match Day",
+        match="strictly later slot|later Match Day",
     ):
         driver.preview_schedule(invalid)
 

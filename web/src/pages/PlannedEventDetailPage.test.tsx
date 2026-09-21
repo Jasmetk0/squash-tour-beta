@@ -1059,24 +1059,20 @@ describe('PlannedEventDetailPage', () => {
     expect(api.applyEventLateReplacement).not.toHaveBeenCalled()
   })
 
-  it('assigns wildcard using selected candidate player instead of manual id typing', async () => {
+  it('retires legacy wildcard controls while preserving read-only history', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
     renderAt('/runs/run-a/calendar/E1')
 
-    const candidateSelect = await screen.findByLabelText('Candidate player')
-    const slotSelect = screen.getByLabelText('Slot')
-    fireEvent.change(slotSelect, { target: { value: '1' } })
-    fireEvent.change(candidateSelect, { target: { value: 'P2' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Assign wildcard' }))
+    expect(await screen.findByRole('heading', { name: 'Canonical WC/RWC review' })).toBeInTheDocument()
+    expect(screen.queryByLabelText('Candidate player')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Slot')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Assign wildcard' })).not.toBeInTheDocument()
+    expect(api.getEventWildcards).not.toHaveBeenCalled()
+    expect(api.getEventWildcardCandidates).not.toHaveBeenCalled()
+    expect(api.assignEventWildcards).not.toHaveBeenCalled()
 
-    await waitFor(() =>
-      expect(api.assignEventWildcards).toHaveBeenCalledWith('run-a', 'E1', {
-        assignments: [{ slot_index: 1, player_id: 'P2' }]
-      })
-    )
-    await waitFor(() => {
-      expect(api.getEventWildcardActions.mock.calls.length).toBeGreaterThan(1)
-      expect(api.getEventLateReplacementActions.mock.calls.length).toBeGreaterThan(1)
-    })
+    expect(await screen.findByRole('heading', { name: 'Wildcard action history' })).toBeInTheDocument()
+    expect(screen.getByText(/#1 · assign_wildcards/)).toBeInTheDocument()
   })
 
   it('renders wildcard action history in append-only sequence order', async () => {

@@ -1,14 +1,18 @@
 name: Full Test Suite
 
-# Intentionally manual while pre-alpha is still being assembled. The complete
-# backend/frontend regression gate is re-enabled as part of the final pre-alpha
-# acceptance pass, instead of running after every merge or every night.
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - buuk
+  schedule:
+    - cron: '0 5 * * *'
 
+# Rapid merges to buuk supersede older push runs. Manual and scheduled runs use
+# their unique run IDs, so they neither cancel one another nor a push run.
 concurrency:
-  group: full-tests-${{ github.run_id }}
-  cancel-in-progress: false
+  group: full-tests-${{ github.event_name == 'push' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'push' }}
 
 jobs:
   backend-full:

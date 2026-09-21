@@ -56,7 +56,9 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingWeekState,
 )
 from beta_engine.domain.rankings.official import (
+    OfficialRankingPlayer,
     OfficialRankingPolicy,
+    OfficialRankingResult,
     RankingWeek,
     calculate_official_ranking,
 )
@@ -4346,6 +4348,492 @@ def test_pre_q_replacement_source_retargets_every_branch_owned_binding():
     assert target.replacement_cutoff_authority.status == "replacement_open"
     assert target.selected_player_id == source.selected_player_id
     assert target.fingerprint != source.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
+    player_ids = ("A", "B", "C", "D", "E", "F", "G")
+    session = session_at(
+        tmp_path / "real-q-ll-fork-restore.sqlite",
+        player_ids,
+        WEEK,
+    )
+    session.add(
+        RunContainerModel(
+            run_id="run",
+            display_name="Real Q LL fork restore",
+            timeline_start_season=2000,
+            timeline_end_season=2049,
+        )
+    )
+    session.add(
+        RunBranchModel(
+            run_id="run",
+            branch_id="branch",
+            display_name="Source",
+        )
+    )
+    session.flush()
+
+    completed = RankingWeek(season_index=0, week=1)
+    published = RankingWeek(season_index=0, week=2)
+    ranking_week = RankingWeek(season_index=0, week=3)
+    ranking_players = tuple(
+        OfficialRankingPlayer(
+            player_id=player_id,
+            tie_break_token=f"rank-{player_id}",
+            tour_entry_week=completed,
+        )
+        for player_id in player_ids
+    )
+    ranking_results = tuple(
+        OfficialRankingResult(
+            edition_id=f"prior-{player_id}",
+            player_id=player_id,
+            source_fingerprint=f"source-{player_id}",
+            completed_week=completed,
+            first_publication_week=published,
+            main_points=(len(player_ids) - index) * 10,
+        )
+        for index, player_id in enumerate(player_ids)
+    )
+    source_snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=ranking_week,
+        policy=OfficialRankingPolicy(policy_id="real-q-ll-ranking"),
+        players=ranking_players,
+        results=ranking_results,
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=ranking_week.ordinal,
+            snapshot_fingerprint=source_snapshot.fingerprint,
+            payload_json=source_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    source_ranking = TournamentRankingSnapshotAuthorityStore(session).adopt(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        ranking_week=ranking_week,
+        command_id="real-q-ll-adopt-ranking",
+    )
+
+    applications = tuple(
+        TournamentEntryApplication(
+            application_id=f"real-q-ll-{player_id}",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-real-q-ll",
+            player_id=player_id,
+            entry_window=(
+                "main" if player_id in {"A", "C", "D"} else "qualification"
+            ),
+            decision_slot_ordinal=10,
+            nr_tie_break_token=f"entry-{player_id}",
+        )
+        for player_id in player_ids
+    )
+    field = TournamentEntryFieldResolver.build_initial(
+        authority=source_ranking,
+        applications=applications,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            qualification_draw_size=4,
+            qualifier_spots=1,
+        ),
+    )
+    apps_fp = _applications_fingerprint(applications)
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-real-q-ll",
+            sequence=1,
+            command_id="real-q-ll-field",
+            request_fingerprint=entry_request_fingerprint(
+                {
+                    "mode": "initial",
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "event_id": "event-real-q-ll",
+                    "authority_fingerprint": source_ranking.fingerprint,
+                    "applications_fingerprint": apps_fp,
+                    "capacity": field.capacity.model_dump(mode="json"),
+                }
+            ),
+            field_fingerprint=field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=source_ranking.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(applications),
+            payload_json=field.model_dump_json(),
+        )
+    )
+    session.flush()
+
+    source_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-input",
+        draw_seed=771122,
+        main_seed_count=1,
+        qualification_seed_count=1,
+    )
+    assert len(source_input.direct_main_player_ids) == 3
+    assert len(source_input.qualification_player_ids) == 4
+
+    source_draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+
+    q = source_draw.qualification_brackets[0]
+    q_slots = {slot.slot_index: slot.player_id for slot in q.slots}
+    q_round_one = tuple(
+        sorted(
+            (node for node in q.nodes if node.round_number == 1),
+            key=lambda node: node.round_sequence,
+        )
+    )
+    assert len(q_round_one) == 2
+    q_final = max(q.nodes, key=lambda node: (node.round_number, node.round_sequence))
+
+    executor = AuthoritativeSlotMatchExecutor(session)
+    round_one_events = []
+    round_one_players = {}
+    for node in q_round_one:
+        top = q_slots[int(node.source_top.removeprefix("slot:"))]
+        bottom = q_slots[int(node.source_bottom.removeprefix("slot:"))]
+        assert top is not None and bottom is not None
+        round_one_players[node.node_id] = (top, bottom)
+        round_one_events.append(
+            SimulationMatchEventPlan(
+                group_id=node.node_id,
+                event_id="event-real-q-ll",
+                match_id=node.node_id,
+                direct_player_ids=(top, bottom),
+            )
+        )
+    q_r1_plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="real-q-r1",
+        ordinal=1,
+        group_ids=tuple(node.node_id for node in q_round_one),
+        match_events=tuple(round_one_events),
+    )
+    q_semis = {}
+    for index, node in enumerate(q_round_one, start=1):
+        top, bottom = round_one_players[node.node_id]
+        q_semis[node.node_id] = executor.execute_match_group(
+            run_id="run",
+            branch_id="branch",
+            week=WEEK,
+            slot_id="real-q-r1",
+            group_id=node.node_id,
+            event_id="event-real-q-ll",
+            match_id=node.node_id,
+            player_a_id=top,
+            player_b_id=bottom,
+            seed=772000 + index,
+            expected_slot_start_fingerprint=q_r1_plan.slot_start_fingerprint,
+        )
+    session.commit()
+
+    semi_winners = tuple(
+        q_semis[node.node_id].result.winner_player_id
+        for node in q_round_one
+    )
+    q_final_plan = executor.create_slot(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="real-q-final",
+        ordinal=2,
+        group_ids=(q_final.node_id,),
+        dependency_ids=tuple(node.node_id for node in q_round_one),
+        match_events=(
+            SimulationMatchEventPlan(
+                group_id=q_final.node_id,
+                event_id="event-real-q-ll",
+                match_id=q_final.node_id,
+                feeder_group_ids=tuple(node.node_id for node in q_round_one),
+            ),
+        ),
+    )
+    q_final_result = executor.execute_match_group(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        slot_id="real-q-final",
+        group_id=q_final.node_id,
+        event_id="event-real-q-ll",
+        match_id=q_final.node_id,
+        player_a_id=semi_winners[0],
+        player_b_id=semi_winners[1],
+        seed=773000,
+        expected_slot_start_fingerprint=q_final_plan.slot_start_fingerprint,
+    )
+    session.commit()
+
+    source_q_rows = session.scalars(
+        select(SimulationEventGroupModel)
+        .where(
+            SimulationEventGroupModel.run_id == "run",
+            SimulationEventGroupModel.branch_id == "branch",
+            SimulationEventGroupModel.event_id == "event-real-q-ll",
+        )
+        .order_by(SimulationEventGroupModel.match_id)
+    ).all()
+    assert len(source_q_rows) == 3
+    source_q_result_fingerprints = {
+        row.match_id: row.result_fingerprint for row in source_q_rows
+    }
+    assert source_q_result_fingerprints[q_final.node_id] == (
+        q_final_result.result_fingerprint
+    )
+
+    source_store = TournamentDrawRevisionStore(session)
+    first_direct = source_input.direct_main_player_ids[0]
+    second_direct = source_input.direct_main_player_ids[1]
+    source_vacancy = source_store.draw_frozen_lucky_loser_vacancy(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-vacancy-1",
+        withdrawn_player_id=first_direct,
+        main_process_window_ordinal=3,
+    )
+    source_fill = source_store.fill_next_frozen_lucky_loser(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-fill-1",
+        main_process_window_ordinal=3,
+    )
+    assert source_vacancy.repair_kind == "lucky_loser_vacancy"
+    assert source_fill.repair_kind == "lucky_loser_fill"
+    source_fill_authority = source_fill.lucky_loser_fill_authority
+    assert source_fill_authority is not None
+    assert source_fill_authority.order_authority.candidates
+    assert (
+        source_fill_authority.order_authority.qualification_terminal_result_fingerprints
+        == (source_q_result_fingerprints[q_final.node_id],)
+    )
+
+    source_payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    session.add(
+        RunBranchModel(
+            run_id="run",
+            branch_id="target",
+            display_name="Target",
+            forked_from_branch_id="branch",
+        )
+    )
+    target_snapshot = source_snapshot.model_copy(update={"branch_id": "target"})
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="target",
+            week_ordinal=ranking_week.ordinal,
+            snapshot_fingerprint=target_snapshot.fingerprint,
+            payload_json=target_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    target_ranking = TournamentRankingSnapshotAuthorityStore(session).adopt(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+        ranking_week=ranking_week,
+        command_id="real-q-ll-adopt-ranking",
+    )
+
+    remapped = remap_coupled_player_slot_history(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+        tournament_ranking_authority_map={
+            source_ranking.fingerprint: target_ranking,
+        },
+    )
+    assert remapped is not None
+    assert len(remapped.simulation_component["draw_revisions"]) == 2
+
+    target_q_result_fingerprints = {
+        source_match_id: remapped.result_fingerprints[source_result]
+        for source_match_id, source_result in source_q_result_fingerprints.items()
+    }
+    assert all(
+        target_q_result_fingerprints[match_id]
+        != source_q_result_fingerprints[match_id]
+        for match_id in source_q_result_fingerprints
+    )
+
+    fork_root_payload = {
+        "content": {
+            "simulation_slot_match_state": remapped.simulation_component,
+        }
+    }
+    restore_saved_simulation_slots(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+
+    target_store = TournamentDrawRevisionStore(session)
+    fork_history = target_store.history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+    )
+    assert tuple(item.repair_kind for item in fork_history) == (
+        "lucky_loser_vacancy",
+        "lucky_loser_fill",
+    )
+    target_fill = fork_history[1]
+    target_fill_authority = target_fill.lucky_loser_fill_authority
+    assert target_fill_authority is not None
+    assert (
+        target_fill_authority.order_authority.qualification_terminal_result_fingerprints
+        == (target_q_result_fingerprints[q_final.node_id],)
+    )
+    assert {
+        candidate.elimination_result_fingerprint
+        for candidate in target_fill_authority.order_authority.candidates
+    } <= set(target_q_result_fingerprints.values())
+    assert (
+        target_fill_authority.order_authority.fingerprint
+        != source_fill_authority.order_authority.fingerprint
+    )
+
+    installed_fork_root = {
+        "content": {
+            "simulation_slot_match_state": _live_component_with_saved_shape(
+                session,
+                run_id="run",
+                branch_id="target",
+                shape_hint=remapped.simulation_component,
+            )
+        }
+    }
+    assert installed_fork_root["content"]["simulation_slot_match_state"] is not None
+    assert (
+        installed_fork_root["content"]["simulation_slot_match_state"]["fingerprint"]
+        == remapped.simulation_component["fingerprint"]
+    )
+
+    target_vacancy_2 = target_store.draw_frozen_lucky_loser_vacancy(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-vacancy-2",
+        withdrawn_player_id=second_direct,
+        main_process_window_ordinal=3,
+    )
+    target_fill_2 = target_store.fill_next_frozen_lucky_loser(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-fill-2",
+        main_process_window_ordinal=3,
+    )
+    assert target_vacancy_2.sequence == 3
+    assert target_fill_2.sequence == 4
+    assert target_fill_2.lucky_loser_fill_authority is not None
+    assert (
+        target_fill_2.lucky_loser_fill_authority.selected_candidate.player_id
+        != target_fill_authority.selected_candidate.player_id
+    )
+
+    live_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        live_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    restore_saved_simulation_slots(
+        session,
+        current_payload=live_payload,
+        target_payload=installed_fork_root,
+        run_id="run",
+        branch_id="target",
+    )
+
+    restored_history = target_store.history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+    )
+    assert tuple(item.fingerprint for item in restored_history) == tuple(
+        item.fingerprint for item in fork_history
+    )
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+    ).count() == 2
+
+    retry_fill = target_store.fill_next_frozen_lucky_loser(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+        command_id="real-q-ll-fill-1",
+        main_process_window_ordinal=3,
+    )
+    assert retry_fill.fingerprint == target_fill.fingerprint
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="target",
+        event_id="event-real-q-ll",
+    ).count() == 2
+
+    recaptured = _live_component_with_saved_shape(
+        session,
+        run_id="run",
+        branch_id="target",
+        shape_hint=installed_fork_root["content"]["simulation_slot_match_state"],
+    )
+    assert recaptured is not None
+    assert (
+        recaptured["fingerprint"]
+        == installed_fork_root["content"]["simulation_slot_match_state"]["fingerprint"]
+    )
 
 
 @pytest.mark.pr_critical

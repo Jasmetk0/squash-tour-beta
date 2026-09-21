@@ -210,3 +210,127 @@ def test_detached_transition_authority_fails_closed():
             target_branch_id="target",
             target_base_revision_id="target-materialized-root",
         )
+
+
+def _with_publication_world(source: RankingRevisionState) -> RankingRevisionState:
+    publications = [
+        {
+            "run_id": source.run_id,
+            "branch_id": source.branch_id,
+            "week_ordinal": entry.snapshot.week.ordinal,
+            "snapshot_fingerprint": entry.snapshot.fingerprint,
+            "payload_json": entry.snapshot.model_dump_json(),
+        }
+        for entry in source.entries
+    ]
+    world = {
+        "run_id": source.run_id,
+        "branch_id": source.branch_id,
+        "current_ordinal": source.entries[-1].snapshot.week.ordinal,
+        "ranking_fingerprint": source.entries[-1].snapshot.fingerprint,
+    }
+    return source.model_copy(
+        update={
+            "authoritative_transition_state": {
+                "world": world,
+                "publications": publications,
+                "receipts": [],
+                "events": [],
+            }
+        }
+    )
+
+
+def test_publications_and_world_head_remap_to_target_ranking_lineage():
+    source = _with_publication_world(_transition_backed_state())
+
+    target = remap_source_free_ranking_state_for_branch(
+        source,
+        run_id="run",
+        source_branch_id="source",
+        target_branch_id="target",
+        target_base_revision_id="target-materialized-root",
+    )
+
+    transition = target.authoritative_transition_state
+    assert transition is not None
+    assert transition["receipts"] == []
+    assert transition["events"] == []
+    assert [row["week_ordinal"] for row in transition["publications"]] == [0, 1]
+    for row, entry in zip(transition["publications"], target.entries, strict=True):
+        assert row["run_id"] == "run"
+        assert row["branch_id"] == "target"
+        assert row["snapshot_fingerprint"] == entry.snapshot.fingerprint
+        assert row["payload_json"] == entry.snapshot.model_dump_json()
+    assert transition["world"] == {
+        "run_id": "run",
+        "branch_id": "target",
+        "current_ordinal": 1,
+        "ranking_fingerprint": target.entries[-1].snapshot.fingerprint,
+    }
+    assert (
+        transition["world"]["ranking_fingerprint"]
+        != source.authoritative_transition_state["world"]["ranking_fingerprint"]
+    )
+
+
+def test_publication_payload_mismatch_fails_closed():
+    source = _transition_backed_state()
+    broken_state = {
+        "world": None,
+        "publications": [
+            {
+                "run_id": "run",
+                "branch_id": "source",
+                "week_ordinal": 0,
+                "snapshot_fingerprint": source.entries[0].snapshot.fingerprint,
+                "payload_json": source.entries[1].snapshot.model_dump_json(),
+            }
+        ],
+        "receipts": [],
+        "events": [],
+    }
+
+    from beta_engine.infrastructure.db.ranking_fork_remap import (
+        _remap_publication_world_state,
+    )
+
+    with pytest.raises(
+        RankingForkRemapUnsupportedError,
+        match="publication differs from frozen source ranking history",
+    ):
+        _remap_publication_world_state(
+            broken_state,
+            run_id="run",
+            source_branch_id="source",
+            target_branch_id="target",
+            source_entries=source.entries,
+            target_entries=source.entries,
+        )
+
+
+def test_transition_receipts_events_stay_fail_closed_until_player_state_remap():
+    source = _transition_backed_state()
+    raw_state = {
+        "world": None,
+        "publications": [],
+        "receipts": [{"command_id": "week-2"}],
+        "events": [],
+    }
+
+    from beta_engine.infrastructure.db.ranking_fork_remap import (
+        _remap_publication_world_state,
+    )
+
+    with pytest.raises(
+        RankingForkRemapUnsupportedError,
+        match="lifecycle/sporting remapping first",
+    ):
+        _remap_publication_world_state(
+            raw_state,
+            run_id="run",
+            source_branch_id="source",
+            target_branch_id="target",
+            source_entries=source.entries,
+            target_entries=source.entries,
+        )

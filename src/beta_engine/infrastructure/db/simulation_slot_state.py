@@ -19,6 +19,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
+    WeekTournamentLockAuthorityModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"
@@ -216,6 +217,32 @@ def _validate_draw_process_rows_shape(rows):
             row.authority_fingerprint,
         ):
             raise ValueError("Saved Tournament Draw process authority row is corrupt")
+
+
+def _validate_week_tournament_lock_rows_shape(rows):
+    from beta_engine.domain.tournaments.week_tournament_lock import (
+        WeekTournamentLockAuthority,
+    )
+
+    keys = [(row.run_id, row.branch_id, row.week_ordinal) for row in rows]
+    if len(keys) != len(set(keys)):
+        raise ValueError("Saved Week Tournament Lock contains duplicate week authority")
+    for row in rows:
+        authority = WeekTournamentLockAuthority.model_validate_json(row.payload_json)
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.week.ordinal,
+            authority.resolved_by_command_id,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.week_ordinal,
+            row.command_id,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Week Tournament Lock authority row is corrupt")
 
 
 def _validate_semantics(slots, groups):

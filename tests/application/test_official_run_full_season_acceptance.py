@@ -347,13 +347,21 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 completed_week=week,
             )
 
-        before_reopen = _request("GET", sim_root + "/position")[1]
-        assert before_reopen["current_week"] == {
+        before_save = _request("GET", sim_root + "/position")[1]
+        assert before_save["current_week"] == {
             "season_index": 0,
             "week": 31,
         }
         # Persist the exact mid-season world before shutting the process down.
+        # Position identity intentionally includes the Saved Revision head and
+        # Working Draft base/version, so compare reopen against the canonical
+        # post-Save position rather than the stale pre-Save fingerprint.
         revision = _save_ranking(None, ranking_root)
+        before_reopen = _request("GET", sim_root + "/position")[1]
+        assert before_reopen["current_week"] == before_save["current_week"]
+        assert before_reopen["position_fingerprint"] != before_save[
+            "position_fingerprint"
+        ]
         head_before_reopen = revision
 
     reopened = ApiServer(database_url=f"sqlite:///{db_path}")

@@ -95,6 +95,15 @@ def remap_bootstrap_ranking_state_for_branch(
     remapped_payload = dict(payload)
     remapped_payload["branch_id"] = target_branch_id
     command = RankingBootstrapCommand.model_validate(remapped_payload)
+    if (
+        command.target_week != entry.snapshot.week
+        or command.policy != entry.snapshot.policy
+        or command.players != entry.inputs.players
+        or command.discipline != "none"
+    ):
+        raise RankingForkRemapUnsupportedError(
+            "Ranking bootstrap command does not exactly match the frozen ranking inputs"
+        )
     if command.initial_world_fingerprint is not None:
         raise RankingForkRemapUnsupportedError(
             "Ranking bootstrap tied to InitialWorld requires player-snapshot remapping first"

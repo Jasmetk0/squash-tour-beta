@@ -1190,3 +1190,20 @@ cleanly from the source Branch.
 A malformed or detached predecessor still fails closed before target state is
 materialized. This closes the correction-over-canonical-tournament follow-up left after
 the v4/v5 authority remap.
+
+
+## Ranking-bearing Branch fork: transition authority identity adapter
+
+A dedicated Branch-fork adapter now safely rebuilds immutable
+`RankingTransitionAuthority` records for a target Branch. It verifies source scope and
+canonical target-week ordering, preserves the frozen sporting roster, policy,
+provenance and audit, and rebinds both `branch_id` and `base_revision_id` before
+recalculating the authority fingerprint. A source-fingerprint -> target-authority map
+is produced for the later weekly-command rebind step.
+
+This is deliberately not yet wired into the full ranking fork materialization path.
+The target `base_revision_id` must be the real target-owned materialized fork-root
+Saved Revision. The next adapter slice must coordinate fork-root revision identity,
+weekly command `authority_fingerprint` rebinding and authoritative publication/world
+state atomically; transition-bearing forks therefore remain fail-closed at the public
+fork boundary for now.

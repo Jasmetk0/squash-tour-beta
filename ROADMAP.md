@@ -1068,3 +1068,10 @@ Draw Revision history, and finally allow canonical Adopted Tournament Authority 
 The materialized Branch-fork path now consumes the canonical source→target Tournament Draw fingerprint map when rebuilding Adopted Tournament Authority. Canonical v6 adopted bundles are re-encoded with target Draw fingerprints and receive new target Branch authority fingerprints instead of retaining source Draw identity. Legacy no-Draw adopted bundles remain compatible, while any unmapped Draw reference still fails closed.
 
 The next downstream recovery slice is Draw Revision replay, including embedded replacement-cutoff and repair-specific LL/WC/replacement-source authorities before revised Draw fingerprints can be considered fully fork-safe.
+
+
+### Basic Draw Revision Branch replay
+
+Branch-fork reconstruction now covers ordinary phase withdrawals across full redraw, seed cascade and Draw Freeze. Replacement-cutoff evidence is replayed only after target match-result fingerprints exist, and each revision rebuilds its successor field/input/draw plus request and revision identities under the target Branch. Revised successor Draw fingerprints are fed back into the Draw mapping used by canonical adopted tournament authority.
+
+Remaining revision work is repair-specific: post-draw WC/RWC repair, Lucky Loser vacancy/fill, frozen ordinary fallback and source-bound pre-Q promotion.

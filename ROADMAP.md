@@ -987,3 +987,16 @@ Next: make the Simulation Slot Saved Revision adapter rebuild its branch-bound p
 protected match inputs, effects and terminal checkpoints and emit those maps. After that
 the same fork path can preserve v2 sporting state and Week Transition receipt/event
 evidence.
+
+
+### Branch identity remapping: Simulation Slot sporting identity seam
+
+Simulation Slot sporting identity now has a dedicated fail-closed adapter for match
+effects and sporting checkpoints. The remaining full-ledger adapter should process
+history in canonical week/slot order and emit source->target maps for protected match
+inputs, result fingerprints, match effects and terminal checkpoints.
+
+This ordered seam resolves the dependency cycle with sporting v2: each target week's
+opening sporting fingerprint is known before that week's Slot ledger is rebuilt; the
+rebuilt ledger then supplies the evidence needed to derive the following sporting
+snapshot.

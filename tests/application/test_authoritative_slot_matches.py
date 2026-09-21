@@ -88,6 +88,10 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
+from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
+    remap_competitive_group_payload,
+    remap_slot_plan,
+)
 from beta_engine.infrastructure.db.tournament_draw_revision import (
     TournamentDrawRevisionConflict,
     TournamentDrawRevisionStore,
@@ -3444,3 +3448,57 @@ def test_walkover_group_saved_revision_round_trips(tmp_path, monkeypatch):
     assert replay.result_fingerprint == committed.result_fingerprint
     assert replay.result.scoreline == "W/O"
     assert replay.effects == ()
+
+
+@pytest.mark.pr_critical
+def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_path):
+    session, _, plan, results, _ = run_semifinals(
+        tmp_path / "fork-remap-source.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    row = session.get(
+        SimulationEventGroupModel,
+        ("run", "branch", WEEK.ordinal, "slot-1", "sf-1"),
+    )
+    assert row is not None
+
+    target_start = "target-slot-start-fingerprint"
+    target_plan = remap_slot_plan(
+        plan,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        slot_start_fingerprint_map={
+            plan.slot_start_fingerprint: target_start,
+        },
+    )
+    remapped = remap_competitive_group_payload(
+        row.payload_json,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        slot_start_fingerprint_map={
+            plan.slot_start_fingerprint: target_start,
+        },
+    )
+
+    payload = json.loads(remapped.payload_json)
+    target_input = payload["authoritative_input"]
+    assert target_plan.branch_id == "target"
+    assert target_plan.slot_start_fingerprint == target_start
+    assert target_input["branch_id"] == "target"
+    assert target_input["slot_start_fingerprint"] == target_start
+    assert all(
+        projection["source_sporting_fingerprint"] == target_start
+        for projection in target_input["player_projections"]
+    )
+    assert remapped.match_input_fingerprint != row.match_input_fingerprint
+    assert remapped.result_fingerprint != row.result_fingerprint
+    assert len(remapped.effect_fingerprint_map) == len(results["sf-1"].effects)
+    assert set(remapped.effect_fingerprint_map) == {
+        effect.fingerprint for effect in results["sf-1"].effects
+    }
+    assert all(
+        value not in remapped.effect_fingerprint_map
+        for value in remapped.effect_fingerprint_map.values()
+    )

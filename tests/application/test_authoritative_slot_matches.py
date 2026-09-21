@@ -56,6 +56,7 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingWeekState,
 )
 from beta_engine.domain.rankings.official import (
+    OfficialRankingPlayer,
     OfficialRankingPolicy,
     RankingWeek,
     calculate_official_ranking,
@@ -4635,10 +4636,18 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
         branch_id="branch",
         week=WEEK,
         policy=OfficialRankingPolicy(policy_id="real-ll-ranking"),
-        players=(),
+        players=tuple(
+            OfficialRankingPlayer(
+                player_id=player_id,
+                tie_break_token=f"rank-{index:02d}",
+                tour_entry_week=WEEK,
+            )
+            for index, player_id in enumerate(player_ids, start=1)
+        ),
         results=(),
         previous=None,
     )
+    assert tuple(row.player_id for row in source_snapshot.rows) == player_ids
     source_ranking = TournamentRankingSnapshotAuthority(
         run_id="run",
         branch_id="branch",

@@ -1537,6 +1537,12 @@ def restore_saved_simulation_slots(
         )
     )
     session.execute(
+        delete(WeekTournamentLockAuthorityModel).where(
+            WeekTournamentLockAuthorityModel.run_id == run_id,
+            WeekTournamentLockAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
         delete(WeekSimulationScheduleModel).where(
             WeekSimulationScheduleModel.run_id == run_id,
             WeekSimulationScheduleModel.branch_id == branch_id,
@@ -1576,6 +1582,8 @@ def restore_saved_simulation_slots(
         session.add(AdoptedTournamentAuthorityModel(**value))
     for value in (target or {}).get("schedules", []):
         session.add(WeekSimulationScheduleModel(**value))
+    for value in (target or {}).get("week_tournament_locks", []):
+        session.add(WeekTournamentLockAuthorityModel(**value))
     for value in (target or {}).get("entry_fields", []):
         session.add(TournamentEntryFieldVersionModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
@@ -1589,6 +1597,19 @@ def restore_saved_simulation_slots(
     for value in (target or {}).get("draw_revisions", []):
         session.add(TournamentDrawRevisionModel(**value))
     session.flush()
+    target_week_locks = (target or {}).get("week_tournament_locks", [])
+    if target_week_locks:
+        from beta_engine.infrastructure.db.week_tournament_lock import (
+            WeekTournamentLockStore,
+        )
+
+        lock_store = WeekTournamentLockStore(session)
+        for value in target_week_locks:
+            lock_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=value["week_ordinal"],
+            )
     target_entry_fields = (target or {}).get("entry_fields", [])
     if target_entry_fields:
         from beta_engine.infrastructure.db.tournament_entry_field import (

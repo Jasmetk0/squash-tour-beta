@@ -1000,3 +1000,16 @@ This ordered seam resolves the dependency cycle with sporting v2: each target we
 opening sporting fingerprint is known before that week's Slot ledger is rebuilt; the
 rebuilt ledger then supplies the evidence needed to derive the following sporting
 snapshot.
+
+
+### Branch identity remapping: completed Simulation Slot core ledger
+
+Completed `slots + groups` Saved Revision history can now be rebuilt deterministically
+for a target Branch. Slot starts are recomputed from target Branch/predecessor identity;
+competitive protected inputs, result fingerprints, match effects and terminal
+checkpoints are then rebuilt in canonical order.
+
+The adapter emits the full fingerprint maps needed by sporting v2. Remaining Simulation
+Slot work is now the auxiliary authority tree (simulation commands/schedules, adopted
+tournament authority, entry field, WC/draw input/draw/revision/process authorities) and
+then wiring this completed core directly into materialized Branch-fork installation.

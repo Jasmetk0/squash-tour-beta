@@ -1304,3 +1304,22 @@ The adapter is fail-closed on any missing dependency mapping. This establishes t
 deterministic week-ordered seam required to break the apparent sporting-v2/slot-ledger
 cycle: target opening sporting snapshot -> target match/effect/checkpoint ledger ->
 target completed-week sporting v2 context -> next target sporting snapshot.
+
+
+## Branch fork: completed Simulation Slot core ledger remap
+
+The completed authoritative Simulation Slot core can now be rebuilt across Branch
+identity for the saved `slots + groups` ledger. The adapter walks slots in canonical
+week/slot order, recomputes target slot-start identity from the target Branch and target
+predecessor checkpoint, rebuilds each slot plan, rebinds competitive protected match
+input identity, recalculates result fingerprints, rebuilds every match sporting effect,
+and then rebuilds slot-start/terminal sporting checkpoints.
+
+The remapper emits exact source->target maps for match inputs, results, match effects,
+terminal checkpoints and slot starts. Those maps are the evidence contract already
+consumed by sporting v2.
+
+The core adapter intentionally remains fail-closed if any auxiliary Simulation Slot
+authority collection is non-empty (commands, schedules, adopted tournament authority,
+entry fields, WC/draw authority trees, etc.). Those broader identity trees require their
+own remappers and are not silently copied.

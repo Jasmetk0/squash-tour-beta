@@ -149,7 +149,6 @@ def _advance_week(
         ranking_root,
         completed_week=completed_week,
     )
-    revision = _save_ranking(None, ranking_root)
     status, preview = _request(
         "POST",
         transition_root + "/derived/preview",
@@ -394,9 +393,10 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             revision=revision,
             week=61,
         )
-        # Week 61 has no ordinary Ranking Transition authority, so explicitly
-        # persist its completed sporting evidence before Season Transition.
-        revision = _save_simulation(sim_root)
+        # Persist the full Week-61 Working Draft before Season Transition.
+        # Ranking Save captures ranking, lifecycle, sporting, and simulation
+        # components atomically, including the explicit empty-week evidence.
+        revision = _save_ranking(None, ranking_root)
         status, preflight = _request(
             "GET",
             sim_root + "/season-transition/preflight",

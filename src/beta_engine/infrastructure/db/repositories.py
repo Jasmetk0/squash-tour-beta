@@ -22,6 +22,7 @@ from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransi
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 from beta_engine.domain.run_revisions import (
+    BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
     BRANCH_RESTORE_AUDIT_EVENT_KIND,
     BRANCH_RESTORE_SAVED_REVISION_KIND,
     CLEAN_WORKING_DRAFT_STATUS,
@@ -122,6 +123,13 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
     capture_saved_ranking_component,
     load_saved_ranking_component,
     restore_saved_ranking_component,
+)
+from beta_engine.infrastructure.db.ranking_fork_remap import (
+    RankingForkRemapUnsupportedError,
+    remap_bootstrap_ranking_state_for_branch,
+)
+from beta_engine.infrastructure.db.ranking_revision_state import (
+    install_ranking_revision_state,
 )
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     SEASON_CLOSURE_COMPONENT_KEY,
@@ -2431,6 +2439,50 @@ class SimulationPersistenceRepository:
                 )
         return lineage
 
+    def saved_revision_requires_materialized_fork_root(
+        self,
+        *,
+        run_id: str,
+        source_branch_id: str,
+        source_revision_id: str,
+    ) -> bool:
+        """Return whether fork creation needs a target-owned materialized root.
+
+        Saved Revisions are immutable, so this read is stable; the write transaction
+        still revalidates lineage and support before committing.
+        """
+        with self._session_factory() as session:
+            source_branch = session.get(RunBranchModel, source_branch_id)
+            if source_branch is None or source_branch.run_id != run_id:
+                raise SavedRevisionBranchForkNotFoundError(
+                    f"source Branch {source_branch_id!r} was not found in Run {run_id!r}"
+                )
+            try:
+                lineage = self._validated_branch_revision_lineage_in_session(
+                    session=session,
+                    branch=source_branch,
+                )
+            except BranchRevisionStateConflictError as exc:
+                raise SavedRevisionBranchForkConflictError(str(exc)) from exc
+            source = next(
+                (
+                    revision
+                    for revision in lineage
+                    if revision.revision_id == source_revision_id
+                ),
+                None,
+            )
+            if source is None:
+                raise SavedRevisionBranchForkConflictError(
+                    "the source Saved Revision is not part of the selected Branch history"
+                )
+            content = source.payload.get("content")
+            if not isinstance(content, dict):
+                raise SavedRevisionBranchForkConflictError(
+                    "the source Saved Revision content is invalid"
+                )
+            return RANKING_COMPONENT_KEY in content
+
     def create_branch_from_saved_revision_atomically(
         self,
         *,
@@ -2440,6 +2492,7 @@ class SimulationPersistenceRepository:
         branch_id: str,
         working_draft_id: str,
         requested_display_name: str | None,
+        materialized_fork_revision_id: str | None = None,
     ) -> RunBranchRecord:
         """Create one timeline that shares an immutable Saved Revision.
 

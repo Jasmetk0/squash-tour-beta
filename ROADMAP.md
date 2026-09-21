@@ -951,3 +951,15 @@ the world head follows the target publication fingerprint at the same ordinal.
 Remaining authoritative transition work is intentionally narrower: Week/Season
 Transition receipts and World Events require lifecycle/sporting and Season Closing
 identity remapping before they can be preserved without fabricating evidence.
+
+
+### Branch identity remapping: player lifecycle history
+
+The complete `player_lifecycle` Saved Revision chain now forks with a ranking-bearing
+materialized Branch. Snapshots are target-scoped, predecessor fingerprints are rebuilt,
+and the target DB state and materialized Saved Revision contain the same remapped
+lifecycle history atomically.
+
+Next: remap player sporting state together with its completed-week source evidence,
+then use the resulting lifecycle/sporting fingerprint maps to preserve Week Transition
+receipts and World Events.

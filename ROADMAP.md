@@ -750,3 +750,15 @@ This closes the missing end-to-end continuity proof for the minimum Official Run
 season path. It does not resolve PAQ-006 scale/performance targets, require every week
 to contain a tournament, or decide any still-open Entry/WC/lock/reconstruction product
 policy.
+
+
+## Pre-alpha validation cadence
+
+Ordinary feature PRs use focused validation: run the tests that exercise the changed
+slice and keep unrelated long regressions out of automatic PR feedback. Those tests are
+retained rather than deleted. A change is not considered merge-ready when a required
+focused check is red.
+
+At an explicit internal release/checkpoint, switch to the release gate: run the complete
+regression suite plus the mandatory Master §31.3 acceptance flows and any checkpoint
+smoke/performance checks. See `docs/PRE_ALPHA_TEST_POLICY.md`.

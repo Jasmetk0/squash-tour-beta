@@ -944,7 +944,7 @@ def remap_coupled_player_slot_history(
         target_request_fingerprint = fingerprint(
             {
                 "request_id": row.request_id,
-                "schedule": target_schedule.model_dump(mode="json"),
+                "schedule": target_schedule.canonical_payload(),
             }
         )
         target_schedules.append(

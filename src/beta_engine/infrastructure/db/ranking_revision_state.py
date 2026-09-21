@@ -24,7 +24,13 @@ from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
 from sqlalchemy import select
 
 
-def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: str) -> RankingRevisionState:
+def capture_ranking_revision_state(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    allow_empty_fork_target: bool = False,
+) -> RankingRevisionState:
     if not session.in_transaction():
         raise ValueError("Ranking revision capture requires a caller transaction")
     connection = session.connection()
@@ -32,7 +38,12 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
     if (connection.dialect.name != "sqlite" or driver_connection is None
             or not driver_connection.in_transaction):
         raise ValueError("Ranking revision capture requires a physical SQLite transaction")
-    history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
+    history = inspect_ranking_history(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        allow_empty_fork_target=allow_empty_fork_target,
+    )
     snapshots = tuple(c.snapshot for c in history.candidates)
     entries = []
     for candidate in history.candidates:
@@ -130,7 +141,12 @@ def install_ranking_revision_state(
         payload, expected_fingerprint=expected_fingerprint, run_id=run_id, branch_id=branch_id,
     )
     # Capture also checks physical transaction presence, scope and fork support.
-    current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
+    current = capture_ranking_revision_state(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        allow_empty_fork_target=True,
+    )
     if current.fingerprint == state.fingerprint:
         return current
     if (

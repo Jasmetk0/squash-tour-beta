@@ -24,6 +24,8 @@ import {
   simulateAuthoritativeNextSlot,
   previewAuthoritativeNextMatchDay,
   simulateAuthoritativeNextMatchDay,
+  previewAuthoritativeNextRound,
+  simulateAuthoritativeNextRound,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -37,6 +39,7 @@ import {
 import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeMatchDayPreview,
+  AuthoritativeRoundPreview,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -175,6 +178,9 @@ export function AuthoritativeSimulationPanel({
   const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
   const [nextMatchDayReview, setNextMatchDayReview] =
     useState<AuthoritativeMatchDayPreview | null>(null)
+  const [nextRoundCommandId, setNextRoundCommandId] = useState(newCommandId)
+  const [nextRoundReview, setNextRoundReview] =
+    useState<AuthoritativeRoundPreview | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -326,6 +332,8 @@ export function AuthoritativeSimulationPanel({
     setNextSlotCommandId(newCommandId())
     setNextMatchDayCommandId(newCommandId())
     setNextMatchDayReview(null)
+    setNextRoundCommandId(newCommandId())
+    setNextRoundReview(null)
     setReconstructionCandidateCount('10')
     setReconstructionWinnerId('')
     setReconstructionMatchScore('')
@@ -392,6 +400,8 @@ export function AuthoritativeSimulationPanel({
     setNextSlotCommandId(newCommandId())
     setNextMatchDayCommandId(newCommandId())
     setNextMatchDayReview(null)
+    setNextRoundCommandId(newCommandId())
+    setNextRoundReview(null)
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
@@ -796,6 +806,55 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const nextRoundPreviewMutation = useMutation({
+    mutationFn: () => previewAuthoritativeNextRound(runId, branchId),
+    onSuccess: (preview) => setNextRoundReview(preview),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextRoundReview(null)
+        setNextRoundCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const nextRoundMutation = useMutation({
+    mutationFn: () => {
+      if (!nextRoundReview) {
+        throw new Error('Review the current canonical Round before simulation.')
+      }
+      return simulateAuthoritativeNextRound(runId, branchId, {
+        command_id: nextRoundCommandId,
+        expected_week: nextRoundReview.week,
+        expected_position_fingerprint:
+          nextRoundReview.expected_position_fingerprint,
+        expected_revision_id: nextRoundReview.expected_revision_id
+      })
+    },
+    onSuccess: async (result) => {
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      setNextRoundReview(null)
+      setNextRoundCommandId(newCommandId())
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextRoundReview(null)
+        setNextRoundCommandId(newCommandId())
+        setConfirmed(false)
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+        ])
+      }
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1176,6 +1235,8 @@ export function AuthoritativeSimulationPanel({
     nextSlotMutation.isPending ||
     nextMatchDayPreviewMutation.isPending ||
     nextMatchDayMutation.isPending ||
+    nextRoundPreviewMutation.isPending ||
+    nextRoundMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1218,7 +1279,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round → Save.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -1991,6 +2052,18 @@ export function AuthoritativeSimulationPanel({
             >
               Review authoritative Next Match Day
             </button>
+            <button
+              type="button"
+              onClick={() => nextRoundPreviewMutation.mutate()}
+              disabled={
+                currentEntrySlot ||
+                position.current_slot_kind !== 'match' ||
+                schedule?.schema_version !== 'week_simulation_schedule.v2' ||
+                actionPending
+              }
+            >
+              Review authoritative Next Round
+            </button>
           </div>
           {nextMatchDayReview ? (
             <>
@@ -2044,6 +2117,83 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {nextRoundReview ? (
+            <>
+              <h5>
+                Reviewed canonical Round · {nextRoundReview.round_identity.event_id} ·{' '}
+                {nextRoundReview.round_identity.draw_phase} R
+                {nextRoundReview.round_identity.round_number}
+              </h5>
+              <MetadataList
+                items={[
+                  { label: 'Event', value: nextRoundReview.round_identity.event_id },
+                  { label: 'Draw phase', value: nextRoundReview.round_identity.draw_phase },
+                  { label: 'Round', value: nextRoundReview.round_identity.round_number },
+                  {
+                    label: 'Round matches',
+                    value: nextRoundReview.target_group_ids.length
+                  },
+                  {
+                    label: 'Chronology horizon slots',
+                    value: nextRoundReview.horizon_slot_ordinals.join(', ')
+                  },
+                  {
+                    label: 'Transit matches',
+                    value: nextRoundReview.transit_group_ids.length
+                  },
+                  {
+                    label: 'Saved Revision',
+                    value: nextRoundReview.expected_revision_id
+                  },
+                  {
+                    label: 'Schedule fingerprint',
+                    value: nextRoundReview.schedule_fingerprint
+                  }
+                ]}
+              />
+              <ol aria-label="Reviewed authoritative Round target matches">
+                {nextRoundReview.target_slot_ordinals.map((slotOrdinal, index) => (
+                  <li key={slotOrdinal}>
+                    Target slot {slotOrdinal}: {nextRoundReview.target_group_ids[index]}
+                  </li>
+                ))}
+              </ol>
+              {nextRoundReview.transit_slot_ordinals.length ? (
+                <>
+                  <p className="status">
+                    Global chronology requires these interleaved matches before the
+                    selected round can finish:
+                  </p>
+                  <ol aria-label="Reviewed authoritative Round transit matches">
+                    {nextRoundReview.transit_slot_ordinals.map((slotOrdinal, index) => (
+                      <li key={slotOrdinal}>
+                        Transit slot {slotOrdinal}: {nextRoundReview.transit_group_ids[index]}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextRoundMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  Simulate reviewed authoritative Next Round
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextRoundReview(null)
+                    setNextRoundCommandId(newCommandId())
+                  }}
+                  disabled={nextRoundMutation.isPending}
+                >
+                  Discard Round review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2058,6 +2208,16 @@ export function AuthoritativeSimulationPanel({
           {nextMatchDayMutation.error ? (
             <p className="error">
               Authoritative Next Match Day failed: {formatApiError(nextMatchDayMutation.error)}
+            </p>
+          ) : null}
+          {nextRoundPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Round preview failed: {formatApiError(nextRoundPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextRoundMutation.error ? (
+            <p className="error">
+              Authoritative Next Round failed: {formatApiError(nextRoundMutation.error)}
             </p>
           ) : null}
         </>

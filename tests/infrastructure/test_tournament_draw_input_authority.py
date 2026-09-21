@@ -29,6 +29,7 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
     TournamentDrawInputAuthorityModel,
+    TournamentWildCardAuthorityModel,
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityConflict,
@@ -44,6 +45,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityConflict,
     TournamentWildCardAuthorityStore,
+    wild_card_decision_slot_ordinals,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -437,6 +439,39 @@ def test_canonical_wc_v2_reserves_exact_global_slot_and_retries(database):
             decision_week=week,
             decision_slot_ordinal=1,
         ) == authority
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_chronology_reader_rejects_row_identity_corruption(database):
+    week = RankingWeek(season_index=0, week=3)
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        )
+
+    with database.begin() as session:
+        row = session.get(
+            TournamentWildCardAuthorityModel,
+            ("run", "branch", "event"),
+        )
+        assert row is not None
+        row.command_id = "corrupt-command-id"
+
+    with database() as session:
+        with pytest.raises(ValueError, match="chronology is corrupt"):
+            wild_card_decision_slot_ordinals(
+                session,
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=week.ordinal,
+            )
 
 
 @pytest.mark.pr_critical

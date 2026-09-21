@@ -1,5 +1,7 @@
 """Master §31.3 Official Run whole-season acceptance through production Admin boundaries."""
 
+# Targeted CI validation branch: exercise this acceptance file only.
+
 from __future__ import annotations
 
 from sqlalchemy import select

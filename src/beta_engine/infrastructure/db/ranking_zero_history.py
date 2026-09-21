@@ -21,8 +21,14 @@ from beta_engine.infrastructure.db.official_rankings import (
 
 
 class OfficialRankingZeroStore:
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        *,
+        allow_empty_fork_target: bool = False,
+    ):
         self.session = session
+        self.allow_empty_fork_target = allow_empty_fork_target
 
     def _scope(self, run_id: str, branch_id: str, *, writing: bool = False):
         run = self.session.get(RunContainerModel, run_id)
@@ -41,7 +47,7 @@ class OfficialRankingZeroStore:
                 )
                 is not None
             )
-            if not has_local_ranking:
+            if not has_local_ranking and not self.allow_empty_fork_target:
                 raise ValueError(
                     "Ranking zero fork ancestry requires a dedicated adapter"
                 )

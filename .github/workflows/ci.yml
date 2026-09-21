@@ -23,9 +23,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # During pre-alpha construction Fast CI runs only tests changed by this PR
-      # (plus colocated frontend tests). The complete suites remain manual until
-      # the explicit final pre-alpha acceptance gate.
+      # Fast CI intentionally runs only a compact catastrophic-regression gate.
+      # Frontend also runs changed/colocated tests. The separate "Full Test Suite"
+      # retains complete coverage after merge to buuk and nightly.
       - name: Detect changed areas
         id: filter
         uses: dorny/paths-filter@v3
@@ -41,52 +41,40 @@ jobs:
               - 'requirements*.txt'
               - '.github/workflows/**'
             frontend:
+              # Canonical World Package changes affect API contracts consumed by the UI.
               - 'config/world_packages/**'
               - 'web/**'
               - 'web/package.json'
               - 'web/package-lock.json'
+              - '.github/workflows/**'
             docs_only:
               - 'docs/**'
               - '**/*.md'
 
   backend-tests:
-    name: Backend PR targeted
+    name: Backend PR critical
     needs: changes
     if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: pyproject.toml
       - name: Install backend dependencies
+        # PR tests need production dependencies and pytest, but not the heavier
+        # dev-only Ruff/httpx extras. The full workflow still installs all dev extras.
         run: python -m pip install -e . pytest
       - name: Compile backend source
         run: python -m compileall -q src
-      - name: Run backend tests changed by this PR
-        shell: bash
+      - name: Run PR critical backend tests
         run: |
-          BASE_SHA="${{ github.event.pull_request.base.sha }}"
-          mapfile -t tests < <(
-            git diff --name-only "$BASE_SHA" HEAD -- tests |
-              grep -E '^tests/.*\.py$' || true
-          )
-
-          if (( ${#tests[@]} == 0 )); then
-            echo "No backend test files changed by this PR."
-            exit 0
-          fi
-
-          mapfile -t unique_tests < <(printf '%s\n' "${tests[@]}" | sort -u)
-          printf 'Running backend tests changed by this PR:\n%s\n' "${unique_tests[*]}"
-          python -m pytest "${unique_tests[@]}" --maxfail=1 --durations=10
+          python -m pytest -m pr_critical --maxfail=1 --durations=10
 
   frontend-checks:
-    name: Frontend targeted tests + build
+    name: Frontend build + critical tests
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
@@ -95,8 +83,6 @@ jobs:
         working-directory: web
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
@@ -104,10 +90,23 @@ jobs:
           cache-dependency-path: web/package-lock.json
       - name: Install web dependencies
         run: npm ci
+      - name: Run stable critical frontend baseline
+        run: |
+          npm run test -- \
+            src/test/faxReferenceFixture.test.ts \
+            src/components/Layout.test.tsx \
+            src/pages/admin/AdminHomePage.test.tsx \
+            src/viewer/ViewerProductRunRouteContext.test.tsx \
+            src/pages/AdminRankingCandidatesPage.test.tsx \
+            src/pages/RankingPreparationPanel.test.tsx \
+            src/pages/RankingSavePanel.test.tsx \
+            src/api/rankingPreparation.test.ts \
+            src/pages/AdminRunBranchesPage.test.tsx
       - name: Run frontend tests changed by this PR
         shell: bash
         run: |
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          git -C .. fetch --no-tags --depth=1 origin "$BASE_SHA"
           mapfile -t changed_files < <(
             git -C .. diff --name-only "$BASE_SHA" HEAD -- web/src |
               grep -E '^web/src/.*\.(ts|tsx)$' || true
@@ -147,5 +146,7 @@ jobs:
     if: needs.changes.outputs.docs_only == 'true' && needs.changes.outputs.backend != 'true' && needs.changes.outputs.frontend != 'true'
     runs-on: ubuntu-latest
     steps:
+      # Docs-only changes intentionally skip expensive backend/frontend jobs.
       - name: Docs-only change detected
-        run: echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."
+        run: |
+          echo "Docs-only change: skipping backend/frontend CI jobs in Fast CI."

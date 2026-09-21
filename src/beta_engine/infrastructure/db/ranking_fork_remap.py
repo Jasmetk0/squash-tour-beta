@@ -15,6 +15,10 @@ from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCo
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import calculate_official_ranking
+from beta_engine.domain.rankings.zero_history import (
+    RankingZeroVersion,
+    resolve_zero_versions,
+)
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionEntry,
     RankingRevisionReceipt,
@@ -24,6 +28,57 @@ from beta_engine.domain.rankings.revision_state import (
 
 class RankingForkRemapUnsupportedError(ValueError):
     """Raised when a ranking bundle is outside the supported fork-remap slice."""
+
+
+def _remap_zero_versions(
+    versions: tuple[RankingZeroVersion, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+) -> tuple[RankingZeroVersion, ...]:
+    latest: dict[str, RankingZeroVersion] = {}
+    remapped: list[RankingZeroVersion] = []
+    for source_version in versions:
+        zero = source_version.zero
+        if (zero.run_id, zero.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Ranking zero source scope is inconsistent"
+            )
+        previous = latest.get(zero.zero_id)
+        if previous is None:
+            if source_version.previous_fingerprint is not None:
+                raise RankingForkRemapUnsupportedError(
+                    "Ranking zero source lineage is incomplete"
+                )
+            previous_fingerprint = None
+        else:
+            previous_fingerprint = previous.fingerprint
+        remapped_version = RankingZeroVersion(
+            effective_week=source_version.effective_week,
+            previous_fingerprint=previous_fingerprint,
+            zero=zero.model_copy(update={"branch_id": target_branch_id}),
+        )
+        latest[zero.zero_id] = remapped_version
+        remapped.append(remapped_version)
+    return tuple(remapped)
+
+
+def _remap_resolved_zeros(
+    zeros,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+):
+    remapped = []
+    for zero in zeros:
+        if (zero.run_id, zero.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Resolved ranking zero scope is inconsistent"
+            )
+        remapped.append(zero.model_copy(update={"branch_id": target_branch_id}))
+    return tuple(remapped)
 
 
 def remap_source_free_ranking_state_for_branch(
@@ -60,6 +115,12 @@ def remap_source_free_ranking_state_for_branch(
             "Ranking-bearing fork does not yet support historical sources or transition authorities"
         )
 
+    remapped_zero_sources = _remap_zero_versions(
+        source.zero_sources,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
     remapped_entries: list[RankingRevisionEntry] = []
     previous = None
     for index, entry in enumerate(source.entries):
@@ -101,6 +162,28 @@ def remap_source_free_ranking_state_for_branch(
                 )
             remapped_payload = dict(payload)
             remapped_payload["branch_id"] = target_branch_id
+            if "disciplinary_zeros" in remapped_payload:
+                remapped_payload["disciplinary_zeros"] = [
+                    {
+                        **zero,
+                        "branch_id": target_branch_id,
+                    }
+                    for zero in remapped_payload["disciplinary_zeros"]
+                ]
+            if "zero_versions" in remapped_payload:
+                source_batch = tuple(
+                    RankingZeroVersion.model_validate(item)
+                    for item in remapped_payload["zero_versions"]
+                )
+                remapped_payload["zero_versions"] = [
+                    item.model_dump(mode="json")
+                    for item in _remap_zero_versions(
+                        source_batch,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=target_branch_id,
+                    )
+                ]
             command = RankingBootstrapCommand.model_validate_json(
                 json.dumps(remapped_payload, sort_keys=True, separators=(",", ":"))
             )
@@ -108,7 +191,6 @@ def remap_source_free_ranking_state_for_branch(
                 command.target_week != entry.snapshot.week
                 or command.policy != entry.snapshot.policy
                 or command.players != entry.inputs.players
-                or command.discipline != "none"
             ):
                 raise RankingForkRemapUnsupportedError(
                     "Ranking bootstrap command does not exactly match the frozen ranking inputs"
@@ -117,9 +199,22 @@ def remap_source_free_ranking_state_for_branch(
                 raise RankingForkRemapUnsupportedError(
                     "Ranking bootstrap tied to InitialWorld requires player-snapshot remapping first"
                 )
-            if command.zero_versions or command.disciplinary_zeros:
+            if command.discipline == "stored_zeros":
+                disciplinary_zeros = resolve_zero_versions(
+                    remapped_zero_sources,
+                    command.target_week,
+                )
+            else:
+                disciplinary_zeros = command.disciplinary_zeros
+            expected_manifest_zeros = _remap_resolved_zeros(
+                entry.inputs.disciplinary_zeros,
+                run_id=run_id,
+                source_branch_id=source_branch_id,
+                target_branch_id=target_branch_id,
+            )
+            if disciplinary_zeros != expected_manifest_zeros:
                 raise RankingForkRemapUnsupportedError(
-                    "Ranking bootstrap with disciplinary history is not yet remappable"
+                    "Ranking bootstrap zero history does not match the frozen manifest"
                 )
             snapshot = calculate_official_ranking(
                 run_id=run_id,
@@ -129,11 +224,13 @@ def remap_source_free_ranking_state_for_branch(
                 players=command.players,
                 results=(),
                 previous=None,
-                disciplinary_zeros=(),
+                disciplinary_zeros=disciplinary_zeros,
             )
             inputs = RankingInputManifest(
                 players=command.players,
                 results=(),
+                disciplinary_zeros=disciplinary_zeros,
+                zeros_from_history=entry.inputs.zeros_from_history,
                 command_request_fingerprint=command.fingerprint,
             )
         else:
@@ -153,21 +250,40 @@ def remap_source_free_ranking_state_for_branch(
             remapped_payload = dict(payload)
             remapped_context = dict(context)
             remapped_context["branch_id"] = target_branch_id
+            if "disciplinary_zeros" in remapped_context:
+                remapped_context["disciplinary_zeros"] = [
+                    {
+                        **zero,
+                        "branch_id": target_branch_id,
+                    }
+                    for zero in remapped_context["disciplinary_zeros"]
+                ]
             remapped_payload["context"] = remapped_context
+            if "zero_versions" in remapped_payload:
+                source_batch = tuple(
+                    RankingZeroVersion.model_validate(item)
+                    for item in remapped_payload["zero_versions"]
+                )
+                remapped_payload["zero_versions"] = [
+                    item.model_dump(mode="json")
+                    for item in _remap_zero_versions(
+                        source_batch,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=target_branch_id,
+                    )
+                ]
             command = RankingWeekCommand.model_validate_json(
                 json.dumps(remapped_payload, sort_keys=True, separators=(",", ":"))
             )
             if (
                 command.tournaments
                 or command.corrections
-                or command.zero_versions
                 or command.audit is not None
                 or command.authority_fingerprint is not None
-                or command.context.discipline != "none"
-                or command.context.disciplinary_zeros
             ):
                 raise RankingForkRemapUnsupportedError(
-                    "Ranking weekly fork supports only source-free, unauthoritied commands"
+                    "Ranking weekly fork does not yet support tournament/correction or authority inputs"
                 )
             if (
                 previous is None
@@ -179,6 +295,23 @@ def remap_source_free_ranking_state_for_branch(
                 raise RankingForkRemapUnsupportedError(
                     "Ranking weekly command does not exactly match the frozen ranking inputs"
                 )
+            if command.context.discipline == "stored_zeros":
+                disciplinary_zeros = resolve_zero_versions(
+                    remapped_zero_sources,
+                    command.context.target_week,
+                )
+            else:
+                disciplinary_zeros = command.context.disciplinary_zeros
+            expected_manifest_zeros = _remap_resolved_zeros(
+                entry.inputs.disciplinary_zeros,
+                run_id=run_id,
+                source_branch_id=source_branch_id,
+                target_branch_id=target_branch_id,
+            )
+            if disciplinary_zeros != expected_manifest_zeros:
+                raise RankingForkRemapUnsupportedError(
+                    "Ranking weekly zero history does not match the frozen manifest"
+                )
             snapshot = calculate_official_ranking(
                 run_id=run_id,
                 branch_id=target_branch_id,
@@ -187,11 +320,13 @@ def remap_source_free_ranking_state_for_branch(
                 players=command.context.players,
                 results=(),
                 previous=previous,
-                disciplinary_zeros=(),
+                disciplinary_zeros=disciplinary_zeros,
             )
             inputs = RankingInputManifest(
                 players=command.context.players,
                 results=(),
+                disciplinary_zeros=disciplinary_zeros,
+                zeros_from_history=entry.inputs.zeros_from_history,
                 command_request_fingerprint=command.fingerprint,
             )
 
@@ -217,6 +352,7 @@ def remap_source_free_ranking_state_for_branch(
         branch_id=target_branch_id,
         entries=tuple(remapped_entries),
         sources=(),
+        zero_sources=remapped_zero_sources,
     )
 
 

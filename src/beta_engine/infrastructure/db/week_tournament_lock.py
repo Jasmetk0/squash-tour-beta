@@ -62,21 +62,19 @@ def _fp(value: object) -> str:
     ).hexdigest()
 
 
-def derive_week_tournament_lock_authority(
+def resolve_week_tournament_lock_evidence(
     session: Session,
     *,
     run_id: str,
     branch_id: str,
-    week: RankingWeek,
     event_ids: tuple[str, ...] | list[str],
-    selections: dict[str, str],
-    command_id: str,
-    operator_label: str,
-    audit_reason: str,
-) -> WeekTournamentLockAuthority:
+) -> tuple[
+    tuple[WeekTournamentLockEventEvidence, ...],
+    dict[str, tuple[str, ...]],
+]:
     canonical_event_ids = tuple(sorted(set(event_ids)))
     if not canonical_event_ids:
-        raise ValueError("Week Tournament Lock requires current-week tournament events")
+        raise ValueError("Week Tournament Lock requires current-week tournament fields")
     if len(canonical_event_ids) != len(tuple(event_ids)):
         raise ValueError("Week Tournament Lock event IDs must be unique")
 
@@ -114,6 +112,27 @@ def derive_week_tournament_lock_authority(
         for player_id, events in accepted_by_player.items()
         if len(set(events)) > 1
     }
+    return tuple(evidence), conflicts
+
+
+def derive_week_tournament_lock_authority(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    event_ids: tuple[str, ...] | list[str],
+    selections: dict[str, str],
+    command_id: str,
+    operator_label: str,
+    audit_reason: str,
+) -> WeekTournamentLockAuthority:
+    evidence, conflicts = resolve_week_tournament_lock_evidence(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        event_ids=event_ids,
+    )
     if set(selections) != set(conflicts):
         missing = sorted(set(conflicts) - set(selections))
         extra = sorted(set(selections) - set(conflicts))
@@ -142,7 +161,7 @@ def derive_week_tournament_lock_authority(
         resolved_by_command_id=command_id,
         operator_label=operator_label,
         audit_reason=audit_reason,
-        event_evidence=tuple(evidence),
+        event_evidence=evidence,
         player_locks=locks,
     )
 

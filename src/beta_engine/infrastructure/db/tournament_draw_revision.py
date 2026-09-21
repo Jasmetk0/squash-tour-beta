@@ -87,6 +87,124 @@ def _source_bound_pre_q_backfill(
     return None
 
 
+def _request_payload_for_revision(
+    revision: TournamentDrawRevision,
+    *,
+    previous_draw_input,
+) -> dict:
+    kind = revision.repair_kind
+    if kind in {"full_redraw", "seed_cascade_phase", "draw_frozen_phase"}:
+        request = {
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "process_authority_fingerprint": revision.process_authority_fingerprint,
+            "withdrawn_player_ids": list(revision.withdrawn_player_ids),
+            "repair_draw_seed": revision.repair_draw_seed,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                revision.qualification_process_window_ordinal
+            ),
+            "affected_draw_types": list(revision.affected_draw_types),
+            "successor_field_fingerprint": revision.successor_field.fingerprint,
+            "replacement_cutoff_authority_fingerprints": [
+                authority.fingerprint
+                for authority in revision.replacement_cutoff_authorities
+            ],
+        }
+        if kind != "full_redraw":
+            request = {"repair_kind": kind, **request}
+        return request
+
+    if kind == "frozen_wild_card_repair":
+        authority = revision.wild_card_repair_authority
+        if authority is None:
+            raise ValueError("Frozen WC revision lacks repair authority")
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "withdrawn_player_id": authority.withdrawn_player_id,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                revision.qualification_process_window_ordinal
+            ),
+            "repair_draw_seed": revision.repair_draw_seed,
+            "unavailable_reserve_player_ids": list(
+                authority.unavailable_player_ids
+            ),
+            "wild_card_repair_authority_fingerprint": authority.fingerprint,
+        }
+
+    if kind == "lucky_loser_vacancy":
+        authority = revision.lucky_loser_vacancy_authority
+        if authority is None:
+            raise ValueError("Lucky Loser vacancy revision lacks authority")
+        replacement = revision.replacement_source_authority
+        winner = authority.qualification_winner_evidence
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "withdrawn_player_id": authority.withdrawn_player_id,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "lucky_loser_ordinal": authority.lucky_loser_ordinal,
+            "qualification_start_fingerprint": (
+                authority.qualification_start_authority.fingerprint
+            ),
+            "replacement_source_authority_fingerprint": (
+                replacement.fingerprint if replacement is not None else None
+            ),
+            "qualification_winner_evidence": (
+                winner.model_dump(mode="json") if winner is not None else None
+            ),
+        }
+
+    if kind == "lucky_loser_fill":
+        authority = revision.lucky_loser_fill_authority
+        if authority is None:
+            raise ValueError("Lucky Loser fill revision lacks authority")
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "placeholder_id": authority.placeholder_id,
+            "selected_player_id": authority.selected_candidate.player_id,
+            "order_authority_fingerprint": authority.order_authority.fingerprint,
+            "unavailable_player_ids": list(authority.unavailable_player_ids),
+        }
+
+    if kind == "frozen_ordinary_fallback":
+        authority = revision.replacement_source_authority
+        if authority is None:
+            raise ValueError("Frozen ordinary fallback lacks source authority")
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "replacement_source_authority_fingerprint": authority.fingerprint,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+        }
+
+    if kind == "source_bound_pre_q_promotion":
+        authority = revision.replacement_source_authority
+        if authority is None:
+            raise ValueError("Source-bound pre-Q revision lacks source authority")
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "replacement_source_authority_fingerprint": authority.fingerprint,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "qualification_process_window_ordinal": (
+                revision.qualification_process_window_ordinal
+            ),
+            "repair_draw_seed": revision.repair_draw_seed,
+            "qualification_backfill_player_id": _source_bound_pre_q_backfill(
+                previous_draw_input=previous_draw_input,
+                replacement_source_authority=authority,
+            ),
+        }
+
+    raise ValueError("Unsupported Tournament Draw revision request identity")
+
+
+
+
 class TournamentDrawRevisionStore:
     def __init__(self, session: Session):
         self.session = session
@@ -226,12 +344,18 @@ class TournamentDrawRevisionStore:
                 raise ValueError("Tournament Draw revision sequence has a gap")
             revision = TournamentDrawRevision.model_validate_json(row.payload_json)
             if (
+                revision.run_id,
+                revision.branch_id,
+                revision.event_id,
                 revision.sequence,
                 revision.command_id,
                 revision.predecessor_draw_fingerprint,
                 revision.successor_draw.fingerprint,
                 revision.fingerprint,
             ) != (
+                row.run_id,
+                row.branch_id,
+                row.event_id,
                 row.sequence,
                 row.command_id,
                 row.predecessor_draw_fingerprint,
@@ -245,6 +369,16 @@ class TournamentDrawRevisionStore:
             ):
                 raise ValueError(
                     "Tournament Draw revision predecessor chain is corrupt"
+                )
+            expected_request_fingerprint = _fp(
+                _request_payload_for_revision(
+                    revision,
+                    previous_draw_input=previous_draw_input,
+                )
+            )
+            if row.request_fingerprint != expected_request_fingerprint:
+                raise ValueError(
+                    "Stored Tournament Draw revision request identity is corrupt"
                 )
 
             if revision.repair_kind == "source_bound_pre_q_promotion":

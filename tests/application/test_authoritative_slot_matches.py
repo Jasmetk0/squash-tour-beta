@@ -97,6 +97,7 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     RankingTransitionAuthorityModel,
     TournamentDrawInputAuthorityModel,
+    TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
 )
@@ -4144,6 +4145,300 @@ def test_special_revision_frozen_evidence_retargets_nested_match_identity():
     assert target.played_matches[0].result_fingerprint == target_result
     assert target.status == source.status
     assert target.fingerprint != source.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_draw_revision_restore_round_trip_and_retry_are_identity_stable(tmp_path):
+    session, _, _, _, _ = run_semifinals(
+        tmp_path / "draw-revision-restore-retry.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
+
+    snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        policy=OfficialRankingPolicy(policy_id="ranking-policy"),
+        players=(),
+        results=(),
+        previous=None,
+    )
+    ranking = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        ranking_week=WEEK,
+        ranking_snapshot=snapshot,
+        adopted_by_command_id="adopt-ranking-restore-retry",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=snapshot.fingerprint,
+            payload_json=snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(ranking)
+
+    apps = tuple(
+        TournamentEntryApplication(
+            application_id=f"restore-a{index}",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+            player_id=f"restore-p{index}",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token=str(index),
+        )
+        for index in range(1, 8)
+    )
+    capacity = TournamentEntryFieldCapacity(main_draw_size=4)
+    field = TournamentEntryFieldResolver.build_initial(
+        authority=ranking,
+        applications=apps,
+        capacity=capacity,
+    )
+    apps_fp = _applications_fingerprint(apps)
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+            sequence=1,
+            command_id="restore-field-cut",
+            request_fingerprint=entry_request_fingerprint(
+                {
+                    "mode": "initial",
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "event_id": "event-restore-retry",
+                    "authority_fingerprint": ranking.fingerprint,
+                    "applications_fingerprint": apps_fp,
+                    "capacity": capacity.model_dump(mode="json"),
+                }
+            ),
+            field_fingerprint=field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=ranking.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(apps),
+            payload_json=field.model_dump_json(),
+        )
+    )
+    draw_input = TournamentDrawInputAuthorityBuilder.build(
+        authority=ranking,
+        field=field,
+        field_sequence=1,
+        command_id="restore-commit-draw",
+        draw_seed=17,
+        main_seed_count=None,
+        qualification_seed_count=None,
+        schema_version="tournament_draw_input_authority.v2",
+    )
+    draw_request = TournamentDrawInputAuthorityStore._request(
+        ranking_authority_fingerprint=ranking.fingerprint,
+        entry_field_fingerprint=field.fingerprint,
+        field_sequence=1,
+        draw_seed=17,
+        main_seed_count=draw_input.main_seed_count,
+        qualification_seed_count=draw_input.qualification_seed_count,
+        wild_card_authority_fingerprint=None,
+    )
+    session.add(
+        TournamentDrawInputAuthorityModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+            command_id="restore-commit-draw",
+            request_fingerprint=draw_input_request_fingerprint(draw_request),
+            authority_fingerprint=draw_input.fingerprint,
+            ranking_authority_fingerprint=ranking.fingerprint,
+            entry_field_fingerprint=field.fingerprint,
+            field_sequence=1,
+            payload_json=draw_input.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-generate-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-configure-process",
+        main_process_window_count=3,
+    )
+    store = TournamentDrawRevisionStore(session)
+    first = store.full_redraw_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-withdraw-p1",
+        withdrawn_player_ids=("restore-p1",),
+        repair_draw_seed=29,
+        main_process_window_ordinal=1,
+    )
+    second = store.draw_frozen_phase_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-withdraw-p2",
+        withdrawn_player_ids=("restore-p2",),
+        main_process_window_ordinal=3,
+    )
+
+    target_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        target_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    target_component_fingerprint = target_payload["content"][
+        "simulation_slot_match_state"
+    ]["fingerprint"]
+
+    third = store.draw_frozen_phase_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-withdraw-p3",
+        withdrawn_player_ids=("restore-p3",),
+        main_process_window_ordinal=3,
+    )
+    assert third.sequence == 3
+
+    current_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        current_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    corrupt_target = json.loads(json.dumps(target_payload))
+    corrupt_row = corrupt_target["content"]["simulation_slot_match_state"][
+        "draw_revisions"
+    ][1]
+    corrupt_revision = json.loads(corrupt_row["payload_json"])
+    corrupt_revision["branch_id"] = "wrong-branch"
+    corrupt_row["payload_json"] = json.dumps(
+        corrupt_revision,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with pytest.raises(
+        ValueError,
+        match="scope mismatch|Draw revision row is corrupt",
+    ):
+        restore_saved_simulation_slots(
+            session,
+            current_payload=current_payload,
+            target_payload=corrupt_target,
+            run_id="run",
+            branch_id="branch",
+        )
+    assert len(
+        store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+        )
+    ) == 3
+
+    restore_saved_simulation_slots(
+        session,
+        current_payload=current_payload,
+        target_payload=target_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    restored_history = store.history(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+    )
+    assert tuple(item.fingerprint for item in restored_history) == (
+        first.fingerprint,
+        second.fingerprint,
+    )
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+    ).count() == 2
+
+    retry = store.draw_frozen_phase_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+        command_id="restore-withdraw-p2",
+        withdrawn_player_ids=("restore-p2",),
+        main_process_window_ordinal=3,
+    )
+    assert retry.fingerprint == second.fingerprint
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-restore-retry",
+    ).count() == 2
+
+    second_row = session.scalar(
+        select(TournamentDrawRevisionModel).where(
+            TournamentDrawRevisionModel.run_id == "run",
+            TournamentDrawRevisionModel.branch_id == "branch",
+            TournamentDrawRevisionModel.event_id == "event-restore-retry",
+            TournamentDrawRevisionModel.sequence == 2,
+        )
+    )
+    assert second_row is not None
+    valid_request_fingerprint = second_row.request_fingerprint
+    second_row.request_fingerprint = "f" * 64
+    session.flush()
+    with pytest.raises(ValueError, match="request identity is corrupt"):
+        store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-restore-retry",
+        )
+    second_row.request_fingerprint = valid_request_fingerprint
+    session.flush()
+
+    restored_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        restored_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    assert restored_payload["content"]["simulation_slot_match_state"][
+        "fingerprint"
+    ] == target_component_fingerprint
 
 
 def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):

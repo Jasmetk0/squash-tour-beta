@@ -166,12 +166,18 @@ def _validate_draw_revision_rows_shape(rows):
         for row in ordered:
             revision = TournamentDrawRevision.model_validate_json(row.payload_json)
             if (
+                revision.run_id,
+                revision.branch_id,
+                revision.event_id,
                 revision.sequence,
                 revision.command_id,
                 revision.predecessor_draw_fingerprint,
                 revision.successor_draw.fingerprint,
                 revision.fingerprint,
             ) != (
+                row.run_id,
+                row.branch_id,
+                row.event_id,
                 row.sequence,
                 row.command_id,
                 row.predecessor_draw_fingerprint,

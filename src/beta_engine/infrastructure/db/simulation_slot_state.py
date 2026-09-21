@@ -617,6 +617,14 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
+    week_tournament_locks = session.scalars(
+        select(WeekTournamentLockAuthorityModel)
+        .where(
+            WeekTournamentLockAuthorityModel.run_id == run_id,
+            WeekTournamentLockAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(WeekTournamentLockAuthorityModel.week_ordinal)
+    ).all()
     entry_fields = session.scalars(
         select(TournamentEntryFieldVersionModel)
         .where(
@@ -1203,6 +1211,7 @@ def _live_component_with_saved_shape(
             commands,
             authorities,
             schedules,
+            week_tournament_locks,
             entry_fields,
             wild_cards,
             draw_inputs,
@@ -1223,6 +1232,8 @@ def _live_component_with_saved_shape(
         include_authorities="authorities" in shape_hint,
         schedules=schedules,
         include_schedules="schedules" in shape_hint,
+        week_tournament_locks=week_tournament_locks,
+        include_week_tournament_locks="week_tournament_locks" in shape_hint,
         entry_fields=entry_fields,
         include_entry_fields="entry_fields" in shape_hint,
         wild_card_authorities=wild_cards,
@@ -1302,6 +1313,26 @@ def restore_saved_simulation_slots(
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
+    live_week_tournament_locks = session.scalars(
+        select(WeekTournamentLockAuthorityModel)
+        .where(
+            WeekTournamentLockAuthorityModel.run_id == run_id,
+            WeekTournamentLockAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(WeekTournamentLockAuthorityModel.week_ordinal)
+    ).all()
+    if live_week_tournament_locks:
+        from beta_engine.infrastructure.db.week_tournament_lock import (
+            WeekTournamentLockStore,
+        )
+
+        lock_store = WeekTournamentLockStore(session)
+        for row in live_week_tournament_locks:
+            lock_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=row.week_ordinal,
+            )
     live_entry_fields = session.scalars(
         select(TournamentEntryFieldVersionModel)
         .where(
@@ -1417,6 +1448,11 @@ def restore_saved_simulation_slots(
                 bool(live_schedules)
                 or bool(expected is not None and "schedules" in expected)
             ),
+            week_tournament_locks=live_week_tournament_locks,
+            include_week_tournament_locks=(
+                bool(live_week_tournament_locks)
+                or bool(expected is not None and "week_tournament_locks" in expected)
+            ),
             entry_fields=live_entry_fields,
             include_entry_fields=(
                 bool(live_entry_fields)
@@ -1453,6 +1489,7 @@ def restore_saved_simulation_slots(
         or live_commands
         or live_authorities
         or live_schedules
+        or live_week_tournament_locks
         or live_entry_fields
         or live_wild_card_authorities
         or live_draw_inputs

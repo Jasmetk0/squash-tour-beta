@@ -735,6 +735,41 @@ def post_cutoff_walkover(
         ) from exc
 
 
+@router.get("/prospect-source/save/preview")
+def preview_run_prospect_source_save(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return runtime.repository.preview_run_prospect_source_save(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/prospect-source/save", status_code=201)
+def save_run_prospect_source(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    service: Annotated[RunWorkingDraftService, Depends(get_run_working_draft_service)],
+):
+    try:
+        return service.save_run_prospect_source(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=payload["expected_draft_version"],
+            expected_run_prospect_source_fingerprint=payload[
+                "expected_run_prospect_source_fingerprint"
+            ],
+        )
+    except (ValueError, KeyError) as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 @router.get("/save/preview")
 def preview_save(
     run_id: str, branch_id: str, runtime: Annotated[ApiRuntime, Depends(get_runtime)]

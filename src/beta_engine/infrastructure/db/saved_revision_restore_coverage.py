@@ -42,6 +42,7 @@ from beta_engine.infrastructure.db.models import (
     RankingTransitionAuthorityModel,
     ResolvedApplicationValidationSlotModel,
     RunEntryDecisionSlotAuthorityModel,
+    RunProspectModel,
     SeasonClosingRankingModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -68,6 +69,9 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
 )
+from beta_engine.infrastructure.db.run_prospect_source_state import (
+    RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+)
 from beta_engine.infrastructure.db.saved_revision_rankings import RANKING_COMPONENT_KEY
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     SEASON_CLOSURE_COMPONENT_KEY,
@@ -89,6 +93,13 @@ class SavedRevisionComponentCoverage:
 
 @dataclass(frozen=True)
 class RestoreTransientBlocker:
+    label: str
+    models: tuple[type[Any], ...]
+
+
+@dataclass(frozen=True)
+class SavedRevisionRunScopedReferenceCoverage:
+    component_key: str
     label: str
     models: tuple[type[Any], ...]
 
@@ -174,6 +185,16 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
     ),
 )
 
+RUN_SCOPED_REFERENCE_COVERAGE: tuple[
+    SavedRevisionRunScopedReferenceCoverage, ...
+] = (
+    SavedRevisionRunScopedReferenceCoverage(
+        component_key=RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+        label="Run prospect source",
+        models=(RunProspectModel,),
+    ),
+)
+
 TRANSIENT_RESTORE_BLOCKERS: tuple[RestoreTransientBlocker, ...] = (
     RestoreTransientBlocker(
         label="standalone match authoring workspace",
@@ -184,6 +205,7 @@ TRANSIENT_RESTORE_BLOCKERS: tuple[RestoreTransientBlocker, ...] = (
 SUPPORTED_CONTENT_KEYS = frozenset(
     {
         *(coverage.component_key for coverage in COMPONENT_COVERAGE),
+        *(coverage.component_key for coverage in RUN_SCOPED_REFERENCE_COVERAGE),
         SEASON_CLOSURE_COMPONENT_KEY,
     }
 )
@@ -215,6 +237,34 @@ def missing_component_coverage(
         if coverage.component_key not in saved_content
         and any(
             _has_scoped_rows(session, model, run_id=run_id, branch_id=branch_id)
+            for model in coverage.models
+        )
+    )
+
+
+def _has_run_scoped_rows(session, model: type[Any], *, run_id: str) -> bool:
+    return (
+        session.scalar(
+            select(model.run_id).where(model.run_id == run_id).limit(1)
+        )
+        is not None
+    )
+
+
+def missing_run_scoped_reference_coverage(
+    session,
+    *,
+    run_id: str,
+    saved_content: dict,
+) -> tuple[SavedRevisionRunScopedReferenceCoverage, ...]:
+    """Return shared Run sources that exist live but are absent from the saved head."""
+
+    return tuple(
+        coverage
+        for coverage in RUN_SCOPED_REFERENCE_COVERAGE
+        if coverage.component_key not in saved_content
+        and any(
+            _has_run_scoped_rows(session, model, run_id=run_id)
             for model in coverage.models
         )
     )

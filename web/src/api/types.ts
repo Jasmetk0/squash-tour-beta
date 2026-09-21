@@ -1184,6 +1184,24 @@ export type AuthoritativeSimulationSaveResponse = {
   audit_event_id: string
 }
 
+export type RunProspectSourceSavePreview = {
+  run_id: string
+  branch_id: string
+  run_prospect_source_fingerprint: string | null
+  prospect_count: number
+  saved_head_revision_id: string
+  draft_version: number
+  has_unsaved_changes: boolean
+  can_save: boolean
+}
+
+export type RunProspectSourceSavePayload = {
+  expected_draft_version: number
+  expected_run_prospect_source_fingerprint: string
+}
+
+export type RunProspectSourceSaveResponse = AuthoritativeSimulationSaveResponse
+
 export type ProspectBridgeInspectionItem = {
   prospect_id: string
   display_name: string

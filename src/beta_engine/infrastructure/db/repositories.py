@@ -183,6 +183,14 @@ from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
     SUPPORTED_CONTENT_KEYS,
     active_transient_restore_blockers,
     missing_component_coverage,
+    missing_run_scoped_reference_coverage,
+)
+from beta_engine.infrastructure.db.run_prospect_source_state import (
+    RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+    capture_run_prospect_source_snapshot,
+    capture_saved_run_prospect_source,
+    load_saved_run_prospect_source,
+    validate_live_run_prospect_source_against_saved,
 )
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
@@ -3183,6 +3191,37 @@ class SimulationPersistenceRepository:
                     + ".",
                 )
 
+            missing_run_sources = missing_run_scoped_reference_coverage(
+                session,
+                run_id=run_id,
+                saved_content=current_content,
+            )
+            for coverage in missing_run_sources:
+                block(
+                    "uncaptured_run_reference_state",
+                    "Current Saved Revision does not capture live "
+                    + coverage.label
+                    + ".",
+                )
+
+            if RUN_PROSPECT_SOURCE_COMPONENT_KEY in current_content:
+                try:
+                    validate_live_run_prospect_source_against_saved(
+                        session,
+                        state.saved_revision.payload,
+                        run_id=run_id,
+                    )
+                except ValueError as exc:
+                    block("run_prospect_source_mismatch", str(exc))
+            try:
+                validate_live_run_prospect_source_against_saved(
+                    session,
+                    target_revision.payload,
+                    run_id=run_id,
+                )
+            except ValueError as exc:
+                block("target_run_prospect_source_mismatch", str(exc))
+
             for transient in active_transient_restore_blockers(
                 session,
                 run_id=run_id,
@@ -3384,6 +3423,18 @@ class SimulationPersistenceRepository:
                         + detail
                     )
 
+                missing_run_sources = missing_run_scoped_reference_coverage(
+                    session,
+                    run_id=run_id,
+                    saved_content=current_saved_content,
+                )
+                if missing_run_sources:
+                    labels = ", ".join(item.label for item in missing_run_sources)
+                    raise SavedRevisionRestoreUnsupportedError(
+                        "restore is blocked because the Saved Revision does not capture "
+                        f"shared Run source state: {labels}"
+                    )
+
                 transient_blockers = active_transient_restore_blockers(
                     session,
                     run_id=run_id,
@@ -3430,6 +3481,23 @@ class SimulationPersistenceRepository:
                         "restore is blocked because the Saved Revision does not yet "
                         "capture the complete sporting or legacy-backed Run state"
                     )
+
+                try:
+                    if RUN_PROSPECT_SOURCE_COMPONENT_KEY in current_content:
+                        validate_live_run_prospect_source_against_saved(
+                            session,
+                            state.saved_revision.payload,
+                            run_id=run_id,
+                        )
+                    validate_live_run_prospect_source_against_saved(
+                        session,
+                        target_revision.payload,
+                        run_id=run_id,
+                    )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        f"Cannot restore Run prospect source evidence: {exc}"
+                    ) from exc
 
                 try:
                     restored_viewer_branch_id = saved_viewer_branch_id(
@@ -3699,6 +3767,9 @@ class SimulationPersistenceRepository:
                 )
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id
                 )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
@@ -3994,6 +4065,45 @@ class SimulationPersistenceRepository:
                 and branch.status == "active",
             }
 
+    def preview_run_prospect_source_save(
+        self, *, run_id: str, branch_id: str
+    ) -> dict:
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            draft = self._viewer_branch_working_draft_in_session(
+                session=session, run_id=run_id, branch_id=branch_id
+            )
+            state = self._validated_branch_revision_state_in_session(
+                session=session, branch=session.get(RunBranchModel, branch_id)
+            )
+            live = capture_run_prospect_source_snapshot(session, run_id=run_id)
+            saved = load_saved_run_prospect_source(
+                state.saved_revision.payload,
+                run_id=run_id,
+            )
+            changed = (
+                live is not None
+                and (saved is None or saved.fingerprint != live.fingerprint)
+            )
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "run_prospect_source_fingerprint": (
+                    live.fingerprint if live is not None else None
+                ),
+                "prospect_count": len(live.records) if live is not None else 0,
+                "saved_head_revision_id": state.saved_head_revision_id,
+                "draft_version": draft.draft_version,
+                "has_unsaved_changes": changed,
+                "can_save": changed
+                and draft.status == CLEAN_WORKING_DRAFT_STATUS
+                and not run.read_only
+                and not branch.read_only
+                and branch.status == "active",
+            }
+
     def save_viewer_branch_selection_atomically(
         self,
         *,
@@ -4005,6 +4115,7 @@ class SimulationPersistenceRepository:
         expected_ranking_fingerprint: str | None = None,
         expected_initial_world_fingerprint: str | None = None,
         expected_simulation_fingerprint: str | None = None,
+        expected_run_prospect_source_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
@@ -4012,6 +4123,7 @@ class SimulationPersistenceRepository:
             expected_ranking_fingerprint is not None
             or expected_initial_world_fingerprint is not None
             or expected_simulation_fingerprint is not None
+            or expected_run_prospect_source_fingerprint is not None
         )
         ranking_only = expected_ranking_fingerprint is not None
         revision_kind = (
@@ -4023,7 +4135,11 @@ class SimulationPersistenceRepository:
                 else (
                     "authoritative_simulation"
                     if expected_simulation_fingerprint
-                    else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                    else (
+                        "run_prospect_source"
+                        if expected_run_prospect_source_fingerprint
+                        else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                    )
                 )
             )
         )
@@ -4155,6 +4271,9 @@ class SimulationPersistenceRepository:
                 capture_saved_sporting(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
+                capture_saved_run_prospect_source(
+                    session, payload, run_id=run_id
+                )
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
@@ -4229,6 +4348,33 @@ class SimulationPersistenceRepository:
                         "kind": "authoritative_simulation",
                         "summary": "Saved authoritative simulation state",
                         "simulation_fingerprint": component["fingerprint"],
+                    }
+                elif expected_run_prospect_source_fingerprint is not None:
+                    component = payload["content"].get(
+                        RUN_PROSPECT_SOURCE_COMPONENT_KEY
+                    )
+                    if (
+                        component is None
+                        or component["fingerprint"]
+                        != expected_run_prospect_source_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Run prospect source changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            RUN_PROSPECT_SOURCE_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Run prospect source is already saved"
+                        )
+                    summary = {
+                        "kind": "run_prospect_source",
+                        "summary": "Saved Run prospect source",
+                        "run_prospect_source_fingerprint": component["fingerprint"],
+                        "prospect_count": len(component["records"]),
                     }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(

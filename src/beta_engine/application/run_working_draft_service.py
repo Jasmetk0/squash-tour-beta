@@ -132,6 +132,38 @@ class RunWorkingDraftService:
             ),
         )
 
+    def save_run_prospect_source(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_run_prospect_source_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_run_prospect_source_fingerprint, str)
+            or len(expected_run_prospect_source_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_run_prospect_source_fingerprint
+            )
+        ):
+            raise ValueError("Expected Run prospect source fingerprint must be SHA-256")
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_prospect_source_fingerprint=(
+                expected_run_prospect_source_fingerprint
+            ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
     def save_simulation(
         self,
         *,

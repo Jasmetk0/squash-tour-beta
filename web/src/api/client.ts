@@ -131,6 +131,9 @@ import type {
   AuthoritativeSimulationSavePreview,
   AuthoritativeSimulationSavePayload,
   AuthoritativeSimulationSaveResponse,
+  RunProspectSourceSavePreview,
+  RunProspectSourceSavePayload,
+  RunProspectSourceSaveResponse,
   ProspectBridgeInspection,
   DerivedAuthoritativeWeekTransitionPreview,
   AuthoritativeWeekTransitionCommand,
@@ -1375,6 +1378,36 @@ export async function simulateAuthoritativeNextSlot(
 ): Promise<AuthoritativeSimulationPosition> {
   const data = await request<AuthoritativeSimulationPosition>(
     authoritativeSimulationRoot(runId, branchId) + '/simulate-next-slot',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function previewRunProspectSourceSave(
+  runId: string,
+  branchId: string
+): Promise<RunProspectSourceSavePreview> {
+  const data = await request<RunProspectSourceSavePreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/prospect-source/save/preview'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.run_prospect_source_fingerprint !== null &&
+    !/^[0-9a-f]{64}$/.test(data.run_prospect_source_fingerprint)
+  ) {
+    throw new Error('Run prospect source Save preview fingerprint is invalid.')
+  }
+  return data
+}
+
+export async function saveRunProspectSource(
+  runId: string,
+  branchId: string,
+  payload: RunProspectSourceSavePayload
+): Promise<RunProspectSourceSaveResponse> {
+  const data = await request<RunProspectSourceSaveResponse>(
+    authoritativeSimulationRoot(runId, branchId) + '/prospect-source/save',
     { method: 'POST', body: JSON.stringify(payload) }
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)

@@ -780,3 +780,12 @@ copying stale revision identity. When a restored target contains `season_closure
 validate the historical component and rebind only its Closure Marker to the newly
 created restore revision ID. Keep the Season Summary unchanged and verify the new
 Saved Revision hash. This is a technical recovery invariant, not a new sporting rule.
+
+
+### Recovery integrity: uncaptured simulation authority guard
+
+Saved Revision restore must fail closed whenever live canonical tournament/simulation
+authority exists that is not represented by the current Saved Revision simulation
+component. The guard includes WC authority, Draw Process authority and Draw revision
+history as well as the older slot/draw tables, preventing future tournament state from
+surviving a restore to an older snapshot.

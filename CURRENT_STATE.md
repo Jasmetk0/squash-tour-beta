@@ -994,3 +994,17 @@ new restore revision could leave the embedded closure marker pointing at the old
 revision identity, making the new revision fail its own closure identity validation.
 Focused regression coverage exercises the real Branch restore transaction and verifies
 the resulting Saved Revision content hash.
+
+
+## Saved Revision restore: complete simulation-authority fail-closed guard
+
+The restore preflight now treats all canonical simulation-adjacent tournament authority
+rows as state that must already be captured by the current Saved Revision before a
+historical restore may proceed. In addition to slots, groups, schedules, Entry Field,
+Draw Input and Draw authority, the guard explicitly covers Tournament WC authority,
+Draw Process authority and append-only Draw revisions.
+
+This prevents a legacy/component-less Saved Revision from restoring while newer live
+WC/process/revision rows remain in the database as future state. The restore aborts
+before mutation instead. Focused regression coverage proves all three omitted authority
+types fail closed and create no restore revision/checkpoint.

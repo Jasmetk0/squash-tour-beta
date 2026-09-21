@@ -41,7 +41,12 @@ from beta_engine.infrastructure.db import (
     create_sqlite_engine,
 )
 from beta_engine.domain.run_revisions import saved_revision_content_hash
-from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
+    TournamentWildCardAuthorityModel,
+    TournamentDrawProcessAuthorityModel,
+    TournamentDrawRevisionModel,
+)
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     install_saved_revision_season_closure,
     load_saved_revision_season_closure,
@@ -461,4 +466,84 @@ def test_restore_rebinds_embedded_season_closure_to_restore_revision(tmp_path) -
     assert closure.parsed_marker.season_summary_fingerprint == summary.fingerprint
     assert repository.verify_branch_saved_revision_hash(
         revision_id="closure-restore-revision"
+    )
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    "row",
+    [
+        TournamentWildCardAuthorityModel(
+            run_id="run-one",
+            branch_id="branch-one",
+            event_id="event-wc",
+            command_id="wc-command",
+            request_fingerprint="a" * 64,
+            authority_fingerprint="b" * 64,
+            entry_field_fingerprint="c" * 64,
+            field_sequence=1,
+            payload_json="{}",
+        ),
+        TournamentDrawProcessAuthorityModel(
+            run_id="run-one",
+            branch_id="branch-one",
+            event_id="event-process",
+            command_id="process-command",
+            request_fingerprint="d" * 64,
+            authority_fingerprint="e" * 64,
+            draw_authority_fingerprint="f" * 64,
+            payload_json="{}",
+        ),
+        TournamentDrawRevisionModel(
+            run_id="run-one",
+            branch_id="branch-one",
+            event_id="event-revision",
+            sequence=1,
+            command_id="revision-command",
+            request_fingerprint="1" * 64,
+            revision_fingerprint="2" * 64,
+            predecessor_draw_fingerprint="3" * 64,
+            successor_draw_fingerprint="4" * 64,
+            payload_json="{}",
+        ),
+    ],
+    ids=["wild-card-authority", "draw-process-authority", "draw-revision"],
+)
+def test_restore_blocks_uncaptured_newer_simulation_authority_rows(tmp_path, row) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / (row.__tablename__ + '.db')}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        session.add(row)
+
+    with pytest.raises(
+        SavedRevisionRestoreUnsupportedError,
+        match="does not capture authoritative simulation state",
+    ):
+        RunSavedRevisionRestoreService(
+            repository=repository,
+            id_factory=_id_factory(
+                "guard-checkpoint",
+                "guard-restore-revision",
+                "guard-restore-audit",
+            ),
+        ).restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+
+    assert (
+        repository.get_branch_saved_revision(revision_id="guard-restore-revision")
+        is None
+    )
+    assert (
+        repository.get_branch_saved_revision_checkpoint(
+            checkpoint_id="guard-checkpoint"
+        )
+        is None
     )

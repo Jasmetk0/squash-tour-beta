@@ -4593,12 +4593,13 @@ def test_real_q_receipts_ll_vacancy_fill_survive_fork_restore_retry(tmp_path):
     )
     session.commit()
 
+    q_match_ids = {node.node_id for node in q.nodes}
     source_q_rows = session.scalars(
         select(SimulationEventGroupModel)
         .where(
             SimulationEventGroupModel.run_id == "run",
             SimulationEventGroupModel.branch_id == "branch",
-            SimulationEventGroupModel.event_id == "event-real-q-ll",
+            SimulationEventGroupModel.match_id.in_(q_match_ids),
         )
         .order_by(SimulationEventGroupModel.match_id)
     ).all()

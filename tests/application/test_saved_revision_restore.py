@@ -44,6 +44,8 @@ from beta_engine.domain.run_revisions import saved_revision_content_hash
 from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
     CompletedWeekSportingContextModel,
+    SeasonClosingRankingModel,
+    StandaloneMatchWorkspaceModel,
     TournamentWildCardAuthorityModel,
     TournamentDrawProcessAuthorityModel,
     TournamentDrawRevisionModel,
@@ -597,3 +599,97 @@ def test_restore_blocks_uncaptured_completed_sporting_context_without_player_sta
         )
         is None
     )
+
+
+@pytest.mark.pr_critical
+def test_restore_blocks_uncaptured_season_closing_ranking(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-closing-ranking.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        session.add(
+            SeasonClosingRankingModel(
+                run_id="run-one",
+                branch_id="branch-one",
+                season_index=0,
+                completed_ordinal=60,
+                fingerprint="c" * 64,
+                payload_json="{}",
+            )
+        )
+
+    with pytest.raises(
+        SavedRevisionRestoreUnsupportedError,
+        match="does not capture complete ranking preparation state",
+    ):
+        RunSavedRevisionRestoreService(
+            repository=repository,
+            id_factory=_id_factory(
+                "closing-ranking-checkpoint",
+                "closing-ranking-restore",
+                "closing-ranking-audit",
+            ),
+        ).restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+
+    assert repository.get_branch_saved_revision(
+        revision_id="closing-ranking-restore"
+    ) is None
+    assert repository.get_branch_saved_revision_checkpoint(
+        checkpoint_id="closing-ranking-checkpoint"
+    ) is None
+
+
+@pytest.mark.pr_critical
+def test_restore_blocks_transient_standalone_match_workspace(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-standalone-workspace.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        session.add(
+            StandaloneMatchWorkspaceModel(
+                run_id="run-one",
+                branch_id="branch-one",
+                version=1,
+                fingerprint="d" * 64,
+                payload_json="{}",
+            )
+        )
+
+    with pytest.raises(
+        SavedRevisionRestoreConflictError,
+        match="standalone match authoring workspace",
+    ):
+        RunSavedRevisionRestoreService(
+            repository=repository,
+            id_factory=_id_factory(
+                "workspace-checkpoint",
+                "workspace-restore",
+                "workspace-audit",
+            ),
+        ).restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+
+    with repository._session_factory() as session:
+        assert session.get(
+            StandaloneMatchWorkspaceModel,
+            ("run-one", "branch-one"),
+        ) is not None
+    assert repository.get_branch_saved_revision(revision_id="workspace-restore") is None
+    assert repository.get_branch_saved_revision_checkpoint(
+        checkpoint_id="workspace-checkpoint"
+    ) is None

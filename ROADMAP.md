@@ -797,3 +797,16 @@ The uncaptured-sporting restore guard covers both player sporting week snapshots
 completed-week sporting contexts. A context-only live row is still sporting history and
 must block restore when the current Saved Revision does not capture the sporting
 component.
+
+
+### Central recovery ownership registry
+
+Saved Revision restore coverage is now maintained as one explicit component-to-live-
+table registry plus a separate transient-blocker registry. New Run/Branch persistence
+must declare recovery ownership instead of relying on ad-hoc restore checks.
+
+Current hardened cases include Season Closing Ranking under ranking recovery,
+WC/Draw Process/Draw Revision under simulation recovery, completed-week sporting
+contexts under sporting recovery, and the transient standalone authoring workspace as
+a restore blocker rather than Saved Revision content. This is a Gate 4/5 save-load
+integrity mechanism and does not define new sporting policy.

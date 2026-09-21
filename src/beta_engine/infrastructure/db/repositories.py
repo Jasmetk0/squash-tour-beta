@@ -179,6 +179,11 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
+from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
+    SUPPORTED_CONTENT_KEYS,
+    active_transient_restore_blockers,
+    missing_component_coverage,
+)
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_EVENT_LEGACY_STATE,
     BRANCH_CHECKPOINT_COMMAND_KIND_CAPTURE_COMPLETED_WEEK_LEGACY_STATE,
@@ -3139,211 +3144,40 @@ class SimulationPersistenceRepository:
                         "Run has no coherent current Viewer Branch"
                     )
 
-                # Legacy empty revisions cannot protect live ranking preparation.
-                # Check row presence, including malformed/partial histories, without
-                # requiring a valid ranking chain or supported ranking fork ancestry.
-                has_uncaptured_ranking = any(
-                    session.scalar(
-                        select(model.run_id)
-                        .where(model.run_id == run_id, model.branch_id == branch_id)
-                        .limit(1)
-                    )
-                    is not None
-                    for model in (
-                        OfficialRankingCandidateModel,
-                        OfficialRankingCommandModel,
-                        OfficialRankingResultVersionModel,
-                        OfficialRankingZeroVersionModel,
-                        OwnedTournamentRankingSourceModel,
-                        RankingTransitionAuthorityModel,
-                        TournamentRankingSnapshotAuthorityModel,
-                        AuthoritativeWorldStateModel,
-                        PublishedOfficialRankingModel,
-                        AuthoritativeWeekTransitionReceiptModel,
-                        AuthoritativeWorldEventModel,
-                    )
-                )
-                if (
-                    has_uncaptured_ranking
-                    and RANKING_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
+                current_saved_content = state.saved_revision.payload.get("content", {})
+                if not isinstance(current_saved_content, dict):
                     raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not yet "
-                        "capture the complete ranking preparation state"
+                        "restore is blocked because the current Saved Revision content is invalid"
                     )
-                has_uncaptured_initial_world = (
-                    session.get(InitialWorldStateModel, (run_id, branch_id)) is not None
+
+                missing_coverage = missing_component_coverage(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    saved_content=current_saved_content,
                 )
-                if (
-                    has_uncaptured_initial_world
-                    and INITIAL_WORLD_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture the initial world"
-                    )
-                has_uncaptured_lifecycle = (
-                    session.scalar(
-                        select(PlayerLifecycleWeekStateModel.run_id)
-                        .where(
-                            PlayerLifecycleWeekStateModel.run_id == run_id,
-                            PlayerLifecycleWeekStateModel.branch_id == branch_id,
+                if missing_coverage:
+                    if len(missing_coverage) == 1:
+                        detail = missing_coverage[0].label
+                    else:
+                        detail = "all live state: " + ", ".join(
+                            item.label for item in missing_coverage
                         )
-                        .limit(1)
-                    )
-                    is not None
-                )
-                if (
-                    has_uncaptured_lifecycle
-                    and PLAYER_LIFECYCLE_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
                     raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture player lifecycle state"
+                        "restore is blocked because the Saved Revision does not capture "
+                        + detail
                     )
-                has_uncaptured_run_entry_slots = (
-                    session.scalar(
-                        select(RunEntryDecisionSlotAuthorityModel.run_id)
-                        .where(
-                            RunEntryDecisionSlotAuthorityModel.run_id == run_id,
-                            RunEntryDecisionSlotAuthorityModel.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
+
+                transient_blockers = active_transient_restore_blockers(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
                 )
-                if (
-                    has_uncaptured_run_entry_slots
-                    and RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture Run entry-decision slots"
-                    )
-                has_uncaptured_application_validation = (
-                    session.scalar(
-                        select(ResolvedApplicationValidationSlotModel.run_id)
-                        .where(
-                            ResolvedApplicationValidationSlotModel.run_id == run_id,
-                            ResolvedApplicationValidationSlotModel.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
-                )
-                if (
-                    has_uncaptured_application_validation
-                    and APPLICATION_VALIDATION_SLOT_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture application validation slots"
-                    )
-                has_uncaptured_application_submission = (
-                    session.scalar(
-                        select(TournamentApplicationSubmissionAuthorityModel.run_id)
-                        .where(
-                            TournamentApplicationSubmissionAuthorityModel.run_id == run_id,
-                            TournamentApplicationSubmissionAuthorityModel.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
-                )
-                if (
-                    has_uncaptured_application_submission
-                    and TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture tournament application submissions"
-                    )
-                has_uncaptured_definitive_wc = (
-                    session.scalar(
-                        select(DefinitiveWildCardAssignmentAuthorityModel.run_id)
-                        .where(
-                            DefinitiveWildCardAssignmentAuthorityModel.run_id == run_id,
-                            DefinitiveWildCardAssignmentAuthorityModel.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
-                )
-                if (
-                    has_uncaptured_definitive_wc
-                    and DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture definitive Wild Card assignments"
-                    )
-                has_uncaptured_tour_entry = (
-                    session.scalar(
-                        select(PlayerTourEntryTriggerModel.run_id)
-                        .where(
-                            PlayerTourEntryTriggerModel.run_id == run_id,
-                            PlayerTourEntryTriggerModel.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
-                )
-                if (
-                    has_uncaptured_tour_entry
-                    and PLAYER_TOUR_ENTRY_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture player Tour-entry triggers"
-                    )
-                has_uncaptured_sporting = any(
-                    session.scalar(
-                        select(model.run_id)
-                        .where(
-                            model.run_id == run_id,
-                            model.branch_id == branch_id,
-                        )
-                        .limit(1)
-                    )
-                    is not None
-                    for model in (
-                        PlayerSportingWeekStateModel,
-                        CompletedWeekSportingContextModel,
-                    )
-                )
-                if has_uncaptured_sporting and PLAYER_SPORTING_COMPONENT_KEY not in state.saved_revision.payload.get("content", {}):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture player sporting state"
-                    )
-                has_uncaptured_simulation = any(
-                    session.scalar(
-                        select(model.run_id)
-                        .where(model.run_id == run_id, model.branch_id == branch_id)
-                        .limit(1)
-                    )
-                    is not None
-                    for model in (
-                        SimulationSlotModel,
-                        SimulationEventGroupModel,
-                        AuthoritativeSimulationCommandModel,
-                        AdoptedTournamentAuthorityModel,
-                        WeekSimulationScheduleModel,
-                        TournamentEntryFieldVersionModel,
-                        TournamentWildCardAuthorityModel,
-                        TournamentDrawInputAuthorityModel,
-                        TournamentDrawAuthorityModel,
-                        TournamentDrawRevisionModel,
-                        TournamentDrawProcessAuthorityModel,
-                    )
-                )
-                if (
-                    has_uncaptured_simulation
-                    and SIMULATION_SLOT_COMPONENT_KEY
-                    not in state.saved_revision.payload.get("content", {})
-                ):
-                    raise SavedRevisionRestoreUnsupportedError(
-                        "restore is blocked because the Saved Revision does not capture authoritative simulation state"
+                if transient_blockers:
+                    labels = ", ".join(item.label for item in transient_blockers)
+                    raise SavedRevisionRestoreConflictError(
+                        "restore is blocked by unsaved transient state: "
+                        f"{labels}; finish or discard that authoring state first"
                     )
 
                 supported_payload_schemas = {
@@ -3372,34 +3206,8 @@ class SimulationPersistenceRepository:
                     not in supported_payload_schemas
                     or not isinstance(current_content, dict)
                     or not isinstance(target_content, dict)
-                    or set(current_content)
-                    - {
-                        RANKING_COMPONENT_KEY,
-                        INITIAL_WORLD_COMPONENT_KEY,
-                        PLAYER_LIFECYCLE_COMPONENT_KEY,
-                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
-                        APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
-                        TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
-                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
-                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
-                        PLAYER_SPORTING_COMPONENT_KEY,
-                        SIMULATION_SLOT_COMPONENT_KEY,
-                        SEASON_CLOSURE_COMPONENT_KEY,
-                    }
-                    or set(target_content)
-                    - {
-                        RANKING_COMPONENT_KEY,
-                        INITIAL_WORLD_COMPONENT_KEY,
-                        PLAYER_LIFECYCLE_COMPONENT_KEY,
-                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
-                        APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
-                        TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
-                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
-                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
-                        PLAYER_SPORTING_COMPONENT_KEY,
-                        SIMULATION_SLOT_COMPONENT_KEY,
-                        SEASON_CLOSURE_COMPONENT_KEY,
-                    }
+                    or set(current_content) - SUPPORTED_CONTENT_KEYS
+                    or set(target_content) - SUPPORTED_CONTENT_KEYS
                     or has_unrestorable_run_state
                 ):
                     raise SavedRevisionRestoreUnsupportedError(

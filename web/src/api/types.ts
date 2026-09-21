@@ -639,6 +639,23 @@ export type RestoreSavedRevisionRequest = {
   explicit_confirmation: boolean
 }
 
+export type SavedRevisionRestorePreflightBlocker = {
+  code: string
+  message: string
+}
+
+export type SavedRevisionRestorePreflight = {
+  run_id: string
+  branch_id: string
+  target_saved_revision_id: string
+  saved_head_revision_id: string
+  draft_version: number
+  current_viewer_branch_id: string
+  target_viewer_branch_id: string | null
+  can_restore: boolean
+  blockers: SavedRevisionRestorePreflightBlocker[]
+}
+
 export type SavedRevisionRestoreCheckpoint = {
   checkpoint_id: string
   saved_revision_id: string

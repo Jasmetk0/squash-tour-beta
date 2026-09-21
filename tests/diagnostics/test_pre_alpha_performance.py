@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.diagnostics.pre_alpha_performance import (
     PROFILE_SCHEMA,
     build_profile,

@@ -956,3 +956,26 @@ Master §31.3 mandatory acceptance flows and any release-specific smoke/performa
 checks must all be run before that version is accepted.
 
 Canonical engineering wording: `docs/PRE_ALPHA_TEST_POLICY.md`.
+
+
+## Current follow-up after #882: PAQ-006 measurement foundation
+
+The repository now has a cross-platform, non-authoritative performance profiler for
+the two mandatory Master §31.3 acceptance flows. It records wall-clock duration,
+Python-managed current/peak heap via `tracemalloc`, exact pytest node IDs, Python and
+platform identity, and pytest exit status as
+`pre_alpha_performance_profile.v1`.
+
+This is measurement infrastructure only. It deliberately sets no pass/fail time or
+memory threshold and therefore does not mark PAQ-006 resolved. The profiler is kept
+out of ordinary PR CI under the focused-test policy and is intended for deliberate
+performance investigations and explicit internal release/checkpoint gates. See
+`docs/PRE_ALPHA_PERFORMANCE_MEASUREMENT_V1.md`.
+
+
+### Green-only PR handoff rule
+
+PR links are not handed to the user as merge-ready while required CI is queued,
+running, failed, cancelled or timed out. After every fix, CI must be re-checked on the
+latest head commit. Only an all-green latest head may be presented as the next PR to
+merge. This is a hard development workflow rule, not a suggestion.

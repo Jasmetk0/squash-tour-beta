@@ -834,3 +834,30 @@ audit trail for old saves. Automatic WC eligibility, automatic RWC ordering and
 Final Commitment / Week Tournament Lock placement remain unresolved Master policy and
 are not inferred by this bridge.
 
+
+
+## Current follow-up after #876
+
+The minimum pre-alpha **Match Reconstruction** contract now has a canonical
+Run/Branch implementation. Admin can reconstruct the currently eligible match by
+supplying hard known facts: winner identity, exact match score and/or exact game
+scores. Candidate count is explicit. Candidates are generated through the same
+canonical Match Engine and Simulation Slot executor as normal sporting execution,
+rather than a second reconstruction engine.
+
+Preview is non-authoritative: adopted authority, slot staging and every candidate
+execution are rolled back. Candidate order is deterministic discovery order and each
+candidate exposes both a compact score summary and complete read-only Match Result
+detail. A bounded natural search may return fewer candidates than requested with an
+explicit warning; it does not force a result.
+
+Only an explicitly selected candidate can become history. Commit re-derives the
+reviewed preview under the current week, Position and Saved Revision head, replays the
+selected seed exactly, persists reconstruction provenance plus operator/audit reason on
+the canonical match-group receipt, then uses the normal match-effects and tournament
+close path.
+
+This closes the **minimum Match Reconstruction** pre-alpha acceptance item, not the
+full reconstruction design. Probability estimates / p-delta-alpha policy, forcing,
+nearest-match search, the complete constraint catalog, reconstruction-session
+retention and final dedicated UI remain unresolved and are not inferred.

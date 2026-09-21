@@ -1075,3 +1075,21 @@ Comparison performs no domain interpretation and no mutation.
 The Saved Revision History UI loads the newest page first, can fetch older pages, and
 renders comparison results for two loaded revisions. See
 `docs/SAVED_REVISION_HISTORY_PAGINATION_COMPARISON_V1.md`.
+
+
+## Run prospect source recovery snapshot
+
+Saved Revision recovery now preserves deterministic evidence for the shared Run-scoped
+prospect catalog through `run_prospect_source_snapshot.v1`.
+
+All future Saved Revisions capture the canonical Run prospect source when present, and
+Admin has an explicit preview/Save boundary for materialized prospect changes. Because
+`run_prospects` is shared across Branches, historical restore never rewrites that live
+table. Instead both preflight and confirm require the target/current saved source
+fingerprint to match the live Run catalog exactly and fail before mutation on drift.
+
+The central restore-coverage registry now has a separate Run-scoped reference category
+alongside Branch-owned components and transient blockers. This closes the prospect-source
+fidelity portion of complete sporting-world recovery without claiming that the broader
+recovery/ranking-remap follow-up is finished. See
+`docs/RUN_PROSPECT_SOURCE_SAVED_REVISION_V1.md`.

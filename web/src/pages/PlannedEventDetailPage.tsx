@@ -1,9 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { FormEvent, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
-  assignEventWildcards,
   getEventLateReplacementActions,
   getEventPreDrawWithdrawalActions,
   getCanonicalTournamentEntryFieldState,
@@ -18,9 +17,10 @@ import {
   generateCanonicalTournamentDraw,
   previewCanonicalFrozenMainReplacement,
   commitCanonicalFrozenMainReplacement,
+  getCanonicalWildCardState,
+  previewCanonicalWildCardAssignment,
+  commitCanonicalWildCardAssignment,
   getEventWildcardActions,
-  getEventWildcardCandidates,
-  getEventWildcards,
   getRun,
   listEvents
 } from '../api/client'
@@ -36,14 +36,22 @@ import {
 import { formatApiError } from '../utils/apiErrors'
 import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
-import type { CanonicalFrozenMainReplacementPreview } from '../api/types'
+import type {
+  CanonicalFrozenMainReplacementPreview,
+  CanonicalWildCardPreview
+} from '../api/types'
 
 export function PlannedEventDetailPage(): JSX.Element {
   const { runId = '', eventId = '' } = useParams()
   const queryClient = useQueryClient()
   const viewed = useAdminViewedSeasonState()
-  const [slotIndexInput, setSlotIndexInput] = useState('1')
-  const [selectedPlayerId, setSelectedPlayerId] = useState('')
+  const [canonicalWildcardOriginalInput, setCanonicalWildcardOriginalInput] = useState('')
+  const [canonicalWildcardReserveInput, setCanonicalWildcardReserveInput] = useState('')
+  const [canonicalWildcardUnavailableInput, setCanonicalWildcardUnavailableInput] = useState('')
+  const [canonicalWildcardOperator, setCanonicalWildcardOperator] = useState('')
+  const [canonicalWildcardReason, setCanonicalWildcardReason] = useState('')
+  const [canonicalWildcardPreview, setCanonicalWildcardPreview] =
+    useState<CanonicalWildCardPreview | null>(null)
   const [canonicalPreDrawWithdrawnPlayerId, setCanonicalPreDrawWithdrawnPlayerId] = useState('')
   const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
   const [mainProcessWindowCount, setMainProcessWindowCount] = useState('')
@@ -55,8 +63,6 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [frozenReplacementPreview, setFrozenReplacementPreview] =
     useState<CanonicalFrozenMainReplacementPreview | null>(null)
   const commissionerQueryKeys = [
-    ['wildcards', runId, eventId],
-    ['wildcard-candidates', runId, eventId],
     ['wildcard-actions', runId, eventId],
     ['pre-draw-withdrawal-actions', runId, eventId],
     ['late-replacement-actions', runId, eventId]
@@ -84,18 +90,6 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId) && !viewed.historical,
     retry: false
   })
-  const wildcardsQuery = useQuery({
-    queryKey: ['wildcards', runId, eventId],
-    queryFn: () => getEventWildcards(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
-    retry: false
-  })
-  const wildcardCandidatesQuery = useQuery({
-    queryKey: ['wildcard-candidates', runId, eventId],
-    queryFn: () => getEventWildcardCandidates(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
-    retry: false
-  })
   const wildcardActionsQuery = useQuery({
     queryKey: ['wildcard-actions', runId, eventId],
     queryFn: () => getEventWildcardActions(runId, eventId),
@@ -103,6 +97,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     retry: false
   })
   const activeBranchId = viewed.time?.branchId ?? ''
+  const canonicalWildcardStateQuery = useQuery({
+    queryKey: ['canonical-wild-card-state', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalWildCardState(runId, activeBranchId, eventId),
+    enabled: Boolean(runId && activeBranchId && eventId) && !viewed.historical,
+    retry: false
+  })
   const canonicalEntryFieldQuery = useQuery({
     queryKey: ['canonical-entry-field', runId, activeBranchId, eventId],
     queryFn: () => getCanonicalTournamentEntryFieldState(runId, activeBranchId, eventId),
@@ -175,12 +175,91 @@ export function PlannedEventDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
-  const wildcardMutation = useMutation({
-    mutationFn: (values: { slotIndex: number; playerId: string }) =>
-      assignEventWildcards(runId, eventId, {
-        assignments: [{ slot_index: values.slotIndex, player_id: values.playerId }]
-      }),
-    onSuccess: invalidateCommissionerQueries
+  function parseOrderedPlayerIds(value: string): string[] {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
+  function parseOriginalWildcardSlots(value: string): Array<string | null> {
+    if (!value.trim()) return []
+    return value.split(',').map((item) => {
+      const normalized = item.trim()
+      return !normalized || normalized === '-' ? null : normalized
+    })
+  }
+
+  const canonicalWildcardPreviewMutation = useMutation({
+    mutationFn: () => {
+      const field = canonicalEntryFieldQuery.data
+      if (!field) {
+        throw new Error('Canonical Tournament Entry Field is required before WC review.')
+      }
+      if (field.draw_input_committed) {
+        throw new Error('Canonical WC review is locked after Draw Input commitment.')
+      }
+      const operator = canonicalWildcardOperator.trim()
+      const reason = canonicalWildcardReason.trim()
+      if (!operator || !reason) {
+        throw new Error('WC review requires operator label and audit reason.')
+      }
+      const original = parseOriginalWildcardSlots(canonicalWildcardOriginalInput)
+      const reserves = parseOrderedPlayerIds(canonicalWildcardReserveInput)
+      const unavailable = Array.from(
+        new Set(parseOrderedPlayerIds(canonicalWildcardUnavailableInput))
+      ).sort()
+      const commandId = [
+        'admin-ui-wc',
+        field.field_fingerprint.slice(0, 16),
+        Date.now().toString(36)
+      ].join('-').slice(0, 128)
+      return previewCanonicalWildCardAssignment(runId, activeBranchId, eventId, {
+        command_id: commandId,
+        original_wild_card_player_ids: original,
+        reserve_wild_card_player_ids: reserves,
+        unavailable_player_ids: unavailable,
+        operator_label: operator,
+        reason
+      })
+    },
+    onSuccess: (preview) => setCanonicalWildcardPreview(preview)
+  })
+
+  const canonicalWildcardCommitMutation = useMutation({
+    mutationFn: () => {
+      const preview = canonicalWildcardPreview
+      if (!preview) {
+        throw new Error('Preview the canonical WC/RWC review before commit.')
+      }
+      const authority = preview.authority
+      if (!authority.operator_label || !authority.audit_reason) {
+        throw new Error('Reviewed WC authority is missing Admin audit provenance.')
+      }
+      return commitCanonicalWildCardAssignment(runId, activeBranchId, eventId, {
+        command_id: authority.resolved_by_command_id,
+        original_wild_card_player_ids: authority.original_wild_card_player_ids,
+        reserve_wild_card_player_ids: authority.reserve_wild_card_player_ids,
+        unavailable_player_ids: authority.unavailable_player_ids,
+        operator_label: authority.operator_label,
+        reason: authority.audit_reason,
+        expected_week: preview.week,
+        expected_revision_id: preview.expected_revision_id,
+        expected_decision_slot_ordinal: preview.decision_slot_ordinal,
+        expected_proposal_fingerprint: preview.proposal_fingerprint
+      })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['canonical-wild-card-state', runId, activeBranchId, eventId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['canonical-entry-field', runId, activeBranchId, eventId]
+        }),
+        queryClient.invalidateQueries({ queryKey: ['wildcard-actions', runId, eventId] })
+      ])
+    }
   })
   async function invalidateCanonicalDrawQueries(): Promise<void> {
     await Promise.all([
@@ -477,18 +556,16 @@ export function PlannedEventDetailPage(): JSX.Element {
   }, [frozenReplacementWithdrawnPlayerId, frozenReplacementUnavailableInput])
 
   useEffect(() => {
-    const firstCandidateId = wildcardCandidatesQuery.data?.candidates[0]?.player_id ?? ''
-    if (!selectedPlayerId && firstCandidateId) {
-      setSelectedPlayerId(firstCandidateId)
-    }
-  }, [wildcardCandidatesQuery.data, selectedPlayerId])
-  function handleWildcardSubmit(event: FormEvent<HTMLFormElement>): void {
-    event.preventDefault()
-    const slotIndex = Number(slotIndexInput)
-    if (!Number.isFinite(slotIndex) || slotIndex < 1 || !selectedPlayerId.trim()) return
-    wildcardMutation.mutate({ slotIndex, playerId: selectedPlayerId.trim() })
-  }
-  if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
+    setCanonicalWildcardPreview(null)
+  }, [
+    canonicalWildcardOriginalInput,
+    canonicalWildcardReserveInput,
+    canonicalWildcardUnavailableInput,
+    canonicalWildcardOperator,
+    canonicalWildcardReason
+  ])
+
+    if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
 
@@ -1121,87 +1198,167 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Commissioner wildcards">
-          {wildcardsQuery.isLoading ? <p className="status">Loading wildcard slots...</p> : null}
-          {wildcardsQuery.error ? <p className="error">Failed to load wildcard state: {formatApiError(wildcardsQuery.error)}</p> : null}
-          {wildcardsQuery.data ? (
+        <SectionCard title="Canonical WC/RWC review">
+          <p className="status">
+            WC eligibility and construction of the RWC order are still intentionally open in the Master.
+            This pre-alpha control therefore records an explicit Admin-reviewed nomination/order; the
+            server owns the frozen Entry Field, Direct Acceptance release, global Simulation Slot,
+            definitive assignments and Tour-entry effects.
+          </p>
+          {canonicalWildcardStateQuery.isLoading ? <p className="status">Loading canonical WC state...</p> : null}
+          {canonicalWildcardStateQuery.error ? (
+            <p className="error">
+              Failed to load canonical WC state: {formatApiError(canonicalWildcardStateQuery.error)}
+            </p>
+          ) : null}
+          {canonicalWildcardStateQuery.data?.authority ? (
             <>
               <MetadataList
                 items={[
-                  { label: 'Wildcard slots', value: wildcardsQuery.data.total_slots },
-                  { label: 'Assignment allowed', value: wildcardsQuery.data.eligible ? 'Yes' : 'No' },
-                  { label: 'Eligibility note', value: wildcardsQuery.data.eligibility_reason ?? 'Eligible' }
+                  { label: 'Authority', value: canonicalWildcardStateQuery.data.authority.schema_version },
+                  {
+                    label: 'Global slot',
+                    value: canonicalWildcardStateQuery.data.authority.decision_slot_ordinal ?? 'Historical / none'
+                  },
+                  {
+                    label: 'Selection policy',
+                    value: canonicalWildcardStateQuery.data.authority.selection_policy_id ?? 'Historical'
+                  },
+                  {
+                    label: 'Reviewed by',
+                    value: canonicalWildcardStateQuery.data.authority.operator_label ?? 'Historical'
+                  }
                 ]}
               />
-              {wildcardsQuery.data.slots.length > 0 ? (
-                <ul>
-                  {wildcardsQuery.data.slots.map((slot) => (
-                    <li key={slot.entry_id}>
-                      Slot {slot.slot_index}: {slot.assigned_player_id ?? 'Unassigned'}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState message="This event has no wildcard slots configured." />
-              )}
-              {wildcardsQuery.data.eligible && wildcardsQuery.data.total_slots > 0 ? (
-                <form onSubmit={handleWildcardSubmit}>
-                  <label>
-                    Slot
-                    <select value={slotIndexInput} onChange={(e) => setSlotIndexInput(e.target.value)}>
-                      {wildcardsQuery.data.slots.map((slot) => (
-                        <option key={slot.slot_index} value={String(slot.slot_index)}>
-                          {slot.slot_index}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    Candidate player
-                    <select value={selectedPlayerId} onChange={(e) => setSelectedPlayerId(e.target.value)}>
-                      <option value="">Select candidate</option>
-                      {(wildcardCandidatesQuery.data?.candidates ?? []).map((candidate) => (
-                        <option key={candidate.player_id} value={candidate.player_id}>
-                          {candidate.player_name} ({candidate.player_id}) · {candidate.country_code} ·{' '}
-                          {candidate.source === 'main_draw_waitlist'
-                            ? 'Main waitlist'
-                            : candidate.source === 'qualification_waitlist'
-                              ? 'Qualification waitlist'
-                              : 'Open pool'}
-                          {candidate.source_priority ? ` #${candidate.source_priority}` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={
-                      wildcardMutation.isPending ||
-                      !selectedPlayerId ||
-                      (wildcardCandidatesQuery.data?.candidates.length ?? 0) === 0
-                    }
-                  >
-                    Assign wildcard
-                  </button>
-                </form>
-              ) : null}
-              {wildcardCandidatesQuery.isLoading ? <p className="status">Loading wildcard candidates...</p> : null}
-              {wildcardCandidatesQuery.error ? (
+              <ul>
+                {canonicalWildcardStateQuery.data.authority.slots.map((slot) => (
+                  <li key={slot.wildcard_index}>
+                    WC {slot.wildcard_index}: {slot.active_player_id ?? 'Unfilled'} · {slot.source}
+                    {slot.reserve_ordinal ? ` · RWC #${slot.reserve_ordinal}` : ''}
+                    {slot.released_because_direct_acceptance ? ' · original holder became Direct' : ''}
+                  </li>
+                ))}
+              </ul>
+              <p className="status">
+                Definitive assignments: {canonicalWildcardStateQuery.data.definitive_assignments.length}
+              </p>
+            </>
+          ) : (
+            <>
+              <label>
+                Original WC slot nominations
+                <input
+                  aria-label="Original WC slot nominations"
+                  value={canonicalWildcardOriginalInput}
+                  onChange={(event) => setCanonicalWildcardOriginalInput(event.target.value)}
+                  placeholder="P17, -, P42"
+                />
+              </label>
+              <p className="status">
+                Comma-separated in physical WC-slot order. Use “-” for an intentionally unfilled slot.
+                The server rejects the review if the count differs from the frozen Entry Field capacity.
+              </p>
+              <label>
+                RWC order
+                <input
+                  aria-label="RWC order"
+                  value={canonicalWildcardReserveInput}
+                  onChange={(event) => setCanonicalWildcardReserveInput(event.target.value)}
+                  placeholder="P88, P91, P104"
+                />
+              </label>
+              <label>
+                Explicitly unavailable WC players
+                <input
+                  aria-label="Unavailable WC players"
+                  value={canonicalWildcardUnavailableInput}
+                  onChange={(event) => setCanonicalWildcardUnavailableInput(event.target.value)}
+                  placeholder="P91, P120"
+                />
+              </label>
+              <label>
+                WC review operator
+                <input
+                  aria-label="WC review operator"
+                  value={canonicalWildcardOperator}
+                  onChange={(event) => setCanonicalWildcardOperator(event.target.value)}
+                />
+              </label>
+              <label>
+                WC review audit reason
+                <textarea
+                  aria-label="WC review audit reason"
+                  value={canonicalWildcardReason}
+                  onChange={(event) => setCanonicalWildcardReason(event.target.value)}
+                />
+              </label>
+              <p>
+                <button
+                  type="button"
+                  disabled={
+                    canonicalWildcardPreviewMutation.isPending ||
+                    canonicalEntryFieldQuery.data?.draw_input_committed === true
+                  }
+                  onClick={() => canonicalWildcardPreviewMutation.mutate()}
+                >
+                  Preview canonical WC/RWC review
+                </button>
+              </p>
+              {canonicalWildcardPreviewMutation.error ? (
                 <p className="error">
-                  Failed to load wildcard candidates: {formatApiError(wildcardCandidatesQuery.error)}
+                  WC preview failed: {formatApiError(canonicalWildcardPreviewMutation.error)}
                 </p>
               ) : null}
-              {wildcardsQuery.data.eligible &&
-              wildcardsQuery.data.total_slots > 0 &&
-              wildcardCandidatesQuery.data &&
-              wildcardCandidatesQuery.data.candidates.length === 0 ? (
-                <p className="status">No eligible wildcard candidates are currently available for this event.</p>
+              {canonicalWildcardPreview ? (
+                <>
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Derived FAX week',
+                        value: `S${canonicalWildcardPreview.week.season_index + 1} W${canonicalWildcardPreview.week.week}`
+                      },
+                      { label: 'Derived global slot', value: canonicalWildcardPreview.decision_slot_ordinal },
+                      {
+                        label: 'Entry Field',
+                        value: `#${canonicalWildcardPreview.field_sequence} · ${canonicalWildcardPreview.entry_field_fingerprint.slice(0, 12)}…`
+                      },
+                      {
+                        label: 'New first Tour-entry sources',
+                        value: canonicalWildcardPreview.first_tour_entry_source_player_ids.join(', ') || 'None'
+                      }
+                    ]}
+                  />
+                  <ul>
+                    {canonicalWildcardPreview.authority.slots.map((slot) => (
+                      <li key={slot.wildcard_index}>
+                        WC {slot.wildcard_index}: {slot.active_player_id ?? 'Unfilled'} · {slot.source}
+                        {slot.reserve_ordinal ? ` · RWC #${slot.reserve_ordinal}` : ''}
+                        {slot.released_because_direct_acceptance ? ' · original holder released after Direct Acceptance' : ''}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    disabled={canonicalWildcardCommitMutation.isPending}
+                    onClick={() => canonicalWildcardCommitMutation.mutate()}
+                  >
+                    Commit reviewed canonical WC/RWC authority
+                  </button>
+                </>
               ) : null}
-              {wildcardMutation.error ? (
-                <p className="error">Wildcard assignment failed: {formatApiError(wildcardMutation.error)}</p>
+              {canonicalWildcardCommitMutation.error ? (
+                <p className="error">
+                  WC commit failed: {formatApiError(canonicalWildcardCommitMutation.error)}
+                </p>
+              ) : null}
+              {canonicalWildcardCommitMutation.data ? (
+                <p className="status">
+                  Canonical WC authority {canonicalWildcardCommitMutation.data.adoption === 'exact_retry' ? 'reused' : 'committed'}
+                  {' '}at global slot {canonicalWildcardCommitMutation.data.decision_slot_ordinal}.
+                </p>
               ) : null}
             </>
-          ) : null}
+          )}
         </SectionCard>
       ) : null}
       {plannedEvent && !viewed.historical ? (

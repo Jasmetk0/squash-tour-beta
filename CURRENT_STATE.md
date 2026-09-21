@@ -1414,3 +1414,10 @@ Materialized Branch forks now replay the remaining specialized Tournament Draw R
 The shared mapping graph covers Branch identity, Tournament Ranking authority, Entry Field, base Wild Card authority, Draw Input, initial and revised Draw authorities, Draw Process authority, authoritative match result fingerprints, and Qualification bracket fingerprints used by Lucky Loser auto-BYE evidence. Each specialized successor Draw/Input/Field/revision fingerprint is fed back into the graph so mixed revision histories can continue chronologically and draw-backed Adopted Tournament Authority v6 can bind to the final revised Draw.
 
 Unknown revision kinds remain fail-closed. The next fork-hardening work is focused on broader mixed-history coverage and restore/retry invariants rather than another unsupported Draw Revision family.
+
+
+## Draw Revision restore / retry hardening
+
+Saved Revision restore now treats Tournament Draw Revision identity as a full persisted command contract rather than payload-only history. Saved/replayed revision rows must bind their payload to the exact Run / Branch / event scope, and Tournament Draw Revision history recomputes the canonical request fingerprint for every currently modeled repair kind before accepting the row.
+
+A PR-critical mixed-history scenario now freezes a full-redraw withdrawal followed by a Draw-Freeze withdrawal, captures that state, advances the live branch with a third revision, rejects a scope-corrupted restore target before mutation, restores the two-revision target, retries the restored second command idempotently without creating a duplicate revision, and proves request-fingerprint corruption fails closed. The restored simulation component fingerprint must equal the captured target fingerprint.

@@ -277,9 +277,13 @@ inspect Week Schedule requirements first; when chronology is required, build and
 atomically adopt the dependency-safe topological proposal; only then inspect Position
 and execute explicit Next Match / whole Next Slot commands; finally Save through the
 simulation-draft fingerprint/version CAS boundary. This does not reinterpret the
-legacy branch wrapper. Higher-level Next Round / Next Week / Next Tournament / Full
-Season controls remain clearly marked compatibility actions until equivalent
-canonical orchestration is implemented.
+legacy branch wrapper. The first higher-level canonical orchestration boundary is now implemented as
+**Next Match Day**: a read-only preview freezes the exact remaining V2 Match Day
+slots, while a durable parent command executes them through deterministic,
+resumable Next Slot children and fails closed on schedule/head/chronology drift.
+Higher-level Next Round / Next Week / Next Tournament / Full Season controls remain
+compatibility actions until they are composed from canonical boundaries rather than
+legacy iteration order. See `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

@@ -208,6 +208,21 @@ class AuthoritativeMatchDayCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeRoundCommand(FrozenInput):
+    """Resumable CAS-guarded orchestration of the nearest unfinished round."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 
 class MatchReconstructionGameScore(FrozenInput):
     """Exact game score in frozen player-A / player-B order."""
@@ -2464,6 +2479,241 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def preview_next_round(self, *, run_id: str, branch_id: str) -> dict:
+        """Freeze the current round identity and the chronology required to finish it."""
+
+        with self.factory() as session:
+            return self._next_round_plan(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+
+    @staticmethod
+    def _round_child_command_id(parent_command_id: str, slot_ordinal: int) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|round-slot|{slot_ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"round-slot:{digest}"
+
+    def simulate_next_round(self, command: AuthoritativeRoundCommand) -> dict:
+        """Finish the nearest unfinished canonical round without skipping chronology.
+
+        The round target is the current V2 schedule identity
+        (event_id, draw_phase, round_number). Every global match slot from the
+        current position through the last remaining slot of that round is frozen in
+        one durable parent operation. Interleaved matches from other tournament
+        identities are transit slots: they execute only because global Simulation
+        Slot chronology cannot be skipped.
+        """
+
+        request_fp = fingerprint(
+            {"mode": "round", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError("Round command ID already has a different request")
+                if receipt.status == "complete":
+                    return json.loads(receipt.result_json)
+                if receipt.status != "pending":
+                    raise ValueError("Round command receipt has an invalid status")
+                frozen = json.loads(receipt.result_json)
+            else:
+                before = self._position(session, command.run_id, command.branch_id)
+                self._validate_expected(session, command, before)
+                plan = self._next_round_plan(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                )
+                child_commands = {
+                    str(slot_ordinal): None
+                    for slot_ordinal in plan["horizon_slot_ordinals"]
+                }
+                frozen = {
+                    "schema_version": "authoritative_round_operation.v1",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "week": command.expected_week.model_dump(mode="json"),
+                    "round_identity": plan["round_identity"],
+                    "schedule_fingerprint": plan["schedule_fingerprint"],
+                    "target_slot_ordinals": plan["target_slot_ordinals"],
+                    "target_group_ids": plan["target_group_ids"],
+                    "horizon_slot_ordinals": plan["horizon_slot_ordinals"],
+                    "transit_slot_ordinals": plan["transit_slot_ordinals"],
+                    "transit_group_ids": plan["transit_group_ids"],
+                    "child_commands": child_commands,
+                }
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps(
+                            frozen, sort_keys=True, separators=(",", ":")
+                        ),
+                    )
+                )
+
+        horizon_ordinals = tuple(
+            int(x) for x in frozen["horizon_slot_ordinals"]
+        )
+        for slot_ordinal in horizon_ordinals:
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                self._require_writable_scope(
+                    session, command.run_id, command.branch_id
+                )
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Round parent receipt disappeared")
+                if parent.status == "complete":
+                    return json.loads(parent.result_json)
+
+                current_frozen = json.loads(parent.result_json)
+                schedule = self._schedule(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    command.expected_week,
+                )
+                if (
+                    schedule is None
+                    or schedule.fingerprint
+                    != current_frozen["schedule_fingerprint"]
+                ):
+                    raise ValueError("Round schedule changed during orchestration")
+                branch = session.get(RunBranchModel, command.branch_id)
+                if (
+                    branch is None
+                    or branch.run_id != command.run_id
+                    or branch.saved_head_revision_id != command.expected_revision_id
+                ):
+                    raise ValueError("expected Branch head is stale")
+
+                stored_child = current_frozen["child_commands"].get(
+                    str(slot_ordinal)
+                )
+                if stored_child is None:
+                    position = self._position(
+                        session, command.run_id, command.branch_id
+                    )
+                    if position.current_week != command.expected_week:
+                        raise ValueError("Round orchestration crossed a week boundary")
+                    if (
+                        position.current_slot_kind != "match"
+                        or position.slot_ordinal != slot_ordinal
+                    ):
+                        raise ValueError(
+                            "Round chronology drifted before the next frozen slot"
+                        )
+                    child = AuthoritativeSimulationCommand(
+                        command_id=self._round_child_command_id(
+                            command.command_id, slot_ordinal
+                        ),
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=command.expected_week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=command.expected_revision_id,
+                    )
+                    current_frozen["child_commands"][str(slot_ordinal)] = (
+                        child.model_dump(mode="json")
+                    )
+                    parent.result_json = json.dumps(
+                        current_frozen, sort_keys=True, separators=(",", ":")
+                    )
+                else:
+                    child = AuthoritativeSimulationCommand.model_validate(
+                        stored_child
+                    )
+
+            self.simulate_next_slot(child)
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            parent = session.get(AuthoritativeSimulationCommandModel, key)
+            if parent is None or parent.request_fingerprint != request_fp:
+                raise ValueError("Round parent receipt disappeared")
+            if parent.status == "complete":
+                return json.loads(parent.result_json)
+            frozen = json.loads(parent.result_json)
+
+            schedule = self._schedule(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+            )
+            if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
+                raise ValueError("Round schedule changed during orchestration")
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("expected Branch head is stale")
+
+            for slot_ordinal in horizon_ordinals:
+                child_payload = frozen["child_commands"].get(str(slot_ordinal))
+                if child_payload is None:
+                    raise ValueError("Round child command was not frozen")
+                child_id = child_payload["command_id"]
+                child_receipt = session.get(
+                    AuthoritativeSimulationCommandModel,
+                    (command.run_id, command.branch_id, child_id),
+                )
+                if child_receipt is None or child_receipt.status != "complete":
+                    raise ValueError("Round child command is incomplete")
+
+            after = self._position(session, command.run_id, command.branch_id)
+            last_horizon_ordinal = horizon_ordinals[-1]
+            if (
+                after.current_slot_kind == "match"
+                and after.slot_ordinal is not None
+                and after.slot_ordinal <= last_horizon_ordinal
+            ):
+                raise ValueError(
+                    "Round orchestration left its frozen chronology horizon unresolved"
+                )
+
+            payload = {
+                "schema_version": "authoritative_round_result.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": command.expected_week.model_dump(mode="json"),
+                "round_identity": frozen["round_identity"],
+                "schedule_fingerprint": frozen["schedule_fingerprint"],
+                "target_slot_ordinals": list(frozen["target_slot_ordinals"]),
+                "target_group_ids": list(frozen["target_group_ids"]),
+                "horizon_slot_ordinals": list(horizon_ordinals),
+                "transit_slot_ordinals": list(frozen["transit_slot_ordinals"]),
+                "transit_group_ids": list(frozen["transit_group_ids"]),
+                "child_command_ids": [
+                    frozen["child_commands"][str(slot_ordinal)]["command_id"]
+                    for slot_ordinal in horizon_ordinals
+                ],
+                "completed_slot_count": len(horizon_ordinals),
+                "position": after.model_dump(mode="json"),
+                "adoption": "committed",
+            }
+            parent.status = "complete"
+            parent.result_json = json.dumps(
+                payload, sort_keys=True, separators=(",", ":")
+            )
+            session.flush()
+            return payload
+
     def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
         """Commit one Master §15.9 W/O without simulating a competitive match.
 
@@ -3825,6 +4075,131 @@ class AuthoritativeRunSimulationDriver:
             "target_group_ids": [
                 group_id
                 for slot in targets
+                for group_id in slot.group_ids
+            ],
+            "expected_position_fingerprint": position.position_fingerprint,
+            "expected_revision_id": branch.saved_head_revision_id,
+        }
+        return {
+            **body,
+            "preview_fingerprint": fingerprint(body),
+        }
+
+    def _next_round_plan(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+    ) -> dict:
+        position = self._position(session, run_id, branch_id)
+        if position.current_slot_kind != "match" or position.slot_ordinal is None:
+            raise ValueError("Next Round requires a current competitive match slot")
+
+        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
+            raise ValueError(
+                "Next Round requires an adopted Week Simulation Schedule v2"
+            )
+        current_spec = next(
+            (
+                slot
+                for slot in schedule.slots
+                if slot.ordinal == position.slot_ordinal
+            ),
+            None,
+        )
+        if current_spec is None:
+            raise ValueError("current Simulation Slot is absent from the Week Schedule")
+        if (
+            current_spec.event_id is None
+            or current_spec.draw_phase is None
+            or current_spec.round_number is None
+        ):
+            raise ValueError("current Simulation Slot has no canonical round identity")
+
+        round_identity = {
+            "event_id": current_spec.event_id,
+            "draw_phase": current_spec.draw_phase,
+            "round_number": current_spec.round_number,
+        }
+
+        def same_round(slot) -> bool:
+            return (
+                slot.event_id == round_identity["event_id"]
+                and slot.draw_phase == round_identity["draw_phase"]
+                and slot.round_number == round_identity["round_number"]
+            )
+
+        remaining = tuple(
+            slot
+            for slot in schedule.slots
+            if slot.ordinal >= position.slot_ordinal
+        )
+        targets = tuple(slot for slot in remaining if same_round(slot))
+        if not targets or not same_round(current_spec):
+            raise ValueError("current canonical Round cannot be resolved")
+
+        first_ordinal = position.slot_ordinal
+        last_ordinal = max(slot.ordinal for slot in targets)
+        horizon = tuple(
+            slot
+            for slot in schedule.slots
+            if first_ordinal <= slot.ordinal <= last_ordinal
+        )
+        horizon_ordinals = tuple(slot.ordinal for slot in horizon)
+        contiguous = tuple(range(first_ordinal, last_ordinal + 1))
+        if horizon_ordinals != contiguous:
+            missing = sorted(set(contiguous) - set(horizon_ordinals))
+            reserved = set(
+                self._entry_slot_ordinals(
+                    session, run_id, branch_id, position.current_week
+                )
+            ) | set(
+                self._wc_slot_ordinals(
+                    session, run_id, branch_id, position.current_week
+                )
+            )
+            if reserved.intersection(missing):
+                raise ValueError(
+                    "Next Round cannot cross a non-match process slot"
+                )
+            raise ValueError(
+                "Next Round requires consecutive global Simulation Slots "
+                "through the round horizon"
+            )
+
+        target_ordinals = tuple(slot.ordinal for slot in targets)
+        target_ordinal_set = set(target_ordinals)
+        transit = tuple(
+            slot for slot in horizon if slot.ordinal not in target_ordinal_set
+        )
+        branch = session.get(RunBranchModel, branch_id)
+        if (
+            branch is None
+            or branch.run_id != run_id
+            or branch.saved_head_revision_id is None
+        ):
+            raise ValueError("Next Round requires a Saved Revision head")
+
+        body = {
+            "schema_version": "authoritative_round_preview.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week": position.current_week.model_dump(mode="json"),
+            "round_identity": round_identity,
+            "schedule_fingerprint": schedule.fingerprint,
+            "target_slot_ordinals": list(target_ordinals),
+            "target_group_ids": [
+                group_id
+                for slot in targets
+                for group_id in slot.group_ids
+            ],
+            "horizon_slot_ordinals": list(horizon_ordinals),
+            "transit_slot_ordinals": [slot.ordinal for slot in transit],
+            "transit_group_ids": [
+                group_id
+                for slot in transit
                 for group_id in slot.group_ids
             ],
             "expected_position_fingerprint": position.position_fingerprint,

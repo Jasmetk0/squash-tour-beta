@@ -1386,3 +1386,18 @@ def restore_saved_simulation_slots(
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({value["event_id"] for value in target_draw_revisions}):
             revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+
+    installed_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        installed_payload,
+        run_id=run_id,
+        branch_id=branch_id,
+    )
+    installed_component = installed_payload["content"].get(COMPONENT_KEY)
+    if (installed_component or {}).get("fingerprint") != (
+        target or {}
+    ).get("fingerprint"):
+        raise ValueError(
+            "Installed simulation-slot state differs from Saved Revision target"
+        )

@@ -1339,3 +1339,19 @@ inside the same fork transaction. A Slot component without captured sporting his
 fails closed rather than being copied with source Branch identity.
 
 Auxiliary Slot authority trees remain separately guarded.
+
+
+## Branch fork: Week Schedule and legacy adopted tournament authority remap
+
+Materialized Branch forks can now preserve two additional Simulation Slot auxiliary
+authorities. WeekSimulationSchedule is rebuilt with the target Branch and receives new
+schedule/request fingerprints while preserving canonical slot/group chronology.
+
+Adopted Tournament Authority history is also rebuilt when its frozen evidence is
+Branch-independent (legacy/no-Draw evidence). Its authority fingerprint is recomputed
+against the target Branch using the canonical authority fingerprint algorithm.
+
+Authorities carrying Draw fingerprints remain fail-closed until the Draw authority
+tree has an exact source->target mapping. Simulation command receipts also remain
+fail-closed because their result payloads are schema-specific and must not be copied
+blindly.

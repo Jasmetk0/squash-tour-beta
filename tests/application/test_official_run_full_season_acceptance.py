@@ -23,10 +23,7 @@ from test_authoritative_simulation_api import (
     _server_state,
     confirm,
 )
-from test_authoritative_three_completed_weeks import (
-    _save_ranking,
-    _save_simulation,
-)
+from test_authoritative_three_completed_weeks import _save_ranking
 
 
 AUDIT = {

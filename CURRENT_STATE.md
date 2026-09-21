@@ -1405,3 +1405,12 @@ Legacy adopted tournament evidence without Draw binding remains supported unchan
 Materialized Branch forks now replay the canonical ordinary withdrawal revision chain for `full_redraw`, `seed_cascade_phase`, and `draw_frozen_phase`. Replay occurs after completed Simulation Slot evidence has been remapped, so embedded player replacement-cutoff authorities are rebuilt under the target Branch and any played-match result fingerprints are rebound through the target result map. Successor Entry Field, Draw Input, Draw, revision request identity and revision fingerprint are rebuilt canonically rather than copied.
 
 Every rebuilt revision successor Draw is added to the source-to-target Draw fingerprint map, allowing draw-backed Adopted Tournament Authority v6 to bind to a revised active Draw. Repair-specific `frozen_wild_card_repair`, Lucky Loser, frozen ordinary fallback and source-bound pre-Q promotion revisions remain fail-closed for their dedicated dependency replay slices.
+
+
+## Branch fork: specialized Draw Revision replay
+
+Materialized Branch forks now replay the remaining specialized Tournament Draw Revision authority families in the same revision lineage as ordinary phase withdrawals: frozen Reserve Wild Card repair, Lucky Loser vacancy, Lucky Loser fill, frozen ordinary fallback, and source-bound pre-Qualification promotion. Frozen nested evidence is retargeted through the accumulated source-to-target authority graph and then revalidated by its domain model before the canonical revision builder creates the target successor Draw.
+
+The shared mapping graph covers Branch identity, Tournament Ranking authority, Entry Field, base Wild Card authority, Draw Input, initial and revised Draw authorities, Draw Process authority, authoritative match result fingerprints, and Qualification bracket fingerprints used by Lucky Loser auto-BYE evidence. Each specialized successor Draw/Input/Field/revision fingerprint is fed back into the graph so mixed revision histories can continue chronologically and draw-backed Adopted Tournament Authority v6 can bind to the final revised Draw.
+
+Unknown revision kinds remain fail-closed. The next fork-hardening work is focused on broader mixed-history coverage and restore/retry invariants rather than another unsupported Draw Revision family.

@@ -1369,3 +1369,25 @@ authorities. Season Closing authorities remain fail-closed.
 
 This is the required first dependency for safely rebuilding Entry Field and the
 downstream WC/Draw authority chain.
+
+
+## Branch fork: Entry Field -> Wild Card -> Draw Input chain
+
+Materialized Branch forks can now rebuild the canonical pre-draw tournament authority
+chain after Tournament Ranking Snapshot authority has been remapped.
+
+Tournament Entry Field history is replayed version-by-version against the target
+Tournament Ranking Snapshot authority. Frozen Entry Applications receive target Branch
+ownership, application fingerprints and command request fingerprints are recalculated,
+and predecessor field chains are rebuilt.
+
+Canonical Wild Card authority is then replayed against the target terminal Entry Field,
+preserving frozen nomination/reserve/unavailability/audit evidence while rebuilding
+Branch, field binding, request and authority fingerprints.
+
+Tournament Draw Input authority is finally replayed through the canonical builder using
+the target ranking authority, target terminal field and target WC authority. Its ranking,
+field, WC, request and authority fingerprints are therefore target-local rather than
+copied from the source Branch.
+
+Draw generation/revision/process authority remains the next downstream boundary.

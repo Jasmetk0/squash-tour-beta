@@ -27,11 +27,13 @@ def inspect_ranking_history(
         or branch.run_id != run_id
     ):
         raise KeyError("Ranking Run/Branch scope does not exist")
-    if branch.forked_from_branch_id is not None:
-        raise ValueError("Ranking fork ancestry inspection is not supported yet")
     snapshots = OfficialRankingCandidateStore(session).history(
         run_id=run_id, branch_id=branch_id
     )
+    if branch.forked_from_branch_id is not None and not snapshots:
+        raise ValueError(
+            "Ranking fork has no materialized Branch-owned ranking history"
+        )
     by_week = {s.week.ordinal: s for s in snapshots}
     commands = {}
     receipts = session.scalars(

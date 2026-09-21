@@ -180,7 +180,6 @@ describe('PlannedEventDetailPage', () => {
       week: { season_index: 0, week: 6 },
       decision_slot_ordinal: 1,
       proposal_fingerprint: 'd'.repeat(64),
-      authority: (await api.previewCanonicalWildCardAssignment()).authority,
       assignment_results: [],
       adoption: 'committed'
     })

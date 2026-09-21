@@ -53,6 +53,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 )
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityConflict,
+    wild_card_decision_slot_ordinals,
 )
 
 
@@ -328,6 +329,12 @@ def test_preview_and_commit_release_direct_holder_to_rwc_and_create_tour_entry(d
         assert trigger.trigger_kind == "definitive_wild_card_assignment"
         assert trigger.trigger_week == WEEK
         assert trigger.decision_slot_ordinal == 1
+        assert wild_card_decision_slot_ordinals(
+            session,
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+        ) == {1}
 
 
 @pytest.mark.pr_critical

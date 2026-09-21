@@ -170,6 +170,7 @@ def remap_coupled_player_slot_history(
     target_wc_by_event: dict[str, TournamentWildCardAuthority] = {}
     target_draw_input_by_event: dict[str, TournamentDrawInputAuthority] = {}
     target_draw_by_event: dict[str, TournamentDrawAuthority] = {}
+    target_draw_fingerprint_map: dict[str, str] = {}
 
     source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
     for row in source_entry_rows:
@@ -430,6 +431,7 @@ def remap_coupled_player_slot_history(
             )
         )
         target_draw_by_event[row.event_id] = target_draw
+        target_draw_fingerprint_map[source_draw.fingerprint] = target_draw.fingerprint
 
     for row in source_draw_process_rows:
         source_process = TournamentDrawProcessAuthority.model_validate_json(

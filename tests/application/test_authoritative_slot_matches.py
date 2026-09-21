@@ -90,6 +90,7 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
 )
 from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
     remap_competitive_group_payload,
+    remap_completed_simulation_slot_core,
     remap_slot_plan,
 )
 from beta_engine.infrastructure.db.tournament_draw_revision import (
@@ -3502,3 +3503,69 @@ def test_branch_fork_adapter_rebuilds_real_slot_plan_and_competitive_group(tmp_p
         value not in remapped.effect_fingerprint_map
         for value in remapped.effect_fingerprint_map.values()
     )
+
+
+@pytest.mark.pr_critical
+def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tmp_path):
+    session, executor, plan, results, checkpoint = run_semifinals(
+        tmp_path / "fork-remap-core.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    opening = get_sporting(
+        session,
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+    )
+    assert opening is not None
+    assert checkpoint is not None
+
+    remapped = remap_completed_simulation_slot_core(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        opening_sporting_fingerprint_map={
+            opening.fingerprint: "target-opening-sporting-fingerprint",
+        },
+    )
+
+    assert remapped is not None
+    component = remapped.component
+    assert component["fingerprint"] != payload["content"]["simulation_slot_match_state"]["fingerprint"]
+    assert all(value["branch_id"] == "target" for value in component["slots"])
+    assert all(value["branch_id"] == "target" for value in component["groups"])
+    assert remapped.slot_starts[plan.slot_start_fingerprint] != plan.slot_start_fingerprint
+    assert remapped.terminal_checkpoints[checkpoint.fingerprint] != checkpoint.fingerprint
+    source_result_fingerprints = {
+        result.result_fingerprint for result in results.values()
+    }
+    assert set(remapped.results) == source_result_fingerprints
+    source_effect_fingerprints = {
+        effect.fingerprint
+        for result in results.values()
+        for effect in result.effects
+    }
+    assert set(remapped.match_effects) == source_effect_fingerprints
+
+    from beta_engine.infrastructure.db.simulation_slot_state import _load
+
+    target_payload = {
+        "content": {
+            "simulation_slot_match_state": component,
+        }
+    }
+    loaded = _load(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert loaded is not None
+    assert loaded["fingerprint"] == component["fingerprint"]

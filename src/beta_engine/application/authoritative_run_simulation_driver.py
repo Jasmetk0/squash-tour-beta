@@ -1306,6 +1306,278 @@ class AuthoritativeRunSimulationDriver:
                 ),
             }
 
+    def inspect_week_tournament_lock(
+        self, *, run_id: str, branch_id: str
+    ) -> dict:
+        """Inspect current accepted-field conflicts without inventing a selection."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            position = self._position(
+                session,
+                run_id,
+                branch_id,
+                allow_missing_schedule=True,
+            )
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or not branch.saved_head_revision_id:
+                raise ValueError(
+                    "Week Tournament Lock requires a saved Branch head"
+                )
+            event_ids = self._week_tournament_lock_event_ids(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=position.current_week,
+            )
+            if event_ids:
+                evidence, conflicts = resolve_week_tournament_lock_evidence(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_ids=event_ids,
+                )
+            else:
+                evidence, conflicts = (), {}
+            stored = WeekTournamentLockStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=position.current_week.ordinal,
+            )
+            return {
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": position.current_week.model_dump(mode="json"),
+                "expected_revision_id": branch.saved_head_revision_id,
+                "position_fingerprint": position.position_fingerprint,
+                "event_ids": list(event_ids),
+                "event_evidence": [
+                    item.model_dump(mode="json") for item in evidence
+                ],
+                "conflicts": [
+                    {
+                        "player_id": player_id,
+                        "eligible_event_ids": list(conflicts[player_id]),
+                    }
+                    for player_id in sorted(conflicts)
+                ],
+                "lock_status": "locked" if stored is not None else (
+                    "required" if conflicts else "not_required"
+                ),
+                "authority": (
+                    stored.model_dump(mode="json") if stored is not None else None
+                ),
+                "authority_fingerprint": (
+                    stored.fingerprint if stored is not None else None
+                ),
+                "selection_policy_id": (
+                    "explicit_admin_week_tournament_lock.v1"
+                ),
+                "final_commitment_deadline_policy": "intentionally_unresolved",
+            }
+
+    def preview_week_tournament_lock(
+        self, request: AuthoritativeWeekTournamentLockPreviewRequest
+    ) -> dict:
+        with self.factory() as session:
+            self._require_writable_scope(
+                session, request.run_id, request.branch_id
+            )
+            before = self._position(
+                session,
+                request.run_id,
+                request.branch_id,
+                allow_missing_schedule=True,
+            )
+            self._validate_expected(session, request, before)
+            if self._schedule(
+                session,
+                request.run_id,
+                request.branch_id,
+                request.expected_week,
+            ) is not None:
+                raise ValueError(
+                    "Week Tournament Lock must be resolved before Week Schedule adoption"
+                )
+            if WeekTournamentLockStore(session).get(
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                week_ordinal=request.expected_week.ordinal,
+            ) is not None:
+                raise ValueError(
+                    "Week Tournament Lock is already immutable for this week"
+                )
+            event_ids = self._week_tournament_lock_event_ids(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                week=request.expected_week,
+            )
+            authority = derive_week_tournament_lock_authority(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                week=request.expected_week,
+                event_ids=event_ids,
+                selections=request.selections_by_player,
+                command_id=request.command_id,
+                operator_label=request.operator_label,
+                audit_reason=request.audit_reason,
+            )
+            return {
+                "run_id": request.run_id,
+                "branch_id": request.branch_id,
+                "week": request.expected_week.model_dump(mode="json"),
+                "event_ids": list(event_ids),
+                "authority": authority.model_dump(mode="json"),
+                "authority_fingerprint": authority.fingerprint,
+                "position_fingerprint": before.position_fingerprint,
+                "persisted": False,
+            }
+
+    def commit_week_tournament_lock(
+        self, command: AuthoritativeWeekTournamentLockCommitCommand
+    ) -> dict:
+        request_fp = fingerprint(
+            {
+                "mode": "week_tournament_lock",
+                "command": command.model_dump(mode="json"),
+            }
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(
+                session, command.run_id, command.branch_id
+            )
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "Week Tournament Lock command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError(
+                        "Week Tournament Lock command receipt is incomplete"
+                    )
+                return json.loads(receipt.result_json)
+
+            before = self._position(
+                session,
+                command.run_id,
+                command.branch_id,
+                allow_missing_schedule=True,
+            )
+            self._validate_expected(session, command, before)
+            if self._schedule(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+            ) is not None:
+                raise ValueError(
+                    "Week Tournament Lock must be resolved before Week Schedule adoption"
+                )
+
+            event_ids = self._week_tournament_lock_event_ids(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+            )
+            lock_commit = WeekTournamentLockStore(session).commit(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                event_ids=event_ids,
+                selections=command.selections_by_player,
+                command_id=command.command_id,
+                operator_label=command.operator_label,
+                audit_reason=command.audit_reason,
+                expected_authority_fingerprint=(
+                    command.expected_authority_fingerprint
+                ),
+            )
+            authority = lock_commit.authority
+            repairs = []
+            if not lock_commit.exact_retry:
+                withdrawn_by_event: dict[str, set[str]] = {}
+                for player_lock in authority.player_locks:
+                    for event_id in player_lock.eligible_event_ids:
+                        if event_id == player_lock.selected_event_id:
+                            continue
+                        withdrawn_by_event.setdefault(event_id, set()).add(
+                            player_lock.player_id
+                        )
+
+                evidence_by_event = {
+                    item.event_id: item for item in authority.event_evidence
+                }
+                field_store = TournamentEntryFieldStore(session)
+                for event_id in sorted(withdrawn_by_event):
+                    expected = evidence_by_event[event_id]
+                    withdrawn = tuple(sorted(withdrawn_by_event[event_id]))
+                    repaired = field_store.stage_pre_draw_repair_from_frozen_inputs(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=event_id,
+                        expected_field_fingerprint=(
+                            expected.entry_field_fingerprint
+                        ),
+                        withdrawn_player_ids=withdrawn,
+                        command_id=self._week_lock_field_command_id(
+                            command.command_id,
+                            event_id,
+                        ),
+                    )
+                    repairs.append(
+                        {
+                            "event_id": event_id,
+                            "withdrawn_player_ids": list(withdrawn),
+                            "field_fingerprint": repaired.fingerprint,
+                        }
+                    )
+
+                _, remaining = resolve_week_tournament_lock_evidence(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_ids=event_ids,
+                )
+                if remaining:
+                    raise ValueError(
+                        "Week Tournament Lock field repair created or retained "
+                        "overlapping accepted players; explicit follow-up policy is required"
+                    )
+
+            result = {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": command.expected_week.model_dump(mode="json"),
+                "authority": authority.model_dump(mode="json"),
+                "authority_fingerprint": authority.fingerprint,
+                "field_repairs": repairs,
+                "adoption": (
+                    "exact_retry"
+                    if lock_commit.exact_retry
+                    else "committed"
+                ),
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        result, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return result
+
     def season_transition_preflight(
         self, *, run_id: str, branch_id: str
     ) -> AuthoritativeSeasonTransitionPreflight:

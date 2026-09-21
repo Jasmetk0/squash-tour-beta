@@ -496,6 +496,9 @@ def remap_completed_simulation_slot_core(
             )
         )
 
+    target_groups.sort(
+        key=lambda row: (row.week_ordinal, row.slot_id, row.group_id)
+    )
     rebuilt = _component(
         target_slots,
         target_groups,

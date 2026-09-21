@@ -23,6 +23,8 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
+    AuthoritativeWeekTournamentLockCommitCommand,
+    AuthoritativeWeekTournamentLockPreviewRequest,
     FinalSeasonTransitionCommand,
     OrdinarySeasonTransitionCommand,
 )
@@ -265,6 +267,91 @@ def review_application_validation_slot(
             status_code=409,
             detail={
                 "code": "explicit_application_validation_review_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get("/week-tournament-lock")
+def inspect_week_tournament_lock(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_week_tournament_lock(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "week_tournament_lock_inspection_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/week-tournament-lock/preview")
+def preview_week_tournament_lock(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        request = AuthoritativeWeekTournamentLockPreviewRequest.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).preview_week_tournament_lock(
+            request
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "week_tournament_lock_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/week-tournament-lock/commit", status_code=201)
+def commit_week_tournament_lock(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeWeekTournamentLockCommitCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).commit_week_tournament_lock(
+            command
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "week_tournament_lock_commit_conflict",
                 "message": str(exc),
             },
         ) from exc

@@ -1276,3 +1276,16 @@ installed atomically with the fork.
 v2 sporting contexts sourced from the authoritative Simulation Slot match/effect ledger
 remain fail-closed. Their terminal sporting and match-effect fingerprints belong to
 separate Branch-owned authorities that are not yet fork-remapped.
+
+
+## Branch fork: sporting v2 evidence remap contract
+
+The player sporting Branch-fork remapper now supports
+`completed_week_sporting_context.v2` once the authoritative Simulation Slot layer
+provides exact target mappings for all external evidence: source result fingerprints,
+the terminal sporting checkpoint fingerprint, and every match-effect fingerprint.
+
+No v2 evidence is copied across Branch identity. Missing any source→target mapping fails
+closed before a target sporting context is created. Once all mappings are present, the
+target context fingerprint and the complete sporting predecessor/context chain are
+rebuilt deterministically.

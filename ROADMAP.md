@@ -281,6 +281,8 @@ legacy branch wrapper. The first higher-level canonical orchestration boundary i
 **Next Match Day**: a read-only preview freezes the exact remaining V2 Match Day
 slots, while a durable parent command executes them through deterministic,
 resumable Next Slot children and fails closed on schedule/head/chronology drift.
+The canonical Simulation Admin UI now exposes this as a reviewed two-step action and
+preserves the same parent command ID across ordinary response-loss retry.
 Higher-level Next Round / Next Week / Next Tournament / Full Season controls remain
 compatibility actions until they are composed from canonical boundaries rather than
 legacy iteration order. See `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`.

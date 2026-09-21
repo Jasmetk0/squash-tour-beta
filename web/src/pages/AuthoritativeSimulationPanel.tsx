@@ -1028,6 +1028,148 @@ export function AuthoritativeSimulationPanel({
       {scheduleQuery.error ? <p className="error">Week Schedule unavailable: {formatApiError(scheduleQuery.error)}</p> : null}
       {savePreviewQuery.error ? <p className="error">Save preview unavailable: {formatApiError(savePreviewQuery.error)}</p> : null}
 
+      {weekLockQuery.isLoading && enabled ? (
+        <p className="status">Inspecting Week Tournament Lock conflicts…</p>
+      ) : null}
+      {weekLockQuery.error ? (
+        <p className="error">
+          Week Tournament Lock unavailable: {formatApiError(weekLockQuery.error)}
+        </p>
+      ) : null}
+      {weekLockQuery.data ? (
+        <>
+          <h4>Week Tournament Lock</h4>
+          <p className="status">
+            Explicit pre-alpha Admin resolution of overlapping accepted tournament fields.
+            The engine does not invent a preferred event or a Final Commitment deadline.
+          </p>
+          {weekLockQuery.data.lock_status === 'not_required' ? (
+            <p className="status">No overlapping accepted-player field conflict requires a lock.</p>
+          ) : null}
+          {weekLockQuery.data.lock_status === 'locked' && weekLockQuery.data.authority ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Status', value: 'Locked' },
+                  { label: 'Policy', value: weekLockQuery.data.authority.selection_policy_id },
+                  { label: 'Operator', value: weekLockQuery.data.authority.operator_label },
+                  { label: 'Authority fingerprint', value: weekLockQuery.data.authority_fingerprint ?? '—' }
+                ]}
+              />
+              <ul aria-label="Week Tournament Lock selections">
+                {weekLockQuery.data.authority.player_locks.map((lock) => (
+                  <li key={lock.player_id}>
+                    {lock.player_id} → {lock.selected_event_id}
+                    {' '}({lock.eligible_event_ids.join(' / ')})
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {weekLockQuery.data.lock_status === 'required' ? (
+            <>
+              <p role="alert" className="error">
+                Competitive play is blocked until every overlapping accepted player has exactly one selected event.
+              </p>
+              {weekLockQuery.data.conflicts.map((conflict) => (
+                <label key={conflict.player_id}>
+                  {conflict.player_id}
+                  <select
+                    aria-label={`Week Tournament Lock event for ${conflict.player_id}`}
+                    value={weekLockSelections[conflict.player_id] ?? ''}
+                    disabled={Boolean(weekLockReview)}
+                    onChange={(event) => {
+                      const selected = event.target.value
+                      setWeekLockSelections((current) => ({
+                        ...current,
+                        [conflict.player_id]: selected
+                      }))
+                    }}
+                  >
+                    <option value="">Choose one tournament…</option>
+                    {conflict.eligible_event_ids.map((eventId) => (
+                      <option key={eventId} value={eventId}>{eventId}</option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              <label>
+                Operator label
+                <input
+                  aria-label="Week Tournament Lock operator"
+                  value={weekLockOperator}
+                  disabled={Boolean(weekLockReview)}
+                  onChange={(event) => setWeekLockOperator(event.target.value)}
+                />
+              </label>
+              <label>
+                Audit reason
+                <textarea
+                  aria-label="Week Tournament Lock audit reason"
+                  value={weekLockReason}
+                  disabled={Boolean(weekLockReview)}
+                  onChange={(event) => setWeekLockReason(event.target.value)}
+                />
+              </label>
+              {!weekLockReview ? (
+                <button
+                  type="button"
+                  disabled={!weekLockReady || actionPending}
+                  onClick={() => weekLockPreviewMutation.mutate()}
+                >
+                  Review Week Tournament Lock
+                </button>
+              ) : (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Reviewed fingerprint', value: weekLockReview.preview.authority_fingerprint },
+                      { label: 'Conflicts resolved', value: weekLockReview.preview.authority.player_locks.length }
+                    ]}
+                  />
+                  <ul aria-label="Reviewed Week Tournament Lock selections">
+                    {weekLockReview.preview.authority.player_locks.map((lock) => (
+                      <li key={lock.player_id}>
+                        {lock.player_id} → {lock.selected_event_id}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    disabled={actionPending}
+                    onClick={() => weekLockCommitMutation.mutate()}
+                  >
+                    Commit Week Tournament Lock
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionPending}
+                    onClick={() => setWeekLockReview(null)}
+                  >
+                    Edit lock review
+                  </button>
+                </>
+              )}
+              {weekLockPreviewMutation.error ? (
+                <p className="error">
+                  Week Tournament Lock preview failed: {formatApiError(weekLockPreviewMutation.error)}
+                </p>
+              ) : null}
+              {weekLockCommitMutation.error ? (
+                <p className="error">
+                  Week Tournament Lock commit failed: {formatApiError(weekLockCommitMutation.error)}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {weekLockCommitMutation.data?.field_repairs.length ? (
+            <p className="status">
+              Canonical field repairs applied to {weekLockCommitMutation.data.field_repairs.length} unselected event(s).
+            </p>
+          ) : null}
+        </>
+      ) : null}
+
       {position ? (
         <>
           <SummaryPills

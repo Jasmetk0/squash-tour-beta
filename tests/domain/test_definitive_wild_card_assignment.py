@@ -72,6 +72,9 @@ def test_historical_wc_v1_fingerprint_ignores_new_chronology_fields():
     legacy_payload = source.model_dump(mode="json")
     legacy_payload.pop("decision_week")
     legacy_payload.pop("decision_slot_ordinal")
+    legacy_payload.pop("selection_policy_id")
+    legacy_payload.pop("operator_label")
+    legacy_payload.pop("audit_reason")
     expected = hashlib.sha256(
         json.dumps(
             legacy_payload,
@@ -83,6 +86,29 @@ def test_historical_wc_v1_fingerprint_ignores_new_chronology_fields():
     assert source.schema_version == "tournament_wild_card_authority.v1"
     assert source.decision_week is None
     assert source.decision_slot_ordinal is None
+    assert source.fingerprint == expected
+
+
+@pytest.mark.pr_critical
+def test_historical_wc_v2_fingerprint_ignores_v3_admin_audit_fields():
+    week = RankingWeek(season_index=2, week=18)
+    source = _wild_card_authority(
+        decision_week=week,
+        decision_slot_ordinal=7,
+    )
+    legacy_payload = source.model_dump(mode="json")
+    legacy_payload.pop("selection_policy_id")
+    legacy_payload.pop("operator_label")
+    legacy_payload.pop("audit_reason")
+    expected = hashlib.sha256(
+        json.dumps(
+            legacy_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+    assert source.schema_version == "tournament_wild_card_authority.v2"
     assert source.fingerprint == expected
 
 

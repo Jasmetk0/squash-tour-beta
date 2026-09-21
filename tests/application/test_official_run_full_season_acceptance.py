@@ -165,7 +165,10 @@ def _advance_week(
         "week": completed_week + 1,
     }
     assert confirm(transition_root, preview["command"], preview)[0] == 201
-    return _save_ranking(None, ranking_root)
+    # The next week's canonical work may remain in the clean Working Draft.
+    # Its following authority Save captures this transition together with that
+    # week's completed evidence, avoiding a redundant Saved Revision per week.
+    return revision
 
 
 def _complete_empty_week(
@@ -190,7 +193,9 @@ def _complete_empty_week(
     )
     assert status == 201, completed
     assert completed["competitive_match_count"] == 0
-    return _save_simulation(sim_root)
+    # Keep the completed evidence in the clean Working Draft. The same week's
+    # ranking-authority Save persists it before Week Transition executes.
+    return revision
 
 
 def _roots(server: ApiServer, run_id: str, branch_id: str) -> tuple[str, str, str]:
@@ -324,7 +329,6 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
 
         completed_week_one = _request("GET", sim_root + "/position")[1]
         assert completed_week_one["supported_tournament_complete"] is True
-        revision = _save_simulation(sim_root)
         revision = _advance_week(
             ranking_root=ranking_root,
             transition_root=transition_root,
@@ -348,6 +352,8 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "season_index": 0,
             "week": 31,
         }
+        # Persist the exact mid-season world before shutting the process down.
+        revision = _save_ranking(None, ranking_root)
         head_before_reopen = revision
 
     reopened = ApiServer(database_url=f"sqlite:///{db_path}")
@@ -380,6 +386,9 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             revision=revision,
             week=61,
         )
+        # Week 61 has no ordinary Ranking Transition authority, so explicitly
+        # persist its completed sporting evidence before Season Transition.
+        revision = _save_simulation(sim_root)
         status, preflight = _request(
             "GET",
             sim_root + "/season-transition/preflight",

@@ -8,9 +8,17 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingWeekState,
 )
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule, fingerprint
+from beta_engine.domain.tournaments.draw_authority import (
+    TournamentDrawAuthority,
+    TournamentDrawAuthorityBuilder,
+)
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
     TournamentDrawInputAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.draw_process_authority import (
+    TournamentDrawProcessAuthority,
+    TournamentDrawProcessAuthorityBuilder,
 )
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
@@ -28,7 +36,9 @@ from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
+    TournamentDrawProcessAuthorityModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
@@ -39,9 +49,17 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
     _applications_json,
     _request_fingerprint as entry_request_fingerprint,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+    _request_fingerprint as draw_authority_request_fingerprint,
+)
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
     _request_fingerprint as draw_input_request_fingerprint,
+)
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+    _fingerprint as draw_process_request_fingerprint,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -110,6 +128,8 @@ def remap_coupled_player_slot_history(
         "entry_fields",
         "wild_card_authorities",
         "draw_inputs",
+        "draw_authorities",
+        "draw_process_authorities",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -132,12 +152,24 @@ def remap_coupled_player_slot_history(
         TournamentDrawInputAuthorityModel(**value)
         for value in source_slot_component.get("draw_inputs", [])
     ]
+    source_draw_rows = [
+        TournamentDrawAuthorityModel(**value)
+        for value in source_slot_component.get("draw_authorities", [])
+    ]
+    source_draw_process_rows = [
+        TournamentDrawProcessAuthorityModel(**value)
+        for value in source_slot_component.get("draw_process_authorities", [])
+    ]
 
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
+    target_draw_rows: list[TournamentDrawAuthorityModel] = []
+    target_draw_process_rows: list[TournamentDrawProcessAuthorityModel] = []
     target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
     target_wc_by_event: dict[str, TournamentWildCardAuthority] = {}
+    target_draw_input_by_event: dict[str, TournamentDrawInputAuthority] = {}
+    target_draw_by_event: dict[str, TournamentDrawAuthority] = {}
 
     source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
     for row in source_entry_rows:
@@ -359,6 +391,92 @@ def remap_coupled_player_slot_history(
                 entry_field_fingerprint=target_field.fingerprint,
                 field_sequence=row.field_sequence,
                 payload_json=target_draw_input.model_dump_json(),
+            )
+        )
+        target_draw_input_by_event[row.event_id] = target_draw_input
+
+    for row in source_draw_rows:
+        source_draw = TournamentDrawAuthority.model_validate_json(row.payload_json)
+        target_draw_input = target_draw_input_by_event.get(row.event_id)
+        if target_draw_input is None:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Draw authority has no mapped Draw Input dependency"
+            )
+        if (
+            source_draw.draw_input_fingerprint != row.draw_input_fingerprint
+            or source_draw.fingerprint != row.authority_fingerprint
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Saved Tournament Draw authority identity is corrupt"
+            )
+        target_draw = TournamentDrawAuthorityBuilder.build(
+            draw_input=target_draw_input,
+            command_id=row.command_id,
+            algorithm_version=source_draw.algorithm_version,
+        )
+        request = TournamentDrawAuthorityStore._request(
+            draw_input_fingerprint=target_draw_input.fingerprint
+        )
+        target_draw_rows.append(
+            TournamentDrawAuthorityModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                event_id=row.event_id,
+                command_id=row.command_id,
+                request_fingerprint=draw_authority_request_fingerprint(request),
+                authority_fingerprint=target_draw.fingerprint,
+                draw_input_fingerprint=target_draw_input.fingerprint,
+                payload_json=target_draw.model_dump_json(),
+            )
+        )
+        target_draw_by_event[row.event_id] = target_draw
+
+    for row in source_draw_process_rows:
+        source_process = TournamentDrawProcessAuthority.model_validate_json(
+            row.payload_json
+        )
+        target_draw = target_draw_by_event.get(row.event_id)
+        if target_draw is None:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Draw process authority has no mapped Draw dependency"
+            )
+        if (
+            source_process.draw_authority_fingerprint
+            != row.draw_authority_fingerprint
+            or source_process.fingerprint != row.authority_fingerprint
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Saved Tournament Draw process authority identity is corrupt"
+            )
+        target_process = TournamentDrawProcessAuthorityBuilder.build(
+            draw=target_draw,
+            command_id=row.command_id,
+            main_process_window_count=source_process.main.process_window_count,
+            qualification_process_window_count=(
+                source_process.qualification.process_window_count
+                if source_process.qualification is not None
+                else None
+            ),
+        )
+        request = TournamentDrawProcessAuthorityStore._request(
+            draw_authority_fingerprint=target_draw.fingerprint,
+            main_process_window_count=source_process.main.process_window_count,
+            qualification_process_window_count=(
+                source_process.qualification.process_window_count
+                if source_process.qualification is not None
+                else None
+            ),
+        )
+        target_draw_process_rows.append(
+            TournamentDrawProcessAuthorityModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                event_id=row.event_id,
+                command_id=row.command_id,
+                request_fingerprint=draw_process_request_fingerprint(request),
+                authority_fingerprint=target_process.fingerprint,
+                draw_authority_fingerprint=target_draw.fingerprint,
+                payload_json=target_process.model_dump_json(),
             )
         )
 
@@ -641,8 +759,12 @@ def remap_coupled_player_slot_history(
         include_wild_card_authorities="wild_card_authorities" in source_slot_component,
         draw_inputs=target_draw_input_rows,
         include_draw_inputs="draw_inputs" in source_slot_component,
-        include_draw_authorities=False,
-        include_draw_process_authorities=False,
+        draw_authorities=target_draw_rows,
+        include_draw_authorities="draw_authorities" in source_slot_component,
+        draw_process_authorities=target_draw_process_rows,
+        include_draw_process_authorities=(
+            "draw_process_authorities" in source_slot_component
+        ),
         include_draw_revisions=False,
     )
 

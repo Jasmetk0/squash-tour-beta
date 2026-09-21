@@ -79,6 +79,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     put_lifecycle,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
+    capture_saved_sporting,
     put_sporting,
     get_sporting,
     resolve_completed_context_from_authoritative_matches,
@@ -87,6 +88,9 @@ from beta_engine.infrastructure.db.player_sporting_state import (
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
+)
+from beta_engine.infrastructure.db.player_slot_fork_remap import (
+    remap_coupled_player_slot_history,
 )
 from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
     remap_competitive_group_payload,
@@ -3569,3 +3573,71 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
     )
     assert loaded is not None
     assert loaded["fingerprint"] == component["fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
+    session, _, plan, results, checkpoint = run_semifinals(
+        tmp_path / "coupled-fork-remap.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    opening = get_sporting(
+        session,
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+    )
+    assert opening is not None
+    context = resolve_completed_context_from_authoritative_matches(
+        session,
+        run_id="run",
+        branch_id="branch",
+        completed_week=WEEK,
+        player_ids=tuple(player.player_id for player in opening.players),
+    )
+    assert context.schema_version == "completed_week_sporting_context.v2"
+    assert checkpoint is not None
+    assert context.terminal_sporting_fingerprint == checkpoint.fingerprint
+
+    payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    remapped = remap_coupled_player_slot_history(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+    )
+
+    assert remapped is not None
+    target_sporting = remapped.sporting_component
+    target_simulation = remapped.simulation_component
+    assert target_sporting["fingerprint"] != payload["content"]["player_sporting_state"]["fingerprint"]
+    assert target_simulation["fingerprint"] != payload["content"]["simulation_slot_match_state"]["fingerprint"]
+    assert target_sporting["states"][0]["branch_id"] == "target"
+    assert target_sporting["contexts"][0]["branch_id"] == "target"
+    assert all(value["branch_id"] == "target" for value in target_simulation["slots"])
+    assert all(value["branch_id"] == "target" for value in target_simulation["groups"])
+    assert target_sporting["contexts"][0]["terminal_sporting_fingerprint"] == remapped.terminal_checkpoint_fingerprints[checkpoint.fingerprint]
+    assert set(target_sporting["contexts"][0]["source_fingerprints"]) == {
+        remapped.result_fingerprints[result.result_fingerprint]
+        for result in results.values()
+    }
+    assert set(target_sporting["contexts"][0]["match_effect_fingerprints"]) == {
+        remapped.match_effect_fingerprints[effect.fingerprint]
+        for result in results.values()
+        for effect in result.effects
+    }
+    assert target_simulation["slots"][0]["slot_start_fingerprint"] != plan.slot_start_fingerprint

@@ -162,9 +162,9 @@ def _advance_week(
         "week": completed_week + 1,
     }
     assert confirm(transition_root, preview["command"], preview)[0] == 201
-    # The next week's canonical work may remain in the clean Working Draft.
-    # Its following authority Save captures this transition together with that
-    # week's completed evidence, avoiding a redundant Saved Revision per week.
+    # The next week's canonical work remains in the clean Working Draft until
+    # an explicit acceptance checkpoint Save. The Saved head therefore stays
+    # unchanged across ordinary draft-only Week Transitions.
     return revision
 
 
@@ -386,6 +386,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 ranking_root=ranking_root,
                 transition_root=transition_root,
                 completed_week=week,
+                revision=revision,
             )
 
         revision = _complete_empty_week(

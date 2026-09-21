@@ -25,7 +25,18 @@ from beta_engine.domain.tournaments.draw_revision_authority import (
     TournamentDrawRevisionBuilder,
 )
 from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthority,
     TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.lucky_loser_authority import (
+    TournamentLuckyLoserFillAuthority,
+    TournamentLuckyLoserOrderAuthority,
+    TournamentLuckyLoserQualificationWinnerEvidence,
+    TournamentLuckyLoserVacancyAuthority,
+)
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentDrawStartEvidence,
+    TournamentReplacementSourceAuthority,
 )
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
@@ -126,6 +137,306 @@ def _retarget_frozen_evidence(
 
     payload = remap(value.model_dump(mode="python"))
     return type(value).model_validate(payload)
+
+
+def _mapped_fingerprint(
+    value: str,
+    *,
+    fingerprint_map: dict[str, str],
+    label: str,
+) -> str:
+    try:
+        return fingerprint_map[value]
+    except KeyError as exc:
+        raise SimulationSlotForkRemapUnsupportedError(
+            f"{label} references branch-owned fingerprint without a target mapping"
+        ) from exc
+
+
+def _retarget_cutoff_authority(
+    value: TournamentPlayerReplacementCutoffAuthority,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+) -> TournamentPlayerReplacementCutoffAuthority:
+    played_matches = tuple(
+        item.model_copy(
+            update={
+                "result_fingerprint": _mapped_fingerprint(
+                    item.result_fingerprint,
+                    fingerprint_map=fingerprint_map,
+                    label="Replacement cutoff evidence",
+                )
+            }
+        )
+        for item in value.played_matches
+    )
+    target = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+        run_id=value.run_id,
+        branch_id=target_branch_id,
+        event_id=value.event_id,
+        player_id=value.player_id,
+        played_matches=played_matches,
+        draw_type=value.draw_type,
+    )
+    if target.status != value.status:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Replacement cutoff status changed while retargeting frozen evidence"
+        )
+    return target
+
+
+def _retarget_q_winner_evidence(
+    value: TournamentLuckyLoserQualificationWinnerEvidence | None,
+    *,
+    fingerprint_map: dict[str, str],
+) -> TournamentLuckyLoserQualificationWinnerEvidence | None:
+    if value is None:
+        return None
+    return value.model_copy(
+        update={
+            "evidence_fingerprint": _mapped_fingerprint(
+                value.evidence_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Qualification winner evidence",
+            )
+        }
+    )
+
+
+def _retarget_draw_start_evidence(
+    value: TournamentDrawStartEvidence | None,
+    *,
+    fingerprint_map: dict[str, str],
+    label: str,
+) -> TournamentDrawStartEvidence | None:
+    if value is None:
+        return None
+    return value.model_copy(
+        update={
+            "result_fingerprint": _mapped_fingerprint(
+                value.result_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label=label,
+            )
+        }
+    )
+
+
+def _retarget_lucky_loser_order_authority(
+    value: TournamentLuckyLoserOrderAuthority,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+) -> TournamentLuckyLoserOrderAuthority:
+    local_map = dict(fingerprint_map)
+    target_auto_byes = []
+    for item in value.qualification_auto_bye_terminals:
+        target_item = item.model_copy(
+            update={
+                "qualification_bracket_fingerprint": _mapped_fingerprint(
+                    item.qualification_bracket_fingerprint,
+                    fingerprint_map=fingerprint_map,
+                    label="Lucky Loser auto-BYE terminal",
+                )
+            }
+        )
+        target_auto_byes.append(target_item)
+        local_map[item.fingerprint] = target_item.fingerprint
+
+    target_candidates = tuple(
+        item.model_copy(
+            update={
+                "elimination_result_fingerprint": _mapped_fingerprint(
+                    item.elimination_result_fingerprint,
+                    fingerprint_map=fingerprint_map,
+                    label="Lucky Loser candidate elimination",
+                )
+            }
+        )
+        for item in value.candidates
+    )
+    target_terminal_fingerprints = tuple(
+        _mapped_fingerprint(
+            item,
+            fingerprint_map=local_map,
+            label="Lucky Loser terminal evidence",
+        )
+        for item in value.qualification_terminal_result_fingerprints
+    )
+    target = value.model_copy(
+        update={
+            "branch_id": target_branch_id,
+            "draw_authority_fingerprint": _mapped_fingerprint(
+                value.draw_authority_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser Draw authority",
+            ),
+            "tournament_ranking_authority_fingerprint": _mapped_fingerprint(
+                value.tournament_ranking_authority_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser ranking authority",
+            ),
+            "qualification_terminal_result_fingerprints": (
+                target_terminal_fingerprints
+            ),
+            "qualification_auto_bye_terminals": tuple(target_auto_byes),
+            "candidates": target_candidates,
+        }
+    )
+    return TournamentLuckyLoserOrderAuthority.model_validate(
+        target.model_dump(mode="python")
+    )
+
+
+def _retarget_replacement_source_authority(
+    value: TournamentReplacementSourceAuthority,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+) -> TournamentReplacementSourceAuthority:
+    target_order = (
+        _retarget_lucky_loser_order_authority(
+            value.lucky_loser_order_authority,
+            target_branch_id=target_branch_id,
+            fingerprint_map=fingerprint_map,
+        )
+        if value.lucky_loser_order_authority is not None
+        else None
+    )
+    target = value.model_copy(
+        update={
+            "branch_id": target_branch_id,
+            "predecessor_draw_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Replacement source Draw",
+            ),
+            "predecessor_draw_input_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_input_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Replacement source Draw Input",
+            ),
+            "qualification_winner_evidence": _retarget_q_winner_evidence(
+                value.qualification_winner_evidence,
+                fingerprint_map=fingerprint_map,
+            ),
+            "qualification_start_evidence": _retarget_draw_start_evidence(
+                value.qualification_start_evidence,
+                fingerprint_map=fingerprint_map,
+                label="Replacement source Qualification-start evidence",
+            ),
+            "main_start_evidence": _retarget_draw_start_evidence(
+                value.main_start_evidence,
+                fingerprint_map=fingerprint_map,
+                label="Replacement source Main-start evidence",
+            ),
+            "replacement_cutoff_authority": _retarget_cutoff_authority(
+                value.replacement_cutoff_authority,
+                target_branch_id=target_branch_id,
+                fingerprint_map=fingerprint_map,
+            ),
+            "lucky_loser_order_authority": target_order,
+            "base_wild_card_authority_fingerprint": (
+                _mapped_fingerprint(
+                    value.base_wild_card_authority_fingerprint,
+                    fingerprint_map=fingerprint_map,
+                    label="Replacement source Wild Card authority",
+                )
+                if value.base_wild_card_authority_fingerprint is not None
+                else None
+            ),
+        }
+    )
+    return TournamentReplacementSourceAuthority.model_validate(
+        target.model_dump(mode="python")
+    )
+
+
+def _retarget_lucky_loser_vacancy_authority(
+    value: TournamentLuckyLoserVacancyAuthority,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+) -> TournamentLuckyLoserVacancyAuthority:
+    target = value.model_copy(
+        update={
+            "branch_id": target_branch_id,
+            "predecessor_draw_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser vacancy Draw",
+            ),
+            "predecessor_draw_input_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_input_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser vacancy Draw Input",
+            ),
+            "withdrawn_player_cutoff_authority": _retarget_cutoff_authority(
+                value.withdrawn_player_cutoff_authority,
+                target_branch_id=target_branch_id,
+                fingerprint_map=fingerprint_map,
+            ),
+            "qualification_start_authority": _retarget_cutoff_authority(
+                value.qualification_start_authority,
+                target_branch_id=target_branch_id,
+                fingerprint_map=fingerprint_map,
+            ),
+            "qualification_winner_evidence": _retarget_q_winner_evidence(
+                value.qualification_winner_evidence,
+                fingerprint_map=fingerprint_map,
+            ),
+        }
+    )
+    return TournamentLuckyLoserVacancyAuthority.model_validate(
+        target.model_dump(mode="python")
+    )
+
+
+def _retarget_lucky_loser_fill_authority(
+    value: TournamentLuckyLoserFillAuthority,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+) -> TournamentLuckyLoserFillAuthority:
+    target_order = _retarget_lucky_loser_order_authority(
+        value.order_authority,
+        target_branch_id=target_branch_id,
+        fingerprint_map=fingerprint_map,
+    )
+    selected = next(
+        (
+            item
+            for item in target_order.candidates
+            if item.player_id == value.selected_candidate.player_id
+            and item.priority_ordinal == value.selected_candidate.priority_ordinal
+        ),
+        None,
+    )
+    if selected is None:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Lucky Loser selected candidate is absent after evidence retarget"
+        )
+    target = value.model_copy(
+        update={
+            "branch_id": target_branch_id,
+            "predecessor_draw_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser fill Draw",
+            ),
+            "predecessor_draw_input_fingerprint": _mapped_fingerprint(
+                value.predecessor_draw_input_fingerprint,
+                fingerprint_map=fingerprint_map,
+                label="Lucky Loser fill Draw Input",
+            ),
+            "order_authority": target_order,
+            "selected_candidate": selected,
+        }
+    )
+    return TournamentLuckyLoserFillAuthority.model_validate(
+        target.model_dump(mode="python")
+    )
 
 
 def remap_coupled_player_slot_history(
@@ -923,7 +1234,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Frozen ordinary fallback lacks replacement-source authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_replacement_source_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -986,7 +1297,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Source-bound pre-Q revision lacks replacement-source authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_replacement_source_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1090,7 +1401,7 @@ def remap_coupled_player_slot_history(
                     )
                 source_replacement = source_revision.replacement_source_authority
                 target_replacement = (
-                    _retarget_frozen_evidence(
+                    _retarget_replacement_source_authority(
                         source_replacement,
                         target_branch_id=target_branch_id,
                         fingerprint_map=frozen_map,
@@ -1105,7 +1416,7 @@ def remap_coupled_player_slot_history(
                     frozen_map[source_replacement.fingerprint] = (
                         target_replacement.fingerprint
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_lucky_loser_vacancy_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,
@@ -1181,7 +1492,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Lucky Loser fill revision lacks fill authority"
                     )
-                target_authority = _retarget_frozen_evidence(
+                target_authority = _retarget_lucky_loser_fill_authority(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,

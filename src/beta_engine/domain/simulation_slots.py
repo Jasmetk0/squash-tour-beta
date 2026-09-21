@@ -109,7 +109,9 @@ class WeekSimulationSchedule(FrozenInput):
                 )
         return self
 
-    def _fingerprint_payload(self) -> dict:
+    def canonical_payload(self) -> dict:
+        """Return the exact version-owned payload used by identity/request hashing."""
+
         if self.schema_version == "week_simulation_schedule.v1":
             return {
                 "schema_version": "week_simulation_schedule.v1",
@@ -128,7 +130,7 @@ class WeekSimulationSchedule(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return fingerprint(self._fingerprint_payload())
+        return fingerprint(self.canonical_payload())
 
 
 class CanonicalMatchInputProjectionPolicy(FrozenInput):

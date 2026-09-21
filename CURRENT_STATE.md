@@ -1129,3 +1129,19 @@ and Saves Week 4 while source history remains unchanged.
 Tournament/result/correction history, zero history, authoritative transition inputs,
 InitialWorld binding, publication/Season Closing evidence and other unsupported
 Branch-owned components remain fail-closed.
+
+
+## Ranking-bearing Branch fork: disciplinary-zero history remap
+
+Ranking fork materialization now supports complete **result-free** histories that include
+versioned disciplinary-zero decisions. Zero source identities are rebuilt for the target
+Branch, including every `RankingZeroVersion.previous_fingerprint` successor link.
+Historical command zero batches and resolved zero manifests are rebound to the target
+Branch and revalidated before the ranking fingerprint chain is recalculated.
+
+A PR-critical acceptance covers a Week 1–3 source history with an initial zero decision
+and later correction, proves the target owns a distinct zero fingerprint lineage, then
+advances only the target to Week 4 while the source Saved Revision remains unchanged.
+
+Tournament/result/correction sources, transition/publication authorities,
+InitialWorld-linked ranking and Season Closing evidence remain fail-closed.

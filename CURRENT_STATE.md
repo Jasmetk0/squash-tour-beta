@@ -905,3 +905,34 @@ This is continuity plumbing only. It does not reinterpret a missing Calendar as 
 empty week, does not decide cancellation handling, and does not add any unresolved
 Entry/WC/lock/reconstruction policy. PR-critical acceptance covers tournament
 weeks -> explicit empty week -> following RankingWeek plus false-empty rejection.
+
+
+## Current follow-up after #879: Official Run whole-season acceptance
+
+The primary mandatory pre-alpha flow from Master §31.3 is now exercised end to end
+through canonical production boundaries. The acceptance creates an owned Official Run
+Initial World through Admin API, derives and Saves the initial Official Ranking,
+simulates a real Week-1 tournament through the authoritative Match Engine path, then
+advances through every remaining week of Season 0. Event-free weeks use the explicit
+Calendar-backed zero-match completion boundary from #879; no direct database repair or
+synthetic completed-week rows are used inside the flow.
+
+Ordinary Week Transitions remain in the clean Working Draft until an explicit Save
+checkpoint, which is the intended Run model rather than an implicit Save-after-every-
+week rule. At Week 31 the test Saves the complete ranking/lifecycle/sporting/simulation
+state, records the post-Save Position fingerprint, shuts the API process down, reopens
+the same Run database, and requires exact Position identity before continuing. Week 61
+is Saved again and must produce a ready canonical Season Transition preflight.
+
+The same flow now successfully round-trips the server-derived
+`season_transition_configuration.v1` through the HTTP advance endpoint and commits the
+ordinary Season Transition to Season 1 Week 1. While building this acceptance, that
+round-trip exposed a strict-mode API bug: JSON arrays emitted for immutable tuple fields
+were rejected when the preview configuration was posted back. The ordinary transition
+endpoint now parses the request in Pydantic JSON mode, preserving strict internal
+models while accepting their normal JSON representation.
+
+The PR-critical whole-season acceptance completes in roughly 36 seconds on the current
+GitHub runner; Fast CI with the full critical set completes in roughly two minutes.
+This proves the minimum whole-season continuity / Save-reopen / rollover path, not the
+still-open PAQ-006 reference-scale target or unresolved automatic Entry/WC/lock policy.

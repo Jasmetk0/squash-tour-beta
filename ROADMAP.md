@@ -1095,4 +1095,4 @@ PR-critical coverage exercises a mixed revision chain across capture -> addition
 
 The recovery path now verifies the complete installed Simulation Slot component after restore/materialized-fork installation by recapturing live state and comparing its canonical fingerprint to the requested target component. This upgrades component installation from per-store validation to whole-component exactness.
 
-PR-critical coverage joins the Branch fork and restore work into one mixed-history scenario: full redraw -> frozen RWC repair -> target materialization -> later target Draw-Freeze mutation -> restore -> exact RWC retry. Next hardening should expand this equivalence test across Lucky Loser and source-bound pre-Q repair families and then move back toward pre-alpha feature delivery.
+PR-critical coverage joins the Branch fork and restore work into one specialized-history scenario: frozen RWC repair -> target materialization -> later target RWC repair -> restore -> exact original RWC retry. Next hardening should expand this equivalence test across Lucky Loser and source-bound pre-Q repair families and then move back toward pre-alpha feature delivery.

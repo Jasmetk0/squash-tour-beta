@@ -18,6 +18,7 @@ from beta_engine.application.authoritative_slot_matches import (
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
+    _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
@@ -25,6 +26,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     MatchReconstructionGameScore,
 )
 from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.season_point_awards_service import FrozenPointAwardAuthority
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
@@ -55,6 +57,7 @@ from beta_engine.domain.rankings.official import (
     RankingWeek,
     calculate_official_ranking,
 )
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
@@ -3961,6 +3964,68 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         command_id="configure-process",
         main_process_window_count=3,
     )
+    adopted_event = CalendarEvent(
+        event_id="event-draw",
+        season="2000/2001",
+        season_week=1,
+        calendar_year=2000,
+        year_week=1,
+        template_id="fork-draw-template",
+        event_name="Fork Draw Open",
+        category="TEST",
+        tour_level="WORLD_TOUR",
+        host_country="CZE",
+        region="Europe",
+        main_draw_size=4,
+        qualification_draw_size=0,
+        seeds_count=2,
+        qualifier_spots=0,
+        ranking_points_table={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+        },
+        ranking_configuration_legacy=False,
+        calendar_fingerprint="c" * 64,
+    )
+    adopted_points = FrozenPointAwardAuthority(
+        ranking_status="ranked",
+        point_distribution={
+            "champion": 1000,
+            "finalist": 650,
+            "semifinal": 400,
+        },
+        point_distribution_source="calendar_event.ranking_points_table",
+    )
+    source_adopted_items = (
+        _AdoptedTournamentEvidence(
+            event_id="event-draw",
+            calendar_event=adopted_event,
+            point_award_authority=adopted_points,
+            draw_authority_fingerprint=source_draw.fingerprint,
+        ),
+    )
+    source_adopted_fingerprint = (
+        AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+            "run",
+            "branch",
+            WEEK,
+            source_adopted_items,
+        )
+    )
+    session.add(
+        AdoptedTournamentAuthorityModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            event_id="event-draw",
+            authority_fingerprint=source_adopted_fingerprint,
+            package_json=AuthoritativeRunSimulationDriver._encode_adopted_authority(
+                source_adopted_items
+            ),
+        )
+    )
+    session.flush()
 
     payload = {"content": {}}
     capture_saved_sporting(
@@ -3993,6 +4058,10 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
     target_draw_input_row = component["draw_inputs"][0]
     target_draw_row = component["draw_authorities"][0]
     target_process_row = component["draw_process_authorities"][0]
+    target_adopted_row = component["authorities"][0]
+    target_adopted_items = AuthoritativeRunSimulationDriver._decode_adopted_authority(
+        target_adopted_row["package_json"]
+    )
     assert target_field_row["branch_id"] == "target"
     assert target_wc_row["branch_id"] == "target"
     assert target_draw_input_row["branch_id"] == "target"
@@ -4021,4 +4090,17 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
     assert (
         target_process_row["draw_authority_fingerprint"]
         == target_draw_row["authority_fingerprint"]
+    )
+    assert target_adopted_row["branch_id"] == "target"
+    assert (
+        target_adopted_row["authority_fingerprint"]
+        != source_adopted_fingerprint
+    )
+    assert (
+        target_adopted_items[0].draw_authority_fingerprint
+        == target_draw_row["authority_fingerprint"]
+    )
+    assert (
+        target_adopted_items[0].draw_authority_fingerprint
+        != source_draw.fingerprint
     )

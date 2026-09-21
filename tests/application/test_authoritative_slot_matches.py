@@ -65,6 +65,14 @@ from beta_engine.domain.tournaments.replacement_cutoff_authority import (
     TournamentPlayedMatchCutoffEvidence,
     TournamentPlayerReplacementCutoffAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.lucky_loser_authority import (
+    TournamentLuckyLoserAutoByeTerminalEvidence,
+    TournamentLuckyLoserCandidate,
+    TournamentLuckyLoserOrderAuthority,
+)
+from beta_engine.domain.tournaments.replacement_source_authority import (
+    TournamentReplacementSourceAuthority,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
@@ -123,6 +131,8 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
 )
 from beta_engine.infrastructure.db.player_slot_fork_remap import (
     _retarget_frozen_evidence,
+    _retarget_lucky_loser_order_authority,
+    _retarget_replacement_source_authority,
     remap_coupled_player_slot_history,
 )
 from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
@@ -4153,6 +4163,163 @@ def test_special_revision_frozen_evidence_retargets_nested_match_identity():
 
 @pytest.mark.pr_critical
 @pytest.mark.pr_critical
+
+@pytest.mark.pr_critical
+def test_lucky_loser_auto_bye_order_retargets_derived_terminal_identity():
+    source_bracket = "a" * 64
+    target_bracket = "b" * 64
+    source_elimination = "c" * 64
+    target_elimination = "d" * 64
+    source_draw = "e" * 64
+    target_draw = "f" * 64
+    source_ranking = "1" * 64
+    target_ranking = "2" * 64
+
+    source_auto = TournamentLuckyLoserAutoByeTerminalEvidence(
+        match_id="q-terminal",
+        section_id="Q1",
+        winner_player_id="q-winner",
+        qualification_bracket_fingerprint=source_bracket,
+    )
+    source_candidate = TournamentLuckyLoserCandidate(
+        player_id="q-loser",
+        priority_ordinal=1,
+        qualification_round_reached=1,
+        tournament_ranking=7,
+        elimination_match_id="q-semi",
+        elimination_result_fingerprint=source_elimination,
+    )
+    source = TournamentLuckyLoserOrderAuthority(
+        schema_version="tournament_lucky_loser_order.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        draw_authority_fingerprint=source_draw,
+        tournament_ranking_authority_fingerprint=source_ranking,
+        qualification_terminal_match_ids=("q-terminal",),
+        qualification_terminal_result_fingerprints=(source_auto.fingerprint,),
+        qualification_auto_bye_terminals=(source_auto,),
+        candidates=(source_candidate,),
+    )
+
+    target = _retarget_lucky_loser_order_authority(
+        source,
+        target_branch_id="target",
+        fingerprint_map={
+            source_bracket: target_bracket,
+            source_elimination: target_elimination,
+            source_draw: target_draw,
+            source_ranking: target_ranking,
+        },
+    )
+
+    target_auto = target.qualification_auto_bye_terminals[0]
+    assert target.branch_id == "target"
+    assert target.draw_authority_fingerprint == target_draw
+    assert target.tournament_ranking_authority_fingerprint == target_ranking
+    assert target_auto.qualification_bracket_fingerprint == target_bracket
+    assert target_auto.fingerprint != source_auto.fingerprint
+    assert target.qualification_terminal_result_fingerprints == (
+        target_auto.fingerprint,
+    )
+    assert target.candidates[0].elimination_result_fingerprint == target_elimination
+    assert target.fingerprint != source.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_lucky_loser_order_fails_closed_when_nested_result_mapping_is_missing():
+    source_auto = TournamentLuckyLoserAutoByeTerminalEvidence(
+        match_id="q-terminal",
+        section_id="Q1",
+        winner_player_id="q-winner",
+        qualification_bracket_fingerprint="a" * 64,
+    )
+    source = TournamentLuckyLoserOrderAuthority(
+        schema_version="tournament_lucky_loser_order.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        draw_authority_fingerprint="b" * 64,
+        tournament_ranking_authority_fingerprint="c" * 64,
+        qualification_terminal_match_ids=("q-terminal",),
+        qualification_terminal_result_fingerprints=(source_auto.fingerprint,),
+        qualification_auto_bye_terminals=(source_auto,),
+        candidates=(
+            TournamentLuckyLoserCandidate(
+                player_id="q-loser",
+                priority_ordinal=1,
+                qualification_round_reached=1,
+                tournament_ranking=9,
+                elimination_match_id="q-semi",
+                elimination_result_fingerprint="d" * 64,
+            ),
+        ),
+    )
+
+    with pytest.raises(
+        Exception,
+        match="candidate elimination.*without a target mapping",
+    ):
+        _retarget_lucky_loser_order_authority(
+            source,
+            target_branch_id="target",
+            fingerprint_map={
+                "a" * 64: "1" * 64,
+                "b" * 64: "2" * 64,
+                "c" * 64: "3" * 64,
+            },
+        )
+
+
+@pytest.mark.pr_critical
+def test_pre_q_replacement_source_retargets_every_branch_owned_binding():
+    source_cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id="main-player",
+        played_matches=(),
+        draw_type="main",
+    )
+    source = TournamentReplacementSourceAuthority(
+        schema_version="tournament_replacement_source.v1",
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        withdrawn_player_id="main-player",
+        predecessor_draw_fingerprint="4" * 64,
+        predecessor_draw_input_fingerprint="5" * 64,
+        physical_slot_index=2,
+        source="qualification_promotion",
+        selected_player_id="q-player",
+        source_ordinal=1,
+        replacement_cutoff_authority=source_cutoff,
+        unavailable_player_ids=(),
+        prior_lucky_loser_player_ids=(),
+        external_reserve_player_ids=("reserve",),
+        base_wild_card_authority_fingerprint="6" * 64,
+    )
+
+    target = _retarget_replacement_source_authority(
+        source,
+        target_branch_id="target",
+        fingerprint_map={
+            "4" * 64: "7" * 64,
+            "5" * 64: "8" * 64,
+            "6" * 64: "9" * 64,
+        },
+    )
+
+    assert target.branch_id == "target"
+    assert target.predecessor_draw_fingerprint == "7" * 64
+    assert target.predecessor_draw_input_fingerprint == "8" * 64
+    assert target.base_wild_card_authority_fingerprint == "9" * 64
+    assert target.replacement_cutoff_authority.branch_id == "target"
+    assert target.replacement_cutoff_authority.status == "replacement_open"
+    assert target.selected_player_id == source.selected_player_id
+    assert target.fingerprint != source.fingerprint
+
+
 def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
     session, _, _, _, _ = run_semifinals(
         tmp_path / "materialized-fork-mixed-restore.sqlite",

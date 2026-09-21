@@ -16,6 +16,9 @@ from beta_engine.application.authoritative_slot_matches import (
     execute_supported_four_player_tournament,
     execute_adopted_four_player_match_package,
 )
+from beta_engine.application.authoritative_frozen_main_replacement import (
+    AuthoritativeFrozenMainReplacement,
+)
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     _AdoptedTournamentEvidence,
@@ -4319,6 +4322,264 @@ def test_pre_q_replacement_source_retargets_every_branch_owned_binding():
     assert target.replacement_cutoff_authority.status == "replacement_open"
     assert target.selected_player_id == source.selected_player_id
     assert target.fingerprint != source.fingerprint
+
+
+
+@pytest.mark.pr_critical
+def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
+    session, _, _, _, _ = run_semifinals(
+        tmp_path / "pre-q-fork-materialize.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
+
+    source_snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        policy=OfficialRankingPolicy(policy_id="pre-q-fork-ranking"),
+        players=(),
+        results=(),
+        previous=None,
+    )
+    source_ranking = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-pre-q-fork",
+        ranking_week=WEEK,
+        ranking_snapshot=source_snapshot,
+        adopted_by_command_id="pre-q-fork-adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=source_snapshot.fingerprint,
+            payload_json=source_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(source_ranking)
+
+    apps = tuple(
+        TournamentEntryApplication(
+            application_id=f"pre-q-a{index}",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-pre-q-fork",
+            player_id=f"pre-q-p{index}",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token=str(index),
+        )
+        for index in range(1, 8)
+    )
+    capacity = TournamentEntryFieldCapacity(
+        main_draw_size=4,
+        qualification_draw_size=2,
+        qualifier_spots=1,
+    )
+    field = TournamentEntryFieldResolver.build_initial(
+        authority=source_ranking,
+        applications=apps,
+        capacity=capacity,
+    )
+    apps_fp = _applications_fingerprint(apps)
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-pre-q-fork",
+            sequence=1,
+            command_id="pre-q-field",
+            request_fingerprint=entry_request_fingerprint(
+                {
+                    "mode": "initial",
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "event_id": "event-pre-q-fork",
+                    "authority_fingerprint": source_ranking.fingerprint,
+                    "applications_fingerprint": apps_fp,
+                    "capacity": capacity.model_dump(mode="json"),
+                }
+            ),
+            field_fingerprint=field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=source_ranking.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(apps),
+            payload_json=field.model_dump_json(),
+        )
+    )
+    session.flush()
+
+    source_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-pre-q-fork",
+        command_id="pre-q-input",
+        draw_seed=991122,
+    )
+    assert source_input.qualification_player_ids
+    assert source_input.direct_main_player_ids
+    withdrawn = source_input.direct_main_player_ids[0]
+
+    TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-pre-q-fork",
+        command_id="pre-q-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-pre-q-fork",
+        command_id="pre-q-process",
+        main_process_window_count=3,
+        qualification_process_window_count=3,
+    )
+    source_result = AuthoritativeFrozenMainReplacement(session).execute(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-pre-q-fork",
+        command_id="pre-q-promote",
+        withdrawn_player_id=withdrawn,
+        main_process_window_ordinal=3,
+        qualification_process_window_ordinal=3,
+        repair_draw_seed=991133,
+    )
+    assert source_result.source == "qualification_promotion"
+    assert len(source_result.draw_revisions) == 1
+    source_revision = source_result.draw_revisions[0]
+    assert source_revision.repair_kind == "source_bound_pre_q_promotion"
+    assert source_revision.replacement_source_authority is not None
+
+    source_payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    session.add(
+        RunBranchModel(
+            run_id="run",
+            branch_id="target",
+            display_name="Target",
+            forked_from_branch_id="branch",
+        )
+    )
+    target_snapshot = source_snapshot.model_copy(update={"branch_id": "target"})
+    target_ranking = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="target",
+        event_id="event-pre-q-fork",
+        ranking_week=WEEK,
+        ranking_snapshot=target_snapshot,
+        adopted_by_command_id="pre-q-fork-adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="target",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=target_snapshot.fingerprint,
+            payload_json=target_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(target_ranking)
+
+    remapped = remap_coupled_player_slot_history(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+        tournament_ranking_authority_map={
+            source_ranking.fingerprint: target_ranking,
+        },
+    )
+    assert remapped is not None
+    assert len(remapped.simulation_component["draw_revisions"]) == 1
+
+    fork_root = {
+        "content": {
+            "simulation_slot_match_state": remapped.simulation_component,
+        }
+    }
+    restore_saved_simulation_slots(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root,
+        run_id="run",
+        branch_id="target",
+    )
+
+    target_history = TournamentDrawRevisionStore(session).history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-pre-q-fork",
+    )
+    assert len(target_history) == 1
+    target_revision = target_history[0]
+    assert target_revision.repair_kind == "source_bound_pre_q_promotion"
+    assert target_revision.branch_id == "target"
+    assert target_revision.fingerprint != source_revision.fingerprint
+    target_source = target_revision.replacement_source_authority
+    assert target_source is not None
+    assert target_source.branch_id == "target"
+    assert (
+        target_source.predecessor_draw_fingerprint
+        == target_revision.predecessor_draw_fingerprint
+    )
+    assert (
+        target_source.predecessor_draw_input_fingerprint
+        != source_revision.replacement_source_authority.predecessor_draw_input_fingerprint
+    )
+
+    retry = TournamentDrawRevisionStore(session).apply_source_bound_pre_q_promotion(
+        run_id="run",
+        branch_id="target",
+        event_id="event-pre-q-fork",
+        command_id=target_revision.command_id,
+        main_process_window_ordinal=target_revision.main_process_window_ordinal,
+        qualification_process_window_ordinal=(
+            target_revision.qualification_process_window_ordinal
+        ),
+        repair_draw_seed=target_revision.repair_draw_seed,
+        replacement_source_authority=target_source,
+    )
+    assert retry.fingerprint == target_revision.fingerprint
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="target",
+        event_id="event-pre-q-fork",
+    ).count() == 1
 
 
 def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):

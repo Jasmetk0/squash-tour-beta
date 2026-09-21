@@ -20,6 +20,13 @@ from beta_engine.domain.tournaments.draw_process_authority import (
     TournamentDrawProcessAuthority,
     TournamentDrawProcessAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.draw_revision_authority import (
+    TournamentDrawRevision,
+    TournamentDrawRevisionBuilder,
+)
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryField,
@@ -39,6 +46,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawAuthorityModel,
     TournamentDrawInputAuthorityModel,
     TournamentDrawProcessAuthorityModel,
+    TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
@@ -60,6 +68,9 @@ from beta_engine.infrastructure.db.tournament_draw_input_authority import (
 from beta_engine.infrastructure.db.tournament_draw_process_authority import (
     TournamentDrawProcessAuthorityStore,
     _fingerprint as draw_process_request_fingerprint,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    _fp as draw_revision_request_fingerprint,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -130,6 +141,7 @@ def remap_coupled_player_slot_history(
         "draw_inputs",
         "draw_authorities",
         "draw_process_authorities",
+        "draw_revisions",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -160,16 +172,25 @@ def remap_coupled_player_slot_history(
         TournamentDrawProcessAuthorityModel(**value)
         for value in source_slot_component.get("draw_process_authorities", [])
     ]
+    source_draw_revision_rows = [
+        TournamentDrawRevisionModel(**value)
+        for value in source_slot_component.get("draw_revisions", [])
+    ]
 
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
     target_draw_rows: list[TournamentDrawAuthorityModel] = []
     target_draw_process_rows: list[TournamentDrawProcessAuthorityModel] = []
+    target_draw_revision_rows: list[TournamentDrawRevisionModel] = []
     target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
+    target_apps_by_event: dict[str, tuple[TournamentEntryApplication, ...]] = {}
+    target_ranking_by_event: dict[str, TournamentRankingSnapshotAuthority] = {}
     target_wc_by_event: dict[str, TournamentWildCardAuthority] = {}
     target_draw_input_by_event: dict[str, TournamentDrawInputAuthority] = {}
     target_draw_by_event: dict[str, TournamentDrawAuthority] = {}
+    source_draw_by_event: dict[str, TournamentDrawAuthority] = {}
+    target_process_by_event: dict[str, TournamentDrawProcessAuthority] = {}
     target_draw_fingerprint_map: dict[str, str] = {}
 
     source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
@@ -281,6 +302,13 @@ def remap_coupled_player_slot_history(
             target_fields.append(target_field)
             previous_target = target_field
         target_fields_by_event[event_id] = tuple(target_fields)
+        target_apps_by_event[event_id] = tuple(
+            TournamentEntryApplication.model_validate_json(
+                app.model_copy(update={"branch_id": target_branch_id}).model_dump_json()
+            )
+            for app in TournamentEntryFieldStore._load_row(ordered[-1])[1]
+        )
+        target_ranking_by_event[event_id] = target_authority
 
     for row in source_wc_rows:
         source_authority = TournamentWildCardAuthority.model_validate_json(
@@ -430,6 +458,7 @@ def remap_coupled_player_slot_history(
                 payload_json=target_draw.model_dump_json(),
             )
         )
+        source_draw_by_event[row.event_id] = source_draw
         target_draw_by_event[row.event_id] = target_draw
         target_draw_fingerprint_map[source_draw.fingerprint] = target_draw.fingerprint
 
@@ -481,6 +510,7 @@ def remap_coupled_player_slot_history(
                 payload_json=target_process.model_dump_json(),
             )
         )
+        target_process_by_event[row.event_id] = target_process
 
     source_schedules = [
         WeekSimulationScheduleModel(**value)
@@ -529,80 +559,6 @@ def remap_coupled_player_slot_history(
         for value in source_slot_component.get("authorities", [])
     ]
     target_authorities: list[AdoptedTournamentAuthorityModel] = []
-    if source_authorities:
-        from beta_engine.application.authoritative_run_simulation_driver import (
-            AuthoritativeRunSimulationDriver,
-        )
-
-        for row in source_authorities:
-            items = AuthoritativeRunSimulationDriver._decode_adopted_authority(
-                row.package_json
-            )
-            week = next(
-                (
-                    state.week
-                    for state in source_bundle[0]
-                    if state.week.ordinal == row.week_ordinal
-                ),
-                None,
-            )
-            if week is None:
-                raise SimulationSlotForkRemapUnsupportedError(
-                    "Adopted Tournament authority week has no saved sporting state"
-                )
-            source_fingerprint = (
-                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
-                    run_id,
-                    source_branch_id,
-                    week,
-                    items,
-                )
-            )
-            if source_fingerprint != row.authority_fingerprint:
-                raise SimulationSlotForkRemapUnsupportedError(
-                    "Saved Adopted Tournament authority fingerprint is corrupt"
-                )
-
-            target_items = []
-            for item in items:
-                if item.draw_authority_fingerprint is None:
-                    target_items.append(item)
-                    continue
-                mapped_draw_fingerprint = target_draw_fingerprint_map.get(
-                    item.draw_authority_fingerprint
-                )
-                if mapped_draw_fingerprint is None:
-                    raise SimulationSlotForkRemapUnsupportedError(
-                        "Adopted Tournament authority references Draw evidence without a target mapping"
-                    )
-                target_items.append(
-                    item.model_copy(
-                        update={
-                            "draw_authority_fingerprint": mapped_draw_fingerprint
-                        }
-                    )
-                )
-            target_items = tuple(target_items)
-            target_fingerprint = (
-                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
-                    run_id,
-                    target_branch_id,
-                    week,
-                    target_items,
-                )
-            )
-            target_authorities.append(
-                AdoptedTournamentAuthorityModel(
-                    run_id=run_id,
-                    branch_id=target_branch_id,
-                    week_ordinal=row.week_ordinal,
-                    event_id=row.event_id,
-                    authority_fingerprint=target_fingerprint,
-                    package_json=AuthoritativeRunSimulationDriver._encode_adopted_authority(
-                        target_items
-                    ),
-                )
-            )
 
     source_states, source_contexts = source_bundle
     context_by_week = {
@@ -756,6 +712,315 @@ def remap_coupled_player_slot_history(
             "Simulation Slot history contains a week without a saved sporting opening state"
         )
 
+    source_revisions_by_event: dict[str, list[TournamentDrawRevisionModel]] = {}
+    for row in source_draw_revision_rows:
+        source_revisions_by_event.setdefault(row.event_id, []).append(row)
+
+    for event_id, rows in source_revisions_by_event.items():
+        source_initial_draw = source_draw_by_event.get(event_id)
+        target_predecessor = target_draw_by_event.get(event_id)
+        target_process = target_process_by_event.get(event_id)
+        target_ranking = target_ranking_by_event.get(event_id)
+        target_initial_input = target_draw_input_by_event.get(event_id)
+        target_fields = target_fields_by_event.get(event_id)
+        target_apps = target_apps_by_event.get(event_id)
+        if (
+            source_initial_draw is None
+            or target_predecessor is None
+            or target_process is None
+            or target_ranking is None
+            or target_initial_input is None
+            or not target_fields
+            or target_apps is None
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Draw revision is missing a mapped frozen dependency"
+            )
+
+        source_predecessor_fingerprint = source_initial_draw.fingerprint
+        target_previous_field = target_fields[-1]
+        target_previous_input = target_initial_input
+        for expected_sequence, row in enumerate(
+            sorted(rows, key=lambda item: item.sequence),
+            start=1,
+        ):
+            source_revision = TournamentDrawRevision.model_validate_json(row.payload_json)
+            if (
+                row.sequence != expected_sequence
+                or source_revision.sequence != row.sequence
+                or source_revision.command_id != row.command_id
+                or source_revision.predecessor_draw_fingerprint
+                != row.predecessor_draw_fingerprint
+                or source_revision.successor_draw.fingerprint
+                != row.successor_draw_fingerprint
+                or source_revision.fingerprint != row.revision_fingerprint
+            ):
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Saved Tournament Draw revision identity is corrupt"
+                )
+            if source_revision.predecessor_draw_fingerprint != source_predecessor_fingerprint:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Saved Tournament Draw revision predecessor chain is corrupt"
+                )
+            if source_revision.repair_kind not in {
+                "full_redraw",
+                "seed_cascade_phase",
+                "draw_frozen_phase",
+            }:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Tournament Draw revision repair kind requires a later fork-remap slice: "
+                    + source_revision.repair_kind
+                )
+
+            target_cutoffs = []
+            for source_cutoff in source_revision.replacement_cutoff_authorities:
+                target_evidence = []
+                for evidence in source_cutoff.played_matches:
+                    try:
+                        mapped_result = all_results[evidence.result_fingerprint]
+                    except KeyError as exc:
+                        raise SimulationSlotForkRemapUnsupportedError(
+                            "Tournament Draw revision cutoff references match evidence without a target mapping"
+                        ) from exc
+                    target_evidence.append(
+                        evidence.model_copy(
+                            update={"result_fingerprint": mapped_result}
+                        )
+                    )
+                target_cutoff = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+                    run_id=run_id,
+                    branch_id=target_branch_id,
+                    event_id=event_id,
+                    player_id=source_cutoff.player_id,
+                    played_matches=tuple(target_evidence),
+                    draw_type=source_cutoff.draw_type,
+                )
+                if target_cutoff.status != source_cutoff.status:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Tournament Draw revision cutoff status changed during remap"
+                    )
+                target_cutoffs.append(target_cutoff)
+            target_cutoffs = tuple(target_cutoffs)
+
+            target_successor_field = TournamentEntryFieldResolver.repair_pre_draw(
+                authority=target_ranking,
+                applications=target_apps,
+                previous=target_previous_field,
+                withdrawn_player_ids=source_revision.withdrawn_player_ids,
+            )
+            target_successor_input = TournamentDrawInputAuthorityBuilder.build(
+                authority=target_ranking,
+                field=target_successor_field,
+                field_sequence=target_initial_input.field_sequence + row.sequence,
+                command_id=row.command_id,
+                draw_seed=(
+                    source_revision.repair_draw_seed
+                    if source_revision.repair_kind == "full_redraw"
+                    else target_previous_input.draw_seed
+                ),
+                main_seed_count=None,
+                qualification_seed_count=None,
+                schema_version="tournament_draw_input_authority.v2",
+            )
+
+            affected = []
+            if (
+                target_previous_input.direct_main_player_ids
+                != target_successor_input.direct_main_player_ids
+                or target_previous_input.wild_card_player_ids
+                != target_successor_input.wild_card_player_ids
+            ):
+                affected.append("main")
+            if (
+                target_previous_input.qualification_player_ids
+                != target_successor_input.qualification_player_ids
+            ):
+                affected.append("qualification")
+            affected_draw_types = tuple(affected)
+            if affected_draw_types != source_revision.affected_draw_types:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Tournament Draw revision affected components changed during remap"
+                )
+
+            common = dict(
+                predecessor=target_predecessor,
+                successor_field=target_successor_field,
+                successor_draw_input=target_successor_input,
+                process_authority=target_process,
+                affected_draw_types=affected_draw_types,
+                main_process_window_ordinal=source_revision.main_process_window_ordinal,
+                qualification_process_window_ordinal=(
+                    source_revision.qualification_process_window_ordinal
+                ),
+                withdrawn_player_ids=source_revision.withdrawn_player_ids,
+                sequence=row.sequence,
+                command_id=row.command_id,
+                replacement_cutoff_authorities=target_cutoffs,
+            )
+            if source_revision.repair_kind == "full_redraw":
+                if source_revision.repair_draw_seed is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Full-redraw revision is missing its repair Draw seed"
+                    )
+                target_revision = TournamentDrawRevisionBuilder.build_full_redraw(
+                    **common,
+                    repair_draw_seed=source_revision.repair_draw_seed,
+                )
+                request = {
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "process_authority_fingerprint": target_process.fingerprint,
+                    "withdrawn_player_ids": list(source_revision.withdrawn_player_ids),
+                    "repair_draw_seed": source_revision.repair_draw_seed,
+                    "main_process_window_ordinal": source_revision.main_process_window_ordinal,
+                    "qualification_process_window_ordinal": (
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    "affected_draw_types": list(affected_draw_types),
+                    "successor_field_fingerprint": target_successor_field.fingerprint,
+                    "replacement_cutoff_authority_fingerprints": [
+                        authority.fingerprint for authority in target_cutoffs
+                    ],
+                }
+            elif source_revision.repair_kind == "seed_cascade_phase":
+                target_revision = TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+                    **common,
+                    repair_draw_seed=source_revision.repair_draw_seed,
+                )
+                request = {
+                    "repair_kind": "seed_cascade_phase",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "process_authority_fingerprint": target_process.fingerprint,
+                    "withdrawn_player_ids": list(source_revision.withdrawn_player_ids),
+                    "main_process_window_ordinal": source_revision.main_process_window_ordinal,
+                    "qualification_process_window_ordinal": (
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    "repair_draw_seed": source_revision.repair_draw_seed,
+                    "affected_draw_types": list(affected_draw_types),
+                    "successor_field_fingerprint": target_successor_field.fingerprint,
+                    "replacement_cutoff_authority_fingerprints": [
+                        authority.fingerprint for authority in target_cutoffs
+                    ],
+                }
+            else:
+                target_revision = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+                    **common,
+                    repair_draw_seed=source_revision.repair_draw_seed,
+                )
+                request = {
+                    "repair_kind": "draw_frozen_phase",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "process_authority_fingerprint": target_process.fingerprint,
+                    "withdrawn_player_ids": list(source_revision.withdrawn_player_ids),
+                    "main_process_window_ordinal": source_revision.main_process_window_ordinal,
+                    "qualification_process_window_ordinal": (
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    "repair_draw_seed": source_revision.repair_draw_seed,
+                    "affected_draw_types": list(affected_draw_types),
+                    "successor_field_fingerprint": target_successor_field.fingerprint,
+                    "replacement_cutoff_authority_fingerprints": [
+                        authority.fingerprint for authority in target_cutoffs
+                    ],
+                }
+
+            target_draw_revision_rows.append(
+                TournamentDrawRevisionModel(
+                    run_id=run_id,
+                    branch_id=target_branch_id,
+                    event_id=event_id,
+                    sequence=row.sequence,
+                    command_id=row.command_id,
+                    request_fingerprint=draw_revision_request_fingerprint(request),
+                    revision_fingerprint=target_revision.fingerprint,
+                    predecessor_draw_fingerprint=target_revision.predecessor_draw_fingerprint,
+                    successor_draw_fingerprint=target_revision.successor_draw.fingerprint,
+                    payload_json=target_revision.model_dump_json(),
+                )
+            )
+            target_draw_fingerprint_map[
+                source_revision.successor_draw.fingerprint
+            ] = target_revision.successor_draw.fingerprint
+            source_predecessor_fingerprint = source_revision.successor_draw.fingerprint
+            target_predecessor = target_revision.successor_draw
+            target_previous_field = target_revision.successor_field
+            target_previous_input = target_revision.successor_draw_input
+
+    if source_authorities:
+        from beta_engine.application.authoritative_run_simulation_driver import (
+            AuthoritativeRunSimulationDriver,
+        )
+
+        for row in source_authorities:
+            items = AuthoritativeRunSimulationDriver._decode_adopted_authority(
+                row.package_json
+            )
+            week = next(
+                (
+                    state.week
+                    for state in source_bundle[0]
+                    if state.week.ordinal == row.week_ordinal
+                ),
+                None,
+            )
+            if week is None:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Adopted Tournament authority week has no saved sporting state"
+                )
+            source_fingerprint = (
+                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+                    run_id,
+                    source_branch_id,
+                    week,
+                    items,
+                )
+            )
+            if source_fingerprint != row.authority_fingerprint:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Saved Adopted Tournament authority fingerprint is corrupt"
+                )
+
+            target_items = []
+            for item in items:
+                if item.draw_authority_fingerprint is None:
+                    target_items.append(item)
+                    continue
+                mapped_draw_fingerprint = target_draw_fingerprint_map.get(
+                    item.draw_authority_fingerprint
+                )
+                if mapped_draw_fingerprint is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Adopted Tournament authority references Draw evidence without a target mapping"
+                    )
+                target_items.append(
+                    item.model_copy(
+                        update={
+                            "draw_authority_fingerprint": mapped_draw_fingerprint
+                        }
+                    )
+                )
+            target_items = tuple(target_items)
+            target_fingerprint = (
+                AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
+                    run_id,
+                    target_branch_id,
+                    week,
+                    target_items,
+                )
+            )
+            target_authorities.append(
+                AdoptedTournamentAuthorityModel(
+                    run_id=run_id,
+                    branch_id=target_branch_id,
+                    week_ordinal=row.week_ordinal,
+                    event_id=row.event_id,
+                    authority_fingerprint=target_fingerprint,
+                    package_json=AuthoritativeRunSimulationDriver._encode_adopted_authority(
+                        target_items
+                    ),
+                )
+            )
+
     target_slots = [
         SimulationSlotModel(**value)
         for component in target_slot_components
@@ -786,7 +1051,8 @@ def remap_coupled_player_slot_history(
         include_draw_process_authorities=(
             "draw_process_authorities" in source_slot_component
         ),
-        include_draw_revisions=False,
+        draw_revisions=target_draw_revision_rows,
+        include_draw_revisions="draw_revisions" in source_slot_component,
     )
 
     return CoupledPlayerSlotForkRemap(

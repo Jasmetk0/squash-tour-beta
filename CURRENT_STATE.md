@@ -1398,3 +1398,10 @@ Draw generation/revision/process authority remains the next downstream boundary.
 Materialized Branch forks now carry canonical draw-backed Adopted Tournament Authority evidence once the source Tournament Draw has an exact target mapping. Each adopted tournament bundle is decoded and validated against its stored source authority fingerprint, every Draw authority fingerprint is rebound through the source-to-target Draw map, the canonical v6 package is re-encoded, and the week authority fingerprint is recalculated under the target Branch identity.
 
 Legacy adopted tournament evidence without Draw binding remains supported unchanged. Draw-bound evidence fails closed if any referenced source Draw lacks a target mapping. Draw Revision history is still intentionally unsupported; revision-specific replacement cutoff, Lucky Loser, Wild Card repair and replacement-source evidence must be replayed before revised Draw fingerprints can participate in adopted authority remapping.
+
+
+## Branch fork: basic Draw Revision replay
+
+Materialized Branch forks now replay the canonical ordinary withdrawal revision chain for `full_redraw`, `seed_cascade_phase`, and `draw_frozen_phase`. Replay occurs after completed Simulation Slot evidence has been remapped, so embedded player replacement-cutoff authorities are rebuilt under the target Branch and any played-match result fingerprints are rebound through the target result map. Successor Entry Field, Draw Input, Draw, revision request identity and revision fingerprint are rebuilt canonically rather than copied.
+
+Every rebuilt revision successor Draw is added to the source-to-target Draw fingerprint map, allowing draw-backed Adopted Tournament Authority v6 to bind to a revised active Draw. Repair-specific `frozen_wild_card_repair`, Lucky Loser, frozen ordinary fallback and source-bound pre-Q promotion revisions remain fail-closed for their dedicated dependency replay slices.

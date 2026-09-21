@@ -660,6 +660,50 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const weekLockPreviewMutation = useMutation({
+    mutationFn: () => {
+      const payload = weekTournamentLockPayload()
+      return previewWeekTournamentLock(runId, branchId, payload).then((preview) => ({
+        payload,
+        preview
+      }))
+    },
+    onSuccess: (review) => setWeekLockReview(review),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekLockReview(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const weekLockCommitMutation = useMutation({
+    mutationFn: () => {
+      if (!weekLockReview) {
+        throw new Error('Review the Week Tournament Lock before committing it.')
+      }
+      return commitWeekTournamentLock(runId, branchId, {
+        ...weekLockReview.payload,
+        expected_authority_fingerprint:
+          weekLockReview.preview.authority_fingerprint
+      })
+    },
+    onSuccess: async () => {
+      setWeekLockReview(null)
+      setWeekLockSelections({})
+      setWeekLockOperator('')
+      setWeekLockReason('')
+      setWeekLockCommandId(newCommandId())
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekLockReview(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
   const ordinarySeasonMutation = useMutation({
     mutationFn: async () => {
       const preflight = seasonTransitionPreflightQuery.data

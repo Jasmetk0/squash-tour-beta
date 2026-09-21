@@ -3653,11 +3653,16 @@ class AuthoritativeRunSimulationDriver:
         ) | set(self._wc_slot_ordinals(session, run_id, branch_id, week))
 
         slots: list[WeekSimulationScheduleSlot] = []
+        scheduled_position_by_group: dict[str, tuple[int, int]] = {}
         next_global_ordinal = 1
         for match_day_ordinal in sorted(by_day):
             ordered_groups = sorted(
                 by_day[match_day_ordinal],
                 key=lambda group_id: (
+                    *self._fair_rest_feeder_position(
+                        self._plan_feeders(plans[group_id]),
+                        scheduled_position_by_group,
+                    ),
                     match_meta[group_id][0],
                     0 if match_meta[group_id][1] == "qualification" else 1,
                     match_meta[group_id][2],
@@ -3704,6 +3709,10 @@ class AuthoritativeRunSimulationDriver:
                         round_number=round_number,
                     )
                 )
+                scheduled_position_by_group[group_id] = (
+                    match_day_ordinal,
+                    match_order,
+                )
                 next_global_ordinal += 1
 
         schedule = WeekSimulationSchedule(
@@ -3723,6 +3732,34 @@ class AuthoritativeRunSimulationDriver:
         return schedule, position_fingerprint
 
     @staticmethod
+    def _fair_rest_feeder_position(
+        feeder_ids: tuple[str, ...],
+        scheduled_position_by_group: dict[str, tuple[int, int]],
+    ) -> tuple[int, int]:
+        """Order dependent matches after opponents whose feeder finished later.
+
+        Master §13.4 priority 3 says the scheduler must consider who played the
+        previous match later. Match Day has no exact clock time in pre-alpha, so
+        the authoritative approximation is the stored (day, within-day order)
+        position of the latest feeder. First-round/direct-only matches retain the
+        existing deterministic tie-break order.
+        """
+
+        if not feeder_ids:
+            return (0, 0)
+        missing = tuple(
+            feeder_id
+            for feeder_id in feeder_ids
+            if feeder_id not in scheduled_position_by_group
+        )
+        if missing:
+            raise ValueError(
+                "fair-rest scheduling requires every feeder position before "
+                "ordering its dependent match: " + ", ".join(sorted(missing))
+            )
+        return max(scheduled_position_by_group[feeder_id] for feeder_id in feeder_ids)
+
+    @staticmethod
     def _topological_schedule_proposal_payload(
         schedule: WeekSimulationSchedule,
         *,
@@ -3733,11 +3770,11 @@ class AuthoritativeRunSimulationDriver:
             "schedule_fingerprint": schedule.fingerprint,
             "position_fingerprint": position_fingerprint,
             "provenance": (
-                "match_day_schedule_hard_constraints.v1; "
+                "match_day_schedule_fair_rest.v1; "
                 "one competitive match per global Simulation Slot; "
                 "Qualification before Main; feeder next-day minimum; "
-                "deterministic within-day order; "
-                "carryover/travel/fairness optimization remains follow-up"
+                "fair-rest feeder chronology before deterministic tie-breaks; "
+                "carryover/minimal-reflow/travel optimization remains follow-up"
             ),
             "persisted": False,
         }

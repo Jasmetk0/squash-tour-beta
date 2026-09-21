@@ -49,7 +49,12 @@ The automatic proposal currently enforces:
    match identity;
 6. each V2 global match slot contains exactly one competitive group;
 7. Entry and Wild Card decision global ordinals remain reserved and are skipped;
-8. proposal/adoption remains immutable, fingerprinted, CAS-guarded and exact-retryable.
+8. proposal/adoption remains immutable, fingerprinted, CAS-guarded and exact-retryable;
+9. automatic within-day ordering now applies the first bounded fair-rest rule from
+   Master §13.4: dependent matches are ordered by the latest stored Match Day /
+   within-day position of their feeders before deterministic structural tie-breaks.
+   A player/path that finished later therefore is not brought forward ahead of an
+   otherwise comparable path on the next Match Day.
 
 For the currently supported single-week canonical tournament flow, Qualification round
 numbers map to the first Match Days and Main round numbers follow after the last
@@ -75,7 +80,10 @@ This slice is not the complete generic Round/Match Schedule system. It does not 
 - court assignment or court-capacity scheduling;
 - travel/acclimatization optimization;
 - carryover optimization between consecutive events;
-- fairness scoring or schedule-quality optimization;
+- the remaining lexicographic fair-rest priorities beyond feeder-finish ordering
+  (minimum-rest maximization, recovery-gap minimization, Q/LL protection, previous-week
+  carryover, published-schedule preservation and deterministic random tie-break);
+- full fairness scoring or schedule-quality optimization;
 - automatic reshuffling after later tournament configuration changes;
 - a finalized Final Commitment deadline/preference policy.
 

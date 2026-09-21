@@ -412,6 +412,39 @@ export function AuthoritativeSimulationPanel({
     }
   }
 
+  function weekTournamentLockPayload(): WeekTournamentLockPreviewPayload {
+    const inspection = weekLockQuery.data
+    if (!inspection || inspection.lock_status !== 'required') {
+      throw new Error('There is no unresolved Week Tournament Lock conflict to review.')
+    }
+    const operator = weekLockOperator.trim()
+    const auditReason = weekLockReason.trim()
+    if (!operator || !auditReason) {
+      throw new Error('Week Tournament Lock operator and audit reason are required.')
+    }
+    const selections = inspection.conflicts.map((conflict) => {
+      const selectedEventId = weekLockSelections[conflict.player_id] ?? ''
+      if (!selectedEventId || !conflict.eligible_event_ids.includes(selectedEventId)) {
+        throw new Error(
+          `Choose exactly one eligible tournament for ${conflict.player_id}.`
+        )
+      }
+      return {
+        player_id: conflict.player_id,
+        selected_event_id: selectedEventId
+      }
+    })
+    return {
+      command_id: weekLockCommandId,
+      expected_week: inspection.week,
+      expected_position_fingerprint: inspection.position_fingerprint,
+      expected_revision_id: inspection.expected_revision_id,
+      operator_label: operator,
+      audit_reason: auditReason,
+      selections
+    }
+  }
+
   const nextMatchMutation = useMutation({
     mutationFn: () => {
       if (!selectedGroupId) throw new Error('Select one currently eligible match group.')

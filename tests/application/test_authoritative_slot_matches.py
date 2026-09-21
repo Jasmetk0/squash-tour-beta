@@ -4320,8 +4320,7 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
     assert target_revision["withdrawn_player_ids"] == ["revision-p1"]
     assert (
         target_revision_row["successor_draw_fingerprint"]
-        == target_revision["successor_draw"]["fingerprint"]
-        if "fingerprint" in target_revision["successor_draw"]
-        else target_revision_row["successor_draw_fingerprint"]
         != source_revision.successor_draw.fingerprint
     )
+    assert target_revision["branch_id"] == "target"
+    assert target_revision["successor_draw"]["branch_id"] == "target"

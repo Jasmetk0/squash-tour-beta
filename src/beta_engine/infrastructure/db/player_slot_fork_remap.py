@@ -785,6 +785,7 @@ def remap_coupled_player_slot_history(
                 "Tournament Draw revision is missing a mapped frozen dependency"
             )
 
+        source_predecessor = source_initial_draw
         source_predecessor_fingerprint = source_initial_draw.fingerprint
         target_previous_field = target_fields[-1]
         target_previous_input = target_initial_input
@@ -810,15 +811,472 @@ def remap_coupled_player_slot_history(
                 raise SimulationSlotForkRemapUnsupportedError(
                     "Saved Tournament Draw revision predecessor chain is corrupt"
                 )
-            if source_revision.repair_kind not in {
+            supported_kinds = {
                 "full_redraw",
                 "seed_cascade_phase",
                 "draw_frozen_phase",
-            }:
+                "frozen_wild_card_repair",
+                "lucky_loser_vacancy",
+                "lucky_loser_fill",
+                "frozen_ordinary_fallback",
+                "source_bound_pre_q_promotion",
+            }
+            if source_revision.repair_kind not in supported_kinds:
                 raise SimulationSlotForkRemapUnsupportedError(
-                    "Tournament Draw revision repair kind requires a later fork-remap slice: "
+                    "Tournament Draw revision repair kind is unsupported: "
                     + source_revision.repair_kind
                 )
+
+            frozen_map = {
+                **target_frozen_fingerprint_map,
+                **target_draw_fingerprint_map,
+                **all_results,
+            }
+            for source_bracket, target_bracket in zip(
+                source_predecessor.qualification_brackets,
+                target_predecessor.qualification_brackets,
+                strict=True,
+            ):
+                frozen_map[source_bracket.fingerprint] = target_bracket.fingerprint
+
+            if source_revision.repair_kind == "frozen_wild_card_repair":
+                source_authority = source_revision.wild_card_repair_authority
+                if source_authority is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Frozen WC revision lacks repair authority"
+                    )
+                target_authority = _retarget_frozen_evidence(
+                    source_authority,
+                    target_branch_id=target_branch_id,
+                    fingerprint_map=frozen_map,
+                )
+                target_successor_input = (
+                    TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
+                        previous=target_previous_input,
+                        command_id=row.command_id,
+                        withdrawn_player_id=target_authority.withdrawn_player_id,
+                        replacement_player_id=target_authority.replacement_player_id,
+                        repair_authority_fingerprint=target_authority.fingerprint,
+                        qualification_replacement_player_id=(
+                            target_authority.replacement_player_id
+                            if target_authority.replacement_source == "qualification"
+                            else None
+                        ),
+                        qualification_backfill_player_id=(
+                            target_authority.qualification_backfill_player_id
+                            if target_authority.replacement_source == "qualification"
+                            else None
+                        ),
+                        main_vacated_seed_number=(
+                            target_authority.vacated_main_seed_number
+                        ),
+                        qualification_vacated_seed_number=(
+                            target_authority.vacated_qualification_seed_number
+                        ),
+                        qualification_full_redraw_reseed=(
+                            source_revision.qualification_repair_action
+                            == "full_redraw"
+                        ),
+                    )
+                )
+                target_revision = TournamentDrawRevisionBuilder.build_frozen_wild_card_repair(
+                    predecessor=target_predecessor,
+                    successor_field=target_previous_field,
+                    successor_draw_input=target_successor_input,
+                    process_authority=target_process,
+                    main_process_window_ordinal=(
+                        source_revision.main_process_window_ordinal
+                    ),
+                    qualification_process_window_ordinal=(
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    repair_draw_seed=source_revision.repair_draw_seed,
+                    sequence=row.sequence,
+                    command_id=row.command_id,
+                    wild_card_repair_authority=target_authority,
+                )
+                request = {
+                    "repair_kind": "frozen_wild_card_repair",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "withdrawn_player_id": target_authority.withdrawn_player_id,
+                    "main_process_window_ordinal": (
+                        source_revision.main_process_window_ordinal
+                    ),
+                    "qualification_process_window_ordinal": (
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    "repair_draw_seed": source_revision.repair_draw_seed,
+                    "unavailable_reserve_player_ids": list(
+                        target_authority.unavailable_player_ids
+                    ),
+                    "wild_card_repair_authority_fingerprint": (
+                        target_authority.fingerprint
+                    ),
+                }
+                target_frozen_fingerprint_map[source_authority.fingerprint] = (
+                    target_authority.fingerprint
+                )
+
+            elif source_revision.repair_kind == "frozen_ordinary_fallback":
+                source_authority = source_revision.replacement_source_authority
+                if source_authority is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Frozen ordinary fallback lacks replacement-source authority"
+                    )
+                target_authority = _retarget_frozen_evidence(
+                    source_authority,
+                    target_branch_id=target_branch_id,
+                    fingerprint_map=frozen_map,
+                )
+                slot = target_predecessor.main.slots[
+                    target_authority.physical_slot_index - 1
+                ]
+                q_winner = target_authority.qualification_winner_evidence
+                target_successor_input = (
+                    TournamentDrawInputAuthorityBuilder.build_frozen_ordinary_fallback(
+                        previous=target_previous_input,
+                        command_id=row.command_id,
+                        withdrawn_player_id=target_authority.withdrawn_player_id,
+                        replacement_source_authority_fingerprint=(
+                            target_authority.fingerprint
+                        ),
+                        replacement_player_id=(
+                            target_authority.selected_player_id
+                            if target_authority.source == "external_reserve"
+                            else None
+                        ),
+                        vacated_main_seed_number=slot.seed_number,
+                        create_bye=target_authority.source == "bye",
+                        vacated_qualifier_placeholder_id=(
+                            q_winner.section_id if q_winner is not None else None
+                        ),
+                    )
+                )
+                target_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_ordinary_fallback(
+                        predecessor=target_predecessor,
+                        successor_field=target_previous_field,
+                        successor_draw_input=target_successor_input,
+                        process_authority=target_process,
+                        main_process_window_ordinal=(
+                            source_revision.main_process_window_ordinal
+                        ),
+                        sequence=row.sequence,
+                        command_id=row.command_id,
+                        replacement_source_authority=target_authority,
+                    )
+                )
+                request = {
+                    "repair_kind": "frozen_ordinary_fallback",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "replacement_source_authority_fingerprint": (
+                        target_authority.fingerprint
+                    ),
+                    "main_process_window_ordinal": (
+                        source_revision.main_process_window_ordinal
+                    ),
+                }
+                target_frozen_fingerprint_map[source_authority.fingerprint] = (
+                    target_authority.fingerprint
+                )
+
+            elif source_revision.repair_kind == "source_bound_pre_q_promotion":
+                source_authority = source_revision.replacement_source_authority
+                if source_authority is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Source-bound pre-Q revision lacks replacement-source authority"
+                    )
+                target_authority = _retarget_frozen_evidence(
+                    source_authority,
+                    target_branch_id=target_branch_id,
+                    fingerprint_map=frozen_map,
+                )
+                selected = target_authority.selected_player_id
+                if selected is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Source-bound pre-Q authority lacks selected player"
+                    )
+                target_slot = target_predecessor.main.slots[
+                    target_authority.physical_slot_index - 1
+                ]
+                q_slot = next(
+                    (
+                        slot
+                        for bracket in target_predecessor.qualification_brackets
+                        for slot in bracket.slots
+                        if slot.player_id == selected
+                    ),
+                    None,
+                )
+                blocked = (
+                    set(target_authority.unavailable_player_ids)
+                    | set(target_previous_input.direct_main_player_ids)
+                    | set(target_previous_input.wild_card_player_ids)
+                    | set(target_previous_input.qualification_player_ids)
+                    | set(target_previous_input.lucky_loser_player_ids)
+                )
+                q_backfill = None
+                if selected in set(target_previous_input.qualification_player_ids):
+                    q_backfill = next(
+                        (
+                            candidate
+                            for candidate in target_authority.external_reserve_player_ids
+                            if candidate not in blocked
+                        ),
+                        None,
+                    )
+                target_successor_input = (
+                    TournamentDrawInputAuthorityBuilder.build_source_bound_pre_q_promotion(
+                        previous=target_previous_input,
+                        command_id=row.command_id,
+                        withdrawn_player_id=target_authority.withdrawn_player_id,
+                        promoted_player_id=selected,
+                        replacement_source_authority_fingerprint=(
+                            target_authority.fingerprint
+                        ),
+                        qualification_backfill_player_id=q_backfill,
+                        main_vacated_seed_number=target_slot.seed_number,
+                        qualification_vacated_seed_number=(
+                            q_slot.seed_number if q_slot is not None else None
+                        ),
+                        qualification_full_redraw_reseed=(
+                            source_revision.qualification_repair_action
+                            == "full_redraw"
+                        ),
+                    )
+                )
+                target_revision = (
+                    TournamentDrawRevisionBuilder.build_source_bound_pre_q_promotion(
+                        predecessor=target_predecessor,
+                        successor_field=target_previous_field,
+                        successor_draw_input=target_successor_input,
+                        process_authority=target_process,
+                        main_process_window_ordinal=(
+                            source_revision.main_process_window_ordinal
+                        ),
+                        qualification_process_window_ordinal=(
+                            source_revision.qualification_process_window_ordinal
+                        ),
+                        sequence=row.sequence,
+                        command_id=row.command_id,
+                        repair_draw_seed=source_revision.repair_draw_seed,
+                        replacement_source_authority=target_authority,
+                    )
+                )
+                request = {
+                    "repair_kind": "source_bound_pre_q_promotion",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "replacement_source_authority_fingerprint": (
+                        target_authority.fingerprint
+                    ),
+                    "main_process_window_ordinal": (
+                        source_revision.main_process_window_ordinal
+                    ),
+                    "qualification_process_window_ordinal": (
+                        source_revision.qualification_process_window_ordinal
+                    ),
+                    "repair_draw_seed": source_revision.repair_draw_seed,
+                    "qualification_backfill_player_id": q_backfill,
+                }
+                target_frozen_fingerprint_map[source_authority.fingerprint] = (
+                    target_authority.fingerprint
+                )
+
+            elif source_revision.repair_kind == "lucky_loser_vacancy":
+                source_authority = source_revision.lucky_loser_vacancy_authority
+                if source_authority is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Lucky Loser vacancy revision lacks vacancy authority"
+                    )
+                source_replacement = source_revision.replacement_source_authority
+                target_replacement = (
+                    _retarget_frozen_evidence(
+                        source_replacement,
+                        target_branch_id=target_branch_id,
+                        fingerprint_map=frozen_map,
+                    )
+                    if source_replacement is not None
+                    else None
+                )
+                if source_replacement is not None and target_replacement is not None:
+                    target_frozen_fingerprint_map[source_replacement.fingerprint] = (
+                        target_replacement.fingerprint
+                    )
+                    frozen_map[source_replacement.fingerprint] = (
+                        target_replacement.fingerprint
+                    )
+                target_authority = _retarget_frozen_evidence(
+                    source_authority,
+                    target_branch_id=target_branch_id,
+                    fingerprint_map=frozen_map,
+                )
+                target_successor_input = (
+                    TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
+                        previous=target_previous_input,
+                        command_id=row.command_id,
+                        withdrawn_player_id=target_authority.withdrawn_player_id,
+                        placeholder_id=target_authority.placeholder_id,
+                        vacated_main_seed_number=(
+                            target_authority.vacated_main_seed_number
+                        ),
+                        replacement_source_authority_fingerprint=(
+                            target_replacement.fingerprint
+                            if target_replacement is not None
+                            else None
+                        ),
+                        vacated_qualifier_placeholder_id=(
+                            target_authority.qualification_winner_evidence.section_id
+                            if target_authority.qualification_winner_evidence
+                            is not None
+                            else None
+                        ),
+                    )
+                )
+                target_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
+                        predecessor=target_predecessor,
+                        successor_field=target_previous_field,
+                        successor_draw_input=target_successor_input,
+                        process_authority=target_process,
+                        main_process_window_ordinal=(
+                            source_revision.main_process_window_ordinal
+                        ),
+                        sequence=row.sequence,
+                        command_id=row.command_id,
+                        lucky_loser_vacancy_authority=target_authority,
+                        replacement_source_authority=target_replacement,
+                    )
+                )
+                request = {
+                    "repair_kind": "lucky_loser_vacancy",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "withdrawn_player_id": target_authority.withdrawn_player_id,
+                    "main_process_window_ordinal": (
+                        source_revision.main_process_window_ordinal
+                    ),
+                    "lucky_loser_ordinal": target_authority.lucky_loser_ordinal,
+                    "qualification_start_fingerprint": (
+                        target_authority.qualification_start_authority.fingerprint
+                    ),
+                    "replacement_source_authority_fingerprint": (
+                        target_replacement.fingerprint
+                        if target_replacement is not None
+                        else None
+                    ),
+                    "qualification_winner_evidence": (
+                        target_authority.qualification_winner_evidence.model_dump(
+                            mode="json"
+                        )
+                        if target_authority.qualification_winner_evidence is not None
+                        else None
+                    ),
+                }
+                target_frozen_fingerprint_map[source_authority.fingerprint] = (
+                    target_authority.fingerprint
+                )
+
+            elif source_revision.repair_kind == "lucky_loser_fill":
+                source_authority = source_revision.lucky_loser_fill_authority
+                if source_authority is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Lucky Loser fill revision lacks fill authority"
+                    )
+                target_authority = _retarget_frozen_evidence(
+                    source_authority,
+                    target_branch_id=target_branch_id,
+                    fingerprint_map=frozen_map,
+                )
+                target_successor_input = (
+                    TournamentDrawInputAuthorityBuilder.build_lucky_loser_fill(
+                        previous=target_previous_input,
+                        command_id=row.command_id,
+                        placeholder_id=target_authority.placeholder_id,
+                        player_id=target_authority.selected_candidate.player_id,
+                    )
+                )
+                target_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_lucky_loser_fill(
+                        predecessor=target_predecessor,
+                        successor_field=target_previous_field,
+                        successor_draw_input=target_successor_input,
+                        process_authority=target_process,
+                        main_process_window_ordinal=(
+                            source_revision.main_process_window_ordinal
+                        ),
+                        sequence=row.sequence,
+                        command_id=row.command_id,
+                        lucky_loser_fill_authority=target_authority,
+                    )
+                )
+                request = {
+                    "repair_kind": "lucky_loser_fill",
+                    "predecessor_draw_fingerprint": target_predecessor.fingerprint,
+                    "main_process_window_ordinal": (
+                        source_revision.main_process_window_ordinal
+                    ),
+                    "placeholder_id": target_authority.placeholder_id,
+                    "selected_player_id": (
+                        target_authority.selected_candidate.player_id
+                    ),
+                    "order_authority_fingerprint": (
+                        target_authority.order_authority.fingerprint
+                    ),
+                    "unavailable_player_ids": list(
+                        target_authority.unavailable_player_ids
+                    ),
+                }
+                target_frozen_fingerprint_map[source_authority.fingerprint] = (
+                    target_authority.fingerprint
+                )
+
+            if source_revision.repair_kind in {
+                "frozen_wild_card_repair",
+                "lucky_loser_vacancy",
+                "lucky_loser_fill",
+                "frozen_ordinary_fallback",
+                "source_bound_pre_q_promotion",
+            }:
+                target_draw_revision_rows.append(
+                    TournamentDrawRevisionModel(
+                        run_id=run_id,
+                        branch_id=target_branch_id,
+                        event_id=event_id,
+                        sequence=row.sequence,
+                        command_id=row.command_id,
+                        request_fingerprint=draw_revision_request_fingerprint(request),
+                        revision_fingerprint=target_revision.fingerprint,
+                        predecessor_draw_fingerprint=(
+                            target_revision.predecessor_draw_fingerprint
+                        ),
+                        successor_draw_fingerprint=(
+                            target_revision.successor_draw.fingerprint
+                        ),
+                        payload_json=target_revision.model_dump_json(),
+                    )
+                )
+                target_draw_fingerprint_map[
+                    source_revision.successor_draw.fingerprint
+                ] = target_revision.successor_draw.fingerprint
+                target_frozen_fingerprint_map[
+                    source_revision.successor_draw.fingerprint
+                ] = target_revision.successor_draw.fingerprint
+                target_frozen_fingerprint_map[
+                    source_revision.successor_draw_input.fingerprint
+                ] = target_revision.successor_draw_input.fingerprint
+                target_frozen_fingerprint_map[
+                    source_revision.successor_field.fingerprint
+                ] = target_revision.successor_field.fingerprint
+                target_frozen_fingerprint_map[source_revision.fingerprint] = (
+                    target_revision.fingerprint
+                )
+                source_predecessor = source_revision.successor_draw
+                source_predecessor_fingerprint = (
+                    source_revision.successor_draw.fingerprint
+                )
+                target_predecessor = target_revision.successor_draw
+                target_previous_field = target_revision.successor_field
+                target_previous_input = target_revision.successor_draw_input
+                continue
 
             target_cutoffs = []
             for source_cutoff in source_revision.replacement_cutoff_authorities:
@@ -989,6 +1447,19 @@ def remap_coupled_player_slot_history(
             target_draw_fingerprint_map[
                 source_revision.successor_draw.fingerprint
             ] = target_revision.successor_draw.fingerprint
+            target_frozen_fingerprint_map[
+                source_revision.successor_draw.fingerprint
+            ] = target_revision.successor_draw.fingerprint
+            target_frozen_fingerprint_map[
+                source_revision.successor_draw_input.fingerprint
+            ] = target_revision.successor_draw_input.fingerprint
+            target_frozen_fingerprint_map[
+                source_revision.successor_field.fingerprint
+            ] = target_revision.successor_field.fingerprint
+            target_frozen_fingerprint_map[source_revision.fingerprint] = (
+                target_revision.fingerprint
+            )
+            source_predecessor = source_revision.successor_draw
             source_predecessor_fingerprint = source_revision.successor_draw.fingerprint
             target_predecessor = target_revision.successor_draw
             target_previous_field = target_revision.successor_field

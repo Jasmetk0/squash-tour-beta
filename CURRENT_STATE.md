@@ -830,9 +830,10 @@ in the RWC order still do not create Tour status.
 Planned Event now uses the canonical Run/Branch state → preview → commit flow. The old
 simulation-run wildcard state, candidate and mutation endpoints return `410 Gone`.
 Historical `assign_wildcards` admin-action history remains readable as a read-only
-audit trail for old saves. Automatic WC eligibility, automatic RWC ordering and
-Final Commitment / Week Tournament Lock placement remain unresolved Master policy and
-are not inferred by this bridge.
+audit trail for old saves. Automatic WC eligibility and automatic RWC ordering remain
+unresolved Master policy and are not inferred by this bridge. The later explicit Week
+Tournament Lock Admin boundary now supplies the pre-alpha conflict-resolution authority;
+automatic Final Commitment deadline/preference policy remains unresolved.
 
 
 

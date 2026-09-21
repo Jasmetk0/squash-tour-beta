@@ -88,3 +88,25 @@ history remains immutable and unchanged.
 
 Tournament/correction result history and authority-backed transition/publication state
 remain outside this adapter.
+
+
+## Result-version and correction history
+
+The fork adapter also supports branch-owned `RankingResultVersion` histories when
+`tournament_sources` is empty.
+
+Every result version is rebuilt for the target Branch identity. Correction
+`previous_fingerprint` links are recalculated against the target result lineage.
+Stored weekly command corrections are rebound to the remapped result-version
+fingerprints before command and ranking fingerprints are recalculated.
+
+At every ranking week the source Saved Revision's frozen result manifest must exactly
+match resolution of its saved result-version history. The target manifest is then built
+from resolution of the remapped target result history.
+
+The immutable `OfficialRankingResult.source_fingerprint` sporting provenance is kept
+unchanged: the fork shares the same historical sporting result evidence while owning a
+new Branch-scoped version chain.
+
+`OwnedTournamentRankingSource` and canonical tournament authorities remain outside
+this adapter and continue to fail closed.

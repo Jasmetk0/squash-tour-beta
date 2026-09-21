@@ -5,6 +5,7 @@ import pytest
 pytestmark = pytest.mark.pr_critical
 
 from beta_engine.infrastructure.db.models import (
+    RunProspectModel,
     SeasonClosingRankingModel,
     StandaloneMatchWorkspaceModel,
     TournamentDrawProcessAuthorityModel,
@@ -13,6 +14,7 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.saved_revision_restore_coverage import (
     COMPONENT_COVERAGE,
+    RUN_SCOPED_REFERENCE_COVERAGE,
     SUPPORTED_CONTENT_KEYS,
     TRANSIENT_RESTORE_BLOCKERS,
 )
@@ -72,6 +74,26 @@ def test_transient_workspace_is_not_misrepresented_as_saved_content() -> None:
 
     assert StandaloneMatchWorkspaceModel in blocker_models
     assert StandaloneMatchWorkspaceModel not in component_models
+
+
+def test_run_prospect_source_is_run_scoped_reference_not_branch_owned() -> None:
+    reference_models = {
+        model
+        for coverage in RUN_SCOPED_REFERENCE_COVERAGE
+        for model in coverage.models
+    }
+    component_models = {
+        model
+        for coverage in COMPONENT_COVERAGE
+        for model in coverage.models
+    }
+
+    assert RunProspectModel in reference_models
+    assert RunProspectModel not in component_models
+    assert all(
+        coverage.component_key in SUPPORTED_CONTENT_KEYS
+        for coverage in RUN_SCOPED_REFERENCE_COVERAGE
+    )
 
 
 def test_season_closure_is_allowed_saved_content_without_live_table_coverage() -> None:

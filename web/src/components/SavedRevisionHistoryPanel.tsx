@@ -38,7 +38,6 @@ function revisionSummary(detail: SavedRevisionHistoryDetail): string {
 
 export function SavedRevisionHistoryPanel({
   runId,
-  run,
   branches
 }: SavedRevisionHistoryPanelProps): JSX.Element {
   const queryClient = useQueryClient()

@@ -1020,3 +1020,26 @@ Saved Revision has no sporting component.
 
 The restore now fails closed before mutation in that inconsistent/legacy state. Focused
 regression coverage verifies that no restore revision or safety checkpoint is created.
+
+
+## Central Saved Revision restore coverage registry
+
+Recovery preflight now has one canonical technical registry mapping Saved Revision
+components to the live Run/Branch tables they own. This replaces the growing chain of
+hand-written per-component row-presence checks in the repository restore method.
+
+The audit that introduced the registry closed two additional gaps:
+
+- `SeasonClosingRankingModel` is explicitly part of ranking recovery coverage, so a
+  legacy/current head without the ranking component cannot hide live archived closing
+  ranking history during restore;
+- the intentionally transient `StandaloneMatchWorkspaceModel` is a restore blocker.
+  A partially authored Master §31.3 standalone match must be completed or discarded
+  before historical restore; it is not silently carried into the restored timeline and
+  is not misrepresented as Saved Revision content.
+
+The registry also makes the previously added WC/Draw Process/Draw Revision and
+CompletedWeekSportingContext guards structural rather than one-off conditions.
+`season_closure` remains an embedded-only supported component handled by its dedicated
+revision-identity rebinding path. See
+`docs/SAVED_REVISION_RESTORE_COVERAGE_V1.md`.

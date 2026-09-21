@@ -71,6 +71,7 @@ from beta_engine.domain.tournaments.draw_input_authority import (
 )
 from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
+    fingerprint,
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
     WeekSimulationScheduleSlot,

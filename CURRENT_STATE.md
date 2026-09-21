@@ -940,3 +940,19 @@ manual and will be run together at the final pre-alpha acceptance gate.
 
 This proves the minimum whole-season continuity / Save-reopen / rollover path, not the
 still-open PAQ-006 reference-scale target or unresolved automatic Entry/WC/lock policy.
+
+
+## Current development test / release policy after #880
+
+During ordinary pre-alpha construction, pull requests should run only the focused tests
+that are relevant to the changed behavior. Long or unrelated regression tests may stay
+out of automatic PR CI; they remain preserved in the repository and can be invoked
+manually. A PR is not merge-ready if a test required for that PR is red.
+
+The complete regression suite is intentionally concentrated around explicit internal
+release/checkpoint boundaries. Whenever an internal version is deliberately declared
+for release (including the first pre-alpha), the full backend/frontend regression gate,
+Master §31.3 mandatory acceptance flows and any release-specific smoke/performance
+checks must all be run before that version is accepted.
+
+Canonical engineering wording: `docs/PRE_ALPHA_TEST_POLICY.md`.

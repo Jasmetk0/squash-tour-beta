@@ -356,8 +356,8 @@ def advance_ordinary_season(
     ],
 ):
     try:
-        command = OrdinarySeasonTransitionCommand.model_validate(
-            {**payload, "run_id": run_id, "branch_id": branch_id}
+        command = OrdinarySeasonTransitionCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
         )
         return _driver(runtime, matches, awards).advance_season(command)
     except (KeyError, ValueError, ValidationError) as exc:

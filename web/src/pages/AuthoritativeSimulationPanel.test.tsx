@@ -10,6 +10,9 @@ const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   inspectAuthoritativeEntryDecisionSlot: vi.fn(),
   reviewAuthoritativeEntryDecisionSlot: vi.fn(),
+  inspectWeekTournamentLock: vi.fn(),
+  previewWeekTournamentLock: vi.fn(),
+  commitWeekTournamentLock: vi.fn(),
   getAuthoritativeSeasonTransitionPreflight: vi.fn(),
   getAdminVisibleProspects: vi.fn(),
   previewAuthoritativeSeasonTransitionConfiguration: vi.fn(),
@@ -231,6 +234,102 @@ beforeEach(() => {
     valid_submission_count: 1,
     submission_batch_fingerprint: '9'.repeat(64),
     first_tour_entry_trigger_fingerprints: ['a'.repeat(64)]
+  })
+  api.inspectWeekTournamentLock.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    expected_revision_id: 'revision-7',
+    position_fingerprint: 'a'.repeat(64),
+    event_ids: ['event-a', 'event-b'],
+    event_evidence: [],
+    conflicts: [],
+    lock_status: 'not_required',
+    authority: null,
+    authority_fingerprint: null,
+    selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+    final_commitment_deadline_policy: 'intentionally_unresolved'
+  })
+  api.previewWeekTournamentLock.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    event_ids: ['event-a', 'event-b'],
+    authority: {
+      schema_version: 'week_tournament_lock_authority.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      resolved_by_command_id: 'lock-command',
+      selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+      operator_label: 'Commissioner',
+      audit_reason: 'Resolve overlapping accepted fields',
+      event_evidence: [
+        {
+          event_id: 'event-a',
+          entry_field_fingerprint: '1'.repeat(64),
+          accepted_player_ids: ['P001']
+        },
+        {
+          event_id: 'event-b',
+          entry_field_fingerprint: '2'.repeat(64),
+          accepted_player_ids: ['P001']
+        }
+      ],
+      player_locks: [
+        {
+          player_id: 'P001',
+          eligible_event_ids: ['event-a', 'event-b'],
+          selected_event_id: 'event-a'
+        }
+      ]
+    },
+    authority_fingerprint: '3'.repeat(64),
+    position_fingerprint: 'a'.repeat(64),
+    persisted: false
+  })
+  api.commitWeekTournamentLock.mockResolvedValue({
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    authority: {
+      schema_version: 'week_tournament_lock_authority.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      resolved_by_command_id: 'lock-command',
+      selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+      operator_label: 'Commissioner',
+      audit_reason: 'Resolve overlapping accepted fields',
+      event_evidence: [
+        {
+          event_id: 'event-a',
+          entry_field_fingerprint: '1'.repeat(64),
+          accepted_player_ids: ['P001']
+        },
+        {
+          event_id: 'event-b',
+          entry_field_fingerprint: '2'.repeat(64),
+          accepted_player_ids: ['P001']
+        }
+      ],
+      player_locks: [
+        {
+          player_id: 'P001',
+          eligible_event_ids: ['event-a', 'event-b'],
+          selected_event_id: 'event-a'
+        }
+      ]
+    },
+    authority_fingerprint: '3'.repeat(64),
+    field_repairs: [
+      {
+        event_id: 'event-b',
+        withdrawn_player_ids: ['P001'],
+        field_fingerprint: '4'.repeat(64)
+      }
+    ],
+    adoption: 'committed'
   })
   api.getAdminVisibleProspects.mockResolvedValue({
     schema_version: 'visible_pre_tour_prospects.v1',
@@ -486,6 +585,125 @@ beforeEach(() => {
 })
 
 describe('AuthoritativeSimulationPanel', () => {
+  it('reviews and commits an explicit Week Tournament Lock before schedule adoption', async () => {
+    api.inspectWeekTournamentLock
+      .mockResolvedValueOnce({
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week,
+        expected_revision_id: 'revision-7',
+        position_fingerprint: 'a'.repeat(64),
+        event_ids: ['event-a', 'event-b'],
+        event_evidence: [
+          {
+            event_id: 'event-a',
+            entry_field_fingerprint: '1'.repeat(64),
+            accepted_player_ids: ['P001']
+          },
+          {
+            event_id: 'event-b',
+            entry_field_fingerprint: '2'.repeat(64),
+            accepted_player_ids: ['P001']
+          }
+        ],
+        conflicts: [
+          {
+            player_id: 'P001',
+            eligible_event_ids: ['event-a', 'event-b']
+          }
+        ],
+        lock_status: 'required',
+        authority: null,
+        authority_fingerprint: null,
+        selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+        final_commitment_deadline_policy: 'intentionally_unresolved'
+      })
+      .mockResolvedValue({
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week,
+        expected_revision_id: 'revision-7',
+        position_fingerprint: 'f'.repeat(64),
+        event_ids: ['event-a', 'event-b'],
+        event_evidence: [],
+        conflicts: [],
+        lock_status: 'locked',
+        authority: {
+          schema_version: 'week_tournament_lock_authority.v1',
+          run_id: 'run-a',
+          branch_id: 'branch-a',
+          week,
+          resolved_by_command_id: 'lock-command',
+          selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+          operator_label: 'Commissioner',
+          audit_reason: 'Resolve overlapping accepted fields',
+          event_evidence: [],
+          player_locks: [
+            {
+              player_id: 'P001',
+              eligible_event_ids: ['event-a', 'event-b'],
+              selected_event_id: 'event-a'
+            }
+          ]
+        },
+        authority_fingerprint: '3'.repeat(64),
+        selection_policy_id: 'explicit_admin_week_tournament_lock.v1',
+        final_commitment_deadline_policy: 'intentionally_unresolved'
+      })
+
+    renderPanel()
+
+    expect(await screen.findByRole('heading', { name: 'Week Tournament Lock' }))
+      .toBeInTheDocument()
+    await userEvent.selectOptions(
+      screen.getByLabelText('Week Tournament Lock event for P001'),
+      'event-a'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Week Tournament Lock operator'),
+      'Commissioner'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Week Tournament Lock audit reason'),
+      'Resolve overlapping accepted fields'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review Week Tournament Lock' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewWeekTournamentLock).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          command_id: expect.any(String),
+          expected_week: week,
+          expected_position_fingerprint: 'a'.repeat(64),
+          expected_revision_id: 'revision-7',
+          operator_label: 'Commissioner',
+          audit_reason: 'Resolve overlapping accepted fields',
+          selections: [
+            { player_id: 'P001', selected_event_id: 'event-a' }
+          ]
+        })
+      )
+    )
+
+    expect(await screen.findByText('Reviewed fingerprint')).toBeInTheDocument()
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Commit Week Tournament Lock' })
+    )
+    await waitFor(() =>
+      expect(api.commitWeekTournamentLock).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          expected_authority_fingerprint: '3'.repeat(64)
+        })
+      )
+    )
+  })
+
   it('shows lifecycle-visible pre-Tour prospects read-only for the current branch', async () => {
     api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
       ...scheduleInspection,

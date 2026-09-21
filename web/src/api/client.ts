@@ -112,6 +112,11 @@ import type {
   AuthoritativeEntryDecisionSlotInspection,
   AuthoritativeExplicitApplicationValidationPayload,
   AuthoritativeApplicationValidationCommitResult,
+  WeekTournamentLockInspection,
+  WeekTournamentLockPreviewPayload,
+  WeekTournamentLockPreview,
+  WeekTournamentLockCommitPayload,
+  WeekTournamentLockCommitResult,
   AuthoritativeSeasonTransitionPreflight,
   SeasonTransitionConfigurationPreview,
   OrdinarySeasonTransitionPayload,
@@ -1275,6 +1280,63 @@ export async function reviewAuthoritativeEntryDecisionSlot(
     !/^[0-9a-f]{64}$/.test(data.validation_policy_fingerprint)
   ) {
     throw new Error('Explicit Entry application validation response is invalid.')
+  }
+  return data
+}
+
+export async function inspectWeekTournamentLock(
+  runId: string,
+  branchId: string
+): Promise<WeekTournamentLockInspection> {
+  const data = await request<WeekTournamentLockInspection>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-tournament-lock'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.authority_fingerprint !== null &&
+    !/^[0-9a-f]{64}$/.test(data.authority_fingerprint)
+  ) {
+    throw new Error('Week Tournament Lock authority fingerprint is invalid.')
+  }
+  return data
+}
+
+export async function previewWeekTournamentLock(
+  runId: string,
+  branchId: string,
+  payload: WeekTournamentLockPreviewPayload
+): Promise<WeekTournamentLockPreview> {
+  const data = await request<WeekTournamentLockPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-tournament-lock/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.persisted !== false ||
+    !/^[0-9a-f]{64}$/.test(data.authority_fingerprint) ||
+    data.authority.run_id !== runId ||
+    data.authority.branch_id !== branchId
+  ) {
+    throw new Error('Week Tournament Lock preview response is invalid.')
+  }
+  return data
+}
+
+export async function commitWeekTournamentLock(
+  runId: string,
+  branchId: string,
+  payload: WeekTournamentLockCommitPayload
+): Promise<WeekTournamentLockCommitResult> {
+  const data = await request<WeekTournamentLockCommitResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-tournament-lock/commit',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.authority_fingerprint !== payload.expected_authority_fingerprint ||
+    !/^[0-9a-f]{64}$/.test(data.authority_fingerprint)
+  ) {
+    throw new Error('Week Tournament Lock commit response is invalid.')
   }
   return data
 }

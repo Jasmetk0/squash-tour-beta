@@ -6,6 +6,9 @@ import {
   getAuthoritativeSimulationPosition,
   inspectAuthoritativeEntryDecisionSlot,
   reviewAuthoritativeEntryDecisionSlot,
+  inspectWeekTournamentLock,
+  previewWeekTournamentLock,
+  commitWeekTournamentLock,
   getAuthoritativeSeasonTransitionPreflight,
   getAdminVisibleProspects,
   previewAuthoritativeSeasonTransitionConfiguration,
@@ -31,6 +34,8 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeApplicationValidationReview,
+  WeekTournamentLockPreview,
+  WeekTournamentLockPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
   AuthoritativeMatchReconstructionPreviewPayload,
   MatchReconstructionConstraints,
@@ -111,6 +116,22 @@ export function AuthoritativeSimulationPanel({
   const [entryValidationReason, setEntryValidationReason] = useState('')
   const [entryValidationDrafts, setEntryValidationDrafts] =
     useState<Record<string, EntryValidationDraft>>({})
+  const [weekLockCommandId, setWeekLockCommandId] = useState(newCommandId)
+  const [weekLockOperator, setWeekLockOperator] = useState('')
+  const [weekLockReason, setWeekLockReason] = useState('')
+  const [weekLockSelections, setWeekLockSelections] =
+    useState<Record<string, string>>({})
+  const [weekLockReview, setWeekLockReview] = useState<{
+    payload: WeekTournamentLockPreviewPayload
+    preview: WeekTournamentLockPreview
+  } | null>(null)
+
+  const weekLockQuery = useQuery({
+    queryKey: ['authoritative-week-tournament-lock', runId, branchId],
+    queryFn: () => inspectWeekTournamentLock(runId, branchId),
+    enabled,
+    retry: false
+  })
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
@@ -245,7 +266,31 @@ export function AuthoritativeSimulationPanel({
     setEntryValidationOperator('')
     setEntryValidationReason('')
     setEntryValidationDrafts({})
+    setWeekLockCommandId(newCommandId())
+    setWeekLockOperator('')
+    setWeekLockReason('')
+    setWeekLockSelections({})
+    setWeekLockReview(null)
   }, [runId, branchId, savedRevisionId])
+
+  useEffect(() => {
+    const inspection = weekLockQuery.data
+    setWeekLockReview(null)
+    setWeekLockCommandId(newCommandId())
+    if (!inspection || inspection.lock_status !== 'required') {
+      setWeekLockSelections({})
+      return
+    }
+    const next: Record<string, string> = {}
+    for (const conflict of inspection.conflicts) {
+      next[conflict.player_id] = ''
+    }
+    setWeekLockSelections(next)
+  }, [
+    weekLockQuery.data?.position_fingerprint,
+    weekLockQuery.data?.authority_fingerprint,
+    weekLockQuery.data?.lock_status
+  ])
 
   useEffect(() => {
     const eligible = positionQuery.data?.eligible_match_ids ?? []
@@ -307,7 +352,9 @@ export function AuthoritativeSimulationPanel({
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
-      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] })
+      queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }
 
@@ -362,6 +409,39 @@ export function AuthoritativeSimulationPanel({
       expected_position_fingerprint: position.position_fingerprint,
       expected_revision_id: savedRevisionId,
       ...(groupId ? { group_id: groupId } : {})
+    }
+  }
+
+  function weekTournamentLockPayload(): WeekTournamentLockPreviewPayload {
+    const inspection = weekLockQuery.data
+    if (!inspection || inspection.lock_status !== 'required') {
+      throw new Error('There is no unresolved Week Tournament Lock conflict to review.')
+    }
+    const operator = weekLockOperator.trim()
+    const auditReason = weekLockReason.trim()
+    if (!operator || !auditReason) {
+      throw new Error('Week Tournament Lock operator and audit reason are required.')
+    }
+    const selections = inspection.conflicts.map((conflict) => {
+      const selectedEventId = weekLockSelections[conflict.player_id] ?? ''
+      if (!selectedEventId || !conflict.eligible_event_ids.includes(selectedEventId)) {
+        throw new Error(
+          `Choose exactly one eligible tournament for ${conflict.player_id}.`
+        )
+      }
+      return {
+        player_id: conflict.player_id,
+        selected_event_id: selectedEventId
+      }
+    })
+    return {
+      command_id: weekLockCommandId,
+      expected_week: inspection.week,
+      expected_position_fingerprint: inspection.position_fingerprint,
+      expected_revision_id: inspection.expected_revision_id,
+      operator_label: operator,
+      audit_reason: auditReason,
+      selections
     }
   }
 
@@ -575,6 +655,50 @@ export function AuthoritativeSimulationPanel({
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const weekLockPreviewMutation = useMutation({
+    mutationFn: () => {
+      const payload = weekTournamentLockPayload()
+      return previewWeekTournamentLock(runId, branchId, payload).then((preview) => ({
+        payload,
+        preview
+      }))
+    },
+    onSuccess: (review) => setWeekLockReview(review),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekLockReview(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const weekLockCommitMutation = useMutation({
+    mutationFn: () => {
+      if (!weekLockReview) {
+        throw new Error('Review the Week Tournament Lock before committing it.')
+      }
+      return commitWeekTournamentLock(runId, branchId, {
+        ...weekLockReview.payload,
+        expected_authority_fingerprint:
+          weekLockReview.preview.authority_fingerprint
+      })
+    },
+    onSuccess: async () => {
+      setWeekLockReview(null)
+      setWeekLockSelections({})
+      setWeekLockOperator('')
+      setWeekLockReason('')
+      setWeekLockCommandId(newCommandId())
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setWeekLockReview(null)
         await refreshCanonicalSimulation()
       }
     }
@@ -848,7 +972,9 @@ export function AuthoritativeSimulationPanel({
     nextSlotMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
-    entryValidationMutation.isPending
+    entryValidationMutation.isPending ||
+    weekLockPreviewMutation.isPending ||
+    weekLockCommitMutation.isPending
   const currentEntrySlot = position?.current_slot_kind === 'entry'
   const entryInspection = entrySlotQuery.data
   const entryValidationReady = Boolean(
@@ -870,6 +996,19 @@ export function AuthoritativeSimulationPanel({
     })
   )
 
+  const weekLockReady = Boolean(
+    weekLockQuery.data?.lock_status === 'required' &&
+    weekLockOperator.trim() &&
+    weekLockReason.trim() &&
+    weekLockQuery.data.conflicts.length > 0 &&
+    weekLockQuery.data.conflicts.every((conflict) =>
+      conflict.eligible_event_ids.includes(
+        weekLockSelections[conflict.player_id] ?? ''
+      )
+    )
+  )
+
+
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
@@ -888,6 +1027,148 @@ export function AuthoritativeSimulationPanel({
       {positionQuery.error ? <p className="error">Position unavailable: {formatApiError(positionQuery.error)}</p> : null}
       {scheduleQuery.error ? <p className="error">Week Schedule unavailable: {formatApiError(scheduleQuery.error)}</p> : null}
       {savePreviewQuery.error ? <p className="error">Save preview unavailable: {formatApiError(savePreviewQuery.error)}</p> : null}
+
+      {weekLockQuery.isLoading && enabled ? (
+        <p className="status">Inspecting Week Tournament Lock conflicts…</p>
+      ) : null}
+      {weekLockQuery.error ? (
+        <p className="error">
+          Week Tournament Lock unavailable: {formatApiError(weekLockQuery.error)}
+        </p>
+      ) : null}
+      {weekLockQuery.data ? (
+        <>
+          <h4>Week Tournament Lock</h4>
+          <p className="status">
+            Explicit pre-alpha Admin resolution of overlapping accepted tournament fields.
+            The engine does not invent a preferred event or a Final Commitment deadline.
+          </p>
+          {weekLockQuery.data.lock_status === 'not_required' ? (
+            <p className="status">No overlapping accepted-player field conflict requires a lock.</p>
+          ) : null}
+          {weekLockQuery.data.lock_status === 'locked' && weekLockQuery.data.authority ? (
+            <>
+              <MetadataList
+                items={[
+                  { label: 'Status', value: 'Locked' },
+                  { label: 'Policy', value: weekLockQuery.data.authority.selection_policy_id },
+                  { label: 'Operator', value: weekLockQuery.data.authority.operator_label },
+                  { label: 'Authority fingerprint', value: weekLockQuery.data.authority_fingerprint ?? '—' }
+                ]}
+              />
+              <ul aria-label="Week Tournament Lock selections">
+                {weekLockQuery.data.authority.player_locks.map((lock) => (
+                  <li key={lock.player_id}>
+                    {lock.player_id} → {lock.selected_event_id}
+                    {' '}({lock.eligible_event_ids.join(' / ')})
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : null}
+          {weekLockQuery.data.lock_status === 'required' ? (
+            <>
+              <p role="alert" className="error">
+                Competitive play is blocked until every overlapping accepted player has exactly one selected event.
+              </p>
+              {weekLockQuery.data.conflicts.map((conflict) => (
+                <label key={conflict.player_id}>
+                  {conflict.player_id}
+                  <select
+                    aria-label={`Week Tournament Lock event for ${conflict.player_id}`}
+                    value={weekLockSelections[conflict.player_id] ?? ''}
+                    disabled={Boolean(weekLockReview)}
+                    onChange={(event) => {
+                      const selected = event.target.value
+                      setWeekLockSelections((current) => ({
+                        ...current,
+                        [conflict.player_id]: selected
+                      }))
+                    }}
+                  >
+                    <option value="">Choose one tournament…</option>
+                    {conflict.eligible_event_ids.map((eventId) => (
+                      <option key={eventId} value={eventId}>{eventId}</option>
+                    ))}
+                  </select>
+                </label>
+              ))}
+              <label>
+                Operator label
+                <input
+                  aria-label="Week Tournament Lock operator"
+                  value={weekLockOperator}
+                  disabled={Boolean(weekLockReview)}
+                  onChange={(event) => setWeekLockOperator(event.target.value)}
+                />
+              </label>
+              <label>
+                Audit reason
+                <textarea
+                  aria-label="Week Tournament Lock audit reason"
+                  value={weekLockReason}
+                  disabled={Boolean(weekLockReview)}
+                  onChange={(event) => setWeekLockReason(event.target.value)}
+                />
+              </label>
+              {!weekLockReview ? (
+                <button
+                  type="button"
+                  disabled={!weekLockReady || actionPending}
+                  onClick={() => weekLockPreviewMutation.mutate()}
+                >
+                  Review Week Tournament Lock
+                </button>
+              ) : (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Reviewed fingerprint', value: weekLockReview.preview.authority_fingerprint },
+                      { label: 'Conflicts resolved', value: weekLockReview.preview.authority.player_locks.length }
+                    ]}
+                  />
+                  <ul aria-label="Reviewed Week Tournament Lock selections">
+                    {weekLockReview.preview.authority.player_locks.map((lock) => (
+                      <li key={lock.player_id}>
+                        {lock.player_id} → {lock.selected_event_id}
+                      </li>
+                    ))}
+                  </ul>
+                  <button
+                    type="button"
+                    disabled={actionPending}
+                    onClick={() => weekLockCommitMutation.mutate()}
+                  >
+                    Commit Week Tournament Lock
+                  </button>
+                  <button
+                    type="button"
+                    disabled={actionPending}
+                    onClick={() => setWeekLockReview(null)}
+                  >
+                    Edit lock review
+                  </button>
+                </>
+              )}
+              {weekLockPreviewMutation.error ? (
+                <p className="error">
+                  Week Tournament Lock preview failed: {formatApiError(weekLockPreviewMutation.error)}
+                </p>
+              ) : null}
+              {weekLockCommitMutation.error ? (
+                <p className="error">
+                  Week Tournament Lock commit failed: {formatApiError(weekLockCommitMutation.error)}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+          {weekLockCommitMutation.data?.field_repairs.length ? (
+            <p className="status">
+              Canonical field repairs applied to {weekLockCommitMutation.data.field_repairs.length} unselected event(s).
+            </p>
+          ) : null}
+        </>
+      ) : null}
 
       {position ? (
         <>

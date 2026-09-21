@@ -391,6 +391,19 @@ class ResolvedApplicationValidationSlotModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class WeekTournamentLockAuthorityModel(Base):
+    """Immutable explicit Admin Week Tournament Lock for one Run/Branch week."""
+
+    __tablename__ = "week_tournament_lock_authorities"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class DefinitiveWildCardAssignmentAuthorityModel(Base):
     """Immutable definitive WC/RWC assignment authority."""
 

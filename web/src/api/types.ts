@@ -1002,6 +1002,98 @@ export type AuthoritativeApplicationValidationCommitResult = {
   first_tour_entry_trigger_fingerprints: string[]
 }
 
+export type WeekTournamentLockEventEvidence = {
+  event_id: string
+  entry_field_fingerprint: string
+  accepted_player_ids: string[]
+}
+
+export type WeekTournamentPlayerLock = {
+  player_id: string
+  eligible_event_ids: string[]
+  selected_event_id: string
+}
+
+export type WeekTournamentLockAuthority = {
+  schema_version: 'week_tournament_lock_authority.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  resolved_by_command_id: string
+  selection_policy_id: 'explicit_admin_week_tournament_lock.v1'
+  operator_label: string
+  audit_reason: string
+  event_evidence: WeekTournamentLockEventEvidence[]
+  player_locks: WeekTournamentPlayerLock[]
+}
+
+export type WeekTournamentLockConflict = {
+  player_id: string
+  eligible_event_ids: string[]
+}
+
+export type WeekTournamentLockInspection = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  expected_revision_id: string
+  position_fingerprint: string
+  event_ids: string[]
+  event_evidence: WeekTournamentLockEventEvidence[]
+  conflicts: WeekTournamentLockConflict[]
+  lock_status: 'not_required' | 'required' | 'locked'
+  authority: WeekTournamentLockAuthority | null
+  authority_fingerprint: string | null
+  selection_policy_id: 'explicit_admin_week_tournament_lock.v1'
+  final_commitment_deadline_policy: 'intentionally_unresolved'
+}
+
+export type WeekTournamentLockSelection = {
+  player_id: string
+  selected_event_id: string
+}
+
+export type WeekTournamentLockPreviewPayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  operator_label: string
+  audit_reason: string
+  selections: WeekTournamentLockSelection[]
+}
+
+export type WeekTournamentLockPreview = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  event_ids: string[]
+  authority: WeekTournamentLockAuthority
+  authority_fingerprint: string
+  position_fingerprint: string
+  persisted: false
+}
+
+export type WeekTournamentLockCommitPayload = WeekTournamentLockPreviewPayload & {
+  expected_authority_fingerprint: string
+}
+
+export type WeekTournamentLockFieldRepair = {
+  event_id: string
+  withdrawn_player_ids: string[]
+  field_fingerprint: string
+}
+
+export type WeekTournamentLockCommitResult = {
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  authority: WeekTournamentLockAuthority
+  authority_fingerprint: string
+  field_repairs: WeekTournamentLockFieldRepair[]
+  adoption: 'committed' | 'exact_retry'
+}
+
 export type AuthoritativeWeekScheduleSlot = {
   ordinal: number
   group_ids: string[]

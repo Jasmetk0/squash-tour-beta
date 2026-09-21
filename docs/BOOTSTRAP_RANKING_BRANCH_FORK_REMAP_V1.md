@@ -129,3 +129,17 @@ history. Detached or mismatched authority state fails closed.
 
 This does not yet remap authoritative publication/world state, Tournament Ranking
 Snapshot authority, or Season Closing archives.
+
+
+## Official publication and world-head identity
+
+A materialized ranking fork may now carry `PublishedOfficialRanking` rows and the
+`AuthoritativeWorldState` ranking head when no Week/Season Transition receipt/event
+audit bundle is present. Publications are not copied byte-for-byte: each source row is
+verified against its frozen ranking entry, then reconstructed from the corresponding
+target Branch snapshot. The world head is rebound to the target Branch and the rebuilt
+latest publication fingerprint.
+
+Transition receipts/events still fail closed because their lifecycle/sporting and
+Season Closing fingerprints belong to authority layers outside this ranking-only
+adapter.

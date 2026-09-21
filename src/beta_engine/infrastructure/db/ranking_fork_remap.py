@@ -174,11 +174,13 @@ def remap_source_free_ranking_state_for_branch(
             referenced_zero_fingerprints.update(
                 version.fingerprint for version in original.zero_versions
             )
-            command = original.model_copy(
-                update={
-                    "branch_id": target_branch_id,
-                    "zero_versions": command_zero_versions,
-                }
+            command = RankingBootstrapCommand.model_validate_json(
+                original.model_copy(
+                    update={
+                        "branch_id": target_branch_id,
+                        "zero_versions": command_zero_versions,
+                    }
+                ).model_dump_json()
             )
             resolved_zeros = (
                 resolve_zero_versions(
@@ -258,13 +260,15 @@ def remap_source_free_ranking_state_for_branch(
             referenced_zero_fingerprints.update(
                 version.fingerprint for version in original.zero_versions
             )
-            command = original.model_copy(
-                update={
-                    "context": original.context.model_copy(
-                        update={"branch_id": target_branch_id}
-                    ),
-                    "zero_versions": command_zero_versions,
-                }
+            command = RankingWeekCommand.model_validate_json(
+                original.model_copy(
+                    update={
+                        "context": original.context.model_copy(
+                            update={"branch_id": target_branch_id}
+                        ),
+                        "zero_versions": command_zero_versions,
+                    }
+                ).model_dump_json()
             )
             resolved_zeros = (
                 resolve_zero_versions(

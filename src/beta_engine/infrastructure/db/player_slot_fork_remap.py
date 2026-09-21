@@ -98,6 +98,36 @@ class CoupledPlayerSlotForkRemap:
     terminal_checkpoint_fingerprints: dict[str, str]
 
 
+def _retarget_frozen_evidence(
+    value,
+    *,
+    target_branch_id: str,
+    fingerprint_map: dict[str, str],
+):
+    """Retarget validated frozen evidence without rewriting its sporting facts."""
+
+    def remap(node):
+        if isinstance(node, dict):
+            return {
+                key: (
+                    target_branch_id
+                    if key == "branch_id"
+                    else remap(item)
+                )
+                for key, item in node.items()
+            }
+        if isinstance(node, list):
+            return [remap(item) for item in node]
+        if isinstance(node, tuple):
+            return tuple(remap(item) for item in node)
+        if isinstance(node, str):
+            return fingerprint_map.get(node, node)
+        return node
+
+    payload = remap(value.model_dump(mode="json"))
+    return type(value).model_validate(payload)
+
+
 def remap_coupled_player_slot_history(
     payload,
     *,

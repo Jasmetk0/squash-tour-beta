@@ -26,6 +26,7 @@ from test_authoritative_simulation_api import (
 from test_authoritative_three_completed_weeks import _save_ranking
 
 
+# This file is the whole-season acceptance boundary for Master §31.3.
 AUDIT = {
     "actor_label": "Official Run acceptance admin",
     "reason": "Exercise the canonical whole-season pre-alpha flow",

@@ -1421,3 +1421,10 @@ Unknown revision kinds remain fail-closed. The next fork-hardening work is focus
 Saved Revision restore now treats Tournament Draw Revision identity as a full persisted command contract rather than payload-only history. Saved/replayed revision rows must bind their payload to the exact Run / Branch / event scope, and Tournament Draw Revision history recomputes the canonical request fingerprint for every currently modeled repair kind before accepting the row.
 
 A PR-critical mixed-history scenario now freezes a full-redraw withdrawal followed by a Draw-Freeze withdrawal, captures that state, advances the live branch with a third revision, rejects a scope-corrupted restore target before mutation, restores the two-revision target, retries the restored second command idempotently without creating a duplicate revision, and proves request-fingerprint corruption fails closed. The restored simulation component fingerprint must equal the captured target fingerprint.
+
+
+## Materialized fork -> restore exactness
+
+Simulation Slot / tournament-authority installation now finishes with a full post-install recapture and fingerprint comparison. A restore or materialized Branch fork therefore succeeds only when the live installed Simulation Slot component is exactly the canonical target Saved Revision component after all Entry Field, WC/RWC, Draw Input, Draw, Draw Process and Draw Revision histories have replayed.
+
+PR-critical coverage now spans a specialized frozen Reserve Wild Card repair on the source Branch, source-to-target Branch remap, exact target installation, a later second live RWC repair on the target Branch, restore back to the materialized fork root, and retry of the restored original RWC command. The target revision lineage remains target-owned, chronological and fingerprint-stable, while source and target revision fingerprints remain distinct.

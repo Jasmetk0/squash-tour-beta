@@ -1089,3 +1089,10 @@ Specialized frozen evidence is retargeted through one accumulated fingerprint gr
 Saved Revision recovery now verifies Draw Revision payload scope and reconstructs canonical request identity for the complete modeled repair-kind set during history replay. This closes the gap between immutable revision payload identity and command-request identity.
 
 PR-critical coverage exercises a mixed revision chain across capture -> additional live mutation -> restore -> exact command retry, plus fail-closed payload-scope and request-fingerprint corruption. Follow-up hardening can move to longer specialized mixed chains and materialized fork -> restore equivalence rather than basic retry semantics.
+
+
+### Materialized fork -> restore equivalence
+
+The recovery path now verifies the complete installed Simulation Slot component after restore/materialized-fork installation by recapturing live state and comparing its canonical fingerprint to the requested target component. This upgrades component installation from per-store validation to whole-component exactness.
+
+PR-critical coverage joins the Branch fork and restore work into one specialized-history scenario: frozen RWC repair -> target materialization -> later target RWC repair -> restore -> exact original RWC retry. Next hardening should expand this equivalence test across Lucky Loser and source-bound pre-Q repair families and then move back toward pre-alpha feature delivery.

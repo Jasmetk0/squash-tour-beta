@@ -1017,6 +1017,154 @@ def _validate_saved_draw_process_against_target_draw(
         TournamentDrawProcessAuthorityStore.validate_row(row, draw=draw)
 
 
+def _live_component_with_saved_shape(
+    session,
+    *,
+    run_id: str,
+    branch_id: str,
+    shape_hint,
+):
+    slots = session.scalars(
+        select(SimulationSlotModel)
+        .where(
+            SimulationSlotModel.run_id == run_id,
+            SimulationSlotModel.branch_id == branch_id,
+        )
+        .order_by(SimulationSlotModel.week_ordinal, SimulationSlotModel.slot_ordinal)
+    ).all()
+    groups = session.scalars(
+        select(SimulationEventGroupModel)
+        .where(
+            SimulationEventGroupModel.run_id == run_id,
+            SimulationEventGroupModel.branch_id == branch_id,
+        )
+        .order_by(
+            SimulationEventGroupModel.week_ordinal,
+            SimulationEventGroupModel.slot_id,
+            SimulationEventGroupModel.group_id,
+        )
+    ).all()
+    commands = session.scalars(
+        select(AuthoritativeSimulationCommandModel)
+        .where(
+            AuthoritativeSimulationCommandModel.run_id == run_id,
+            AuthoritativeSimulationCommandModel.branch_id == branch_id,
+        )
+        .order_by(AuthoritativeSimulationCommandModel.command_id)
+    ).all()
+    authorities = session.scalars(
+        select(AdoptedTournamentAuthorityModel)
+        .where(
+            AdoptedTournamentAuthorityModel.run_id == run_id,
+            AdoptedTournamentAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(AdoptedTournamentAuthorityModel.week_ordinal)
+    ).all()
+    schedules = session.scalars(
+        select(WeekSimulationScheduleModel)
+        .where(
+            WeekSimulationScheduleModel.run_id == run_id,
+            WeekSimulationScheduleModel.branch_id == branch_id,
+        )
+        .order_by(WeekSimulationScheduleModel.week_ordinal)
+    ).all()
+    entry_fields = session.scalars(
+        select(TournamentEntryFieldVersionModel)
+        .where(
+            TournamentEntryFieldVersionModel.run_id == run_id,
+            TournamentEntryFieldVersionModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentEntryFieldVersionModel.event_id,
+            TournamentEntryFieldVersionModel.sequence,
+        )
+    ).all()
+    wild_cards = session.scalars(
+        select(TournamentWildCardAuthorityModel)
+        .where(
+            TournamentWildCardAuthorityModel.run_id == run_id,
+            TournamentWildCardAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentWildCardAuthorityModel.event_id)
+    ).all()
+    draw_inputs = session.scalars(
+        select(TournamentDrawInputAuthorityModel)
+        .where(
+            TournamentDrawInputAuthorityModel.run_id == run_id,
+            TournamentDrawInputAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawInputAuthorityModel.event_id)
+    ).all()
+    draws = session.scalars(
+        select(TournamentDrawAuthorityModel)
+        .where(
+            TournamentDrawAuthorityModel.run_id == run_id,
+            TournamentDrawAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawAuthorityModel.event_id)
+    ).all()
+    processes = session.scalars(
+        select(TournamentDrawProcessAuthorityModel)
+        .where(
+            TournamentDrawProcessAuthorityModel.run_id == run_id,
+            TournamentDrawProcessAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentDrawProcessAuthorityModel.event_id)
+    ).all()
+    revisions = session.scalars(
+        select(TournamentDrawRevisionModel)
+        .where(
+            TournamentDrawRevisionModel.run_id == run_id,
+            TournamentDrawRevisionModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentDrawRevisionModel.event_id,
+            TournamentDrawRevisionModel.sequence,
+        )
+    ).all()
+
+    any_live = any(
+        (
+            slots,
+            groups,
+            commands,
+            authorities,
+            schedules,
+            entry_fields,
+            wild_cards,
+            draw_inputs,
+            draws,
+            processes,
+            revisions,
+        )
+    )
+    if shape_hint is None and not any_live:
+        return None
+    shape_hint = shape_hint or {}
+    return _component(
+        slots,
+        groups,
+        commands,
+        authorities,
+        include_commands="commands" in shape_hint,
+        include_authorities="authorities" in shape_hint,
+        schedules=schedules,
+        include_schedules="schedules" in shape_hint,
+        entry_fields=entry_fields,
+        include_entry_fields="entry_fields" in shape_hint,
+        wild_card_authorities=wild_cards,
+        include_wild_card_authorities="wild_card_authorities" in shape_hint,
+        draw_inputs=draw_inputs,
+        include_draw_inputs="draw_inputs" in shape_hint,
+        draw_authorities=draws,
+        include_draw_authorities="draw_authorities" in shape_hint,
+        draw_process_authorities=processes,
+        include_draw_process_authorities="draw_process_authorities" in shape_hint,
+        draw_revisions=revisions,
+        include_draw_revisions="draw_revisions" in shape_hint,
+    )
+
+
 def restore_saved_simulation_slots(
     session, *, current_payload, target_payload, run_id, branch_id
 ):
@@ -1386,3 +1534,16 @@ def restore_saved_simulation_slots(
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({value["event_id"] for value in target_draw_revisions}):
             revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+
+    installed_component = _live_component_with_saved_shape(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        shape_hint=target,
+    )
+    if (installed_component or {}).get("fingerprint") != (
+        target or {}
+    ).get("fingerprint"):
+        raise ValueError(
+            "Installed simulation-slot state differs from Saved Revision target"
+        )

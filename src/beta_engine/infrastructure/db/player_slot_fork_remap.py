@@ -8,11 +8,40 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingWeekState,
 )
 from beta_engine.domain.simulation_slots import WeekSimulationSchedule, fingerprint
+from beta_engine.domain.tournaments.draw_input_authority import (
+    TournamentDrawInputAuthority,
+    TournamentDrawInputAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryApplication,
+    TournamentEntryField,
+    TournamentEntryFieldResolver,
+)
+from beta_engine.domain.tournaments.ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthority,
+)
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority,
+    TournamentWildCardAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
+    TournamentDrawInputAuthorityModel,
+    TournamentEntryFieldVersionModel,
+    TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
+)
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+    _applications_fingerprint,
+    _applications_json,
+    _request_fingerprint as entry_request_fingerprint,
+)
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+    _request_fingerprint as draw_input_request_fingerprint,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
     PLAYER_SPORTING_COMPONENT_KEY,
@@ -47,6 +76,9 @@ def remap_coupled_player_slot_history(
     source_branch_id: str,
     target_branch_id: str,
     v1_source_fingerprint_map: dict[str, str],
+    tournament_ranking_authority_map: dict[
+        str, TournamentRankingSnapshotAuthority
+    ] | None = None,
 ) -> CoupledPlayerSlotForkRemap | None:
     """Remap sporting + completed Slot core in canonical week order.
 
@@ -67,12 +99,17 @@ def remap_coupled_player_slot_history(
     if source_bundle is None or source_slot_component is None:
         return None
 
+    tournament_ranking_authority_map = tournament_ranking_authority_map or {}
+
     auxiliary = set(source_slot_component) - {
         "fingerprint",
         "slots",
         "groups",
         "authorities",
         "schedules",
+        "entry_fields",
+        "wild_card_authorities",
+        "draw_inputs",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -81,6 +118,248 @@ def remap_coupled_player_slot_history(
         raise SimulationSlotForkRemapUnsupportedError(
             "Coupled player/Slot fork does not yet support auxiliary authorities: "
             + ", ".join(sorted(nonempty_auxiliary))
+        )
+
+    source_entry_rows = [
+        TournamentEntryFieldVersionModel(**value)
+        for value in source_slot_component.get("entry_fields", [])
+    ]
+    source_wc_rows = [
+        TournamentWildCardAuthorityModel(**value)
+        for value in source_slot_component.get("wild_card_authorities", [])
+    ]
+    source_draw_input_rows = [
+        TournamentDrawInputAuthorityModel(**value)
+        for value in source_slot_component.get("draw_inputs", [])
+    ]
+
+    target_entry_rows: list[TournamentEntryFieldVersionModel] = []
+    target_wc_rows: list[TournamentWildCardAuthorityModel] = []
+    target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
+    target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
+    target_wc_by_event: dict[str, TournamentWildCardAuthority] = {}
+
+    source_entries_by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
+    for row in source_entry_rows:
+        source_entries_by_event.setdefault(row.event_id, []).append(row)
+
+    for event_id, rows in source_entries_by_event.items():
+        ordered = tuple(sorted(rows, key=lambda row: row.sequence))
+        source_authority_fingerprint = ordered[0].ranking_authority_fingerprint
+        target_authority = tournament_ranking_authority_map.get(
+            source_authority_fingerprint
+        )
+        if target_authority is None:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Entry Field references ranking authority without a target mapping"
+            )
+        source_authority = None
+        source_fields: tuple[TournamentEntryField, ...] = ()
+        # Reconstruct source authority from the frozen field contract: every row must
+        # point at the same source authority fingerprint, which is already mapped.
+        if any(
+            row.ranking_authority_fingerprint != source_authority_fingerprint
+            for row in ordered
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Entry Field history changes ranking authority mid-lineage"
+            )
+
+        target_fields: list[TournamentEntryField] = []
+        previous_target: TournamentEntryField | None = None
+        for row in ordered:
+            source_field, source_apps = TournamentEntryFieldStore._load_row(row)
+            target_apps = tuple(
+                TournamentEntryApplication.model_validate_json(
+                    app.model_copy(update={"branch_id": target_branch_id}).model_dump_json()
+                )
+                for app in source_apps
+            )
+            apps_fp = _applications_fingerprint(target_apps)
+            if row.sequence == 1:
+                target_field = TournamentEntryFieldResolver.build_initial(
+                    authority=target_authority,
+                    applications=target_apps,
+                    capacity=source_field.capacity,
+                )
+                request_fp = entry_request_fingerprint(
+                    {
+                        "mode": "initial",
+                        "run_id": run_id,
+                        "branch_id": target_branch_id,
+                        "event_id": event_id,
+                        "authority_fingerprint": target_authority.fingerprint,
+                        "applications_fingerprint": apps_fp,
+                        "capacity": source_field.capacity.model_dump(mode="json"),
+                    }
+                )
+            else:
+                if previous_target is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Tournament Entry Field repair has no target predecessor"
+                    )
+                source_previous = TournamentEntryFieldStore._load_row(
+                    ordered[row.sequence - 2]
+                )[0]
+                newly_withdrawn = tuple(
+                    sorted(
+                        set(source_field.withdrawn_player_ids)
+                        - set(source_previous.withdrawn_player_ids)
+                    )
+                )
+                target_field = TournamentEntryFieldResolver.repair_pre_draw(
+                    authority=target_authority,
+                    applications=target_apps,
+                    previous=previous_target,
+                    withdrawn_player_ids=newly_withdrawn,
+                )
+                request_fp = entry_request_fingerprint(
+                    {
+                        "mode": "pre_draw_repair",
+                        "run_id": run_id,
+                        "branch_id": target_branch_id,
+                        "event_id": event_id,
+                        "authority_fingerprint": target_authority.fingerprint,
+                        "applications_fingerprint": apps_fp,
+                        "predecessor_fingerprint": previous_target.fingerprint,
+                        "withdrawn_player_ids": newly_withdrawn,
+                    }
+                )
+            target_entry_rows.append(
+                TournamentEntryFieldVersionModel(
+                    run_id=run_id,
+                    branch_id=target_branch_id,
+                    event_id=event_id,
+                    sequence=row.sequence,
+                    command_id=row.command_id,
+                    request_fingerprint=request_fp,
+                    field_fingerprint=target_field.fingerprint,
+                    predecessor_fingerprint=(
+                        previous_target.fingerprint
+                        if previous_target is not None
+                        else None
+                    ),
+                    ranking_authority_fingerprint=target_authority.fingerprint,
+                    applications_fingerprint=apps_fp,
+                    applications_json=_applications_json(target_apps),
+                    payload_json=target_field.model_dump_json(),
+                )
+            )
+            target_fields.append(target_field)
+            previous_target = target_field
+        target_fields_by_event[event_id] = tuple(target_fields)
+
+    for row in source_wc_rows:
+        source_authority = TournamentWildCardAuthority.model_validate_json(
+            row.payload_json
+        )
+        fields = target_fields_by_event.get(row.event_id)
+        if not fields or row.field_sequence != len(fields):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament WC authority has no matching target terminal Entry Field"
+            )
+        target_field = fields[-1]
+        target_authority = TournamentWildCardAuthorityBuilder.build(
+            field=target_field,
+            field_sequence=row.field_sequence,
+            command_id=row.command_id,
+            original_wild_card_player_ids=source_authority.original_wild_card_player_ids,
+            reserve_wild_card_player_ids=source_authority.reserve_wild_card_player_ids,
+            unavailable_player_ids=source_authority.unavailable_player_ids,
+            decision_week=source_authority.decision_week,
+            decision_slot_ordinal=source_authority.decision_slot_ordinal,
+            selection_policy_id=source_authority.selection_policy_id,
+            operator_label=source_authority.operator_label,
+            audit_reason=source_authority.audit_reason,
+        )
+        request = {
+            "entry_field_fingerprint": target_field.fingerprint,
+            "field_sequence": row.field_sequence,
+            "original_wild_card_player_ids": list(
+                source_authority.original_wild_card_player_ids
+            ),
+            "reserve_wild_card_player_ids": list(
+                source_authority.reserve_wild_card_player_ids
+            ),
+            "unavailable_player_ids": sorted(
+                set(source_authority.unavailable_player_ids)
+            ),
+        }
+        if source_authority.decision_week is not None:
+            request["decision_week"] = source_authority.decision_week.model_dump(
+                mode="json"
+            )
+            request["decision_slot_ordinal"] = (
+                source_authority.decision_slot_ordinal
+            )
+        if source_authority.selection_policy_id is not None:
+            request["selection_policy_id"] = source_authority.selection_policy_id
+            request["operator_label"] = source_authority.operator_label
+            request["audit_reason"] = source_authority.audit_reason
+        target_wc_rows.append(
+            TournamentWildCardAuthorityModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                event_id=row.event_id,
+                command_id=row.command_id,
+                request_fingerprint=fingerprint(request),
+                authority_fingerprint=target_authority.fingerprint,
+                entry_field_fingerprint=target_field.fingerprint,
+                field_sequence=row.field_sequence,
+                payload_json=target_authority.model_dump_json(),
+            )
+        )
+        target_wc_by_event[row.event_id] = target_authority
+
+    for row in source_draw_input_rows:
+        source_draw_input = TournamentDrawInputAuthority.model_validate_json(
+            row.payload_json
+        )
+        fields = target_fields_by_event.get(row.event_id)
+        target_ranking_authority = tournament_ranking_authority_map.get(
+            source_draw_input.tournament_ranking_authority_fingerprint
+        )
+        if not fields or target_ranking_authority is None:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Tournament Draw Input has no mapped ranking/Entry Field dependencies"
+            )
+        target_field = fields[-1]
+        target_wc = target_wc_by_event.get(row.event_id)
+        target_draw_input = TournamentDrawInputAuthorityBuilder.build(
+            authority=target_ranking_authority,
+            field=target_field,
+            field_sequence=row.field_sequence,
+            command_id=row.command_id,
+            draw_seed=source_draw_input.draw_seed,
+            main_seed_count=source_draw_input.main_seed_count,
+            qualification_seed_count=source_draw_input.qualification_seed_count,
+            schema_version=source_draw_input.schema_version,
+            wild_card_authority=target_wc,
+        )
+        request = TournamentDrawInputAuthorityStore._request(
+            ranking_authority_fingerprint=target_ranking_authority.fingerprint,
+            entry_field_fingerprint=target_field.fingerprint,
+            field_sequence=row.field_sequence,
+            draw_seed=source_draw_input.draw_seed,
+            main_seed_count=target_draw_input.main_seed_count,
+            qualification_seed_count=target_draw_input.qualification_seed_count,
+            wild_card_authority_fingerprint=(
+                target_draw_input.wild_card_authority_fingerprint
+            ),
+        )
+        target_draw_input_rows.append(
+            TournamentDrawInputAuthorityModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                event_id=row.event_id,
+                command_id=row.command_id,
+                request_fingerprint=draw_input_request_fingerprint(request),
+                authority_fingerprint=target_draw_input.fingerprint,
+                ranking_authority_fingerprint=target_ranking_authority.fingerprint,
+                entry_field_fingerprint=target_field.fingerprint,
+                field_sequence=row.field_sequence,
+                payload_json=target_draw_input.model_dump_json(),
+            )
         )
 
     source_schedules = [
@@ -356,9 +635,12 @@ def remap_coupled_player_slot_history(
         include_authorities="authorities" in source_slot_component,
         schedules=target_schedules,
         include_schedules="schedules" in source_slot_component,
-        include_entry_fields=False,
-        include_wild_card_authorities=False,
-        include_draw_inputs=False,
+        entry_fields=target_entry_rows,
+        include_entry_fields="entry_fields" in source_slot_component,
+        wild_card_authorities=target_wc_rows,
+        include_wild_card_authorities="wild_card_authorities" in source_slot_component,
+        draw_inputs=target_draw_input_rows,
+        include_draw_inputs="draw_inputs" in source_slot_component,
         include_draw_authorities=False,
         include_draw_process_authorities=False,
         include_draw_revisions=False,

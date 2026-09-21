@@ -2812,6 +2812,14 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
+                    source_to_target_tournament_ranking_authority = {
+                        source.fingerprint: target
+                        for source, target in zip(
+                            source_ranking.tournament_ranking_snapshot_authorities,
+                            remapped_ranking.tournament_ranking_snapshot_authorities,
+                            strict=True,
+                        )
+                    }
                     coupled_player_slot = None
                     if SIMULATION_SLOT_COMPONENT_KEY in source_content:
                         try:
@@ -2822,6 +2830,9 @@ class SimulationPersistenceRepository:
                                 target_branch_id=branch_id,
                                 v1_source_fingerprint_map=(
                                     source_to_target_tournament_fingerprint
+                                ),
+                                tournament_ranking_authority_map=(
+                                    source_to_target_tournament_ranking_authority
                                 ),
                             )
                         except (

@@ -1048,3 +1048,16 @@ same week rather than copying the source snapshot.
 Next dependency chain:
 Tournament Ranking Snapshot -> Entry Field -> Wild Card -> Draw Input -> Draw ->
 Draw Revision / Draw Process -> canonical Adopted Tournament Authority v6.
+
+
+### Branch identity remapping: pre-draw authority chain
+
+The supported materialized-fork chain now reaches:
+Tournament Ranking Snapshot -> Entry Field -> Wild Card -> Draw Input.
+
+Each layer is replayed from its frozen authoritative inputs and bound to the immediately
+preceding target authority. Entry applications are also rebound to the target Branch so
+their aggregate fingerprint is not reused from source identity.
+
+Next: rebuild Tournament Draw Authority from target Draw Input, then Draw Process and
+Draw Revision history, and finally allow canonical Adopted Tournament Authority v6.

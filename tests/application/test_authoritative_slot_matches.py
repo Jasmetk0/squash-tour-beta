@@ -50,9 +50,28 @@ from beta_engine.domain.players.sporting import (
     PlayerSportingRecord,
     PlayerSportingWeekState,
 )
-from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.rankings.official import (
+    OfficialRankingPolicy,
+    RankingWeek,
+    calculate_official_ranking,
+)
+from beta_engine.domain.tournaments.ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthority,
+)
+from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryApplication,
+    TournamentEntryFieldCapacity,
+    TournamentEntryFieldResolver,
+)
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthorityBuilder,
+)
+from beta_engine.domain.tournaments.draw_input_authority import (
+    TournamentDrawInputAuthorityBuilder,
+)
 from beta_engine.domain.simulation_slots import (
     CanonicalMatchInputProjectionPolicy,
+    fingerprint,
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
     WeekSimulationScheduleSlot,
@@ -63,12 +82,16 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     AuthoritativeWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PublishedOfficialRankingModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
     RunBranchModel,
     RunContainerModel,
     RankingTransitionAuthorityModel,
+    TournamentDrawInputAuthorityModel,
+    TournamentEntryFieldVersionModel,
+    TournamentWildCardAuthorityModel,
 )
 from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
@@ -96,6 +119,18 @@ from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
     remap_competitive_group_payload,
     remap_completed_simulation_slot_core,
     remap_slot_plan,
+)
+from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    _applications_fingerprint,
+    _applications_json,
+    _request_fingerprint as entry_request_fingerprint,
+)
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+    _request_fingerprint as draw_input_request_fingerprint,
 )
 from beta_engine.infrastructure.db.tournament_draw_revision import (
     TournamentDrawRevisionConflict,
@@ -3725,3 +3760,229 @@ def test_coupled_fork_remaps_week_schedule_and_legacy_adopted_authority(tmp_path
         target_authority_row["package_json"]
         == source_component["authorities"][0]["package_json"]
     )
+
+
+@pytest.mark.pr_critical
+def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
+    session, _, _, _, _ = run_semifinals(
+        tmp_path / "pre-draw-chain-fork.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
+    snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        policy=OfficialRankingPolicy(policy_id="ranking-policy"),
+        players=(),
+        results=(),
+        previous=None,
+    )
+    source_ranking_authority = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-draw",
+        ranking_week=WEEK,
+        ranking_snapshot=snapshot,
+        adopted_by_command_id="adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=snapshot.fingerprint,
+            payload_json=snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(
+        source_ranking_authority
+    )
+    target_snapshot = snapshot.model_copy(update={"branch_id": "target"})
+    target_ranking_authority = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="target",
+        event_id="event-draw",
+        ranking_week=WEEK,
+        ranking_snapshot=target_snapshot,
+        adopted_by_command_id="adopt-ranking",
+    )
+    apps = (
+        TournamentEntryApplication(
+            application_id="a1",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-draw",
+            player_id="p1",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token="1",
+        ),
+        TournamentEntryApplication(
+            application_id="a2",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-draw",
+            player_id="p2",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token="2",
+        ),
+    )
+    capacity = TournamentEntryFieldCapacity(
+        main_draw_size=4,
+        wild_card_slots=1,
+        bye_slots=1,
+    )
+    source_field = TournamentEntryFieldResolver.build_initial(
+        authority=source_ranking_authority,
+        applications=apps,
+        capacity=capacity,
+    )
+    apps_fp = _applications_fingerprint(apps)
+    source_field_request = entry_request_fingerprint(
+        {
+            "mode": "initial",
+            "run_id": "run",
+            "branch_id": "branch",
+            "event_id": "event-draw",
+            "authority_fingerprint": source_ranking_authority.fingerprint,
+            "applications_fingerprint": apps_fp,
+            "capacity": capacity.model_dump(mode="json"),
+        }
+    )
+    source_wc = TournamentWildCardAuthorityBuilder.build(
+        field=source_field,
+        field_sequence=1,
+        command_id="resolve-wc",
+        original_wild_card_player_ids=("wc-1",),
+    )
+    wc_request = {
+        "entry_field_fingerprint": source_field.fingerprint,
+        "field_sequence": 1,
+        "original_wild_card_player_ids": ["wc-1"],
+        "reserve_wild_card_player_ids": [],
+        "unavailable_player_ids": [],
+    }
+    source_draw_input = TournamentDrawInputAuthorityBuilder.build(
+        authority=source_ranking_authority,
+        field=source_field,
+        field_sequence=1,
+        command_id="commit-draw",
+        draw_seed=17,
+        main_seed_count=None,
+        qualification_seed_count=None,
+        schema_version="tournament_draw_input_authority.v3",
+        wild_card_authority=source_wc,
+    )
+    draw_request = TournamentDrawInputAuthorityStore._request(
+        ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+        entry_field_fingerprint=source_field.fingerprint,
+        field_sequence=1,
+        draw_seed=17,
+        main_seed_count=source_draw_input.main_seed_count,
+        qualification_seed_count=source_draw_input.qualification_seed_count,
+        wild_card_authority_fingerprint=source_wc.fingerprint,
+    )
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-draw",
+            sequence=1,
+            command_id="field-cut",
+            request_fingerprint=source_field_request,
+            field_fingerprint=source_field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(apps),
+            payload_json=source_field.model_dump_json(),
+        )
+    )
+    session.add(
+        TournamentWildCardAuthorityModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-draw",
+            command_id="resolve-wc",
+            request_fingerprint=fingerprint(wc_request),
+            authority_fingerprint=source_wc.fingerprint,
+            entry_field_fingerprint=source_field.fingerprint,
+            field_sequence=1,
+            payload_json=source_wc.model_dump_json(),
+        )
+    )
+    session.add(
+        TournamentDrawInputAuthorityModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-draw",
+            command_id="commit-draw",
+            request_fingerprint=draw_input_request_fingerprint(draw_request),
+            authority_fingerprint=source_draw_input.fingerprint,
+            ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+            entry_field_fingerprint=source_field.fingerprint,
+            field_sequence=1,
+            payload_json=source_draw_input.model_dump_json(),
+        )
+    )
+    session.flush()
+
+    payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    remapped = remap_coupled_player_slot_history(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+        tournament_ranking_authority_map={
+            source_ranking_authority.fingerprint: target_ranking_authority
+        },
+    )
+
+    assert remapped is not None
+    component = remapped.simulation_component
+    target_field_row = component["entry_fields"][0]
+    target_wc_row = component["wild_card_authorities"][0]
+    target_draw_row = component["draw_inputs"][0]
+    assert target_field_row["branch_id"] == "target"
+    assert target_wc_row["branch_id"] == "target"
+    assert target_draw_row["branch_id"] == "target"
+    assert target_field_row["field_fingerprint"] != source_field.fingerprint
+    assert target_wc_row["authority_fingerprint"] != source_wc.fingerprint
+    assert target_draw_row["authority_fingerprint"] != source_draw_input.fingerprint
+    assert (
+        target_draw_row["ranking_authority_fingerprint"]
+        == target_ranking_authority.fingerprint
+    )
+    assert target_draw_row["entry_field_fingerprint"] == target_field_row["field_fingerprint"]

@@ -1355,3 +1355,17 @@ Authorities carrying Draw fingerprints remain fail-closed until the Draw authori
 tree has an exact source->target mapping. Simulation command receipts also remain
 fail-closed because their result payloads are schema-specific and must not be copied
 blindly.
+
+
+## Branch fork: Tournament Ranking Snapshot authority remap
+
+TournamentRankingSnapshotAuthority is now rebuilt against the target Branch's remapped
+Official Ranking snapshot for the same ranking week. The target authority preserves
+event identity and adoption command provenance while receiving target Branch ownership,
+target ranking snapshot identity and a newly computed authority fingerprint.
+
+Trusted materialized ranking installation now accepts these remapped tournament-ranking
+authorities. Season Closing authorities remain fail-closed.
+
+This is the required first dependency for safely rebuilding Entry Field and the
+downstream WC/Draw authority chain.

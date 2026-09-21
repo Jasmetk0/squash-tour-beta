@@ -250,7 +250,7 @@ class StandaloneMatchService:
         )
 
     @staticmethod
-    def _result_payload(group) -> dict:
+    def _result_payload(group, *, terminal_sporting_fingerprint: str | None = None) -> dict:
         result = group.result
         return {
             "schema_version": "standalone_match_commit.v1",
@@ -261,7 +261,9 @@ class StandaloneMatchService:
             "sets_won": dict(result.sets_won),
             "result_fingerprint": group.result_fingerprint,
             "match_input_fingerprint": group.authoritative_input.fingerprint,
-            "terminal_sporting_fingerprint": group.terminal_checkpoint.fingerprint,
+            "terminal_sporting_fingerprint": (
+                terminal_sporting_fingerprint or group.terminal_checkpoint.fingerprint
+            ),
         }
 
     def inspect(self, *, run_id: str, branch_id: str) -> StandaloneMatchState:
@@ -274,11 +276,20 @@ class StandaloneMatchService:
             )
             if row is not None:
                 group = AuthoritativeSlotMatchExecutor._load_group(row)
+                slot = session.get(
+                    SimulationSlotModel,
+                    (run_id, branch_id, STANDALONE_WEEK.ordinal, STANDALONE_SLOT_ID),
+                )
+                if slot is None:
+                    raise ValueError("Standalone match group has no owning Simulation Slot")
+                terminal = AuthoritativeSlotMatchExecutor._load_checkpoint(slot)
                 return StandaloneMatchState(
                     run_id=run_id,
                     branch_id=branch_id,
                     frozen_world_fingerprint=world.fingerprint if world else None,
-                    result=self._result_payload(group),
+                    result=self._result_payload(
+                        group, terminal_sporting_fingerprint=terminal.fingerprint
+                    ),
                     status="complete",
                 )
             workspace = self._load_workspace(session, run_id=run_id, branch_id=branch_id)

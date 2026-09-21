@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Iterator
+import json
 
 import pytest
 from sqlalchemy import event
@@ -15,11 +16,19 @@ from beta_engine.application.run_saved_revision_restore_service import (
     RunSavedRevisionRestoreService,
 )
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.run_revisions import (
     BRANCH_RESTORE_AUDIT_EVENT_KIND,
     BRANCH_RESTORE_SAVED_REVISION_KIND,
     CLEAN_WORKING_DRAFT_STATUS,
     PRE_RESTORE_CHECKPOINT_KIND,
+)
+from beta_engine.domain.season_closure import (
+    ClosureRuleVersionRef,
+    SeasonClosureMarkerCandidate,
+    SeasonClosurePackage,
+    SeasonSummarySnapshot,
+    bind_season_closure_marker,
 )
 from beta_engine.infrastructure.db import (
     DatabaseSettings,
@@ -30,6 +39,12 @@ from beta_engine.infrastructure.db import (
     SimulationPersistenceRepository,
     create_session_factory,
     create_sqlite_engine,
+)
+from beta_engine.domain.run_revisions import saved_revision_content_hash
+from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+from beta_engine.infrastructure.db.saved_revision_season_closure import (
+    install_saved_revision_season_closure,
+    load_saved_revision_season_closure,
 )
 
 
@@ -359,4 +374,91 @@ def test_restore_fails_closed_for_state_not_captured_by_saved_revision(
             checkpoint_id="unsupported-checkpoint"
         )
         is None
+    )
+
+
+@pytest.mark.pr_critical
+def test_restore_rebinds_embedded_season_closure_to_restore_revision(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-season-closure.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        target = session.get(BranchSavedRevisionModel, "revision-one")
+        assert target is not None
+        payload = json.loads(target.payload_json)
+        change_summary = json.loads(target.change_summary_json)
+
+        completed_week = RankingWeek(season_index=0, week=61)
+        summary = SeasonSummarySnapshot(
+            run_id="run-one",
+            branch_id="branch-one",
+            completed_week=completed_week,
+            closing_ranking_fingerprint="a" * 64,
+        )
+        candidate = SeasonClosureMarkerCandidate(
+            run_id="run-one",
+            branch_id="branch-one",
+            completed_week=completed_week,
+            season_summary_fingerprint=summary.fingerprint,
+            closing_ranking_fingerprint="a" * 64,
+            rule_versions=(
+                ClosureRuleVersionRef(
+                    rule_kind="official_ranking_policy",
+                    rule_id="test-policy",
+                    fingerprint="b" * 64,
+                ),
+            ),
+        )
+        package = SeasonClosurePackage(summary=summary, marker=candidate)
+        marker = bind_season_closure_marker(
+            candidate,
+            final_saved_revision_id=target.revision_id,
+        )
+        install_saved_revision_season_closure(
+            payload,
+            package=package,
+            marker=marker,
+        )
+        target.payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        target.content_hash = saved_revision_content_hash(
+            revision_id=target.revision_id,
+            run_id=target.run_id,
+            branch_id=target.branch_id,
+            sequence=target.sequence,
+            parent_revision_id=target.parent_revision_id,
+            kind=target.kind,
+            payload_schema_version=target.payload_schema_version,
+            payload=payload,
+            change_summary=change_summary,
+        )
+
+    restored = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory(
+            "closure-checkpoint",
+            "closure-restore-revision",
+            "closure-restore-audit",
+        ),
+    ).restore_current_branch(
+        run_id="run-one",
+        branch_id="branch-one",
+        target_saved_revision_id="revision-one",
+        expected_head_saved_revision_id="revision-two",
+        expected_draft_version=2,
+        expected_current_viewer_branch_id="branch-two",
+        explicit_confirmation=True,
+    )
+
+    closure = load_saved_revision_season_closure(
+        restored.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+        revision_id="closure-restore-revision",
+    )
+    assert closure is not None
+    assert closure.parsed_summary.fingerprint == summary.fingerprint
+    assert closure.parsed_marker.final_saved_revision_id == "closure-restore-revision"
+    assert closure.parsed_marker.season_summary_fingerprint == summary.fingerprint
+    assert repository.verify_branch_saved_revision_hash(
+        revision_id="closure-restore-revision"
     )

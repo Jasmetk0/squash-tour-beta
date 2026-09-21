@@ -80,3 +80,16 @@ Lifecycle history is stored in its own `player_lifecycle` Saved Revision
 component, not `ranking_revision_state`. Restore compares the live history with
 the current saved component before replacing it. Older revisions without this
 component remain compatible, but cannot silently discard live uncaptured state.
+
+
+## Branch-fork identity
+
+Materialized ranking-bearing Branch forks now support the complete saved lifecycle
+history. Source snapshots are validated first, then rebuilt with the target Branch id
+and a newly chained target predecessor fingerprint. Sporting-independent lifecycle
+facts and policy evidence are preserved exactly. The rebuilt chain is installed into
+the target Branch and embedded in its target-owned materialized Saved Revision in the
+same fork transaction.
+
+The shared `source_initial_world_fingerprint` remains historical provenance to the
+fork's shared origin; it is not rewritten into a fabricated target InitialWorld.

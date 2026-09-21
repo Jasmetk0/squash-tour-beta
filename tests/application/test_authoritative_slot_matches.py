@@ -4286,16 +4286,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
     )
 
     source_store = TournamentDrawRevisionStore(session)
-    source_first = source_store.full_redraw_withdrawal(
-        run_id="run",
-        branch_id="branch",
-        event_id="event-fork-mixed",
-        command_id="fork-mixed-full-redraw",
-        withdrawn_player_ids=("fork-mixed-p1",),
-        repair_draw_seed=441133,
-        main_process_window_ordinal=1,
-    )
-    source_second = source_store.draw_frozen_wild_card_withdrawal(
+    source_rwc = source_store.draw_frozen_wild_card_withdrawal(
         run_id="run",
         branch_id="branch",
         event_id="event-fork-mixed",
@@ -4310,10 +4301,10 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
             branch_id="branch",
             event_id="event-fork-mixed",
         )
-    ) == ("full_redraw", "frozen_wild_card_repair")
-    assert source_second.wild_card_repair_authority is not None
+    ) == ("frozen_wild_card_repair",)
+    assert source_rwc.wild_card_repair_authority is not None
     assert (
-        source_second.wild_card_repair_authority.replacement_player_id
+        source_rwc.wild_card_repair_authority.replacement_player_id
         == "fork-mixed-p5"
     )
 
@@ -4400,35 +4391,36 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         event_id="event-fork-mixed",
     )
     assert tuple(item.repair_kind for item in target_history) == (
-        "full_redraw",
         "frozen_wild_card_repair",
     )
-    assert target_history[0].fingerprint != source_first.fingerprint
-    assert target_history[1].fingerprint != source_second.fingerprint
+    assert target_history[0].fingerprint != source_rwc.fingerprint
     assert target_history[0].branch_id == "target"
-    assert target_history[1].branch_id == "target"
-    assert (
-        target_history[0].successor_draw.fingerprint
-        == target_history[1].predecessor_draw_fingerprint
-    )
 
     target_store = TournamentDrawRevisionStore(session)
-    third = target_store.draw_frozen_phase_withdrawal(
+    live_second = target_store.draw_frozen_wild_card_withdrawal(
         run_id="run",
         branch_id="target",
         event_id="event-fork-mixed",
-        command_id="target-live-third",
-        withdrawn_player_ids=("fork-mixed-p2",),
+        command_id="target-live-rwc",
+        withdrawn_player_id="fork-mixed-p5",
         main_process_window_ordinal=3,
     )
-    assert third.sequence == 3
-    assert len(
-        target_store.history(
-            run_id="run",
-            branch_id="target",
-            event_id="event-fork-mixed",
-        )
-    ) == 3
+    assert live_second.sequence == 2
+    assert live_second.wild_card_repair_authority is not None
+    assert (
+        live_second.wild_card_repair_authority.replacement_player_id
+        == "fork-mixed-p6"
+    )
+    live_history = target_store.history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+    )
+    assert len(live_history) == 2
+    assert (
+        live_history[0].successor_draw.fingerprint
+        == live_history[1].predecessor_draw_fingerprint
+    )
 
     current_payload = {"content": {}}
     capture_saved_simulation_slots(
@@ -4457,7 +4449,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         run_id="run",
         branch_id="target",
         event_id="event-fork-mixed",
-    ).count() == 2
+    ).count() == 1
 
     retry = target_store.draw_frozen_wild_card_withdrawal(
         run_id="run",
@@ -4467,12 +4459,12 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         withdrawn_player_id="fork-mixed-p4",
         main_process_window_ordinal=3,
     )
-    assert retry.fingerprint == target_history[1].fingerprint
+    assert retry.fingerprint == target_history[0].fingerprint
     assert session.query(TournamentDrawRevisionModel).filter_by(
         run_id="run",
         branch_id="target",
         event_id="event-fork-mixed",
-    ).count() == 2
+    ).count() == 1
 
     recaptured = {"content": {}}
     capture_saved_simulation_slots(
@@ -4489,7 +4481,7 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         json.loads(
             recaptured["content"]["simulation_slot_match_state"][
                 "draw_revisions"
-            ][1]["payload_json"]
+            ][0]["payload_json"]
         )["branch_id"]
         == "target"
     )

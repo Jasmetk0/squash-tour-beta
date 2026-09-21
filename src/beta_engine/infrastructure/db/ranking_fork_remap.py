@@ -232,6 +232,7 @@ def _remap_result_sources(
     remapped: list[RankingResultVersion] = []
     by_source_fingerprint: dict[str, RankingResultVersion] = {}
     latest_by_key: dict[tuple[str, str], RankingResultVersion] = {}
+    latest_source_by_key: dict[tuple[str, str], RankingResultVersion] = {}
     tournament_version_map = tournament_version_map or {}
     tournament_editions = tournament_editions or set()
 
@@ -242,30 +243,39 @@ def _remap_result_sources(
             )
         key = (version.result.edition_id, version.result.player_id)
         canonical_tournament_version = tournament_version_map.get(version.fingerprint)
+        previous = latest_by_key.get(key)
+        source_previous = latest_source_by_key.get(key)
+        expected_source_previous_fingerprint = (
+            source_previous.fingerprint if source_previous is not None else None
+        )
+        if version.previous_fingerprint != expected_source_previous_fingerprint:
+            raise RankingForkRemapUnsupportedError(
+                "Ranking result correction predecessor differs from source history"
+            )
+
         if canonical_tournament_version is not None:
             remapped_version = canonical_tournament_version
-            previous = latest_by_key.get(key)
-            if previous is not None or version.previous_fingerprint is not None:
+            if previous is not None:
                 raise RankingForkRemapUnsupportedError(
                     "Canonical tournament source must be the first version for its player"
                 )
-        elif version.result.edition_id in tournament_editions:
-            raise RankingForkRemapUnsupportedError(
-                "Ranking fork does not yet support corrections over canonical tournament sources"
-            )
         else:
-            previous = latest_by_key.get(key)
+            if version.result.edition_id in tournament_editions and previous is None:
+                raise RankingForkRemapUnsupportedError(
+                    "Canonical tournament correction is missing its remapped base result"
+                )
             remapped_version = RankingResultVersion(
-            run_id=run_id,
-            branch_id=target_branch_id,
-            effective_week=version.effective_week,
-            result=version.result,
+                run_id=run_id,
+                branch_id=target_branch_id,
+                effective_week=version.effective_week,
+                result=version.result,
                 previous_fingerprint=(
                     previous.fingerprint if previous is not None else None
                 ),
             )
         by_source_fingerprint[version.fingerprint] = remapped_version
         latest_by_key[key] = remapped_version
+        latest_source_by_key[key] = version
         remapped.append(remapped_version)
 
     return tuple(remapped), by_source_fingerprint

@@ -536,10 +536,6 @@ def remap_coupled_player_slot_history(
             items = AuthoritativeRunSimulationDriver._decode_adopted_authority(
                 row.package_json
             )
-            if any(item.draw_authority_fingerprint is not None for item in items):
-                raise SimulationSlotForkRemapUnsupportedError(
-                    "Adopted Tournament authority references Draw evidence without a target mapping"
-                )
             week = next(
                 (
                     state.week
@@ -564,12 +560,33 @@ def remap_coupled_player_slot_history(
                 raise SimulationSlotForkRemapUnsupportedError(
                     "Saved Adopted Tournament authority fingerprint is corrupt"
                 )
+
+            target_items = []
+            for item in items:
+                if item.draw_authority_fingerprint is None:
+                    target_items.append(item)
+                    continue
+                mapped_draw_fingerprint = target_draw_fingerprint_map.get(
+                    item.draw_authority_fingerprint
+                )
+                if mapped_draw_fingerprint is None:
+                    raise SimulationSlotForkRemapUnsupportedError(
+                        "Adopted Tournament authority references Draw evidence without a target mapping"
+                    )
+                target_items.append(
+                    item.model_copy(
+                        update={
+                            "draw_authority_fingerprint": mapped_draw_fingerprint
+                        }
+                    )
+                )
+            target_items = tuple(target_items)
             target_fingerprint = (
                 AuthoritativeRunSimulationDriver._tournament_authority_fingerprint(
                     run_id,
                     target_branch_id,
                     week,
-                    items,
+                    target_items,
                 )
             )
             target_authorities.append(
@@ -579,7 +596,9 @@ def remap_coupled_player_slot_history(
                     week_ordinal=row.week_ordinal,
                     event_id=row.event_id,
                     authority_fingerprint=target_fingerprint,
-                    package_json=row.package_json,
+                    package_json=AuthoritativeRunSimulationDriver._encode_adopted_authority(
+                        target_items
+                    ),
                 )
             )
 

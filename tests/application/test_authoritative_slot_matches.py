@@ -4631,10 +4631,11 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
     session.flush()
 
     event_id = "event-real-ll-fork"
+    ranking_week = RankingWeek(season_index=0, week=2)
     source_snapshot = calculate_official_ranking(
         run_id="run",
         branch_id="branch",
-        week=WEEK,
+        week=ranking_week,
         policy=OfficialRankingPolicy(policy_id="real-ll-ranking"),
         players=tuple(
             OfficialRankingPlayer(
@@ -4652,7 +4653,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
         run_id="run",
         branch_id="branch",
         event_id=event_id,
-        ranking_week=WEEK,
+        ranking_week=ranking_week,
         ranking_snapshot=source_snapshot,
         adopted_by_command_id="real-ll-adopt-ranking",
     )
@@ -4660,7 +4661,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
         PublishedOfficialRankingModel(
             run_id="run",
             branch_id="branch",
-            week_ordinal=WEEK.ordinal,
+            week_ordinal=ranking_week.ordinal,
             snapshot_fingerprint=source_snapshot.fingerprint,
             payload_json=source_snapshot.model_dump_json(),
         )
@@ -4938,7 +4939,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
         run_id="run",
         branch_id="target",
         event_id=event_id,
-        ranking_week=WEEK,
+        ranking_week=ranking_week,
         ranking_snapshot=target_snapshot,
         adopted_by_command_id="real-ll-adopt-ranking",
     )
@@ -4946,7 +4947,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
         PublishedOfficialRankingModel(
             run_id="run",
             branch_id="target",
-            week_ordinal=WEEK.ordinal,
+            week_ordinal=ranking_week.ordinal,
             snapshot_fingerprint=target_snapshot.fingerprint,
             payload_json=target_snapshot.model_dump_json(),
         )

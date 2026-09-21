@@ -1323,3 +1323,19 @@ The core adapter intentionally remains fail-closed if any auxiliary Simulation S
 authority collection is non-empty (commands, schedules, adopted tournament authority,
 entry fields, WC/draw authority trees, etc.). Those broader identity trees require their
 own remappers and are not silently copied.
+
+
+## Materialized Branch fork: coupled sporting v2 + Slot core install
+
+Materialized ranking-bearing Branch forks now orchestrate player sporting history and
+the completed Simulation Slot core together in canonical week order. Each target
+sporting snapshot becomes the opening authority for that week's target Slot ledger; the
+rebuilt Slot results, match effects and terminal checkpoint then rebuild the completed
+sporting v2 context that feeds the next sporting snapshot.
+
+The remapped sporting component and Slot core component are both written into the
+target-owned materialized Saved Revision and installed into target Branch persistence
+inside the same fork transaction. A Slot component without captured sporting history
+fails closed rather than being copied with source Branch identity.
+
+Auxiliary Slot authority trees remain separately guarded.

@@ -141,6 +141,7 @@ def _advance_week(
     ranking_root: str,
     transition_root: str,
     completed_week: int,
+    revision: str,
 ) -> str:
     _derive_transition_authority(
         ranking_root,
@@ -329,6 +330,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             ranking_root=ranking_root,
             transition_root=transition_root,
             completed_week=1,
+            revision=revision,
         )
 
         for week in range(2, 31):
@@ -341,6 +343,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 ranking_root=ranking_root,
                 transition_root=transition_root,
                 completed_week=week,
+                revision=revision,
             )
 
         before_save = _request("GET", sim_root + "/position")[1]

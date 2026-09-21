@@ -6,6 +6,10 @@ import json
 
 import pytest
 
+from beta_engine.api.deps import (
+    get_season_match_service,
+    get_season_point_awards_service,
+)
 from beta_engine.application.authoritative_run_simulation_driver import (
     AUTHORITATIVE_EMPTY_WEEK_PROVENANCE,
 )
@@ -28,6 +32,29 @@ from test_authoritative_three_completed_weeks import (
     _save_ranking,
     _save_simulation,
 )
+
+
+def _remove_week_two_source_fixture(server) -> None:
+    """Make Week 2 genuinely event-free before Run ownership begins."""
+
+    matches = server.app.dependency_overrides[get_season_match_service]()
+    registry = matches._load_registry()
+    registry.matches_by_event_id = {
+        event_id: package
+        for event_id, package in registry.matches_by_event_id.items()
+        if not (package.season == "2000/2001" and package.season_week == 2)
+    }
+    matches._save_registry(registry)
+
+    awards = server.app.dependency_overrides[get_season_point_awards_service]()
+    calendars = awards.calendar_service._load_registry()
+    calendar = calendars.calendars_by_season["2000/2001"]
+    calendar.events = [
+        event
+        for event in calendar.events
+        if event.season_week != 2
+    ]
+    awards.calendar_service._save_registry(calendars)
 
 
 def _roster(server, run_id: str, branch_id: str, week: RankingWeek):
@@ -149,6 +176,7 @@ def _complete_tournament_week(
 @pytest.mark.pr_critical
 def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
     server, package = _server_state(tmp_path)
+    _remove_week_two_source_fixture(server)
 
     with server:
         run_id, branch_id, revision = _create_run(
@@ -185,7 +213,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
         )[0] == 201
         revision = _save_ranking(server, ranking_root)
 
-        for number in (1, 2):
+        for number in (1,):
             revision = _complete_tournament_week(
                 server,
                 run_id=run_id,
@@ -195,7 +223,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
                 bootstrap=bootstrap,
             )
 
-        empty_week = RankingWeek(season_index=0, week=3)
+        empty_week = RankingWeek(season_index=0, week=2)
         before = _request("GET", sim_root + "/position")[1]
         assert before["current_week"] == empty_week.model_dump(mode="json")
         assert "week_schedule_missing" in before["transition_blockers"]
@@ -204,12 +232,12 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
         ]
 
         command = {
-            "command_id": "complete-empty-week-3",
+            "command_id": "complete-empty-week-2",
             "expected_week": empty_week.model_dump(mode="json"),
             "expected_position_fingerprint": before["position_fingerprint"],
             "expected_revision_id": revision,
             "operator_label": "Acceptance Admin",
-            "audit_reason": "Confirm the Calendar has no competitive work in Week 3",
+            "audit_reason": "Confirm the Calendar has no competitive work in Week 2",
         }
         status, completed = _request(
             "POST",
@@ -254,7 +282,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
         revision = _save_simulation(sim_root)
 
         roster = _roster(server, run_id, branch_id, empty_week)
-        target = {"season_index": 0, "week": 4}
+        target = {"season_index": 0, "week": 3}
         status, authority = _request(
             "POST",
             ranking_root + "/transition-authorities",
@@ -267,7 +295,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
                 "players": roster,
                 "policy": bootstrap["policy"],
                 "provenance": "Explicit empty-week acceptance",
-                "adopted_by_command_id": "empty-week-authority-3",
+                "adopted_by_command_id": "empty-week-authority-2",
                 "audit": bootstrap["audit"],
             },
         )
@@ -279,7 +307,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
             "transition_blockers"
         ]
         transition_command = {
-            "command_id": "transition-empty-week-3",
+            "command_id": "transition-empty-week-2",
             "run_id": run_id,
             "branch_id": branch_id,
             "base_revision_id": revision,
@@ -302,7 +330,7 @@ def test_explicit_empty_week_advances_without_manual_database_repair(tmp_path):
         after = _request("GET", sim_root + "/position")[1]
         assert after["current_week"] == {
             "season_index": 0,
-            "week": 4,
+            "week": 3,
         }
 
 

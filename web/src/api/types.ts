@@ -1097,10 +1097,17 @@ export type WeekTournamentLockCommitResult = {
 export type AuthoritativeWeekScheduleSlot = {
   ordinal: number
   group_ids: string[]
+  match_day_ordinal?: number | null
+  match_order?: number | null
+  event_id?: string | null
+  draw_phase?: 'qualification' | 'main' | null
+  round_number?: number | null
 }
 
 export type AuthoritativeWeekSchedule = {
-  schema_version: 'week_simulation_schedule.v1'
+  schema_version:
+    | 'week_simulation_schedule.v1'
+    | 'week_simulation_schedule.v2'
   run_id: string
   branch_id: string
   week: AuthoritativeRankingWeek

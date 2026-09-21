@@ -4265,6 +4265,19 @@ class AuthoritativeRunSimulationDriver:
                         "Match Day match order must follow global Simulation Slot order"
                     )
 
+            chronological = [
+                (
+                    slot.match_day_ordinal,
+                    slot.match_order,
+                    slot.ordinal,
+                )
+                for slot in schedule.slots
+            ]
+            if chronological != sorted(chronological):
+                raise ValueError(
+                    "global Simulation Slot order must follow Match Day chronology"
+                )
+
             for group_id, plan in plans.items():
                 for feeder in self._plan_feeders(plan):
                     if day_of[feeder] >= day_of[group_id]:

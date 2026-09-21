@@ -259,6 +259,9 @@ def test_saved_revision_rejects_wc_entry_global_slot_collision(tmp_path):
                     "run_id": "run",
                     "branch_id": "branch",
                     "event_id": "wc-event",
+                    "command_id": wc.resolved_by_command_id,
+                    "entry_field_fingerprint": wc.entry_field_fingerprint,
+                    "field_sequence": wc.field_sequence,
                     "authority_fingerprint": wc.fingerprint,
                     "payload_json": wc.model_dump_json(),
                 }

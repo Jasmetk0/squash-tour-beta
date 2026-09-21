@@ -3764,6 +3764,23 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         tmp_path / "pre-draw-chain-fork.sqlite",
         ("sf-1", "sf-2"),
     )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
     snapshot = calculate_official_ranking(
         run_id="run",
         branch_id="branch",

@@ -4860,7 +4860,7 @@ def test_real_q_receipts_ll_vacancy_fill_survive_materialized_fork(tmp_path):
             ),
         )
         .order_by(
-            SimulationEventGroupModel.slot_ordinal,
+            SimulationEventGroupModel.slot_id,
             SimulationEventGroupModel.group_id,
         )
     ).all()

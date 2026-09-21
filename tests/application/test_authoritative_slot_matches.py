@@ -154,6 +154,9 @@ from beta_engine.infrastructure.db.tournament_draw_authority import (
 from beta_engine.infrastructure.db.tournament_draw_process_authority import (
     TournamentDrawProcessAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+    TournamentWildCardAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_walkover_authority import (
     TournamentWalkoverAuthorityStore,
 )
@@ -4148,6 +4151,350 @@ def test_special_revision_frozen_evidence_retargets_nested_match_identity():
 
 
 @pytest.mark.pr_critical
+@pytest.mark.pr_critical
+def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
+    session, _, _, _, _ = run_semifinals(
+        tmp_path / "materialized-fork-mixed-restore.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
+
+    source_snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        policy=OfficialRankingPolicy(policy_id="fork-mixed-ranking"),
+        players=(),
+        results=(),
+        previous=None,
+    )
+    source_ranking = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        ranking_week=WEEK,
+        ranking_snapshot=source_snapshot,
+        adopted_by_command_id="fork-mixed-adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=source_snapshot.fingerprint,
+            payload_json=source_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(source_ranking)
+
+    apps = tuple(
+        TournamentEntryApplication(
+            application_id=f"fork-mixed-a{index}",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-fork-mixed",
+            player_id=f"fork-mixed-p{index}",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token=str(index),
+        )
+        for index in range(1, 7)
+    )
+    field = TournamentEntryFieldResolver.build_initial(
+        authority=source_ranking,
+        applications=apps,
+        capacity=TournamentEntryFieldCapacity(
+            main_draw_size=4,
+            wild_card_slots=1,
+        ),
+    )
+    apps_fp = _applications_fingerprint(apps)
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-fork-mixed",
+            sequence=1,
+            command_id="fork-mixed-field",
+            request_fingerprint=entry_request_fingerprint(
+                {
+                    "mode": "initial",
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "event_id": "event-fork-mixed",
+                    "authority_fingerprint": source_ranking.fingerprint,
+                    "applications_fingerprint": apps_fp,
+                    "capacity": field.capacity.model_dump(mode="json"),
+                }
+            ),
+            field_fingerprint=field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=source_ranking.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(apps),
+            payload_json=field.model_dump_json(),
+        )
+    )
+    session.flush()
+
+    source_wc = TournamentWildCardAuthorityStore(session).resolve(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-wc",
+        original_wild_card_player_ids=("fork-mixed-p4",),
+        reserve_wild_card_player_ids=("fork-mixed-p5", "fork-mixed-p6"),
+    )
+    assert source_wc.active_wild_card_player_ids == ("fork-mixed-p4",)
+
+    source_input = TournamentDrawInputAuthorityStore(session).commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-input",
+        draw_seed=441122,
+    )
+    source_draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-draw",
+    )
+    TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-process",
+        main_process_window_count=3,
+    )
+
+    source_store = TournamentDrawRevisionStore(session)
+    source_first = source_store.full_redraw_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-full-redraw",
+        withdrawn_player_ids=("fork-mixed-p1",),
+        repair_draw_seed=441133,
+        main_process_window_ordinal=1,
+    )
+    source_second = source_store.draw_frozen_wild_card_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-rwc",
+        withdrawn_player_id="fork-mixed-p4",
+        main_process_window_ordinal=3,
+    )
+    assert tuple(
+        revision.repair_kind
+        for revision in source_store.history(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-fork-mixed",
+        )
+    ) == ("full_redraw", "frozen_wild_card_repair")
+    assert source_second.wild_card_repair_authority is not None
+    assert (
+        source_second.wild_card_repair_authority.replacement_player_id
+        == "fork-mixed-p5"
+    )
+
+    source_payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    session.add(
+        RunBranchModel(
+            run_id="run",
+            branch_id="target",
+            display_name="Target",
+            forked_from_branch_id="branch",
+        )
+    )
+    target_snapshot = source_snapshot.model_copy(update={"branch_id": "target"})
+    target_ranking = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+        ranking_week=WEEK,
+        ranking_snapshot=target_snapshot,
+        adopted_by_command_id="fork-mixed-adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="target",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=target_snapshot.fingerprint,
+            payload_json=target_snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(target_ranking)
+
+    remapped = remap_coupled_player_slot_history(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+        tournament_ranking_authority_map={
+            source_ranking.fingerprint: target_ranking,
+        },
+    )
+    assert remapped is not None
+
+    fork_root_payload = {
+        "content": {
+            "simulation_slot_match_state": remapped.simulation_component,
+        }
+    }
+    restore_saved_simulation_slots(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+
+    installed_fork_root = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        installed_fork_root,
+        run_id="run",
+        branch_id="target",
+    )
+    fork_component = installed_fork_root["content"]["simulation_slot_match_state"]
+    assert fork_component["fingerprint"] == remapped.simulation_component["fingerprint"]
+    target_history = TournamentDrawRevisionStore(session).history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+    )
+    assert tuple(item.repair_kind for item in target_history) == (
+        "full_redraw",
+        "frozen_wild_card_repair",
+    )
+    assert target_history[0].fingerprint != source_first.fingerprint
+    assert target_history[1].fingerprint != source_second.fingerprint
+    assert target_history[0].branch_id == "target"
+    assert target_history[1].branch_id == "target"
+    assert (
+        target_history[0].successor_draw.fingerprint
+        == target_history[1].predecessor_draw_fingerprint
+    )
+
+    target_store = TournamentDrawRevisionStore(session)
+    third = target_store.draw_frozen_phase_withdrawal(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+        command_id="target-live-third",
+        withdrawn_player_ids=("fork-mixed-p2",),
+        main_process_window_ordinal=3,
+    )
+    assert third.sequence == 3
+    assert len(
+        target_store.history(
+            run_id="run",
+            branch_id="target",
+            event_id="event-fork-mixed",
+        )
+    ) == 3
+
+    current_payload = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        current_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    restore_saved_simulation_slots(
+        session,
+        current_payload=current_payload,
+        target_payload=installed_fork_root,
+        run_id="run",
+        branch_id="target",
+    )
+
+    restored_history = target_store.history(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+    )
+    assert tuple(item.fingerprint for item in restored_history) == tuple(
+        item.fingerprint for item in target_history
+    )
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+    ).count() == 2
+
+    retry = target_store.draw_frozen_wild_card_withdrawal(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+        command_id="fork-mixed-rwc",
+        withdrawn_player_id="fork-mixed-p4",
+        main_process_window_ordinal=3,
+    )
+    assert retry.fingerprint == target_history[1].fingerprint
+    assert session.query(TournamentDrawRevisionModel).filter_by(
+        run_id="run",
+        branch_id="target",
+        event_id="event-fork-mixed",
+    ).count() == 2
+
+    recaptured = {"content": {}}
+    capture_saved_simulation_slots(
+        session,
+        recaptured,
+        run_id="run",
+        branch_id="target",
+    )
+    assert (
+        recaptured["content"]["simulation_slot_match_state"]["fingerprint"]
+        == fork_component["fingerprint"]
+    )
+    assert (
+        json.loads(
+            recaptured["content"]["simulation_slot_match_state"][
+                "draw_revisions"
+            ][1]["payload_json"]
+        )["branch_id"]
+        == "target"
+    )
+
+
 def test_draw_revision_restore_round_trip_and_retry_are_identity_stable(tmp_path):
     session, _, _, _, _ = run_semifinals(
         tmp_path / "draw-revision-restore-retry.sqlite",

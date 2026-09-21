@@ -163,8 +163,7 @@ def install_ranking_revision_state(
 
     if allow_empty_fork_target and branch.forked_from_branch_id is not None:
         if (
-            state.sources
-            or state.tournament_sources
+            state.tournament_sources
             or state.transition_authorities
             or state.tournament_ranking_snapshot_authorities
             or state.season_closing_rankings
@@ -173,13 +172,12 @@ def install_ranking_revision_state(
             or state.entries[0].snapshot.week.ordinal != 0
             or any(
                 entry.snapshot.week.ordinal != index
-                or entry.inputs.results
                 or len(entry.receipts) != 1
                 for index, entry in enumerate(state.entries)
             )
         ):
             raise ValueError(
-                "Trusted fork install supports only complete result-free ranking history"
+                "Trusted fork install supports complete ranking history without tournament/transition authorities"
             )
         row_models = (
             OfficialRankingCandidateModel,
@@ -239,7 +237,13 @@ def install_ranking_revision_state(
             authorities.append(authority)
         # Sources precede candidates because ordinary source writes cannot backdate
         # into an already staged history. All are still inside the same savepoint.
-        sources = OfficialRankingResultStore(session)
+        sources = OfficialRankingResultStore(
+            session,
+            allow_empty_fork_target=(
+                allow_empty_fork_target
+                and branch.forked_from_branch_id is not None
+            ),
+        )
         for version in state.sources:
             sources.append(version)
         zeros = OfficialRankingZeroStore(

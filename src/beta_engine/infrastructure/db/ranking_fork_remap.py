@@ -15,6 +15,7 @@ from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCo
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import calculate_official_ranking
+from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
@@ -28,6 +29,73 @@ from beta_engine.domain.rankings.revision_state import (
 
 class RankingForkRemapUnsupportedError(ValueError):
     """Raised when a ranking bundle is outside the supported fork-remap slice."""
+
+
+def _remap_result_sources(
+    source_versions: tuple[RankingResultVersion, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+) -> tuple[
+    tuple[RankingResultVersion, ...],
+    dict[str, RankingResultVersion],
+]:
+    remapped: list[RankingResultVersion] = []
+    by_source_fingerprint: dict[str, RankingResultVersion] = {}
+    latest_by_key: dict[tuple[str, str], RankingResultVersion] = {}
+
+    for version in source_versions:
+        if (version.run_id, version.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Ranking result source scope does not match the source Branch"
+            )
+        key = (version.result.edition_id, version.result.player_id)
+        previous = latest_by_key.get(key)
+        remapped_version = RankingResultVersion(
+            run_id=run_id,
+            branch_id=target_branch_id,
+            effective_week=version.effective_week,
+            result=version.result,
+            previous_fingerprint=(
+                previous.fingerprint if previous is not None else None
+            ),
+        )
+        by_source_fingerprint[version.fingerprint] = remapped_version
+        latest_by_key[key] = remapped_version
+        remapped.append(remapped_version)
+
+    return tuple(remapped), by_source_fingerprint
+
+
+def _resolve_result_versions(
+    versions: tuple[RankingResultVersion, ...],
+    *,
+    week,
+):
+    latest: dict[tuple[str, str], object] = {}
+    for version in versions:
+        if version.effective_week.ordinal <= week.ordinal:
+            latest[
+                (version.result.edition_id, version.result.player_id)
+            ] = version.result
+    return tuple(latest[key] for key in sorted(latest))
+
+
+def _remap_command_corrections(
+    versions: tuple[RankingResultVersion, ...],
+    *,
+    mapped_by_source_fingerprint: dict[str, RankingResultVersion],
+) -> tuple[RankingResultVersion, ...]:
+    remapped: list[RankingResultVersion] = []
+    for version in versions:
+        mapped = mapped_by_source_fingerprint.get(version.fingerprint)
+        if mapped is None:
+            raise RankingForkRemapUnsupportedError(
+                "Ranking command references result history outside the Saved Revision"
+            )
+        remapped.append(mapped)
+    return tuple(remapped)
 
 
 def _remap_zero_sources(
@@ -104,17 +172,22 @@ def remap_source_free_ranking_state_for_branch(
             "Ranking-bearing fork requires a complete Week-1 ranking root"
         )
     if (
-        source.sources
-        or source.tournament_sources
+        source.tournament_sources
         or source.transition_authorities
         or source.tournament_ranking_snapshot_authorities
         or source.season_closing_rankings
         or source.authoritative_transition_state is not None
     ):
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support result or transition authorities"
+            "Ranking-bearing fork does not yet support tournament or transition authorities"
         )
 
+    remapped_result_sources, result_by_source_fingerprint = _remap_result_sources(
+        source.sources,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
     remapped_zero_sources, zero_by_source_fingerprint = _remap_zero_sources(
         source.zero_sources,
         run_id=run_id,
@@ -126,9 +199,9 @@ def remap_source_free_ranking_state_for_branch(
     remapped_entries: list[RankingRevisionEntry] = []
     previous = None
     for index, entry in enumerate(source.entries):
-        if entry.inputs.results or len(entry.receipts) != 1:
+        if len(entry.receipts) != 1:
             raise RankingForkRemapUnsupportedError(
-                "Ranking-bearing fork currently requires result-free command history"
+                "Ranking-bearing fork requires one complete command receipt per week"
             )
         receipt = entry.receipts[0]
         if receipt.request_payload_json is None:
@@ -204,19 +277,31 @@ def remap_source_free_ranking_state_for_branch(
                 raise RankingForkRemapUnsupportedError(
                     "Ranking bootstrap zero manifest does not match stored zero history"
                 )
+            original_results = _resolve_result_versions(
+                source.sources,
+                week=original.target_week,
+            )
+            if entry.inputs.results != original_results:
+                raise RankingForkRemapUnsupportedError(
+                    "Ranking bootstrap result manifest does not match stored result history"
+                )
+            resolved_results = _resolve_result_versions(
+                remapped_result_sources,
+                week=command.target_week,
+            )
             snapshot = calculate_official_ranking(
                 run_id=run_id,
                 branch_id=target_branch_id,
                 week=command.target_week,
                 policy=command.policy,
                 players=command.players,
-                results=(),
+                results=resolved_results,
                 previous=None,
                 disciplinary_zeros=resolved_zeros,
             )
             inputs = RankingInputManifest(
                 players=command.players,
-                results=(),
+                results=resolved_results,
                 disciplinary_zeros=tuple(
                     sorted(resolved_zeros, key=lambda z: z.zero_id)
                 ),
@@ -240,13 +325,12 @@ def remap_source_free_ranking_state_for_branch(
                 )
             if (
                 original.tournaments
-                or original.corrections
                 or original.audit is not None
                 or original.authority_fingerprint is not None
                 or original.context.discipline == "resolved_zeros"
             ):
                 raise RankingForkRemapUnsupportedError(
-                    "Ranking weekly fork supports result-free none/stored_zeros commands"
+                    "Ranking weekly fork supports result-history none/stored_zeros commands without tournament bindings"
                 )
             if previous is None or original.context.completed_week != previous.week:
                 raise RankingForkRemapUnsupportedError(
@@ -256,6 +340,10 @@ def remap_source_free_ranking_state_for_branch(
             command_zero_versions = _remap_command_zero_versions(
                 original.zero_versions,
                 mapped_by_source_fingerprint=zero_by_source_fingerprint,
+            )
+            command_corrections = _remap_command_corrections(
+                original.corrections,
+                mapped_by_source_fingerprint=result_by_source_fingerprint,
             )
             referenced_zero_fingerprints.update(
                 version.fingerprint for version in original.zero_versions
@@ -267,6 +355,7 @@ def remap_source_free_ranking_state_for_branch(
                             update={"branch_id": target_branch_id}
                         ),
                         "zero_versions": command_zero_versions,
+                        "corrections": command_corrections,
                     }
                 ).model_dump_json()
             )
@@ -295,19 +384,31 @@ def remap_source_free_ranking_state_for_branch(
                 raise RankingForkRemapUnsupportedError(
                     "Ranking weekly zero manifest does not match stored zero history"
                 )
+            original_results = _resolve_result_versions(
+                source.sources,
+                week=original.context.target_week,
+            )
+            if entry.inputs.results != original_results:
+                raise RankingForkRemapUnsupportedError(
+                    "Ranking weekly result manifest does not match stored result history"
+                )
+            resolved_results = _resolve_result_versions(
+                remapped_result_sources,
+                week=command.context.target_week,
+            )
             snapshot = calculate_official_ranking(
                 run_id=run_id,
                 branch_id=target_branch_id,
                 week=command.context.target_week,
                 policy=command.context.policy,
                 players=command.context.players,
-                results=(),
+                results=resolved_results,
                 previous=previous,
                 disciplinary_zeros=resolved_zeros,
             )
             inputs = RankingInputManifest(
                 players=command.context.players,
-                results=(),
+                results=resolved_results,
                 disciplinary_zeros=tuple(
                     sorted(resolved_zeros, key=lambda z: z.zero_id)
                 ),
@@ -344,7 +445,7 @@ def remap_source_free_ranking_state_for_branch(
         run_id=run_id,
         branch_id=target_branch_id,
         entries=tuple(remapped_entries),
-        sources=(),
+        sources=remapped_result_sources,
         zero_sources=remapped_zero_sources,
     )
 

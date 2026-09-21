@@ -1145,3 +1145,19 @@ the source Branch keeps its original zero history.
 
 Tournament/result/correction history and transition/publication authorities remain
 fail-closed pending their own remap adapters.
+
+
+## Ranking-bearing Branch fork: result/correction history remap
+
+Ranking-bearing forks now support Branch-owned `RankingResultVersion` histories and
+their correction chains when no `OwnedTournamentRankingSource` authority bundle is
+present. Result-version Branch identities and predecessor fingerprints are rebuilt for
+the target, weekly correction commands are rebound to the new fingerprints, and every
+frozen ranking manifest is checked against source-history resolution before target
+snapshots are recalculated.
+
+A PR-critical acceptance proves the target can fork an existing Week-2 result history,
+append an independent Week-3 correction, and Save it while the source Branch retains its
+original result version and ranking points.
+
+Canonical tournament source/authority remapping remains a separate fail-closed follow-up.

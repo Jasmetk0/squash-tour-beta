@@ -880,3 +880,14 @@ reconstructed for the target Branch.
 The next substantial remaining source-bearing adapter is tournament/correction result
 history; transition/publication authorities, InitialWorld-linked state and Season
 Closing evidence remain separate follow-ups.
+
+
+### Ranking identity remapping: result-version correction histories
+
+Ranking-bearing forks now remap immutable Branch-owned `RankingResultVersion` chains,
+including later corrections and their predecessor fingerprints. The ranking manifests
+and stored correction commands are deterministically rebuilt for the target Branch.
+
+The remaining tournament layer is `OwnedTournamentRankingSource` plus canonical
+Tournament Result / Point Award / Prize Money authority fingerprints. That authority
+bundle remains fail-closed until its dedicated adapter is implemented.

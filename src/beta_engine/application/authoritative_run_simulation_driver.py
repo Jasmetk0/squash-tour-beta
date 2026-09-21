@@ -84,6 +84,10 @@ from beta_engine.application.season_point_awards_service import (
     FrozenPointAwardAuthority,
     SeasonPointAwardsService,
 )
+from beta_engine.domain.players.sporting import (
+    CompletedWeekSportingContext,
+    CompetitiveMatchCount,
+)
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.tournaments.models import CalendarEvent
@@ -124,12 +128,46 @@ from beta_engine.infrastructure.db.tournament_walkover_authority import (
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import (
+    get_completed_context,
     get_sporting,
     preflight_completed_context_from_authoritative_matches,
+    put_completed_context,
 )
 from beta_engine.infrastructure.db.authoritative_week_transition import (
     preview_persisted_week_transition,
 )
+
+
+AUTHORITATIVE_EMPTY_WEEK_PROVENANCE = (
+    "explicit Run/Branch empty-week completion against frozen season Calendar authority"
+)
+
+
+class AuthoritativeEmptyWeekCompletionCommand(FrozenInput):
+    """CAS-guarded proof that one canonical week contains no competitive work."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    operator_label: str = Field(min_length=1, max_length=200)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("empty-week operator and audit reason must be non-empty")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
 
 
 class AuthoritativeSimulationCommand(FrozenInput):
@@ -433,6 +471,218 @@ class AuthoritativeRunSimulationDriver:
     ) -> AuthoritativeSimulationPosition:
         with self.factory() as session:
             return self._position(session, run_id, branch_id)
+
+    def complete_empty_week(
+        self, command: AuthoritativeEmptyWeekCompletionCommand
+    ) -> dict:
+        """Persist explicit zero-match evidence only for a provably empty week."""
+
+        request_fp = fingerprint(
+            {
+                "mode": "authoritative_empty_week_completion.v1",
+                "command": command.model_dump(mode="json"),
+            }
+        )
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            key = (command.run_id, command.branch_id, command.command_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "empty-week command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("empty-week command receipt is incomplete")
+                return json.loads(receipt.result_json)
+
+            before = self._position(
+                session,
+                command.run_id,
+                command.branch_id,
+                allow_missing_schedule=True,
+            )
+            self._validate_expected(session, command, before)
+
+            calendar, calendar_evidence = self._empty_week_calendar_evidence(
+                command.expected_week
+            )
+            covering_events = tuple(
+                event.event_id
+                for event in calendar.events
+                if (event.start_season_week or event.season_week)
+                <= command.expected_week.week
+                <= (
+                    event.end_season_week
+                    or event.start_season_week
+                    or event.season_week
+                )
+            )
+            if covering_events:
+                raise ValueError(
+                    "empty-week completion is blocked by Calendar events: "
+                    + ", ".join(sorted(covering_events))
+                )
+
+            packages = self._packages(
+                command.expected_week,
+                required=False,
+                session=session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if packages:
+                raise ValueError(
+                    "empty-week completion is blocked by executable tournament packages"
+                )
+            if session.get(
+                AdoptedTournamentAuthorityModel,
+                (command.run_id, command.branch_id, command.expected_week.ordinal),
+            ) is not None:
+                raise ValueError(
+                    "empty-week completion is blocked by adopted tournament authority"
+                )
+            if self._schedule(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+            ) is not None:
+                raise ValueError(
+                    "empty-week completion is blocked by an adopted Week Schedule"
+                )
+            if self._entry_slot_ordinals(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+            ) or self._wc_slot_ordinals(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+            ):
+                raise ValueError(
+                    "empty-week completion is blocked by non-match Simulation Slots"
+                )
+
+            slots = session.scalars(
+                select(SimulationSlotModel).where(
+                    SimulationSlotModel.run_id == command.run_id,
+                    SimulationSlotModel.branch_id == command.branch_id,
+                    SimulationSlotModel.week_ordinal == command.expected_week.ordinal,
+                )
+            ).all()
+            groups = session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.run_id == command.run_id,
+                    SimulationEventGroupModel.branch_id == command.branch_id,
+                    SimulationEventGroupModel.week_ordinal
+                    == command.expected_week.ordinal,
+                )
+            ).all()
+            if slots or groups:
+                raise ValueError(
+                    "empty-week completion is blocked by authoritative match history"
+                )
+
+            sources = OwnedTournamentRankingSourceStore(session).history(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if any(source is None for source in sources):
+                raise ValueError("owned tournament source history is incomplete")
+            if any(
+                source is not None
+                and source.binding.completed_week == command.expected_week
+                for source in sources
+            ):
+                raise ValueError(
+                    "empty-week completion is blocked by completed tournament sources"
+                )
+
+            lifecycle = get_lifecycle(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+            )
+            sporting = get_sporting(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+            )
+            if lifecycle is None or sporting is None:
+                raise ValueError(
+                    "empty-week completion requires lifecycle and sporting roster"
+                )
+
+            try:
+                get_completed_context(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    completed_week=command.expected_week,
+                )
+            except ValueError as exc:
+                if "zero matches cannot be inferred" not in str(exc):
+                    raise
+            else:
+                raise ValueError(
+                    "completed week already has authoritative sporting evidence"
+                )
+
+            context = put_completed_context(
+                session,
+                CompletedWeekSportingContext(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    completed_week=command.expected_week,
+                    competitive_match_counts=tuple(
+                        CompetitiveMatchCount(player_id=player.player_id, count=0)
+                        for player in sorted(
+                            sporting.players, key=lambda item: item.player_id
+                        )
+                    ),
+                    source_fingerprints=(calendar_evidence,),
+                    provenance=AUTHORITATIVE_EMPTY_WEEK_PROVENANCE,
+                ),
+            )
+            after = self._position(
+                session,
+                command.run_id,
+                command.branch_id,
+                allow_missing_schedule=True,
+            )
+            payload = {
+                "schema_version": "authoritative_empty_week_completion.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "completed_week": command.expected_week.model_dump(mode="json"),
+                "completed_context_fingerprint": context.fingerprint,
+                "calendar_evidence_fingerprint": calendar_evidence,
+                "competitive_match_count": 0,
+                "player_count": len(context.competitive_match_counts),
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+                "position": after.model_dump(mode="json"),
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
 
     def _validate_legacy_entry_roster_against_run(
         self,
@@ -1904,6 +2154,65 @@ class AuthoritativeRunSimulationDriver:
         if not eligible_groups:
             raise ValueError("current slot has no unresolved eligible match")
         return eligible_groups
+
+    def _empty_week_calendar_evidence(self, week: RankingWeek):
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        resolved = self.awards_service.calendar_service.get_calendar(season=season)
+        calendar = resolved.calendar
+        if calendar is None:
+            raise ValueError(
+                "empty-week completion requires explicit season Calendar authority"
+            )
+        evidence = fingerprint(
+            {
+                "schema_version": "empty_week_calendar_evidence.v1",
+                "season": season,
+                "week": week.model_dump(mode="json"),
+                "calendar": calendar.model_dump(mode="json"),
+            }
+        )
+        return calendar, evidence
+
+    @staticmethod
+    def _explicit_empty_week_context(
+        session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        sporting,
+    ):
+        try:
+            context = get_completed_context(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                completed_week=week,
+            )
+        except ValueError as exc:
+            if "zero matches cannot be inferred" in str(exc):
+                return None
+            raise
+        if context.provenance != AUTHORITATIVE_EMPTY_WEEK_PROVENANCE:
+            return None
+        expected_ids = (
+            tuple(sorted(player.player_id for player in sporting.players))
+            if sporting is not None
+            else ()
+        )
+        observed_ids = tuple(
+            item.player_id for item in context.competitive_match_counts
+        )
+        if (
+            sporting is None
+            or observed_ids != expected_ids
+            or any(item.count != 0 for item in context.competitive_match_counts)
+            or len(context.source_fingerprints) != 1
+            or context.terminal_sporting_fingerprint is not None
+            or context.match_effect_fingerprints
+        ):
+            raise ValueError("explicit empty-week sporting evidence is corrupt")
+        return context
 
     def _current_week(self, session, run_id, branch_id):
         world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
@@ -3590,10 +3899,34 @@ class AuthoritativeRunSimulationDriver:
             if slots and all(s.status == "complete" for s in slots)
             else None
         )
+        lifecycle = get_lifecycle(
+            session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        sporting = get_sporting(
+            session, run_id=run_id, branch_id=branch_id, week=week
+        )
+        explicit_empty_context = (
+            self._explicit_empty_week_context(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                sporting=sporting,
+            )
+            if (
+                not packages
+                and schedule is None
+                and not slots
+                and not groups
+                and not entry_slot_ordinals
+                and not wc_slot_ordinals
+            )
+            else None
+        )
         blockers = []
         if unresolved_entry_ordinals:
             blockers.append("entry_validation_pending")
-        if schedule is None and (
+        if explicit_empty_context is None and schedule is None and (
             bool(entry_slot_ordinals)
             or bool(wc_slot_ordinals)
             or len(packages) > 1
@@ -3604,19 +3937,13 @@ class AuthoritativeRunSimulationDriver:
             blockers.append("pending_authoritative_groups")
         if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
-        if terminal is None:
+        if terminal is None and explicit_empty_context is None:
             blockers.append("terminal_sporting_checkpoint_missing")
-        lifecycle = get_lifecycle(
-            session, run_id=run_id, branch_id=branch_id, week=week
-        )
-        sporting = get_sporting(
-            session, run_id=run_id, branch_id=branch_id, week=week
-        )
         if lifecycle is None:
             blockers.append("lifecycle_roster_missing")
         if sporting is None:
             blockers.append("sporting_roster_missing")
-        if not blockers:
+        if not blockers and explicit_empty_context is None:
             try:
                 preflight_completed_context_from_authoritative_matches(
                     session,
@@ -3721,6 +4048,11 @@ class AuthoritativeRunSimulationDriver:
                 [world.current_ordinal, world.ranking_fingerprint] if world else None
             ),
             "terminal": terminal.fingerprint if terminal else None,
+            "empty_week_context": (
+                explicit_empty_context.fingerprint
+                if explicit_empty_context is not None
+                else None
+            ),
         }
         ready = not blockers
         return AuthoritativeSimulationPosition(

@@ -56,6 +56,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentRankingSnapshotAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
+    WeekTournamentLockAuthorityModel,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     PLAYER_LIFECYCLE_COMPONENT_KEY,
@@ -181,6 +182,7 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
             TournamentDrawAuthorityModel,
             TournamentDrawRevisionModel,
             TournamentDrawProcessAuthorityModel,
+            WeekTournamentLockAuthorityModel,
         ),
     ),
 )

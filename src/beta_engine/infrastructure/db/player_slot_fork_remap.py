@@ -50,6 +50,9 @@ from beta_engine.domain.tournaments.wild_card_authority import (
     TournamentWildCardAuthority,
     TournamentWildCardAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.week_tournament_lock import (
+    WeekTournamentLockAuthority,
+)
 from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
     SimulationEventGroupModel,
@@ -61,6 +64,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
     WeekSimulationScheduleModel,
+    WeekTournamentLockAuthorityModel,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
@@ -483,6 +487,7 @@ def remap_coupled_player_slot_history(
         "draw_authorities",
         "draw_process_authorities",
         "draw_revisions",
+        "week_tournament_locks",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -517,6 +522,10 @@ def remap_coupled_player_slot_history(
         TournamentDrawRevisionModel(**value)
         for value in source_slot_component.get("draw_revisions", [])
     ]
+    source_week_lock_rows = [
+        WeekTournamentLockAuthorityModel(**value)
+        for value in source_slot_component.get("week_tournament_locks", [])
+    ]
 
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
@@ -524,6 +533,7 @@ def remap_coupled_player_slot_history(
     target_draw_rows: list[TournamentDrawAuthorityModel] = []
     target_draw_process_rows: list[TournamentDrawProcessAuthorityModel] = []
     target_draw_revision_rows: list[TournamentDrawRevisionModel] = []
+    target_week_lock_rows: list[WeekTournamentLockAuthorityModel] = []
     target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
     target_apps_by_event: dict[str, tuple[TournamentEntryApplication, ...]] = {}
     target_ranking_by_event: dict[str, TournamentRankingSnapshotAuthority] = {}
@@ -658,6 +668,42 @@ def remap_coupled_player_slot_history(
             target_frozen_fingerprint_map[source_row.field_fingerprint] = (
                 target_field.fingerprint
             )
+
+    for row in source_week_lock_rows:
+        source_lock = WeekTournamentLockAuthority.model_validate_json(row.payload_json)
+        target_evidence = []
+        for evidence in source_lock.event_evidence:
+            mapped_field = target_frozen_fingerprint_map.get(
+                evidence.entry_field_fingerprint
+            )
+            if mapped_field is None:
+                raise SimulationSlotForkRemapUnsupportedError(
+                    "Week Tournament Lock references Entry Field without a target mapping"
+                )
+            target_evidence.append(
+                evidence.model_copy(
+                    update={"entry_field_fingerprint": mapped_field}
+                )
+            )
+        target_lock = WeekTournamentLockAuthority.model_validate(
+            source_lock.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "event_evidence": tuple(target_evidence),
+                }
+            ).model_dump(mode="python")
+        )
+        target_week_lock_rows.append(
+            WeekTournamentLockAuthorityModel(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                week_ordinal=row.week_ordinal,
+                command_id=row.command_id,
+                request_fingerprint=row.request_fingerprint,
+                authority_fingerprint=target_lock.fingerprint,
+                payload_json=target_lock.model_dump_json(),
+            )
+        )
 
     for row in source_wc_rows:
         source_authority = TournamentWildCardAuthority.model_validate_json(
@@ -1893,6 +1939,8 @@ def remap_coupled_player_slot_history(
         ),
         draw_revisions=target_draw_revision_rows,
         include_draw_revisions="draw_revisions" in source_slot_component,
+        week_tournament_locks=target_week_lock_rows,
+        include_week_tournament_locks="week_tournament_locks" in source_slot_component,
     )
 
     return CoupledPlayerSlotForkRemap(

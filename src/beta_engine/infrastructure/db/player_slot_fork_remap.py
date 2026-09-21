@@ -1156,7 +1156,7 @@ def remap_coupled_player_slot_history(
                     raise SimulationSlotForkRemapUnsupportedError(
                         "Frozen WC revision lacks repair authority"
                     )
-                target_authority = _retarget_replacement_source_authority(
+                target_authority = _retarget_frozen_evidence(
                     source_authority,
                     target_branch_id=target_branch_id,
                     fingerprint_map=frozen_map,

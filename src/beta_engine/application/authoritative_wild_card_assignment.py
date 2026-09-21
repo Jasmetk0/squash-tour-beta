@@ -25,6 +25,7 @@ from beta_engine.domain.tournaments.wild_card_authority import (
     TournamentWildCardAuthorityBuilder,
 )
 from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
+    DefinitiveWildCardAssignmentStore,
     record_definitive_wild_card_assignment,
 )
 from beta_engine.infrastructure.db.models import (
@@ -166,6 +167,17 @@ class AuthoritativeWildCardAssignmentCommitResult(FrozenInput):
     authority: TournamentWildCardAuthority
     assignment_results: tuple[AuthoritativeWildCardCommitItem, ...]
     adoption: Literal["committed", "exact_retry"]
+
+
+class AuthoritativeWildCardAssignmentState(FrozenInput):
+    schema_version: Literal["authoritative_wild_card_assignment_state.v1"] = (
+        "authoritative_wild_card_assignment_state.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    authority: TournamentWildCardAuthority | None = None
+    definitive_assignments: tuple[DefinitiveWildCardAssignmentAuthority, ...] = ()
 
 
 class AuthoritativeWildCardAssignmentService:
@@ -549,6 +561,39 @@ class AuthoritativeWildCardAssignmentService:
             persisted=False,
             proposal_fingerprint=proposal_fp,
         )
+
+    def inspect(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+    ) -> AuthoritativeWildCardAssignmentState:
+        with self.factory() as session:
+            run = session.get(RunContainerModel, run_id)
+            branch = session.get(RunBranchModel, branch_id)
+            if run is None or branch is None or branch.run_id != run_id:
+                raise ValueError("Canonical WC Run/Branch scope does not exist")
+            authority = TournamentWildCardAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            assignments = tuple(
+                item
+                for item in DefinitiveWildCardAssignmentStore(session).list(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                )
+                if item.event_id == event_id
+            )
+            return AuthoritativeWildCardAssignmentState(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                authority=authority,
+                definitive_assignments=assignments,
+            )
 
     def preview(
         self,

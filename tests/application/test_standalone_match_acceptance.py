@@ -6,6 +6,7 @@ import pytest
 
 from beta_engine.application.run_container_creation_service import RunContainerCreationService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.run_saved_revision_restore_service import RunSavedRevisionRestoreService
 from beta_engine.application.standalone_match_service import (
     StandaloneMatchAddPlayerCommand,
     StandaloneMatchService,
@@ -183,3 +184,32 @@ def test_empty_run_two_manual_players_can_play_one_saved_standalone_match(tmp_pa
     assert "player_lifecycle" in content
     assert "player_sporting_state" in content
     assert "simulation_slot_match_state" in content
+
+    restored_empty = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("checkpoint-empty", "revision-empty", "audit-empty"),
+    ).restore_current_branch(
+        run_id="run",
+        branch_id="branch",
+        target_saved_revision_id="revision-1",
+        expected_head_saved_revision_id=saved.saved_revision.revision_id,
+        expected_draft_version=saved.working_draft.draft_version,
+        expected_current_viewer_branch_id="branch",
+        explicit_confirmation=True,
+    )
+    assert service.inspect(run_id="run", branch_id="branch").status == "empty"
+
+    restored_match = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("checkpoint-match", "revision-match", "audit-match"),
+    ).restore_current_branch(
+        run_id="run",
+        branch_id="branch",
+        target_saved_revision_id=saved.saved_revision.revision_id,
+        expected_head_saved_revision_id=restored_empty.saved_revision.revision_id,
+        expected_draft_version=restored_empty.working_draft.draft_version,
+        expected_current_viewer_branch_id="branch",
+        explicit_confirmation=True,
+    )
+    assert restored_match.saved_revision.revision_id == "revision-match"
+    assert service.inspect(run_id="run", branch_id="branch") == completed

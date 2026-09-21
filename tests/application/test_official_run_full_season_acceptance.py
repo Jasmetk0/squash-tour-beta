@@ -211,7 +211,7 @@ def _roots(server: ApiServer, run_id: str, branch_id: str) -> tuple[str, str, st
     return ranking_root, transition_root, sim_root
 
 
-@pytest.mark.pr_critical
+@pytest.mark.smoke
 def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     tmp_path,
 ):
@@ -372,8 +372,8 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             reopened, run_id, branch_id
         )
         loaded = _request("GET", sim_root + "/position")[1]
-        assert loaded["current_week"] == before_reopen["current_week"]
-        assert loaded["position_fingerprint"] == before_reopen["position_fingerprint"]
+        assert loaded["current_week"] == saved_before_reopen["current_week"]
+        assert loaded["position_fingerprint"] == saved_before_reopen["position_fingerprint"]
         revision = head_before_reopen
 
         for week in range(31, 61):

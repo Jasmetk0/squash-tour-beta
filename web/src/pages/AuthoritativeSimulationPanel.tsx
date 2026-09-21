@@ -6,6 +6,9 @@ import {
   getAuthoritativeSimulationPosition,
   inspectAuthoritativeEntryDecisionSlot,
   reviewAuthoritativeEntryDecisionSlot,
+  inspectWeekTournamentLock,
+  previewWeekTournamentLock,
+  commitWeekTournamentLock,
   getAuthoritativeSeasonTransitionPreflight,
   getAdminVisibleProspects,
   previewAuthoritativeSeasonTransitionConfiguration,
@@ -31,6 +34,8 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeApplicationValidationReview,
+  WeekTournamentLockPreview,
+  WeekTournamentLockPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
   AuthoritativeMatchReconstructionPreviewPayload,
   MatchReconstructionConstraints,
@@ -111,6 +116,22 @@ export function AuthoritativeSimulationPanel({
   const [entryValidationReason, setEntryValidationReason] = useState('')
   const [entryValidationDrafts, setEntryValidationDrafts] =
     useState<Record<string, EntryValidationDraft>>({})
+  const [weekLockCommandId, setWeekLockCommandId] = useState(newCommandId)
+  const [weekLockOperator, setWeekLockOperator] = useState('')
+  const [weekLockReason, setWeekLockReason] = useState('')
+  const [weekLockSelections, setWeekLockSelections] =
+    useState<Record<string, string>>({})
+  const [weekLockReview, setWeekLockReview] = useState<{
+    payload: WeekTournamentLockPreviewPayload
+    preview: WeekTournamentLockPreview
+  } | null>(null)
+
+  const weekLockQuery = useQuery({
+    queryKey: ['authoritative-week-tournament-lock', runId, branchId],
+    queryFn: () => inspectWeekTournamentLock(runId, branchId),
+    enabled,
+    retry: false
+  })
 
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],

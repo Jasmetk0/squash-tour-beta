@@ -912,3 +912,16 @@ Later `RankingResultVersion` corrections over canonical tournament-backed result
 now supported by Branch forks. The source predecessor chain is verified exactly, then
 each correction is rebuilt against the corresponding target-Branch predecessor
 fingerprint. Broken or detached correction history remains fail-closed.
+
+
+### Ranking identity remapping: transition authority identity foundation
+
+A dedicated adapter now rebuilds `RankingTransitionAuthority` records for target
+Branch/Saved-Revision identity while preserving frozen roster, policy, provenance and
+audit evidence. Source scope and target-week ordering are validated and source
+fingerprints map deterministically to the rebuilt target authorities.
+
+This is the identity foundation only. Full transition-bearing Branch forks remain
+guarded until materialized fork-root Saved Revision identity, weekly command authority
+references, and authoritative publication/world state are rebound together in one
+atomic fork path.

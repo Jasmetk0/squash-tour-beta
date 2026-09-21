@@ -22,6 +22,9 @@ from beta_engine.domain.rankings.official import calculate_official_ranking
 from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
+from beta_engine.domain.tournaments.ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthority,
+)
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
@@ -511,6 +514,54 @@ def _remap_command_zero_versions(
     return tuple(remapped)
 
 
+
+def _remap_tournament_ranking_snapshot_authorities(
+    authorities: tuple[TournamentRankingSnapshotAuthority, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    source_entries: tuple[RankingRevisionEntry, ...],
+    target_entries: tuple[RankingRevisionEntry, ...],
+) -> tuple[
+    tuple[TournamentRankingSnapshotAuthority, ...],
+    dict[str, TournamentRankingSnapshotAuthority],
+]:
+    source_by_week = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in source_entries
+    }
+    target_by_week = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in target_entries
+    }
+    remapped = []
+    by_source_fingerprint = {}
+    for authority in authorities:
+        if (authority.run_id, authority.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Tournament Ranking Snapshot authority scope differs from source Branch"
+            )
+        source_snapshot = source_by_week.get(authority.ranking_week.ordinal)
+        target_snapshot = target_by_week.get(authority.ranking_week.ordinal)
+        if (
+            source_snapshot is None
+            or target_snapshot is None
+            or authority.ranking_snapshot != source_snapshot
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Tournament Ranking Snapshot authority differs from frozen ranking history"
+            )
+        target = TournamentRankingSnapshotAuthority.model_validate_json(
+            authority.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "ranking_snapshot": target_snapshot,
+                }
+            ).model_dump_json()
+        )
+        by_source_fingerprint[authority.fingerprint] = target
+        remapped.append(target)
+    return tuple(remapped), by_source_fingerprint
+
 def remap_source_free_ranking_state_for_branch(
     source: RankingRevisionState,
     *,
@@ -533,12 +584,9 @@ def remap_source_free_ranking_state_for_branch(
         raise RankingForkRemapUnsupportedError(
             "Ranking-bearing fork requires a complete Week-1 ranking root"
         )
-    if (
-        source.tournament_ranking_snapshot_authorities
-        or source.season_closing_rankings
-    ):
+    if source.season_closing_rankings:
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support Tournament Ranking Snapshot/Season Closing authorities"
+            "Ranking-bearing fork does not yet support Season Closing authorities"
         )
     if source.transition_authorities and target_base_revision_id is None:
         raise RankingForkRemapUnsupportedError(
@@ -893,6 +941,17 @@ def remap_source_free_ranking_state_for_branch(
         )
 
     remapped_entries_tuple = tuple(remapped_entries)
+    (
+        remapped_tournament_ranking_snapshot_authorities,
+        _tournament_ranking_snapshot_authority_map,
+    ) = _remap_tournament_ranking_snapshot_authorities(
+        source.tournament_ranking_snapshot_authorities,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        source_entries=source.entries,
+        target_entries=remapped_entries_tuple,
+    )
     remapped_transition_state = _remap_publication_world_state(
         source.authoritative_transition_state,
         run_id=run_id,
@@ -903,7 +962,11 @@ def remap_source_free_ranking_state_for_branch(
     )
 
     return RankingRevisionState(
-        schema_version="ranking_revision_state.v4",
+        schema_version=(
+            "ranking_revision_state.v5"
+            if remapped_tournament_ranking_snapshot_authorities
+            else "ranking_revision_state.v4"
+        ),
         run_id=run_id,
         branch_id=target_branch_id,
         entries=remapped_entries_tuple,
@@ -911,6 +974,9 @@ def remap_source_free_ranking_state_for_branch(
         zero_sources=remapped_zero_sources,
         tournament_sources=remapped_tournament_sources,
         transition_authorities=remapped_transition_authorities,
+        tournament_ranking_snapshot_authorities=(
+            remapped_tournament_ranking_snapshot_authorities
+        ),
         authoritative_transition_state=remapped_transition_state,
     )
 

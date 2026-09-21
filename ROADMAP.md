@@ -771,3 +771,12 @@ Before choosing a reference-scale performance target, capture reproducible evide
 and emits a versioned JSON report containing wall time and cross-platform Python heap
 peak. It does not invent a threshold and does not close PAQ-006. The profiler belongs
 to release/checkpoint validation rather than ordinary PR CI.
+
+
+### Recovery integrity: revision-bound Season Closure
+
+Saved Revision restore must preserve immutable historical closure evidence without
+copying stale revision identity. When a restored target contains `season_closure`,
+validate the historical component and rebind only its Closure Marker to the newly
+created restore revision ID. Keep the Season Summary unchanged and verify the new
+Saved Revision hash. This is a technical recovery invariant, not a new sporting rule.

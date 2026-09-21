@@ -979,3 +979,18 @@ PR links are not handed to the user as merge-ready while required CI is queued,
 running, failed, cancelled or timed out. After every fix, CI must be re-checked on the
 latest head commit. Only an all-green latest head may be presented as the next PR to
 merge. This is a hard development workflow rule, not a suggestion.
+
+
+## Saved Revision restore: Season Closure identity repair
+
+Saved Revision restore now treats embedded `season_closure` evidence as revision-bound
+state. Historical target closure evidence is validated against the historical target
+revision before restore, then the newly created restore revision receives the same
+Season Summary with a newly bound Closure Marker whose `final_saved_revision_id`
+points to the restore revision itself. The historical target revision is not rewritten.
+
+This closes a recovery-integrity hole where copying a Season Transition revision into a
+new restore revision could leave the embedded closure marker pointing at the old
+revision identity, making the new revision fail its own closure identity validation.
+Focused regression coverage exercises the real Branch restore transaction and verifies
+the resulting Saved Revision content hash.

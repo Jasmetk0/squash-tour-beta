@@ -8,7 +8,9 @@ from typing import Literal
 from beta_engine.domain.run_revisions import canonical_json
 from beta_engine.domain.season_closure import (
     SeasonClosureMarker,
+    SeasonClosureMarkerCandidate,
     SeasonClosurePackage,
+    bind_season_closure_marker,
 )
 from beta_engine.domain.rankings.official import FrozenInput
 
@@ -123,3 +125,50 @@ def load_saved_revision_season_closure(
     ) or marker.completed_week != summary.completed_week:
         raise ValueError("Saved Revision season closure identity mismatch")
     return component
+
+
+def rebind_saved_revision_season_closure(
+    payload: dict,
+    *,
+    run_id: str,
+    branch_id: str,
+    source_revision_id: str,
+    target_revision_id: str,
+) -> SavedRevisionSeasonClosure | None:
+    """Validate a copied closure component and bind it to a new Saved Revision id.
+
+    Restore creates a new immutable revision rather than mutating the historical
+    target. The embedded closure marker therefore cannot retain the historical
+    target revision id: doing so would make the new revision fail its own
+    load-time identity validation.
+    """
+
+    component = load_saved_revision_season_closure(
+        payload,
+        run_id=run_id,
+        branch_id=branch_id,
+        revision_id=source_revision_id,
+    )
+    if component is None:
+        return None
+
+    summary = component.parsed_summary
+    marker = component.parsed_marker
+    candidate = SeasonClosureMarkerCandidate(
+        run_id=marker.run_id,
+        branch_id=marker.branch_id,
+        completed_week=marker.completed_week,
+        season_summary_fingerprint=marker.season_summary_fingerprint,
+        closing_ranking_fingerprint=marker.closing_ranking_fingerprint,
+        rule_versions=marker.rule_versions,
+    )
+    package = SeasonClosurePackage(summary=summary, marker=candidate)
+    rebound_marker = bind_season_closure_marker(
+        candidate,
+        final_saved_revision_id=target_revision_id,
+    )
+    return install_saved_revision_season_closure(
+        payload,
+        package=package,
+        marker=rebound_marker,
+    )

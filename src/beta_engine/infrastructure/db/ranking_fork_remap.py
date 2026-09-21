@@ -94,7 +94,9 @@ def remap_bootstrap_ranking_state_for_branch(
 
     remapped_payload = dict(payload)
     remapped_payload["branch_id"] = target_branch_id
-    command = RankingBootstrapCommand.model_validate(remapped_payload)
+    command = RankingBootstrapCommand.model_validate_json(
+        json.dumps(remapped_payload, sort_keys=True, separators=(",", ":"))
+    )
     if (
         command.target_week != entry.snapshot.week
         or command.policy != entry.snapshot.policy

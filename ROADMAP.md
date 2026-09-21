@@ -1096,3 +1096,10 @@ PR-critical coverage exercises a mixed revision chain across capture -> addition
 The recovery path now verifies the complete installed Simulation Slot component after restore/materialized-fork installation by recapturing live state and comparing its canonical fingerprint to the requested target component. This upgrades component installation from per-store validation to whole-component exactness.
 
 PR-critical coverage joins the Branch fork and restore work into one specialized-history scenario: frozen RWC repair -> target materialization -> later target RWC repair -> restore -> exact original RWC retry. Next hardening should expand this equivalence test across Lucky Loser and source-bound pre-Q repair families and then move back toward pre-alpha feature delivery.
+
+
+### Strict Lucky Loser / pre-Q fork evidence
+
+Fork replay no longer permits Lucky Loser or replacement-source nested fingerprints to survive merely because a generic recursive retarget did not recognize them. Branch-owned Draw/Input/Ranking/WC/result/Q-bracket evidence now requires exact source->target mappings.
+
+LL v2 auto-BYE evidence is rebuilt before LL-order terminal fingerprints so the target order owns the target auto-BYE evidence hash rather than a stale source hash. Source-bound pre-Q promotion is covered through Saved Revision capture, target Branch remap/materialization and idempotent retry. Remaining recovery work should emphasize broader real-match LL vacancy/fill acceptance and then return to pre-alpha product delivery.

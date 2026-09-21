@@ -12,7 +12,13 @@ from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.official_ranking_transition import RankingTransitionContext
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.run_branch_creation_service import RunBranchCreationService
-from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
+from beta_engine.domain.rankings.official import (
+    DisciplinaryZero,
+    OfficialRankingPlayer,
+    OfficialRankingPolicy,
+    RankingWeek,
+)
+from beta_engine.domain.rankings.zero_history import RankingZeroVersion
 from beta_engine.infrastructure.db import WorkingDraftConflictError, SavedRevisionBranchForkConflictError, SavedRevisionHistoryConflictError
 from beta_engine.infrastructure.db.models import BranchRevisionAuditEventModel, BranchSavedRevisionModel, OfficialRankingCandidateModel
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
@@ -340,6 +346,218 @@ def test_source_free_multiweek_ranking_fork_rebuilds_full_lineage_and_diverges(p
     assert reloaded.get_branch_revision_state(
         branch_id="branch-four"
     ).saved_head_revision_id == "revision-branch-four-week-four"
+
+
+@pytest.mark.pr_critical
+def test_zero_history_ranking_fork_remaps_zero_lineage_and_diverges(tmp_path):
+    path = tmp_path / "saved-ranking-zero-fork.db"
+    repo = _repository(f"sqlite:///{path}")
+    _run_with_saved_viewer_change(repo)
+
+    week1 = RankingWeek(season_index=0, week=1)
+    week2 = RankingWeek(season_index=0, week=2)
+    week3 = RankingWeek(season_index=0, week=3)
+    week4 = RankingWeek(season_index=0, week=4)
+    policy = OfficialRankingPolicy(policy_id="policy")
+    player = OfficialRankingPlayer(
+        player_id="player-a",
+        tie_break_token="token-a",
+        tour_entry_week=week1,
+    )
+    first_zero = RankingZeroVersion(
+        effective_week=week1,
+        previous_fingerprint=None,
+        zero=DisciplinaryZero(
+            zero_id="zero-a",
+            run_id="run-one",
+            branch_id="branch-one",
+            player_id="player-a",
+            source_fingerprint="discipline-initial",
+            effective_week=week1,
+            duration_weeks=3,
+        ),
+    )
+
+    runner = RankingWeekCommandRunner(repo._session_factory)
+    runner.execute(
+        RankingBootstrapCommand(
+            command_id="bootstrap-zero",
+            run_id="run-one",
+            branch_id="branch-one",
+            policy=policy,
+            players=(player,),
+            discipline="stored_zeros",
+            zero_versions=(first_zero,),
+        )
+    )
+    runner.execute(
+        RankingWeekCommand(
+            command_id="week-two-zero",
+            tournaments=(),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-one",
+                completed_week=week1,
+                target_week=week2,
+                policy=policy,
+                players=(player,),
+                discipline="stored_zeros",
+            ),
+        )
+    )
+
+    corrected_zero = RankingZeroVersion(
+        effective_week=week3,
+        previous_fingerprint=first_zero.fingerprint,
+        zero=first_zero.zero.model_copy(
+            update={
+                "source_fingerprint": "discipline-corrected",
+                "duration_weeks": 1,
+            }
+        ),
+    )
+    runner.execute(
+        RankingWeekCommand(
+            command_id="week-three-zero-correction",
+            tournaments=(),
+            zero_versions=(corrected_zero,),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-one",
+                completed_week=week2,
+                target_week=week3,
+                policy=policy,
+                players=(player,),
+                discipline="stored_zeros",
+            ),
+        )
+    )
+
+    service = RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory("revision-zero-source", "audit-zero-source"),
+    )
+    staged = service.stage_viewer_branch(
+        run_id="run-one",
+        branch_id="branch-one",
+        viewer_branch_id="branch-one",
+        expected_draft_version=2,
+    )
+    source_saved = service.save(
+        run_id="run-one",
+        branch_id="branch-one",
+        expected_draft_version=staged.draft_version,
+    )
+    source_state = load_saved_ranking_component(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_state is not None
+    assert len(source_state.entries) == 3
+    assert len(source_state.zero_sources) == 2
+    assert source_state.zero_sources[1].previous_fingerprint == (
+        source_state.zero_sources[0].fingerprint
+    )
+
+    created = RunBranchCreationService(
+        repository=repo,
+        id_factory=_id_factory(
+            "branch-zero-fork",
+            "draft-zero-fork",
+            "revision-zero-fork-root",
+        ),
+    ).create_from_saved_revision(
+        run_id="run-one",
+        source_branch_id="branch-one",
+        source_saved_revision_id="revision-zero-source",
+        display_name="Zero History Fork",
+    )
+    assert created.saved_head_revision_id == "revision-zero-fork-root"
+
+    fork_root = repo.get_branch_saved_revision(
+        revision_id="revision-zero-fork-root"
+    )
+    assert fork_root is not None
+    target_state = load_saved_ranking_component(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-zero-fork",
+    )
+    assert target_state is not None
+    assert len(target_state.entries) == 3
+    assert len(target_state.zero_sources) == 2
+    assert all(
+        version.zero.branch_id == "branch-zero-fork"
+        for version in target_state.zero_sources
+    )
+    assert all(
+        target.fingerprint != source.fingerprint
+        for target, source in zip(
+            target_state.zero_sources,
+            source_state.zero_sources,
+            strict=True,
+        )
+    )
+    assert target_state.zero_sources[1].previous_fingerprint == (
+        target_state.zero_sources[0].fingerprint
+    )
+    assert all(
+        zero.branch_id == "branch-zero-fork"
+        for entry in target_state.entries
+        for zero in entry.inputs.disciplinary_zeros
+    )
+
+    target_runner = RankingWeekCommandRunner(repo._session_factory)
+    target_runner.execute(
+        RankingWeekCommand(
+            command_id="target-week-four",
+            tournaments=(),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-zero-fork",
+                completed_week=week3,
+                target_week=week4,
+                policy=policy,
+                players=(player,),
+                discipline="stored_zeros",
+            ),
+        )
+    )
+    target_preview = repo.preview_ranking_save(
+        run_id="run-one",
+        branch_id="branch-zero-fork",
+    )
+    target_saved = RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory(
+            "revision-zero-target-week-four",
+            "audit-zero-target",
+        ),
+    ).save_ranking(
+        run_id="run-one",
+        branch_id="branch-zero-fork",
+        expected_draft_version=0,
+        expected_ranking_fingerprint=target_preview["ranking_fingerprint"],
+    )
+    target_after = load_saved_ranking_component(
+        target_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-zero-fork",
+    )
+    assert target_after is not None
+    assert len(target_after.entries) == 4
+
+    source_after = load_saved_ranking_component(
+        repo.get_branch_saved_revision(
+            revision_id="revision-zero-source"
+        ).payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_after is not None
+    assert len(source_after.entries) == 3
+    assert source_after.zero_sources == source_state.zero_sources
 
 
 @pytest.mark.parametrize("damage", ["hash", "scope", "shape"])

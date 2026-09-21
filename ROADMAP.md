@@ -789,3 +789,11 @@ authority exists that is not represented by the current Saved Revision simulatio
 component. The guard includes WC authority, Draw Process authority and Draw revision
 history as well as the older slot/draw tables, preventing future tournament state from
 surviving a restore to an older snapshot.
+
+
+### Recovery integrity: completed-week sporting context coverage
+
+The uncaptured-sporting restore guard covers both player sporting week snapshots and
+completed-week sporting contexts. A context-only live row is still sporting history and
+must block restore when the current Saved Revision does not capture the sporting
+component.

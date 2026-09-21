@@ -43,6 +43,7 @@ from beta_engine.infrastructure.db import (
 from beta_engine.domain.run_revisions import saved_revision_content_hash
 from beta_engine.infrastructure.db.models import (
     BranchSavedRevisionModel,
+    CompletedWeekSportingContextModel,
     TournamentWildCardAuthorityModel,
     TournamentDrawProcessAuthorityModel,
     TournamentDrawRevisionModel,
@@ -544,6 +545,55 @@ def test_restore_blocks_uncaptured_newer_simulation_authority_rows(tmp_path, row
     assert (
         repository.get_branch_saved_revision_checkpoint(
             checkpoint_id="guard-checkpoint"
+        )
+        is None
+    )
+
+
+@pytest.mark.pr_critical
+def test_restore_blocks_uncaptured_completed_sporting_context_without_player_state(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-orphan-sporting-context.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        session.add(
+            CompletedWeekSportingContextModel(
+                run_id="run-one",
+                branch_id="branch-one",
+                week_ordinal=0,
+                fingerprint="a" * 64,
+                payload_json="{}",
+            )
+        )
+
+    with pytest.raises(
+        SavedRevisionRestoreUnsupportedError,
+        match="does not capture player sporting state",
+    ):
+        RunSavedRevisionRestoreService(
+            repository=repository,
+            id_factory=_id_factory(
+                "sporting-context-checkpoint",
+                "sporting-context-restore",
+                "sporting-context-audit",
+            ),
+        ).restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+
+    assert (
+        repository.get_branch_saved_revision(revision_id="sporting-context-restore")
+        is None
+    )
+    assert (
+        repository.get_branch_saved_revision_checkpoint(
+            checkpoint_id="sporting-context-checkpoint"
         )
         is None
     )

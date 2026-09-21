@@ -163,8 +163,7 @@ def install_ranking_revision_state(
 
     if allow_empty_fork_target and branch.forked_from_branch_id is not None:
         if (
-            state.tournament_sources
-            or state.transition_authorities
+            state.transition_authorities
             or state.tournament_ranking_snapshot_authorities
             or state.season_closing_rankings
             or state.authoritative_transition_state is not None
@@ -177,7 +176,7 @@ def install_ranking_revision_state(
             )
         ):
             raise ValueError(
-                "Trusted fork install supports complete ranking history without tournament/transition authorities"
+                "Trusted fork install supports complete ranking history without transition/publication authorities"
             )
         row_models = (
             OfficialRankingCandidateModel,

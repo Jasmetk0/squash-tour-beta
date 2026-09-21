@@ -1161,3 +1161,19 @@ append an independent Week-3 correction, and Save it while the source Branch ret
 original result version and ranking points.
 
 Canonical tournament source/authority remapping remains a separate fail-closed follow-up.
+
+
+## Ranking-bearing Branch fork: canonical tournament authority remap
+
+Ranking-bearing forks now support canonical `OwnedTournamentRankingSource` v4/v5
+bundles. Tournament Result authority is rebound to the target Branch; Point Award
+authority and optional Prize Money authority are rebuilt against the new Result
+fingerprint; the target tournament binding is then rebuilt against those target-owned
+authority fingerprints. Ranking result versions are re-derived from the remapped
+canonical authorities rather than copied from source history.
+
+The trusted empty-fork installer accepts this remapped tournament-source state
+atomically with the ranking lineage. Legacy tournament source versions v1-v3, final
+Closing-only v6 sources, corrections layered on canonical tournament editions, and
+transition/publication/Season Closing authorities remain fail-closed pending their own
+explicit adapters.

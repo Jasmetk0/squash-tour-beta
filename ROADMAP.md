@@ -842,3 +842,17 @@ Branch. Current and target source drift fails closed before restore mutation.
 This advances the section 11 complete sporting-world recovery follow-up. Remaining work
 still includes broader world-state/identity recovery and ranking-bearing fork identity
 remapping; this slice does not promote unresolved Tour-entry/product policy.
+
+
+### Ranking identity remapping: bootstrap fork slice
+
+Ranking-bearing Branch creation now supports the first remappable subset instead of
+blanket rejection. A source-free Week-1 bootstrap ranking is rebuilt for the target
+Branch identity, installed atomically, and anchored by a target-owned materialized
+fork-root Saved Revision whose parent is the selected source revision.
+
+The target can then diverge with its own later ranking Saves while the source history
+remains unchanged. Full ranking-bearing fork support remains open for multi-week
+histories, tournament/zero/transition authorities, InitialWorld-linked state and
+Season Closing evidence; each requires an explicit identity-remap adapter rather than
+generic payload rewriting.

@@ -21,6 +21,7 @@ from beta_engine.domain.rankings.input_manifest import RankingInputManifest
 from beta_engine.domain.rankings.official import calculate_official_ranking
 from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.rankings.transition_authority import RankingTransitionAuthority
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
@@ -34,6 +35,59 @@ from beta_engine.domain.rankings.revision_state import (
 
 class RankingForkRemapUnsupportedError(ValueError):
     """Raised when a ranking bundle is outside the supported fork-remap slice."""
+
+
+def _remap_transition_authorities(
+    authorities: tuple[RankingTransitionAuthority, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    target_base_revision_id: str,
+) -> tuple[
+    tuple[RankingTransitionAuthority, ...],
+    dict[str, RankingTransitionAuthority],
+]:
+    """Rebind immutable Week Transition ranking inputs to target fork identity.
+
+    Sporting roster, policy, provenance and audit stay immutable. Branch and Saved
+    Revision ownership are target-local, so the fingerprint is intentionally rebuilt.
+    """
+    if not target_base_revision_id.strip():
+        raise RankingForkRemapUnsupportedError(
+            "Ranking transition authority remap requires a target Saved Revision id"
+        )
+
+    remapped: list[RankingTransitionAuthority] = []
+    by_source_fingerprint: dict[str, RankingTransitionAuthority] = {}
+    previous_target_ordinal = None
+
+    for authority in authorities:
+        if (authority.run_id, authority.branch_id) != (run_id, source_branch_id):
+            raise RankingForkRemapUnsupportedError(
+                "Ranking transition authority scope does not match the source Branch"
+            )
+        if (
+            previous_target_ordinal is not None
+            and authority.target_week.ordinal <= previous_target_ordinal
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Ranking transition authority history is not in canonical target-week order"
+            )
+
+        target = RankingTransitionAuthority.model_validate_json(
+            authority.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "base_revision_id": target_base_revision_id,
+                }
+            ).model_dump_json()
+        )
+        by_source_fingerprint[authority.fingerprint] = target
+        remapped.append(target)
+        previous_target_ordinal = authority.target_week.ordinal
+
+    return tuple(remapped), by_source_fingerprint
 
 
 def _hash(value: object) -> str:

@@ -1043,3 +1043,19 @@ CompletedWeekSportingContext guards structural rather than one-off conditions.
 `season_closure` remains an embedded-only supported component handled by its dedicated
 revision-identity rebinding path. See
 `docs/SAVED_REVISION_RESTORE_COVERAGE_V1.md`.
+
+
+## Saved Revision restore preflight
+
+Historical restore now exposes a read-only, target-specific preflight contract. The
+backend resolves validated revision lineage and returns the exact current Saved Revision
+head, Working Draft version, current/target Viewer Branch identities and all known
+restore blockers without mutating state.
+
+The Saved Revision History UI now consumes that server preflight instead of duplicating
+restore eligibility rules client-side. Confirm binds to the reviewed server snapshot and
+still revalidates everything under `BEGIN IMMEDIATE`, so a stale preflight fails closed.
+
+Coverage-registry blockers, transient authoring blockers and unsupported legacy-backed
+Run/Branch state are visible before opening the confirmation dialog. See
+`docs/SAVED_REVISION_RESTORE_PREFLIGHT_V1.md`.

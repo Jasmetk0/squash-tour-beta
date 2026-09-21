@@ -693,3 +693,72 @@ def test_restore_blocks_transient_standalone_match_workspace(tmp_path) -> None:
     assert repository.get_branch_saved_revision_checkpoint(
         checkpoint_id="workspace-checkpoint"
     ) is None
+
+
+@pytest.mark.pr_critical
+def test_restore_preflight_returns_server_owned_expected_snapshot(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-preflight-ready.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    preview = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("unused-checkpoint", "unused-revision", "unused-audit"),
+    ).preview_current_branch_restore(
+        run_id="run-one",
+        branch_id="branch-one",
+        target_saved_revision_id="revision-one",
+    )
+
+    assert preview.can_restore is True
+    assert preview.blockers == ()
+    assert preview.saved_head_revision_id == "revision-two"
+    assert preview.draft_version == 2
+    assert preview.current_viewer_branch_id == "branch-two"
+    assert preview.target_viewer_branch_id == "branch-one"
+
+
+@pytest.mark.pr_critical
+def test_restore_preflight_reports_transient_and_uncaptured_state_without_mutation(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-preflight-blocked.db'}")
+    _run_with_saved_viewer_change(repository)
+
+    with repository._session_factory.begin() as session:
+        session.add(
+            CompletedWeekSportingContextModel(
+                run_id="run-one",
+                branch_id="branch-one",
+                week_ordinal=0,
+                fingerprint="a" * 64,
+                payload_json="{}",
+            )
+        )
+        session.add(
+            StandaloneMatchWorkspaceModel(
+                run_id="run-one",
+                branch_id="branch-one",
+                version=1,
+                fingerprint="b" * 64,
+                payload_json="{}",
+            )
+        )
+
+    preview = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("unused-checkpoint", "unused-revision", "unused-audit"),
+    ).preview_current_branch_restore(
+        run_id="run-one",
+        branch_id="branch-one",
+        target_saved_revision_id="revision-one",
+    )
+
+    assert preview.can_restore is False
+    assert {item.code for item in preview.blockers} == {
+        "uncaptured_live_state",
+        "transient_state_active",
+    }
+    assert any("player sporting state" in item.message for item in preview.blockers)
+    assert any("standalone match authoring workspace" in item.message for item in preview.blockers)
+    assert repository.get_branch_saved_revision(revision_id="unused-revision") is None
+    assert repository.get_branch_saved_revision_checkpoint(
+        checkpoint_id="unused-checkpoint"
+    ) is None

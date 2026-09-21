@@ -15,9 +15,9 @@ const api = vi.hoisted(() => {
   return {
     ApiError,
     createRunBranchFromSavedRevision: vi.fn(),
-    getBranchWorkingDraft: vi.fn(),
     getSavedRevision: vi.fn(),
     getSavedRevisionRecoveryActivity: vi.fn(),
+    getSavedRevisionRestorePreflight: vi.fn(),
     listSavedRevisionHistory: vi.fn(),
     restoreSavedRevision: vi.fn()
   }
@@ -147,7 +147,17 @@ beforeEach(() => {
     audit_events: []
   })
   api.getSavedRevision.mockResolvedValue(detail)
-  api.getBranchWorkingDraft.mockResolvedValue(draft)
+  api.getSavedRevisionRestorePreflight.mockResolvedValue({
+    run_id: run.run_id,
+    branch_id: branch.branch_id,
+    target_saved_revision_id: 'revision-one',
+    saved_head_revision_id: 'revision-two',
+    draft_version: 2,
+    current_viewer_branch_id: 'branch-two',
+    target_viewer_branch_id: branch.branch_id,
+    can_restore: true,
+    blockers: []
+  })
   api.createRunBranchFromSavedRevision.mockResolvedValue({
     ...branch,
     branch_id: 'branch-three',
@@ -356,11 +366,21 @@ describe('SavedRevisionHistoryPanel', () => {
   })
 
   it('blocks restore for a dirty Working Draft while keeping read-only preview available', async () => {
-    api.getBranchWorkingDraft.mockResolvedValueOnce({
-      ...draft,
-      status: 'dirty',
-      change_count: 1,
-      can_save: true
+    api.getSavedRevisionRestorePreflight.mockResolvedValueOnce({
+      run_id: run.run_id,
+      branch_id: branch.branch_id,
+      target_saved_revision_id: 'revision-one',
+      saved_head_revision_id: 'revision-two',
+      draft_version: 2,
+      current_viewer_branch_id: 'branch-two',
+      target_viewer_branch_id: branch.branch_id,
+      can_restore: false,
+      blockers: [
+        {
+          code: 'working_draft_dirty',
+          message: 'Save, discard, or branch the dirty Working Draft before restore.'
+        }
+      ]
     })
     renderPanel()
     await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
@@ -375,13 +395,29 @@ describe('SavedRevisionHistoryPanel', () => {
   })
 
   it('explains the pre-alpha boundary for sporting or legacy-backed state', async () => {
+    api.getSavedRevisionRestorePreflight.mockResolvedValueOnce({
+      run_id: run.run_id,
+      branch_id: branch.branch_id,
+      target_saved_revision_id: 'revision-one',
+      saved_head_revision_id: 'revision-two',
+      draft_version: 2,
+      current_viewer_branch_id: 'branch-two',
+      target_viewer_branch_id: branch.branch_id,
+      can_restore: false,
+      blockers: [
+        {
+          code: 'unrestorable_run_state',
+          message: 'This pre-alpha restore does not yet capture all legacy-backed Run/Branch state.'
+        }
+      ]
+    })
     renderPanel({ run: { ...run, world_id: 'fax-world' } })
     await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
     const restore = await screen.findByRole('button', {
       name: 'Restore current Branch from this revision'
     })
     expect(restore).toBeDisabled()
-    expect(screen.getByText(/only when the Saved Revision fully captures/)).toBeInTheDocument()
+    expect(screen.getByText(/does not yet capture all legacy-backed Run\/Branch state/)).toBeInTheDocument()
     expect(api.restoreSavedRevision).not.toHaveBeenCalled()
   })
 

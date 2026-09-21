@@ -78,6 +78,7 @@ import type {
   SavedRevisionHistoryDetail,
   RestoreSavedRevisionRequest,
   RestoreSavedRevisionResponse,
+  SavedRevisionRestorePreflight,
   BranchCheckpoint,
   BranchCheckpointListResponse,
   CaptureInitialBranchCheckpointRequest,
@@ -962,6 +963,16 @@ export function getSavedRevision(
 ): Promise<SavedRevisionHistoryDetail> {
   return request(
     `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions/${encodeURIComponent(revisionId)}`
+  )
+}
+
+export function getSavedRevisionRestorePreflight(
+  runId: string,
+  branchId: string,
+  revisionId: string
+): Promise<SavedRevisionRestorePreflight> {
+  return request(
+    `/run-containers/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/saved-revisions/${encodeURIComponent(revisionId)}/restore-preflight`
   )
 }
 

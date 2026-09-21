@@ -810,3 +810,12 @@ WC/Draw Process/Draw Revision under simulation recovery, completed-week sporting
 contexts under sporting recovery, and the transient standalone authoring workspace as
 a restore blocker rather than Saved Revision content. This is a Gate 4/5 save-load
 integrity mechanism and does not define new sporting policy.
+
+
+### Restore review preflight
+
+Saved Revision recovery now has an explicit read-only preflight before confirm. Admin
+history UI must use server-derived blocker diagnostics and expected head/draft/Viewer
+identities rather than reproduce recovery rules in the client. Confirm remains the sole
+mutation boundary and repeats all checks under the writer lock. This strengthens the
+Gate 4/5 save-load/recovery path without changing product policy.

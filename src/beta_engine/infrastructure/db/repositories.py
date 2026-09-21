@@ -443,6 +443,25 @@ class BranchSavedRevisionRestoreResult:
     audit_event: BranchRevisionAuditEventRecord
 
 
+@dataclass(frozen=True)
+class SavedRevisionRestorePreflightBlocker:
+    code: str
+    message: str
+
+
+@dataclass(frozen=True)
+class BranchSavedRevisionRestorePreflight:
+    run_id: str
+    branch_id: str
+    target_saved_revision_id: str
+    saved_head_revision_id: str
+    draft_version: int
+    current_viewer_branch_id: str
+    target_viewer_branch_id: str | None
+    can_restore: bool
+    blockers: tuple[SavedRevisionRestorePreflightBlocker, ...]
+
+
 class BranchRevisionStateError(ValueError):
     """Base error for a Branch whose Saved Revision/Draft boundary is unusable."""
 
@@ -3044,6 +3063,203 @@ class SimulationPersistenceRepository:
             return [
                 self._to_branch_saved_revision_checkpoint(model) for model in models
             ]
+
+    def preview_branch_saved_revision_restore(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_saved_revision_id: str,
+    ) -> BranchSavedRevisionRestorePreflight:
+        """Inspect known restore blockers without mutating Run/Branch state.
+
+        Confirm still repeats all checks under BEGIN IMMEDIATE.  This preview is a
+        review aid and stale-prevention contract, not permission to skip confirm-time
+        validation.
+        """
+
+        with self._session_factory.begin() as session:
+            session.execute(text("BEGIN"))
+            run = session.get(RunContainerModel, run_id)
+            if run is None:
+                raise SavedRevisionRestoreNotFoundError(
+                    f"Run {run_id!r} was not found"
+                )
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or branch.run_id != run_id:
+                raise SavedRevisionRestoreNotFoundError(
+                    f"Branch {branch_id!r} was not found in Run {run_id!r}"
+                )
+
+            try:
+                state = self._validated_branch_revision_state_in_session(
+                    session=session, branch=branch
+                )
+                lineage = self._validated_branch_revision_lineage_in_session(
+                    session=session, branch=branch
+                )
+            except BranchRevisionStateConflictError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
+
+            target_revision = next(
+                (
+                    revision
+                    for revision in lineage
+                    if revision.revision_id == target_saved_revision_id
+                ),
+                None,
+            )
+            if target_revision is None:
+                raise SavedRevisionRestoreNotFoundError(
+                    f"Saved Revision {target_saved_revision_id!r} was not found "
+                    f"in Branch {branch_id!r} history"
+                )
+
+            blockers: list[SavedRevisionRestorePreflightBlocker] = []
+
+            def block(code: str, message: str) -> None:
+                blockers.append(
+                    SavedRevisionRestorePreflightBlocker(
+                        code=code,
+                        message=message,
+                    )
+                )
+
+            if run.read_only:
+                block("run_read_only", "Restore requires a writable Run.")
+            if branch.read_only:
+                block("branch_read_only", "Restore requires a writable Branch.")
+            if branch.status != "active":
+                block("branch_inactive", "Restore requires an active Branch.")
+            if target_saved_revision_id == state.saved_head_revision_id:
+                block(
+                    "target_is_current_head",
+                    "The selected Saved Revision is already the current Branch head.",
+                )
+            if state.working_draft.status != CLEAN_WORKING_DRAFT_STATUS:
+                block(
+                    "working_draft_dirty",
+                    "Save, discard, or branch the dirty Working Draft before restore.",
+                )
+
+            current_viewer_branch_id = (run.official_branch_id or "").strip()
+            current_viewer = (
+                session.get(RunBranchModel, current_viewer_branch_id)
+                if current_viewer_branch_id
+                else None
+            )
+            if (
+                current_viewer is None
+                or current_viewer.run_id != run_id
+                or current_viewer.status != "active"
+            ):
+                block(
+                    "current_viewer_branch_incoherent",
+                    "Run has no coherent current Viewer Branch.",
+                )
+
+            current_content = state.saved_revision.payload.get("content")
+            target_content = target_revision.payload.get("content")
+            if not isinstance(current_content, dict):
+                raise SavedRevisionRestoreUnsupportedError(
+                    "current Saved Revision content is invalid"
+                )
+            if not isinstance(target_content, dict):
+                raise SavedRevisionRestoreUnsupportedError(
+                    "target Saved Revision content is invalid"
+                )
+
+            missing_coverage = missing_component_coverage(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                saved_content=current_content,
+            )
+            for coverage in missing_coverage:
+                block(
+                    "uncaptured_live_state",
+                    "Current Saved Revision does not capture live "
+                    + coverage.label
+                    + ".",
+                )
+
+            for transient in active_transient_restore_blockers(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            ):
+                block(
+                    "transient_state_active",
+                    "Unsaved transient state blocks restore: "
+                    + transient.label
+                    + ".",
+                )
+
+            supported_payload_schemas = {
+                INITIAL_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+            }
+            if (
+                state.saved_revision.payload_schema_version
+                not in supported_payload_schemas
+                or target_revision.payload_schema_version
+                not in supported_payload_schemas
+                or set(current_content) - SUPPORTED_CONTENT_KEYS
+                or set(target_content) - SUPPORTED_CONTENT_KEYS
+            ):
+                block(
+                    "unsupported_saved_revision_content",
+                    "Restore does not yet support every component in the current "
+                    "and target Saved Revisions.",
+                )
+
+            if any(
+                value is not None
+                for value in (
+                    run.world_id,
+                    run.world_package_fingerprint,
+                    run.config_version,
+                    run.config_fingerprint,
+                    run.global_seed,
+                    branch.legacy_simulation_run_id,
+                    branch.head_checkpoint_id,
+                    branch.forked_from_checkpoint_id,
+                )
+            ):
+                block(
+                    "unrestorable_run_state",
+                    "This pre-alpha restore does not yet capture all legacy-backed "
+                    "Run/Branch state.",
+                )
+
+            try:
+                target_viewer_branch_id = saved_viewer_branch_id(
+                    target_revision.payload
+                )
+            except ValueError as exc:
+                raise SavedRevisionRestoreConflictError(str(exc)) from exc
+            target_viewer = session.get(RunBranchModel, target_viewer_branch_id)
+            if (
+                target_viewer is None
+                or target_viewer.run_id != run_id
+                or target_viewer.status != "active"
+            ):
+                block(
+                    "target_viewer_branch_unavailable",
+                    "Target Saved Revision refers to an unavailable Viewer Branch.",
+                )
+
+            return BranchSavedRevisionRestorePreflight(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_saved_revision_id=target_saved_revision_id,
+                saved_head_revision_id=state.saved_head_revision_id,
+                draft_version=state.working_draft.draft_version,
+                current_viewer_branch_id=current_viewer_branch_id,
+                target_viewer_branch_id=target_viewer_branch_id,
+                can_restore=not blockers,
+                blockers=tuple(blockers),
+            )
 
     def restore_branch_saved_revision_atomically(
         self,

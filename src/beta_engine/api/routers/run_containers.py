@@ -22,6 +22,8 @@ from beta_engine.api.schemas import (
     RunContainerResponse,
     RestoreSavedRevisionRequest,
     RestoreSavedRevisionResponse,
+    SavedRevisionRestorePreflightBlockerResponse,
+    SavedRevisionRestorePreflightResponse,
     SavedRevisionHistoryDetailResponse,
     SavedRevisionHistoryEntryResponse,
     SavedRevisionHistoryListResponse,
@@ -140,6 +142,26 @@ def _save_response(record: ViewerBranchSaveResult) -> SaveWorkingDraftResponse:
         ),
         working_draft=_working_draft_response(record.working_draft),
         audit_event_id=record.audit_event.audit_event_id,
+    )
+
+
+def _restore_preflight_response(record) -> SavedRevisionRestorePreflightResponse:
+    return SavedRevisionRestorePreflightResponse(
+        run_id=record.run_id,
+        branch_id=record.branch_id,
+        target_saved_revision_id=record.target_saved_revision_id,
+        saved_head_revision_id=record.saved_head_revision_id,
+        draft_version=record.draft_version,
+        current_viewer_branch_id=record.current_viewer_branch_id,
+        target_viewer_branch_id=record.target_viewer_branch_id,
+        can_restore=record.can_restore,
+        blockers=[
+            SavedRevisionRestorePreflightBlockerResponse(
+                code=item.code,
+                message=item.message,
+            )
+            for item in record.blockers
+        ],
     )
 
 
@@ -541,6 +563,34 @@ def get_saved_revision_history_detail(
         branch_id=branch_id,
         payload=detail.saved_revision.payload,
     )
+
+
+@router.get(
+    "/{run_id}/branches/{branch_id}/saved-revisions/{revision_id}/restore-preflight",
+    response_model=SavedRevisionRestorePreflightResponse,
+)
+def preview_saved_revision_restore(
+    run_id: str,
+    branch_id: str,
+    revision_id: str,
+    service: RunSavedRevisionRestoreService = Depends(
+        get_run_saved_revision_restore_service
+    ),
+) -> SavedRevisionRestorePreflightResponse:
+    try:
+        return _restore_preflight_response(
+            service.preview_current_branch_restore(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_saved_revision_id=revision_id,
+            )
+        )
+    except (
+        SavedRevisionRestoreNotFoundError,
+        SavedRevisionRestoreConflictError,
+    ) as exc:
+        _raise_saved_revision_restore_http_error(exc)
+        raise AssertionError("unreachable")
 
 
 @router.post(

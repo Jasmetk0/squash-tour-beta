@@ -3,9 +3,9 @@ import { useState } from 'react'
 
 import {
   createRunBranchFromSavedRevision,
-  getBranchWorkingDraft,
   getSavedRevision,
   getSavedRevisionRecoveryActivity,
+  getSavedRevisionRestorePreflight,
   listSavedRevisionHistory,
   restoreSavedRevision
 } from '../api/client'
@@ -38,7 +38,6 @@ function revisionSummary(detail: SavedRevisionHistoryDetail): string {
 
 export function SavedRevisionHistoryPanel({
   runId,
-  run,
   branches
 }: SavedRevisionHistoryPanelProps): JSX.Element {
   const queryClient = useQueryClient()
@@ -54,7 +53,6 @@ export function SavedRevisionHistoryPanel({
     ? requestedBranchId
     : branches[0]?.branch_id ?? ''
   const branch = branches.find((candidate) => candidate.branch_id === branchId)
-  const currentViewerBranchId = run.viewer_branch_id ?? run.official_branch_id ?? ''
 
   const historyQuery = useQuery({
     queryKey: ['saved-revision-history', runId, branchId],
@@ -112,12 +110,18 @@ export function SavedRevisionHistoryPanel({
       detail.revision_id === selectedRevisionId
   )
 
-  const draftQuery = useQuery({
-    queryKey: ['branch-working-draft', runId, branchId],
-    queryFn: () => getBranchWorkingDraft(runId, branchId),
-    enabled: Boolean(detailIdentityIsValid && branch)
+  const restorePreflightQuery = useQuery({
+    queryKey: ['saved-revision-restore-preflight', runId, branchId, selectedRevisionId],
+    queryFn: () => getSavedRevisionRestorePreflight(runId, branchId, selectedRevisionId),
+    enabled: Boolean(detailIdentityIsValid && branch && selectedRevisionId)
   })
-  const draft = draftQuery.data
+  const restorePreflight = restorePreflightQuery.data
+  const restorePreflightIdentityIsValid = Boolean(
+    restorePreflight &&
+      restorePreflight.run_id === runId &&
+      restorePreflight.branch_id === branchId &&
+      restorePreflight.target_saved_revision_id === selectedRevisionId
+  )
 
   const createBranchMutation = useMutation({
     mutationFn: () => {
@@ -154,6 +158,7 @@ export function SavedRevisionHistoryPanel({
         queryClient.invalidateQueries({ queryKey: ['saved-revision-history', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['saved-revision-recovery-activity', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['branch-working-draft', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revision-restore-preflight', runId, branchId] }),
         queryClient.invalidateQueries({ queryKey: ['run-container', runId] }),
         queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
         queryClient.invalidateQueries({ queryKey: ['viewer-official-run-context', runId] })
@@ -179,31 +184,20 @@ export function SavedRevisionHistoryPanel({
   let restoreBlocker: string | null = null
   if (!detailIdentityIsValid) restoreBlocker = 'Open a valid Saved Revision preview first.'
   else if (!historyIdentityIsValid) restoreBlocker = 'Saved Revision history identity is inconsistent.'
-  else if (selectedRevisionId === history?.saved_head_revision_id) restoreBlocker = 'The selected revision is already the current Saved Revision head.'
-  else if (run.status !== 'active' || run.read_only) restoreBlocker = 'Restore requires an active writable Product Run.'
-  else if (!branch || branch.status !== 'active' || branch.read_only) restoreBlocker = 'Restore requires an active writable Branch.'
-  else if (
-    run.world_id != null ||
-    run.world_package_fingerprint != null ||
-    run.config_version != null ||
-    run.config_fingerprint != null ||
-    run.global_seed != null ||
-    branch.legacy_simulation_run_id != null ||
-    branch.head_checkpoint_id != null ||
-    branch.forked_from_checkpoint_id != null
-  ) restoreBlocker = 'This pre-alpha restore is available only when the Saved Revision fully captures the canonical empty Run state.'
-  else if (draftQuery.isLoading) restoreBlocker = 'Loading the current Working Draft...'
-  else if (draftQuery.error) restoreBlocker = 'The current Working Draft could not be verified.'
-  else if (!draft || draft.run_id !== runId || draft.branch_id !== branchId) restoreBlocker = 'The current Working Draft identity is inconsistent.'
-  else if (draft.status !== 'clean') restoreBlocker = 'Save, discard, or branch the dirty Working Draft before restore.'
-  else if (draft.base_saved_revision_id !== history?.saved_head_revision_id) restoreBlocker = 'The Working Draft and Saved Revision head do not agree.'
-  else if (!currentViewerBranchId) restoreBlocker = 'The current Viewer Branch could not be verified.'
+  else if (restorePreflightQuery.isLoading) restoreBlocker = 'Checking restore preflight...'
+  else if (restorePreflightQuery.error) restoreBlocker = `Restore preflight failed: ${formatApiError(restorePreflightQuery.error)}`
+  else if (!restorePreflightIdentityIsValid) restoreBlocker = 'Restore preflight identity is inconsistent.'
+  else if (restorePreflight && !restorePreflight.can_restore) {
+    restoreBlocker = restorePreflight.blockers.map((item) => item.message).join(' ')
+  }
 
   const reviewStillCurrent = Boolean(
     restoreReview &&
-      history?.saved_head_revision_id === restoreReview.expectedHeadSavedRevisionId &&
-      draft?.draft_version === restoreReview.expectedDraftVersion &&
-      currentViewerBranchId === restoreReview.expectedCurrentViewerBranchId
+      restorePreflightIdentityIsValid &&
+      restorePreflight?.can_restore &&
+      restorePreflight.saved_head_revision_id === restoreReview.expectedHeadSavedRevisionId &&
+      restorePreflight.draft_version === restoreReview.expectedDraftVersion &&
+      restorePreflight.current_viewer_branch_id === restoreReview.expectedCurrentViewerBranchId
   )
   const canSubmitRestore = Boolean(
     restoreReview &&
@@ -233,11 +227,11 @@ export function SavedRevisionHistoryPanel({
   }
 
   function openRestoreReview(): void {
-    if (restoreBlocker || !history || !draft || !branch) return
+    if (restoreBlocker || !restorePreflight || !branch) return
     setRestoreReview({
-      expectedHeadSavedRevisionId: history.saved_head_revision_id,
-      expectedDraftVersion: draft.draft_version,
-      expectedCurrentViewerBranchId: currentViewerBranchId,
+      expectedHeadSavedRevisionId: restorePreflight.saved_head_revision_id,
+      expectedDraftVersion: restorePreflight.draft_version,
+      expectedCurrentViewerBranchId: restorePreflight.current_viewer_branch_id,
       confirmationPhrase: `RESTORE ${branch.display_name}`
     })
     setTypedConfirmation('')

@@ -74,18 +74,43 @@ const scheduleInspection = {
 
 const proposal = {
   schedule: {
-    schema_version: 'week_simulation_schedule.v1' as const,
+    schema_version: 'week_simulation_schedule.v2' as const,
     run_id: 'run-a',
     branch_id: 'branch-a',
     week,
     slots: [
-      { ordinal: 1, group_ids: ['g1', 'g2'] },
-      { ordinal: 2, group_ids: ['g3'] }
+      {
+        ordinal: 1,
+        group_ids: ['g1'],
+        match_day_ordinal: 1,
+        match_order: 1,
+        event_id: 'event-a',
+        draw_phase: 'main' as const,
+        round_number: 1
+      },
+      {
+        ordinal: 2,
+        group_ids: ['g2'],
+        match_day_ordinal: 1,
+        match_order: 2,
+        event_id: 'event-b',
+        draw_phase: 'main' as const,
+        round_number: 1
+      },
+      {
+        ordinal: 3,
+        group_ids: ['g3'],
+        match_day_ordinal: 2,
+        match_order: 1,
+        event_id: 'event-a',
+        draw_phase: 'main' as const,
+        round_number: 2
+      }
     ]
   },
   schedule_fingerprint: 'c'.repeat(64),
   position_fingerprint: 'd'.repeat(64),
-  provenance: 'earliest_dependency_safe_topological_proposal_v1; not Match Day timing or Final Commitment authority',
+  provenance: 'match_day_schedule_hard_constraints.v1; one competitive match per global Simulation Slot',
   persisted: false as const
 }
 
@@ -736,11 +761,11 @@ describe('AuthoritativeSimulationPanel', () => {
 
     expect(await screen.findByText('Week Simulation Schedule')).toBeInTheDocument()
     expect(api.getAuthoritativeSimulationPosition).not.toHaveBeenCalled()
-    expect(screen.getByText('Canonical Position and match execution stay locked until this required immutable Week Schedule is adopted.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Build topological schedule proposal' }))
+    expect(screen.getByText('Canonical Position and match execution stay locked until this immutable Match Day / global-slot schedule is adopted.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Build Match Day schedule proposal' }))
 
-    expect(await screen.findByRole('list', { name: 'Proposed authoritative week schedule' })).toHaveTextContent('Slot 1: g1, g2')
-    await userEvent.click(screen.getByRole('button', { name: 'Adopt reviewed topological schedule' }))
+    expect(await screen.findByRole('list', { name: 'Proposed authoritative week schedule' })).toHaveTextContent('Day 1 · #1 · global slot 1 · event-a · main R1: g1')
+    await userEvent.click(screen.getByRole('button', { name: 'Adopt reviewed Match Day schedule' }))
 
     await waitFor(() =>
       expect(api.adoptAuthoritativeWeekScheduleProposal).toHaveBeenCalledWith(

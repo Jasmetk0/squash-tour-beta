@@ -4104,3 +4104,224 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         target_adopted_items[0].draw_authority_fingerprint
         != source_draw.fingerprint
     )
+
+
+def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
+    session, _, _, _, _ = run_semifinals(
+        tmp_path / "basic-draw-revision-fork.sqlite",
+        ("sf-1", "sf-2"),
+    )
+    if session.get(RunContainerModel, "run") is None:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+    if session.get(RunBranchModel, "branch") is None:
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Source",
+            )
+        )
+    session.flush()
+
+    snapshot = calculate_official_ranking(
+        run_id="run",
+        branch_id="branch",
+        week=WEEK,
+        policy=OfficialRankingPolicy(policy_id="ranking-policy"),
+        players=(),
+        results=(),
+        previous=None,
+    )
+    source_ranking_authority = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-revision",
+        ranking_week=WEEK,
+        ranking_snapshot=snapshot,
+        adopted_by_command_id="adopt-ranking-revision",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=snapshot.fingerprint,
+            payload_json=snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(
+        source_ranking_authority
+    )
+    target_snapshot = snapshot.model_copy(update={"branch_id": "target"})
+    target_ranking_authority = TournamentRankingSnapshotAuthority(
+        run_id="run",
+        branch_id="target",
+        event_id="event-revision",
+        ranking_week=WEEK,
+        ranking_snapshot=target_snapshot,
+        adopted_by_command_id="adopt-ranking-revision",
+    )
+
+    apps = tuple(
+        TournamentEntryApplication(
+            application_id=f"revision-a{index}",
+            run_id="run",
+            branch_id="branch",
+            event_id="event-revision",
+            player_id=f"revision-p{index}",
+            entry_window="main",
+            decision_slot_ordinal=1,
+            nr_tie_break_token=str(index),
+        )
+        for index in range(1, 6)
+    )
+    capacity = TournamentEntryFieldCapacity(main_draw_size=4)
+    source_field = TournamentEntryFieldResolver.build_initial(
+        authority=source_ranking_authority,
+        applications=apps,
+        capacity=capacity,
+    )
+    apps_fp = _applications_fingerprint(apps)
+    source_field_request = entry_request_fingerprint(
+        {
+            "mode": "initial",
+            "run_id": "run",
+            "branch_id": "branch",
+            "event_id": "event-revision",
+            "authority_fingerprint": source_ranking_authority.fingerprint,
+            "applications_fingerprint": apps_fp,
+            "capacity": capacity.model_dump(mode="json"),
+        }
+    )
+    session.add(
+        TournamentEntryFieldVersionModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-revision",
+            sequence=1,
+            command_id="revision-field-cut",
+            request_fingerprint=source_field_request,
+            field_fingerprint=source_field.fingerprint,
+            predecessor_fingerprint=None,
+            ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+            applications_fingerprint=apps_fp,
+            applications_json=_applications_json(apps),
+            payload_json=source_field.model_dump_json(),
+        )
+    )
+
+    source_draw_input = TournamentDrawInputAuthorityBuilder.build(
+        authority=source_ranking_authority,
+        field=source_field,
+        field_sequence=1,
+        command_id="revision-commit-draw",
+        draw_seed=17,
+        main_seed_count=None,
+        qualification_seed_count=None,
+        schema_version="tournament_draw_input_authority.v2",
+    )
+    draw_request = TournamentDrawInputAuthorityStore._request(
+        ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+        entry_field_fingerprint=source_field.fingerprint,
+        field_sequence=1,
+        draw_seed=17,
+        main_seed_count=source_draw_input.main_seed_count,
+        qualification_seed_count=source_draw_input.qualification_seed_count,
+        wild_card_authority_fingerprint=None,
+    )
+    session.add(
+        TournamentDrawInputAuthorityModel(
+            run_id="run",
+            branch_id="branch",
+            event_id="event-revision",
+            command_id="revision-commit-draw",
+            request_fingerprint=draw_input_request_fingerprint(draw_request),
+            authority_fingerprint=source_draw_input.fingerprint,
+            ranking_authority_fingerprint=source_ranking_authority.fingerprint,
+            entry_field_fingerprint=source_field.fingerprint,
+            field_sequence=1,
+            payload_json=source_draw_input.model_dump_json(),
+        )
+    )
+    session.flush()
+
+    source_draw = TournamentDrawAuthorityStore(session).generate(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-revision",
+        command_id="revision-generate-draw",
+    )
+    source_process = TournamentDrawProcessAuthorityStore(session).configure(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-revision",
+        command_id="revision-configure-process",
+        main_process_window_count=3,
+    )
+    source_revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+        run_id="run",
+        branch_id="branch",
+        event_id="event-revision",
+        command_id="revision-withdraw-p1",
+        withdrawn_player_ids=("revision-p1",),
+        repair_draw_seed=29,
+        main_process_window_ordinal=1,
+    )
+
+    payload = {"content": {}}
+    capture_saved_sporting(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_simulation_slots(
+        session,
+        payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    remapped = remap_coupled_player_slot_history(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        v1_source_fingerprint_map={},
+        tournament_ranking_authority_map={
+            source_ranking_authority.fingerprint: target_ranking_authority
+        },
+    )
+
+    assert remapped is not None
+    component = remapped.simulation_component
+    target_draw_row = component["draw_authorities"][0]
+    target_process_row = component["draw_process_authorities"][0]
+    target_revision_row = component["draw_revisions"][0]
+    target_revision = json.loads(target_revision_row["payload_json"])
+
+    assert target_revision_row["branch_id"] == "target"
+    assert target_revision_row["revision_fingerprint"] != source_revision.fingerprint
+    assert (
+        target_revision_row["predecessor_draw_fingerprint"]
+        == target_draw_row["authority_fingerprint"]
+    )
+    assert (
+        target_revision["process_authority_fingerprint"]
+        == target_process_row["authority_fingerprint"]
+    )
+    assert target_revision["repair_kind"] == "full_redraw"
+    assert target_revision["withdrawn_player_ids"] == ["revision-p1"]
+    assert (
+        target_revision_row["successor_draw_fingerprint"]
+        == target_revision["successor_draw"]["fingerprint"]
+        if "fingerprint" in target_revision["successor_draw"]
+        else target_revision_row["successor_draw_fingerprint"]
+        != source_revision.successor_draw.fingerprint
+    )

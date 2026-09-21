@@ -136,6 +136,7 @@ from beta_engine.infrastructure.db.player_slot_fork_remap import (
     remap_coupled_player_slot_history,
 )
 from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
+    SimulationSlotForkRemapUnsupportedError,
     remap_competitive_group_payload,
     remap_completed_simulation_slot_core,
     remap_slot_plan,
@@ -4257,7 +4258,7 @@ def test_lucky_loser_order_fails_closed_when_nested_result_mapping_is_missing():
     )
 
     with pytest.raises(
-        Exception,
+        SimulationSlotForkRemapUnsupportedError,
         match="candidate elimination.*without a target mapping",
     ):
         _retarget_lucky_loser_order_authority(

@@ -1461,4 +1461,4 @@ The current canonical proposal derives hard constraints from frozen tournament t
 - Entry and WC decision global ordinals remain reserved and are skipped by match slots.
 - Admin preview/adoption remains immutable, CAS-guarded and exact-retryable; Branch fork and Saved Revision handling preserve the V2 metadata.
 
-This is deliberately the **single-week pre-alpha Match Day foundation**, not the finished generic tournament scheduler. Calendar-spanning multi-week Round Schedule ranges, explicit rest-day ranges beyond the current next-round/day rule, court allocation, cross-event travel/acclimatization, carryover optimization and fairness scoring remain follow-up policy/optimization work.
+This is deliberately the **single-week pre-alpha Match Day foundation**, not the finished generic tournament scheduler. Calendar-spanning multi-week Round Schedule ranges, explicit rest-day ranges beyond the current next-round/day rule, court allocation, cross-event travel/acclimatization, carryover optimization and fairness scoring remain follow-up policy/optimization work. See `docs/MATCH_DAY_SCHEDULE_V1.md`.

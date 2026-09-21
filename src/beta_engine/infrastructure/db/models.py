@@ -467,6 +467,17 @@ class TournamentEntryFieldVersionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class StandaloneMatchWorkspaceModel(Base):
+    """Mutable Run/Branch authoring state for the no-calendar pre-alpha match flow."""
+
+    __tablename__ = "standalone_match_workspaces"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class SimulationSlotModel(Base):
     """Immutable plan plus evolving completion head for one global slot."""
     __tablename__ = "simulation_slots"

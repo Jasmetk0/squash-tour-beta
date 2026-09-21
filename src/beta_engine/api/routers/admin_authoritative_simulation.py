@@ -31,6 +31,11 @@ from beta_engine.application.season_transition_configuration import (
 )
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.standalone_match_service import (
+    StandaloneMatchAddPlayerCommand,
+    StandaloneMatchService,
+    StandaloneMatchSimulateCommand,
+)
 from beta_engine.application.prospect_bridge_inspection import inspect_prospect_bridge
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy
 from beta_engine.domain.rankings.official import OfficialRankingPolicy, RankingWeek
@@ -580,6 +585,71 @@ def commit_match_reconstruction(
         raise HTTPException(
             status_code=409,
             detail={"code": "match_reconstruction_commit_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/standalone-match")
+def standalone_match_state(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return StandaloneMatchService(runtime.repository._session_factory).inspect(
+            run_id=run_id, branch_id=branch_id
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "standalone_match_state_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/standalone-match/players")
+def add_standalone_match_player(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        command = StandaloneMatchAddPlayerCommand.model_validate(payload)
+        return StandaloneMatchService(runtime.repository._session_factory).add_player(
+            run_id=run_id, branch_id=branch_id, command=command
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "standalone_match_player_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/standalone-match/simulate")
+def simulate_standalone_match(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        command = StandaloneMatchSimulateCommand.model_validate(payload)
+        return StandaloneMatchService(runtime.repository._session_factory).simulate(
+            run_id=run_id, branch_id=branch_id, command=command
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "standalone_match_simulation_conflict", "message": str(exc)},
         ) from exc
 
 

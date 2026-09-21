@@ -189,7 +189,7 @@ def _complete_empty_week(
         },
     )
     assert status == 201, completed
-    assert completed["total_competitive_match_count"] == 0
+    assert completed["competitive_match_count"] == 0
     return _save_simulation(sim_root)
 
 

@@ -23,6 +23,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
+    AuthoritativeMatchDayCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     MatchReconstructionConstraints,
@@ -1556,6 +1557,123 @@ def test_match_day_v2_same_day_matches_use_sequential_sporting_snapshots(tmp_pat
             for group in groups
         ]
         assert starts[0] != starts[1]
+
+
+@pytest.mark.pr_critical
+def test_next_match_day_is_resumable_after_completed_child_response_loss(
+    tmp_path,
+    monkeypatch,
+):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "next-match-day-resume"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    day_one = tuple(
+        slot for slot in schedule.slots if slot.match_day_ordinal == 1
+    )
+    day_two = tuple(
+        slot for slot in schedule.slots if slot.match_day_ordinal == 2
+    )
+    assert len(day_one) == 4
+    assert len(day_two) == 2
+
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="next-match-day-schedule",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+    preview = driver.preview_next_match_day(run_id="run", branch_id="branch")
+    assert preview["match_day_ordinal"] == 1
+    assert preview["target_slot_ordinals"] == [slot.ordinal for slot in day_one]
+    assert preview["target_group_ids"] == [
+        group_id for slot in day_one for group_id in slot.group_ids
+    ]
+    assert preview["expected_revision_id"] == "revision"
+
+    command = AuthoritativeMatchDayCommand(
+        command_id="next-match-day-1",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+    )
+
+    original = AuthoritativeRunSimulationDriver.simulate_next_slot
+    injected = {"raised": False}
+
+    def lose_first_child_response(self, child, *, fault_at=None):
+        result = original(self, child, fault_at=fault_at)
+        if (
+            child.command_id.startswith("match-day-slot:")
+            and not injected["raised"]
+        ):
+            injected["raised"] = True
+            raise RuntimeError("lost response after committed Match Day child")
+        return result
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "simulate_next_slot",
+        lose_first_child_response,
+    )
+    with pytest.raises(RuntimeError, match="lost response"):
+        driver.simulate_next_match_day(command)
+
+    with factory() as session:
+        committed_after_fault = session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+        ).all()
+        assert len(committed_after_fault) == 1
+
+    result = driver.simulate_next_match_day(command)
+    assert result["schema_version"] == "authoritative_match_day_result.v1"
+    assert result["match_day_ordinal"] == 1
+    assert result["completed_slot_count"] == len(day_one)
+    assert result["target_slot_ordinals"] == [slot.ordinal for slot in day_one]
+    assert len(result["child_command_ids"]) == len(day_one)
+    assert len(set(result["child_command_ids"])) == len(day_one)
+    assert result["position"]["current_slot_kind"] == "match"
+    assert result["position"]["slot_ordinal"] == day_two[0].ordinal
+
+    with factory() as session:
+        groups = session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+        ).all()
+        assert len(groups) == len(day_one)
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", "next-match-day-1"),
+        )
+        assert parent is not None
+        assert parent.status == "complete"
+        assert all(
+            session.get(
+                AuthoritativeSimulationCommandModel,
+                ("run", "branch", child_id),
+            ).status
+            == "complete"
+            for child_id in result["child_command_ids"]
+        )
+
+    assert driver.simulate_next_match_day(command) == result
 
 
 @pytest.mark.pr_critical

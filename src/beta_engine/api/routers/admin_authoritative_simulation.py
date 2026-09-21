@@ -20,6 +20,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
+    AuthoritativeMatchDayCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
@@ -781,6 +782,59 @@ def simulate_next_match(
     ],
 ):
     return _mutate(run_id, branch_id, payload, runtime, matches, awards, slot=False)
+
+
+@router.get("/next-match-day/preview")
+def preview_next_match_day(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).preview_next_match_day(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_match_day_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/simulate-next-match-day", status_code=201)
+def simulate_next_match_day(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeMatchDayCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).simulate_next_match_day(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_match_day_simulation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.post("/simulate-next-slot")

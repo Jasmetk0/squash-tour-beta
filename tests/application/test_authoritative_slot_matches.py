@@ -61,6 +61,10 @@ from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
+from beta_engine.domain.tournaments.replacement_cutoff_authority import (
+    TournamentPlayedMatchCutoffEvidence,
+    TournamentPlayerReplacementCutoffAuthorityBuilder,
+)
 from beta_engine.domain.tournaments.entry_field import (
     TournamentEntryApplication,
     TournamentEntryFieldCapacity,
@@ -116,6 +120,7 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     restore_saved_simulation_slots,
 )
 from beta_engine.infrastructure.db.player_slot_fork_remap import (
+    _retarget_frozen_evidence,
     remap_coupled_player_slot_history,
 )
 from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
@@ -4104,6 +4109,41 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         target_adopted_items[0].draw_authority_fingerprint
         != source_draw.fingerprint
     )
+
+
+@pytest.mark.pr_critical
+def test_special_revision_frozen_evidence_retargets_nested_match_identity():
+    source_result = "1" * 64
+    target_result = "2" * 64
+    source = TournamentPlayerReplacementCutoffAuthorityBuilder.build(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        player_id="withdrawn",
+        played_matches=(
+            TournamentPlayedMatchCutoffEvidence(
+                match_id="m1",
+                week_ordinal=0,
+                slot_id="slot-1",
+                slot_ordinal=1,
+                group_id="group-1",
+                result_fingerprint=source_result,
+                opponent_player_id="opponent",
+                outcome="win",
+            ),
+        ),
+    )
+
+    target = _retarget_frozen_evidence(
+        source,
+        target_branch_id="target",
+        fingerprint_map={source_result: target_result},
+    )
+
+    assert target.branch_id == "target"
+    assert target.played_matches[0].result_fingerprint == target_result
+    assert target.status == source.status
+    assert target.fingerprint != source.fingerprint
 
 
 def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):

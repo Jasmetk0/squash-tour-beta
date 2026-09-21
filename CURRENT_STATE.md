@@ -889,3 +889,19 @@ This implements the narrow PAQ-003 / PAQ-005 acceptance requirement only. It doe
 invent a global Start gate, Calendar/Tournament policy, ranking policy, automatic player
 generation or a broader standalone multi-match workflow. See
 `docs/STANDALONE_MATCH_ACCEPTANCE_V1.md`.
+
+## Current follow-up after #878: authoritative empty weeks
+
+The whole-season Official Run path now has an explicit production boundary for a
+genuinely event-free week. `authoritative-simulation/empty-week/complete` is
+CAS-guarded by current Position and Saved Revision, requires a real season Calendar,
+rejects any Calendar Event interval or existing tournament/simulation ownership,
+and persists a zero-match `CompletedWeekSportingContext` with frozen Calendar
+evidence. Position accepts that context in place of a match terminal checkpoint,
+so the ordinary development/lifecycle/ranking Week Transition can proceed without
+direct DB seeding.
+
+This is continuity plumbing only. It does not reinterpret a missing Calendar as an
+empty week, does not decide cancellation handling, and does not add any unresolved
+Entry/WC/lock/reconstruction policy. PR-critical acceptance covers tournament
+weeks -> explicit empty week -> following RankingWeek plus false-empty rejection.

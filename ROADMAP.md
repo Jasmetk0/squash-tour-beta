@@ -1109,4 +1109,4 @@ LL v2 auto-BYE evidence is rebuilt before LL-order terminal fingerprints so the 
 
 The fork/restore safety net now exercises Lucky Loser with real canonical Qualification receipts from the authoritative Simulation Slot executor: Q semifinals -> Q terminal -> LL vacancy -> LL fill -> Branch remap/materialization -> second target LL vacancy/fill -> restore -> idempotent retry.
 
-This closes the main recovery-evidence gap left after strict LL/pre-Q fingerprint remapping. Follow-up work should move back toward remaining pre-alpha product delivery unless a new real-world fork/recovery defect appears.
+This closes the main recovery-evidence gap left after strict LL/pre-Q fingerprint remapping. The same slice also canonicalizes remapped Slot/Group row ordering to match Saved Revision capture before aggregate fingerprinting; fork identity no longer depends on slot-ID lexical order accidentally matching slot chronology. Follow-up work should move back toward remaining pre-alpha product delivery unless a new real-world fork/recovery defect appears.

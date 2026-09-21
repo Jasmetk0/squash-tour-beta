@@ -1174,6 +1174,19 @@ canonical authorities rather than copied from source history.
 
 The trusted empty-fork installer accepts this remapped tournament-source state
 atomically with the ranking lineage. Legacy tournament source versions v1-v3, final
-Closing-only v6 sources, corrections layered on canonical tournament editions, and
-transition/publication/Season Closing authorities remain fail-closed pending their own
+Closing-only v6 sources, transition/publication/Season Closing authorities remain fail-closed pending their own
 explicit adapters.
+
+
+## Ranking-bearing Branch fork: tournament correction-chain remap
+
+Canonical tournament-backed ranking history may now include later
+`RankingResultVersion` corrections. The source correction chain must be complete and
+its stored predecessor fingerprint must exactly match the preceding source version.
+During fork materialization each correction is rebound to the already remapped target
+predecessor fingerprint, so target history remains independently valid and diverges
+cleanly from the source Branch.
+
+A malformed or detached predecessor still fails closed before target state is
+materialized. This closes the correction-over-canonical-tournament follow-up left after
+the v4/v5 authority remap.

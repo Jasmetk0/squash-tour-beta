@@ -134,6 +134,9 @@ import type {
   AuthoritativeMatchDayPreview,
   AuthoritativeMatchDayCommandPayload,
   AuthoritativeMatchDayResult,
+  AuthoritativeRoundPreview,
+  AuthoritativeRoundCommandPayload,
+  AuthoritativeRoundResult,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1527,6 +1530,57 @@ export async function simulateAuthoritativeNextMatchDay(
     !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint)
   ) {
     throw new Error('Authoritative Match Day result is invalid.')
+  }
+  return data
+}
+
+export async function previewAuthoritativeNextRound(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeRoundPreview> {
+  const data = await request<AuthoritativeRoundPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/next-round/preview'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_round_preview.v1' ||
+    !data.round_identity.event_id ||
+    data.round_identity.round_number < 1 ||
+    data.target_slot_ordinals.length === 0 ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    data.horizon_slot_ordinals.length === 0 ||
+    data.horizon_slot_ordinals[0] !== data.target_slot_ordinals[0] ||
+    data.horizon_slot_ordinals[
+      data.horizon_slot_ordinals.length - 1
+    ] !== data.target_slot_ordinals[data.target_slot_ordinals.length - 1] ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Round preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeNextRound(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeRoundCommandPayload
+): Promise<AuthoritativeRoundResult> {
+  const data = await request<AuthoritativeRoundResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-round',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (
+    data.schema_version !== 'authoritative_round_result.v1' ||
+    data.completed_slot_count !== data.horizon_slot_ordinals.length ||
+    data.child_command_ids.length !== data.horizon_slot_ordinals.length ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint)
+  ) {
+    throw new Error('Authoritative Round result is invalid.')
   }
   return data
 }

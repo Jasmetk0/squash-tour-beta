@@ -191,6 +191,56 @@ def test_bootstrap_ranking_revision_forks_with_target_branch_identity_and_can_di
     ).saved_head_revision_id == "revision-branch-three-week-two"
 
 
+@pytest.mark.pr_critical
+def test_multiweek_ranking_fork_stays_fail_closed_until_next_remap_adapter(prepared):
+    path, repo, runner, command, *_ = prepared
+    save(prepared)
+    runner.execute(
+        RankingWeekCommand(
+            command_id="week-2",
+            tournaments=(),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-one",
+                completed_week=RankingWeek(season_index=0, week=1),
+                target_week=RankingWeek(season_index=0, week=2),
+                policy=command.policy,
+                players=(),
+                discipline="none",
+            ),
+        )
+    )
+    preview = repo.preview_ranking_save(run_id="run-one", branch_id="branch-one")
+    RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory("revision-four", "audit-three"),
+    ).save_ranking(
+        run_id="run-one",
+        branch_id="branch-one",
+        expected_draft_version=4,
+        expected_ranking_fingerprint=preview["ranking_fingerprint"],
+    )
+
+    before = dump(path)
+    with pytest.raises(
+        SavedRevisionBranchForkConflictError,
+        match="bootstrap-only ranking history",
+    ):
+        RunBranchCreationService(
+            repository=repo,
+            id_factory=_id_factory(
+                "branch-four",
+                "draft-four",
+                "revision-fork-four",
+            ),
+        ).create_from_saved_revision(
+            run_id="run-one",
+            source_branch_id="branch-one",
+            source_saved_revision_id="revision-four",
+        )
+    assert dump(path) == before
+
+
 @pytest.mark.parametrize("damage", ["hash", "scope", "shape"])
 def test_history_rejects_invalid_embedded_ranking(prepared, damage):
     _, repo, *_ = prepared

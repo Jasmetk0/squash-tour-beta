@@ -1332,7 +1332,9 @@ def test_manual_match_day_schedule_can_split_round_without_breaking_feeders(tmp_
         run_id="run",
         branch_id="branch",
     )
-    automatic = WeekSimulationSchedule.model_validate(proposed["schedule"])
+    automatic = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
     first_roots = sorted(
         (
             match

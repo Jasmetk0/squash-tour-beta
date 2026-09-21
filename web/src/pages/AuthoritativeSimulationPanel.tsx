@@ -1422,19 +1422,147 @@ export function AuthoritativeSimulationPanel({
                   <ol aria-label="Proposed authoritative week schedule">
                     {proposal.schedule.slots.map((slot) => (
                       <li key={slot.ordinal}>
-                  {slot.match_day_ordinal != null
-                    ? `Day ${slot.match_day_ordinal} · #${slot.match_order} · global slot ${slot.ordinal} · ${slot.event_id} · ${slot.draw_phase} R${slot.round_number}: ${slot.group_ids.join(', ')}`
-                    : `Legacy global slot ${slot.ordinal}: ${slot.group_ids.join(', ')}`}
-                </li>
+                        {slot.match_day_ordinal != null
+                          ? `Day ${slot.match_day_ordinal} · #${slot.match_order} · global slot ${slot.ordinal} · ${slot.event_id} · ${slot.draw_phase} R${slot.round_number}: ${slot.group_ids.join(', ')}`
+                          : `Legacy global slot ${slot.ordinal}: ${slot.group_ids.join(', ')}`}
+                      </li>
                     ))}
                   </ol>
                   <button
                     type="button"
                     onClick={() => adoptMutation.mutate()}
-                    disabled={adoptMutation.isPending || !proposalRequestId}
+                    disabled={
+                      adoptMutation.isPending ||
+                      manualScheduleAdoptMutation.isPending ||
+                      !proposalRequestId
+                    }
                   >
                     Adopt reviewed Match Day schedule
                   </button>
+
+                  {proposal.schedule.schema_version === 'week_simulation_schedule.v2' ? (
+                    <>
+                      <h5>Manual Match Day schedule edit</h5>
+                      <p className="status">
+                        Change only the playing day and within-day priority. Global Simulation Slot ordinals are rebuilt from the proposal's reserved ordinal pool. The server revalidates every hard scheduling constraint before adoption.
+                      </p>
+                      <ul aria-label="Editable Match Day schedule">
+                        {proposal.schedule.slots.map((slot) => {
+                          const groupId = slot.group_ids[0]
+                          if (!groupId) return null
+                          const draft = manualScheduleDraft[groupId] ?? {
+                            day: String(slot.match_day_ordinal ?? ''),
+                            order: String(slot.match_order ?? '')
+                          }
+                          return (
+                            <li key={groupId}>
+                              <strong>
+                                {slot.event_id} · {slot.draw_phase} R{slot.round_number} · {groupId}
+                              </strong>{' '}
+                              <label>
+                                Match Day
+                                <input
+                                  aria-label={`Match Day ${groupId}`}
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={draft.day}
+                                  onChange={(event) => {
+                                    setManualScheduleDraft((current) => ({
+                                      ...current,
+                                      [groupId]: {
+                                        day: event.target.value,
+                                        order: current[groupId]?.order ?? draft.order
+                                      }
+                                    }))
+                                    setManualScheduleReview(null)
+                                  }}
+                                  disabled={
+                                    manualSchedulePreviewMutation.isPending ||
+                                    manualScheduleAdoptMutation.isPending
+                                  }
+                                />
+                              </label>{' '}
+                              <label>
+                                Preferred order
+                                <input
+                                  aria-label={`Match order ${groupId}`}
+                                  type="number"
+                                  min={1}
+                                  step={1}
+                                  value={draft.order}
+                                  onChange={(event) => {
+                                    setManualScheduleDraft((current) => ({
+                                      ...current,
+                                      [groupId]: {
+                                        day: current[groupId]?.day ?? draft.day,
+                                        order: event.target.value
+                                      }
+                                    }))
+                                    setManualScheduleReview(null)
+                                  }}
+                                  disabled={
+                                    manualSchedulePreviewMutation.isPending ||
+                                    manualScheduleAdoptMutation.isPending
+                                  }
+                                />
+                              </label>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={() => manualSchedulePreviewMutation.mutate()}
+                        disabled={
+                          manualSchedulePreviewMutation.isPending ||
+                          manualScheduleAdoptMutation.isPending
+                        }
+                      >
+                        Review edited Match Day schedule
+                      </button>
+                      {manualSchedulePreviewMutation.error ? (
+                        <p className="error">
+                          Edited schedule review failed: {formatApiError(manualSchedulePreviewMutation.error)}
+                        </p>
+                      ) : null}
+                      {manualScheduleReview ? (
+                        <>
+                          <MetadataList
+                            items={[
+                              {
+                                label: 'Reviewed schedule fingerprint',
+                                value: manualScheduleReview.preview.schedule_fingerprint
+                              },
+                              {
+                                label: 'Reviewed position fingerprint',
+                                value: manualScheduleReview.preview.position_fingerprint
+                              }
+                            ]}
+                          />
+                          <ol aria-label="Reviewed edited Match Day schedule">
+                            {manualScheduleReview.schedule.slots.map((slot) => (
+                              <li key={slot.ordinal}>
+                                Day {slot.match_day_ordinal} · #{slot.match_order} · global slot {slot.ordinal} · {slot.event_id} · {slot.draw_phase} R{slot.round_number}: {slot.group_ids.join(', ')}
+                              </li>
+                            ))}
+                          </ol>
+                          <button
+                            type="button"
+                            onClick={() => manualScheduleAdoptMutation.mutate()}
+                            disabled={manualScheduleAdoptMutation.isPending}
+                          >
+                            Adopt reviewed edited Match Day schedule
+                          </button>
+                        </>
+                      ) : null}
+                      {manualScheduleAdoptMutation.error ? (
+                        <p className="error">
+                          Edited schedule adoption failed: {formatApiError(manualScheduleAdoptMutation.error)}
+                        </p>
+                      ) : null}
+                    </>
+                  ) : null}
                 </>
               ) : null}
               {adoptMutation.error ? (

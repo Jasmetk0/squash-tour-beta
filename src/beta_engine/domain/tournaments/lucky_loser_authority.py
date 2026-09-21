@@ -352,6 +352,21 @@ class TournamentLuckyLoserOrderAuthority(FrozenInput):
                 raise ValueError("Historical LL order v1 cannot carry auto-BYE evidence")
         elif not self.qualification_auto_bye_terminals:
             raise ValueError("LL order v2 requires auto-BYE terminal evidence")
+        else:
+            auto_by_match = {
+                item.match_id: item
+                for item in self.qualification_auto_bye_terminals
+            }
+            for match_id, evidence_fingerprint in zip(
+                self.qualification_terminal_match_ids,
+                self.qualification_terminal_result_fingerprints,
+                strict=True,
+            ):
+                auto = auto_by_match.get(match_id)
+                if auto is not None and evidence_fingerprint != auto.fingerprint:
+                    raise ValueError(
+                        "LL auto-BYE terminal fingerprint differs from embedded evidence"
+                    )
         expected_ordinals = tuple(range(1, len(self.candidates) + 1))
         if tuple(item.priority_ordinal for item in self.candidates) != expected_ordinals:
             raise ValueError("LL candidate priority ordinals are not canonical")

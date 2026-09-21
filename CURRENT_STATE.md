@@ -1129,3 +1129,19 @@ and Saves Week 4 while source history remains unchanged.
 Tournament/result/correction history, zero history, authoritative transition inputs,
 InitialWorld binding, publication/Season Closing evidence and other unsupported
 Branch-owned components remain fail-closed.
+
+
+## Ranking-bearing Branch fork: disciplinary-zero remap
+
+Result-free ranking-bearing forks now support versioned `stored_zeros` history.
+`RankingZeroVersion` records are rebuilt for the target Branch, including their
+successor fingerprint chain, and all stored ranking command receipts are rebound to the
+target zero fingerprints before ranking snapshots are recalculated.
+
+The fork adapter verifies the frozen manifest against the source zero history at every
+ranking week and rejects manual `resolved_zeros` injection. A PR-critical acceptance
+proves the target can append its own later zero correction and Save a new ranking while
+the source Branch keeps its original zero history.
+
+Tournament/result/correction history and transition/publication authorities remain
+fail-closed pending their own remap adapters.

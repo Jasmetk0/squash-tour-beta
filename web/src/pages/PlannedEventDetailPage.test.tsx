@@ -16,6 +16,9 @@ const api = vi.hoisted(() => ({
   },
   getRun: vi.fn(),
   listEvents: vi.fn(),
+  getCanonicalWildCardState: vi.fn(),
+  previewCanonicalWildCardAssignment: vi.fn(),
+  commitCanonicalWildCardAssignment: vi.fn(),
   getEventWildcards: vi.fn(),
   getEventLateReplacementState: vi.fn(),
   getEventLateReplacementCandidates: vi.fn(),
@@ -58,7 +61,10 @@ const historicalView = () => ({ historical: true, unavailable: false, failed: fa
     { event_id: 'event-a', season: 2005, week: 10, tour: 'WORLD', category: 'GOLD', template_id: 'EVENT-A' },
     { event_id: 'event-after', season: 2005, week: 12, tour: 'WORLD', category: 'PLATINUM', template_id: 'AFTER' }
   ] } })
-type MockViewedState = ReturnType<typeof presentView> | ReturnType<typeof historicalView>
+type MockViewedState =
+  | ReturnType<typeof presentView>
+  | ReturnType<typeof presentBranchView>
+  | ReturnType<typeof historicalView>
 
 function renderAt(route: string): void {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -94,13 +100,89 @@ describe('PlannedEventDetailPage', () => {
       run_id: 'run-a',
       events: [{ event_sequence: 2, event_id: 'E2', season: 2029, week: 4, template_id: 'TEMP-C', tournament_result: { ok: true } }]
     })
-    api.getEventWildcards.mockResolvedValue({
+    api.getCanonicalWildCardState.mockResolvedValue({
+      schema_version: 'authoritative_wild_card_assignment_state.v1',
       run_id: 'run-a',
+      branch_id: 'branch-a',
       event_id: 'E1',
-      eligible: true,
-      eligibility_reason: null,
-      total_slots: 1,
-      slots: [{ slot_index: 1, entry_id: 'E1:WILD_CARD_PLACEHOLDER:1', assigned_player_id: null }]
+      authority: null,
+      definitive_assignments: []
+    })
+    api.previewCanonicalWildCardAssignment.mockResolvedValue({
+      schema_version: 'authoritative_wild_card_assignment_preview.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      week: { season_index: 0, week: 6 },
+      decision_slot_ordinal: 1,
+      expected_revision_id: 'revision-1',
+      selection_policy_id: 'explicit_admin_wild_card_selection.v1',
+      selection_policy_fingerprint: 'f'.repeat(64),
+      entry_field_fingerprint: 'a'.repeat(64),
+      field_sequence: 1,
+      authority: {
+        schema_version: 'tournament_wild_card_authority.v3',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        event_id: 'E1',
+        resolved_by_command_id: 'admin-ui-wc-reviewed',
+        entry_field_fingerprint: 'a'.repeat(64),
+        field_sequence: 1,
+        decision_week: { season_index: 0, week: 6 },
+        decision_slot_ordinal: 1,
+        selection_policy_id: 'explicit_admin_wild_card_selection.v1',
+        operator_label: 'Commissioner',
+        audit_reason: 'Reviewed explicitly',
+        original_wild_card_player_ids: ['P1'],
+        reserve_wild_card_player_ids: ['P9'],
+        unavailable_player_ids: [],
+        slots: [
+          {
+            wildcard_index: 1,
+            original_player_id: 'P1',
+            active_player_id: 'P9',
+            source: 'reserve_wc',
+            reserve_ordinal: 1,
+            released_because_direct_acceptance: true
+          }
+        ],
+        adjusted_qualification_player_ids: ['Q1', 'Q2'],
+        adjusted_below_qualification_cut_player_ids: []
+      },
+      definitive_assignments: [
+        {
+          schema_version: 'definitive_wild_card_assignment_authority.v1',
+          run_id: 'run-a',
+          branch_id: 'branch-a',
+          event_id: 'E1',
+          player_id: 'P9',
+          wildcard_index: 1,
+          assignment_source: 'reserve_wc',
+          reserve_ordinal: 1,
+          assignment_week: { season_index: 0, week: 6 },
+          decision_slot_ordinal: 1,
+          source_wild_card_command_id: 'admin-ui-wc-reviewed',
+          source_wild_card_authority_fingerprint: 'e'.repeat(64),
+          source_entry_field_fingerprint: 'a'.repeat(64),
+          source_field_sequence: 1,
+          provenance: 'canonical explicit Admin WC/RWC review'
+        }
+      ],
+      first_tour_entry_source_player_ids: ['P9'],
+      persisted: false,
+      proposal_fingerprint: 'd'.repeat(64)
+    })
+    api.commitCanonicalWildCardAssignment.mockResolvedValue({
+      schema_version: 'authoritative_wild_card_assignment_commit.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      event_id: 'E1',
+      week: { season_index: 0, week: 6 },
+      decision_slot_ordinal: 1,
+      proposal_fingerprint: 'd'.repeat(64),
+      authority: (await api.previewCanonicalWildCardAssignment()).authority,
+      assignment_results: [],
+      adoption: 'committed'
     })
     api.getCanonicalTournamentEntryFieldState.mockResolvedValue({
       schema_version: 'canonical_tournament_entry_field_state.v2',
@@ -471,20 +553,20 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('WORLD').length).toBeGreaterThan(0); expect(screen.getByText('GOLD')).toBeInTheDocument(); expect(screen.getByText('EVENT-A')).toBeInTheDocument()
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
-    for (const name of ['Commissioner wildcards', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Legacy pre-draw withdrawal history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
-    for (const method of ['getRun', 'listEvents', 'getEventWildcards', 'getEventWildcardCandidates', 'getEventWildcardActions', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
+    for (const name of ['Canonical WC/RWC review', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Legacy pre-draw withdrawal history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
+    for (const method of ['getRun', 'listEvents', 'getCanonicalWildCardState', 'previewCanonicalWildCardAssignment', 'commitCanonicalWildCardAssignment', 'getEventWildcardActions', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
 
   it('re-enables current and commissioner queries after Past changes to Present', async () => {
     let current: MockViewedState = historicalView(); adminTime.viewed.mockImplementation(() => current)
-    function Harness() { const [, update] = useState(0); return <><button onClick={() => { current = presentView(); update(value => value + 1) }}>Switch Present</button><PlannedEventDetailPage /></> }
+    function Harness() { const [, update] = useState(0); return <><button onClick={() => { current = presentBranchView(); update(value => value + 1) }}>Switch Present</button><PlannedEventDetailPage /></> }
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
     render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/runs/run-a/calendar/E1']}><Routes><Route path="/runs/:runId/calendar/:eventId" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>)
-    await screen.findByText('Past'); expect(api.getEventWildcards).not.toHaveBeenCalled()
+    await screen.findByText('Past'); expect(api.getCanonicalWildCardState).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Switch Present' }))
     await waitFor(() => expect(api.getRun).toHaveBeenCalled())
-    await waitFor(() => expect(api.getEventWildcards).toHaveBeenCalled())
+    await waitFor(() => expect(api.getCanonicalWildCardState).toHaveBeenCalled())
     expect(screen.getByText('Present')).toBeInTheDocument()
   })
 
@@ -527,13 +609,66 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('None').length).toBeGreaterThan(0)
   })
 
-  it('renders wildcard commissioner section with slot visibility', async () => {
+  it('previews and commits canonical WC/RWC review from the active Branch', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
     renderAt('/runs/run-a/calendar/E1')
 
-    expect(await screen.findByRole('heading', { name: 'Commissioner wildcards' })).toBeInTheDocument()
-    expect(await screen.findByText('Slot 1: Unassigned')).toBeInTheDocument()
-    expect(await screen.findByRole('option', { name: /Player One \(P1\)/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Assign wildcard' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Canonical WC/RWC review' })).toBeInTheDocument()
+    expect(screen.getByText(/eligibility and construction of the RWC order are still intentionally open/i)).toBeInTheDocument()
+    expect(api.getEventWildcards).not.toHaveBeenCalled()
+    expect(api.getEventWildcardCandidates).not.toHaveBeenCalled()
+
+    fireEvent.change(screen.getByLabelText('Original WC slot nominations'), {
+      target: { value: 'P1' }
+    })
+    fireEvent.change(screen.getByLabelText('RWC order'), { target: { value: 'P9' } })
+    fireEvent.change(screen.getByLabelText('WC review operator'), {
+      target: { value: 'Commissioner' }
+    })
+    fireEvent.change(screen.getByLabelText('WC review audit reason'), {
+      target: { value: 'Reviewed explicitly' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Preview canonical WC/RWC review' }))
+
+    await waitFor(() =>
+      expect(api.previewCanonicalWildCardAssignment).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        expect.objectContaining({
+          original_wild_card_player_ids: ['P1'],
+          reserve_wild_card_player_ids: ['P9'],
+          unavailable_player_ids: [],
+          operator_label: 'Commissioner',
+          reason: 'Reviewed explicitly'
+        })
+      )
+    )
+    expect(await screen.findByText(/WC 1: P9 · reserve_wc/)).toBeInTheDocument()
+    expect(screen.getByText('P9')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Commit reviewed canonical WC/RWC authority' })
+    )
+    await waitFor(() =>
+      expect(api.commitCanonicalWildCardAssignment).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        {
+          command_id: 'admin-ui-wc-reviewed',
+          original_wild_card_player_ids: ['P1'],
+          reserve_wild_card_player_ids: ['P9'],
+          unavailable_player_ids: [],
+          operator_label: 'Commissioner',
+          reason: 'Reviewed explicitly',
+          expected_week: { season_index: 0, week: 6 },
+          expected_revision_id: 'revision-1',
+          expected_decision_slot_ordinal: 1,
+          expected_proposal_fingerprint: 'd'.repeat(64)
+        }
+      )
+    )
   })
 
   it('renders canonical Main Draw warning for the active Admin Branch', async () => {

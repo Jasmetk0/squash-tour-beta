@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 
 import {
   adoptAuthoritativeWeekScheduleProposal,
+  adoptAuthoritativeWeekSchedule,
   getAuthoritativeSimulationPosition,
   inspectAuthoritativeEntryDecisionSlot,
   reviewAuthoritativeEntryDecisionSlot,
@@ -17,6 +18,7 @@ import {
   inspectAuthoritativeWeekSchedule,
   previewAuthoritativeSimulationSave,
   proposeAuthoritativeWeekSchedule,
+  previewAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
   simulateAuthoritativeNextMatch,
   simulateAuthoritativeNextSlot,
@@ -32,7 +34,9 @@ import {
 } from '../api/client'
 import type {
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
+  AuthoritativeWeekScheduleManualPreview,
   AuthoritativeApplicationValidationReview,
   WeekTournamentLockPreview,
   WeekTournamentLockPreviewPayload,
@@ -59,6 +63,73 @@ type Props = {
 type EntryValidationDraft = {
   outcome: '' | 'valid' | 'invalid'
   reason: string
+}
+
+type MatchDayScheduleDraft = Record<
+  string,
+  {
+    day: string
+    order: string
+  }
+>
+
+function seedMatchDayScheduleDraft(
+  schedule: AuthoritativeWeekSchedule
+): MatchDayScheduleDraft {
+  const next: MatchDayScheduleDraft = {}
+  for (const slot of schedule.slots) {
+    const groupId = slot.group_ids[0]
+    if (!groupId || slot.match_day_ordinal == null || slot.match_order == null) continue
+    next[groupId] = {
+      day: String(slot.match_day_ordinal),
+      order: String(slot.match_order)
+    }
+  }
+  return next
+}
+
+function editedMatchDaySchedule(
+  source: AuthoritativeWeekSchedule,
+  draft: MatchDayScheduleDraft
+): AuthoritativeWeekSchedule {
+  if (source.schema_version !== 'week_simulation_schedule.v2') {
+    throw new Error('Manual Match Day editing requires Week Simulation Schedule v2.')
+  }
+  const ordinalPool = source.slots.map((slot) => slot.ordinal).sort((a, b) => a - b)
+  const rows = source.slots.map((slot) => {
+    const groupId = slot.group_ids[0]
+    if (!groupId) throw new Error('Every Match Day slot must contain one group.')
+    const value = draft[groupId]
+    const day = Number(value?.day ?? slot.match_day_ordinal)
+    const requestedOrder = Number(value?.order ?? slot.match_order)
+    if (!Number.isInteger(day) || day < 1) {
+      throw new Error(`Match Day for ${groupId} must be a positive integer.`)
+    }
+    if (!Number.isInteger(requestedOrder) || requestedOrder < 1) {
+      throw new Error(`Match order for ${groupId} must be a positive integer.`)
+    }
+    return { slot, groupId, day, requestedOrder }
+  })
+  rows.sort(
+    (a, b) =>
+      a.day - b.day ||
+      a.requestedOrder - b.requestedOrder ||
+      a.slot.ordinal - b.slot.ordinal ||
+      a.groupId.localeCompare(b.groupId)
+  )
+
+  const nextOrderByDay = new Map<number, number>()
+  const slots = rows.map((row, index) => {
+    const matchOrder = (nextOrderByDay.get(row.day) ?? 0) + 1
+    nextOrderByDay.set(row.day, matchOrder)
+    return {
+      ...row.slot,
+      ordinal: ordinalPool[index],
+      match_day_ordinal: row.day,
+      match_order: matchOrder
+    }
+  })
+  return { ...source, slots }
 }
 
 function entryValidationKey(eventId: string, playerId: string): string {
@@ -89,6 +160,13 @@ export function AuthoritativeSimulationPanel({
   const [selectedReconstructionCandidate, setSelectedReconstructionCandidate] = useState('')
   const [proposal, setProposal] = useState<AuthoritativeWeekScheduleProposal | null>(null)
   const [proposalRequestId, setProposalRequestId] = useState('')
+  const [manualScheduleDraft, setManualScheduleDraft] =
+    useState<MatchDayScheduleDraft>({})
+  const [manualScheduleRequestId, setManualScheduleRequestId] = useState(newCommandId)
+  const [manualScheduleReview, setManualScheduleReview] = useState<{
+    schedule: AuthoritativeWeekSchedule
+    preview: AuthoritativeWeekScheduleManualPreview
+  } | null>(null)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
@@ -233,6 +311,9 @@ export function AuthoritativeSimulationPanel({
   useEffect(() => {
     setProposal(null)
     setProposalRequestId('')
+    setManualScheduleDraft({})
+    setManualScheduleRequestId(newCommandId())
+    setManualScheduleReview(null)
     setConfirmed(false)
     setSelectedGroupId('')
     setNextMatchCommandId(newCommandId())

@@ -168,8 +168,7 @@ def install_ranking_revision_state(
             and (transition["receipts"] or transition["events"])
         )
         if (
-            state.tournament_ranking_snapshot_authorities
-            or state.season_closing_rankings
+            state.season_closing_rankings
             or unsupported_transition_audit
             or not state.entries
             or state.entries[0].snapshot.week.ordinal != 0
@@ -180,7 +179,7 @@ def install_ranking_revision_state(
             )
         ):
             raise ValueError(
-                "Trusted fork install supports ranking history plus publication/world head, without transition receipts/events or Season Closing authorities"
+                "Trusted fork install supports ranking history plus publication/world head and Tournament Ranking Snapshot authorities, without transition receipts/events or Season Closing authorities"
             )
         row_models = (
             OfficialRankingCandidateModel,

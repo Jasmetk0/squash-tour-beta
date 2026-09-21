@@ -3529,6 +3529,17 @@ class AuthoritativeRunSimulationDriver:
                     or bool(wc_slot_ordinals)
                     or len(packages) > 1
                     or len(plans) != 3
+                    or any(
+                        self._canonical_draw_binding(
+                            session,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            week=week,
+                            event_id=package.event_id,
+                        )
+                        is not None
+                        for package in packages
+                    )
                 ),
                 "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
@@ -4356,6 +4367,17 @@ class AuthoritativeRunSimulationDriver:
                     )
                 )
                 != 3
+                or any(
+                    self._canonical_draw_binding(
+                        session,
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week=week,
+                        event_id=package.event_id,
+                    )
+                    is not None
+                    for package in packages
+                )
             )
             and not allow_missing_schedule
         ):
@@ -4491,6 +4513,17 @@ class AuthoritativeRunSimulationDriver:
             or bool(wc_slot_ordinals)
             or len(packages) > 1
             or len(plans) != 3
+            or any(
+                self._canonical_draw_binding(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    event_id=package.event_id,
+                )
+                is not None
+                for package in packages
+            )
         ):
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
@@ -4721,7 +4754,12 @@ class AuthoritativeRunSimulationDriver:
             group_ids=spec.group_ids,
             match_events=selected,
             dependency_ids=tuple(f for p in selected for f in self._plan_feeders(p)),
-            provenance=f"adopted-authority:{authority_fp};week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'}",
+            provenance=(
+                f"adopted-authority:{authority_fp};"
+                f"week-schedule:{schedule.fingerprint if schedule else 'single-event-compat'};"
+                f"match-day:{getattr(spec, 'match_day_ordinal', None) or 'legacy'};"
+                f"match-order:{getattr(spec, 'match_order', None) or 'legacy'}"
+            ),
         )
 
     def _eligible_groups(self, session, position, packages):

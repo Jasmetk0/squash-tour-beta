@@ -1927,10 +1927,15 @@ def test_real_persisted_eight_player_draw_executes_and_closes_once(tmp_path):
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
         assert len(slots) == 7
-        first_day_slot_ids = {
-            f"{package.event_id}:slot:{slot.ordinal}"
+        first_day_ordinals = {
+            slot.ordinal
             for slot in schedule.slots
             if slot.match_day_ordinal == 1
+        }
+        first_day_slot_ids = {
+            slot.slot_id
+            for slot in slots
+            if slot.slot_ordinal in first_day_ordinals
         }
         first_day_groups = [
             group for group in groups if group.slot_id in first_day_slot_ids
@@ -2230,10 +2235,15 @@ def test_real_persisted_sixteen_player_draw_executes_and_closes_once(tmp_path):
             == 1
             for slot in slots
         )
-        first_day_slot_ids = {
-            f"{event.event_id}:slot:{slot.ordinal}"
+        first_day_ordinals = {
+            slot.ordinal
             for slot in schedule.slots
             if slot.match_day_ordinal == 1
+        }
+        first_day_slot_ids = {
+            slot.slot_id
+            for slot in slots
+            if slot.slot_ordinal in first_day_ordinals
         }
         opening_groups = [
             group for group in groups if group.slot_id in first_day_slot_ids

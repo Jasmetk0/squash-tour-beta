@@ -192,26 +192,33 @@ def test_bootstrap_ranking_revision_forks_with_target_branch_identity_and_can_di
 
 
 @pytest.mark.pr_critical
-def test_multiweek_ranking_fork_stays_fail_closed_until_next_remap_adapter(prepared):
+def test_source_free_multiweek_ranking_fork_rebuilds_full_lineage_and_diverges(prepared):
     path, repo, runner, command, *_ = prepared
     save(prepared)
-    runner.execute(
-        RankingWeekCommand(
-            command_id="week-2",
-            tournaments=(),
-            context=RankingTransitionContext(
-                run_id="run-one",
-                branch_id="branch-one",
-                completed_week=RankingWeek(season_index=0, week=1),
-                target_week=RankingWeek(season_index=0, week=2),
-                policy=command.policy,
-                players=(),
-                discipline="none",
-            ),
+    for week_number in (2, 3):
+        runner.execute(
+            RankingWeekCommand(
+                command_id=f"source-week-{week_number}",
+                tournaments=(),
+                context=RankingTransitionContext(
+                    run_id="run-one",
+                    branch_id="branch-one",
+                    completed_week=RankingWeek(
+                        season_index=0,
+                        week=week_number - 1,
+                    ),
+                    target_week=RankingWeek(
+                        season_index=0,
+                        week=week_number,
+                    ),
+                    policy=command.policy,
+                    players=(),
+                    discipline="none",
+                ),
+            )
         )
-    )
     preview = repo.preview_ranking_save(run_id="run-one", branch_id="branch-one")
-    RunWorkingDraftService(
+    source_saved = RunWorkingDraftService(
         repository=repo,
         id_factory=_id_factory("revision-four", "audit-three"),
     ).save_ranking(
@@ -220,25 +227,119 @@ def test_multiweek_ranking_fork_stays_fail_closed_until_next_remap_adapter(prepa
         expected_draft_version=4,
         expected_ranking_fingerprint=preview["ranking_fingerprint"],
     )
+    source_state = load_saved_ranking_component(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_state is not None
+    assert len(source_state.entries) == 3
 
-    before = dump(path)
-    with pytest.raises(
-        SavedRevisionBranchForkConflictError,
-        match="bootstrap-only ranking history",
-    ):
-        RunBranchCreationService(
-            repository=repo,
-            id_factory=_id_factory(
-                "branch-four",
-                "draft-four",
-                "revision-fork-four",
-            ),
-        ).create_from_saved_revision(
-            run_id="run-one",
-            source_branch_id="branch-one",
-            source_saved_revision_id="revision-four",
+    created = RunBranchCreationService(
+        repository=repo,
+        id_factory=_id_factory(
+            "branch-four",
+            "draft-four",
+            "revision-fork-four",
+        ),
+    ).create_from_saved_revision(
+        run_id="run-one",
+        source_branch_id="branch-one",
+        source_saved_revision_id="revision-four",
+        display_name="Multiweek Ranking Fork",
+    )
+    assert created.saved_head_revision_id == "revision-fork-four"
+
+    fork_root = repo.get_branch_saved_revision(revision_id="revision-fork-four")
+    assert fork_root is not None
+    target_state = load_saved_ranking_component(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-four",
+    )
+    assert target_state is not None
+    assert len(target_state.entries) == 3
+    assert [entry.snapshot.week.week for entry in target_state.entries] == [1, 2, 3]
+    assert all(
+        entry.snapshot.branch_id == "branch-four"
+        for entry in target_state.entries
+    )
+    assert all(
+        target_entry.snapshot.fingerprint != source_entry.snapshot.fingerprint
+        for target_entry, source_entry in zip(
+            target_state.entries,
+            source_state.entries,
+            strict=True,
         )
-    assert dump(path) == before
+    )
+    assert all(
+        target_entry.receipts[0].request_fingerprint
+        != source_entry.receipts[0].request_fingerprint
+        for target_entry, source_entry in zip(
+            target_state.entries,
+            source_state.entries,
+            strict=True,
+        )
+    )
+    assert target_state.entries[1].snapshot.previous_fingerprint == (
+        target_state.entries[0].snapshot.fingerprint
+    )
+    assert target_state.entries[2].snapshot.previous_fingerprint == (
+        target_state.entries[1].snapshot.fingerprint
+    )
+
+    target_runner = RankingWeekCommandRunner(repo._session_factory)
+    target_runner.execute(
+        RankingWeekCommand(
+            command_id="branch-four-week-4",
+            tournaments=(),
+            context=RankingTransitionContext(
+                run_id="run-one",
+                branch_id="branch-four",
+                completed_week=RankingWeek(season_index=0, week=3),
+                target_week=RankingWeek(season_index=0, week=4),
+                policy=command.policy,
+                players=(),
+                discipline="none",
+            ),
+        )
+    )
+    target_preview = repo.preview_ranking_save(
+        run_id="run-one",
+        branch_id="branch-four",
+    )
+    target_saved = RunWorkingDraftService(
+        repository=repo,
+        id_factory=_id_factory(
+            "revision-branch-four-week-four",
+            "audit-branch-four",
+        ),
+    ).save_ranking(
+        run_id="run-one",
+        branch_id="branch-four",
+        expected_draft_version=0,
+        expected_ranking_fingerprint=target_preview["ranking_fingerprint"],
+    )
+    target_after = load_saved_ranking_component(
+        target_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-four",
+    )
+    assert target_after is not None
+    assert len(target_after.entries) == 4
+
+    source_after = load_saved_ranking_component(
+        repo.get_branch_saved_revision(revision_id="revision-four").payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_after is not None
+    assert len(source_after.entries) == 3
+
+    reloaded = _repository(f"sqlite:///{path}")
+    assert reloaded.get_branch_revision_state(
+        branch_id="branch-four"
+    ).saved_head_revision_id == "revision-branch-four-week-four"
 
 
 @pytest.mark.parametrize("damage", ["hash", "scope", "shape"])

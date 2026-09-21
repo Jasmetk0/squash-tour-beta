@@ -722,3 +722,31 @@ evidence instead of manual DB repair. The command hashes the existing season
 Calendar authority, fails closed if any Calendar Event or simulation/tournament
 work owns the week, and then reuses the normal Saved Revision + Week Transition
 path. See `docs/AUTHORITATIVE_EMPTY_WEEK_COMPLETION_V1.md`.
+
+
+### Official Run whole-season acceptance
+
+Master §31.3's primary pre-alpha acceptance flow now has a direct canonical backend
+acceptance test. It starts from the production Admin Initial World boundary, prepares
+the derived Week-1 Official Ranking, executes a real Week-1 tournament through the
+authoritative Simulation Slot / Match Engine path, advances every remaining
+RankingWeek with explicit Calendar-proven empty-week evidence, Saves and reopens the
+Run mid-season, completes Week 61, then executes the real ordinary Season Transition
+into next Season Week 1.
+
+The long path deliberately keeps ordinary weekly consequences in the clean Working
+Draft and checkpoints only at acceptance Save boundaries. This matches the Master
+Working Draft / Saved Revision contract and avoids inventing a requirement to create a
+Saved Revision after every week. The mid-season restart compares the exact post-Save
+Position identity, including Saved Revision head and Working Draft base/version.
+
+The acceptance exposed and fixed one real HTTP round-trip defect: the Season
+Transition configuration preview serializes immutable tuple fields as JSON arrays,
+while the advance endpoint had been validating the decoded Python dict in strict
+Python mode. The advance endpoint now validates the submitted payload in Pydantic JSON
+mode, so the exact configuration returned by preview can be posted back unchanged.
+
+This closes the missing end-to-end continuity proof for the minimum Official Run
+season path. It does not resolve PAQ-006 scale/performance targets, require every week
+to contain a tournament, or decide any still-open Entry/WC/lock/reconstruction product
+policy.

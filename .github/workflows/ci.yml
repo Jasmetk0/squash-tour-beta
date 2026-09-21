@@ -39,14 +39,12 @@ jobs:
               - 'tests/**'
               - 'pyproject.toml'
               - 'requirements*.txt'
-              - '.github/workflows/**'
             frontend:
               # Canonical World Package changes affect API contracts consumed by the UI.
               - 'config/world_packages/**'
               - 'web/**'
               - 'web/package.json'
               - 'web/package-lock.json'
-              - '.github/workflows/**'
             docs_only:
               - 'docs/**'
               - '**/*.md'

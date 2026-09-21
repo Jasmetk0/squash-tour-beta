@@ -44,6 +44,25 @@ def _opening_players(package) -> tuple[str, ...]:
 
 
 def _stage_conflicting_fields(driver, factory, week, first, second):
+    # The reusable multi-event fixture rewrites legacy MatchPackage chronology to
+    # Week 1 without rewriting its Calendar authority. Week Tournament Lock is
+    # intentionally Calendar-owned, so make this feature fixture internally
+    # canonical instead of weakening production week resolution.
+    calendar_service = driver.awards_service.calendar_service
+    registry = calendar_service._load_registry()
+    calendar = registry.calendars_by_season[first.season]
+    for index, event in enumerate(calendar.events):
+        if event.event_id in {first.event_id, second.event_id}:
+            calendar.events[index] = event.model_copy(
+                update={
+                    "season_week": week.week,
+                    "start_season_week": week.week,
+                    "end_season_week": week.week,
+                    "duration_in_season_weeks": 1,
+                }
+            )
+    calendar_service._save_registry(registry)
+
     first_players = _opening_players(first)
     second_players = _opening_players(second)
     shared = first_players[0]

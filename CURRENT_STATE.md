@@ -1243,3 +1243,21 @@ atomically with ranking history.
 Week/Season Transition receipts and World Events remain fail-closed because they carry
 player lifecycle/sporting or Season Closing fingerprints that cannot be truthfully
 rebuilt by the ranking-only Saved Revision slice yet.
+
+
+## Branch fork: player lifecycle Saved Revision remap
+
+Ranking-bearing materialized Branch forks can now carry the complete
+`player_lifecycle` Saved Revision component. The fork path validates the source
+component, rebuilds every immutable lifecycle snapshot for the target Branch, rewires
+the predecessor fingerprint chain to target-local fingerprints, writes the rebuilt
+component into the target materialized Saved Revision, and installs the same lifecycle
+history into target Branch persistence in the fork transaction.
+
+Player roster, lifecycle policy, age/status/Tour-entry evidence and shared InitialWorld
+provenance remain unchanged. Only Branch-owned identity and predecessor fingerprints
+are rebuilt.
+
+Player sporting history remains guarded for the next slice because its completed-week
+contexts also reference branch-owned tournament/match-effect evidence that must be
+mapped rather than copied.

@@ -868,3 +868,15 @@ and the target materialized fork root owns the resulting independent ranking lin
 Remaining adapters are the genuinely source-bearing cases: tournament/correction result
 history, disciplinary-zero history, transition/publication authorities, InitialWorld-
 linked ranking and Season Closing evidence.
+
+
+### Ranking identity remapping: disciplinary-zero histories
+
+Result-free ranking-bearing forks now remap complete stored disciplinary-zero version
+chains alongside ranking commands and snapshots. Branch-bound zero identities,
+successor fingerprints, command fingerprints and resolved manifest inputs are
+reconstructed for the target Branch.
+
+The next substantial remaining source-bearing adapter is tournament/correction result
+history; transition/publication authorities, InitialWorld-linked state and Season
+Closing evidence remain separate follow-ups.

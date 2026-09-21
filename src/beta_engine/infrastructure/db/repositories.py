@@ -126,7 +126,7 @@ from beta_engine.infrastructure.db.saved_revision_rankings import (
 )
 from beta_engine.infrastructure.db.ranking_fork_remap import (
     RankingForkRemapUnsupportedError,
-    remap_bootstrap_ranking_state_for_branch,
+    remap_source_free_ranking_state_for_branch,
 )
 from beta_engine.infrastructure.db.ranking_revision_state import (
     install_ranking_revision_state,
@@ -2625,7 +2625,7 @@ class SimulationPersistenceRepository:
                         )
                         if source_ranking is None:
                             raise ValueError("ranking component is missing")
-                        remapped_ranking = remap_bootstrap_ranking_state_for_branch(
+                        remapped_ranking = remap_source_free_ranking_state_for_branch(
                             source_ranking,
                             run_id=run_id,
                             source_branch_id=source_branch_id,
@@ -2774,7 +2774,7 @@ class SimulationPersistenceRepository:
                         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
                         "summary": (
                             f"Forked Branch from {source_revision_id} with remapped "
-                            "bootstrap ranking identity"
+                            "source-free ranking identity"
                         ),
                         "source_branch_id": source_branch_id,
                         "source_saved_revision_id": source_revision_id,

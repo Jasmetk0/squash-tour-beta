@@ -1,3 +1,6 @@
+import hashlib
+import json
+
 import pytest
 
 from beta_engine.domain.players.tour_entry import PlayerTourEntryTrigger
@@ -61,6 +64,26 @@ def _wild_card_authority(
         adjusted_qualification_player_ids=(),
         adjusted_below_qualification_cut_player_ids=(),
     )
+
+
+@pytest.mark.pr_critical
+def test_historical_wc_v1_fingerprint_ignores_new_chronology_fields():
+    source = _wild_card_authority()
+    legacy_payload = source.model_dump(mode="json")
+    legacy_payload.pop("decision_week")
+    legacy_payload.pop("decision_slot_ordinal")
+    expected = hashlib.sha256(
+        json.dumps(
+            legacy_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+    assert source.schema_version == "tournament_wild_card_authority.v1"
+    assert source.decision_week is None
+    assert source.decision_slot_ordinal is None
+    assert source.fingerprint == expected
 
 
 @pytest.mark.pr_critical

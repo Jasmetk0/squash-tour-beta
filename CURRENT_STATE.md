@@ -1391,3 +1391,10 @@ field, WC, request and authority fingerprints are therefore target-local rather 
 copied from the source Branch.
 
 Draw generation/revision/process authority remains the next downstream boundary.
+
+
+## Branch fork: draw-backed Adopted Tournament Authority v6 remap
+
+Materialized Branch forks now carry canonical draw-backed Adopted Tournament Authority evidence once the source Tournament Draw has an exact target mapping. Each adopted tournament bundle is decoded and validated against its stored source authority fingerprint, every Draw authority fingerprint is rebound through the source-to-target Draw map, the canonical v6 package is re-encoded, and the week authority fingerprint is recalculated under the target Branch identity.
+
+Legacy adopted tournament evidence without Draw binding remains supported unchanged. Draw-bound evidence fails closed if any referenced source Draw lacks a target mapping. Draw Revision history is still intentionally unsupported; revision-specific replacement cutoff, Lucky Loser, Wild Card repair and replacement-source evidence must be replayed before revised Draw fingerprints can participate in adopted authority remapping.

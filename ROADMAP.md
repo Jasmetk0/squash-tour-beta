@@ -1061,3 +1061,10 @@ their aggregate fingerprint is not reused from source identity.
 
 Next: rebuild Tournament Draw Authority from target Draw Input, then Draw Process and
 Draw Revision history, and finally allow canonical Adopted Tournament Authority v6.
+
+
+### Draw-backed adopted tournament authority fork remap
+
+The materialized Branch-fork path now consumes the canonical source→target Tournament Draw fingerprint map when rebuilding Adopted Tournament Authority. Canonical v6 adopted bundles are re-encoded with target Draw fingerprints and receive new target Branch authority fingerprints instead of retaining source Draw identity. Legacy no-Draw adopted bundles remain compatible, while any unmapped Draw reference still fails closed.
+
+The next downstream recovery slice is Draw Revision replay, including embedded replacement-cutoff and repair-specific LL/WC/replacement-source authorities before revised Draw fingerprints can be considered fully fork-safe.

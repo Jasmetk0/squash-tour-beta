@@ -21,7 +21,7 @@ class InitialWorldState(BaseModel):
     season: Literal["2000/2001"] = "2000/2001"
     players: tuple[SeasonActivePlayer, ...]
     policies: tuple[OfficialRankingPolicy, ...] = ()
-    source_kind: Literal["production_initial_pool.v1"]
+    source_kind: Literal["production_initial_pool.v1", "manual_standalone.v1"]
     source_season: str = Field(min_length=1)
     source_fingerprint: str = Field(min_length=1)
     bootstrap_seed: int

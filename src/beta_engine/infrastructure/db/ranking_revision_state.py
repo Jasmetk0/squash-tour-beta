@@ -244,7 +244,13 @@ def install_ranking_revision_state(
             sources.append(version)
         zeros = OfficialRankingZeroStore(session)
         for version in state.zero_sources:
-            zeros.append(version)
+            zeros.append(
+                version,
+                allow_empty_fork_target=(
+                    allow_empty_fork_target
+                    and branch.forked_from_branch_id is not None
+                ),
+            )
         candidates = OfficialRankingCandidateStore(session)
         for index, entry in enumerate(state.entries):
             candidates.append(

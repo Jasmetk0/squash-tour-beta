@@ -64,3 +64,27 @@ historical authorities are Branch-bound. No generic string replacement is used.
 
 This is a technical ranking identity remapping slice. It does not define new ranking,
 discipline, tournament, lifecycle, or Tour-entry policy.
+
+
+## Stored disciplinary-zero history
+
+The fork adapter also supports result-free histories whose ranking commands use
+`stored_zeros`.
+
+Every `RankingZeroVersion` is rebuilt for the target Branch identity. Successor
+`previous_fingerprint` links are recalculated against the target zero lineage, and
+every stored ranking command is rebound to the remapped zero-version fingerprints.
+
+The adapter verifies that:
+
+- every saved zero version is owned by at least one stored ranking command;
+- the frozen ranking manifest's resolved disciplinary-zero set exactly matches the
+  source zero history at that week;
+- only `none` or `stored_zeros` discipline is accepted;
+- manually injected `resolved_zeros` history is not silently adopted.
+
+The target can append later zero corrections independently after the fork. Source zero
+history remains immutable and unchanged.
+
+Tournament/correction result history and authority-backed transition/publication state
+remain outside this adapter.

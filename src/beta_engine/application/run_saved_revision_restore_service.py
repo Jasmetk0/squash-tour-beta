@@ -38,6 +38,19 @@ class RunSavedRevisionRestoreService:
     repository: SimulationPersistenceRepository
     id_factory: EntityIdFactory
 
+    def preview_current_branch_restore(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_saved_revision_id: str,
+    ):
+        return self.repository.preview_branch_saved_revision_restore(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_saved_revision_id=target_saved_revision_id,
+        )
+
     def restore_current_branch(
         self,
         *,

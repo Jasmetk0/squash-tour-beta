@@ -148,6 +148,9 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     PLAYER_LIFECYCLE_COMPONENT_KEY,
     bootstrap_lifecycle,
     capture_saved_lifecycle,
+    load_saved_lifecycle,
+    put_lifecycle,
+    remap_saved_lifecycle_component,
     restore_saved_lifecycle,
 )
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
@@ -2609,6 +2612,7 @@ class SimulationPersistenceRepository:
                     unsupported_content = set(source_content) - {
                         RANKING_COMPONENT_KEY,
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
+                        PLAYER_LIFECYCLE_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2771,6 +2775,23 @@ class SimulationPersistenceRepository:
                         "fingerprint": remapped_ranking.fingerprint,
                         "state": remapped_ranking.model_dump(mode="json"),
                     }
+                    remapped_lifecycle_component = remap_saved_lifecycle_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                    )
+                    if remapped_lifecycle_component is not None:
+                        target_payload["content"][PLAYER_LIFECYCLE_COMPONENT_KEY] = (
+                            remapped_lifecycle_component
+                        )
+                        remapped_lifecycle_states = load_saved_lifecycle(
+                            target_payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                        for lifecycle_state in remapped_lifecycle_states or ():
+                            put_lifecycle(session, lifecycle_state)
                     summary = {
                         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
                         "summary": (

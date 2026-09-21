@@ -10,6 +10,7 @@ from beta_engine.domain.rankings.official import (
 )
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionEntry,
+    RankingRevisionReceipt,
     RankingRevisionState,
 )
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
@@ -259,12 +260,18 @@ def test_branch_fork_remaps_tournament_ranking_snapshot_to_target_publication():
             "zeros_from_history": False,
             "command_request_fingerprint": "0" * 64,
         },
-        receipts=(),
+        receipts=(
+            RankingRevisionReceipt(
+                command_id="bootstrap",
+                request_fingerprint="0" * 64,
+                request_payload_json="{}",
+            ),
+        ),
     )
     target_entry = RankingRevisionEntry(
         snapshot=target_snapshot,
         inputs=source_entry.inputs,
-        receipts=(),
+        receipts=source_entry.receipts,
     )
     source_authority = TournamentRankingSnapshotAuthority(
         run_id="run",

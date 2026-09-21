@@ -45,6 +45,19 @@ The Match Day operation is intentionally resumable rather than pretending the wh
 day is one database transaction. Individual Simulation Slots retain their existing
 atomic/exactly-once behavior and historical receipts.
 
+## Admin UI
+
+The canonical Simulation Admin panel exposes this boundary as a reviewed two-step
+operation. **Review authoritative Next Match Day** loads the server-derived preview
+and shows the frozen Match Day, global slots, competitive groups, Saved Revision and
+schedule fingerprint. **Simulate reviewed authoritative Match Day** then sends only
+the reviewed CAS inputs plus one stable command ID.
+
+A normal network/response failure keeps that command ID and review so the Admin can
+retry the exact resumable parent operation. A canonical 409 conflict discards the
+stale review and refreshes current Position/Schedule instead of encouraging a retry
+against changed history.
+
 ## Scope limits
 
 This slice does not define `Next Round` semantics. One round may span multiple Match

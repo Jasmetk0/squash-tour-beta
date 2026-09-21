@@ -131,6 +131,9 @@ import type {
   AdoptAuthoritativeWeekScheduleProposalPayload,
   AuthoritativeWeekScheduleAdoptionResult,
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeMatchDayPreview,
+  AuthoritativeMatchDayCommandPayload,
+  AuthoritativeMatchDayResult,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1481,6 +1484,50 @@ export async function simulateAuthoritativeNextSlot(
     { method: 'POST', body: JSON.stringify(payload) }
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function previewAuthoritativeNextMatchDay(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeMatchDayPreview> {
+  const data = await request<AuthoritativeMatchDayPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/next-match-day/preview'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_day_preview.v1' ||
+    data.match_day_ordinal < 1 ||
+    data.target_slot_ordinals.length === 0 ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Match Day preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeNextMatchDay(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeMatchDayCommandPayload
+): Promise<AuthoritativeMatchDayResult> {
+  const data = await request<AuthoritativeMatchDayResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-match-day',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (
+    data.schema_version !== 'authoritative_match_day_result.v1' ||
+    data.completed_slot_count !== data.target_slot_ordinals.length ||
+    data.child_command_ids.length !== data.target_slot_ordinals.length ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint)
+  ) {
+    throw new Error('Authoritative Match Day result is invalid.')
+  }
   return data
 }
 

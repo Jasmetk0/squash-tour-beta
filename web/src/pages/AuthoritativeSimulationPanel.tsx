@@ -22,6 +22,8 @@ import {
   saveAuthoritativeSimulation,
   simulateAuthoritativeNextMatch,
   simulateAuthoritativeNextSlot,
+  previewAuthoritativeNextMatchDay,
+  simulateAuthoritativeNextMatchDay,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -34,6 +36,7 @@ import {
 } from '../api/client'
 import type {
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeMatchDayPreview,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -169,6 +172,9 @@ export function AuthoritativeSimulationPanel({
   } | null>(null)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
+  const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
+  const [nextMatchDayReview, setNextMatchDayReview] =
+    useState<AuthoritativeMatchDayPreview | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -318,6 +324,8 @@ export function AuthoritativeSimulationPanel({
     setSelectedGroupId('')
     setNextMatchCommandId(newCommandId())
     setNextSlotCommandId(newCommandId())
+    setNextMatchDayCommandId(newCommandId())
+    setNextMatchDayReview(null)
     setReconstructionCandidateCount('10')
     setReconstructionWinnerId('')
     setReconstructionMatchScore('')
@@ -382,6 +390,8 @@ export function AuthoritativeSimulationPanel({
     if (!positionQuery.data?.position_fingerprint) return
     setNextMatchCommandId(newCommandId())
     setNextSlotCommandId(newCommandId())
+    setNextMatchDayCommandId(newCommandId())
+    setNextMatchDayReview(null)
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
@@ -727,6 +737,55 @@ export function AuthoritativeSimulationPanel({
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
+        setConfirmed(false)
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+        ])
+      }
+    }
+  })
+
+  const nextMatchDayPreviewMutation = useMutation({
+    mutationFn: () => previewAuthoritativeNextMatchDay(runId, branchId),
+    onSuccess: (preview) => setNextMatchDayReview(preview),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextMatchDayReview(null)
+        setNextMatchDayCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const nextMatchDayMutation = useMutation({
+    mutationFn: () => {
+      if (!nextMatchDayReview) {
+        throw new Error('Review the current canonical Match Day before simulation.')
+      }
+      return simulateAuthoritativeNextMatchDay(runId, branchId, {
+        command_id: nextMatchDayCommandId,
+        expected_week: nextMatchDayReview.week,
+        expected_position_fingerprint:
+          nextMatchDayReview.expected_position_fingerprint,
+        expected_revision_id: nextMatchDayReview.expected_revision_id
+      })
+    },
+    onSuccess: async (result) => {
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      setNextMatchDayReview(null)
+      setNextMatchDayCommandId(newCommandId())
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextMatchDayReview(null)
+        setNextMatchDayCommandId(newCommandId())
         setConfirmed(false)
         await Promise.all([
           refreshCanonicalSimulation(),
@@ -1115,6 +1174,8 @@ export function AuthoritativeSimulationPanel({
   const actionPending =
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
+    nextMatchDayPreviewMutation.isPending ||
+    nextMatchDayMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1157,7 +1218,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day → Save.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -1918,12 +1979,86 @@ export function AuthoritativeSimulationPanel({
             >
               Simulate authoritative Next Slot
             </button>
+            <button
+              type="button"
+              onClick={() => nextMatchDayPreviewMutation.mutate()}
+              disabled={
+                currentEntrySlot ||
+                position.current_slot_kind !== 'match' ||
+                schedule?.schema_version !== 'week_simulation_schedule.v2' ||
+                actionPending
+              }
+            >
+              Review authoritative Next Match Day
+            </button>
           </div>
+          {nextMatchDayReview ? (
+            <>
+              <h5>Reviewed canonical Match Day {nextMatchDayReview.match_day_ordinal}</h5>
+              <MetadataList
+                items={[
+                  { label: 'Match Day', value: nextMatchDayReview.match_day_ordinal },
+                  {
+                    label: 'Global slots',
+                    value: nextMatchDayReview.target_slot_ordinals.join(', ')
+                  },
+                  {
+                    label: 'Competitive matches',
+                    value: nextMatchDayReview.target_group_ids.length
+                  },
+                  {
+                    label: 'Saved Revision',
+                    value: nextMatchDayReview.expected_revision_id
+                  },
+                  {
+                    label: 'Schedule fingerprint',
+                    value: nextMatchDayReview.schedule_fingerprint
+                  }
+                ]}
+              />
+              <ol aria-label="Reviewed authoritative Match Day">
+                {nextMatchDayReview.target_slot_ordinals.map((slotOrdinal, index) => (
+                  <li key={slotOrdinal}>
+                    Global slot {slotOrdinal}: {nextMatchDayReview.target_group_ids[index]}
+                  </li>
+                ))}
+              </ol>
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextMatchDayMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  Simulate reviewed authoritative Match Day
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextMatchDayReview(null)
+                    setNextMatchDayCommandId(newCommandId())
+                  }}
+                  disabled={nextMatchDayMutation.isPending}
+                >
+                  Discard Match Day review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
           {nextSlotMutation.error ? (
             <p className="error">Authoritative Next Slot failed: {formatApiError(nextSlotMutation.error)}</p>
+          ) : null}
+          {nextMatchDayPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Match Day preview failed: {formatApiError(nextMatchDayPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextMatchDayMutation.error ? (
+            <p className="error">
+              Authoritative Next Match Day failed: {formatApiError(nextMatchDayMutation.error)}
+            </p>
           ) : null}
         </>
       ) : null}

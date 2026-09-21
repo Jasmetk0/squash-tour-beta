@@ -932,7 +932,11 @@ were rejected when the preview configuration was posted back. The ordinary trans
 endpoint now parses the request in Pydantic JSON mode, preserving strict internal
 models while accepting their normal JSON representation.
 
-The PR-critical whole-season acceptance completes in roughly 36 seconds on the current
-GitHub runner; Fast CI with the full critical set completes in roughly two minutes.
+The whole-season acceptance is the PR-specific backend test for this slice. On the
+current GitHub runner its test body completes in 31.28 seconds; the targeted pytest run
+reports 1 passed and 2415 deselected in 42.96 seconds. During pre-alpha construction,
+pull requests run only tests changed by that PR, while the complete regression suite is
+manual and will be run together at the final pre-alpha acceptance gate.
+
 This proves the minimum whole-season continuity / Save-reopen / rollover path, not the
 still-open PAQ-006 reference-scale target or unresolved automatic Entry/WC/lock policy.

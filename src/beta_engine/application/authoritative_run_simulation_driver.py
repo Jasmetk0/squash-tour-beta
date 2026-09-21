@@ -3545,7 +3545,7 @@ class AuthoritativeRunSimulationDriver:
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
                 "event_ids": [p.event_id for p in packages],
                 "group_ids": list(plans),
-                "schedule": schedule.model_dump(mode="json") if schedule else None,
+                "schedule": schedule.canonical_payload() if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
             }
@@ -3729,7 +3729,7 @@ class AuthoritativeRunSimulationDriver:
         position_fingerprint: str,
     ) -> dict:
         return {
-            "schedule": schedule.model_dump(mode="json"),
+            "schedule": schedule.canonical_payload(),
             "schedule_fingerprint": schedule.fingerprint,
             "position_fingerprint": position_fingerprint,
             "provenance": (
@@ -3785,7 +3785,7 @@ class AuthoritativeRunSimulationDriver:
                 request_fp = fingerprint(
                     {
                         "request_id": request_id,
-                        "schedule": stored.model_dump(mode="json"),
+                        "schedule": stored.canonical_payload(),
                     }
                 )
                 if (
@@ -3794,7 +3794,7 @@ class AuthoritativeRunSimulationDriver:
                     and stored.fingerprint == expected_schedule_fingerprint
                 ):
                     return {
-                        "schedule": stored.model_dump(mode="json"),
+                        "schedule": stored.canonical_payload(),
                         "schedule_fingerprint": stored.fingerprint,
                         "adoption": "exact_retry",
                     }
@@ -3817,7 +3817,7 @@ class AuthoritativeRunSimulationDriver:
             request_fp = fingerprint(
                 {
                     "request_id": request_id,
-                    "schedule": schedule.model_dump(mode="json"),
+                    "schedule": schedule.canonical_payload(),
                 }
             )
             session.add(
@@ -3844,7 +3844,7 @@ class AuthoritativeRunSimulationDriver:
         expected_position_fingerprint: str,
     ):
         request_fp = fingerprint(
-            {"request_id": request_id, "schedule": schedule.model_dump(mode="json")}
+            {"request_id": request_id, "schedule": schedule.canonical_payload()}
         )
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
@@ -3865,7 +3865,7 @@ class AuthoritativeRunSimulationDriver:
                     and row.request_fingerprint == request_fp
                 ):
                     return {
-                        "schedule": schedule.model_dump(mode="json"),
+                        "schedule": schedule.canonical_payload(),
                         "schedule_fingerprint": schedule.fingerprint,
                         "adoption": "exact_retry",
                     }
@@ -3932,7 +3932,7 @@ class AuthoritativeRunSimulationDriver:
                 ),
             )
             return {
-                "schedule": schedule.model_dump(mode="json"),
+                "schedule": schedule.canonical_payload(),
                 "schedule_fingerprint": schedule.fingerprint,
                 "position_fingerprint": fingerprint(
                     {

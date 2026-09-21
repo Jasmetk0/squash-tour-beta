@@ -2741,6 +2741,7 @@ class SimulationPersistenceRepository:
                             expected_fingerprint=remapped_ranking.fingerprint,
                             run_id=run_id,
                             branch_id=branch_id,
+                            allow_empty_fork_target=True,
                         )
                     except ValueError as exc:
                         raise SavedRevisionBranchForkConflictError(

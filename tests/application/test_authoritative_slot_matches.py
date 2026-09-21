@@ -4166,9 +4166,6 @@ def test_special_revision_frozen_evidence_retargets_nested_match_identity():
 
 
 @pytest.mark.pr_critical
-@pytest.mark.pr_critical
-
-@pytest.mark.pr_critical
 def test_lucky_loser_auto_bye_order_retargets_derived_terminal_identity():
     source_bracket = "a" * 64
     target_bracket = "b" * 64
@@ -4322,7 +4319,6 @@ def test_pre_q_replacement_source_retargets_every_branch_owned_binding():
     assert target.replacement_cutoff_authority.status == "replacement_open"
     assert target.selected_player_id == source.selected_player_id
     assert target.fingerprint != source.fingerprint
-
 
 
 @pytest.mark.pr_critical

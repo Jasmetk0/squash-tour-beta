@@ -1851,16 +1851,26 @@ def remap_coupled_player_slot_history(
                 )
             )
 
-    target_slots = [
-        SimulationSlotModel(**value)
-        for component in target_slot_components
-        for value in component["slots"]
-    ]
-    target_groups = [
-        SimulationEventGroupModel(**value)
-        for component in target_slot_components
-        for value in component["groups"]
-    ]
+    target_slots = sorted(
+        (
+            SimulationSlotModel(**value)
+            for component in target_slot_components
+            for value in component["slots"]
+        ),
+        key=lambda row: (row.week_ordinal, row.slot_ordinal),
+    )
+    target_groups = sorted(
+        (
+            SimulationEventGroupModel(**value)
+            for component in target_slot_components
+            for value in component["groups"]
+        ),
+        key=lambda row: (
+            row.week_ordinal,
+            row.slot_id,
+            row.group_id,
+        ),
+    )
     merged_simulation_component = simulation_component(
         target_slots,
         target_groups,

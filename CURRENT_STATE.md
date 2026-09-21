@@ -1289,3 +1289,18 @@ No v2 evidence is copied across Branch identity. Missing any source→target map
 closed before a target sporting context is created. Once all mappings are present, the
 target context fingerprint and the complete sporting predecessor/context chain are
 rebuilt deterministically.
+
+
+## Branch fork: Simulation Slot sporting identity adapter
+
+A dedicated Simulation Slot fork adapter now rebuilds the branch-owned sporting identity
+inside authoritative match history. `PlayerMatchSportingEffect` can be rebound through
+target mappings for its pre-match sporting snapshot, protected match input and
+authoritative result fingerprints. `PlayerSportingCheckpoint` can likewise be rebound
+through target opening-week sporting identity, slot-start identity, predecessor
+checkpoint identity and applied match-effect fingerprints.
+
+The adapter is fail-closed on any missing dependency mapping. This establishes the
+deterministic week-ordered seam required to break the apparent sporting-v2/slot-ledger
+cycle: target opening sporting snapshot -> target match/effect/checkpoint ledger ->
+target completed-week sporting v2 context -> next target sporting snapshot.

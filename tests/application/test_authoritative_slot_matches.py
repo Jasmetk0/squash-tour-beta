@@ -1324,6 +1324,66 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
 
 
 @pytest.mark.pr_critical
+def test_match_day_v2_same_day_matches_use_sequential_sporting_snapshots(tmp_path):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "match-day-sequential-snapshots"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    day_one = [
+        slot for slot in schedule.slots if slot.match_day_ordinal == 1
+    ]
+    assert len(day_one) >= 2
+    assert day_one[0].match_order == 1
+    assert day_one[1].match_order == 2
+
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="match-day-sequential-snapshots",
+        expected_week=week,
+        expected_schedule_fingerprint=proposed["schedule_fingerprint"],
+        expected_position_fingerprint=proposed["position_fingerprint"],
+    )
+
+    first_command, first_position = _driver_command(
+        driver, week, "match-day-first"
+    )
+    assert first_position.slot_ordinal == day_one[0].ordinal
+    driver.simulate_next_slot(first_command)
+
+    second_command, second_position = _driver_command(
+        driver, week, "match-day-second"
+    )
+    assert second_position.slot_ordinal == day_one[1].ordinal
+    driver.simulate_next_slot(second_command)
+
+    with factory() as session:
+        groups = session.scalars(
+            select(SimulationEventGroupModel)
+            .where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+            .order_by(SimulationEventGroupModel.slot_id)
+        ).all()
+        assert len(groups) == 2
+        starts = [
+            AuthoritativeSlotMatchExecutor._load_group(
+                group
+            ).authoritative_input.slot_start_fingerprint
+            for group in groups
+        ]
+        assert starts[0] != starts[1]
+
+
+@pytest.mark.pr_critical
 def test_topological_schedule_proposal_adoption_is_atomic_and_idempotent(tmp_path):
     driver, factory, week, _, _ = _multi_driver_fixture(
         tmp_path / "proposal-adoption"

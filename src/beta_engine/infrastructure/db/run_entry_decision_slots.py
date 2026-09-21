@@ -347,7 +347,10 @@ def _saved_wild_card_decision_positions(
             raise ValueError("Saved Tournament WC authority chronology is corrupt")
         if (authority.run_id, authority.branch_id) != (run_id, branch_id):
             raise ValueError("Saved Tournament WC authority has mismatched Run/Branch scope")
-        if authority.schema_version != "tournament_wild_card_authority.v2":
+        if authority.schema_version not in {
+            "tournament_wild_card_authority.v2",
+            "tournament_wild_card_authority.v3",
+        }:
             continue
         if authority.decision_week is None or authority.decision_slot_ordinal is None:
             raise ValueError("Saved canonical WC authority is missing global-slot chronology")

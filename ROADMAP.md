@@ -1025,3 +1025,15 @@ snapshots and completed Slot evidence.
 Remaining Simulation Slot fork work is the auxiliary authority tree: simulation
 commands/schedules, adopted tournament authority, entry-field/WC/draw input/draw
 revision/process identities, plus walkover-group remapping.
+
+
+### Branch identity remapping: schedule + adopted tournament authority
+
+The auxiliary Simulation Slot fork path now includes Week Simulation Schedule identity
+and Adopted Tournament Authority identity when the adopted evidence has no Draw
+dependency. Both are rebuilt into the target component and installed through the same
+materialized fork transaction as sporting + Slot core.
+
+Next: remap the Draw/Entry Field/Wild Card authority chain so canonical adopted
+tournament authority v6 can be rebuilt too. Simulation command receipts remain a
+separate schema-by-schema follow-up.

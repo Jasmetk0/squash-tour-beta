@@ -57,7 +57,10 @@ class DefinitiveWildCardAssignmentAuthority(FrozenInput):
         decision_slot_ordinal: int,
         provenance: str,
     ) -> "DefinitiveWildCardAssignmentAuthority":
-        if authority.schema_version == "tournament_wild_card_authority.v2":
+        if authority.schema_version in {
+            "tournament_wild_card_authority.v2",
+            "tournament_wild_card_authority.v3",
+        }:
             if (
                 authority.decision_week != assignment_week
                 or authority.decision_slot_ordinal != decision_slot_ordinal

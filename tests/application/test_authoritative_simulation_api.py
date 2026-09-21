@@ -773,7 +773,19 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
         )
         assert status == 200, proposed
         assert proposed["persisted"] is False
-        assert len(proposed["schedule"]["slots"]) == 2
+        assert proposed["schedule"]["schema_version"] == "week_simulation_schedule.v2"
+        assert len(proposed["schedule"]["slots"]) == 6
+        assert all(
+            len(slot["group_ids"]) == 1
+            for slot in proposed["schedule"]["slots"]
+        )
+        assert [
+            sum(
+                slot["match_day_ordinal"] == day
+                for slot in proposed["schedule"]["slots"]
+            )
+            for day in (1, 2)
+        ] == [4, 2]
 
         adoption = {
             "request_id": "adopt-topological-proposal",

@@ -1093,3 +1093,22 @@ alongside Branch-owned components and transient blockers. This closes the prospe
 fidelity portion of complete sporting-world recovery without claiming that the broader
 recovery/ranking-remap follow-up is finished. See
 `docs/RUN_PROSPECT_SOURCE_SAVED_REVISION_V1.md`.
+
+
+## Ranking-bearing Branch fork: bootstrap remap slice
+
+The blanket rejection of all ranking-bearing Branch forks is removed for one verified
+production-safe subset: a Saved Revision containing a single source-free Week-1
+`initial_ranking.v1` history (plus optional Run-scoped prospect-source evidence).
+
+Fork creation now reconstructs the bootstrap command for the target Branch identity,
+recalculates its request and Official Ranking fingerprints, installs the remapped
+ranking state atomically, and creates a target-owned `branch_fork_materialized`
+Saved Revision as a child of the selected source revision. The new Working Draft is
+based on that fork-root revision; source history remains immutable shared ancestry.
+
+A PR-critical acceptance proves the target Branch can then prepare and Save Week 2 while
+the source Branch remains unchanged. Multi-week ranking history, InitialWorld-bound
+ranking, tournament/zero/transition authorities, Season Closing state and other
+Branch-owned components still fail closed pending dedicated remap adapters. See
+`docs/BOOTSTRAP_RANKING_BRANCH_FORK_REMAP_V1.md`.

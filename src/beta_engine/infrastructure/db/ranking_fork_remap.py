@@ -375,21 +375,36 @@ def remap_source_free_ranking_state_for_branch(
             "Ranking-bearing fork requires a complete Week-1 ranking root"
         )
     if (
-        source.tournament_sources
-        or source.transition_authorities
+        source.transition_authorities
         or source.tournament_ranking_snapshot_authorities
         or source.season_closing_rankings
         or source.authoritative_transition_state is not None
     ):
         raise RankingForkRemapUnsupportedError(
-            "Ranking-bearing fork does not yet support tournament or transition authorities"
+            "Ranking-bearing fork does not yet support transition/publication authorities"
         )
 
+    (
+        remapped_tournament_sources,
+        remapped_tournament_by_edition,
+        tournament_version_map,
+        tournament_editions,
+    ) = _remap_tournament_sources(
+        source.tournament_sources,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+    )
+    source_tournament_by_edition = {
+        item.binding.edition_id: item for item in source.tournament_sources
+    }
     remapped_result_sources, result_by_source_fingerprint = _remap_result_sources(
         source.sources,
         run_id=run_id,
         source_branch_id=source_branch_id,
         target_branch_id=target_branch_id,
+        tournament_version_map=tournament_version_map,
+        tournament_editions=tournament_editions,
     )
     remapped_zero_sources, zero_by_source_fingerprint = _remap_zero_sources(
         source.zero_sources,
@@ -398,6 +413,7 @@ def remap_source_free_ranking_state_for_branch(
         target_branch_id=target_branch_id,
     )
     referenced_zero_fingerprints: set[str] = set()
+    referenced_tournament_editions: set[str] = set()
 
     remapped_entries: list[RankingRevisionEntry] = []
     previous = None
@@ -527,13 +543,12 @@ def remap_source_free_ranking_state_for_branch(
                     "Ranking weekly command does not exactly match frozen evidence"
                 )
             if (
-                original.tournaments
-                or original.audit is not None
+                original.audit is not None
                 or original.authority_fingerprint is not None
                 or original.context.discipline == "resolved_zeros"
             ):
                 raise RankingForkRemapUnsupportedError(
-                    "Ranking weekly fork supports result-history none/stored_zeros commands without tournament bindings"
+                    "Ranking weekly fork does not yet support audited or transition-authority commands"
                 )
             if previous is None or original.context.completed_week != previous.week:
                 raise RankingForkRemapUnsupportedError(
@@ -548,6 +563,20 @@ def remap_source_free_ranking_state_for_branch(
                 original.corrections,
                 mapped_by_source_fingerprint=result_by_source_fingerprint,
             )
+            command_tournaments = []
+            for binding in original.tournaments:
+                source_tournament = source_tournament_by_edition.get(binding.edition_id)
+                target_tournament = remapped_tournament_by_edition.get(binding.edition_id)
+                if (
+                    source_tournament is None
+                    or target_tournament is None
+                    or source_tournament.binding != binding
+                ):
+                    raise RankingForkRemapUnsupportedError(
+                        "Ranking command tournament binding is not owned by the Saved Revision"
+                    )
+                command_tournaments.append(target_tournament.binding)
+                referenced_tournament_editions.add(binding.edition_id)
             referenced_zero_fingerprints.update(
                 version.fingerprint for version in original.zero_versions
             )
@@ -559,6 +588,7 @@ def remap_source_free_ranking_state_for_branch(
                         ),
                         "zero_versions": command_zero_versions,
                         "corrections": command_corrections,
+                        "tournaments": tuple(command_tournaments),
                     }
                 ).model_dump_json()
             )
@@ -642,6 +672,10 @@ def remap_source_free_ranking_state_for_branch(
         raise RankingForkRemapUnsupportedError(
             "Saved zero history is not completely owned by stored ranking commands"
         )
+    if referenced_tournament_editions != tournament_editions:
+        raise RankingForkRemapUnsupportedError(
+            "Saved tournament sources are not completely owned by stored ranking commands"
+        )
 
     return RankingRevisionState(
         schema_version="ranking_revision_state.v4",
@@ -650,6 +684,7 @@ def remap_source_free_ranking_state_for_branch(
         entries=tuple(remapped_entries),
         sources=remapped_result_sources,
         zero_sources=remapped_zero_sources,
+        tournament_sources=remapped_tournament_sources,
     )
 
 

@@ -6,7 +6,16 @@ from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZe
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionState, RankingRevisionEntry, RankingRevisionReceipt,
 )
-from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+from beta_engine.infrastructure.db.models import (
+    OfficialRankingCandidateModel,
+    OfficialRankingCommandModel,
+    OfficialRankingResultVersionModel,
+    OfficialRankingZeroVersionModel,
+    OwnedTournamentRankingSourceModel,
+    RankingTransitionAuthorityModel,
+    TournamentRankingSnapshotAuthorityModel,
+    SeasonClosingRankingModel,
+)
 from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
 from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs

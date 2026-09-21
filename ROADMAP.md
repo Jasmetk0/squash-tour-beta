@@ -714,3 +714,11 @@ questions. A later policy slice may replace the explicit Admin review with a can
 automatic eligibility/order authority only after those rules are specified. Final
 Commitment / Week Tournament Lock timing is likewise still not invented here.
 
+### Whole-season continuity: explicit empty weeks
+
+Implemented a narrow Gate 5 unblocker for Official Run whole-season acceptance:
+an event-free RankingWeek can now be completed with explicit zero-match sporting
+evidence instead of manual DB repair. The command hashes the existing season
+Calendar authority, fails closed if any Calendar Event or simulation/tournament
+work owns the week, and then reuses the normal Saved Revision + Week Transition
+path. See `docs/AUTHORITATIVE_EMPTY_WEEK_COMPLETION_V1.md`.

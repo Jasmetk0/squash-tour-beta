@@ -269,6 +269,32 @@ class SavedRevisionHistoryListResponse(BaseModel):
     )
 
 
+class SavedRevisionHistoryPageResponse(SavedRevisionHistoryListResponse):
+    total_count: int
+    has_more_older: bool
+    next_before_sequence: int | None = None
+
+
+class SavedRevisionComponentComparisonResponse(BaseModel):
+    component_key: str
+    status: Literal["added", "removed", "changed", "unchanged"]
+    before_fingerprint: str | None = None
+    after_fingerprint: str | None = None
+
+
+class SavedRevisionComparisonResponse(BaseModel):
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    from_revision: SavedRevisionHistoryEntryResponse
+    to_revision: SavedRevisionHistoryEntryResponse
+    run_changes: dict[str, dict[str, object | None]]
+    branch_changes: dict[str, dict[str, object | None]]
+    components: list[SavedRevisionComponentComparisonResponse] = Field(
+        default_factory=list
+    )
+
+
 class SavedRevisionRecoveryCheckpointResponse(BaseModel):
     checkpoint_id: str
     run_id: str

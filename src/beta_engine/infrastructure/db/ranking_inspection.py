@@ -18,7 +18,11 @@ from beta_engine.infrastructure.db.official_rankings import (
 
 
 def inspect_ranking_history(
-    session: Session, *, run_id: str, branch_id: str
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    allow_empty_fork_target: bool = False,
 ) -> RankingCandidateHistory:
     branch = session.get(RunBranchModel, branch_id)
     if (
@@ -27,11 +31,17 @@ def inspect_ranking_history(
         or branch.run_id != run_id
     ):
         raise KeyError("Ranking Run/Branch scope does not exist")
-    if branch.forked_from_branch_id is not None:
-        raise ValueError("Ranking fork ancestry inspection is not supported yet")
     snapshots = OfficialRankingCandidateStore(session).history(
         run_id=run_id, branch_id=branch_id
     )
+    if (
+        branch.forked_from_branch_id is not None
+        and not snapshots
+        and not allow_empty_fork_target
+    ):
+        raise ValueError(
+            "Ranking fork has no materialized Branch-owned ranking history"
+        )
     by_week = {s.week.ordinal: s for s in snapshots}
     commands = {}
     receipts = session.scalars(

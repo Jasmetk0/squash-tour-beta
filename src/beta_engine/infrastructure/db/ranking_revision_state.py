@@ -6,7 +6,16 @@ from beta_engine.infrastructure.db.ranking_zero_history import OfficialRankingZe
 from beta_engine.domain.rankings.revision_state import (
     RankingRevisionState, RankingRevisionEntry, RankingRevisionReceipt,
 )
-from beta_engine.infrastructure.db.models import OfficialRankingCommandModel
+from beta_engine.infrastructure.db.models import (
+    OfficialRankingCandidateModel,
+    OfficialRankingCommandModel,
+    OfficialRankingResultVersionModel,
+    OfficialRankingZeroVersionModel,
+    OwnedTournamentRankingSourceModel,
+    RankingTransitionAuthorityModel,
+    TournamentRankingSnapshotAuthorityModel,
+    SeasonClosingRankingModel,
+)
 from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
 from beta_engine.infrastructure.db.ranking_week_command import verify_ranking_command_inputs
@@ -24,7 +33,13 @@ from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
 from sqlalchemy import select
 
 
-def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: str) -> RankingRevisionState:
+def capture_ranking_revision_state(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    allow_empty_fork_target: bool = False,
+) -> RankingRevisionState:
     if not session.in_transaction():
         raise ValueError("Ranking revision capture requires a caller transaction")
     connection = session.connection()
@@ -32,7 +47,12 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
     if (connection.dialect.name != "sqlite" or driver_connection is None
             or not driver_connection.in_transaction):
         raise ValueError("Ranking revision capture requires a physical SQLite transaction")
-    history = inspect_ranking_history(session, run_id=run_id, branch_id=branch_id)
+    history = inspect_ranking_history(
+        session,
+        run_id=run_id,
+        branch_id=branch_id,
+        allow_empty_fork_target=allow_empty_fork_target,
+    )
     snapshots = tuple(c.snapshot for c in history.candidates)
     entries = []
     for candidate in history.candidates:
@@ -111,8 +131,13 @@ def capture_ranking_revision_state(session: Session, *, run_id: str, branch_id: 
 
 
 def install_ranking_revision_state(
-    session: Session, payload: str, *, expected_fingerprint: str,
-    run_id: str, branch_id: str,
+    session: Session,
+    payload: str,
+    *,
+    expected_fingerprint: str,
+    run_id: str,
+    branch_id: str,
+    allow_empty_fork_target: bool = False,
 ) -> RankingRevisionState:
     """Install a trusted same-scope bundle into empty ranking storage only.
 
@@ -129,8 +154,65 @@ def install_ranking_revision_state(
     state = load_ranking_revision_state(
         payload, expected_fingerprint=expected_fingerprint, run_id=run_id, branch_id=branch_id,
     )
-    # Capture also checks physical transaction presence, scope and fork support.
-    current = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
+    run = session.get(RunContainerModel, run_id)
+    branch = session.get(RunBranchModel, branch_id)
+    if run is None or branch is None:
+        raise ValueError("Ranking restore scope does not exist")
+    if run.read_only or branch.read_only:
+        raise ValueError("Ranking restore target is read-only")
+
+    if allow_empty_fork_target and branch.forked_from_branch_id is not None:
+        if (
+            state.sources
+            or state.zero_sources
+            or state.tournament_sources
+            or state.transition_authorities
+            or state.tournament_ranking_snapshot_authorities
+            or state.season_closing_rankings
+            or state.authoritative_transition_state is not None
+            or len(state.entries) != 1
+            or state.entries[0].snapshot.week.ordinal != 0
+        ):
+            raise ValueError(
+                "Trusted fork install supports bootstrap-only ranking state"
+            )
+        row_models = (
+            OfficialRankingCandidateModel,
+            OfficialRankingCommandModel,
+            OfficialRankingResultVersionModel,
+            OfficialRankingZeroVersionModel,
+            OwnedTournamentRankingSourceModel,
+            RankingTransitionAuthorityModel,
+            TournamentRankingSnapshotAuthorityModel,
+            SeasonClosingRankingModel,
+            AuthoritativeWorldStateModel,
+            PublishedOfficialRankingModel,
+            AuthoritativeWeekTransitionReceiptModel,
+            AuthoritativeWorldEventModel,
+        )
+        if any(
+            session.scalar(
+                select(model.run_id)
+                .where(model.run_id == run_id, model.branch_id == branch_id)
+                .limit(1)
+            )
+            is not None
+            for model in row_models
+        ):
+            raise ValueError("Trusted fork install target ranking storage is not empty")
+        current = RankingRevisionState(
+            run_id=run_id,
+            branch_id=branch_id,
+            entries=(),
+            sources=(),
+        )
+    else:
+        # Capture also checks physical transaction presence, scope and fork support.
+        current = capture_ranking_revision_state(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
     if current.fingerprint == state.fingerprint:
         return current
     if (
@@ -143,12 +225,6 @@ def install_ranking_revision_state(
         or current.season_closing_rankings
     ):
         raise ValueError("Ranking restore target is not empty and differs from saved state")
-    run = session.get(RunContainerModel, run_id)
-    branch = session.get(RunBranchModel, branch_id)
-    if run is None or branch is None:
-        raise ValueError("Ranking restore scope does not exist")
-    if run.read_only or branch.read_only:
-        raise ValueError("Ranking restore target is read-only")
     with session.begin_nested():
         owned = OwnedTournamentRankingSourceStore(session)
         for source in state.tournament_sources:
@@ -166,7 +242,15 @@ def install_ranking_revision_state(
             zeros.append(version)
         candidates = OfficialRankingCandidateStore(session)
         for index, entry in enumerate(state.entries):
-            candidates.append(entry.snapshot, bootstrap=index == 0)
+            candidates.append(
+                entry.snapshot,
+                bootstrap=index == 0,
+                allow_materialized_fork_bootstrap=(
+                    allow_empty_fork_target
+                    and branch.forked_from_branch_id is not None
+                    and index == 0
+                ),
+            )
             for receipt in entry.receipts:
                 session.add(OfficialRankingCommandModel(
                     run_id=run_id, branch_id=branch_id, command_id=receipt.command_id,

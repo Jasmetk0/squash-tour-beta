@@ -9,6 +9,7 @@ from beta_engine.domain.rankings.result_history import (
     validate_result_successor,
 )
 from beta_engine.infrastructure.db.models import (
+    OfficialRankingCandidateModel,
     OfficialRankingResultVersionModel,
     RunBranchModel,
     RunContainerModel,
@@ -28,9 +29,21 @@ class OfficialRankingResultStore:
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("Ranking result scope does not exist")
         if branch.forked_from_branch_id is not None:
-            raise ValueError(
-                "Ranking result fork ancestry requires a dedicated adapter"
+            has_local_ranking = (
+                self.session.scalar(
+                    select(OfficialRankingCandidateModel.run_id)
+                    .where(
+                        OfficialRankingCandidateModel.run_id == run_id,
+                        OfficialRankingCandidateModel.branch_id == branch_id,
+                    )
+                    .limit(1)
+                )
+                is not None
             )
+            if not has_local_ranking:
+                raise ValueError(
+                    "Ranking result fork ancestry requires a dedicated adapter"
+                )
         if writing and (run.read_only or branch.read_only):
             raise ValueError("Ranking result scope is read-only")
 

@@ -73,7 +73,11 @@ class OfficialRankingCandidateStore:
         return tuple(history)
 
     def append(
-        self, snapshot: OfficialRankingSnapshot, *, bootstrap: bool = False
+        self,
+        snapshot: OfficialRankingSnapshot,
+        *,
+        bootstrap: bool = False,
+        allow_materialized_fork_bootstrap: bool = False,
     ) -> OfficialRankingSnapshot:
         """Stage a candidate in the caller's transaction; exact retries are reads.
 
@@ -111,6 +115,7 @@ class OfficialRankingCandidateStore:
         elif (
             self.session.get(RunBranchModel, snapshot.branch_id).forked_from_branch_id
             is not None
+            and not allow_materialized_fork_bootstrap
         ):
             raise RankingCandidateConflict(
                 "Forked ranking ancestry requires a dedicated adapter"

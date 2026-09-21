@@ -53,6 +53,16 @@ class RunBranchCreationService:
         working_draft_id = _validated_entity_id(
             self.id_factory("working-draft"), kind="working draft"
         )
+        materialized_fork_revision_id = None
+        if self.repository.saved_revision_requires_materialized_fork_root(
+            run_id=run_id,
+            source_branch_id=source_branch_id,
+            source_revision_id=source_saved_revision_id,
+        ):
+            materialized_fork_revision_id = _validated_entity_id(
+                self.id_factory("saved-revision"),
+                kind="materialized fork saved revision",
+            )
         return self.repository.create_branch_from_saved_revision_atomically(
             run_id=run_id,
             source_branch_id=source_branch_id,
@@ -60,4 +70,5 @@ class RunBranchCreationService:
             branch_id=branch_id,
             working_draft_id=working_draft_id,
             requested_display_name=normalized_name,
+            materialized_fork_revision_id=materialized_fork_revision_id,
         )

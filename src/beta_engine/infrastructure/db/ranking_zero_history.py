@@ -10,6 +10,7 @@ from beta_engine.domain.rankings.zero_history import (
     resolve_zero_versions,
 )
 from beta_engine.infrastructure.db.models import (
+    OfficialRankingCandidateModel,
     OfficialRankingZeroVersionModel,
     RunBranchModel,
     RunContainerModel,
@@ -29,9 +30,21 @@ class OfficialRankingZeroStore:
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("Ranking zero scope does not exist")
         if branch.forked_from_branch_id is not None:
-            raise ValueError(
-                "Ranking zero fork ancestry requires a dedicated adapter"
+            has_local_ranking = (
+                self.session.scalar(
+                    select(OfficialRankingCandidateModel.run_id)
+                    .where(
+                        OfficialRankingCandidateModel.run_id == run_id,
+                        OfficialRankingCandidateModel.branch_id == branch_id,
+                    )
+                    .limit(1)
+                )
+                is not None
             )
+            if not has_local_ranking:
+                raise ValueError(
+                    "Ranking zero fork ancestry requires a dedicated adapter"
+                )
         if writing and (run.read_only or branch.read_only):
             raise ValueError("Ranking zero scope is read-only")
 

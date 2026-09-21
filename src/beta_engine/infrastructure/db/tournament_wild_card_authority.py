@@ -59,11 +59,17 @@ def wild_card_decision_slot_ordinals(
             authority.run_id,
             authority.branch_id,
             authority.event_id,
+            authority.resolved_by_command_id,
+            authority.entry_field_fingerprint,
+            authority.field_sequence,
             authority.fingerprint,
         ) != (
             row.run_id,
             row.branch_id,
             row.event_id,
+            row.command_id,
+            row.entry_field_fingerprint,
+            row.field_sequence,
             row.authority_fingerprint,
         ):
             raise ValueError("Stored Tournament WC authority chronology is corrupt")

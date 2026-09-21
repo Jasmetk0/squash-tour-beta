@@ -331,11 +331,17 @@ def _saved_wild_card_decision_positions(
             row.get("run_id"),
             row.get("branch_id"),
             row.get("event_id"),
+            row.get("command_id"),
+            row.get("entry_field_fingerprint"),
+            row.get("field_sequence"),
             row.get("authority_fingerprint"),
         ) != (
             authority.run_id,
             authority.branch_id,
             authority.event_id,
+            authority.resolved_by_command_id,
+            authority.entry_field_fingerprint,
+            authority.field_sequence,
             authority.fingerprint,
         ):
             raise ValueError("Saved Tournament WC authority chronology is corrupt")

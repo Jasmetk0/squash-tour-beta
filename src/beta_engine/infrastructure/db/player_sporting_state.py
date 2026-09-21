@@ -741,6 +741,99 @@ def load_saved_sporting(payload, *, run_id, branch_id):
     return states
 
 
+
+def load_saved_sporting_bundle(payload, *, run_id, branch_id):
+    """Return validated sporting states and completed-week contexts."""
+    states = load_saved_sporting(payload, run_id=run_id, branch_id=branch_id)
+    if states is None:
+        return None
+    component = payload["content"][PLAYER_SPORTING_COMPONENT_KEY]
+    contexts = tuple(
+        CompletedWeekSportingContext.model_validate_json(json.dumps(context))
+        for context in component["contexts"]
+    )
+    return states, contexts
+
+
+def remap_saved_sporting_component(
+    payload,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    source_fingerprint_map: dict[str, str],
+):
+    """Rebuild sporting history whose completed-week evidence can be mapped exactly.
+
+    v1 contexts are backed by OwnedTournamentRankingSource fingerprints, for which the
+    ranking fork already has target equivalents. v2 match/effect-ledger contexts remain
+    fail-closed until those separate authorities are fork-remapped too.
+    """
+    bundle = load_saved_sporting_bundle(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if bundle is None:
+        return None
+    source_states, source_contexts = bundle
+
+    remapped_contexts = []
+    for context in source_contexts:
+        if context.schema_version != "completed_week_sporting_context.v1":
+            raise ValueError(
+                "Sporting Branch fork does not yet support v2 match/effect evidence"
+            )
+        try:
+            mapped_sources = tuple(
+                sorted(source_fingerprint_map[value] for value in context.source_fingerprints)
+            )
+        except KeyError as exc:
+            raise ValueError(
+                "Saved sporting context references evidence without a target fork mapping"
+            ) from exc
+        target_context = CompletedWeekSportingContext.model_validate_json(
+            context.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "source_fingerprints": mapped_sources,
+                }
+            ).model_dump_json()
+        )
+        remapped_contexts.append(target_context)
+
+    context_by_week = {
+        context.completed_week.ordinal: context for context in remapped_contexts
+    }
+    remapped_states = []
+    previous = None
+    for state in source_states:
+        updates = {
+            "branch_id": target_branch_id,
+            "predecessor_fingerprint": (
+                previous.fingerprint if previous is not None else None
+            ),
+        }
+        if state.week.ordinal != 0:
+            target_context = context_by_week.get(state.week.ordinal - 1)
+            if target_context is None:
+                raise ValueError(
+                    "Saved sporting state is missing its remapped completed-week context"
+                )
+            updates["completed_context_fingerprint"] = target_context.fingerprint
+        target_state = PlayerSportingWeekState.model_validate_json(
+            state.model_copy(update=updates).model_dump_json()
+        )
+        remapped_states.append(target_state)
+        previous = target_state
+
+    remapped_states_tuple = tuple(remapped_states)
+    remapped_contexts_tuple = tuple(remapped_contexts)
+    _validate_state_context_chain(remapped_states_tuple, remapped_contexts_tuple)
+    return _component(remapped_states_tuple, remapped_contexts_tuple)
+
+
+
 def restore_saved_sporting(
     session, *, current_payload, target_payload, run_id, branch_id
 ):

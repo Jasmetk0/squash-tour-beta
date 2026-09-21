@@ -1264,6 +1264,35 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
 
 
 @pytest.mark.pr_critical
+def test_schedule_tiebreak_is_stable_and_scope_bound():
+    week = RankingWeek(season_index=0, week=7)
+    token = AuthoritativeRunSimulationDriver._deterministic_schedule_tiebreak(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="match-a",
+    )
+    assert token == AuthoritativeRunSimulationDriver._deterministic_schedule_tiebreak(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="match-a",
+    )
+    assert token != AuthoritativeRunSimulationDriver._deterministic_schedule_tiebreak(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="match-b",
+    )
+    assert token != AuthoritativeRunSimulationDriver._deterministic_schedule_tiebreak(
+        run_id="run",
+        branch_id="other-branch",
+        week=week,
+        group_id="match-a",
+    )
+
+
+@pytest.mark.pr_critical
 def test_fair_rest_feeder_position_tracks_latest_prior_match():
     positions = {
         "early": (1, 1),
@@ -1301,7 +1330,7 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     )
 
     assert proposed["persisted"] is False
-    assert "match_day_schedule_fair_rest.v1" in proposed["provenance"]
+    assert "match_day_schedule_fair_rest.v2" in proposed["provenance"]
     assert schedule.schema_version == "week_simulation_schedule.v2"
     assert schedule.week == week
     assert len(schedule.slots) == 6
@@ -1320,6 +1349,19 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     day_one = [slot for slot in schedule.slots if slot.match_day_ordinal == 1]
     day_two = [slot for slot in schedule.slots if slot.match_day_ordinal == 2]
     assert {slot.group_ids[0] for slot in day_one} == first_roots | second_roots
+    expected_day_one = sorted(
+        first_roots | second_roots,
+        key=lambda group_id: (
+            driver._deterministic_schedule_tiebreak(
+                run_id="run",
+                branch_id="branch",
+                week=week,
+                group_id=group_id,
+            ),
+            group_id,
+        ),
+    )
+    assert [slot.group_ids[0] for slot in day_one] == expected_day_one
     assert [slot.match_order for slot in day_one] == [1, 2, 3, 4]
     assert {slot.group_ids[0] for slot in day_two} == {
         match.match_id

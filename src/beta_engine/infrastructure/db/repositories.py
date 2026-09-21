@@ -2832,6 +2832,11 @@ class SimulationPersistenceRepository:
                                 "Simulation Slot/player sporting fork cannot be "
                                 f"remapped safely: {exc}"
                             ) from exc
+                        if coupled_player_slot is None:
+                            raise SavedRevisionBranchForkConflictError(
+                                "Simulation Slot Saved Revision requires captured "
+                                "player sporting history for Branch remapping"
+                            )
 
                     remapped_sporting_component = (
                         coupled_player_slot.sporting_component

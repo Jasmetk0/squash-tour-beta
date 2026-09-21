@@ -164,7 +164,6 @@ def install_ranking_revision_state(
     if allow_empty_fork_target and branch.forked_from_branch_id is not None:
         if (
             state.sources
-            or state.zero_sources
             or state.tournament_sources
             or state.transition_authorities
             or state.tournament_ranking_snapshot_authorities
@@ -175,14 +174,12 @@ def install_ranking_revision_state(
             or any(
                 entry.snapshot.week.ordinal != index
                 or entry.inputs.results
-                or entry.inputs.disciplinary_zeros
-                or entry.inputs.zeros_from_history
                 or len(entry.receipts) != 1
                 for index, entry in enumerate(state.entries)
             )
         ):
             raise ValueError(
-                "Trusted fork install supports only complete source-free ranking history"
+                "Trusted fork install supports only complete result-free ranking history"
             )
         row_models = (
             OfficialRankingCandidateModel,

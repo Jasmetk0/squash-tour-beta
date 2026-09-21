@@ -113,7 +113,7 @@ def _remap_resolved_zeros(
     return tuple(remapped)
 
 
-def remap_source_free_ranking_state_for_branch(
+def remap_result_free_ranking_state_for_branch(
     source: RankingRevisionState,
     *,
     run_id: str,
@@ -365,4 +365,5 @@ def remap_source_free_ranking_state_for_branch(
 
 
 # Backward-compatible internal alias for callers/tests from the bootstrap-only slice.
-remap_bootstrap_ranking_state_for_branch = remap_source_free_ranking_state_for_branch
+remap_source_free_ranking_state_for_branch = remap_result_free_ranking_state_for_branch
+remap_bootstrap_ranking_state_for_branch = remap_result_free_ranking_state_for_branch

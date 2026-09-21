@@ -24,7 +24,14 @@ class OfficialRankingZeroStore:
     def __init__(self, session: Session):
         self.session = session
 
-    def _scope(self, run_id: str, branch_id: str, *, writing: bool = False):
+    def _scope(
+        self,
+        run_id: str,
+        branch_id: str,
+        *,
+        writing: bool = False,
+        allow_empty_fork_target: bool = False,
+    ):
         run = self.session.get(RunContainerModel, run_id)
         branch = self.session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
@@ -41,7 +48,7 @@ class OfficialRankingZeroStore:
                 )
                 is not None
             )
-            if not has_local_ranking:
+            if not has_local_ranking and not allow_empty_fork_target:
                 raise ValueError(
                     "Ranking zero fork ancestry requires a dedicated adapter"
                 )
@@ -49,9 +56,17 @@ class OfficialRankingZeroStore:
             raise ValueError("Ranking zero scope is read-only")
 
     def history(
-        self, *, run_id: str, branch_id: str
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        allow_empty_fork_target: bool = False,
     ) -> tuple[RankingZeroVersion, ...]:
-        self._scope(run_id, branch_id)
+        self._scope(
+            run_id,
+            branch_id,
+            allow_empty_fork_target=allow_empty_fork_target,
+        )
         records = self.session.scalars(
             select(OfficialRankingZeroVersionModel)
             .where(
@@ -98,10 +113,24 @@ class OfficialRankingZeroStore:
         """Latest effective decision per zero, including expired decisions."""
         return resolve_zero_versions(self.history(run_id=run_id, branch_id=branch_id), week)
 
-    def append(self, version: RankingZeroVersion) -> RankingZeroVersion:
+    def append(
+        self,
+        version: RankingZeroVersion,
+        *,
+        allow_empty_fork_target: bool = False,
+    ) -> RankingZeroVersion:
         version = RankingZeroVersion.model_validate_json(version.model_dump_json())
-        self._scope(version.zero.run_id, version.zero.branch_id, writing=True)
-        history = self.history(run_id=version.zero.run_id, branch_id=version.zero.branch_id)
+        self._scope(
+            version.zero.run_id,
+            version.zero.branch_id,
+            writing=True,
+            allow_empty_fork_target=allow_empty_fork_target,
+        )
+        history = self.history(
+            run_id=version.zero.run_id,
+            branch_id=version.zero.branch_id,
+            allow_empty_fork_target=allow_empty_fork_target,
+        )
         lineage = [v for v in history if v.zero.zero_id == version.zero.zero_id]
         for existing in lineage:
             if existing.effective_week == version.effective_week:

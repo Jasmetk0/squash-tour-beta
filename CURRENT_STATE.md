@@ -861,3 +861,31 @@ This closes the **minimum Match Reconstruction** pre-alpha acceptance item, not 
 full reconstruction design. Probability estimates / p-delta-alpha policy, forcing,
 nearest-match search, the complete constraint catalog, reconstruction-session
 retention and final dedicated UI remain unresolved and are not inferred.
+
+
+## Current follow-up after #877
+
+The second mandatory pre-alpha acceptance flow from Master §31.3 now has a minimum
+backend implementation on this branch: a canonical **empty Run** can author exactly two
+manual players and simulate one standalone competitive match without attaching a World
+Package, Calendar, Tournament Edition, Entry Field, Wild Card authority, Draw or Week
+Simulation Schedule.
+
+The pre-match workspace is Run/Branch-owned and optimistic-fingerprint guarded. Match
+commit owns one BEGIN IMMEDIATE transaction: it freezes the reviewed manual players as
+manual_standalone.v1 InitialWorld truth, bootstraps Week-1 lifecycle and 57-attribute
+sporting state through the existing canonical adapters, creates one direct-player
+Simulation Slot and executes through AuthoritativeSlotMatchExecutor / the normal Match
+Engine effects path. Exact command retry returns the stored result; conflicting reuse
+fails closed.
+
+The PR-critical acceptance also proves operation-scoped modularity by asserting that
+Tournament/Entry/WC/Draw/Week-schedule authority remains absent. After completion the
+existing authoritative simulation Save captures InitialWorld, lifecycle, sporting,
+slot/group and command-receipt truth into the Saved Revision. The transient pre-match
+workspace itself is not claimed as independently saveable in this minimum slice.
+
+This implements the narrow PAQ-003 / PAQ-005 acceptance requirement only. It does not
+invent a global Start gate, Calendar/Tournament policy, ranking policy, automatic player
+generation or a broader standalone multi-match workflow. See
+`docs/STANDALONE_MATCH_ACCEPTANCE_V1.md`.

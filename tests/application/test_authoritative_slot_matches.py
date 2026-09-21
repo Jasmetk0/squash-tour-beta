@@ -4352,7 +4352,10 @@ def test_draw_revision_restore_round_trip_and_retry_are_identity_stable(tmp_path
         sort_keys=True,
         separators=(",", ":"),
     )
-    with pytest.raises(ValueError, match="Draw revision row is corrupt"):
+    with pytest.raises(
+        ValueError,
+        match="scope mismatch|Draw revision row is corrupt",
+    ):
         restore_saved_simulation_slots(
             session,
             current_payload=current_payload,

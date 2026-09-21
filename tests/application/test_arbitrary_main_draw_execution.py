@@ -223,8 +223,13 @@ def test_thirteen_player_canonical_main_draw_closes_with_three_byes(tmp_path):
         json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
     )
 
-    assert [len(slot.group_ids) for slot in schedule.slots] == [5, 4, 2, 1]
-    assert sum(len(slot.group_ids) for slot in schedule.slots) == 12
+    assert schedule.schema_version == "week_simulation_schedule.v2"
+    assert len(schedule.slots) == 12
+    assert all(len(slot.group_ids) == 1 for slot in schedule.slots)
+    assert [
+        sum(slot.match_day_ordinal == day for slot in schedule.slots)
+        for day in (1, 2, 3, 4)
+    ] == [5, 4, 2, 1]
 
     driver.adopt_topological_schedule_proposal(
         run_id="run",
@@ -255,7 +260,7 @@ def test_thirteen_player_canonical_main_draw_closes_with_three_byes(tmp_path):
         slots = db.scalars(
             select(SimulationSlotModel).order_by(SimulationSlotModel.slot_ordinal)
         ).all()
-        assert len(slots) == 4
+        assert len(slots) == 12
 
         sources = OwnedTournamentRankingSourceStore(db).history(
             run_id="run",

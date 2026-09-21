@@ -27,6 +27,17 @@ Both canonical first-entry sources now project into the same
 1. valid tournament application submission;
 2. definitive valid WC/RWC assignment.
 
-This remains a pure domain boundary. Persistence and atomic command integration remain
-separate so the submission/WC evidence and the player's first Tour-entry trigger can
-later commit in one transaction without inventing timing from downstream field state.
+Canonical WC resolution now has a chronology-aware v2 form. New canonical writers may
+freeze the exact FAX week and global Simulation Slot ordinal directly on
+`TournamentWildCardAuthority`; historical v1 authorities remain fingerprint-compatible.
+A definitive WC/RWC assignment created from v2 must reuse that exact position and cannot
+supply a different week or slot ordinal.
+
+The persisted v2 WC authority is itself a completed non-match decision slot: Entry and
+match slot writers reject the same position, later global slots may count the WC ordinal
+as completed, and Saved Revision collision checks include v2 WC positions.
+
+This remains a pure domain boundary. The next application/API slice must derive the
+current week/slot from authoritative Run position, resolve WC/RWC authority and record
+all resulting definitive assignments plus first Tour-entry triggers atomically; clients
+must not invent chronology.

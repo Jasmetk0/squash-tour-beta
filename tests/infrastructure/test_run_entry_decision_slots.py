@@ -13,7 +13,15 @@ from beta_engine.domain.tournaments.run_entry_decision_slot import (
     EntryDecisionEvidence,
     RunEntryDecisionSlotAuthority,
 )
-from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority,
+    TournamentWildCardSlotResolution,
+)
+from beta_engine.infrastructure.db.models import (
+    RunBranchModel,
+    RunContainerModel,
+    TournamentWildCardAuthorityModel,
+)
 from beta_engine.infrastructure.db.application_validation_slots import (
     ApplicationValidationSlotStore,
 )
@@ -127,6 +135,149 @@ def _match_plan(executor, *, ordinal=1):
             ),
         ),
     )
+
+
+def _install_wc_slot(session, *, ordinal=1, event_id="wc-event"):
+    authority = TournamentWildCardAuthority(
+        schema_version="tournament_wild_card_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id=event_id,
+        resolved_by_command_id=f"wc-command-{ordinal}",
+        entry_field_fingerprint="1" * 64,
+        field_sequence=1,
+        decision_week=WEEK,
+        decision_slot_ordinal=ordinal,
+        original_wild_card_player_ids=(None,),
+        reserve_wild_card_player_ids=(),
+        unavailable_player_ids=(),
+        slots=(
+            TournamentWildCardSlotResolution(
+                wildcard_index=1,
+                source="unfilled",
+            ),
+        ),
+        adjusted_qualification_player_ids=(),
+        adjusted_below_qualification_cut_player_ids=(),
+    )
+    session.add(
+        TournamentWildCardAuthorityModel(
+            run_id=authority.run_id,
+            branch_id=authority.branch_id,
+            event_id=authority.event_id,
+            command_id=authority.resolved_by_command_id,
+            request_fingerprint="2" * 64,
+            authority_fingerprint=authority.fingerprint,
+            entry_field_fingerprint=authority.entry_field_fingerprint,
+            field_sequence=authority.field_sequence,
+            payload_json=authority.model_dump_json(),
+        )
+    )
+    session.flush()
+    return authority
+
+
+@pytest.mark.pr_critical
+def test_wc_slot_then_entry_slot_collision_fails_closed(tmp_path):
+    session = session_at(tmp_path / "wc-entry-collision.sqlite")
+    _ensure_scope(session)
+    try:
+        _install_wc_slot(session)
+        with pytest.raises(
+            RunEntryDecisionSlotConflict,
+            match="already belongs to a WC-decision slot",
+        ):
+            RunEntryDecisionSlotStore(session).append(_entry_slot())
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_wc_slot_then_match_slot_collision_fails_closed(tmp_path):
+    session = session_at(tmp_path / "wc-match-collision.sqlite")
+    _ensure_scope(session)
+    try:
+        _install_wc_slot(session)
+        with pytest.raises(
+            ValueError,
+            match="already belongs to a WC-decision slot",
+        ):
+            _match_plan(AuthoritativeSlotMatchExecutor(session), ordinal=1)
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_completed_wc_slot_satisfies_prior_global_ordinal_for_entry(tmp_path):
+    session = session_at(tmp_path / "wc-entry-order.sqlite")
+    _ensure_scope(session)
+    try:
+        _install_wc_slot(session, ordinal=1)
+        second = _entry_slot(
+            decision_slot_ordinal=2,
+            source_entry_batch_fingerprint="e" * 64,
+            source_application_decisions_fingerprint="f" * 64,
+        )
+        assert RunEntryDecisionSlotStore(session).append(second) == second
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_saved_revision_rejects_wc_entry_global_slot_collision(tmp_path):
+    session = session_at(tmp_path / "saved-wc-entry-collision.sqlite")
+    _ensure_scope(session)
+    try:
+        entry = _entry_slot()
+        RunEntryDecisionSlotStore(session).append(entry)
+        payload = {"content": {}}
+        capture_saved_run_entry_decision_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        wc = TournamentWildCardAuthority(
+            schema_version="tournament_wild_card_authority.v2",
+            run_id="run",
+            branch_id="branch",
+            event_id="wc-event",
+            resolved_by_command_id="wc-command-1",
+            entry_field_fingerprint="1" * 64,
+            field_sequence=1,
+            decision_week=WEEK,
+            decision_slot_ordinal=1,
+            original_wild_card_player_ids=(None,),
+            slots=(TournamentWildCardSlotResolution(wildcard_index=1, source="unfilled"),),
+            adjusted_qualification_player_ids=(),
+            adjusted_below_qualification_cut_player_ids=(),
+        )
+        payload["content"]["simulation_slot_match_state"] = {
+            "slots": [],
+            "wild_card_authorities": [
+                {
+                    "run_id": "run",
+                    "branch_id": "branch",
+                    "event_id": "wc-event",
+                    "command_id": wc.resolved_by_command_id,
+                    "entry_field_fingerprint": wc.entry_field_fingerprint,
+                    "field_sequence": wc.field_sequence,
+                    "authority_fingerprint": wc.fingerprint,
+                    "payload_json": wc.model_dump_json(),
+                }
+            ],
+        }
+        with pytest.raises(
+            ValueError,
+            match="WC decision and another slot claim the same global position",
+        ):
+            validate_saved_entry_match_slot_collisions(
+                payload,
+                run_id="run",
+                branch_id="branch",
+            )
+    finally:
+        session.close()
 
 
 @pytest.mark.pr_critical

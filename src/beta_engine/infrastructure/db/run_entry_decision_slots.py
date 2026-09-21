@@ -12,6 +12,9 @@ from beta_engine.domain.simulation_slots import WeekSimulationSchedule
 from beta_engine.domain.tournaments.run_entry_decision_slot import (
     RunEntryDecisionSlotAuthority,
 )
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority,
+)
 from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
@@ -168,6 +171,20 @@ class RunEntryDecisionSlotStore:
                 "Global Simulation Slot ordinal already belongs to a match slot"
             )
 
+        from beta_engine.infrastructure.db.tournament_wild_card_authority import (
+            wild_card_decision_slot_ordinals,
+        )
+        wc_ordinals = wild_card_decision_slot_ordinals(
+            self.session,
+            run_id=authority.run_id,
+            branch_id=authority.branch_id,
+            week_ordinal=authority.week.ordinal,
+        )
+        if authority.decision_slot_ordinal in wc_ordinals:
+            raise RunEntryDecisionSlotConflict(
+                "Global Simulation Slot ordinal already belongs to a WC-decision slot"
+            )
+
         schedule_row = self.session.get(
             WeekSimulationScheduleModel,
             (authority.run_id, authority.branch_id, authority.week.ordinal),
@@ -216,7 +233,16 @@ class RunEntryDecisionSlotStore:
                     )
                 ).all()
             )
-            completed_prior = completed_entry_ordinals | completed_match_ordinals
+            completed_wc_ordinals = {
+                ordinal
+                for ordinal in wc_ordinals
+                if ordinal < authority.decision_slot_ordinal
+            }
+            completed_prior = (
+                completed_entry_ordinals
+                | completed_match_ordinals
+                | completed_wc_ordinals
+            )
             if completed_prior != required_prior:
                 missing = sorted(required_prior - completed_prior)
                 raise RunEntryDecisionSlotConflict(
@@ -284,6 +310,54 @@ def load_saved_run_entry_decision_slots(
     return slots
 
 
+def _saved_wild_card_decision_positions(
+    simulation: dict | None,
+    *,
+    run_id: str,
+    branch_id: str,
+) -> set[tuple[int, int]]:
+    raw = [] if simulation is None else simulation.get("wild_card_authorities", [])
+    if not isinstance(raw, list):
+        raise ValueError("Saved Simulation Slot component has invalid WC authority rows")
+    positions: set[tuple[int, int]] = set()
+    for row in raw:
+        if not isinstance(row, dict):
+            raise ValueError("Saved Tournament WC authority row is invalid")
+        payload_json = row.get("payload_json")
+        if not isinstance(payload_json, str):
+            raise ValueError("Saved Tournament WC authority payload is invalid")
+        authority = TournamentWildCardAuthority.model_validate_json(payload_json)
+        if (
+            row.get("run_id"),
+            row.get("branch_id"),
+            row.get("event_id"),
+            row.get("command_id"),
+            row.get("entry_field_fingerprint"),
+            row.get("field_sequence"),
+            row.get("authority_fingerprint"),
+        ) != (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.resolved_by_command_id,
+            authority.entry_field_fingerprint,
+            authority.field_sequence,
+            authority.fingerprint,
+        ):
+            raise ValueError("Saved Tournament WC authority chronology is corrupt")
+        if (authority.run_id, authority.branch_id) != (run_id, branch_id):
+            raise ValueError("Saved Tournament WC authority has mismatched Run/Branch scope")
+        if authority.schema_version != "tournament_wild_card_authority.v2":
+            continue
+        if authority.decision_week is None or authority.decision_slot_ordinal is None:
+            raise ValueError("Saved canonical WC authority is missing global-slot chronology")
+        position = (authority.decision_week.ordinal, authority.decision_slot_ordinal)
+        if position in positions:
+            raise ValueError("Saved WC decisions contain duplicate global positions")
+        positions.add(position)
+    return positions
+
+
 def validate_saved_entry_match_slot_collisions(
     payload: dict,
     *,
@@ -297,6 +371,11 @@ def validate_saved_entry_match_slot_collisions(
     ) or ()
     simulation = payload.get("content", {}).get(SIMULATION_SLOT_COMPONENT_KEY)
     raw_match_slots = [] if simulation is None else simulation.get("slots", [])
+    wc_positions = _saved_wild_card_decision_positions(
+        simulation,
+        run_id=run_id,
+        branch_id=branch_id,
+    )
     if not isinstance(raw_match_slots, list):
         raise ValueError("Saved Simulation Slot component has invalid slot rows")
     match_positions: set[tuple[int, int]] = set()
@@ -320,6 +399,13 @@ def validate_saved_entry_match_slot_collisions(
             "Saved entry and match slots claim the same global position "
             f"({week_ordinal}, {slot_ordinal})"
         )
+    wc_overlap = wc_positions & (match_positions | entry_positions)
+    if wc_overlap:
+        week_ordinal, slot_ordinal = sorted(wc_overlap)[0]
+        raise ValueError(
+            "Saved WC decision and another slot claim the same global position "
+            f"({week_ordinal}, {slot_ordinal})"
+        )
 
     match_weeks = {week for week, _ in match_positions}
     for week_ordinal in sorted(match_weeks):
@@ -330,22 +416,27 @@ def validate_saved_entry_match_slot_collisions(
             ordinal for week, ordinal in entry_positions if week == week_ordinal
         }
         max_match = max(match_ordinals)
+        wc_ordinals = {
+            ordinal for week, ordinal in wc_positions if week == week_ordinal
+        }
         missing = (
             set(range(1, max_match + 1))
             - match_ordinals
             - entry_ordinals
+            - wc_ordinals
         )
         if missing:
             raise ValueError(
                 "Saved match chronology contains a global-slot gap not owned "
-                "by an entry-decision slot"
+                "by an entry-decision slot or WC-decision slot"
             )
 
-    all_weeks = {week for week, _ in (match_positions | entry_positions)}
+    all_positions = match_positions | entry_positions | wc_positions
+    all_weeks = {week for week, _ in all_positions}
     for week_ordinal in sorted(all_weeks):
         global_ordinals = {
             ordinal
-            for week, ordinal in (match_positions | entry_positions)
+            for week, ordinal in all_positions
             if week == week_ordinal
         }
         if global_ordinals != set(range(1, max(global_ordinals) + 1)):

@@ -674,3 +674,20 @@ Legacy simulation-run late-replacement and pre-draw-withdrawal UI/authoring endp
 retirement are complete. Their historical sidecar action logs remain read-only;
 broader retirement of unrelated legacy simulation paths remains separate migration
 work.
+
+Canonical WC/RWC resolution now has the chronology foundation required to become a
+first-class Run decision. `TournamentWildCardAuthority v2` freezes exact FAX week
+plus global Simulation Slot ordinal while preserving historical v1 fingerprints.
+Entry, WC and match writers mutually exclude one another at the same global position;
+WC decisions cannot overtake incomplete prior slots; week schedule generation reserves
+completed WC ordinals; and Saved Revision collision/contiguity validation includes
+chronology-aware WC authorities. Definitive WC/RWC assignment evidence created from
+v2 must reuse the exact source position.
+
+The immediate follow-up is the canonical **transaction-owning WC Admin command**:
+derive current Position server-side, resolve WC/RWC authority at that exact global
+slot, atomically persist all definitive WC/RWC assignments and first Tour-entry
+triggers, expose the review/commit flow in Planned Event Admin, then retire the legacy
+simulation-run wildcard mutation endpoint while keeping historical action data
+read-only. This step must not invent Final Commitment / Week Tournament Lock policy.
+

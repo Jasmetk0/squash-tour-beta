@@ -776,3 +776,31 @@ IDs, source fingerprints, Main/Q windows and NR tie-break evidence from frozen R
 truth and CAS-guards the current Position, Branch head and Entry slot before mutation.
 This is an operational pre-alpha bridge, not an invented automatic eligibility or
 deadline policy. Field capacity still cannot create or revoke Tour status.
+
+## Current follow-up after #874
+
+Canonical WC/RWC resolution can now participate in the same **global Simulation Slot
+chronology** as Entry decisions and matches without pretending that a WC decision is a
+match slot. New `TournamentWildCardAuthority v2` freezes the exact FAX week and
+one-based global slot ordinal on the immutable WC resolution itself; historical v1
+authorities remain fingerprint-compatible and carry no retroactive chronology.
+
+Live writers are symmetric and fail closed. WC v2 cannot claim an ordinal already
+owned by a persisted Entry slot, match slot or adopted match schedule, and it cannot
+skip an unresolved earlier Entry decision, incomplete match, existing WC decision or
+missing ordinal. Entry and match writers now reject chronology-aware WC slots in the
+opposite direction. The topological week scheduler treats completed WC decision
+ordinals as reserved non-match slots and shifts match layers around them.
+
+Saved Revision validation includes WC v2 positions when checking global-slot
+collisions and contiguity while leaving historical WC v1 replay untouched. The
+existing definitive WC/RWC assignment domain authority is also bound so that when it
+is created from a chronology-aware WC source, it must reuse the exact source week and
+slot ordinal.
+
+This is the chronology foundation only. The next slice is the transaction-owning
+Run/Branch Admin command that derives the current week/global ordinal from
+authoritative Position, resolves canonical WC/RWC authority, records every resulting
+definitive assignment plus first Tour-entry trigger atomically, exposes it in Planned
+Event Admin, and only then retires the remaining legacy wildcard authoring surface.
+

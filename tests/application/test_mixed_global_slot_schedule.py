@@ -12,7 +12,14 @@ from beta_engine.domain.tournaments.run_entry_decision_slot import (
     EntryDecisionEvidence,
     RunEntryDecisionSlotAuthority,
 )
-from beta_engine.infrastructure.db.models import SimulationSlotModel
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority,
+    TournamentWildCardSlotResolution,
+)
+from beta_engine.infrastructure.db.models import (
+    SimulationSlotModel,
+    TournamentWildCardAuthorityModel,
+)
 from beta_engine.infrastructure.db.application_validation_slots import (
     ApplicationValidationSlotStore,
 )
@@ -44,6 +51,44 @@ def _entry_slot(week, *, ordinal):
             ),
         ),
     )
+
+
+def _install_wc_slot(session, week, *, ordinal):
+    authority = TournamentWildCardAuthority(
+        schema_version="tournament_wild_card_authority.v2",
+        run_id="run",
+        branch_id="branch",
+        event_id="wc-event",
+        resolved_by_command_id=f"wc-command-{ordinal}",
+        entry_field_fingerprint="1" * 64,
+        field_sequence=1,
+        decision_week=week,
+        decision_slot_ordinal=ordinal,
+        original_wild_card_player_ids=(None,),
+        slots=(
+            TournamentWildCardSlotResolution(
+                wildcard_index=1,
+                source="unfilled",
+            ),
+        ),
+        adjusted_qualification_player_ids=(),
+        adjusted_below_qualification_cut_player_ids=(),
+    )
+    session.add(
+        TournamentWildCardAuthorityModel(
+            run_id=authority.run_id,
+            branch_id=authority.branch_id,
+            event_id=authority.event_id,
+            command_id=authority.resolved_by_command_id,
+            request_fingerprint="2" * 64,
+            authority_fingerprint=authority.fingerprint,
+            entry_field_fingerprint=authority.entry_field_fingerprint,
+            field_sequence=authority.field_sequence,
+            payload_json=authority.model_dump_json(),
+        )
+    )
+    session.flush()
+    return authority
 
 
 def _resolve_entry_slot(session, authority):
@@ -125,6 +170,43 @@ def test_topological_match_schedule_skips_persisted_entry_global_ordinal(tmp_pat
         )
         assert first_match_slot is not None
         assert first_match_slot.slot_ordinal == 2
+
+
+@pytest.mark.pr_critical
+def test_topological_match_schedule_skips_completed_wc_global_ordinal(tmp_path):
+    driver, factory, week, _, _ = _multi_driver_fixture(
+        tmp_path / "wc-reserved-first"
+    )
+    with factory.begin() as session:
+        _install_wc_slot(session, week, ordinal=1)
+
+    inspected = driver.inspect_schedule(run_id="run", branch_id="branch")
+    assert inspected["required"] is True
+    assert inspected["reserved_wc_slot_ordinals"] == [1]
+
+    proposal = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    match_ordinals = tuple(slot.ordinal for slot in schedule.slots)
+    assert match_ordinals[0] == 2
+    assert 1 not in match_ordinals
+
+    driver.adopt_topological_schedule_proposal(
+        run_id="run",
+        branch_id="branch",
+        request_id="schedule-with-wc-gap",
+        expected_week=week,
+        expected_schedule_fingerprint=schedule.fingerprint,
+        expected_position_fingerprint=proposal["position_fingerprint"],
+    )
+
+    command, before = _driver_command(driver, week, "first-match-after-wc")
+    assert before.slot_ordinal == 2
+    driver.simulate_next_slot(command)
 
 
 @pytest.mark.pr_critical

@@ -29,6 +29,7 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
     TournamentDrawInputAuthorityModel,
+    TournamentWildCardAuthorityModel,
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityConflict,
@@ -44,6 +45,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityConflict,
     TournamentWildCardAuthorityStore,
+    wild_card_decision_slot_ordinals,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -405,6 +407,89 @@ def test_resolved_wc_rwc_authority_commits_draw_input_v3_and_backfills_q(databas
                 event_id="event",
                 command_id="too-late-wc",
                 original_wild_card_player_ids=("E",),
+            )
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_v2_reserves_exact_global_slot_and_retries(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        week = RankingWeek(season_index=0, week=3)
+        store = TournamentWildCardAuthorityStore(session)
+        authority = store.resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        )
+
+        assert authority.schema_version == "tournament_wild_card_authority.v2"
+        assert authority.decision_week == week
+        assert authority.decision_slot_ordinal == 1
+        assert store.get(run_id="run", branch_id="branch", event_id="event") == authority
+        assert store.resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        ) == authority
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_chronology_reader_rejects_row_identity_corruption(database):
+    week = RankingWeek(season_index=0, week=3)
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        TournamentWildCardAuthorityStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="canonical-wc-slot",
+            original_wild_card_player_ids=("B",),
+            decision_week=week,
+            decision_slot_ordinal=1,
+        )
+
+    with database.begin() as session:
+        row = session.get(
+            TournamentWildCardAuthorityModel,
+            ("run", "branch", "event"),
+        )
+        assert row is not None
+        row.command_id = "corrupt-command-id"
+
+    with database() as session:
+        with pytest.raises(ValueError, match="chronology is corrupt"):
+            wild_card_decision_slot_ordinals(
+                session,
+                run_id="run",
+                branch_id="branch",
+                week_ordinal=week.ordinal,
+            )
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_v2_cannot_skip_missing_global_ordinal(database):
+    with database.begin() as session:
+        stage_initial_field(session, wild_cards=1)
+        with pytest.raises(
+            TournamentWildCardAuthorityConflict,
+            match=r"missing completed ordinals \[1\]",
+        ):
+            TournamentWildCardAuthorityStore(session).resolve(
+                run_id="run",
+                branch_id="branch",
+                event_id="event",
+                command_id="canonical-wc-slot-2",
+                original_wild_card_player_ids=("B",),
+                decision_week=RankingWeek(season_index=0, week=3),
+                decision_slot_ordinal=2,
             )
 
 

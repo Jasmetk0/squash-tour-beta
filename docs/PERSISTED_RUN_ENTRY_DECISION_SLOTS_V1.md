@@ -14,10 +14,17 @@ preserving one crucial invariant:
 ## Live collision guard
 
 `RunEntryDecisionSlotStore.append(...)` rejects an entry slot when a persisted match
-slot already owns the same global position.
+slot or chronology-aware canonical WC decision already owns the same global position.
 
-`AuthoritativeSlotMatchExecutor.create_slot(...)` now performs the symmetric check and
-rejects a match slot when a persisted entry-decision slot already owns that position.
+`AuthoritativeSlotMatchExecutor.create_slot(...)` performs the symmetric checks and
+rejects a match slot when a persisted entry-decision or canonical WC-decision slot owns
+that position.
+
+`TournamentWildCardAuthority` v2 freezes its own FAX week/global ordinal. WC resolution
+is complete when that immutable authority is persisted, so later Entry/match slots may
+count the WC ordinal as completed. A WC decision cannot overtake an unresolved earlier
+Entry slot, incomplete match slot, missing ordinal or an ordinal reserved by the adopted
+match schedule.
 
 Thus technical execution order cannot create two different “slot 4” authorities.
 
@@ -47,9 +54,11 @@ Saved Revisions capture entry-decision slots before application-validation resul
 6. first Tour-entry triggers;
 7. later sporting / match-slot state.
 
-Before restore, both current and target Saved Revisions are checked for collisions
-between the entry-slot component and the match-slot component. A historical snapshot
-that claims the same global position for both kinds fails closed.
+Before restore, both current and target Saved Revisions are checked across all three
+currently separate global-slot owners: Entry decisions, chronology-aware WC decisions
+and match slots. A historical snapshot that claims the same Run/Branch/week/ordinal for
+more than one kind fails closed. Historical WC v1 authorities carry no global slot and
+therefore remain outside this chronology without being rewritten.
 
 ## Persistence identity
 
@@ -67,4 +76,4 @@ Exact retry is idempotent. A different authority for the same global position co
 This is deliberately an interoperability bridge, not the final generic Simulation Slot
 schema. A later refactor may unify entry, match, announcement, commitment and other slot
 event kinds under one generalized slot plan. Until that exists, this slice prevents the
-separate entry and match persistence paths from diverging chronologically.
+separate Entry, WC-decision and match persistence paths from diverging chronologically.

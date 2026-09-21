@@ -762,3 +762,12 @@ focused check is red.
 At an explicit internal release/checkpoint, switch to the release gate: run the complete
 regression suite plus the mandatory Master §31.3 acceptance flows and any checkpoint
 smoke/performance checks. See `docs/PRE_ALPHA_TEST_POLICY.md`.
+
+
+### PAQ-006 measurement foundation
+
+Before choosing a reference-scale performance target, capture reproducible evidence.
+`scripts/profile_pre_alpha_acceptance.py` runs the two mandatory Master §31.3 flows
+and emits a versioned JSON report containing wall time and cross-platform Python heap
+peak. It does not invent a threshold and does not close PAQ-006. The profiler belongs
+to release/checkpoint validation rather than ordinary PR CI.

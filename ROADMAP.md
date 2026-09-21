@@ -963,3 +963,15 @@ lifecycle history atomically.
 Next: remap player sporting state together with its completed-week source evidence,
 then use the resulting lifecycle/sporting fingerprint maps to preserve Week Transition
 receipts and World Events.
+
+
+### Branch identity remapping: player sporting v1 history
+
+Player sporting Saved Revision history now forks safely for v1 completed-week contexts.
+Owned tournament source fingerprints are mapped to their target Branch equivalents,
+completed-week context fingerprints are rebuilt, and the sporting predecessor/context
+chain is rebuilt and installed atomically with lifecycle/ranking fork state.
+
+Remaining sporting identity work is specifically v2 Simulation Slot match/effect
+evidence. Once those authorities are remapped, Week Transition receipt/event
+fingerprints can be rebuilt from target ranking + lifecycle + sporting histories.

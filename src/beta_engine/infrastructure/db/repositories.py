@@ -2495,10 +2495,12 @@ class SimulationPersistenceRepository:
         requested_display_name: str | None,
         materialized_fork_revision_id: str | None = None,
     ) -> RunBranchRecord:
-        """Create one timeline that shares an immutable Saved Revision.
+        """Create one timeline from an immutable Saved Revision.
 
-        The source revision is referenced, never copied. The new Branch owns a
-        distinct clean Working Draft and does not become the Viewer Branch.
+        Simple forks share the selected source revision. Supported ranking-bearing
+        forks instead create a target-owned materialized child revision after
+        identity remapping. The new Branch owns a distinct clean Working Draft and
+        does not become the Viewer Branch.
         """
 
         if requested_display_name is not None:
@@ -2692,13 +2694,18 @@ class SimulationPersistenceRepository:
                 if materialize_fork_root:
                     assert remapped_ranking is not None
                     assert materialized_fork_revision_id is not None
-                    installed = install_ranking_revision_state(
-                        session,
-                        remapped_ranking.model_dump_json(),
-                        expected_fingerprint=remapped_ranking.fingerprint,
-                        run_id=run_id,
-                        branch_id=branch_id,
-                    )
+                    try:
+                        installed = install_ranking_revision_state(
+                            session,
+                            remapped_ranking.model_dump_json(),
+                            expected_fingerprint=remapped_ranking.fingerprint,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionBranchForkConflictError(
+                            f"remapped ranking state could not be installed: {exc}"
+                        ) from exc
                     if installed.fingerprint != remapped_ranking.fingerprint:
                         raise SavedRevisionBranchForkConflictError(
                             "remapped ranking state did not install exactly"

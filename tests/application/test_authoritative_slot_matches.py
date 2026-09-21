@@ -82,6 +82,7 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     AuthoritativeWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PublishedOfficialRankingModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
@@ -118,6 +119,9 @@ from beta_engine.infrastructure.db.simulation_slot_fork_remap import (
     remap_competitive_group_payload,
     remap_completed_simulation_slot_core,
     remap_slot_plan,
+)
+from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import (
     _applications_fingerprint,
@@ -3797,6 +3801,19 @@ def test_coupled_fork_remaps_entry_wc_and_draw_input_chain(tmp_path):
         ranking_week=WEEK,
         ranking_snapshot=snapshot,
         adopted_by_command_id="adopt-ranking",
+    )
+    session.add(
+        PublishedOfficialRankingModel(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=WEEK.ordinal,
+            snapshot_fingerprint=snapshot.fingerprint,
+            payload_json=snapshot.model_dump_json(),
+        )
+    )
+    session.flush()
+    TournamentRankingSnapshotAuthorityStore(session).append(
+        source_ranking_authority
     )
     target_snapshot = snapshot.model_copy(update={"branch_id": "target"})
     target_ranking_authority = TournamentRankingSnapshotAuthority(

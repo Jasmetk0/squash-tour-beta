@@ -971,3 +971,11 @@ memory threshold and therefore does not mark PAQ-006 resolved. The profiler is k
 out of ordinary PR CI under the focused-test policy and is intended for deliberate
 performance investigations and explicit internal release/checkpoint gates. See
 `docs/PRE_ALPHA_PERFORMANCE_MEASUREMENT_V1.md`.
+
+
+### Green-only PR handoff rule
+
+PR links are not handed to the user as merge-ready while required CI is queued,
+running, failed, cancelled or timed out. After every fix, CI must be re-checked on the
+latest head commit. Only an all-green latest head may be presented as the next PR to
+merge. This is a hard development workflow rule, not a suggestion.

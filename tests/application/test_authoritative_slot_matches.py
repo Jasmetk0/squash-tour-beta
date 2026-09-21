@@ -1264,6 +1264,29 @@ def test_multi_event_chronology_blocker_has_no_authoritative_mutation(tmp_path):
 
 
 @pytest.mark.pr_critical
+def test_fair_rest_feeder_position_tracks_latest_prior_match():
+    positions = {
+        "early": (1, 1),
+        "late": (1, 4),
+        "previous-day": (2, 2),
+    }
+
+    assert AuthoritativeRunSimulationDriver._fair_rest_feeder_position(
+        (), positions
+    ) == (0, 0)
+    assert AuthoritativeRunSimulationDriver._fair_rest_feeder_position(
+        ("early", "late"), positions
+    ) == (1, 4)
+    assert AuthoritativeRunSimulationDriver._fair_rest_feeder_position(
+        ("late", "previous-day"), positions
+    ) == (2, 2)
+    with pytest.raises(ValueError, match="requires every feeder position"):
+        AuthoritativeRunSimulationDriver._fair_rest_feeder_position(
+            ("missing",), positions
+        )
+
+
+@pytest.mark.pr_critical
 def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(
         tmp_path / "proposal-multi"
@@ -1278,7 +1301,7 @@ def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_
     )
 
     assert proposed["persisted"] is False
-    assert "match_day_schedule_hard_constraints.v1" in proposed["provenance"]
+    assert "match_day_schedule_fair_rest.v1" in proposed["provenance"]
     assert schedule.schema_version == "week_simulation_schedule.v2"
     assert schedule.week == week
     assert len(schedule.slots) == 6

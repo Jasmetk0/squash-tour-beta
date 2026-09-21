@@ -1207,3 +1207,21 @@ Saved Revision. The next adapter slice must coordinate fork-root revision identi
 weekly command `authority_fingerprint` rebinding and authoritative publication/world
 state atomically; transition-bearing forks therefore remain fail-closed at the public
 fork boundary for now.
+
+
+## Ranking-bearing Branch fork: transition-backed command remap
+
+The ranking fork path now consumes the real target-owned materialized fork-root Saved
+Revision identity while rebuilding `RankingTransitionAuthority` history. Transition
+authorities are installed into the target ranking state, and audited
+`RankingWeekCommand` receipts are rebound from the source authority fingerprint to the
+new target authority fingerprint before their request and Official Ranking fingerprints
+are recalculated.
+
+The adapter verifies that every referenced authority belongs to the Saved Revision and
+matches the frozen completed/target week, roster, policy and audit evidence. It also
+requires every saved transition authority to be owned by a stored ranking command;
+detached authority history fails closed.
+
+Authoritative publication/world state, Tournament Ranking Snapshot authority and Season
+Closing archives are still outside this fork slice and remain fail-closed.

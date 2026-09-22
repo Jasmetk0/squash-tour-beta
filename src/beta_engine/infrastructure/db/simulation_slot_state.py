@@ -31,6 +31,50 @@ def _validate_command_rows_shape(rows):
             payload = json.loads(row.result_json)
         except (TypeError, ValueError) as exc:
             raise ValueError("Saved simulation command receipt JSON is corrupt") from exc
+        if (
+            isinstance(payload, dict)
+            and payload.get("schema_version")
+            == "authoritative_simulation_historical_fork_receipt.v1"
+        ):
+            if (
+                row.status != "historical_fork"
+                or payload.get("run_id") != row.run_id
+                or payload.get("branch_id") != row.branch_id
+                or payload.get("command_id") != row.command_id
+                or payload.get("retryable") is not False
+            ):
+                raise ValueError(
+                    "Saved historical simulation fork receipt scope is corrupt"
+                )
+            source_branch_id = payload.get("source_branch_id")
+            source_request_fingerprint = payload.get("source_request_fingerprint")
+            if (
+                not isinstance(source_branch_id, str)
+                or not isinstance(source_request_fingerprint, str)
+            ):
+                raise ValueError(
+                    "Saved historical simulation fork receipt source identity is corrupt"
+                )
+            expected = hashlib.sha256(
+                json.dumps(
+                    {
+                        "schema_version": "authoritative_simulation_historical_fork_request.v1",
+                        "run_id": row.run_id,
+                        "branch_id": row.branch_id,
+                        "command_id": row.command_id,
+                        "source_branch_id": source_branch_id,
+                        "source_request_fingerprint": source_request_fingerprint,
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            ).hexdigest()
+            if expected != row.request_fingerprint:
+                raise ValueError(
+                    "Saved historical simulation fork receipt fingerprint is corrupt"
+                )
+            continue
+
         evidence = payload.get("_request_evidence") if isinstance(payload, dict) else None
         if evidence is None:
             # Historical receipts predate self-describing request evidence.

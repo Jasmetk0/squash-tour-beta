@@ -35,6 +35,7 @@ import {
   previewAuthoritativeFullSimulation,
   simulateAuthoritativeFullSimulation,
   getPendingAuthoritativeFullSimulations,
+  abandonAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -248,6 +249,14 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeFullSimulationPreview | null>(null)
   const [fullSimulationProgress, setFullSimulationProgress] =
     useState<AuthoritativeFullSimulationProgress | null>(null)
+  const [fullSimulationAbandonTarget, setFullSimulationAbandonTarget] =
+    useState<string | null>(null)
+  const [fullSimulationAbandonOperator, setFullSimulationAbandonOperator] =
+    useState('')
+  const [fullSimulationAbandonReason, setFullSimulationAbandonReason] =
+    useState('')
+  const [fullSimulationAbandonConfirmed, setFullSimulationAbandonConfirmed] =
+    useState(false)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -1263,6 +1272,48 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const fullSimulationAbandonMutation = useMutation({
+    mutationFn: () => {
+      if (!fullSimulationAbandonTarget) {
+        throw new Error('Select a pending Full Simulation parent to abandon.')
+      }
+      if (!fullSimulationAbandonOperator.trim() || !fullSimulationAbandonReason.trim()) {
+        throw new Error('Abandon requires an operator label and audit reason.')
+      }
+      if (!fullSimulationAbandonConfirmed) {
+        throw new Error(
+          'Confirm that already committed child work remains canonical before abandoning.'
+        )
+      }
+      return abandonAuthoritativeFullSimulation(runId, branchId, {
+        target_command_id: fullSimulationAbandonTarget,
+        operator_label: fullSimulationAbandonOperator.trim(),
+        audit_reason: fullSimulationAbandonReason.trim(),
+        confirm_committed_child_work_persists: true
+      })
+    },
+    onSuccess: async (result) => {
+      if (fullSimulationCommandId === result.target_command_id) {
+        setFullSimulationReview(null)
+        setFullSimulationProgress(null)
+        setFullSimulationCommandId(newCommandId())
+        setFullSimulationOperator('')
+        setFullSimulationReason('')
+      }
+      setFullSimulationAbandonTarget(null)
+      setFullSimulationAbandonOperator('')
+      setFullSimulationAbandonReason('')
+      setFullSimulationAbandonConfirmed(false)
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['authoritative-full-simulation-pending', runId, branchId]
+      })
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1653,6 +1704,7 @@ export function AuthoritativeSimulationPanel({
     nextSeasonMutation.isPending ||
     fullSimulationPreviewMutation.isPending ||
     fullSimulationMutation.isPending ||
+    fullSimulationAbandonMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -2462,9 +2514,100 @@ export function AuthoritativeSimulationPanel({
                     >
                       Resume this Full Simulation
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFullSimulationAbandonTarget(operation.command.command_id)
+                        setFullSimulationAbandonOperator('')
+                        setFullSimulationAbandonReason('')
+                        setFullSimulationAbandonConfirmed(false)
+                      }}
+                      disabled={actionPending}
+                    >
+                      Prepare abandon
+                    </button>
                   </li>
                 ))}
               </ol>
+              {fullSimulationAbandonTarget ? (
+                <div role="group" aria-label="Abandon Full Simulation">
+                  <p role="alert" className="error">
+                    Abandoning releases only the Full Simulation parent. Already
+                    committed child work remains part of the canonical Run/Branch
+                    and is not rolled back.
+                  </p>
+                  <p>
+                    Target parent: <code>{fullSimulationAbandonTarget}</code>
+                  </p>
+                  <label>
+                    Abandon operator
+                    <input
+                      aria-label="Full Simulation abandon operator"
+                      value={fullSimulationAbandonOperator}
+                      maxLength={128}
+                      onChange={(event) =>
+                        setFullSimulationAbandonOperator(event.target.value)
+                      }
+                      disabled={fullSimulationAbandonMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    Abandon audit reason
+                    <textarea
+                      aria-label="Full Simulation abandon audit reason"
+                      value={fullSimulationAbandonReason}
+                      maxLength={2000}
+                      onChange={(event) =>
+                        setFullSimulationAbandonReason(event.target.value)
+                      }
+                      disabled={fullSimulationAbandonMutation.isPending}
+                    />
+                  </label>
+                  <label>
+                    <input
+                      aria-label="Confirm committed Full Simulation child work persists"
+                      type="checkbox"
+                      checked={fullSimulationAbandonConfirmed}
+                      onChange={(event) =>
+                        setFullSimulationAbandonConfirmed(event.target.checked)
+                      }
+                      disabled={fullSimulationAbandonMutation.isPending}
+                    />{' '}
+                    I understand already committed child work remains canonical.
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => fullSimulationAbandonMutation.mutate()}
+                    disabled={
+                      !fullSimulationAbandonOperator.trim() ||
+                      !fullSimulationAbandonReason.trim() ||
+                      !fullSimulationAbandonConfirmed ||
+                      fullSimulationAbandonMutation.isPending
+                    }
+                  >
+                    Abandon pending Full Simulation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFullSimulationAbandonTarget(null)
+                      setFullSimulationAbandonOperator('')
+                      setFullSimulationAbandonReason('')
+                      setFullSimulationAbandonConfirmed(false)
+                    }}
+                    disabled={fullSimulationAbandonMutation.isPending}
+                  >
+                    Keep parent
+                  </button>
+                  {fullSimulationAbandonMutation.error ? (
+                    <p className="error">
+                      Full Simulation abandon failed: {
+                        formatApiError(fullSimulationAbandonMutation.error)
+                      }
+                    </p>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           ) : null}
           {pendingFullSimulationQuery.data?.legacy_pending_count ? (

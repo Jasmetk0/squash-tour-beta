@@ -1040,6 +1040,19 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
             {"mode": "slot", "command": command.model_dump(mode="json")}
         )
 
+        saved = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            saved,
+            run_id="run",
+            branch_id="branch",
+        )
+        command_rows = saved["content"]["simulation_slot_match_state"]["commands"]
+        saved_receipt = next(
+            row for row in command_rows if row["command_id"] == command.command_id
+        )
+        assert json.loads(saved_receipt["result_json"])["_request_evidence"] == evidence
+
     retry = driver.simulate_next_slot(command)
     assert retry == first
     assert "_request_evidence" not in retry

@@ -4821,9 +4821,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
     target_closing_basis = target_evidence["closing_position_basis"]
 
     assert payload["schema_version"] == (
-        "authoritative_simulation_historical_fork_receipt.v4"
+        "authoritative_simulation_historical_fork_receipt.v5"
     )
-    assert payload["retryable"] is False
+    assert payload["retryable"] is True
     assert target_evidence["schema_version"] == (
         "authoritative_simulation_request_evidence.v3"
     )
@@ -4862,6 +4862,124 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
         match="historical simulation fork target result identity is corrupt",
     ):
         _validate_command_rows_shape([target_row])
+
+
+@pytest.mark.pr_critical
+def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_path):
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        SimulationPositionForkIdentityGraph,
+        _retarget_simulation_command_receipt_as_historical,
+    )
+
+    driver, factory, week = _driver_fixture(tmp_path / "historical-v5-retry")
+    source_command, source_position = _driver_command(
+        driver,
+        week,
+        "historical-retry-command",
+    )
+    opening_basis = source_position.position_basis
+    assert isinstance(opening_basis, dict)
+    closing_basis = dict(opening_basis)
+    source_result = {
+        **source_position.model_dump(mode="json"),
+        "position_fingerprint": fingerprint(closing_basis),
+    }
+    source_evidence = {
+        "schema_version": "authoritative_simulation_request_evidence.v3",
+        "mode": "slot",
+        "command": source_command.model_dump(mode="json"),
+        "opening_position_basis": opening_basis,
+        "closing_position_basis": closing_basis,
+    }
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id=source_command.command_id,
+        request_fingerprint=fingerprint(
+            {"mode": "slot", "command": source_command.model_dump(mode="json")}
+        ),
+        status="complete",
+        result_json=json.dumps(
+            {
+                **source_result,
+                "_request_evidence": source_evidence,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    target_revision = "target-revision"
+    graph = SimulationPositionForkIdentityGraph(
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        target_base_revision_id=target_revision,
+        schedule_fingerprints={},
+        slot_plan_fingerprints={},
+        group_command_fingerprints={},
+        result_fingerprints={},
+        terminal_checkpoint_payloads={},
+        owned_tournament_fingerprints={},
+        week_tournament_lock_fingerprints={},
+        tournament_authority_fingerprints={},
+        sporting_fingerprints={},
+        lifecycle_fingerprints={},
+        transition_authority_fingerprints={},
+        ranking_snapshot_fingerprints={},
+        terminal_checkpoint_fingerprints={},
+        sporting_context_fingerprints={},
+    )
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id=target_revision,
+        position_identity_graph=graph,
+    )
+    target_payload = json.loads(target_row.result_json)
+    assert target_payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v5"
+    )
+    target_command = AuthoritativeSimulationCommand.model_validate(
+        target_payload["target_request_evidence"]["command"]
+    )
+
+    with factory.begin() as session:
+        session.add(
+            RunBranchModel(
+                branch_id="target",
+                run_id="run",
+                display_name="Target fork",
+                saved_head_revision_id=target_revision,
+            )
+        )
+        session.add(target_row)
+
+    with factory() as session:
+        before_slots = len(session.scalars(select(SimulationSlotModel)).all())
+        before_groups = len(session.scalars(select(SimulationEventGroupModel)).all())
+
+    replayed = driver.simulate_next_slot(target_command)
+    assert replayed == target_payload["target_result"]
+
+    with factory() as session:
+        assert len(session.scalars(select(SimulationSlotModel)).all()) == before_slots
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups
+        stored = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "target", target_command.command_id),
+        )
+        assert stored is not None
+        assert stored.status == "historical_fork"
+        assert json.loads(stored.result_json) == target_payload
+
+    changed = target_command.model_copy(
+        update={"expected_position_fingerprint": "0" * 64}
+    )
+    with pytest.raises(
+        ValueError,
+        match="simulation command ID already has a different request",
+    ):
+        driver.simulate_next_slot(changed)
 
 
 @pytest.mark.pr_critical

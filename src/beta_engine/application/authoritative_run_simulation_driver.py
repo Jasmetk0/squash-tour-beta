@@ -4192,6 +4192,109 @@ class AuthoritativeRunSimulationDriver:
         with self.factory() as session:
             return self._full_simulation_plan(session, request=request)
 
+    def inspect_pending_full_simulations(
+        self, *, run_id: str, branch_id: str
+    ) -> dict:
+        """Return resumable durable Full Simulation parents for one Run/Branch."""
+
+        with self.factory() as session:
+            receipts = session.scalars(
+                select(AuthoritativeSimulationCommandModel).where(
+                    AuthoritativeSimulationCommandModel.run_id == run_id,
+                    AuthoritativeSimulationCommandModel.branch_id == branch_id,
+                    AuthoritativeSimulationCommandModel.status == "pending",
+                )
+            ).all()
+
+            operations: list[dict] = []
+            legacy_pending_count = 0
+            for receipt in receipts:
+                try:
+                    frozen = json.loads(receipt.result_json)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        "pending simulation command receipt JSON is corrupt"
+                    ) from exc
+                if (
+                    frozen.get("schema_version")
+                    != "authoritative_full_simulation_operation.v1"
+                ):
+                    continue
+
+                resume_payload = frozen.get("resume_command")
+                review = frozen.get("review")
+                if resume_payload is None or review is None:
+                    legacy_pending_count += 1
+                    continue
+
+                command = AuthoritativeFullSimulationCommand.model_validate(
+                    resume_payload
+                )
+                if (
+                    command.run_id != run_id
+                    or command.branch_id != branch_id
+                    or command.command_id != receipt.command_id
+                ):
+                    raise ValueError(
+                        "pending Full Simulation resume command scope is corrupt"
+                    )
+                expected_request_fp = fingerprint(
+                    {
+                        "mode": "full_simulation",
+                        "command": command.model_dump(mode="json"),
+                    }
+                )
+                if receipt.request_fingerprint != expected_request_fp:
+                    raise ValueError(
+                        "pending Full Simulation resume command fingerprint is corrupt"
+                    )
+
+                parsed_review = dict(review)
+                if (
+                    parsed_review.get("schema_version")
+                    != "authoritative_full_simulation_preview.v1"
+                    or parsed_review.get("run_id") != run_id
+                    or parsed_review.get("branch_id") != branch_id
+                    or parsed_review.get("preview_fingerprint")
+                    != command.expected_preview_fingerprint
+                    or parsed_review.get("expected_position_fingerprint")
+                    != command.expected_position_fingerprint
+                    or parsed_review.get("expected_revision_id")
+                    != command.expected_revision_id
+                ):
+                    raise ValueError(
+                        "pending Full Simulation reviewed contract is corrupt"
+                    )
+
+                operations.append(
+                    {
+                        "command": command.model_dump(mode="json"),
+                        "review": parsed_review,
+                        "completed_seasons": list(
+                            frozen.get("completed_seasons", [])
+                        ),
+                        "completed_season_count": len(
+                            frozen.get("completed_seasons", [])
+                        ),
+                        "final_completed_weeks": list(
+                            frozen.get("final_completed_weeks", [])
+                        ),
+                        "final_completed_week_count": len(
+                            frozen.get("final_completed_weeks", [])
+                        ),
+                    }
+                )
+
+            operations.sort(key=lambda item: item["command"]["command_id"])
+            return {
+                "schema_version":
+                    "authoritative_full_simulation_pending_collection.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "operations": operations,
+                "legacy_pending_count": legacy_pending_count,
+            }
+
     @staticmethod
     def _full_season_child_command_id(
         parent_command_id: str, season_index: int
@@ -4460,6 +4563,8 @@ class AuthoritativeRunSimulationDriver:
                     "final_week61_slot_children": {},
                     "final_boundary_saved_revision_id": None,
                     "final_boundary_position_fingerprint": None,
+                    "resume_command": command.model_dump(mode="json"),
+                    "review": plan,
                 }
                 session.add(
                     AuthoritativeSimulationCommandModel(

@@ -1645,3 +1645,18 @@ Historical fork receipts created before this integrity field remain readable. Re
 still deliberately disabled: this step protects the opening Position evidence added in
 the previous slice so later target-Branch request reconstruction can trust the source
 inputs it consumes.
+
+
+
+## Target Saved Revision identity for forked Simulation receipts
+
+Newly materialized Simulation command history now uses historical fork receipt/request
+schema v2. Each receipt is bound to the exact target materialized fork Saved Revision
+that owns the remapped Branch state, in addition to the target Branch and preserved
+source request evidence. The historical request fingerprint therefore changes if the
+target fork revision identity is altered.
+
+Historical v1 fork receipts remain readable. Retry is still intentionally disabled:
+this slice establishes the target revision identity required for later reconstruction
+of a complete target-owned exact-retry request without claiming that the remapped
+opening Position or public result payload is ready yet.

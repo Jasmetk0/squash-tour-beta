@@ -4464,6 +4464,7 @@ def test_simulation_command_receipt_fork_is_read_only_historical_audit():
     target_row = _retarget_simulation_command_receipt_as_historical(
         source_row,
         target_branch_id="target",
+        target_base_revision_id="fork-revision",
     )
     payload = json.loads(target_row.result_json)
 
@@ -4472,6 +4473,10 @@ def test_simulation_command_receipt_fork_is_read_only_historical_audit():
     assert target_row.command_id == source_row.command_id
     assert target_row.status == "historical_fork"
     assert target_row.request_fingerprint != source_row.request_fingerprint
+    assert payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v2"
+    )
+    assert payload["target_base_revision_id"] == "fork-revision"
     assert payload["retryable"] is False
     assert payload["source_branch_id"] == "branch"
     assert payload["source_request_fingerprint"] == source_fp
@@ -4496,6 +4501,24 @@ def test_simulation_command_receipt_fork_is_read_only_historical_audit():
     with pytest.raises(
         ValueError,
         match="historical simulation fork receipt request evidence is corrupt",
+    ):
+        _validate_command_rows_shape([target_row])
+
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id="fork-revision",
+    )
+    tampered_revision = json.loads(target_row.result_json)
+    tampered_revision["target_base_revision_id"] = "different-fork-revision"
+    target_row.result_json = json.dumps(
+        tampered_revision,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation fork receipt fingerprint is corrupt",
     ):
         _validate_command_rows_shape([target_row])
 

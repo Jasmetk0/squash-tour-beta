@@ -109,6 +109,7 @@ def _retarget_simulation_command_receipt_as_historical(
     row: AuthoritativeSimulationCommandModel,
     *,
     target_branch_id: str,
+    target_base_revision_id: str,
 ) -> AuthoritativeSimulationCommandModel:
     try:
         source_result = json.loads(row.result_json)
@@ -120,6 +121,10 @@ def _retarget_simulation_command_receipt_as_historical(
         raise SimulationSlotForkRemapUnsupportedError(
             "Simulation command receipt result must be an object"
         )
+    if not target_base_revision_id.strip():
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation command receipt remap requires a target Saved Revision id"
+        )
 
     request_evidence = source_result.get("_request_evidence")
     request_evidence_fingerprint = (
@@ -129,10 +134,11 @@ def _retarget_simulation_command_receipt_as_historical(
     )
 
     historical = {
-        "schema_version": "authoritative_simulation_historical_fork_receipt.v1",
+        "schema_version": "authoritative_simulation_historical_fork_receipt.v2",
         "run_id": row.run_id,
         "branch_id": target_branch_id,
         "command_id": row.command_id,
+        "target_base_revision_id": target_base_revision_id,
         "source_branch_id": row.branch_id,
         "source_status": row.status,
         "source_request_fingerprint": row.request_fingerprint,
@@ -147,12 +153,14 @@ def _retarget_simulation_command_receipt_as_historical(
     }
     request_fingerprint = fingerprint(
         {
-            "schema_version": "authoritative_simulation_historical_fork_request.v1",
+            "schema_version": "authoritative_simulation_historical_fork_request.v2",
             "run_id": row.run_id,
             "branch_id": target_branch_id,
             "command_id": row.command_id,
+            "target_base_revision_id": target_base_revision_id,
             "source_branch_id": row.branch_id,
             "source_request_fingerprint": row.request_fingerprint,
+            "source_request_evidence_fingerprint": request_evidence_fingerprint,
         }
     )
     return AuthoritativeSimulationCommandModel(
@@ -514,6 +522,7 @@ def remap_coupled_player_slot_history(
     run_id: str,
     source_branch_id: str,
     target_branch_id: str,
+    target_base_revision_id: str | None = None,
     v1_source_fingerprint_map: dict[str, str],
     tournament_ranking_authority_map: dict[
         str, TournamentRankingSnapshotAuthority
@@ -597,10 +606,15 @@ def remap_coupled_player_slot_history(
         for value in source_slot_component.get("week_tournament_locks", [])
     ]
 
+    if source_command_rows and not (target_base_revision_id or "").strip():
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation command history requires a target Saved Revision id"
+        )
     target_command_rows: list[AuthoritativeSimulationCommandModel] = [
         _retarget_simulation_command_receipt_as_historical(
             row,
             target_branch_id=target_branch_id,
+            target_base_revision_id=target_base_revision_id or "",
         )
         for row in source_command_rows
     ]

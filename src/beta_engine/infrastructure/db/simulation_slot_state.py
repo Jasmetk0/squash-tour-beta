@@ -34,7 +34,10 @@ def _validate_command_rows_shape(rows):
         if (
             isinstance(payload, dict)
             and payload.get("schema_version")
-            == "authoritative_simulation_historical_fork_receipt.v1"
+            in {
+                "authoritative_simulation_historical_fork_receipt.v1",
+                "authoritative_simulation_historical_fork_receipt.v2",
+            }
         ):
             if (
                 row.status != "historical_fork"
@@ -82,16 +85,41 @@ def _validate_command_rows_shape(rows):
                         "Saved historical simulation fork receipt request evidence is corrupt"
                     )
 
+            historical_schema = payload["schema_version"]
+            if (
+                historical_schema
+                == "authoritative_simulation_historical_fork_receipt.v2"
+            ):
+                target_base_revision_id = payload.get("target_base_revision_id")
+                if (
+                    not isinstance(target_base_revision_id, str)
+                    or not target_base_revision_id.strip()
+                ):
+                    raise ValueError(
+                        "Saved historical simulation fork receipt target revision is corrupt"
+                    )
+                expected_request = {
+                    "schema_version": "authoritative_simulation_historical_fork_request.v2",
+                    "run_id": row.run_id,
+                    "branch_id": row.branch_id,
+                    "command_id": row.command_id,
+                    "target_base_revision_id": target_base_revision_id,
+                    "source_branch_id": source_branch_id,
+                    "source_request_fingerprint": source_request_fingerprint,
+                    "source_request_evidence_fingerprint": source_evidence_fingerprint,
+                }
+            else:
+                expected_request = {
+                    "schema_version": "authoritative_simulation_historical_fork_request.v1",
+                    "run_id": row.run_id,
+                    "branch_id": row.branch_id,
+                    "command_id": row.command_id,
+                    "source_branch_id": source_branch_id,
+                    "source_request_fingerprint": source_request_fingerprint,
+                }
             expected = hashlib.sha256(
                 json.dumps(
-                    {
-                        "schema_version": "authoritative_simulation_historical_fork_request.v1",
-                        "run_id": row.run_id,
-                        "branch_id": row.branch_id,
-                        "command_id": row.command_id,
-                        "source_branch_id": source_branch_id,
-                        "source_request_fingerprint": source_request_fingerprint,
-                    },
+                    expected_request,
                     sort_keys=True,
                     separators=(",", ":"),
                 ).encode()

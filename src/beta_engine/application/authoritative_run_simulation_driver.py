@@ -27,6 +27,7 @@ from beta_engine.application.canonical_tournament_topology import (
     project_canonical_draw_to_match_topology,
 )
 from beta_engine.application.final_season_transition import (
+    FINAL_WEEK,
     FinalSeasonTransitionCommand,
     FinalSeasonTransitionResult,
     commit_final_season_transition,
@@ -91,6 +92,8 @@ from beta_engine.domain.players.sporting import (
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS
+from beta_engine.domain.run_revisions import FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
 from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
     SimulationMatchEventPlan,
@@ -151,6 +154,9 @@ from beta_engine.infrastructure.db.authoritative_week_transition import (
 from beta_engine.infrastructure.db.ranking_transition_authority import (
     RankingTransitionAuthorityStore,
     derive_ranking_transition_authority,
+)
+from beta_engine.infrastructure.db.saved_revision_season_closure import (
+    load_saved_revision_season_closure,
 )
 from beta_engine.application.authoritative_week_transition import (
     AuthoritativeWeekTransitionCommand,
@@ -310,6 +316,43 @@ class AuthoritativeSeasonPreviewRequest(FrozenInput):
 
 class AuthoritativeSeasonCommand(AuthoritativeSeasonPreviewRequest):
     """Durable progressive parent that reaches the next Season boundary."""
+
+    expected_start_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeFullSimulationPreviewRequest(FrozenInput):
+    """Reviewed progressive orchestration through the final Run closure."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError(
+                "Full Simulation operator and audit reason must be non-empty"
+            )
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+
+class AuthoritativeFullSimulationCommand(
+    AuthoritativeFullSimulationPreviewRequest
+):
+    """Durable parent from current Position through completed Run."""
 
     expected_start_week: RankingWeek
     expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")

@@ -4570,6 +4570,65 @@ class AuthoritativeRunSimulationDriver:
                     session.flush()
                     return payload
 
+            prior_pending_seasons = sorted(
+                int(season_key)
+                for season_key in frozen["season_children"]
+                if (
+                    int(season_key) < position.current_week.season_index
+                    and int(season_key) not in frozen["completed_seasons"]
+                )
+            )
+            if prior_pending_seasons:
+                prior_season_index = prior_pending_seasons[0]
+                stored_prior = frozen["season_children"][
+                    str(prior_season_index)
+                ]
+                prior_child = AuthoritativeSeasonCommand.model_validate_json(
+                    json.dumps(stored_prior["command"])
+                )
+                prior_result = self.simulate_next_season(prior_child)
+                if (
+                    prior_result.get("schema_version")
+                    == "authoritative_season_progress.v1"
+                ):
+                    with self.factory() as session:
+                        current = self._position(
+                            session,
+                            command.run_id,
+                            command.branch_id,
+                            allow_missing_schedule=True,
+                        )
+                    return self._full_progress_payload(
+                        command=command,
+                        frozen=frozen,
+                        checkpoint=prior_result["checkpoint"],
+                        blockers=tuple(prior_result.get("blockers", ())),
+                        detail=prior_result.get("detail"),
+                        position=current,
+                        child_progress=prior_result,
+                        season_transition_preflight=prior_result.get(
+                            "season_transition_preflight"
+                        ),
+                    )
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(
+                        AuthoritativeSimulationCommandModel, key
+                    )
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError(
+                            "Full Simulation parent receipt disappeared"
+                        )
+                    frozen_now = json.loads(parent.result_json)
+                    if prior_season_index not in frozen_now["completed_seasons"]:
+                        frozen_now["completed_seasons"].append(
+                            prior_season_index
+                        )
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
             if position.current_week.season_index < FINAL_WEEK.season_index:
                 season_index = position.current_week.season_index
                 season_key = str(season_index)

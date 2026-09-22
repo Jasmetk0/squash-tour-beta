@@ -1534,6 +1534,24 @@ export type AuthoritativeFullSimulationExecution =
   | AuthoritativeFullSimulationProgress
   | AuthoritativeFullSimulationResult
 
+export type AuthoritativeFullSimulationPendingOperation = {
+  command: AuthoritativeFullSimulationCommandPayload
+  review: AuthoritativeFullSimulationPreview
+  completed_seasons: number[]
+  completed_season_count: number
+  final_completed_weeks: AuthoritativeRankingWeek[]
+  final_completed_week_count: number
+}
+
+export type AuthoritativeFullSimulationPendingCollection = {
+  schema_version: 'authoritative_full_simulation_pending_collection.v1'
+  run_id: string
+  branch_id: string
+  operations: AuthoritativeFullSimulationPendingOperation[]
+  legacy_pending_count: number
+}
+
+
 export type MatchReconstructionGameScore = {
   player_a_points: number
   player_b_points: number

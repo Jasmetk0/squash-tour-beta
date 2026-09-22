@@ -1063,6 +1063,31 @@ def simulate_next_season(
         ) from exc
 
 
+@router.get("/full-simulation/pending")
+def inspect_pending_full_simulations(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_pending_full_simulations(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_full_simulation_pending_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.post("/full-simulation/preview")
 def preview_full_simulation(
     run_id: str,

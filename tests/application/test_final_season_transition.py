@@ -393,6 +393,21 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     assert preflight["ready_for_execution"] is True
     assert preflight["saved_revision_id"] == "revision-before-final"
 
+    pending = driver.inspect_pending_full_simulations(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert pending["schema_version"] == (
+        "authoritative_full_simulation_pending_collection.v1"
+    )
+    assert pending["legacy_pending_count"] == 0
+    assert len(pending["operations"]) == 1
+    resumed = pending["operations"][0]
+    assert resumed["command"] == command.model_dump(mode="json")
+    assert resumed["review"] == preview
+    assert resumed["completed_season_count"] == 0
+    assert resumed["final_completed_week_count"] == 1
+
     final_command = _command(preflight["preflight_fingerprint"])
     final_result = driver.finalize_final_season(final_command)
     assert final_result.run_status == COMPLETED_RUN_STATUS

@@ -152,6 +152,7 @@ import type {
   AuthoritativeFullSimulationPreview,
   AuthoritativeFullSimulationCommandPayload,
   AuthoritativeFullSimulationExecution,
+  AuthoritativeFullSimulationPendingCollection,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1771,6 +1772,38 @@ export async function simulateAuthoritativeNextSeason(
     data.target_week.week !== 1
   ) {
     throw new Error('Authoritative Season result is invalid.')
+  }
+  return data
+}
+
+export async function getPendingAuthoritativeFullSimulations(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeFullSimulationPendingCollection> {
+  const data = await request<AuthoritativeFullSimulationPendingCollection>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/pending'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_pending_collection.v1' ||
+    data.legacy_pending_count < 0
+  ) {
+    throw new Error('Pending Full Simulation response is invalid.')
+  }
+  for (const operation of data.operations) {
+    if (
+      operation.command.expected_preview_fingerprint !==
+        operation.review.preview_fingerprint ||
+      operation.command.expected_position_fingerprint !==
+        operation.review.expected_position_fingerprint ||
+      operation.command.expected_revision_id !==
+        operation.review.expected_revision_id ||
+      operation.completed_season_count !== operation.completed_seasons.length ||
+      operation.final_completed_week_count !==
+        operation.final_completed_weeks.length
+    ) {
+      throw new Error('Pending Full Simulation operation is invalid.')
+    }
   }
   return data
 }

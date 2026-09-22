@@ -1471,3 +1471,13 @@ Simulation Admin can now branch from the canonical `week_simulation_schedule.v2`
 The manual preview is non-persistent and returns a schedule fingerprint plus a position fingerprint bound to both current canonical simulation state and the exact edited schedule. Commit therefore adopts only the reviewed payload; any later edit or concurrent simulation change makes the review stale. Backend PR-critical coverage proves that one round can be deliberately split across multiple Match Days while feeder dependencies still require a later dependent day.
 
 This is the decided Admin-edit foundation from Master §13.4. Automatic lexicographic fair-rest optimization, carryover from the previous week, schedule-quality scoring and minimal-range reflow after later withdrawals/replacements remain follow-up work.
+
+
+## Full Simulation durable browser resume
+
+Canonical Full Simulation now persists the exact reviewed parent command and preview
+contract inside its pending durable receipt. Run/Branch Admin can inspect resumable
+parents after browser/process state loss, restore the original Command ID plus
+operator/audit metadata, and continue the same deterministic parent without rerolling
+already-committed child work. Pending receipts created before this resume metadata are
+reported explicitly as legacy rather than guessed or silently replaced.

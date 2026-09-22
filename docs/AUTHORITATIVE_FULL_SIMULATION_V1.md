@@ -85,6 +85,15 @@ sporting mutation and does not require the Run to remain writable.
 
 ## Durable retry and reopen
 
+A pending parent now persists its exact reviewed command and preview contract inside
+the durable Full Simulation operation receipt. The Run/Branch inspection endpoint
+returns resumable pending parents after browser or process state loss, including the
+original Command ID, operator/audit metadata, reviewed start contract and accumulated
+completed-season/final-week counters. The Admin Simulation surface can therefore
+restore the exact parent after reload instead of manufacturing a replacement command.
+Older pending receipts created before this metadata existed remain backend-resumable
+only when the original command payload is still available and are reported separately.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

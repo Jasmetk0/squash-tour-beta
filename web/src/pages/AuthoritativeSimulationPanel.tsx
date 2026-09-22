@@ -32,6 +32,8 @@ import {
   simulateAuthoritativeNextWeek,
   previewAuthoritativeNextSeason,
   simulateAuthoritativeNextSeason,
+  previewAuthoritativeFullSimulation,
+  simulateAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -51,6 +53,8 @@ import type {
   AuthoritativeWeekProgress,
   AuthoritativeSeasonPreview,
   AuthoritativeSeasonProgress,
+  AuthoritativeFullSimulationPreview,
+  AuthoritativeFullSimulationProgress,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -209,6 +213,13 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeSeasonPreview | null>(null)
   const [nextSeasonProgress, setNextSeasonProgress] =
     useState<AuthoritativeSeasonProgress | null>(null)
+  const [fullSimulationCommandId, setFullSimulationCommandId] = useState(newCommandId)
+  const [fullSimulationOperator, setFullSimulationOperator] = useState('')
+  const [fullSimulationReason, setFullSimulationReason] = useState('')
+  const [fullSimulationReview, setFullSimulationReview] =
+    useState<AuthoritativeFullSimulationPreview | null>(null)
+  const [fullSimulationProgress, setFullSimulationProgress] =
+    useState<AuthoritativeFullSimulationProgress | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -354,6 +365,14 @@ export function AuthoritativeSimulationPanel({
     setNextSeasonReason('')
     setNextSeasonReview(null)
     setNextSeasonProgress(null)
+  }, [runId, branchId])
+
+  useEffect(() => {
+    setFullSimulationCommandId(newCommandId())
+    setFullSimulationOperator('')
+    setFullSimulationReason('')
+    setFullSimulationReview(null)
+    setFullSimulationProgress(null)
   }, [runId, branchId])
 
   useEffect(() => {
@@ -1110,6 +1129,93 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const fullSimulationPreviewMutation = useMutation({
+    mutationFn: () => {
+      const operator = fullSimulationOperator.trim()
+      const reason = fullSimulationReason.trim()
+      if (!operator || !reason) {
+        throw new Error('Full Simulation requires an operator label and audit reason.')
+      }
+      return previewAuthoritativeFullSimulation(runId, branchId, {
+        command_id: fullSimulationCommandId,
+        operator_label: operator,
+        audit_reason: reason
+      })
+    },
+    onSuccess: (preview) => {
+      setFullSimulationReview(preview)
+      setFullSimulationProgress(null)
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setFullSimulationReview(null)
+        setFullSimulationProgress(null)
+        setFullSimulationCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const fullSimulationMutation = useMutation({
+    mutationFn: () => {
+      if (!fullSimulationReview) {
+        throw new Error('Review the canonical Full Simulation range first.')
+      }
+      return simulateAuthoritativeFullSimulation(runId, branchId, {
+        command_id: fullSimulationCommandId,
+        operator_label: fullSimulationOperator.trim(),
+        audit_reason: fullSimulationReason.trim(),
+        expected_start_week: fullSimulationReview.start_week,
+        expected_position_fingerprint:
+          fullSimulationReview.expected_position_fingerprint,
+        expected_revision_id: fullSimulationReview.expected_revision_id,
+        expected_preview_fingerprint: fullSimulationReview.preview_fingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      if (result.schema_version === 'authoritative_full_simulation_progress.v1') {
+        setFullSimulationProgress(result)
+        if (result.position) {
+          queryClient.setQueryData(
+            ['authoritative-simulation-position', runId, branchId],
+            result.position
+          )
+        }
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+        ])
+        return
+      }
+      setFullSimulationProgress(null)
+      setFullSimulationReview(null)
+      setFullSimulationCommandId(newCommandId())
+      setFullSimulationOperator('')
+      setFullSimulationReason('')
+      setConfirmed(false)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-season-transition-preflight', runId, branchId] })
+      ])
+    },
+    onError: async () => {
+      // Preserve the reviewed Full Simulation parent across partial season work,
+      // explicit Save boundaries, process reopen and final Run closure.
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+      ])
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1498,6 +1604,8 @@ export function AuthoritativeSimulationPanel({
     nextWeekMutation.isPending ||
     nextSeasonPreviewMutation.isPending ||
     nextSeasonMutation.isPending ||
+    fullSimulationPreviewMutation.isPending ||
+    fullSimulationMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1540,7 +1648,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season / Full Simulation → Save / reviewed boundaries.
         It does not use the legacy simulation-run binding.
       </p>
 

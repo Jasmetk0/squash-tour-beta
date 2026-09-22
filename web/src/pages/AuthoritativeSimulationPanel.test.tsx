@@ -30,6 +30,8 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextMatchDay: vi.fn(),
   previewAuthoritativeNextRound: vi.fn(),
   simulateAuthoritativeNextRound: vi.fn(),
+  previewAuthoritativeNextTournament: vi.fn(),
+  simulateAuthoritativeNextTournament: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -200,6 +202,54 @@ const roundResult = {
     unresolved_group_ids: ['g4'],
     blocked_match_ids: [],
     position_fingerprint: '2'.repeat(64)
+  },
+  adoption: 'committed' as const
+}
+
+const tournamentPreview = {
+  schema_version: 'authoritative_tournament_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  event_id: 'event-a',
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 3],
+  target_group_ids: ['g1', 'g3'],
+  horizon_slot_ordinals: [1, 2, 3],
+  transit_slot_ordinals: [2],
+  transit_group_ids: ['g2'],
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  preview_fingerprint: '9'.repeat(64)
+}
+
+const tournamentResult = {
+  schema_version: 'authoritative_tournament_result.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  event_id: 'event-a',
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 3],
+  target_group_ids: ['g1', 'g3'],
+  horizon_slot_ordinals: [1, 2, 3],
+  transit_slot_ordinals: [2],
+  transit_group_ids: ['g2'],
+  child_command_ids: [
+    'tournament-slot:one',
+    'tournament-slot:two',
+    'tournament-slot:three'
+  ],
+  completed_slot_count: 3,
+  owned_tournament_source_fingerprint: 'f'.repeat(64),
+  position: {
+    ...position,
+    current_slot_id: 'slot-4',
+    slot_ordinal: 4,
+    eligible_match_ids: ['g4'],
+    unresolved_group_ids: ['g4'],
+    blocked_match_ids: [],
+    position_fingerprint: '3'.repeat(64)
   },
   adoption: 'committed' as const
 }
@@ -648,6 +698,8 @@ beforeEach(() => {
   api.simulateAuthoritativeNextMatchDay.mockResolvedValue(matchDayResult)
   api.previewAuthoritativeNextRound.mockResolvedValue(roundPreview)
   api.simulateAuthoritativeNextRound.mockResolvedValue(roundResult)
+  api.previewAuthoritativeNextTournament.mockResolvedValue(tournamentPreview)
+  api.simulateAuthoritativeNextTournament.mockResolvedValue(tournamentResult)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1250,6 +1302,79 @@ describe('AuthoritativeSimulationPanel', () => {
     )
     expect(
       api.simulateAuthoritativeNextRound.mock.calls[1][2].command_id
+    ).toBe(firstCommand.command_id)
+  })
+
+  it('reviews tournament transit chronology and retries the same canonical command', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextTournament
+      .mockRejectedValueOnce(new Error('network response lost'))
+      .mockResolvedValueOnce(tournamentResult)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Next Tournament' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeNextTournament).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Reviewed canonical Tournament · event-a'
+      })
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Tournament target matches'
+      })
+    ).toHaveTextContent('Target slot 1: g1')
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Tournament target matches'
+      })
+    ).toHaveTextContent('Target slot 3: g3')
+    expect(
+      screen.getByRole('list', {
+        name: 'Reviewed authoritative Tournament transit matches'
+      })
+    ).toHaveTextContent('Transit slot 2: g2')
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const commit = screen.getByRole('button', {
+      name: 'Simulate reviewed authoritative Next Tournament'
+    })
+    await userEvent.click(commit)
+
+    expect(
+      await screen.findByText(
+        'Authoritative Next Tournament failed: network response lost'
+      )
+    ).toBeInTheDocument()
+    const firstCommand =
+      api.simulateAuthoritativeNextTournament.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      expected_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7'
+    })
+    expect(firstCommand).not.toHaveProperty('run_id')
+    expect(firstCommand).not.toHaveProperty('branch_id')
+
+    await userEvent.click(commit)
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextTournament).toHaveBeenCalledTimes(2)
+    )
+    expect(
+      api.simulateAuthoritativeNextTournament.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
   })
 

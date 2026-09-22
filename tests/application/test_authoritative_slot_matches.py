@@ -1051,7 +1051,18 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
         saved_receipt = next(
             row for row in command_rows if row["command_id"] == command.command_id
         )
-        assert json.loads(saved_receipt["result_json"])["_request_evidence"] == evidence
+        saved_payload = json.loads(saved_receipt["result_json"])
+        assert saved_payload["_request_evidence"] == evidence
+        position_evidence = saved_payload["_position_evidence"]
+        assert position_evidence["schema_version"] == (
+            "authoritative_simulation_position_evidence.v1"
+        )
+        assert fingerprint(position_evidence["before"]) == (
+            command.expected_position_fingerprint
+        )
+        assert fingerprint(position_evidence["after"]) == (
+            saved_payload["position_fingerprint"]
+        )
 
     retry = driver.simulate_next_slot(command)
     assert retry == first

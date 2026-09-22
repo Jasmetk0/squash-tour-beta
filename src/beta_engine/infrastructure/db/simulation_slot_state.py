@@ -79,12 +79,46 @@ def _validate_command_rows_shape(rows):
         if evidence is None:
             # Historical receipts predate self-describing request evidence.
             continue
-        if evidence.get("schema_version") != "authoritative_simulation_request_evidence.v1":
+        evidence_schema = evidence.get("schema_version")
+        if evidence_schema not in {
+            "authoritative_simulation_request_evidence.v1",
+            "authoritative_simulation_request_evidence.v2",
+        }:
             raise ValueError("Saved simulation command request evidence schema is invalid")
         mode = evidence.get("mode")
         command = evidence.get("command")
         if mode not in {"match", "slot"} or not isinstance(command, dict):
             raise ValueError("Saved simulation command request evidence is invalid")
+        if evidence_schema == "authoritative_simulation_request_evidence.v2":
+            opening = evidence.get("opening_position")
+            if not isinstance(opening, dict):
+                raise ValueError(
+                    "Saved simulation command opening Position evidence is missing"
+                )
+            opening_fingerprint = opening.get("fingerprint")
+            opening_basis = opening.get("basis")
+            if (
+                not isinstance(opening_fingerprint, str)
+                or not isinstance(opening_basis, dict)
+            ):
+                raise ValueError(
+                    "Saved simulation command opening Position evidence is invalid"
+                )
+            calculated_opening = hashlib.sha256(
+                json.dumps(
+                    opening_basis,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ).encode()
+            ).hexdigest()
+            if (
+                calculated_opening != opening_fingerprint
+                or command.get("expected_position_fingerprint")
+                != opening_fingerprint
+            ):
+                raise ValueError(
+                    "Saved simulation command opening Position evidence is corrupt"
+                )
         if (
             command.get("run_id") != row.run_id
             or command.get("branch_id") != row.branch_id

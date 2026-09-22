@@ -4865,6 +4865,46 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
 
 
 @pytest.mark.pr_critical
+def test_historical_v4_receipt_remains_read_only():
+    command = AuthoritativeSimulationCommand(
+        command_id="legacy-v4-command",
+        run_id="run",
+        branch_id="target",
+        expected_week=RankingWeek(season_index=0, week=1),
+        expected_position_fingerprint="1" * 64,
+        expected_revision_id="target-revision",
+        group_id=None,
+    )
+    row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="target",
+        command_id=command.command_id,
+        request_fingerprint="2" * 64,
+        status="historical_fork",
+        result_json=json.dumps(
+            {
+                "schema_version": "authoritative_simulation_historical_fork_receipt.v4",
+                "retryable": False,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation command is not retryable",
+    ):
+        AuthoritativeRunSimulationDriver._historical_simulation_retry_result(
+            row,
+            command=command,
+            mode="slot",
+            request_fingerprint=fingerprint(
+                {"mode": "slot", "command": command.model_dump(mode="json")}
+            ),
+        )
+
+
+@pytest.mark.pr_critical
 def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_path):
     from beta_engine.infrastructure.db.player_slot_fork_remap import (
         SimulationPositionForkIdentityGraph,

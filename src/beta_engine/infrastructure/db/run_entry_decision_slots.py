@@ -310,6 +310,40 @@ def load_saved_run_entry_decision_slots(
     return slots
 
 
+def remap_saved_run_entry_decision_slots_component(
+    payload: dict,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+) -> tuple[dict | None, dict[str, str]]:
+    """Retarget Run entry-slot scope while preserving source decision evidence."""
+
+    source = load_saved_run_entry_decision_slots(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if source is None:
+        return None, {}
+
+    target = tuple(
+        item.model_copy(update={"branch_id": target_branch_id})
+        for item in source
+    )
+    mapping = {
+        source_item.fingerprint: target_item.fingerprint
+        for source_item, target_item in zip(source, target, strict=True)
+    }
+    return (
+        {
+            "fingerprint": _component_fingerprint(target),
+            "slots": [item.model_dump(mode="json") for item in target],
+        },
+        mapping,
+    )
+
+
 def _saved_wild_card_decision_positions(
     simulation: dict | None,
     *,

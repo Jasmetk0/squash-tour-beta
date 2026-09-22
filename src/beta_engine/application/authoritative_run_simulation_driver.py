@@ -5862,21 +5862,55 @@ class AuthoritativeRunSimulationDriver:
 
         target_request_fingerprint = payload.get("target_request_fingerprint")
         target_evidence = payload.get("target_request_evidence")
+        target_evidence_fingerprint = payload.get(
+            "target_request_evidence_fingerprint"
+        )
         target_result = payload.get("target_result")
         target_result_fingerprint = payload.get("target_result_fingerprint")
         if (
-            target_request_fingerprint != request_fingerprint
+            not isinstance(target_request_fingerprint, str)
             or not isinstance(target_evidence, dict)
+            or not isinstance(target_evidence_fingerprint, str)
             or not isinstance(target_result, dict)
             or not isinstance(target_result_fingerprint, str)
         ):
+            raise ValueError("historical simulation replay evidence is corrupt")
+
+        historical_request = {
+            "schema_version": "authoritative_simulation_historical_fork_request.v5",
+            "run_id": receipt.run_id,
+            "branch_id": receipt.branch_id,
+            "command_id": receipt.command_id,
+            "target_base_revision_id": payload.get("target_base_revision_id"),
+            "source_branch_id": payload.get("source_branch_id"),
+            "source_request_fingerprint": payload.get(
+                "source_request_fingerprint"
+            ),
+            "source_request_evidence_fingerprint": payload.get(
+                "source_request_evidence_fingerprint"
+            ),
+            "target_request_evidence_fingerprint": target_evidence_fingerprint,
+            "target_request_fingerprint": target_request_fingerprint,
+            "target_result_fingerprint": target_result_fingerprint,
+        }
+        if (
+            fingerprint(target_evidence) != target_evidence_fingerprint
+            or fingerprint(historical_request) != receipt.request_fingerprint
+            or fingerprint(target_result) != target_result_fingerprint
+        ):
+            raise ValueError("historical simulation replay evidence is corrupt")
+
+        if target_request_fingerprint != request_fingerprint:
             raise ValueError("simulation command ID already has a different request")
         if (
             target_evidence.get("mode") != mode
             or target_evidence.get("command") != command.model_dump(mode="json")
         ):
             raise ValueError("simulation command ID already has a different request")
-        if fingerprint(target_result) != target_result_fingerprint:
+        if (
+            target_result.get("run_id") != receipt.run_id
+            or target_result.get("branch_id") != receipt.branch_id
+        ):
             raise ValueError("historical simulation target result is corrupt")
         return dict(target_result)
 

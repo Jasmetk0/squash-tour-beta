@@ -1631,3 +1631,15 @@ the command's expected Position fingerprint.
 This closes the next prerequisite for target-Branch exact-retry reconstruction:
 receipt remap can now reason from the original Position inputs instead of treating the
 opening Position fingerprint as an opaque hash.
+
+
+## Opening Simulation Position fingerprint basis
+
+Canonical Simulation Position now retains its exact fingerprint basis internally while
+keeping that body excluded from the public Position payload. New Next Match / Next Slot
+request-evidence v2 receipts therefore persist the exact opening Position hash input
+whose SHA-256 equals the command's expected_position_fingerprint.
+
+Saved Revision receipt validation already verifies that equality. This closes the
+evidence gap required for deterministic source->target Position reconstruction during
+future retryable Branch-fork receipt remapping; no public Simulation API shape changes.

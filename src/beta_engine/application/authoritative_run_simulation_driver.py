@@ -6035,6 +6035,80 @@ class AuthoritativeRunSimulationDriver:
             "preview_fingerprint": fingerprint(body),
         }
 
+    def _full_simulation_plan(
+        self,
+        session: Session,
+        *,
+        request: AuthoritativeFullSimulationPreviewRequest,
+    ) -> dict:
+        position = self._position(
+            session,
+            request.run_id,
+            request.branch_id,
+            allow_missing_schedule=True,
+        )
+        start_week = position.current_week
+        if start_week.ordinal > FINAL_WEEK.ordinal:
+            raise ValueError("Full Simulation current week is beyond the supported Run")
+
+        run = session.get(RunContainerModel, request.run_id)
+        branch = session.get(RunBranchModel, request.branch_id)
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == request.branch_id
+            )
+        )
+        if (
+            run is None
+            or branch is None
+            or branch.run_id != request.run_id
+            or draft is None
+            or branch.saved_head_revision_id is None
+        ):
+            raise ValueError(
+                "Full Simulation requires a Saved Revision-backed Run/Branch"
+            )
+        if run.status == COMPLETED_RUN_STATUS:
+            raise ValueError("Full Simulation Run is already completed")
+        if run.read_only or branch.read_only or branch.status != "active":
+            raise ValueError("Full Simulation requires a writable active Branch")
+        if draft.status != "clean":
+            raise ValueError("Full Simulation requires a clean Working Draft at review")
+        if draft.base_revision_id != branch.saved_head_revision_id:
+            raise ValueError("Full Simulation Working Draft base is not the Saved head")
+
+        initial_action = (
+            "final_season_range"
+            if start_week.season_index == FINAL_WEEK.season_index
+            else "next_season"
+        )
+        body = {
+            "schema_version": "authoritative_full_simulation_preview.v1",
+            "run_id": request.run_id,
+            "branch_id": request.branch_id,
+            "start_week": start_week.model_dump(mode="json"),
+            "final_week": FINAL_WEEK.model_dump(mode="json"),
+            "remaining_weeks_including_current": (
+                FINAL_WEEK.ordinal - start_week.ordinal + 1
+            ),
+            "remaining_seasons_including_current": (
+                FINAL_WEEK.season_index - start_week.season_index + 1
+            ),
+            "initial_action": initial_action,
+            "initial_transition_blockers": list(position.transition_blockers),
+            "season_child_mode": "canonical_next_season",
+            "final_season_mode": "canonical_final_run_closure",
+            "explicit_boundary_policy": (
+                "save_and_review_required_at_every_season_boundary"
+            ),
+            "expected_position_fingerprint": position.position_fingerprint,
+            "expected_revision_id": branch.saved_head_revision_id,
+        }
+        return {
+            **body,
+            "preview_fingerprint": fingerprint(body),
+        }
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)

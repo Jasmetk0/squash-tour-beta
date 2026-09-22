@@ -45,6 +45,12 @@ from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PlayerTourEntryTriggerStore,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
@@ -362,3 +368,76 @@ def test_preview_cannot_overtake_unresolved_entry_slot(database):
             event_id="event",
             request=_request(),
         )
+
+
+@pytest.mark.pr_critical
+def test_canonical_wc_admin_commit_flows_into_draw_input_and_draw(database):
+    """The reviewed WC/RWC decision must become real canonical Draw evidence."""
+
+    with database.begin() as session:
+        field = _install_world(session)
+        assert field.direct_main_player_ids == ("A", "C")
+        assert field.qualification_player_ids == ("B", "D")
+
+    service = AuthoritativeWildCardAssignmentService(database)
+    request = _request()
+    preview = service.preview(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        request=request,
+    )
+    committed = service.commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command=AuthoritativeWildCardCommitCommand(
+            **request.model_dump(),
+            expected_week=preview.week,
+            expected_revision_id=preview.expected_revision_id,
+            expected_decision_slot_ordinal=preview.decision_slot_ordinal,
+            expected_proposal_fingerprint=preview.proposal_fingerprint,
+        ),
+    )
+    assert committed.authority.slots[0].source == "reserve_wc"
+    assert committed.authority.slots[0].active_player_id == "PROSPECT"
+
+    with database.begin() as session:
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-to-draw-input",
+            draw_seed=90210,
+        )
+        assert draw_input.wild_card_authority_fingerprint == (
+            committed.authority.fingerprint
+        )
+        assert draw_input.wild_card_player_ids == ("PROSPECT",)
+        assert "PROSPECT" not in draw_input.direct_main_player_ids
+        assert "PROSPECT" not in draw_input.qualification_player_ids
+
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="wc-to-draw",
+        )
+        wc_slots = tuple(
+            slot
+            for slot in draw.main.slots
+            if slot.entry_status == "wild_card"
+        )
+        assert len(wc_slots) == 1
+        assert wc_slots[0].player_id == "PROSPECT"
+        assert wc_slots[0].seed_number is None
+        assert wc_slots[0].entrant_kind == "player"
+
+        assert {
+            slot.player_id
+            for slot in draw.main.slots
+            if slot.player_id is not None
+        } == {
+            *draw_input.direct_main_player_ids,
+            *draw_input.wild_card_player_ids,
+        }

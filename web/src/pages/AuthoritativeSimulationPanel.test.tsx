@@ -38,6 +38,7 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextSeason: vi.fn(),
   previewAuthoritativeFullSimulation: vi.fn(),
   simulateAuthoritativeFullSimulation: vi.fn(),
+  getPendingAuthoritativeFullSimulations: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -582,6 +583,13 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+    schema_version: 'authoritative_full_simulation_pending_collection.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    operations: [],
+    legacy_pending_count: 0
+  })
   api.inspectAuthoritativeEntryDecisionSlot.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1865,6 +1873,95 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       api.simulateAuthoritativeFullSimulation.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
+  })
+
+  it('restores a durable pending Full Simulation parent after page state loss', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      operations: [
+        {
+          command: {
+            command_id: 'full-parent-reload',
+            operator_label: 'Commissioner',
+            audit_reason: 'Resume complete Run',
+            expected_start_week: fullSimulationPreview.start_week,
+            expected_position_fingerprint:
+              fullSimulationPreview.expected_position_fingerprint,
+            expected_revision_id: fullSimulationPreview.expected_revision_id,
+            expected_preview_fingerprint:
+              fullSimulationPreview.preview_fingerprint
+          },
+          review: {
+            ...fullSimulationPreview,
+            command_id: 'full-parent-reload'
+          },
+          completed_seasons: [2, 3, 4],
+          completed_season_count: 3,
+          final_completed_weeks: [],
+          final_completed_week_count: 0
+        }
+      ],
+      legacy_pending_count: 0
+    })
+    api.simulateAuthoritativeFullSimulation.mockResolvedValue(
+      fullSimulationReviewProgress
+    )
+
+    renderPanel()
+
+    expect(
+      await screen.findByRole('list', {
+        name: 'Resumable Full Simulation parents'
+      })
+    ).toHaveTextContent('full-parent-reload')
+    expect(
+      screen.getByRole('list', {
+        name: 'Resumable Full Simulation parents'
+      })
+    ).toHaveTextContent('3 completed season(s)')
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Resume this Full Simulation' })
+    )
+    expect(screen.getByLabelText('Full Simulation operator')).toHaveValue(
+      'Commissioner'
+    )
+    expect(screen.getByLabelText('Full Simulation audit reason')).toHaveValue(
+      'Resume complete Run'
+    )
+    expect(
+      await screen.findByRole('heading', {
+        name: /Reviewed canonical Full Simulation/
+      })
+    ).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Simulate reviewed authoritative Full Simulation'
+      })
+    )
+
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          command_id: 'full-parent-reload',
+          operator_label: 'Commissioner',
+          audit_reason: 'Resume complete Run',
+          expected_preview_fingerprint:
+            fullSimulationPreview.preview_fingerprint
+        })
+      )
+    )
   })
 
   it('reviews the current Entry slot with minimal explicit Admin verdicts', async () => {

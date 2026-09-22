@@ -430,6 +430,43 @@ def test_saved_entry_slots_remap_branch_identity_with_explicit_fingerprint_map(t
 
 
 @pytest.mark.pr_critical
+def test_saved_entry_slots_remap_branch_identity_and_fingerprint(tmp_path):
+    session = session_at(tmp_path / "entry-slot-fork-remap.sqlite")
+    _ensure_scope(session)
+    try:
+        source = _entry_slot()
+        RunEntryDecisionSlotStore(session).append(source)
+        payload = {"content": {}}
+        capture_saved_run_entry_decision_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        component, mapping = remap_saved_run_entry_decision_slots_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+        )
+        assert component is not None
+        target_payload = {"content": {RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY: component}}
+        target = load_saved_run_entry_decision_slots(
+            target_payload,
+            run_id="run",
+            branch_id="target",
+        )
+        assert target is not None
+        assert len(target) == 1
+        assert target[0].branch_id == "target"
+        assert target[0].decisions == source.decisions
+        assert mapping == {source.fingerprint: target[0].fingerprint}
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
 def test_saved_component_round_trip_restores_entry_slots(tmp_path):
     session = session_at(tmp_path / "saved-entry-slots.sqlite")
     _ensure_scope(session)

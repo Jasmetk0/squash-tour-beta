@@ -38,6 +38,7 @@ def _validate_command_rows_shape(rows):
                 "authoritative_simulation_historical_fork_receipt.v1",
                 "authoritative_simulation_historical_fork_receipt.v2",
                 "authoritative_simulation_historical_fork_receipt.v3",
+                "authoritative_simulation_historical_fork_receipt.v4",
             }
         ):
             if (
@@ -90,6 +91,7 @@ def _validate_command_rows_shape(rows):
             if historical_schema in {
                 "authoritative_simulation_historical_fork_receipt.v2",
                 "authoritative_simulation_historical_fork_receipt.v3",
+                "authoritative_simulation_historical_fork_receipt.v4",
             }:
                 target_base_revision_id = payload.get("target_base_revision_id")
                 if (
@@ -101,10 +103,15 @@ def _validate_command_rows_shape(rows):
                     )
                 expected_request = {
                     "schema_version": (
-                        "authoritative_simulation_historical_fork_request.v3"
+                        "authoritative_simulation_historical_fork_request.v4"
                         if historical_schema
-                        == "authoritative_simulation_historical_fork_receipt.v3"
-                        else "authoritative_simulation_historical_fork_request.v2"
+                        == "authoritative_simulation_historical_fork_receipt.v4"
+                        else (
+                            "authoritative_simulation_historical_fork_request.v3"
+                            if historical_schema
+                            == "authoritative_simulation_historical_fork_receipt.v3"
+                            else "authoritative_simulation_historical_fork_request.v2"
+                        )
                     ),
                     "run_id": row.run_id,
                     "branch_id": row.branch_id,
@@ -116,7 +123,10 @@ def _validate_command_rows_shape(rows):
                 }
                 if (
                     historical_schema
-                    == "authoritative_simulation_historical_fork_receipt.v3"
+                    in {
+                        "authoritative_simulation_historical_fork_receipt.v3",
+                        "authoritative_simulation_historical_fork_receipt.v4",
+                    }
                 ):
                     target_evidence = payload.get("target_request_evidence")
                     target_evidence_fingerprint = payload.get(
@@ -152,7 +162,10 @@ def _validate_command_rows_shape(rows):
                     target_basis = target_evidence.get("opening_position_basis")
                     if (
                         target_evidence.get("schema_version")
-                        != "authoritative_simulation_request_evidence.v2"
+                        not in {
+                            "authoritative_simulation_request_evidence.v2",
+                            "authoritative_simulation_request_evidence.v3",
+                        }
                         or target_mode not in {"match", "slot"}
                         or not isinstance(target_command, dict)
                         or not isinstance(target_basis, dict)
@@ -217,6 +230,77 @@ def _validate_command_rows_shape(rows):
                             "target_request_fingerprint": target_request_fingerprint,
                         }
                     )
+                    if (
+                        target_evidence.get("schema_version")
+                        == "authoritative_simulation_request_evidence.v3"
+                    ):
+                        target_closing_basis = target_evidence.get(
+                            "closing_position_basis"
+                        )
+                        if not isinstance(target_closing_basis, dict):
+                            raise ValueError(
+                                "Saved historical simulation fork target closing Position basis is missing"
+                            )
+                        target_closing_scope = target_closing_basis.get("scope")
+                        if (
+                            not isinstance(target_closing_scope, list)
+                            or len(target_closing_scope) != 3
+                            or target_closing_scope[0] != row.run_id
+                            or target_closing_scope[1] != row.branch_id
+                            or not isinstance(target_closing_scope[2], int)
+                        ):
+                            raise ValueError(
+                                "Saved historical simulation fork target closing Position scope is corrupt"
+                            )
+                    if (
+                        historical_schema
+                        == "authoritative_simulation_historical_fork_receipt.v4"
+                    ):
+                        target_result = payload.get("target_result")
+                        target_result_fingerprint = payload.get(
+                            "target_result_fingerprint"
+                        )
+                        if (
+                            not isinstance(target_result, dict)
+                            or not isinstance(target_result_fingerprint, str)
+                            or target_evidence.get("schema_version")
+                            != "authoritative_simulation_request_evidence.v3"
+                        ):
+                            raise ValueError(
+                                "Saved historical simulation fork target result evidence is missing"
+                            )
+                        if (
+                            target_result.get("run_id") != row.run_id
+                            or target_result.get("branch_id") != row.branch_id
+                            or target_result.get("position_fingerprint")
+                            != hashlib.sha256(
+                                json.dumps(
+                                    target_evidence["closing_position_basis"],
+                                    sort_keys=True,
+                                    separators=(",", ":"),
+                                ).encode()
+                            ).hexdigest()
+                        ):
+                            raise ValueError(
+                                "Saved historical simulation fork target result identity is corrupt"
+                            )
+                        actual_target_result_fingerprint = hashlib.sha256(
+                            json.dumps(
+                                target_result,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            ).encode()
+                        ).hexdigest()
+                        if (
+                            actual_target_result_fingerprint
+                            != target_result_fingerprint
+                        ):
+                            raise ValueError(
+                                "Saved historical simulation fork target result fingerprint is corrupt"
+                            )
+                        expected_request["target_result_fingerprint"] = (
+                            target_result_fingerprint
+                        )
             else:
                 expected_request = {
                     "schema_version": "authoritative_simulation_historical_fork_request.v1",
@@ -247,6 +331,7 @@ def _validate_command_rows_shape(rows):
         if schema_version not in {
             "authoritative_simulation_request_evidence.v1",
             "authoritative_simulation_request_evidence.v2",
+            "authoritative_simulation_request_evidence.v3",
         }:
             raise ValueError("Saved simulation command request evidence schema is invalid")
         mode = evidence.get("mode")
@@ -270,7 +355,10 @@ def _validate_command_rows_shape(rows):
             raise ValueError(
                 "Saved simulation command request evidence fingerprint is corrupt"
             )
-        if schema_version == "authoritative_simulation_request_evidence.v2":
+        if schema_version in {
+            "authoritative_simulation_request_evidence.v2",
+            "authoritative_simulation_request_evidence.v3",
+        }:
             opening_position_basis = evidence.get("opening_position_basis")
             if not isinstance(opening_position_basis, dict):
                 raise ValueError(
@@ -293,6 +381,42 @@ def _validate_command_rows_shape(rows):
                 raise ValueError(
                     "Saved simulation command opening Position basis is corrupt"
                 )
+            if schema_version == "authoritative_simulation_request_evidence.v3":
+                closing_position_basis = evidence.get("closing_position_basis")
+                if not isinstance(closing_position_basis, dict):
+                    raise ValueError(
+                        "Saved simulation command closing Position basis is missing"
+                    )
+                if row.status != "complete":
+                    raise ValueError(
+                        "Saved simulation command closing Position evidence requires a complete receipt"
+                    )
+                result_position_fingerprint = payload.get("position_fingerprint")
+                if (
+                    not isinstance(result_position_fingerprint, str)
+                    or hashlib.sha256(
+                        json.dumps(
+                            closing_position_basis,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    != result_position_fingerprint
+                ):
+                    raise ValueError(
+                        "Saved simulation command closing Position basis is corrupt"
+                    )
+                closing_scope = closing_position_basis.get("scope")
+                if (
+                    not isinstance(closing_scope, list)
+                    or len(closing_scope) != 3
+                    or closing_scope[0] != row.run_id
+                    or closing_scope[1] != row.branch_id
+                    or not isinstance(closing_scope[2], int)
+                ):
+                    raise ValueError(
+                        "Saved simulation command closing Position scope is corrupt"
+                    )
 
 
 def _validate_entry_field_rows(rows):

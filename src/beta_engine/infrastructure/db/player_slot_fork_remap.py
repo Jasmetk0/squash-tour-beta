@@ -368,6 +368,60 @@ def _retarget_simulation_opening_position_basis(
     }
 
 
+_SIMULATION_PUBLIC_RESULT_KEYS = {
+    "run_id",
+    "branch_id",
+    "current_week",
+    "current_slot_kind",
+    "current_slot_id",
+    "slot_ordinal",
+    "unresolved_group_ids",
+    "eligible_match_ids",
+    "blocked_match_ids",
+    "current_slot_complete",
+    "supported_tournament_complete",
+    "week_ready_for_transition",
+    "transition_blockers",
+    "terminal_sporting_fingerprint",
+    "position_fingerprint",
+}
+
+
+def _retarget_simulation_public_result(
+    source_result: dict,
+    *,
+    source_closing_basis: dict,
+    target_closing_basis: dict,
+    graph: SimulationPositionForkIdentityGraph,
+) -> dict:
+    public = {
+        key: value
+        for key, value in source_result.items()
+        if key != "_request_evidence"
+    }
+    if set(public) != _SIMULATION_PUBLIC_RESULT_KEYS:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation public result schema is unsupported for target replay"
+        )
+    if (
+        public.get("run_id") != graph.run_id
+        or public.get("branch_id") != graph.source_branch_id
+        or public.get("position_fingerprint") != fingerprint(source_closing_basis)
+    ):
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation public result identity does not match closing Position evidence"
+        )
+    target = dict(public)
+    target["branch_id"] = graph.target_branch_id
+    target["position_fingerprint"] = fingerprint(target_closing_basis)
+    target["terminal_sporting_fingerprint"] = _map_optional_position_identity(
+        public.get("terminal_sporting_fingerprint"),
+        mapping=graph.terminal_checkpoint_fingerprints,
+        label="public result terminal sporting checkpoint",
+    )
+    return target
+
+
 def _retarget_simulation_command_receipt_as_historical(
     row: AuthoritativeSimulationCommandModel,
     *,
@@ -399,10 +453,15 @@ def _retarget_simulation_command_receipt_as_historical(
 
     target_request_evidence = None
     target_request_fingerprint = None
+    target_result = None
+    target_result_fingerprint = None
     if (
         isinstance(request_evidence, dict)
         and request_evidence.get("schema_version")
-        == "authoritative_simulation_request_evidence.v2"
+        in {
+            "authoritative_simulation_request_evidence.v2",
+            "authoritative_simulation_request_evidence.v3",
+        }
     ):
         source_command = request_evidence.get("command")
         source_basis = request_evidence.get("opening_position_basis")
@@ -438,20 +497,64 @@ def _retarget_simulation_command_receipt_as_historical(
                         "expected_position_fingerprint": fingerprint(target_basis),
                     }
                 )
+                source_closing_basis = request_evidence.get(
+                    "closing_position_basis"
+                )
+                target_closing_basis = None
+                if request_evidence.get("schema_version") == (
+                    "authoritative_simulation_request_evidence.v3"
+                ):
+                    if not isinstance(source_closing_basis, dict):
+                        raise SimulationSlotForkRemapUnsupportedError(
+                            "Simulation v3 request evidence is missing closing Position basis"
+                        )
+                    try:
+                        target_closing_basis = (
+                            _retarget_simulation_opening_position_basis(
+                                source_closing_basis,
+                                graph=position_identity_graph,
+                            )
+                        )
+                    except SimulationSlotForkRemapUnsupportedError:
+                        target_closing_basis = None
+
                 target_request_evidence = {
-                    "schema_version": "authoritative_simulation_request_evidence.v2",
+                    "schema_version": (
+                        "authoritative_simulation_request_evidence.v3"
+                        if target_closing_basis is not None
+                        else "authoritative_simulation_request_evidence.v2"
+                    ),
                     "mode": mode,
                     "command": target_command,
                     "opening_position_basis": target_basis,
                 }
+                if target_closing_basis is not None:
+                    target_request_evidence["closing_position_basis"] = (
+                        target_closing_basis
+                    )
+                    try:
+                        target_result = _retarget_simulation_public_result(
+                            source_result,
+                            source_closing_basis=source_closing_basis,
+                            target_closing_basis=target_closing_basis,
+                            graph=position_identity_graph,
+                        )
+                    except SimulationSlotForkRemapUnsupportedError:
+                        target_result = None
+                    if target_result is not None:
+                        target_result_fingerprint = fingerprint(target_result)
                 target_request_fingerprint = fingerprint(
                     {"mode": mode, "command": target_command}
                 )
 
     historical_schema = (
-        "authoritative_simulation_historical_fork_receipt.v3"
-        if target_request_evidence is not None
-        else "authoritative_simulation_historical_fork_receipt.v2"
+        "authoritative_simulation_historical_fork_receipt.v4"
+        if target_result is not None
+        else (
+            "authoritative_simulation_historical_fork_receipt.v3"
+            if target_request_evidence is not None
+            else "authoritative_simulation_historical_fork_receipt.v2"
+        )
     )
     historical = {
         "schema_version": historical_schema,
@@ -481,11 +584,22 @@ def _retarget_simulation_command_receipt_as_historical(
                 "target_request_fingerprint": target_request_fingerprint,
             }
         )
+    if target_result is not None:
+        historical.update(
+            {
+                "target_result": target_result,
+                "target_result_fingerprint": target_result_fingerprint,
+            }
+        )
     historical_request = {
         "schema_version": (
-            "authoritative_simulation_historical_fork_request.v3"
-            if target_request_evidence is not None
-            else "authoritative_simulation_historical_fork_request.v2"
+            "authoritative_simulation_historical_fork_request.v4"
+            if target_result is not None
+            else (
+                "authoritative_simulation_historical_fork_request.v3"
+                if target_request_evidence is not None
+                else "authoritative_simulation_historical_fork_request.v2"
+            )
         ),
         "run_id": row.run_id,
         "branch_id": target_branch_id,
@@ -504,6 +618,8 @@ def _retarget_simulation_command_receipt_as_historical(
                 "target_request_fingerprint": target_request_fingerprint,
             }
         )
+    if target_result is not None:
+        historical_request["target_result_fingerprint"] = target_result_fingerprint
     request_fingerprint = fingerprint(historical_request)
     return AuthoritativeSimulationCommandModel(
         run_id=row.run_id,

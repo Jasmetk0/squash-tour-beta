@@ -1699,3 +1699,31 @@ target request fingerprint into their own integrity hash.
 This still does **not** enable replay: v3 historical receipts remain
 `status="historical_fork"` and `retryable=false`. Target request identity is now
 provable; safe target result replay/idempotent command behavior remains the next slice.
+
+
+
+## Closing Simulation Position and target result evidence
+
+Completed canonical Simulate Next Match / Next Slot receipts now upgrade their private
+request evidence to `authoritative_simulation_request_evidence.v3`. In addition to the
+opening Position basis, v3 stores the exact closing Position basis whose fingerprint is
+returned publicly as the command result's `position_fingerprint`. Pending receipts
+remain v2 until completion, preserving resumability without inventing a result that does
+not exist yet.
+
+Saved Revision validation binds the closing basis to the complete receipt, its
+Run/Branch scope and the public result Position fingerprint. Materialized Branch remap
+can then reconstruct both opening and closing Position bases through the explicit
+source-to-target identity graph. When the source public result has the canonical
+Simulation Position shape, the fork also rebuilds a target-owned public result:
+Branch identity, closing Position fingerprint and terminal sporting fingerprint are
+retargeted while all sporting/UI facts remain unchanged.
+
+Such receipts use historical fork schema v4 and bind the reconstructed target result
+fingerprint into the historical receipt request integrity hash. Older source receipts
+without closing Position evidence remain v2/v3 read-only evidence and are never guessed.
+
+Replay is still deliberately disabled: historical v4 receipts remain
+`status="historical_fork"` and `retryable=false`. The remaining step is to define
+the controlled promotion/idempotent read path that can expose a proven v4 target result
+as a canonical exact retry without mutating sporting state.

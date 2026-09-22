@@ -1573,6 +1573,34 @@ export type AuthoritativeFullSimulationAbandonResult = {
   audit_reason: string
 }
 
+export type AuthoritativeFullSimulationHistoryItem = {
+  command_id: string
+  status: 'pending' | 'abandoned' | 'complete'
+  start_week: AuthoritativeRankingWeek | null
+  final_week: AuthoritativeRankingWeek | null
+  completed_seasons: number[]
+  completed_season_count: number
+  final_completed_weeks: AuthoritativeRankingWeek[]
+  final_completed_week_count: number
+  operator_label: string | null
+  audit_reason: string | null
+  abandonment: {
+    operator_label: string
+    audit_reason: string
+    committed_child_work_persists: true
+    completed_seasons: number[]
+    final_completed_weeks: AuthoritativeRankingWeek[]
+  } | null
+}
+
+export type AuthoritativeFullSimulationHistory = {
+  schema_version: 'authoritative_full_simulation_history.v1'
+  run_id: string
+  branch_id: string
+  items: AuthoritativeFullSimulationHistoryItem[]
+  item_count: number
+}
+
 
 export type MatchReconstructionGameScore = {
   player_a_points: number

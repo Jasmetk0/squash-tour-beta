@@ -5907,9 +5907,14 @@ class AuthoritativeRunSimulationDriver:
             or target_evidence.get("command") != command.model_dump(mode="json")
         ):
             raise ValueError("simulation command ID already has a different request")
+        closing_basis = target_evidence.get("closing_position_basis")
         if (
-            target_result.get("run_id") != receipt.run_id
+            target_evidence.get("schema_version")
+            != "authoritative_simulation_request_evidence.v3"
+            or not isinstance(closing_basis, dict)
+            or target_result.get("run_id") != receipt.run_id
             or target_result.get("branch_id") != receipt.branch_id
+            or target_result.get("position_fingerprint") != fingerprint(closing_basis)
         ):
             raise ValueError("historical simulation target result is corrupt")
         return dict(target_result)

@@ -1617,3 +1617,17 @@ These remapped receipts deliberately set `retryable=false`. They do **not** clai
 source command's opening Position fingerprint or Saved Revision identity is valid on
 the target Branch. Exact target-Branch replay remains fail-closed until opening Position
 identity itself has an explicit source->target reconstruction contract.
+
+
+## Self-describing opening Simulation Position identity
+
+New `Simulate Next Match` / `Simulate Next Slot` request evidence now records the
+exact canonical Position hash basis that was validated before execution. The basis is
+private receipt evidence: it is excluded from the public
+`AuthoritativeSimulationPosition` payload, while its SHA-256 fingerprint must equal
+the command's `expected_position_fingerprint`.
+
+Saved Revision validation accepts historical request-evidence v1 and verifies v2
+opening Position evidence cryptographically. This supplies the missing source-side
+material needed for a future retryable Branch-fork receipt remap; the target Branch can
+rebuild Branch-bound Position evidence instead of guessing from a source hash.

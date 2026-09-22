@@ -1370,6 +1370,93 @@ def test_fair_rest_feeder_position_tracks_latest_prior_match():
 
 
 @pytest.mark.pr_critical
+def test_q_ll_rest_protection_is_derived_from_canonical_main_slots():
+    draw = SimpleNamespace(
+        main=SimpleNamespace(
+            slots=(
+                SimpleNamespace(
+                    slot_index=1,
+                    entrant_kind="player",
+                    entry_status=None,
+                ),
+                SimpleNamespace(
+                    slot_index=2,
+                    entrant_kind="player",
+                    entry_status=None,
+                ),
+                SimpleNamespace(
+                    slot_index=3,
+                    entrant_kind="player",
+                    entry_status="lucky_loser",
+                ),
+                SimpleNamespace(
+                    slot_index=4,
+                    entrant_kind="player",
+                    entry_status=None,
+                ),
+                SimpleNamespace(
+                    slot_index=5,
+                    entrant_kind="qualifier_placeholder",
+                    entry_status=None,
+                ),
+                SimpleNamespace(
+                    slot_index=6,
+                    entrant_kind="player",
+                    entry_status=None,
+                ),
+            ),
+            nodes=(
+                SimpleNamespace(
+                    round_number=1,
+                    round_sequence=1,
+                    source_top="slot:1",
+                    source_bottom="slot:2",
+                ),
+                SimpleNamespace(
+                    round_number=1,
+                    round_sequence=2,
+                    source_top="slot:3",
+                    source_bottom="slot:4",
+                ),
+                SimpleNamespace(
+                    round_number=1,
+                    round_sequence=3,
+                    source_top="slot:5",
+                    source_bottom="slot:6",
+                ),
+            ),
+        )
+    )
+    package = SimpleNamespace(
+        main_draw_matches=(
+            SimpleNamespace(
+                match_id="direct",
+                round_number=1,
+                bracket_position=1,
+            ),
+            SimpleNamespace(
+                match_id="ll",
+                round_number=1,
+                bracket_position=2,
+            ),
+            SimpleNamespace(
+                match_id="q",
+                round_number=1,
+                bracket_position=3,
+            ),
+        )
+    )
+
+    protected = AuthoritativeRunSimulationDriver._q_ll_rest_protected_group_ids(
+        draw=draw,
+        package=package,
+        executable_group_ids={"direct", "ll", "q"},
+    )
+
+    assert protected == {"ll", "q"}
+
+
+@pytest.mark.pr_critical
 def test_fair_rest_schedule_key_protects_q_ll_only_after_feeder_priority():
     week = RankingWeek(season_index=0, week=7)
     positions = {

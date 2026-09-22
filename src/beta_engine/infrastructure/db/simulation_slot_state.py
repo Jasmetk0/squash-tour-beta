@@ -25,6 +25,41 @@ from beta_engine.infrastructure.db.models import (
 COMPONENT_KEY = "simulation_slot_match_state"
 
 
+def _validate_command_rows_shape(rows):
+    for row in rows:
+        try:
+            payload = json.loads(row.result_json)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("Saved simulation command receipt JSON is corrupt") from exc
+        evidence = payload.get("_request_evidence") if isinstance(payload, dict) else None
+        if evidence is None:
+            # Historical receipts predate self-describing request evidence.
+            continue
+        if evidence.get("schema_version") != "authoritative_simulation_request_evidence.v1":
+            raise ValueError("Saved simulation command request evidence schema is invalid")
+        mode = evidence.get("mode")
+        command = evidence.get("command")
+        if mode not in {"match", "slot"} or not isinstance(command, dict):
+            raise ValueError("Saved simulation command request evidence is invalid")
+        if (
+            command.get("run_id") != row.run_id
+            or command.get("branch_id") != row.branch_id
+            or command.get("command_id") != row.command_id
+        ):
+            raise ValueError("Saved simulation command request evidence scope is corrupt")
+        expected = hashlib.sha256(
+            json.dumps(
+                {"mode": mode, "command": command},
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+        if expected != row.request_fingerprint:
+            raise ValueError(
+                "Saved simulation command request evidence fingerprint is corrupt"
+            )
+
+
 def _validate_entry_field_rows(rows):
     from beta_engine.infrastructure.db.tournament_entry_field import (
         TournamentEntryFieldStore,
@@ -381,6 +416,7 @@ def _component(
     include_week_tournament_locks=False,
 ):
     _validate_semantics(slots, groups)
+    _validate_command_rows_shape(commands)
     _validate_entry_field_rows(entry_fields)
     _validate_wild_card_rows_shape(wild_card_authorities)
     _validate_draw_input_rows_shape(draw_inputs)

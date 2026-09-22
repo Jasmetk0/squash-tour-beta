@@ -1013,6 +1013,51 @@ def test_final_season_tournament_boundary_is_closing_only():
     assert closing_ordinal == completed.ordinal + 1
 
 
+@pytest.mark.pr_critical
+def test_next_slot_receipt_preserves_private_request_evidence_without_changing_retry_shape(
+    tmp_path,
+):
+    driver, factory, week = _driver_fixture(tmp_path / "receipt-request-evidence")
+    command, _ = _driver_command(driver, week, "receipt-slot")
+
+    first = driver.simulate_next_slot(command)
+    assert "_request_evidence" not in first
+
+    with factory() as session:
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert receipt is not None
+        stored = json.loads(receipt.result_json)
+        evidence = stored["_request_evidence"]
+        assert evidence == {
+            "schema_version": "authoritative_simulation_request_evidence.v1",
+            "mode": "slot",
+            "command": command.model_dump(mode="json"),
+        }
+        assert receipt.request_fingerprint == fingerprint(
+            {"mode": "slot", "command": command.model_dump(mode="json")}
+        )
+
+        saved = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            saved,
+            run_id="run",
+            branch_id="branch",
+        )
+        command_rows = saved["content"]["simulation_slot_match_state"]["commands"]
+        saved_receipt = next(
+            row for row in command_rows if row["command_id"] == command.command_id
+        )
+        assert json.loads(saved_receipt["result_json"])["_request_evidence"] == evidence
+
+    retry = driver.simulate_next_slot(command)
+    assert retry == first
+    assert "_request_evidence" not in retry
+
+
 def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "partial")
     command, _ = _driver_command(driver, week, "slot")

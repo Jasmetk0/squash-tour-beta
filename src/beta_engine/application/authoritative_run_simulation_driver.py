@@ -5806,7 +5806,25 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    @staticmethod
+    def _simulation_receipt_request_evidence(command, *, mode: Literal["match", "slot"]) -> dict:
+        return {
+            "schema_version": "authoritative_simulation_request_evidence.v1",
+            "mode": mode,
+            "command": command.model_dump(mode="json"),
+        }
+
+    @staticmethod
+    def _public_simulation_receipt_result(payload: dict) -> dict:
+        result = dict(payload)
+        result.pop("_request_evidence", None)
+        return result
+
     def _mutate(self, command, *, mode: Literal["match", "slot"], fault_at=None):
+        request_evidence = self._simulation_receipt_request_evidence(
+            command,
+            mode=mode,
+        )
         request_fp = fingerprint(
             {"mode": mode, "command": command.model_dump(mode="json")}
         )
@@ -5823,7 +5841,9 @@ class AuthoritativeRunSimulationDriver:
                         "simulation command ID already has a different request"
                     )
                 if receipt.status == "complete":
-                    return json.loads(receipt.result_json)
+                    return self._public_simulation_receipt_result(
+                        json.loads(receipt.result_json)
+                    )
                 operation_targets = tuple(
                     json.loads(receipt.result_json)["target_group_ids"]
                 )
@@ -5852,7 +5872,10 @@ class AuthoritativeRunSimulationDriver:
                             {
                                 "target_group_ids": targets,
                                 "authority_fingerprint": authority_fp,
-                            }
+                                "_request_evidence": request_evidence,
+                            },
+                            sort_keys=True,
+                            separators=(",", ":"),
                         ),
                     )
                 )
@@ -5882,7 +5905,12 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError("pending simulation command receipt disappeared")
             receipt.status = "complete"
             receipt.result_json = json.dumps(
-                payload, sort_keys=True, separators=(",", ":")
+                {
+                    **payload,
+                    "_request_evidence": request_evidence,
+                },
+                sort_keys=True,
+                separators=(",", ":"),
             )
             if fault_at == "after_source_staging_before_receipt":
                 raise RuntimeError(

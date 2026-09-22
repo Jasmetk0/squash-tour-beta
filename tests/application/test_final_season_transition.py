@@ -446,6 +446,21 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     assert len(result["closure_marker_fingerprint"]) == 64
     assert len(result["season_summary_fingerprint"]) == 64
 
+    history = driver.inspect_full_simulation_history(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert history["schema_version"] == "authoritative_full_simulation_history.v1"
+    assert history["item_count"] == 1
+    completed_item = history["items"][0]
+    assert completed_item["command_id"] == command.command_id
+    assert completed_item["status"] == "complete"
+    assert completed_item["operator_label"] == "Final acceptance admin"
+    assert completed_item["audit_reason"] == (
+        "Review the final canonical Run closure boundary"
+    )
+    assert completed_item["completed_season_count"] == 1
+
     assert driver.simulate_full_simulation(command) == result
 
 
@@ -518,6 +533,19 @@ def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work
     )
     assert pending["operations"] == []
     assert pending["legacy_pending_count"] == 0
+
+    history = driver.inspect_full_simulation_history(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert history["item_count"] == 1
+    abandoned_item = history["items"][0]
+    assert abandoned_item["command_id"] == command.command_id
+    assert abandoned_item["status"] == "abandoned"
+    assert abandoned_item["operator_label"] == "Original admin"
+    assert abandoned_item["abandonment"]["operator_label"] == "Override admin"
+    assert abandoned_item["abandonment"]["committed_child_work_persists"] is True
+    assert abandoned_item["final_completed_week_count"] == 1
 
     with database() as session:
         receipt = session.get(

@@ -227,6 +227,9 @@ def test_canonical_result_derives_champion_finalist_and_stages_without_legacy_se
     assert stages[authority.champion_player_id] == "champion"
     assert stages[authority.finalist_player_id] == "finalist"
     assert sum(stage == "semifinal" for stage in stages.values()) == 2
+    assert {
+        player.main_entry_status for player in authority.players
+    } == {"direct"}
     assert authority.draw_authority_fingerprint == draw.fingerprint
 
 
@@ -333,6 +336,7 @@ def test_canonical_result_keeps_withdrawn_q_winner_separate_from_lucky_loser():
     replacement = by_player[lucky_loser]
     assert replacement.draw_type == "both"
     assert replacement.qualifier is True
+    assert replacement.main_entry_status == "lucky_loser"
     assert lucky_loser not in authority.qualification_winner_ids
 
     q_match = next(
@@ -342,6 +346,100 @@ def test_canonical_result_keeps_withdrawn_q_winner_separate_from_lucky_loser():
     )
     assert q_match.winner_player_id == q_winner
     assert q_match.loser_player_id == lucky_loser
+
+
+@pytest.mark.pr_critical
+def test_canonical_result_preserves_wild_card_main_entry_provenance():
+    initial = TournamentDrawAuthorityBuilder.build(
+        draw_input=_input(),
+        command_id="draw-wild-card-result-provenance",
+    )
+    target = next(
+        slot
+        for slot in initial.main.slots
+        if slot.player_id is not None and slot.seed_number is None
+    )
+    wild_card_player_id = target.player_id
+    repaired_main = initial.main.model_copy(
+        update={
+            "slots": tuple(
+                slot.model_copy(update={"entry_status": "wild_card"})
+                if slot.slot_index == target.slot_index
+                else slot
+                for slot in initial.main.slots
+            )
+        }
+    )
+    draw = initial.model_copy(update={"main": repaired_main})
+    package = _complete(
+        draw,
+        build_run_owned_match_package(
+            draw=draw,
+            event=_event(),
+            week=RankingWeek(season_index=0, week=1),
+        ),
+    )
+
+    authority = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=RankingWeek(season_index=0, week=1),
+        draw=draw,
+        package=package,
+    )
+
+    by_player = {player.player_id: player for player in authority.players}
+    assert by_player[wild_card_player_id].main_entry_status == "wild_card"
+    assert all(
+        player.main_entry_status == "direct"
+        for player in authority.players
+        if player.player_id != wild_card_player_id
+    )
+
+
+@pytest.mark.pr_critical
+def test_historical_result_payload_without_main_entry_status_keeps_fingerprint():
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=_input(),
+        command_id="draw-historical-result-provenance",
+    )
+    week = RankingWeek(season_index=0, week=1)
+    package = _complete(
+        draw,
+        build_run_owned_match_package(draw=draw, event=_event(), week=week),
+    )
+    current = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        draw=draw,
+        package=package,
+    )
+    historical_payload = current.model_dump(mode="json")
+    for player in historical_payload["players"]:
+        player.pop("main_entry_status", None)
+    expected = hashlib.sha256(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode()
+    ).hexdigest()
+
+    reopened = type(current).model_validate_json(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
+
+    assert all(player.main_entry_status is None for player in reopened.players)
+    assert reopened.fingerprint == expected
+    assert all(
+        "main_entry_status" not in player
+        for player in reopened.model_dump(mode="json")["players"]
+    )
 
 
 def test_canonical_result_collects_four_independent_qualification_winners():

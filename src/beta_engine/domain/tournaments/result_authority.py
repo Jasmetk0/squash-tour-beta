@@ -43,6 +43,10 @@ class TournamentPlayerResultAuthority(FrozenInput):
     draw_type: Literal["qualification", "main", "both"]
     seed_number: int | None = Field(default=None, ge=1)
     qualifier: bool = False
+    main_entry_status: Literal["direct", "wild_card", "lucky_loser"] | None = Field(
+        default=None,
+        exclude_if=lambda value: value is None,
+    )
     reached_stage: str = Field(min_length=1)
     final_round_number: int | None = Field(default=None, ge=1)
     eliminated_by_player_id: str | None = None
@@ -274,10 +278,16 @@ def build_tournament_result_authority(
 
     seed_by_player: dict[str, int] = {}
     direct_main_ids: set[str] = set()
+    main_entry_status_by_player: dict[
+        str, Literal["direct", "wild_card", "lucky_loser"]
+    ] = {}
     q_ids: set[str] = set()
     for slot in draw.main.slots:
         if slot.player_id:
             direct_main_ids.add(slot.player_id)
+            main_entry_status_by_player[slot.player_id] = (
+                slot.entry_status if slot.entry_status is not None else "direct"
+            )
             if slot.seed_number is not None:
                 seed_by_player[slot.player_id] = slot.seed_number
     for bracket in draw.qualification_brackets:
@@ -395,6 +405,7 @@ def build_tournament_result_authority(
                 draw_type=draw_type,
                 seed_number=seed_by_player.get(player_id),
                 qualifier=qualifier,
+                main_entry_status=main_entry_status_by_player.get(player_id),
                 reached_stage=stage,
                 final_round_number=item["last_round"],
                 eliminated_by_player_id=item["eliminated_by"],

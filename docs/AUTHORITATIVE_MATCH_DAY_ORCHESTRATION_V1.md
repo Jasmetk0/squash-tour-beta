@@ -60,10 +60,11 @@ against changed history.
 
 ## Scope limits
 
-This slice does not define `Next Round` semantics. One round may span multiple Match
-Days, and multiple tournaments may coexist in one week, so round-level orchestration
-must be derived from canonical schedule metadata rather than copied from the legacy
-simulation wrapper.
+Canonical `Next Round` is now implemented separately in
+`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`. It derives the current
+event/phase/round identity from V2 schedule metadata and freezes every required global
+match slot through the last remaining target of that round, including explicitly
+reported interleaved transit matches.
 
 It also does not auto-cross Entry/WC process slots, Week Transition, Season Transition,
 or a Saved Revision boundary. Those remain explicit canonical boundaries.

@@ -129,7 +129,7 @@ export function RunSimulationPage(): JSX.Element {
     {eligibility && <p role="alert" className="error">Legacy compatibility simulation blocked: {eligibility}</p>}
     <SectionCard title="Legacy compatibility simulation actions">
       <p className="status">
-        These controls still use the legacy branch simulation wrapper. Canonical sporting execution is the authoritative panel above; higher-level Next Round/Week/Tournament/Season equivalents are not treated as interchangeable until their canonical orchestration exists.
+        These controls still use the legacy branch simulation wrapper. Canonical Next Match, Next Slot, Next Match Day and Next Round now live in the authoritative panel above; legacy actions remain compatibility tools. Next Week/Tournament/Season are not treated as canonical until their new orchestration exists.
       </p>
       <div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).map(action => <button key={action} type="button" disabled={Boolean(eligibility)} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div>
     </SectionCard>

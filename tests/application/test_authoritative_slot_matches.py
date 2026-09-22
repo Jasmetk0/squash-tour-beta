@@ -24,6 +24,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
     AuthoritativeMatchDayCommand,
+    AuthoritativeRoundCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     MatchReconstructionConstraints,
@@ -1674,6 +1675,162 @@ def test_next_match_day_is_resumable_after_completed_child_response_loss(
         )
 
     assert driver.simulate_next_match_day(command) == result
+
+
+@pytest.mark.pr_critical
+def test_next_round_freezes_round_identity_executes_transit_and_resumes(
+    tmp_path,
+    monkeypatch,
+):
+    driver, factory, week, first, second = _multi_driver_fixture(
+        tmp_path / "next-round-resume"
+    )
+    proposed = driver.propose_topological_schedule(
+        run_id="run",
+        branch_id="branch",
+    )
+    automatic = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposed["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    by_group = {slot.group_ids[0]: slot for slot in automatic.slots}
+    first_roots = sorted(
+        (
+            match
+            for match in first.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
+    second_roots = sorted(
+        (
+            match
+            for match in second.main_draw_matches
+            if match.round_number == 1
+        ),
+        key=lambda match: match.bracket_position,
+    )
+    first_final = next(
+        match for match in first.main_draw_matches if match.round_number == 2
+    )
+    second_final = next(
+        match for match in second.main_draw_matches if match.round_number == 2
+    )
+    ordered_group_ids = [
+        first_roots[0].match_id,
+        second_roots[0].match_id,
+        first_roots[1].match_id,
+        second_roots[1].match_id,
+        first_final.match_id,
+        second_final.match_id,
+    ]
+    manual_slots = []
+    for index, group_id in enumerate(ordered_group_ids):
+        day = 1 if index < 4 else 2
+        order = index + 1 if day == 1 else index - 3
+        manual_slots.append(
+            by_group[group_id].model_copy(
+                update={
+                    "ordinal": index + 1,
+                    "match_day_ordinal": day,
+                    "match_order": order,
+                }
+            )
+        )
+    manual = automatic.model_copy(update={"slots": tuple(manual_slots)})
+    reviewed = driver.preview_schedule(manual)
+    driver.adopt_schedule(
+        manual,
+        request_id="next-round-interleaved-schedule",
+        expected_position_fingerprint=reviewed["position_fingerprint"],
+    )
+
+    preview = driver.preview_next_round(run_id="run", branch_id="branch")
+    assert preview["round_identity"] == {
+        "event_id": first.event_id,
+        "draw_phase": "main",
+        "round_number": 1,
+    }
+    assert preview["target_slot_ordinals"] == [1, 3]
+    assert preview["target_group_ids"] == [
+        first_roots[0].match_id,
+        first_roots[1].match_id,
+    ]
+    assert preview["horizon_slot_ordinals"] == [1, 2, 3]
+    assert preview["transit_slot_ordinals"] == [2]
+    assert preview["transit_group_ids"] == [second_roots[0].match_id]
+    assert preview["expected_revision_id"] == "revision"
+
+    command = AuthoritativeRoundCommand(
+        command_id="next-round-1",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+    )
+
+    original = AuthoritativeRunSimulationDriver.simulate_next_slot
+    injected = {"raised": False}
+
+    def lose_first_child_response(self, child, *, fault_at=None):
+        result = original(self, child, fault_at=fault_at)
+        if child.command_id.startswith("round-slot:") and not injected["raised"]:
+            injected["raised"] = True
+            raise RuntimeError("lost response after committed Round child")
+        return result
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "simulate_next_slot",
+        lose_first_child_response,
+    )
+    with pytest.raises(RuntimeError, match="lost response"):
+        driver.simulate_next_round(command)
+
+    with factory() as session:
+        committed_after_fault = session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+        ).all()
+        assert len(committed_after_fault) == 1
+
+    result = driver.simulate_next_round(command)
+    assert result["schema_version"] == "authoritative_round_result.v1"
+    assert result["round_identity"] == preview["round_identity"]
+    assert result["target_slot_ordinals"] == [1, 3]
+    assert result["horizon_slot_ordinals"] == [1, 2, 3]
+    assert result["transit_slot_ordinals"] == [2]
+    assert result["completed_slot_count"] == 3
+    assert len(result["child_command_ids"]) == 3
+    assert len(set(result["child_command_ids"])) == 3
+    assert result["position"]["current_slot_kind"] == "match"
+    assert result["position"]["slot_ordinal"] == 4
+
+    with factory() as session:
+        groups = session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == "run",
+                SimulationEventGroupModel.branch_id == "branch",
+                SimulationEventGroupModel.week_ordinal == week.ordinal,
+            )
+        ).all()
+        assert len(groups) == 3
+        assert {row.group_id for row in groups} == {
+            first_roots[0].match_id,
+            second_roots[0].match_id,
+            first_roots[1].match_id,
+        }
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", "next-round-1"),
+        )
+        assert parent is not None
+        assert parent.status == "complete"
+
+    assert driver.simulate_next_round(command) == result
 
 
 @pytest.mark.pr_critical

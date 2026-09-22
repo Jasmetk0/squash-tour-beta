@@ -4547,7 +4547,7 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
         "wc_slot_ordinals": [],
         "week_tournament_lock": "source-lock",
         "week_tournament_lock_conflicts": [],
-        "entry_validation_slots": [],
+        "entry_validation_slots": [[1, "source-entry-validation-fp"]],
         "current_slot_kind": "match",
         "current_slot_ordinal": 2,
         "proposed_schedule_requirement": ["event-one"],
@@ -4637,6 +4637,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
         sporting_context_fingerprints={
             "source-empty-context": "target-empty-context",
         },
+        entry_validation_fingerprints={
+            "source-entry-validation-fp": "target-entry-validation-fp",
+        },
     )
 
     target_row = _retarget_simulation_command_receipt_as_historical(
@@ -4660,6 +4663,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
     assert target_basis["branch_head"] == "target-revision"
     assert target_basis["draft"] == ["target-revision", "clean", 0]
     assert target_basis["schedule"] == "target-schedule"
+    assert target_basis["entry_validation_slots"] == [
+        [1, "target-entry-validation-fp"]
+    ]
     assert target_basis["slots"][0][2:] == [
         "target-plan-one",
         "target-terminal-json",

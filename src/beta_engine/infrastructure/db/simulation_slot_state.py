@@ -79,7 +79,11 @@ def _validate_command_rows_shape(rows):
         if evidence is None:
             # Historical receipts predate self-describing request evidence.
             continue
-        if evidence.get("schema_version") != "authoritative_simulation_request_evidence.v1":
+        schema_version = evidence.get("schema_version")
+        if schema_version not in {
+            "authoritative_simulation_request_evidence.v1",
+            "authoritative_simulation_request_evidence.v2",
+        }:
             raise ValueError("Saved simulation command request evidence schema is invalid")
         mode = evidence.get("mode")
         command = evidence.get("command")
@@ -102,6 +106,29 @@ def _validate_command_rows_shape(rows):
             raise ValueError(
                 "Saved simulation command request evidence fingerprint is corrupt"
             )
+        if schema_version == "authoritative_simulation_request_evidence.v2":
+            opening_position_basis = evidence.get("opening_position_basis")
+            if not isinstance(opening_position_basis, dict):
+                raise ValueError(
+                    "Saved simulation command opening Position basis is missing"
+                )
+            expected_position_fingerprint = command.get(
+                "expected_position_fingerprint"
+            )
+            if (
+                not isinstance(expected_position_fingerprint, str)
+                or hashlib.sha256(
+                    json.dumps(
+                        opening_position_basis,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest()
+                != expected_position_fingerprint
+            ):
+                raise ValueError(
+                    "Saved simulation command opening Position basis is corrupt"
+                )
 
 
 def _validate_entry_field_rows(rows):

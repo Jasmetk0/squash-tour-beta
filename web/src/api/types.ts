@@ -1601,6 +1601,30 @@ export type AuthoritativeFullSimulationHistory = {
   item_count: number
 }
 
+export type AuthoritativeFullSimulationParentDetail = {
+  schema_version: 'authoritative_full_simulation_parent_detail.v1'
+  run_id: string
+  branch_id: string
+  command_id: string
+  status: 'pending' | 'abandoned' | 'complete'
+  receipt_request_fingerprint: string
+  start_week: AuthoritativeRankingWeek | null
+  final_week: AuthoritativeRankingWeek | null
+  initial_saved_revision_id: string | null
+  completed_seasons: number[]
+  final_completed_weeks: AuthoritativeRankingWeek[]
+  season_child_command_ids: string[]
+  final_week_child_command_ids: string[]
+  final_empty_week_child_command_ids: string[]
+  final_week61_slot_child_command_ids: string[]
+  final_boundary_saved_revision_id: string | null
+  final_boundary_position_fingerprint: string | null
+  operator_label: string | null
+  audit_reason: string | null
+  preview_fingerprint: string | null
+  abandonment: AuthoritativeFullSimulationHistoryItem['abandonment']
+}
+
 
 export type MatchReconstructionGameScore = {
   player_a_points: number

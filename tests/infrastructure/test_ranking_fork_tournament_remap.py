@@ -208,6 +208,29 @@ def _canonical_source(*, with_prize_money: bool) -> OwnedTournamentRankingSource
     )
 
 
+def _final_closing_source(
+    *, with_prize_money: bool
+) -> OwnedTournamentRankingSource:
+    source = _canonical_source(with_prize_money=with_prize_money)
+    closing_binding = source.binding.model_copy(
+        update={"first_publication_week": None}
+    )
+    provenance = (
+        "canonical_run_owned_tournament_authorities_and_prize_money_final_closing"
+        if with_prize_money
+        else "canonical_run_owned_tournament_authorities_final_closing"
+    )
+    return OwnedTournamentRankingSource.model_validate_json(
+        source.model_copy(
+            update={
+                "schema_version": "owned_tournament_ranking_source.v6",
+                "binding": closing_binding,
+                "provenance_kind": provenance,
+            }
+        ).model_dump_json()
+    )
+
+
 @pytest.mark.parametrize("with_prize_money", [False, True])
 def test_canonical_tournament_source_remaps_branch_scoped_authorities(
     with_prize_money: bool,
@@ -279,25 +302,60 @@ def test_canonical_tournament_source_remaps_branch_scoped_authorities(
         assert target.canonical_prize_awards is None
 
 
-@pytest.mark.parametrize(
-    "schema_version",
-    ["owned_tournament_ranking_source.v3", "owned_tournament_ranking_source.v6"],
-)
-def test_noncanonical_or_final_closing_tournament_sources_stay_fail_closed(
-    schema_version: str,
-):
+def test_legacy_noncanonical_tournament_source_stays_fail_closed():
     source = _canonical_source(with_prize_money=False).model_copy(
-        update={"schema_version": schema_version}
+        update={"schema_version": "owned_tournament_ranking_source.v3"}
     )
     with pytest.raises(
         RankingForkRemapUnsupportedError,
-        match="canonical v4/v5",
+        match="canonical v4/v5/v6",
     ):
         _remap_tournament_sources(
             (source,),
             run_id="run-one",
             source_branch_id="branch-source",
             target_branch_id="branch-target",
+        )
+
+
+@pytest.mark.parametrize("with_prize_money", [False, True])
+def test_final_closing_v6_tournament_source_remaps_without_official_projection(
+    with_prize_money: bool,
+):
+    source = _final_closing_source(with_prize_money=with_prize_money)
+
+    remapped, by_edition, version_map, editions = _remap_tournament_sources(
+        (source,),
+        run_id="run-one",
+        source_branch_id="branch-source",
+        target_branch_id="branch-target",
+    )
+
+    assert editions == {"edition-a"}
+    assert version_map == {}
+    assert len(remapped) == 1
+    target = remapped[0]
+    assert by_edition["edition-a"] == target
+    assert target.schema_version == "owned_tournament_ranking_source.v6"
+    assert target.binding.branch_id == "branch-target"
+    assert target.binding.closing_only is True
+    assert target.binding.first_publication_week is None
+    assert target.canonical_result is not None
+    assert target.canonical_awards is not None
+    assert target.canonical_result.branch_id == "branch-target"
+    assert target.canonical_awards.branch_id == "branch-target"
+    assert target.canonical_result.fingerprint != source.canonical_result.fingerprint
+    assert target.canonical_awards.fingerprint != source.canonical_awards.fingerprint
+    if with_prize_money:
+        assert target.canonical_prize_awards is not None
+        assert target.canonical_prize_awards.branch_id == "branch-target"
+        assert target.provenance_kind == (
+            "canonical_run_owned_tournament_authorities_and_prize_money_final_closing"
+        )
+    else:
+        assert target.canonical_prize_awards is None
+        assert target.provenance_kind == (
+            "canonical_run_owned_tournament_authorities_final_closing"
         )
 
 

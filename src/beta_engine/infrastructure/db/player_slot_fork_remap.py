@@ -55,6 +55,7 @@ from beta_engine.domain.tournaments.week_tournament_lock import (
 )
 from beta_engine.infrastructure.db.models import (
     AdoptedTournamentAuthorityModel,
+    AuthoritativeSimulationCommandModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     TournamentDrawAuthorityModel,
@@ -102,6 +103,62 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     _component as simulation_component,
     _load as load_saved_simulation_slots,
 )
+
+
+def _retarget_simulation_command_receipt_as_historical(
+    row: AuthoritativeSimulationCommandModel,
+    *,
+    target_branch_id: str,
+) -> AuthoritativeSimulationCommandModel:
+    try:
+        source_result = json.loads(row.result_json)
+    except (TypeError, ValueError) as exc:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation command receipt JSON is corrupt"
+        ) from exc
+    if not isinstance(source_result, dict):
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation command receipt result must be an object"
+        )
+
+    historical = {
+        "schema_version": "authoritative_simulation_historical_fork_receipt.v1",
+        "run_id": row.run_id,
+        "branch_id": target_branch_id,
+        "command_id": row.command_id,
+        "source_branch_id": row.branch_id,
+        "source_status": row.status,
+        "source_request_fingerprint": row.request_fingerprint,
+        "source_result": source_result,
+        "retryable": False,
+        "provenance": (
+            "materialized Branch fork preserves source Simulation command history "
+            "as read-only audit evidence; target exact retry requires a remapped "
+            "opening Position identity and is intentionally unsupported"
+        ),
+    }
+    request_fingerprint = fingerprint(
+        {
+            "schema_version": "authoritative_simulation_historical_fork_request.v1",
+            "run_id": row.run_id,
+            "branch_id": target_branch_id,
+            "command_id": row.command_id,
+            "source_branch_id": row.branch_id,
+            "source_request_fingerprint": row.request_fingerprint,
+        }
+    )
+    return AuthoritativeSimulationCommandModel(
+        run_id=row.run_id,
+        branch_id=target_branch_id,
+        command_id=row.command_id,
+        request_fingerprint=request_fingerprint,
+        status="historical_fork",
+        result_json=json.dumps(
+            historical,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
 
 
 @dataclass(frozen=True)
@@ -488,6 +545,7 @@ def remap_coupled_player_slot_history(
         "draw_process_authorities",
         "draw_revisions",
         "week_tournament_locks",
+        "commands",
     }
     nonempty_auxiliary = {
         key for key in auxiliary if source_slot_component.get(key)
@@ -498,6 +556,10 @@ def remap_coupled_player_slot_history(
             + ", ".join(sorted(nonempty_auxiliary))
         )
 
+    source_command_rows = [
+        AuthoritativeSimulationCommandModel(**value)
+        for value in source_slot_component.get("commands", [])
+    ]
     source_entry_rows = [
         TournamentEntryFieldVersionModel(**value)
         for value in source_slot_component.get("entry_fields", [])
@@ -527,6 +589,13 @@ def remap_coupled_player_slot_history(
         for value in source_slot_component.get("week_tournament_locks", [])
     ]
 
+    target_command_rows: list[AuthoritativeSimulationCommandModel] = [
+        _retarget_simulation_command_receipt_as_historical(
+            row,
+            target_branch_id=target_branch_id,
+        )
+        for row in source_command_rows
+    ]
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
@@ -1920,8 +1989,9 @@ def remap_coupled_player_slot_history(
     merged_simulation_component = simulation_component(
         target_slots,
         target_groups,
+        commands=target_command_rows,
         authorities=target_authorities,
-        include_commands=False,
+        include_commands="commands" in source_slot_component,
         include_authorities="authorities" in source_slot_component,
         schedules=target_schedules,
         include_schedules="schedules" in source_slot_component,

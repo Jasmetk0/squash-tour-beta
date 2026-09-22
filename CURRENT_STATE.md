@@ -1602,3 +1602,18 @@ Historical receipts without request evidence remain readable and unchanged. This
 the prerequisite for safe schema-by-schema Branch-fork remapping of simulation command
 receipts; the request fingerprint can now be rebuilt under target Branch / Saved
 Revision identity instead of being copied blindly.
+
+
+## Historical Simulation receipt preservation across Branch forks
+
+Materialized Branch forks can now preserve captured Simulation command receipts as
+explicitly read-only historical evidence instead of rejecting every Saved Revision
+whose Simulation Slot component contains command history. Target rows use status
+`historical_fork`, receive a new target-Branch-bound receipt fingerprint, and retain
+the source Branch, source request fingerprint, source status and complete source result
+payload for audit.
+
+These remapped receipts deliberately set `retryable=false`. They do **not** claim the
+source command's opening Position fingerprint or Saved Revision identity is valid on
+the target Branch. Exact target-Branch replay remains fail-closed until opening Position
+identity itself has an explicit source->target reconstruction contract.

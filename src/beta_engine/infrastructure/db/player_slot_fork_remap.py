@@ -184,6 +184,14 @@ class CoupledPlayerSlotForkRemap:
     result_fingerprints: dict[str, str]
     match_effect_fingerprints: dict[str, str]
     terminal_checkpoint_fingerprints: dict[str, str]
+    sporting_fingerprints: dict[str, str]
+    schedule_fingerprints: dict[str, str]
+    slot_plan_fingerprints: dict[str, str]
+    group_command_fingerprints: dict[str, str]
+    terminal_checkpoint_payloads: dict[str, str]
+    week_tournament_lock_fingerprints: dict[str, str]
+    adopted_tournament_authority_fingerprints: dict[str, str]
+    owned_tournament_fingerprints: dict[str, str]
 
 
 def _retarget_frozen_evidence(
@@ -625,6 +633,7 @@ def remap_coupled_player_slot_history(
     target_draw_process_rows: list[TournamentDrawProcessAuthorityModel] = []
     target_draw_revision_rows: list[TournamentDrawRevisionModel] = []
     target_week_lock_rows: list[WeekTournamentLockAuthorityModel] = []
+    week_tournament_lock_fingerprint_map: dict[str, str] = {}
     target_fields_by_event: dict[str, tuple[TournamentEntryField, ...]] = {}
     target_apps_by_event: dict[str, tuple[TournamentEntryApplication, ...]] = {}
     target_ranking_by_event: dict[str, TournamentRankingSnapshotAuthority] = {}
@@ -794,6 +803,9 @@ def remap_coupled_player_slot_history(
                 authority_fingerprint=target_lock.fingerprint,
                 payload_json=target_lock.model_dump_json(),
             )
+        )
+        week_tournament_lock_fingerprint_map[row.authority_fingerprint] = (
+            target_lock.fingerprint
         )
 
     for row in source_wc_rows:
@@ -1013,6 +1025,7 @@ def remap_coupled_player_slot_history(
         for value in source_slot_component.get("schedules", [])
     ]
     target_schedules: list[WeekSimulationScheduleModel] = []
+    schedule_fingerprint_map: dict[str, str] = {}
     for row in source_schedules:
         schedule = WeekSimulationSchedule.model_validate_json(row.payload_json)
         if (
@@ -1049,12 +1062,14 @@ def remap_coupled_player_slot_history(
                 payload_json=target_schedule.model_dump_json(),
             )
         )
+        schedule_fingerprint_map[row.schedule_fingerprint] = target_schedule.fingerprint
 
     source_authorities = [
         AdoptedTournamentAuthorityModel(**value)
         for value in source_slot_component.get("authorities", [])
     ]
     target_authorities: list[AdoptedTournamentAuthorityModel] = []
+    adopted_authority_fingerprint_map: dict[str, str] = {}
 
     source_states, source_contexts = source_bundle
     context_by_week = {
@@ -1075,6 +1090,10 @@ def remap_coupled_player_slot_history(
     all_results: dict[str, str] = {}
     all_effects: dict[str, str] = {}
     all_terminals: dict[str, str] = {}
+    all_slot_plans: dict[str, str] = {}
+    all_group_commands: dict[str, str] = {}
+    all_terminal_payloads: dict[str, str] = {}
+    sporting_fingerprint_map: dict[str, str] = {}
     remapped_context_by_week: dict[int, CompletedWeekSportingContext] = {}
 
     previous_target: PlayerSportingWeekState | None = None
@@ -1099,6 +1118,7 @@ def remap_coupled_player_slot_history(
             source_state.model_copy(update=updates).model_dump_json()
         )
         target_states.append(target_state)
+        sporting_fingerprint_map[source_state.fingerprint] = target_state.fingerprint
         previous_target = target_state
 
         week_ordinal = source_state.week.ordinal
@@ -1143,6 +1163,9 @@ def remap_coupled_player_slot_history(
             all_results.update(week_remap.results)
             all_effects.update(week_remap.match_effects)
             all_terminals.update(week_remap.terminal_checkpoints)
+            all_slot_plans.update(week_remap.slot_plans)
+            all_group_commands.update(week_remap.group_commands)
+            all_terminal_payloads.update(week_remap.terminal_checkpoint_payloads)
 
         source_context = context_by_week.get(week_ordinal)
         if source_context is None:
@@ -1987,6 +2010,9 @@ def remap_coupled_player_slot_history(
                     ),
                 )
             )
+            adopted_authority_fingerprint_map[row.authority_fingerprint] = (
+                target_fingerprint
+            )
 
     target_slots = sorted(
         (
@@ -2044,4 +2070,14 @@ def remap_coupled_player_slot_history(
         result_fingerprints=all_results,
         match_effect_fingerprints=all_effects,
         terminal_checkpoint_fingerprints=all_terminals,
+        sporting_fingerprints=sporting_fingerprint_map,
+        schedule_fingerprints=schedule_fingerprint_map,
+        slot_plan_fingerprints=all_slot_plans,
+        group_command_fingerprints=all_group_commands,
+        terminal_checkpoint_payloads=all_terminal_payloads,
+        week_tournament_lock_fingerprints=week_tournament_lock_fingerprint_map,
+        adopted_tournament_authority_fingerprints=(
+            adopted_authority_fingerprint_map
+        ),
+        owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
     )

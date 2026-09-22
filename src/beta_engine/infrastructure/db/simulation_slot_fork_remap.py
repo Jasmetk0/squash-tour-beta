@@ -257,6 +257,9 @@ class RemappedSimulationSlotCore:
     match_effects: dict[str, str]
     terminal_checkpoints: dict[str, str]
     slot_starts: dict[str, str]
+    slot_plans: dict[str, str]
+    group_commands: dict[str, str]
+    terminal_checkpoint_payloads: dict[str, str]
 
 
 def remap_completed_simulation_slot_core(
@@ -323,6 +326,9 @@ def remap_completed_simulation_slot_core(
     input_map: dict[str, str] = {}
     result_map: dict[str, str] = {}
     effect_map: dict[str, str] = {}
+    plan_map: dict[str, str] = {}
+    command_map: dict[str, str] = {}
+    terminal_payload_map: dict[str, str] = {}
     target_slots: list[SimulationSlotModel] = []
     target_groups: list[SimulationEventGroupModel] = []
 
@@ -394,6 +400,7 @@ def remap_completed_simulation_slot_core(
             target_branch_id=target_branch_id,
             slot_start_fingerprint_map=slot_start_map,
         )
+        plan_map[source_slot.plan_fingerprint] = target_plan.fingerprint
 
         slot_groups = sorted(
             groups_by_slot.get(
@@ -454,6 +461,7 @@ def remap_completed_simulation_slot_core(
                 remapped.result_fingerprint
             )
             effect_map.update(remapped.effect_fingerprint_map)
+            command_map[source_group.command_fingerprint] = command_fingerprint
             target_groups.append(
                 SimulationEventGroupModel(
                     run_id=run_id,
@@ -480,6 +488,9 @@ def remap_completed_simulation_slot_core(
             match_effect_fingerprint_map=effect_map,
         )
         checkpoint_map[source_terminal.fingerprint] = target_terminal.fingerprint
+        terminal_payload_map[source_slot.terminal_checkpoint_json] = (
+            target_terminal.model_dump_json()
+        )
         target_slots.append(
             SimulationSlotModel(
                 run_id=run_id,
@@ -523,4 +534,7 @@ def remap_completed_simulation_slot_core(
         match_effects=effect_map,
         terminal_checkpoints=checkpoint_map,
         slot_starts=slot_start_map,
+        slot_plans=plan_map,
+        group_commands=command_map,
+        terminal_checkpoint_payloads=terminal_payload_map,
     )

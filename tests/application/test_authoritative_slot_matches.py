@@ -4560,6 +4560,8 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    source_sporting = payload["content"]["player_sporting_state"]
+    source_simulation = payload["content"]["simulation_slot_match_state"]
 
     remapped = remap_coupled_player_slot_history(
         payload,
@@ -4589,6 +4591,35 @@ def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
         for effect in result.effects
     }
     assert target_simulation["slots"][0]["slot_start_fingerprint"] != plan.slot_start_fingerprint
+    source_state_fp = fingerprint(source_sporting["states"][0])
+    target_state_fp = fingerprint(target_sporting["states"][0])
+    assert remapped.sporting_fingerprints[source_state_fp] == target_state_fp
+    for source_slot, target_slot in zip(
+        source_simulation["slots"],
+        target_simulation["slots"],
+        strict=True,
+    ):
+        assert (
+            remapped.slot_plan_fingerprints[source_slot["plan_fingerprint"]]
+            == target_slot["plan_fingerprint"]
+        )
+        assert (
+            remapped.terminal_checkpoint_payloads[
+                source_slot["terminal_checkpoint_json"]
+            ]
+            == target_slot["terminal_checkpoint_json"]
+        )
+    for source_group, target_group in zip(
+        source_simulation["groups"],
+        target_simulation["groups"],
+        strict=True,
+    ):
+        assert (
+            remapped.group_command_fingerprints[
+                source_group["command_fingerprint"]
+            ]
+            == target_group["command_fingerprint"]
+        )
 
 
 @pytest.mark.pr_critical
@@ -4672,6 +4703,16 @@ def test_coupled_fork_remaps_week_schedule_and_legacy_adopted_authority(tmp_path
     assert (
         target_authority_row["package_json"]
         == source_component["authorities"][0]["package_json"]
+    )
+    assert (
+        remapped.schedule_fingerprints[
+            source_component["schedules"][0]["schedule_fingerprint"]
+        ]
+        == target_schedule_row["schedule_fingerprint"]
+    )
+    assert (
+        remapped.adopted_tournament_authority_fingerprints[source_authority_fp]
+        == target_authority_row["authority_fingerprint"]
     )
 
 

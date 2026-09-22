@@ -119,8 +119,11 @@ def test_saved_application_trigger_remaps_to_target_submission_evidence(database
         run_id="run",
         source_branch_id="branch",
         target_branch_id="target",
-        application_submission_fingerprint_map={
-            trigger.source_evidence_fingerprint: target_submission_fingerprint,
+        application_submission_identity_map={
+            trigger.source_evidence_fingerprint: (
+                trigger.source_evidence_id,
+                target_submission_fingerprint,
+            ),
         },
     )
     assert component is not None
@@ -137,6 +140,23 @@ def test_saved_application_trigger_remaps_to_target_submission_evidence(database
     assert mapped.source_evidence_id == trigger.source_evidence_id
     assert mapped.source_evidence_fingerprint == target_submission_fingerprint
     assert fingerprint_map == {trigger.fingerprint: mapped.fingerprint}
+
+    with pytest.raises(
+        ValueError,
+        match="application id differs from mapped submission",
+    ):
+        remap_saved_tour_entry_triggers_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            application_submission_identity_map={
+                trigger.source_evidence_fingerprint: (
+                    "different-application",
+                    target_submission_fingerprint,
+                ),
+            },
+        )
 
 
 @pytest.mark.pr_critical
@@ -164,8 +184,11 @@ def test_saved_wild_card_trigger_requires_separate_fork_evidence_mapping(databas
             run_id="run",
             source_branch_id="branch",
             target_branch_id="target",
-            application_submission_fingerprint_map={
-                trigger.source_evidence_fingerprint: "b" * 64,
+            application_submission_identity_map={
+                trigger.source_evidence_fingerprint: (
+                    trigger.source_evidence_id,
+                    "b" * 64,
+                ),
             },
         )
 

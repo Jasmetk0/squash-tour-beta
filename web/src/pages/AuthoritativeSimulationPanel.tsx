@@ -36,6 +36,7 @@ import {
   simulateAuthoritativeFullSimulation,
   getPendingAuthoritativeFullSimulations,
   getAuthoritativeFullSimulationHistory,
+  getAuthoritativeFullSimulationParentDetail,
   abandonAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
@@ -258,6 +259,8 @@ export function AuthoritativeSimulationPanel({
     useState('')
   const [fullSimulationAbandonConfirmed, setFullSimulationAbandonConfirmed] =
     useState(false)
+  const [fullSimulationHistorySelection, setFullSimulationHistorySelection] =
+    useState<string | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -367,6 +370,23 @@ export function AuthoritativeSimulationPanel({
     queryKey: ['authoritative-full-simulation-history', runId, branchId],
     queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId),
     enabled,
+    retry: false
+  })
+
+  const fullSimulationParentDetailQuery = useQuery({
+    queryKey: [
+      'authoritative-full-simulation-parent-detail',
+      runId,
+      branchId,
+      fullSimulationHistorySelection
+    ],
+    queryFn: () =>
+      getAuthoritativeFullSimulationParentDetail(
+        runId,
+        branchId,
+        fullSimulationHistorySelection as string
+      ),
+    enabled: Boolean(enabled && fullSimulationHistorySelection),
     retry: false
   })
 
@@ -2652,9 +2672,103 @@ export function AuthoritativeSimulationPanel({
                         {' — '}{item.abandonment.audit_reason}
                       </span>
                     ) : null}
+                    <button
+                      type="button"
+                      onClick={() => setFullSimulationHistorySelection(item.command_id)}
+                    >
+                      Inspect parent
+                    </button>
                   </li>
                 ))}
               </ol>
+              {fullSimulationParentDetailQuery.data ? (
+                <div role="group" aria-label="Full Simulation parent detail">
+                  <h6>Full Simulation parent detail</h6>
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Command ID',
+                        value: fullSimulationParentDetailQuery.data.command_id
+                      },
+                      {
+                        label: 'Status',
+                        value: fullSimulationParentDetailQuery.data.status
+                      },
+                      {
+                        label: 'Receipt request fingerprint',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .receipt_request_fingerprint
+                      },
+                      {
+                        label: 'Initial Saved Revision',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .initial_saved_revision_id ?? 'n/a'
+                      },
+                      {
+                        label: 'Final boundary Saved Revision',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .final_boundary_saved_revision_id ?? 'n/a'
+                      },
+                      {
+                        label: 'Season child commands',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .season_child_command_ids.join(', ') || 'none'
+                      },
+                      {
+                        label: 'Final-week child commands',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .final_week_child_command_ids.join(', ') || 'none'
+                      },
+                      {
+                        label: 'Final empty-week commands',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .final_empty_week_child_command_ids.join(', ') ||
+                          'none'
+                      },
+                      {
+                        label: 'Week 61 slot commands',
+                        value:
+                          fullSimulationParentDetailQuery.data
+                            .final_week61_slot_child_command_ids.join(', ') ||
+                          'none'
+                      }
+                    ]}
+                  />
+                  {fullSimulationParentDetailQuery.data.audit_reason ? (
+                    <p>
+                      Parent audit: {
+                        fullSimulationParentDetailQuery.data.audit_reason
+                      }
+                    </p>
+                  ) : null}
+                  {fullSimulationParentDetailQuery.data.abandonment ? (
+                    <p>
+                      Abandonment audit: {
+                        fullSimulationParentDetailQuery.data.abandonment.audit_reason
+                      }
+                    </p>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setFullSimulationHistorySelection(null)}
+                  >
+                    Close parent detail
+                  </button>
+                </div>
+              ) : null}
+              {fullSimulationParentDetailQuery.error ? (
+                <p className="error">
+                  Full Simulation parent detail failed: {
+                    formatApiError(fullSimulationParentDetailQuery.error)
+                  }
+                </p>
+              ) : null}
             </div>
           ) : null}
           {fullSimulationHistoryQuery.error ? (

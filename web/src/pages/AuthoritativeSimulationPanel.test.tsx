@@ -1898,10 +1898,7 @@ describe('AuthoritativeSimulationPanel', () => {
             expected_preview_fingerprint:
               fullSimulationPreview.preview_fingerprint
           },
-          review: {
-            ...fullSimulationPreview,
-            command_id: 'full-parent-reload'
-          },
+          review: fullSimulationPreview,
           completed_seasons: [2, 3, 4],
           completed_season_count: 3,
           final_completed_weeks: [],

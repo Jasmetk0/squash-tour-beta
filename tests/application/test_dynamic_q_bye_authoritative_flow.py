@@ -266,7 +266,7 @@ def test_dynamic_qualifier_vs_bye_closes_through_authoritative_run_flow(tmp_path
         branch_id="branch",
         event_id=event.event_id,
         command_id="repair-to-bye",
-        main_process_window_ordinal=1,
+        main_process_window_ordinal=3,
         replacement_source_authority=bye_source,
     )
     repaired = revision.successor_draw

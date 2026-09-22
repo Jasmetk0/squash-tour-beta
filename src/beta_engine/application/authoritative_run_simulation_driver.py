@@ -5813,14 +5813,25 @@ class AuthoritativeRunSimulationDriver:
         *,
         mode: Literal["match", "slot"],
         opening_position_basis: dict[str, Any] | None = None,
+        closing_position_basis: dict[str, Any] | None = None,
     ) -> dict:
         payload = {
-            "schema_version": "authoritative_simulation_request_evidence.v2",
+            "schema_version": (
+                "authoritative_simulation_request_evidence.v3"
+                if closing_position_basis is not None
+                else "authoritative_simulation_request_evidence.v2"
+            ),
             "mode": mode,
             "command": command.model_dump(mode="json"),
         }
         if opening_position_basis is not None:
             payload["opening_position_basis"] = opening_position_basis
+        if closing_position_basis is not None:
+            if opening_position_basis is None:
+                raise ValueError(
+                    "closing Simulation Position evidence requires opening Position evidence"
+                )
+            payload["closing_position_basis"] = closing_position_basis
         return payload
 
     @staticmethod
@@ -5918,11 +5929,27 @@ class AuthoritativeRunSimulationDriver:
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if receipt is None:
                 raise ValueError("pending simulation command receipt disappeared")
+            opening_position_basis = (
+                request_evidence.get("opening_position_basis")
+                if isinstance(request_evidence, dict)
+                else None
+            )
+            completed_request_evidence = (
+                self._simulation_receipt_request_evidence(
+                    command,
+                    mode=mode,
+                    opening_position_basis=opening_position_basis,
+                    closing_position_basis=after.position_basis,
+                )
+                if isinstance(opening_position_basis, dict)
+                and isinstance(after.position_basis, dict)
+                else request_evidence
+            )
             receipt.status = "complete"
             receipt.result_json = json.dumps(
                 {
                     **payload,
-                    "_request_evidence": request_evidence,
+                    "_request_evidence": completed_request_evidence,
                 },
                 sort_keys=True,
                 separators=(",", ":"),

@@ -4184,6 +4184,948 @@ class AuthoritativeRunSimulationDriver:
 
         raise ValueError("Next Season exceeded the bounded orchestration step budget")
 
+    def preview_full_simulation(
+        self, request: AuthoritativeFullSimulationPreviewRequest
+    ) -> dict:
+        """Review the complete remaining Run range without mutating it."""
+
+        with self.factory() as session:
+            return self._full_simulation_plan(session, request=request)
+
+    @staticmethod
+    def _full_season_child_command_id(
+        parent_command_id: str, season_index: int
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|full-season|{season_index}".encode()
+        ).hexdigest()[:24]
+        return f"full-season:{digest}"
+
+    @staticmethod
+    def _full_final_week_child_command_id(
+        parent_command_id: str, week: RankingWeek
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|full-final-week|{week.ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"full-final-week:{digest}"
+
+    @staticmethod
+    def _full_final_empty_week_child_command_id(
+        parent_command_id: str, week: RankingWeek
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|full-final-empty|{week.ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"full-final-empty:{digest}"
+
+    @staticmethod
+    def _full_final_week61_slot_child_command_id(
+        parent_command_id: str, slot_ordinal: int
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|full-final-w61-slot|{slot_ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"full-final-w61-slot:{digest}"
+
+    @staticmethod
+    def _full_progress_payload(
+        *,
+        command: AuthoritativeFullSimulationCommand,
+        frozen: dict,
+        checkpoint: str,
+        blockers: tuple[str, ...] = (),
+        detail: str | None = None,
+        position: AuthoritativeSimulationPosition | None = None,
+        child_progress: dict | None = None,
+        season_transition_preflight: dict | None = None,
+    ) -> dict:
+        payload = {
+            "schema_version": "authoritative_full_simulation_progress.v1",
+            "status": "blocked",
+            "run_id": command.run_id,
+            "branch_id": command.branch_id,
+            "start_week": frozen["start_week"],
+            "current_week": (
+                position.current_week.model_dump(mode="json")
+                if position is not None
+                else None
+            ),
+            "final_week": frozen["final_week"],
+            "completed_seasons": list(frozen["completed_seasons"]),
+            "completed_season_count": len(frozen["completed_seasons"]),
+            "final_completed_weeks": list(frozen["final_completed_weeks"]),
+            "final_completed_week_count": len(frozen["final_completed_weeks"]),
+            "checkpoint": checkpoint,
+            "blockers": list(blockers),
+            "detail": detail,
+            "position": (
+                position.model_dump(mode="json")
+                if position is not None
+                else None
+            ),
+        }
+        if child_progress is not None:
+            payload["child_progress"] = child_progress
+        if season_transition_preflight is not None:
+            payload["season_transition_preflight"] = season_transition_preflight
+        return payload
+
+    @staticmethod
+    def _completed_run_closure_evidence(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+    ) -> dict | None:
+        run = session.get(RunContainerModel, run_id)
+        branch = session.get(RunBranchModel, branch_id)
+        if run is None or branch is None or branch.run_id != run_id:
+            raise ValueError("Full Simulation Run/Branch scope disappeared")
+        if run.status != COMPLETED_RUN_STATUS:
+            return None
+        if branch.saved_head_revision_id is None:
+            raise ValueError("completed Run lost its final Saved Revision head")
+        revision = session.get(
+            BranchSavedRevisionModel, branch.saved_head_revision_id
+        )
+        if (
+            revision is None
+            or revision.run_id != run_id
+            or revision.branch_id != branch_id
+            or revision.kind != FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
+        ):
+            raise ValueError(
+                "completed Run head is not the canonical final-season closure revision"
+            )
+        try:
+            payload = json.loads(revision.payload_json)
+        except json.JSONDecodeError as exc:
+            raise ValueError("final Run Saved Revision JSON is corrupt") from exc
+        closure = load_saved_revision_season_closure(
+            payload,
+            run_id=run_id,
+            branch_id=branch_id,
+            revision_id=revision.revision_id,
+        )
+        if closure is None or closure.parsed_marker.completed_week != FINAL_WEEK:
+            raise ValueError(
+                "completed Run head lost canonical 2049/50 Season Closure evidence"
+            )
+        return {
+            "final_saved_revision_id": revision.revision_id,
+            "closure_marker_fingerprint": closure.parsed_marker.fingerprint,
+            "season_summary_fingerprint": closure.parsed_summary.fingerprint,
+        }
+
+    def simulate_full_simulation(
+        self, command: AuthoritativeFullSimulationCommand
+    ) -> dict:
+        """Progress the current Run to final 2049/50 closure through canonical children."""
+
+        request_fp = fingerprint(
+            {
+                "mode": "full_simulation",
+                "command": command.model_dump(mode="json"),
+            }
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+
+        # A pending Full Simulation must be able to observe the external final
+        # closure after that command makes the Run non-writable.
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "Full Simulation command ID already has a different request"
+                    )
+                if receipt.status == "complete":
+                    return json.loads(receipt.result_json)
+                if receipt.status != "pending":
+                    raise ValueError(
+                        "Full Simulation command receipt has an invalid status"
+                    )
+                frozen = json.loads(receipt.result_json)
+                completed = self._completed_run_closure_evidence(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                )
+                if completed is not None:
+                    seasons = list(frozen["completed_seasons"])
+                    if FINAL_WEEK.season_index not in seasons:
+                        seasons.append(FINAL_WEEK.season_index)
+                    payload = {
+                        "schema_version": "authoritative_full_simulation_result.v1",
+                        "status": "complete",
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "start_week": frozen["start_week"],
+                        "final_week": frozen["final_week"],
+                        "completed_seasons": seasons,
+                        "completed_season_count": len(seasons),
+                        "season_child_command_ids": [
+                            item["command"]["command_id"]
+                            for _, item in sorted(
+                                frozen["season_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_week_child_command_ids": [
+                            item["command"]["command_id"]
+                            for _, item in sorted(
+                                frozen["final_week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_empty_week_child_command_ids": [
+                            command_id
+                            for _, command_id in sorted(
+                                frozen["final_empty_week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_week61_slot_child_command_ids": [
+                            item["command_id"]
+                            for _, item in sorted(
+                                frozen["final_week61_slot_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "run_status": COMPLETED_RUN_STATUS,
+                        **completed,
+                        "adoption": "committed",
+                    }
+                    receipt.status = "complete"
+                    receipt.result_json = json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    )
+                    session.flush()
+                    return payload
+                self._require_writable_scope(
+                    session, command.run_id, command.branch_id
+                )
+            else:
+                self._require_writable_scope(
+                    session, command.run_id, command.branch_id
+                )
+                before = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
+                if before.current_week != command.expected_start_week:
+                    raise ValueError("Full Simulation reviewed start week is stale")
+                if (
+                    before.position_fingerprint
+                    != command.expected_position_fingerprint
+                ):
+                    raise ValueError("Full Simulation reviewed Position is stale")
+                branch = session.get(RunBranchModel, command.branch_id)
+                if (
+                    branch is None
+                    or branch.saved_head_revision_id
+                    != command.expected_revision_id
+                ):
+                    raise ValueError(
+                        "Full Simulation reviewed Saved Revision is stale"
+                    )
+                plan = self._full_simulation_plan(
+                    session,
+                    request=AuthoritativeFullSimulationPreviewRequest(
+                        command_id=command.command_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    ),
+                )
+                if plan["preview_fingerprint"] != command.expected_preview_fingerprint:
+                    raise ValueError("Full Simulation preview changed before commit")
+                frozen = {
+                    "schema_version": "authoritative_full_simulation_operation.v1",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "start_week": plan["start_week"],
+                    "final_week": plan["final_week"],
+                    "initial_saved_revision_id": command.expected_revision_id,
+                    "completed_seasons": [],
+                    "season_children": {},
+                    "final_completed_weeks": [],
+                    "final_week_children": {},
+                    "final_empty_week_children": {},
+                    "final_week61_slot_children": {},
+                    "final_boundary_saved_revision_id": None,
+                    "final_boundary_position_fingerprint": None,
+                }
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps(
+                            frozen, sort_keys=True, separators=(",", ":")
+                        ),
+                    )
+                )
+
+        for _ in range(128):
+            with self.factory() as session:
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Full Simulation parent receipt disappeared")
+                if parent.status == "complete":
+                    return json.loads(parent.result_json)
+                frozen = json.loads(parent.result_json)
+                run = session.get(RunContainerModel, command.run_id)
+                completed = self._completed_run_closure_evidence(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                )
+                if completed is not None:
+                    # Re-enter the top-level completion transaction on the next loop
+                    # iteration rather than duplicating the final receipt writer here.
+                    pass
+                if run is not None and run.status == COMPLETED_RUN_STATUS:
+                    with self.factory.begin() as write_session:
+                        write_session.execute(text("BEGIN IMMEDIATE"))
+                        parent_write = write_session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if parent_write is None:
+                            raise ValueError(
+                                "Full Simulation parent receipt disappeared"
+                            )
+                        frozen_write = json.loads(parent_write.result_json)
+                        completed_write = self._completed_run_closure_evidence(
+                            write_session,
+                            run_id=command.run_id,
+                            branch_id=command.branch_id,
+                        )
+                        if completed_write is None:
+                            raise ValueError(
+                                "completed Run lacks final closure evidence"
+                            )
+                        seasons = list(frozen_write["completed_seasons"])
+                        if FINAL_WEEK.season_index not in seasons:
+                            seasons.append(FINAL_WEEK.season_index)
+                        payload = {
+                            "schema_version": "authoritative_full_simulation_result.v1",
+                            "status": "complete",
+                            "run_id": command.run_id,
+                            "branch_id": command.branch_id,
+                            "start_week": frozen_write["start_week"],
+                            "final_week": frozen_write["final_week"],
+                            "completed_seasons": seasons,
+                            "completed_season_count": len(seasons),
+                            "season_child_command_ids": [
+                                item["command"]["command_id"]
+                                for _, item in sorted(
+                                    frozen_write["season_children"].items(),
+                                    key=lambda pair: int(pair[0]),
+                                )
+                            ],
+                            "final_week_child_command_ids": [
+                                item["command"]["command_id"]
+                                for _, item in sorted(
+                                    frozen_write["final_week_children"].items(),
+                                    key=lambda pair: int(pair[0]),
+                                )
+                            ],
+                            "final_empty_week_child_command_ids": [
+                                command_id
+                                for _, command_id in sorted(
+                                    frozen_write[
+                                        "final_empty_week_children"
+                                    ].items(),
+                                    key=lambda pair: int(pair[0]),
+                                )
+                            ],
+                            "final_week61_slot_child_command_ids": [
+                                item["command_id"]
+                                for _, item in sorted(
+                                    frozen_write[
+                                        "final_week61_slot_children"
+                                    ].items(),
+                                    key=lambda pair: int(pair[0]),
+                                )
+                            ],
+                            "run_status": COMPLETED_RUN_STATUS,
+                            **completed_write,
+                            "adoption": "committed",
+                        }
+                        parent_write.status = "complete"
+                        parent_write.result_json = json.dumps(
+                            payload,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                        write_session.flush()
+                        return payload
+
+                position = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
+                branch = session.get(RunBranchModel, command.branch_id)
+                if branch is None or branch.saved_head_revision_id is None:
+                    raise ValueError(
+                        "Full Simulation lost its Saved Revision-backed Branch"
+                    )
+                current_saved_revision_id = branch.saved_head_revision_id
+
+            if position.current_week.season_index < FINAL_WEEK.season_index:
+                season_index = position.current_week.season_index
+                season_key = str(season_index)
+                stored = frozen["season_children"].get(season_key)
+                if stored is None:
+                    child_id = self._full_season_child_command_id(
+                        command.command_id, season_index
+                    )
+                    preview_request = AuthoritativeSeasonPreviewRequest(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    )
+                    try:
+                        child_preview = self.preview_next_season(preview_request)
+                    except ValueError as exc:
+                        return self._full_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            checkpoint="season_preparation_required",
+                            blockers=tuple(position.transition_blockers),
+                            detail=str(exc),
+                            position=position,
+                        )
+                    child = AuthoritativeSeasonCommand(
+                        **preview_request.model_dump(mode="json"),
+                        expected_start_week=child_preview["start_week"],
+                        expected_position_fingerprint=child_preview[
+                            "expected_position_fingerprint"
+                        ],
+                        expected_revision_id=child_preview[
+                            "expected_revision_id"
+                        ],
+                        expected_preview_fingerprint=child_preview[
+                            "preview_fingerprint"
+                        ],
+                    )
+                    with self.factory.begin() as session:
+                        session.execute(text("BEGIN IMMEDIATE"))
+                        parent = session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if (
+                            parent is None
+                            or parent.request_fingerprint != request_fp
+                        ):
+                            raise ValueError(
+                                "Full Simulation parent receipt disappeared"
+                            )
+                        frozen_now = json.loads(parent.result_json)
+                        existing = frozen_now["season_children"].get(season_key)
+                        if existing is None:
+                            current = self._position(
+                                session,
+                                command.run_id,
+                                command.branch_id,
+                                allow_missing_schedule=True,
+                            )
+                            branch_now = session.get(
+                                RunBranchModel, command.branch_id
+                            )
+                            if (
+                                current.current_week
+                                != child.expected_start_week
+                                or current.position_fingerprint
+                                != child.expected_position_fingerprint
+                                or branch_now is None
+                                or branch_now.saved_head_revision_id
+                                != child.expected_revision_id
+                            ):
+                                raise ValueError(
+                                    "Full Simulation season child changed before freeze"
+                                )
+                            frozen_now["season_children"][season_key] = {
+                                "command": child.model_dump(mode="json"),
+                                "preview_fingerprint": child_preview[
+                                    "preview_fingerprint"
+                                ],
+                            }
+                            parent.result_json = json.dumps(
+                                frozen_now,
+                                sort_keys=True,
+                                separators=(",", ":"),
+                            )
+                            frozen = frozen_now
+                            stored = frozen_now["season_children"][season_key]
+                        else:
+                            stored = existing
+
+                child = AuthoritativeSeasonCommand.model_validate_json(
+                    json.dumps(stored["command"])
+                )
+                child_result = self.simulate_next_season(child)
+                if (
+                    child_result.get("schema_version")
+                    == "authoritative_season_progress.v1"
+                ):
+                    with self.factory() as session:
+                        current = self._position(
+                            session,
+                            command.run_id,
+                            command.branch_id,
+                            allow_missing_schedule=True,
+                        )
+                    return self._full_progress_payload(
+                        command=command,
+                        frozen=frozen,
+                        checkpoint=child_result["checkpoint"],
+                        blockers=tuple(child_result.get("blockers", ())),
+                        detail=child_result.get("detail"),
+                        position=current,
+                        child_progress=child_result,
+                        season_transition_preflight=child_result.get(
+                            "season_transition_preflight"
+                        ),
+                    )
+
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError(
+                            "Full Simulation parent receipt disappeared"
+                        )
+                    frozen_now = json.loads(parent.result_json)
+                    if season_index not in frozen_now["completed_seasons"]:
+                        frozen_now["completed_seasons"].append(season_index)
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
+            if position.current_week.season_index != FINAL_WEEK.season_index:
+                raise ValueError(
+                    "Full Simulation crossed outside the supported 50-season Run"
+                )
+
+            week = position.current_week
+            if position.current_slot_kind == "entry":
+                return self._full_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    checkpoint="entry_process_required",
+                    blockers=("entry_process_required",),
+                    detail=(
+                        "Resolve the current Entry/application decision surface, "
+                        "then retry this exact Full Simulation command."
+                    ),
+                    position=position,
+                )
+
+            if week.week < FINAL_WEEK.week:
+                empty_week_already_proved = (
+                    str(week.ordinal) in frozen["final_empty_week_children"]
+                )
+                if (
+                    position.current_slot_kind == "match"
+                    or position.terminal_sporting_fingerprint is not None
+                    or empty_week_already_proved
+                ):
+                    week_key = str(week.ordinal)
+                    stored = frozen["final_week_children"].get(week_key)
+                    if stored is None:
+                        child_id = self._full_final_week_child_command_id(
+                            command.command_id, week
+                        )
+                        preview_request = AuthoritativeWeekPreviewRequest(
+                            command_id=child_id,
+                            run_id=command.run_id,
+                            branch_id=command.branch_id,
+                            operator_label=command.operator_label,
+                            audit_reason=command.audit_reason,
+                        )
+                        try:
+                            child_preview = self.preview_next_week(preview_request)
+                        except ValueError as exc:
+                            return self._full_progress_payload(
+                                command=command,
+                                frozen=frozen,
+                                checkpoint="week_preparation_required",
+                                blockers=tuple(position.transition_blockers),
+                                detail=str(exc),
+                                position=position,
+                            )
+                        child = AuthoritativeWeekCommand(
+                            **preview_request.model_dump(mode="json"),
+                            expected_week=week,
+                            expected_position_fingerprint=child_preview[
+                                "expected_position_fingerprint"
+                            ],
+                            expected_revision_id=child_preview[
+                                "expected_revision_id"
+                            ],
+                            expected_preview_fingerprint=child_preview[
+                                "preview_fingerprint"
+                            ],
+                        )
+                        with self.factory.begin() as session:
+                            session.execute(text("BEGIN IMMEDIATE"))
+                            parent = session.get(
+                                AuthoritativeSimulationCommandModel, key
+                            )
+                            if (
+                                parent is None
+                                or parent.request_fingerprint != request_fp
+                            ):
+                                raise ValueError(
+                                    "Full Simulation parent receipt disappeared"
+                                )
+                            frozen_now = json.loads(parent.result_json)
+                            if (
+                                frozen_now["final_week_children"].get(week_key)
+                                is None
+                            ):
+                                frozen_now["final_week_children"][week_key] = {
+                                    "command": child.model_dump(mode="json"),
+                                    "preview_fingerprint": child_preview[
+                                        "preview_fingerprint"
+                                    ],
+                                }
+                                parent.result_json = json.dumps(
+                                    frozen_now,
+                                    sort_keys=True,
+                                    separators=(",", ":"),
+                                )
+                                frozen = frozen_now
+                            stored = frozen_now["final_week_children"][week_key]
+                    child = AuthoritativeWeekCommand.model_validate_json(
+                        json.dumps(stored["command"])
+                    )
+                    child_result = self.simulate_next_week(child)
+                    if (
+                        child_result.get("schema_version")
+                        == "authoritative_week_progress.v1"
+                    ):
+                        with self.factory() as session:
+                            current = self._position(
+                                session,
+                                command.run_id,
+                                command.branch_id,
+                                allow_missing_schedule=True,
+                            )
+                        return self._full_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            checkpoint="week_transition_prerequisite",
+                            blockers=tuple(
+                                child_result.get("transition_blockers", ())
+                            ),
+                            detail=(
+                                "The final-season Next Week child paused. "
+                                "Resolve its explicit prerequisite and retry the "
+                                "same Full Simulation command."
+                            ),
+                            position=current,
+                            child_progress=child_result,
+                        )
+                    completed_week = child_result["completed_week"]
+                    with self.factory.begin() as session:
+                        session.execute(text("BEGIN IMMEDIATE"))
+                        parent = session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if (
+                            parent is None
+                            or parent.request_fingerprint != request_fp
+                        ):
+                            raise ValueError(
+                                "Full Simulation parent receipt disappeared"
+                            )
+                        frozen_now = json.loads(parent.result_json)
+                        if (
+                            completed_week
+                            not in frozen_now["final_completed_weeks"]
+                        ):
+                            frozen_now["final_completed_weeks"].append(
+                                completed_week
+                            )
+                        parent.result_json = json.dumps(
+                            frozen_now,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                    continue
+
+                child_id = self._full_final_empty_week_child_command_id(
+                    command.command_id, week
+                )
+                with self.factory() as session:
+                    existing_child = session.get(
+                        AuthoritativeSimulationCommandModel,
+                        (command.run_id, command.branch_id, child_id),
+                    )
+                if existing_child is None:
+                    empty_command = AuthoritativeEmptyWeekCompletionCommand(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=week,
+                        expected_position_fingerprint=(
+                            position.position_fingerprint
+                        ),
+                        expected_revision_id=current_saved_revision_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    )
+                    try:
+                        self.complete_empty_week(empty_command)
+                    except ValueError as exc:
+                        return self._full_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            checkpoint="week_preparation_required",
+                            blockers=tuple(position.transition_blockers),
+                            detail=str(exc),
+                            position=position,
+                        )
+                elif existing_child.status != "complete":
+                    raise ValueError(
+                        "Full Simulation empty-week child receipt is incomplete"
+                    )
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError(
+                            "Full Simulation parent receipt disappeared"
+                        )
+                    frozen_now = json.loads(parent.result_json)
+                    frozen_now["final_empty_week_children"][
+                        str(week.ordinal)
+                    ] = child_id
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
+            if week != FINAL_WEEK:
+                raise ValueError("Full Simulation final-season Week identity is invalid")
+
+            if position.current_slot_kind == "match":
+                if position.slot_ordinal is None:
+                    raise ValueError("Final Week current match slot has no ordinal")
+                slot_key = str(position.slot_ordinal)
+                stored_slot = frozen["final_week61_slot_children"].get(
+                    slot_key
+                )
+                if stored_slot is None:
+                    child = AuthoritativeSimulationCommand(
+                        command_id=self._full_final_week61_slot_child_command_id(
+                            command.command_id, position.slot_ordinal
+                        ),
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=week,
+                        expected_position_fingerprint=(
+                            position.position_fingerprint
+                        ),
+                        expected_revision_id=current_saved_revision_id,
+                    )
+                    with self.factory.begin() as session:
+                        session.execute(text("BEGIN IMMEDIATE"))
+                        parent = session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if (
+                            parent is None
+                            or parent.request_fingerprint != request_fp
+                        ):
+                            raise ValueError(
+                                "Full Simulation parent receipt disappeared"
+                            )
+                        frozen_now = json.loads(parent.result_json)
+                        frozen_now["final_week61_slot_children"][slot_key] = (
+                            child.model_dump(mode="json")
+                        )
+                        parent.result_json = json.dumps(
+                            frozen_now,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                        frozen = frozen_now
+                        stored_slot = frozen_now[
+                            "final_week61_slot_children"
+                        ][slot_key]
+                child = AuthoritativeSimulationCommand.model_validate_json(
+                    json.dumps(stored_slot)
+                )
+                self.simulate_next_slot(child)
+                continue
+
+            final_empty_already_proved = (
+                str(week.ordinal) in frozen["final_empty_week_children"]
+            )
+            if (
+                position.terminal_sporting_fingerprint is None
+                and not final_empty_already_proved
+            ):
+                child_id = self._full_final_empty_week_child_command_id(
+                    command.command_id, week
+                )
+                empty_command = AuthoritativeEmptyWeekCompletionCommand(
+                    command_id=child_id,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    expected_week=week,
+                    expected_position_fingerprint=(
+                        position.position_fingerprint
+                    ),
+                    expected_revision_id=current_saved_revision_id,
+                    operator_label=command.operator_label,
+                    audit_reason=command.audit_reason,
+                )
+                try:
+                    self.complete_empty_week(empty_command)
+                except ValueError as exc:
+                    return self._full_progress_payload(
+                        command=command,
+                        frozen=frozen,
+                        checkpoint="final_week_preparation_required",
+                        blockers=tuple(position.transition_blockers),
+                        detail=str(exc),
+                        position=position,
+                    )
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError(
+                            "Full Simulation parent receipt disappeared"
+                        )
+                    frozen_now = json.loads(parent.result_json)
+                    frozen_now["final_empty_week_children"][
+                        str(week.ordinal)
+                    ] = child_id
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Full Simulation parent receipt disappeared")
+                frozen_now = json.loads(parent.result_json)
+                week_payload = FINAL_WEEK.model_dump(mode="json")
+                if week_payload not in frozen_now["final_completed_weeks"]:
+                    frozen_now["final_completed_weeks"].append(week_payload)
+                mutated_final_range = bool(
+                    frozen_now["final_week_children"]
+                    or frozen_now["final_empty_week_children"]
+                    or frozen_now["final_week61_slot_children"]
+                )
+                boundary_head = frozen_now.get(
+                    "final_boundary_saved_revision_id"
+                )
+                if mutated_final_range and boundary_head is None:
+                    frozen_now["final_boundary_saved_revision_id"] = (
+                        current_saved_revision_id
+                    )
+                    frozen_now["final_boundary_position_fingerprint"] = (
+                        position.position_fingerprint
+                    )
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                    frozen = frozen_now
+                    return self._full_progress_payload(
+                        command=command,
+                        frozen=frozen_now,
+                        checkpoint="final_run_save_required",
+                        blockers=("final_run_save_required",),
+                        detail=(
+                            "The final-season sporting range changed canonical "
+                            "state. Save it explicitly before final Run closure."
+                        ),
+                        position=position,
+                    )
+                frozen = frozen_now
+
+            if (
+                frozen.get("final_boundary_saved_revision_id") is not None
+                and current_saved_revision_id
+                == frozen["final_boundary_saved_revision_id"]
+            ):
+                return self._full_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    checkpoint="final_run_save_required",
+                    blockers=("final_run_save_required",),
+                    detail=(
+                        "The final 2049/50 boundary has not been Saved since "
+                        "Full Simulation reached it."
+                    ),
+                    position=position,
+                )
+
+            preflight = self.season_transition_preflight(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if not preflight.final_season:
+                raise ValueError(
+                    "Full Simulation final boundary is not the 2049/50 closure"
+                )
+            if not preflight.ready_for_execution:
+                return self._full_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    checkpoint="final_run_closure_prerequisite",
+                    blockers=tuple(
+                        (*preflight.state_blockers, *preflight.implementation_gaps)
+                    ),
+                    detail=(
+                        "Canonical final Run closure is not ready. Resolve the "
+                        "listed prerequisite and retry this exact command."
+                    ),
+                    position=position,
+                    season_transition_preflight=preflight.model_dump(
+                        mode="json"
+                    ),
+                )
+
+            return self._full_progress_payload(
+                command=command,
+                frozen=frozen,
+                checkpoint="final_run_closure_review_required",
+                blockers=("final_run_closure_review_required",),
+                detail=(
+                    "2049/50 Week 61 is Saved and final closure preflight is "
+                    "ready. Review/commit the existing Final Run closure, then "
+                    "retry this exact Full Simulation command once more."
+                ),
+                position=position,
+                season_transition_preflight=preflight.model_dump(mode="json"),
+            )
+
+        raise ValueError(
+            "Full Simulation exceeded the bounded orchestration step budget"
+        )
+
     def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
         """Commit one Master §15.9 W/O without simulating a competitive match.
 

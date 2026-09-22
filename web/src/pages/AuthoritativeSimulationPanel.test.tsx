@@ -32,6 +32,8 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextRound: vi.fn(),
   previewAuthoritativeNextTournament: vi.fn(),
   simulateAuthoritativeNextTournament: vi.fn(),
+  previewAuthoritativeNextWeek: vi.fn(),
+  simulateAuthoritativeNextWeek: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -251,6 +253,78 @@ const tournamentResult = {
     blocked_match_ids: [],
     position_fingerprint: '3'.repeat(64)
   },
+  adoption: 'committed' as const
+}
+
+const weekPreview = {
+  schema_version: 'authoritative_week_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  target_week: { season_index: 2, week: 18 },
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 2, 3],
+  target_group_ids: ['g1', 'g2', 'g3'],
+  ranking_authority_mode: 'derived' as const,
+  ranking_authority_command_id: 'week-authority:preview',
+  ranking_authority_fingerprint: '5'.repeat(64),
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  initial_transition_blockers: [
+    'pending_authoritative_groups',
+    'ranking_transition_authority_missing'
+  ],
+  preview_fingerprint: '6'.repeat(64)
+}
+
+const weekProgress = {
+  schema_version: 'authoritative_week_progress.v1' as const,
+  status: 'blocked' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  completed_week: week,
+  target_week: { season_index: 2, week: 18 },
+  target_slot_ordinals: [1, 2, 3],
+  completed_slot_count: 3,
+  transition_blockers: ['working_draft_dirty'],
+  position: {
+    ...position,
+    current_slot_kind: null,
+    current_slot_id: null,
+    slot_ordinal: null,
+    unresolved_group_ids: [],
+    eligible_match_ids: [],
+    blocked_match_ids: [],
+    current_slot_complete: true,
+    supported_tournament_complete: true,
+    week_ready_for_transition: false,
+    transition_blockers: ['working_draft_dirty'],
+    terminal_sporting_fingerprint: '7'.repeat(64),
+    position_fingerprint: '8'.repeat(64)
+  }
+}
+
+const weekResult = {
+  schema_version: 'authoritative_week_result.v1' as const,
+  status: 'complete' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  completed_week: week,
+  target_week: { season_index: 2, week: 18 },
+  schedule_fingerprint: 'c'.repeat(64),
+  target_slot_ordinals: [1, 2, 3],
+  target_group_ids: ['g1', 'g2', 'g3'],
+  child_command_ids: ['week-slot:one', 'week-slot:two', 'week-slot:three'],
+  completed_slot_count: 3,
+  ranking_authority_mode: 'derived' as const,
+  ranking_authority_command_id: 'week-authority:preview',
+  ranking_authority_fingerprint: '5'.repeat(64),
+  week_transition_command_id: 'week-transition:one',
+  week_transition_request_fingerprint: '9'.repeat(64),
+  official_ranking_fingerprint: 'a'.repeat(64),
+  player_lifecycle_fingerprint: 'b'.repeat(64),
+  player_sporting_fingerprint: 'd'.repeat(64),
+  world_event_kind: 'week_transition_completed' as const,
   adoption: 'committed' as const
 }
 
@@ -700,6 +774,8 @@ beforeEach(() => {
   api.simulateAuthoritativeNextRound.mockResolvedValue(roundResult)
   api.previewAuthoritativeNextTournament.mockResolvedValue(tournamentPreview)
   api.simulateAuthoritativeNextTournament.mockResolvedValue(tournamentResult)
+  api.previewAuthoritativeNextWeek.mockResolvedValue(weekPreview)
+  api.simulateAuthoritativeNextWeek.mockResolvedValue(weekResult)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1376,6 +1452,80 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       api.simulateAuthoritativeNextTournament.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
+  })
+
+  it('keeps one reviewed Next Week command across a blocked checkpoint retry', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextWeek
+      .mockResolvedValueOnce(weekProgress)
+      .mockResolvedValueOnce(weekResult)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.type(
+      screen.getByLabelText('Next Week operator'),
+      'Commissioner'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Next Week audit reason'),
+      'Advance reviewed week'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Next Week' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeNextWeek).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          command_id: expect.any(String),
+          operator_label: 'Commissioner',
+          audit_reason: 'Advance reviewed week'
+        }
+      )
+    )
+    expect(
+      await screen.findByRole('heading', { name: /Reviewed canonical Week/ })
+    ).toHaveTextContent('W17')
+    expect(screen.getByText(/Frozen remaining global slots: 1, 2, 3/)).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const commit = screen.getByRole('button', {
+      name: 'Simulate reviewed authoritative Next Week'
+    })
+    await userEvent.click(commit)
+
+    expect(
+      await screen.findByText(/Next Week paused after 3 sporting slot/)
+    ).toHaveTextContent('working_draft_dirty')
+    const firstCommand = api.simulateAuthoritativeNextWeek.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      command_id: expect.any(String),
+      operator_label: 'Commissioner',
+      audit_reason: 'Advance reviewed week',
+      expected_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7',
+      expected_preview_fingerprint: '6'.repeat(64)
+    })
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const retry = screen.getByRole('button', {
+      name: 'Retry reviewed authoritative Next Week'
+    })
+    await userEvent.click(retry)
+
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextWeek).toHaveBeenCalledTimes(2)
+    )
+    expect(api.simulateAuthoritativeNextWeek.mock.calls[1][2].command_id).toBe(
+      firstCommand.command_id
+    )
   })
 
   it('reviews the current Entry slot with minimal explicit Admin verdicts', async () => {

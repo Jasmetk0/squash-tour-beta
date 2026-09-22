@@ -2627,6 +2627,8 @@ export function AuthoritativeSimulationPanel({
               disabled={
                 !fullSimulationOperator.trim() ||
                 !fullSimulationReason.trim() ||
+                Boolean(pendingFullSimulationQuery.data?.operations.length) ||
+                Boolean(pendingFullSimulationQuery.data?.legacy_pending_count) ||
                 actionPending
               }
             >

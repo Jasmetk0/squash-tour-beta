@@ -94,6 +94,12 @@ restore the exact parent after reload instead of manufacturing a replacement com
 Older pending receipts created before this metadata existed remain backend-resumable
 only when the original command payload is still available and are reported separately.
 
+Only one pending Full Simulation parent is permitted per Run/Branch. A new preview or
+new parent start fails closed while another Full Simulation parent is pending; Admin
+must resume or finish the existing parent first. This prevents two long-range
+orchestrations from racing through the same canonical Branch while preserving exact
+retry for the already-existing parent.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

@@ -1919,6 +1919,11 @@ describe('AuthoritativeSimulationPanel', () => {
       })
     ).toHaveTextContent('full-parent-reload')
     expect(
+      screen.getByRole('button', {
+        name: 'Review authoritative Full Simulation'
+      })
+    ).toBeDisabled()
+    expect(
       screen.getByRole('list', {
         name: 'Resumable Full Simulation parents'
       })

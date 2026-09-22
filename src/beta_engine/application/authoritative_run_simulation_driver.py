@@ -3734,9 +3734,13 @@ class AuthoritativeRunSimulationDriver:
                 )
 
             if week.week < 61:
+                empty_week_already_proved = (
+                    str(week.ordinal) in frozen["empty_week_children"]
+                )
                 if (
                     position.current_slot_kind == "match"
                     or position.terminal_sporting_fingerprint is not None
+                    or empty_week_already_proved
                 ):
                     week_key = str(week.ordinal)
                     stored = frozen["week_children"].get(week_key)
@@ -3989,7 +3993,13 @@ class AuthoritativeRunSimulationDriver:
                 self.simulate_next_slot(child)
                 continue
 
-            if position.terminal_sporting_fingerprint is None:
+            week61_empty_already_proved = (
+                str(week.ordinal) in frozen["empty_week_children"]
+            )
+            if (
+                position.terminal_sporting_fingerprint is None
+                and not week61_empty_already_proved
+            ):
                 child_id = self._season_empty_week_child_command_id(
                     command.command_id, week
                 )

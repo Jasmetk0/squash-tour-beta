@@ -4786,6 +4786,27 @@ class AuthoritativeRunSimulationDriver:
                                 frozen_now["final_week_children"].get(week_key)
                                 is None
                             ):
+                                current = self._position(
+                                    session,
+                                    command.run_id,
+                                    command.branch_id,
+                                    allow_missing_schedule=True,
+                                )
+                                branch_now = session.get(
+                                    RunBranchModel, command.branch_id
+                                )
+                                if (
+                                    current.current_week != child.expected_week
+                                    or current.position_fingerprint
+                                    != child.expected_position_fingerprint
+                                    or branch_now is None
+                                    or branch_now.saved_head_revision_id
+                                    != child.expected_revision_id
+                                ):
+                                    raise ValueError(
+                                        "Full Simulation final-season Week child "
+                                        "changed before freeze"
+                                    )
                                 frozen_now["final_week_children"][week_key] = {
                                     "command": child.model_dump(mode="json"),
                                     "preview_fingerprint": child_preview[
@@ -4945,6 +4966,27 @@ class AuthoritativeRunSimulationDriver:
                                 "Full Simulation parent receipt disappeared"
                             )
                         frozen_now = json.loads(parent.result_json)
+                        current = self._position(
+                            session,
+                            command.run_id,
+                            command.branch_id,
+                            allow_missing_schedule=True,
+                        )
+                        branch_now = session.get(
+                            RunBranchModel, command.branch_id
+                        )
+                        if (
+                            current.current_week != child.expected_week
+                            or current.slot_ordinal != position.slot_ordinal
+                            or current.position_fingerprint
+                            != child.expected_position_fingerprint
+                            or branch_now is None
+                            or branch_now.saved_head_revision_id
+                            != child.expected_revision_id
+                        ):
+                            raise ValueError(
+                                "Full Simulation final Week slot changed before freeze"
+                            )
                         frozen_now["final_week61_slot_children"][slot_key] = (
                             child.model_dump(mode="json")
                         )

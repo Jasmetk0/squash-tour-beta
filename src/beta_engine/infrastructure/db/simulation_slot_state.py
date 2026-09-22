@@ -55,6 +55,33 @@ def _validate_command_rows_shape(rows):
                 raise ValueError(
                     "Saved historical simulation fork receipt source identity is corrupt"
                 )
+
+            source_result = payload.get("source_result")
+            source_evidence_fingerprint = payload.get(
+                "source_request_evidence_fingerprint"
+            )
+            if source_evidence_fingerprint is not None:
+                if not isinstance(source_result, dict):
+                    raise ValueError(
+                        "Saved historical simulation fork receipt source result is corrupt"
+                    )
+                source_evidence = source_result.get("_request_evidence")
+                if not isinstance(source_evidence, dict):
+                    raise ValueError(
+                        "Saved historical simulation fork receipt request evidence is missing"
+                    )
+                actual_evidence_fingerprint = hashlib.sha256(
+                    json.dumps(
+                        source_evidence,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest()
+                if actual_evidence_fingerprint != source_evidence_fingerprint:
+                    raise ValueError(
+                        "Saved historical simulation fork receipt request evidence is corrupt"
+                    )
+
             expected = hashlib.sha256(
                 json.dumps(
                     {

@@ -4702,6 +4702,169 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
 
 
 @pytest.mark.pr_critical
+def test_simulation_command_receipt_fork_reconstructs_target_public_result():
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        SimulationPositionForkIdentityGraph,
+        _retarget_simulation_command_receipt_as_historical,
+    )
+    from beta_engine.infrastructure.db.simulation_slot_state import (
+        _validate_command_rows_shape,
+    )
+
+    opening_basis = {
+        "scope": ["run", "branch", 0],
+        "schedule": None,
+        "entry_slot_ordinals": [],
+        "wc_slot_ordinals": [],
+        "week_tournament_lock": None,
+        "week_tournament_lock_conflicts": [],
+        "entry_validation_slots": [],
+        "current_slot_kind": "match",
+        "current_slot_ordinal": 1,
+        "proposed_schedule_requirement": [],
+        "slots": [],
+        "groups": [],
+        "owned": [],
+        "tournament_authority": None,
+        "sporting": None,
+        "lifecycle": None,
+        "branch_head": "source-revision",
+        "draft": ["source-revision", "clean", 0],
+        "transition_authority": None,
+        "world": None,
+        "terminal": None,
+        "empty_week_context": None,
+    }
+    closing_basis = {
+        **opening_basis,
+        "current_slot_kind": None,
+        "current_slot_ordinal": None,
+    }
+    source_command = {
+        "command_id": "result-contract-command",
+        "run_id": "run",
+        "branch_id": "branch",
+        "expected_week": {"season_index": 0, "week": 1},
+        "expected_position_fingerprint": fingerprint(opening_basis),
+        "expected_revision_id": "source-revision",
+        "group_id": None,
+    }
+    source_evidence = {
+        "schema_version": "authoritative_simulation_request_evidence.v3",
+        "mode": "slot",
+        "command": source_command,
+        "opening_position_basis": opening_basis,
+        "closing_position_basis": closing_basis,
+    }
+    source_result = {
+        "run_id": "run",
+        "branch_id": "branch",
+        "current_week": {"season_index": 0, "week": 1},
+        "current_slot_kind": None,
+        "current_slot_id": None,
+        "slot_ordinal": None,
+        "unresolved_group_ids": [],
+        "eligible_match_ids": [],
+        "blocked_match_ids": [],
+        "current_slot_complete": True,
+        "supported_tournament_complete": False,
+        "week_ready_for_transition": False,
+        "transition_blockers": ["tournament_source_missing"],
+        "terminal_sporting_fingerprint": None,
+        "position_fingerprint": fingerprint(closing_basis),
+        "_request_evidence": source_evidence,
+    }
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id=source_command["command_id"],
+        request_fingerprint=fingerprint(
+            {"mode": "slot", "command": source_command}
+        ),
+        status="complete",
+        result_json=json.dumps(
+            source_result,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    graph = SimulationPositionForkIdentityGraph(
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        schedule_fingerprints={},
+        slot_plan_fingerprints={},
+        group_command_fingerprints={},
+        result_fingerprints={},
+        terminal_checkpoint_payloads={},
+        owned_tournament_fingerprints={},
+        week_tournament_lock_fingerprints={},
+        tournament_authority_fingerprints={},
+        sporting_fingerprints={},
+        lifecycle_fingerprints={},
+        transition_authority_fingerprints={},
+        ranking_snapshot_fingerprints={},
+        terminal_checkpoint_fingerprints={},
+        sporting_context_fingerprints={},
+    )
+
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        position_identity_graph=graph,
+    )
+    payload = json.loads(target_row.result_json)
+    target_evidence = payload["target_request_evidence"]
+    target_result = payload["target_result"]
+    target_closing_basis = target_evidence["closing_position_basis"]
+
+    assert payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v4"
+    )
+    assert payload["retryable"] is False
+    assert target_evidence["schema_version"] == (
+        "authoritative_simulation_request_evidence.v3"
+    )
+    assert target_closing_basis["scope"] == ["run", "target", 0]
+    assert target_closing_basis["branch_head"] == "target-revision"
+    assert target_result["branch_id"] == "target"
+    assert target_result["position_fingerprint"] == fingerprint(
+        target_closing_basis
+    )
+    assert payload["target_result_fingerprint"] == fingerprint(target_result)
+    assert {
+        key: value
+        for key, value in target_result.items()
+        if key not in {"branch_id", "position_fingerprint"}
+    } == {
+        key: value
+        for key, value in source_result.items()
+        if key not in {
+            "branch_id",
+            "position_fingerprint",
+            "_request_evidence",
+        }
+    }
+
+    _validate_command_rows_shape([target_row])
+
+    tampered = json.loads(target_row.result_json)
+    tampered["target_result"]["branch_id"] = "wrong-target"
+    target_row.result_json = json.dumps(
+        tampered,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation fork target result identity is corrupt",
+    ):
+        _validate_command_rows_shape([target_row])
+
+
+@pytest.mark.pr_critical
 def test_simulation_command_receipt_fork_keeps_v2_when_target_position_is_unsupported():
     from beta_engine.infrastructure.db.player_slot_fork_remap import (
         SimulationPositionForkIdentityGraph,

@@ -4418,6 +4418,62 @@ def test_completed_slot_core_saved_revision_remaps_and_emits_sporting_v2_maps(tm
 
 
 @pytest.mark.pr_critical
+def test_simulation_command_receipt_fork_is_read_only_historical_audit():
+    source_command = {
+        "command_id": "slot-command-1",
+        "run_id": "run",
+        "branch_id": "branch",
+        "expected_week": WEEK.model_dump(mode="json"),
+        "expected_position_fingerprint": "1" * 64,
+        "expected_revision_id": "source-revision",
+        "group_id": None,
+    }
+    source_fp = fingerprint({"mode": "slot", "command": source_command})
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id="slot-command-1",
+        request_fingerprint=source_fp,
+        status="complete",
+        result_json=json.dumps(
+            {
+                "run_id": "run",
+                "branch_id": "branch",
+                "position_fingerprint": "2" * 64,
+                "_request_evidence": {
+                    "schema_version": "authoritative_simulation_request_evidence.v1",
+                    "mode": "slot",
+                    "command": source_command,
+                },
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        _retarget_simulation_command_receipt_as_historical,
+    )
+
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+    )
+    payload = json.loads(target_row.result_json)
+
+    assert target_row.run_id == "run"
+    assert target_row.branch_id == "target"
+    assert target_row.command_id == source_row.command_id
+    assert target_row.status == "historical_fork"
+    assert target_row.request_fingerprint != source_row.request_fingerprint
+    assert payload["retryable"] is False
+    assert payload["source_branch_id"] == "branch"
+    assert payload["source_request_fingerprint"] == source_fp
+    assert payload["source_status"] == "complete"
+    assert payload["source_result"]["_request_evidence"]["command"] == source_command
+
+
+@pytest.mark.pr_critical
 def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
     session, _, plan, results, checkpoint = run_semifinals(
         tmp_path / "coupled-fork-remap.sqlite",

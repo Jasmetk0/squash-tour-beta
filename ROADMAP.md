@@ -291,11 +291,18 @@ deterministic Next Slot children and fails closed on process-slot or chronology 
 every remaining target match and the exact global chronology horizon through the
 event's final target, reports interleaved other-event matches as transit work, and
 only completes after canonical Owned Tournament Ranking Source closure.
-Next Week / Full Season remain compatibility actions until they are composed from
-canonical process/transition boundaries rather than legacy iteration order. See
+**Next Week is now canonical**: one reviewed durable parent freezes every
+remaining current-week V2 match slot plus the target Ranking Transition Authority,
+executes sport through deterministic Next Slot children, then freezes and executes
+the existing atomic Week Transition. Known non-progress prerequisites fail the wider
+preview closed; later legitimate checkpoints return resumable blocked progress while
+preserving the exact parent command. Week 61 remains a Season Transition boundary.
+Full Season remains compatibility-only until it composes these canonical week/season
+boundaries with progressive validation. See
 `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`,
-`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md` and
-`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md`.
+`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`,
+`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md` and
+`docs/AUTHORITATIVE_WEEK_ORCHESTRATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

@@ -124,6 +124,13 @@ season/final-week/empty-week/Week-61 child Command IDs, available preview finger
 and abandonment audit. It is read-only and derived from the durable parent receipt;
 it does not reopen, retry or mutate the orchestration.
 
+
+While a Full Simulation parent is pending, Admin periodically refreshes the pending
+parent collection and the visible history/detail inspection so durable changes made
+from another tab/process become visible without a page reload. Canonical mutations
+also invalidate pending/history/detail queries immediately; completed or abandoned
+history does not poll once no pending parent remains.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

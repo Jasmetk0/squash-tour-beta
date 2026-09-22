@@ -366,11 +366,23 @@ export function AuthoritativeSimulationPanel({
     retry: false
   })
 
+  const pendingFullSimulationQuery = useQuery({
+    queryKey: ['authoritative-full-simulation-pending', runId, branchId],
+    queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId),
+    enabled,
+    retry: false,
+    refetchInterval: enabled ? 5000 : false
+  })
+
   const fullSimulationHistoryQuery = useQuery({
     queryKey: ['authoritative-full-simulation-history', runId, branchId],
     queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId),
     enabled,
-    retry: false
+    retry: false,
+    refetchInterval:
+      enabled && Boolean(pendingFullSimulationQuery.data?.operations.length)
+        ? 5000
+        : false
   })
 
   const fullSimulationParentDetailQuery = useQuery({
@@ -387,14 +399,13 @@ export function AuthoritativeSimulationPanel({
         fullSimulationHistorySelection as string
       ),
     enabled: Boolean(enabled && fullSimulationHistorySelection),
-    retry: false
-  })
-
-  const pendingFullSimulationQuery = useQuery({
-    queryKey: ['authoritative-full-simulation-pending', runId, branchId],
-    queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId),
-    enabled,
-    retry: false
+    retry: false,
+    refetchInterval:
+      enabled &&
+      Boolean(fullSimulationHistorySelection) &&
+      Boolean(pendingFullSimulationQuery.data?.operations.length)
+        ? 5000
+        : false
   })
 
   const seasonTransitionPreflightQuery = useQuery({
@@ -593,6 +604,7 @@ export function AuthoritativeSimulationPanel({
       queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-pending', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-history', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-parent-detail', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }

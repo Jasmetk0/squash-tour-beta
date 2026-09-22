@@ -1519,3 +1519,12 @@ parent detail. Admin can see the receipt request fingerprint, Saved Revision bou
 IDs, canonical child Command IDs across season/final-week/empty-week/Week-61 work,
 available preview fingerprint and abandonment audit without mutating or reopening the
 parent.
+
+
+## Full Simulation audit freshness
+
+While a canonical Full Simulation parent is pending, Simulation Admin periodically
+refreshes pending/history/detail inspection so durable receipt changes from another
+tab or process appear without a page reload. Relevant canonical mutations also
+invalidate all three query surfaces immediately. Polling stops for history/detail
+once no pending parent remains.

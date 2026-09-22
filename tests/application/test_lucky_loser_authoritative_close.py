@@ -260,8 +260,8 @@ def test_real_qualification_lucky_loser_continues_to_canonical_tournament_close(
         run_id="run",
         branch_id="branch",
     )
-    pre_ll_schedule = WeekSimulationSchedule.model_validate(
-        pre_ll_proposal["schedule"]
+    pre_ll_schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(pre_ll_proposal["schedule"], sort_keys=True, separators=(",", ":"))
     )
     q_specs = tuple(
         slot
@@ -367,8 +367,8 @@ def test_real_qualification_lucky_loser_continues_to_canonical_tournament_close(
         run_id="run",
         branch_id="branch",
     )
-    post_ll_schedule = WeekSimulationSchedule.model_validate(
-        post_ll_proposal["schedule"]
+    post_ll_schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(post_ll_proposal["schedule"], sort_keys=True, separators=(",", ":"))
     )
     assert tuple(
         (slot.ordinal, slot.group_ids, slot.draw_phase, slot.round_number)

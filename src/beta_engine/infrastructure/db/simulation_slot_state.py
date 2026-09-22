@@ -86,9 +86,15 @@ def _validate_command_rows_shape(rows):
                     )
 
             historical_schema = payload["schema_version"]
-            if historical_schema == "authoritative_simulation_historical_fork_receipt.v2":
+            if (
+                historical_schema
+                == "authoritative_simulation_historical_fork_receipt.v2"
+            ):
                 target_base_revision_id = payload.get("target_base_revision_id")
-                if not isinstance(target_base_revision_id, str) or not target_base_revision_id.strip():
+                if (
+                    not isinstance(target_base_revision_id, str)
+                    or not target_base_revision_id.strip()
+                ):
                     raise ValueError(
                         "Saved historical simulation fork receipt target revision is corrupt"
                     )

@@ -199,7 +199,7 @@ def remap_saved_tour_entry_triggers_component(
     run_id: str,
     source_branch_id: str,
     target_branch_id: str,
-    application_submission_fingerprint_map: dict[str, str],
+    application_submission_identity_map: dict[str, tuple[str, str]],
 ) -> tuple[dict | None, dict[str, str]]:
     """Retarget first Tour-entry triggers backed by valid application submissions."""
 
@@ -219,7 +219,10 @@ def remap_saved_tour_entry_triggers_component(
                 "Player Tour-entry trigger kind requires a separate target evidence remap"
             )
         try:
-            target_source_fingerprint = application_submission_fingerprint_map[
+            (
+                target_source_evidence_id,
+                target_source_fingerprint,
+            ) = application_submission_identity_map[
                 trigger.source_evidence_fingerprint
             ]
         except KeyError as exc:
@@ -227,6 +230,10 @@ def remap_saved_tour_entry_triggers_component(
                 "Player Tour-entry trigger references application submission "
                 "without a target mapping"
             ) from exc
+        if trigger.source_evidence_id != target_source_evidence_id:
+            raise ValueError(
+                "Player Tour-entry trigger application id differs from mapped submission"
+            )
         mapped = trigger.model_copy(
             update={
                 "branch_id": target_branch_id,

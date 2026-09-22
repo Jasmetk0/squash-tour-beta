@@ -5225,8 +5225,10 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Full Simulation parent receipt disappeared")
                 frozen_now = json.loads(parent.result_json)
                 week_payload = FINAL_WEEK.model_dump(mode="json")
+                progress_changed = False
                 if week_payload not in frozen_now["final_completed_weeks"]:
                     frozen_now["final_completed_weeks"].append(week_payload)
+                    progress_changed = True
                 mutated_final_range = bool(
                     frozen_now["final_week_children"]
                     or frozen_now["final_empty_week_children"]
@@ -5242,9 +5244,12 @@ class AuthoritativeRunSimulationDriver:
                     frozen_now["final_boundary_position_fingerprint"] = (
                         position.position_fingerprint
                     )
+                    progress_changed = True
+                if progress_changed:
                     parent.result_json = json.dumps(
                         frozen_now, sort_keys=True, separators=(",", ":")
                     )
+                if mutated_final_range and boundary_head is None:
                     frozen = frozen_now
                     return self._full_progress_payload(
                         command=command,

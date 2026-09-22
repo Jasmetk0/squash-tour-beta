@@ -1031,11 +1031,14 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
         assert receipt is not None
         stored = json.loads(receipt.result_json)
         evidence = stored["_request_evidence"]
-        assert evidence == {
-            "schema_version": "authoritative_simulation_request_evidence.v1",
-            "mode": "slot",
-            "command": command.model_dump(mode="json"),
-        }
+        assert evidence["schema_version"] == (
+            "authoritative_simulation_request_evidence.v2"
+        )
+        assert evidence["mode"] == "slot"
+        assert evidence["command"] == command.model_dump(mode="json")
+        assert fingerprint(evidence["opening_position_basis"]) == (
+            command.expected_position_fingerprint
+        )
         assert receipt.request_fingerprint == fingerprint(
             {"mode": "slot", "command": command.model_dump(mode="json")}
         )
@@ -1056,6 +1059,9 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
     retry = driver.simulate_next_slot(command)
     assert retry == first
     assert "_request_evidence" not in retry
+
+    visible_position = driver.position(run_id="run", branch_id="branch")
+    assert "position_basis" not in visible_position.model_dump(mode="json")
 
 
 def test_next_slot_partial_commit_reopens_and_resumes(tmp_path):

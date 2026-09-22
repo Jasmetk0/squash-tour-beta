@@ -695,6 +695,7 @@ class AuthoritativeSimulationPosition(FrozenInput):
     run_id: str
     branch_id: str
     current_week: RankingWeek
+    position_basis: dict[str, Any] | None = Field(default=None, exclude=True)
     current_slot_kind: Literal["entry", "match"] | None = None
     current_slot_id: str | None
     slot_ordinal: int | None
@@ -5807,12 +5808,20 @@ class AuthoritativeRunSimulationDriver:
             return payload
 
     @staticmethod
-    def _simulation_receipt_request_evidence(command, *, mode: Literal["match", "slot"]) -> dict:
-        return {
-            "schema_version": "authoritative_simulation_request_evidence.v1",
+    def _simulation_receipt_request_evidence(
+        command,
+        *,
+        mode: Literal["match", "slot"],
+        opening_position_basis: dict[str, Any] | None = None,
+    ) -> dict:
+        payload = {
+            "schema_version": "authoritative_simulation_request_evidence.v2",
             "mode": mode,
             "command": command.model_dump(mode="json"),
         }
+        if opening_position_basis is not None:
+            payload["opening_position_basis"] = opening_position_basis
+        return payload
 
     @staticmethod
     def _public_simulation_receipt_result(payload: dict) -> dict:
@@ -5840,16 +5849,22 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError(
                         "simulation command ID already has a different request"
                     )
+                stored_receipt = json.loads(receipt.result_json)
                 if receipt.status == "complete":
-                    return self._public_simulation_receipt_result(
-                        json.loads(receipt.result_json)
-                    )
-                operation_targets = tuple(
-                    json.loads(receipt.result_json)["target_group_ids"]
+                    return self._public_simulation_receipt_result(stored_receipt)
+                operation_targets = tuple(stored_receipt["target_group_ids"])
+                request_evidence = stored_receipt.get(
+                    "_request_evidence",
+                    request_evidence,
                 )
             else:
                 before = self._position(session, command.run_id, command.branch_id)
                 self._validate_expected(session, command, before)
+                request_evidence = self._simulation_receipt_request_evidence(
+                    command,
+                    mode=mode,
+                    opening_position_basis=before.position_basis,
+                )
                 packages, authority_fp = self._authority_package(
                     session,
                     command.run_id,
@@ -8931,6 +8946,7 @@ class AuthoritativeRunSimulationDriver:
             transition_blockers=tuple(blockers),
             terminal_sporting_fingerprint=terminal.fingerprint if terminal else None,
             position_fingerprint=fingerprint(body),
+            position_basis=body,
         )
 
     def _ensure_current_slot(self, session, command, packages):

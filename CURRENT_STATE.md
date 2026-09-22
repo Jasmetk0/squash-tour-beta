@@ -1747,3 +1747,6 @@ request fails closed.
 Historical v1-v4 fork receipts remain read-only and cannot use this replay path. This
 keeps previously persisted audit receipts backward-compatible while making replayability
 an explicit schema capability rather than changing the meaning of older receipts.
+
+A v5 retry is result replay, not Simulation re-execution: it returns the already
+reconstructed target-owned public result and leaves authoritative state unchanged.

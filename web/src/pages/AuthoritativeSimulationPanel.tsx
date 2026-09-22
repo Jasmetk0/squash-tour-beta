@@ -26,6 +26,8 @@ import {
   simulateAuthoritativeNextMatchDay,
   previewAuthoritativeNextRound,
   simulateAuthoritativeNextRound,
+  previewAuthoritativeNextTournament,
+  simulateAuthoritativeNextTournament,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -40,6 +42,7 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
+  AuthoritativeTournamentPreview,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -181,6 +184,9 @@ export function AuthoritativeSimulationPanel({
   const [nextRoundCommandId, setNextRoundCommandId] = useState(newCommandId)
   const [nextRoundReview, setNextRoundReview] =
     useState<AuthoritativeRoundPreview | null>(null)
+  const [nextTournamentCommandId, setNextTournamentCommandId] = useState(newCommandId)
+  const [nextTournamentReview, setNextTournamentReview] =
+    useState<AuthoritativeTournamentPreview | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -334,6 +340,8 @@ export function AuthoritativeSimulationPanel({
     setNextMatchDayReview(null)
     setNextRoundCommandId(newCommandId())
     setNextRoundReview(null)
+    setNextTournamentCommandId(newCommandId())
+    setNextTournamentReview(null)
     setReconstructionCandidateCount('10')
     setReconstructionWinnerId('')
     setReconstructionMatchScore('')
@@ -402,6 +410,8 @@ export function AuthoritativeSimulationPanel({
     setNextMatchDayReview(null)
     setNextRoundCommandId(newCommandId())
     setNextRoundReview(null)
+    setNextTournamentCommandId(newCommandId())
+    setNextTournamentReview(null)
     setWeekTransitionCommandId(newCommandId())
     setWeekTransitionReview(null)
     setWeekTransitionCommitted(false)
@@ -855,6 +865,55 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const nextTournamentPreviewMutation = useMutation({
+    mutationFn: () => previewAuthoritativeNextTournament(runId, branchId),
+    onSuccess: (preview) => setNextTournamentReview(preview),
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextTournamentReview(null)
+        setNextTournamentCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const nextTournamentMutation = useMutation({
+    mutationFn: () => {
+      if (!nextTournamentReview) {
+        throw new Error('Review the current canonical Tournament before simulation.')
+      }
+      return simulateAuthoritativeNextTournament(runId, branchId, {
+        command_id: nextTournamentCommandId,
+        expected_week: nextTournamentReview.week,
+        expected_position_fingerprint:
+          nextTournamentReview.expected_position_fingerprint,
+        expected_revision_id: nextTournamentReview.expected_revision_id
+      })
+    },
+    onSuccess: async (result) => {
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      setNextTournamentReview(null)
+      setNextTournamentCommandId(newCommandId())
+      setConfirmed(false)
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextTournamentReview(null)
+        setNextTournamentCommandId(newCommandId())
+        setConfirmed(false)
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+        ])
+      }
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1237,6 +1296,8 @@ export function AuthoritativeSimulationPanel({
     nextMatchDayMutation.isPending ||
     nextRoundPreviewMutation.isPending ||
     nextRoundMutation.isPending ||
+    nextTournamentPreviewMutation.isPending ||
+    nextTournamentMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1279,7 +1340,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament → Save.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -2064,6 +2125,18 @@ export function AuthoritativeSimulationPanel({
             >
               Review authoritative Next Round
             </button>
+            <button
+              type="button"
+              onClick={() => nextTournamentPreviewMutation.mutate()}
+              disabled={
+                currentEntrySlot ||
+                position.current_slot_kind !== 'match' ||
+                schedule?.schema_version !== 'week_simulation_schedule.v2' ||
+                actionPending
+              }
+            >
+              Review authoritative Next Tournament
+            </button>
           </div>
           {nextMatchDayReview ? (
             <>
@@ -2194,6 +2267,77 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {nextTournamentReview ? (
+            <>
+              <h5>Reviewed canonical Tournament · {nextTournamentReview.event_id}</h5>
+              <MetadataList
+                items={[
+                  { label: 'Event', value: nextTournamentReview.event_id },
+                  {
+                    label: 'Tournament matches',
+                    value: nextTournamentReview.target_group_ids.length
+                  },
+                  {
+                    label: 'Chronology horizon slots',
+                    value: nextTournamentReview.horizon_slot_ordinals.join(', ')
+                  },
+                  {
+                    label: 'Transit matches',
+                    value: nextTournamentReview.transit_group_ids.length
+                  },
+                  {
+                    label: 'Saved Revision',
+                    value: nextTournamentReview.expected_revision_id
+                  },
+                  {
+                    label: 'Schedule fingerprint',
+                    value: nextTournamentReview.schedule_fingerprint
+                  }
+                ]}
+              />
+              <ol aria-label="Reviewed authoritative Tournament target matches">
+                {nextTournamentReview.target_slot_ordinals.map((slotOrdinal, index) => (
+                  <li key={slotOrdinal}>
+                    Target slot {slotOrdinal}: {nextTournamentReview.target_group_ids[index]}
+                  </li>
+                ))}
+              </ol>
+              {nextTournamentReview.transit_slot_ordinals.length ? (
+                <>
+                  <p className="status">
+                    Global chronology requires these interleaved matches before the
+                    selected tournament can finish:
+                  </p>
+                  <ol aria-label="Reviewed authoritative Tournament transit matches">
+                    {nextTournamentReview.transit_slot_ordinals.map((slotOrdinal, index) => (
+                      <li key={slotOrdinal}>
+                        Transit slot {slotOrdinal}: {nextTournamentReview.transit_group_ids[index]}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextTournamentMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  Simulate reviewed authoritative Next Tournament
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextTournamentReview(null)
+                    setNextTournamentCommandId(newCommandId())
+                  }}
+                  disabled={nextTournamentMutation.isPending}
+                >
+                  Discard Tournament review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2218,6 +2362,16 @@ export function AuthoritativeSimulationPanel({
           {nextRoundMutation.error ? (
             <p className="error">
               Authoritative Next Round failed: {formatApiError(nextRoundMutation.error)}
+            </p>
+          ) : null}
+          {nextTournamentPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Tournament preview failed: {formatApiError(nextTournamentPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextTournamentMutation.error ? (
+            <p className="error">
+              Authoritative Next Tournament failed: {formatApiError(nextTournamentMutation.error)}
             </p>
           ) : null}
         </>

@@ -589,6 +589,113 @@ def test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact(tmp_
             )
 
 
+@pytest.mark.pr_critical
+def test_authoritative_next_tournament_preview_and_commit_over_http(tmp_path):
+    driver, _, week, first, second = _multi_driver_fixture(
+        tmp_path / "next-tournament-http-source"
+    )
+    server = ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'next-tournament-http.sqlite'}"
+    )
+    server.app.dependency_overrides[get_season_match_service] = lambda: (
+        driver.match_service
+    )
+    server.app.dependency_overrides[get_season_point_awards_service] = lambda: (
+        driver.awards_service
+    )
+
+    with server:
+        run_id, branch_id, revision = _create_run(
+            server,
+            display_name="HTTP canonical Next Tournament",
+        )
+        _install_owned_state(
+            server,
+            first,
+            run_id,
+            branch_id,
+            additional_packages=(second,),
+        )
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "authoritative-simulation"
+        )
+        status, proposed = _request("GET", root + "/week-schedule/proposal")
+        assert status == 200, proposed
+        adoption = {
+            "request_id": "next-tournament-http-schedule",
+            "expected_week": proposed["schedule"]["week"],
+            "expected_schedule_fingerprint": proposed[
+                "schedule_fingerprint"
+            ],
+            "expected_position_fingerprint": proposed[
+                "position_fingerprint"
+            ],
+        }
+        status, adopted = _request(
+            "POST",
+            root + "/week-schedule/adopt-proposal",
+            adoption,
+        )
+        assert status == 201, adopted
+
+        status, preview = _request(
+            "GET",
+            root + "/next-tournament/preview",
+        )
+        assert status == 200, preview
+        assert (
+            preview["schema_version"]
+            == "authoritative_tournament_preview.v1"
+        )
+        assert preview["event_id"]
+        assert preview["expected_revision_id"] == revision
+        assert preview["target_slot_ordinals"]
+        assert preview["horizon_slot_ordinals"]
+        assert (
+            preview["horizon_slot_ordinals"][0]
+            == preview["target_slot_ordinals"][0]
+        )
+        assert (
+            preview["horizon_slot_ordinals"][-1]
+            == preview["target_slot_ordinals"][-1]
+        )
+
+        command = {
+            "command_id": "http-next-tournament-1",
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview[
+                "expected_position_fingerprint"
+            ],
+            "expected_revision_id": preview["expected_revision_id"],
+        }
+        status, result = _request(
+            "POST",
+            root + "/simulate-next-tournament",
+            command,
+        )
+        assert status == 201, result
+        assert (
+            result["schema_version"]
+            == "authoritative_tournament_result.v1"
+        )
+        assert result["event_id"] == preview["event_id"]
+        assert result["target_slot_ordinals"] == preview["target_slot_ordinals"]
+        assert (
+            result["horizon_slot_ordinals"]
+            == preview["horizon_slot_ordinals"]
+        )
+        assert result["completed_slot_count"] == len(
+            preview["horizon_slot_ordinals"]
+        )
+        assert len(result["owned_tournament_source_fingerprint"]) == 64
+        assert _request(
+            "POST",
+            root + "/simulate-next-tournament",
+            command,
+        ) == (201, result)
+
+
 @pytest.mark.smoke
 def test_authoritative_simulation_http_guards_retry_and_close(tmp_path):
     server, package = _server_state(tmp_path)

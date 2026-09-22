@@ -66,6 +66,9 @@ refreshes Position/Schedule.
 
 ## Scope limits
 
-This slice does not define `Next Tournament`, `Next Week`, `Next Season` or
-`Full Simulation`. Those wider ranges must compose canonical boundaries and inherit
-their prerequisites rather than reusing the legacy branch wrapper.
+Canonical `Next Tournament` is now implemented separately in
+`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md`. It expands the same frozen
+chronology-horizon contract from one round identity to the full current event and
+requires canonical tournament-source closure. `Next Week`, `Next Season` and
+`Full Simulation` remain wider follow-up ranges that must compose canonical
+boundaries rather than reusing the legacy branch wrapper.

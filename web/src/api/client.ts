@@ -137,6 +137,9 @@ import type {
   AuthoritativeRoundPreview,
   AuthoritativeRoundCommandPayload,
   AuthoritativeRoundResult,
+  AuthoritativeTournamentPreview,
+  AuthoritativeTournamentCommandPayload,
+  AuthoritativeTournamentResult,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1581,6 +1584,58 @@ export async function simulateAuthoritativeNextRound(
     !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint)
   ) {
     throw new Error('Authoritative Round result is invalid.')
+  }
+  return data
+}
+
+export async function previewAuthoritativeNextTournament(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeTournamentPreview> {
+  const data = await request<AuthoritativeTournamentPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/next-tournament/preview'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_tournament_preview.v1' ||
+    !data.event_id ||
+    data.target_slot_ordinals.length === 0 ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    data.horizon_slot_ordinals.length === 0 ||
+    data.horizon_slot_ordinals[0] !== data.target_slot_ordinals[0] ||
+    data.horizon_slot_ordinals[
+      data.horizon_slot_ordinals.length - 1
+    ] !== data.target_slot_ordinals[data.target_slot_ordinals.length - 1] ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Tournament preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeNextTournament(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeTournamentCommandPayload
+): Promise<AuthoritativeTournamentResult> {
+  const data = await request<AuthoritativeTournamentResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-tournament',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (
+    data.schema_version !== 'authoritative_tournament_result.v1' ||
+    !data.event_id ||
+    data.completed_slot_count !== data.horizon_slot_ordinals.length ||
+    data.child_command_ids.length !== data.horizon_slot_ordinals.length ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.owned_tournament_source_fingerprint)
+  ) {
+    throw new Error('Authoritative Tournament result is invalid.')
   }
   return data
 }

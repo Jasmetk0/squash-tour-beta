@@ -287,10 +287,15 @@ preserves the same parent command ID across ordinary response-loss retry.
 from the adopted V2 schedule, freezes the exact global chronology horizon through the
 last remaining target match, reports interleaved transit matches, resumes through
 deterministic Next Slot children and fails closed on process-slot or chronology drift.
-Next Week / Next Tournament / Full Season remain compatibility actions until they are
-composed from canonical boundaries rather than legacy iteration order. See
-`docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md` and
-`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`.
+**Next Tournament is now canonical** as well: it freezes the current event ID,
+every remaining target match and the exact global chronology horizon through the
+event's final target, reports interleaved other-event matches as transit work, and
+only completes after canonical Owned Tournament Ranking Source closure.
+Next Week / Full Season remain compatibility actions until they are composed from
+canonical process/transition boundaries rather than legacy iteration order. See
+`docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`,
+`docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md` and
+`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

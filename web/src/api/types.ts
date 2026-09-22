@@ -1260,6 +1260,49 @@ export type AuthoritativeRoundResult = {
   adoption: 'committed'
 }
 
+export type AuthoritativeTournamentPreview = {
+  schema_version: 'authoritative_tournament_preview.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  event_id: string
+  schedule_fingerprint: string
+  target_slot_ordinals: number[]
+  target_group_ids: string[]
+  horizon_slot_ordinals: number[]
+  transit_slot_ordinals: number[]
+  transit_group_ids: string[]
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  preview_fingerprint: string
+}
+
+export type AuthoritativeTournamentCommandPayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+}
+
+export type AuthoritativeTournamentResult = {
+  schema_version: 'authoritative_tournament_result.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  event_id: string
+  schedule_fingerprint: string
+  target_slot_ordinals: number[]
+  target_group_ids: string[]
+  horizon_slot_ordinals: number[]
+  transit_slot_ordinals: number[]
+  transit_group_ids: string[]
+  child_command_ids: string[]
+  completed_slot_count: number
+  owned_tournament_source_fingerprint: string
+  position: AuthoritativeSimulationPosition
+  adoption: 'committed'
+}
+
 export type MatchReconstructionGameScore = {
   player_a_points: number
   player_b_points: number

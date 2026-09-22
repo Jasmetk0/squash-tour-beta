@@ -371,7 +371,7 @@ def remap_saved_application_submissions_component(
     source_branch_id: str,
     target_branch_id: str,
     validation_fingerprint_map: dict[str, str],
-) -> tuple[dict | None, dict[str, str]]:
+) -> tuple[dict | None, dict[str, tuple[str, str]]]:
     """Retarget valid application submissions through mapped validation authority."""
 
     source = load_saved_application_submissions(
@@ -383,7 +383,7 @@ def remap_saved_application_submissions_component(
         return None, {}
 
     target = []
-    fingerprint_map: dict[str, str] = {}
+    identity_map: dict[str, tuple[str, str]] = {}
     for submission in source:
         try:
             target_validation_fingerprint = validation_fingerprint_map[
@@ -401,7 +401,10 @@ def remap_saved_application_submissions_component(
             }
         )
         target.append(mapped)
-        fingerprint_map[submission.fingerprint] = mapped.fingerprint
+        identity_map[submission.fingerprint] = (
+            mapped.application_id,
+            mapped.fingerprint,
+        )
 
     target_tuple = tuple(target)
     return (
@@ -411,7 +414,7 @@ def remap_saved_application_submissions_component(
                 item.model_dump(mode="json") for item in target_tuple
             ],
         },
-        fingerprint_map,
+        identity_map,
     )
 
 

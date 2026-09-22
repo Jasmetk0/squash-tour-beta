@@ -2181,6 +2181,28 @@ export function AuthoritativeSimulationPanel({
             />{' '}
             I reviewed the current canonical position and Saved Revision head.
           </label>
+          <div className="form-grid">
+            <label>
+              Next Week operator
+              <input
+                aria-label="Next Week operator"
+                value={nextWeekOperator}
+                maxLength={128}
+                disabled={Boolean(nextWeekReview) || nextWeekMutation.isPending}
+                onChange={(event) => setNextWeekOperator(event.target.value)}
+              />
+            </label>
+            <label>
+              Next Week audit reason
+              <textarea
+                aria-label="Next Week audit reason"
+                value={nextWeekReason}
+                maxLength={2000}
+                disabled={Boolean(nextWeekReview) || nextWeekMutation.isPending}
+                onChange={(event) => setNextWeekReason(event.target.value)}
+              />
+            </label>
+          </div>
           <div className="quick-actions">
             <button
               type="button"
@@ -2231,6 +2253,21 @@ export function AuthoritativeSimulationPanel({
               }
             >
               Review authoritative Next Tournament
+            </button>
+            <button
+              type="button"
+              onClick={() => nextWeekPreviewMutation.mutate()}
+              disabled={
+                currentEntrySlot ||
+                position.current_week.week === 61 ||
+                !nextWeekOperator.trim() ||
+                !nextWeekReason.trim() ||
+                (position.current_slot_kind === 'match' &&
+                  schedule?.schema_version !== 'week_simulation_schedule.v2') ||
+                actionPending
+              }
+            >
+              Review authoritative Next Week
             </button>
           </div>
           {nextMatchDayReview ? (
@@ -2433,6 +2470,87 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {nextWeekReview ? (
+            <>
+              <h5>
+                Reviewed canonical Week · S{nextWeekReview.week.season_index} W
+                {nextWeekReview.week.week} → W{nextWeekReview.target_week.week}
+              </h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Current week',
+                    value: `Season index ${nextWeekReview.week.season_index} · Week ${nextWeekReview.week.week}`
+                  },
+                  {
+                    label: 'Target week',
+                    value: `Season index ${nextWeekReview.target_week.season_index} · Week ${nextWeekReview.target_week.week}`
+                  },
+                  {
+                    label: 'Remaining competitive slots',
+                    value: nextWeekReview.target_slot_ordinals.length
+                  },
+                  {
+                    label: 'Ranking authority',
+                    value: nextWeekReview.ranking_authority_mode
+                  },
+                  {
+                    label: 'Saved Revision',
+                    value: nextWeekReview.expected_revision_id
+                  },
+                  {
+                    label: 'Ranking authority fingerprint',
+                    value: nextWeekReview.ranking_authority_fingerprint
+                  }
+                ]}
+              />
+              {nextWeekReview.target_slot_ordinals.length ? (
+                <p className="status">
+                  Frozen remaining global slots: {nextWeekReview.target_slot_ordinals.join(', ')}.
+                </p>
+              ) : (
+                <p className="status">
+                  Sporting work is already complete; this reviewed range starts at Week Transition.
+                </p>
+              )}
+              {nextWeekReview.initial_transition_blockers.length ? (
+                <p className="status">
+                  Expected in-progress blockers at review: {
+                    nextWeekReview.initial_transition_blockers.join(', ')
+                  }.
+                </p>
+              ) : null}
+              {nextWeekProgress ? (
+                <p role="alert" className="error">
+                  Next Week paused after {nextWeekProgress.completed_slot_count} sporting slot(s).
+                  Resolve: {nextWeekProgress.transition_blockers.join(', ')}. Retry this exact
+                  reviewed command afterward.
+                </p>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextWeekMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  {nextWeekProgress
+                    ? 'Retry reviewed authoritative Next Week'
+                    : 'Simulate reviewed authoritative Next Week'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextWeekReview(null)
+                    setNextWeekProgress(null)
+                    setNextWeekCommandId(newCommandId())
+                  }}
+                  disabled={nextWeekMutation.isPending}
+                >
+                  Discard Next Week review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2467,6 +2585,17 @@ export function AuthoritativeSimulationPanel({
           {nextTournamentMutation.error ? (
             <p className="error">
               Authoritative Next Tournament failed: {formatApiError(nextTournamentMutation.error)}
+            </p>
+          ) : null}
+          {nextWeekPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Week preview failed: {formatApiError(nextWeekPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextWeekMutation.error ? (
+            <p className="error">
+              Authoritative Next Week failed: {formatApiError(nextWeekMutation.error)}.
+              The reviewed command is preserved for exact retry.
             </p>
           ) : null}
         </>

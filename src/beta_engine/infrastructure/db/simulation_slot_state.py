@@ -247,6 +247,7 @@ def _validate_command_rows_shape(rows):
         if schema_version not in {
             "authoritative_simulation_request_evidence.v1",
             "authoritative_simulation_request_evidence.v2",
+            "authoritative_simulation_request_evidence.v3",
         }:
             raise ValueError("Saved simulation command request evidence schema is invalid")
         mode = evidence.get("mode")
@@ -270,7 +271,10 @@ def _validate_command_rows_shape(rows):
             raise ValueError(
                 "Saved simulation command request evidence fingerprint is corrupt"
             )
-        if schema_version == "authoritative_simulation_request_evidence.v2":
+        if schema_version in {
+            "authoritative_simulation_request_evidence.v2",
+            "authoritative_simulation_request_evidence.v3",
+        }:
             opening_position_basis = evidence.get("opening_position_basis")
             if not isinstance(opening_position_basis, dict):
                 raise ValueError(
@@ -293,6 +297,42 @@ def _validate_command_rows_shape(rows):
                 raise ValueError(
                     "Saved simulation command opening Position basis is corrupt"
                 )
+            if schema_version == "authoritative_simulation_request_evidence.v3":
+                closing_position_basis = evidence.get("closing_position_basis")
+                if not isinstance(closing_position_basis, dict):
+                    raise ValueError(
+                        "Saved simulation command closing Position basis is missing"
+                    )
+                if row.status != "complete":
+                    raise ValueError(
+                        "Saved simulation command closing Position evidence requires a complete receipt"
+                    )
+                result_position_fingerprint = payload.get("position_fingerprint")
+                if (
+                    not isinstance(result_position_fingerprint, str)
+                    or hashlib.sha256(
+                        json.dumps(
+                            closing_position_basis,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    != result_position_fingerprint
+                ):
+                    raise ValueError(
+                        "Saved simulation command closing Position basis is corrupt"
+                    )
+                closing_scope = closing_position_basis.get("scope")
+                if (
+                    not isinstance(closing_scope, list)
+                    or len(closing_scope) != 3
+                    or closing_scope[0] != row.run_id
+                    or closing_scope[1] != row.branch_id
+                    or not isinstance(closing_scope[2], int)
+                ):
+                    raise ValueError(
+                        "Saved simulation command closing Position scope is corrupt"
+                    )
 
 
 def _validate_entry_field_rows(rows):

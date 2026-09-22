@@ -1528,3 +1528,17 @@ refreshes pending/history/detail inspection so durable receipt changes from anot
 tab or process appear without a page reload. Relevant canonical mutations also
 invalidate all three query surfaces immediately. Polling stops for history/detail
 once no pending parent remains.
+
+
+## Dynamic qualifier-vs-BYE authoritative flow
+
+A repaired Main Draw BYE may now sit opposite a canonical Qualification placeholder
+without creating a fake executable match. The topology collapses the non-executable
+BYE node onto the linked Qualification terminal feeder; authoritative scheduling
+contains only real competitive groups. After the Qualification feeder resolves,
+canonical tournament close materializes the Main BYE as historical result evidence,
+preserves the qualifier promotion identity, and writes one Run/Branch-owned
+Tournament Result + Point Award source with the Qualification winner's Main BYE and
+Qualification component both intact. The PR-critical acceptance proves the path from
+Ranking Snapshot -> Entry Field -> Draw -> repaired Main BYE -> schedule -> simulated
+groups -> Owned Tournament Ranking Source.

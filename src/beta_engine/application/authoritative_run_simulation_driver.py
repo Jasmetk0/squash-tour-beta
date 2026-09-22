@@ -8621,7 +8621,10 @@ class AuthoritativeRunSimulationDriver:
             and not entry_slot_ordinals
             and not wc_slot_ordinals
             and len(packages) == 1
-            and len(plans) == 3
+            and not packages[0].qualification_matches
+            and len(packages[0].main_draw_matches) == 3
+            and {match.match_id for match in packages[0].main_draw_matches}
+            == set(plans)
         ):
             matches = sorted(
                 packages[0].main_draw_matches,

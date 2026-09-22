@@ -4477,6 +4477,27 @@ def test_simulation_command_receipt_fork_is_read_only_historical_audit():
     assert payload["source_request_fingerprint"] == source_fp
     assert payload["source_status"] == "complete"
     assert payload["source_result"]["_request_evidence"]["command"] == source_command
+    assert payload["source_request_evidence_fingerprint"] == fingerprint(
+        payload["source_result"]["_request_evidence"]
+    )
+
+    from beta_engine.infrastructure.db.simulation_slot_state import (
+        _validate_command_rows_shape,
+    )
+
+    _validate_command_rows_shape([target_row])
+    tampered = json.loads(target_row.result_json)
+    tampered["source_result"]["_request_evidence"]["mode"] = "match"
+    target_row.result_json = json.dumps(
+        tampered,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation fork receipt request evidence is corrupt",
+    ):
+        _validate_command_rows_shape([target_row])
 
 
 @pytest.mark.pr_critical

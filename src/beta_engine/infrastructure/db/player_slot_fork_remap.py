@@ -121,6 +121,13 @@ def _retarget_simulation_command_receipt_as_historical(
             "Simulation command receipt result must be an object"
         )
 
+    request_evidence = source_result.get("_request_evidence")
+    request_evidence_fingerprint = (
+        fingerprint(request_evidence)
+        if isinstance(request_evidence, dict)
+        else None
+    )
+
     historical = {
         "schema_version": "authoritative_simulation_historical_fork_receipt.v1",
         "run_id": row.run_id,
@@ -129,6 +136,7 @@ def _retarget_simulation_command_receipt_as_historical(
         "source_branch_id": row.branch_id,
         "source_status": row.status,
         "source_request_fingerprint": row.request_fingerprint,
+        "source_request_evidence_fingerprint": request_evidence_fingerprint,
         "source_result": source_result,
         "retryable": False,
         "provenance": (

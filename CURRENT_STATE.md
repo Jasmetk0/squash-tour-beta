@@ -1631,3 +1631,17 @@ the command's expected Position fingerprint.
 This closes the next prerequisite for target-Branch exact-retry reconstruction:
 receipt remap can now reason from the original Position inputs instead of treating the
 opening Position fingerprint as an opaque hash.
+
+
+
+## Tamper-evident Simulation request evidence across Branch forks
+
+New materialized Branch-fork historical Simulation receipts now bind the preserved
+private request evidence with its own canonical fingerprint. Saved Revision validation
+recomputes that fingerprint from the nested source receipt and rejects any fork history
+whose request evidence was changed, removed or replaced after remapping.
+
+Historical fork receipts created before this integrity field remain readable. Retry is
+still deliberately disabled: this step protects the opening Position evidence added in
+the previous slice so later target-Branch request reconstruction can trust the source
+inputs it consumes.

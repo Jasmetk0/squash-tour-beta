@@ -8912,6 +8912,7 @@ class AuthoritativeRunSimulationDriver:
             run_id=run_id,
             branch_id=branch_id,
             current_week=week,
+            position_basis=body,
             current_slot_kind=(
                 "entry"
                 if entry_is_current

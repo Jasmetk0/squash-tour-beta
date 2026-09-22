@@ -3243,6 +3243,7 @@ class AuthoritativeRunSimulationDriver:
             self.simulate_next_slot(child)
 
         transition_payload = None
+        transition_command_payload = None
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
@@ -3296,26 +3297,71 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError(
                         "Next Week Week Transition boundary changed before execution"
                     )
-                transition_preview = AuthoritativeWeekTransitionRunner(
-                    self.factory, self.awards_service
-                ).preview(transition_command)
-                transition_payload = {
-                    "command": transition_command.model_dump(mode="json"),
-                    "request_fingerprint": transition_command.fingerprint,
-                    "expected_ranking_fingerprint": (
-                        transition_preview.official_ranking_fingerprint
-                    ),
-                    "expected_lifecycle_fingerprint": (
-                        transition_preview.player_lifecycle_fingerprint
-                    ),
-                    "expected_sporting_fingerprint": (
-                        transition_preview.player_sporting_fingerprint
-                    ),
-                }
-                frozen["week_transition"] = transition_payload
-                parent.result_json = json.dumps(
-                    frozen, sort_keys=True, separators=(",", ":")
+                transition_command_payload = transition_command.model_dump(
+                    mode="json"
                 )
+
+        if transition_payload is None:
+            transition_command = AuthoritativeWeekTransitionCommand.model_validate(
+                transition_command_payload
+            )
+            transition_preview = AuthoritativeWeekTransitionRunner(
+                self.factory, self.awards_service
+            ).preview(transition_command)
+            candidate_transition_payload = {
+                "command": transition_command.model_dump(mode="json"),
+                "request_fingerprint": transition_command.fingerprint,
+                "expected_ranking_fingerprint": (
+                    transition_preview.official_ranking_fingerprint
+                ),
+                "expected_lifecycle_fingerprint": (
+                    transition_preview.player_lifecycle_fingerprint
+                ),
+                "expected_sporting_fingerprint": (
+                    transition_preview.player_sporting_fingerprint
+                ),
+            }
+
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                self._require_writable_scope(
+                    session, command.run_id, command.branch_id
+                )
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Week parent receipt disappeared")
+                if parent.status == "complete":
+                    return json.loads(parent.result_json)
+                frozen = json.loads(parent.result_json)
+                transition_payload = frozen.get("week_transition")
+                if transition_payload is None:
+                    position = self._position(
+                        session, command.run_id, command.branch_id
+                    )
+                    if (
+                        position.current_week != command.expected_week
+                        or not position.week_ready_for_transition
+                    ):
+                        raise ValueError(
+                            "Next Week transition readiness changed during preview"
+                        )
+                    current_transition = derive_persisted_week_transition_command(
+                        session,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=self._week_transition_child_command_id(
+                            command.command_id
+                        ),
+                    )
+                    if current_transition.fingerprint != transition_command.fingerprint:
+                        raise ValueError(
+                            "Next Week Week Transition changed during preview"
+                        )
+                    frozen["week_transition"] = candidate_transition_payload
+                    parent.result_json = json.dumps(
+                        frozen, sort_keys=True, separators=(",", ":")
+                    )
+                    transition_payload = candidate_transition_payload
 
         transition_command = AuthoritativeWeekTransitionCommand.model_validate(
             transition_payload["command"]

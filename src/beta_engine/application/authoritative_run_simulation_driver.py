@@ -5840,6 +5840,46 @@ class AuthoritativeRunSimulationDriver:
         result.pop("_request_evidence", None)
         return result
 
+    @staticmethod
+    def _historical_simulation_retry_result(
+        receipt: AuthoritativeSimulationCommandModel,
+        *,
+        command,
+        mode: Literal["match", "slot"],
+        request_fingerprint: str,
+    ) -> dict:
+        try:
+            payload = json.loads(receipt.result_json)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("historical simulation receipt JSON is corrupt") from exc
+        if (
+            not isinstance(payload, dict)
+            or payload.get("schema_version")
+            != "authoritative_simulation_historical_fork_receipt.v5"
+            or payload.get("retryable") is not True
+        ):
+            raise ValueError("historical simulation command is not retryable")
+
+        target_request_fingerprint = payload.get("target_request_fingerprint")
+        target_evidence = payload.get("target_request_evidence")
+        target_result = payload.get("target_result")
+        target_result_fingerprint = payload.get("target_result_fingerprint")
+        if (
+            target_request_fingerprint != request_fingerprint
+            or not isinstance(target_evidence, dict)
+            or not isinstance(target_result, dict)
+            or not isinstance(target_result_fingerprint, str)
+        ):
+            raise ValueError("simulation command ID already has a different request")
+        if (
+            target_evidence.get("mode") != mode
+            or target_evidence.get("command") != command.model_dump(mode="json")
+        ):
+            raise ValueError("simulation command ID already has a different request")
+        if fingerprint(target_result) != target_result_fingerprint:
+            raise ValueError("historical simulation target result is corrupt")
+        return dict(target_result)
+
     def _mutate(self, command, *, mode: Literal["match", "slot"], fault_at=None):
         request_evidence = self._simulation_receipt_request_evidence(
             command,
@@ -5856,6 +5896,13 @@ class AuthoritativeRunSimulationDriver:
             key = (command.run_id, command.branch_id, command.command_id)
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if receipt:
+                if receipt.status == "historical_fork":
+                    return self._historical_simulation_retry_result(
+                        receipt,
+                        command=command,
+                        mode=mode,
+                        request_fingerprint=request_fp,
+                    )
                 if receipt.request_fingerprint != request_fp:
                     raise ValueError(
                         "simulation command ID already has a different request"

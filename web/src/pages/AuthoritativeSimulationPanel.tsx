@@ -28,6 +28,8 @@ import {
   simulateAuthoritativeNextRound,
   previewAuthoritativeNextTournament,
   simulateAuthoritativeNextTournament,
+  previewAuthoritativeNextWeek,
+  simulateAuthoritativeNextWeek,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -43,6 +45,8 @@ import type {
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
+  AuthoritativeWeekPreview,
+  AuthoritativeWeekProgress,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -187,6 +191,13 @@ export function AuthoritativeSimulationPanel({
   const [nextTournamentCommandId, setNextTournamentCommandId] = useState(newCommandId)
   const [nextTournamentReview, setNextTournamentReview] =
     useState<AuthoritativeTournamentPreview | null>(null)
+  const [nextWeekCommandId, setNextWeekCommandId] = useState(newCommandId)
+  const [nextWeekOperator, setNextWeekOperator] = useState('')
+  const [nextWeekReason, setNextWeekReason] = useState('')
+  const [nextWeekReview, setNextWeekReview] =
+    useState<AuthoritativeWeekPreview | null>(null)
+  const [nextWeekProgress, setNextWeekProgress] =
+    useState<AuthoritativeWeekProgress | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -342,6 +353,11 @@ export function AuthoritativeSimulationPanel({
     setNextRoundReview(null)
     setNextTournamentCommandId(newCommandId())
     setNextTournamentReview(null)
+    setNextWeekCommandId(newCommandId())
+    setNextWeekOperator('')
+    setNextWeekReason('')
+    setNextWeekReview(null)
+    setNextWeekProgress(null)
     setReconstructionCandidateCount('10')
     setReconstructionWinnerId('')
     setReconstructionMatchScore('')
@@ -914,6 +930,83 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const nextWeekPreviewMutation = useMutation({
+    mutationFn: () => {
+      const operator = nextWeekOperator.trim()
+      const reason = nextWeekReason.trim()
+      if (!operator || !reason) {
+        throw new Error('Next Week requires an operator label and audit reason.')
+      }
+      return previewAuthoritativeNextWeek(runId, branchId, {
+        command_id: nextWeekCommandId,
+        operator_label: operator,
+        audit_reason: reason
+      })
+    },
+    onSuccess: (preview) => {
+      setNextWeekReview(preview)
+      setNextWeekProgress(null)
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextWeekReview(null)
+        setNextWeekProgress(null)
+        setNextWeekCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const nextWeekMutation = useMutation({
+    mutationFn: () => {
+      if (!nextWeekReview) {
+        throw new Error('Review the current canonical Week before simulation.')
+      }
+      return simulateAuthoritativeNextWeek(runId, branchId, {
+        command_id: nextWeekCommandId,
+        operator_label: nextWeekOperator.trim(),
+        audit_reason: nextWeekReason.trim(),
+        expected_week: nextWeekReview.week,
+        expected_position_fingerprint:
+          nextWeekReview.expected_position_fingerprint,
+        expected_revision_id: nextWeekReview.expected_revision_id,
+        expected_preview_fingerprint: nextWeekReview.preview_fingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      if (result.schema_version === 'authoritative_week_progress.v1') {
+        setNextWeekProgress(result)
+        queryClient.setQueryData(
+          ['authoritative-simulation-position', runId, branchId],
+          result.position
+        )
+        await refreshCanonicalSimulation()
+        return
+      }
+      setNextWeekProgress(null)
+      setNextWeekReview(null)
+      setNextWeekCommandId(newCommandId())
+      setNextWeekOperator('')
+      setNextWeekReason('')
+      setConfirmed(false)
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] })
+      ])
+    },
+    onError: async () => {
+      // Keep the exact reviewed parent command. A 409 or lost response can happen
+      // after durable child/transition work committed, so retry must reuse it.
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+      ])
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1298,6 +1391,8 @@ export function AuthoritativeSimulationPanel({
     nextRoundMutation.isPending ||
     nextTournamentPreviewMutation.isPending ||
     nextTournamentMutation.isPending ||
+    nextWeekPreviewMutation.isPending ||
+    nextWeekMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1340,7 +1435,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week → Save.
         It does not use the legacy simulation-run binding.
       </p>
 

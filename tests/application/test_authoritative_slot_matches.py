@@ -4872,24 +4872,68 @@ def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_p
     )
 
     driver, factory, week = _driver_fixture(tmp_path / "historical-v5-retry")
-    source_command, source_position = _driver_command(
-        driver,
-        week,
-        "historical-retry-command",
-    )
-    opening_basis = source_position.position_basis
-    assert isinstance(opening_basis, dict)
-    closing_basis = dict(opening_basis)
-    source_result = {
-        **source_position.model_dump(mode="json"),
-        "position_fingerprint": fingerprint(closing_basis),
+    opening_basis = {
+        "scope": ["run", "branch", week.ordinal],
+        "schedule": None,
+        "entry_slot_ordinals": [],
+        "wc_slot_ordinals": [],
+        "week_tournament_lock": None,
+        "week_tournament_lock_conflicts": [],
+        "entry_validation_slots": [],
+        "current_slot_kind": "match",
+        "current_slot_ordinal": 1,
+        "proposed_schedule_requirement": [],
+        "slots": [],
+        "groups": [],
+        "owned": [],
+        "tournament_authority": None,
+        "sporting": None,
+        "lifecycle": None,
+        "branch_head": "source-revision",
+        "draft": ["source-revision", "clean", 0],
+        "transition_authority": None,
+        "world": None,
+        "terminal": None,
+        "empty_week_context": None,
     }
+    closing_basis = {
+        **opening_basis,
+        "current_slot_kind": None,
+        "current_slot_ordinal": None,
+    }
+    source_command = AuthoritativeSimulationCommand(
+        command_id="historical-retry-command",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=fingerprint(opening_basis),
+        expected_revision_id="source-revision",
+        group_id=None,
+    )
     source_evidence = {
         "schema_version": "authoritative_simulation_request_evidence.v3",
         "mode": "slot",
         "command": source_command.model_dump(mode="json"),
         "opening_position_basis": opening_basis,
         "closing_position_basis": closing_basis,
+    }
+    source_result = {
+        "run_id": "run",
+        "branch_id": "branch",
+        "current_week": week.model_dump(mode="json"),
+        "current_slot_kind": None,
+        "current_slot_id": None,
+        "slot_ordinal": None,
+        "unresolved_group_ids": [],
+        "eligible_match_ids": [],
+        "blocked_match_ids": [],
+        "current_slot_complete": True,
+        "supported_tournament_complete": False,
+        "week_ready_for_transition": False,
+        "transition_blockers": ["tournament_source_missing"],
+        "terminal_sporting_fingerprint": None,
+        "position_fingerprint": fingerprint(closing_basis),
+        "_request_evidence": source_evidence,
     }
     source_row = AuthoritativeSimulationCommandModel(
         run_id="run",
@@ -4900,10 +4944,7 @@ def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_p
         ),
         status="complete",
         result_json=json.dumps(
-            {
-                **source_result,
-                "_request_evidence": source_evidence,
-            },
+            source_result,
             sort_keys=True,
             separators=(",", ":"),
         ),
@@ -4939,6 +4980,7 @@ def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_p
     assert target_payload["schema_version"] == (
         "authoritative_simulation_historical_fork_receipt.v5"
     )
+    assert target_payload["retryable"] is True
     target_command = AuthoritativeSimulationCommand.model_validate(
         target_payload["target_request_evidence"]["command"]
     )

@@ -1792,7 +1792,6 @@ export async function getPendingAuthoritativeFullSimulations(
   }
   for (const operation of data.operations) {
     if (
-      operation.command.command_id !== operation.review.command_id ||
       operation.command.expected_preview_fingerprint !==
         operation.review.preview_fingerprint ||
       operation.command.expected_position_fingerprint !==

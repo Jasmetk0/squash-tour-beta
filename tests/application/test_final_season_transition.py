@@ -408,6 +408,26 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     assert resumed["completed_season_count"] == 0
     assert resumed["final_completed_week_count"] == 1
 
+    competing_request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="full-simulation-competing-parent",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Second admin",
+        audit_reason="Attempt a competing complete Run parent",
+    )
+    with pytest.raises(ValueError, match="already has a pending parent"):
+        driver.preview_full_simulation(competing_request)
+
+    competing_command = AuthoritativeFullSimulationCommand(
+        **competing_request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    with pytest.raises(ValueError, match="already has a pending parent"):
+        driver.simulate_full_simulation(competing_command)
+
     final_command = _command(preflight["preflight_fingerprint"])
     final_result = driver.finalize_final_season(final_command)
     assert final_result.run_status == COMPLETED_RUN_STATUS

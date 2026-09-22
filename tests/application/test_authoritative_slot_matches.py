@@ -1984,7 +1984,7 @@ def test_next_tournament_executes_interleaved_chronology_and_resumes(
             branch_id="branch",
         )
         assert len(sources) == 1
-        assert sources[0].event_id == first.event_id
+        assert sources[0].binding.event_id == first.event_id
         assert sources[0].fingerprint == result[
             "owned_tournament_source_fingerprint"
         ]

@@ -1587,3 +1587,17 @@ recalculated while each player's `main_entry_status` remains unchanged.
 This closes the recovery contract introduced by canonical Main-entry result provenance:
 forking a ranking-bearing Branch cannot silently degrade a Wild Card entrant into an
 undifferentiated Main participant.
+
+
+## Saved Revision restore preserves Main-entry provenance
+
+Ranking-component recovery now has PR-critical coverage for canonical tournament
+sources carrying Main-entry provenance. A v5 Owned Tournament Ranking Source with
+Wild Card/direct player provenance is captured, restored backward to an empty ranking
+component, then restored forward to the saved component. The final recapture must
+match the exact saved ranking-component fingerprint and preserve the canonical Result,
+Point Award and Prize Money authority fingerprints together with each player's
+`main_entry_status`.
+
+This closes the Saved Revision recovery contract introduced by Main-entry provenance:
+a backward/forward ranking restore cannot silently erase WC/LL entry identity.

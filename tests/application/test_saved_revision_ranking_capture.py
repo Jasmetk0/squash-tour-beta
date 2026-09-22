@@ -43,6 +43,14 @@ from beta_engine.infrastructure.db.application_validation_slots import (
     load_saved_application_validation_slots,
     record_resolved_application_validation_slot,
 )
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
+    load_saved_application_submissions,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PlayerTourEntryTriggerStore,
+    load_saved_tour_entry_triggers,
+)
 
 
 @pytest.fixture
@@ -335,6 +343,146 @@ def test_ranking_fork_remaps_resolved_all_invalid_entry_slot_identity(prepared):
             run_id="run-one",
             branch_id="branch-entry-fork",
         ) == (target_resolved,)
+
+
+@pytest.mark.pr_critical
+def test_ranking_fork_remaps_valid_application_submission_and_first_entry_trigger(
+    prepared,
+):
+    _, repo, *_ = prepared
+    week = RankingWeek(season_index=0, week=1)
+    source_slot = RunEntryDecisionSlotAuthority(
+        run_id="run-one",
+        branch_id="branch-one",
+        week=week,
+        decision_slot_ordinal=1,
+        source_entry_batch_fingerprint="1" * 64,
+        source_application_decisions_fingerprint="2" * 64,
+        source_active_players_fingerprint="3" * 64,
+        decisions=(
+            EntryDecisionEvidence(
+                event_id="valid-entry-event",
+                player_id="prospect-valid-entry",
+                target="MAIN",
+                source_decision_fingerprint="4" * 64,
+            ),
+        ),
+    )
+    source_validation = TournamentApplicationValidationAuthority(
+        validation_id="validation-valid-entry",
+        application_id="application-valid-entry",
+        run_id="run-one",
+        branch_id="branch-one",
+        week=week,
+        decision_slot_ordinal=1,
+        source_slot_fingerprint=source_slot.fingerprint,
+        event_id="valid-entry-event",
+        player_id="prospect-valid-entry",
+        entry_window="main",
+        source_decision_fingerprint="4" * 64,
+        outcome="valid",
+        nr_tie_break_token="nr-valid-entry",
+        validation_policy_id="fork-valid-entry-policy.v1",
+        validation_policy_fingerprint="5" * 64,
+        reasons=(),
+        provenance="materialized fork valid Entry regression",
+    )
+    source_resolved = ResolvedApplicationValidationSlot(
+        slot=source_slot,
+        validations=(source_validation,),
+    )
+    with repo._session_factory.begin() as session:
+        RunEntryDecisionSlotStore(session).append(source_slot)
+        committed = record_resolved_application_validation_slot(
+            session,
+            source_resolved,
+        )
+        assert committed.submission_commit is not None
+        source_submission = committed.submission_commit.batch.submissions[0]
+        source_trigger = committed.submission_commit.first_tour_entry_triggers[0]
+
+    source_saved = save(prepared)
+    assert load_saved_application_submissions(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    ) == (source_submission,)
+    assert load_saved_tour_entry_triggers(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    ) == (source_trigger,)
+
+    created = RunBranchCreationService(
+        repository=repo,
+        id_factory=_id_factory(
+            "branch-valid-entry-fork",
+            "draft-valid-entry-fork",
+            "revision-valid-entry-fork",
+        ),
+    ).create_from_saved_revision(
+        run_id="run-one",
+        source_branch_id="branch-one",
+        source_saved_revision_id="revision-three",
+        display_name="Valid Entry Fork",
+    )
+    assert created.saved_head_revision_id == "revision-valid-entry-fork"
+
+    fork_root = repo.get_branch_saved_revision(
+        revision_id="revision-valid-entry-fork"
+    )
+    assert fork_root is not None
+    target_validations = load_saved_application_validation_slots(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-valid-entry-fork",
+    )
+    target_submissions = load_saved_application_submissions(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-valid-entry-fork",
+    )
+    target_triggers = load_saved_tour_entry_triggers(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-valid-entry-fork",
+    )
+    assert target_validations is not None and len(target_validations) == 1
+    assert target_submissions is not None and len(target_submissions) == 1
+    assert target_triggers is not None and len(target_triggers) == 1
+
+    target_validation = target_validations[0].validations[0]
+    target_submission = target_submissions[0]
+    target_trigger = target_triggers[0]
+    assert target_submission.branch_id == "branch-valid-entry-fork"
+    assert target_submission.application_id == source_submission.application_id
+    assert target_submission.validation_authority_id == (
+        source_submission.validation_authority_id
+    )
+    assert target_submission.validation_authority_fingerprint == (
+        target_validation.fingerprint
+    )
+    assert target_submission.fingerprint != source_submission.fingerprint
+
+    assert target_trigger.branch_id == "branch-valid-entry-fork"
+    assert target_trigger.trigger_kind == "valid_tournament_application"
+    assert target_trigger.source_evidence_id == source_submission.application_id
+    assert target_trigger.source_evidence_fingerprint == target_submission.fingerprint
+    assert target_trigger.fingerprint != source_trigger.fingerprint
+
+    with repo._session_factory() as session:
+        assert TournamentApplicationSubmissionStore(session).list(
+            run_id="run-one",
+            branch_id="branch-valid-entry-fork",
+        ) == (target_submission,)
+        assert PlayerTourEntryTriggerStore(session).list(
+            run_id="run-one",
+            branch_id="branch-valid-entry-fork",
+        ) == (target_trigger,)
+
+    assert repo.verify_branch_saved_revision_hash(
+        revision_id="revision-valid-entry-fork"
+    )
 
 
 @pytest.mark.pr_critical

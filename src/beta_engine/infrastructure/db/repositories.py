@@ -2901,7 +2901,7 @@ class SimulationPersistenceRepository:
                         run_id=run_id,
                         source_branch_id=source_branch_id,
                         target_branch_id=branch_id,
-                        application_submission_fingerprint_map=(
+                        application_submission_identity_map=(
                             source_to_target_application_submission
                         ),
                     )

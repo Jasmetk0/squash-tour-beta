@@ -26,6 +26,23 @@ from beta_engine.infrastructure.db.saved_revision_rankings import load_saved_ran
 from beta_engine.domain.rankings.result_history import RankingResultVersion
 from beta_engine.domain.rankings.zero_history import RankingZeroVersion
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
+from beta_engine.domain.tournaments.run_entry_decision_slot import (
+    EntryDecisionEvidence,
+    RunEntryDecisionSlotAuthority,
+)
+from beta_engine.domain.tournaments.application_validation_authority import (
+    ResolvedApplicationValidationSlot,
+    TournamentApplicationValidationAuthority,
+)
+from beta_engine.infrastructure.db.run_entry_decision_slots import (
+    RunEntryDecisionSlotStore,
+    load_saved_run_entry_decision_slots,
+)
+from beta_engine.infrastructure.db.application_validation_slots import (
+    ApplicationValidationSlotStore,
+    load_saved_application_validation_slots,
+    record_resolved_application_validation_slot,
+)
 
 
 @pytest.fixture
@@ -198,6 +215,126 @@ def test_bootstrap_ranking_revision_forks_with_target_branch_identity_and_can_di
     assert reloaded.get_branch_revision_state(
         branch_id="branch-three"
     ).saved_head_revision_id == "revision-branch-three-week-two"
+
+
+@pytest.mark.pr_critical
+def test_ranking_fork_remaps_resolved_all_invalid_entry_slot_identity(prepared):
+    _, repo, *_ = prepared
+    week = RankingWeek(season_index=0, week=1)
+    source_slot = RunEntryDecisionSlotAuthority(
+        run_id="run-one",
+        branch_id="branch-one",
+        week=week,
+        decision_slot_ordinal=1,
+        source_entry_batch_fingerprint="a" * 64,
+        source_application_decisions_fingerprint="b" * 64,
+        source_active_players_fingerprint="c" * 64,
+        decisions=(
+            EntryDecisionEvidence(
+                event_id="entry-event",
+                player_id="prospect-entry",
+                target="MAIN",
+                source_decision_fingerprint="d" * 64,
+            ),
+        ),
+    )
+    validation = TournamentApplicationValidationAuthority(
+        validation_id="validation-entry",
+        application_id="application-entry",
+        run_id="run-one",
+        branch_id="branch-one",
+        week=week,
+        decision_slot_ordinal=1,
+        source_slot_fingerprint=source_slot.fingerprint,
+        event_id="entry-event",
+        player_id="prospect-entry",
+        entry_window="main",
+        source_decision_fingerprint="d" * 64,
+        outcome="invalid",
+        nr_tie_break_token=None,
+        validation_policy_id="fork-entry-policy.v1",
+        validation_policy_fingerprint="e" * 64,
+        reasons=("ineligible_under_resolved_policy",),
+        provenance="materialized fork Entry validation regression",
+    )
+    source_resolved = ResolvedApplicationValidationSlot(
+        slot=source_slot,
+        validations=(validation,),
+    )
+    with repo._session_factory.begin() as session:
+        RunEntryDecisionSlotStore(session).append(source_slot)
+        committed = record_resolved_application_validation_slot(
+            session,
+            source_resolved,
+        )
+        assert committed.submission_commit is None
+
+    source_saved = save(prepared)
+    source_slots = load_saved_run_entry_decision_slots(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    source_validations = load_saved_application_validation_slots(
+        source_saved.saved_revision.payload,
+        run_id="run-one",
+        branch_id="branch-one",
+    )
+    assert source_slots == (source_slot,)
+    assert source_validations == (source_resolved,)
+
+    created = RunBranchCreationService(
+        repository=repo,
+        id_factory=_id_factory(
+            "branch-entry-fork",
+            "draft-entry-fork",
+            "revision-entry-fork",
+        ),
+    ).create_from_saved_revision(
+        run_id="run-one",
+        source_branch_id="branch-one",
+        source_saved_revision_id="revision-three",
+        display_name="Entry Validation Fork",
+    )
+    assert created.saved_head_revision_id == "revision-entry-fork"
+
+    fork_root = repo.get_branch_saved_revision(revision_id="revision-entry-fork")
+    assert fork_root is not None
+    target_slots = load_saved_run_entry_decision_slots(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-entry-fork",
+    )
+    target_validations = load_saved_application_validation_slots(
+        fork_root.payload,
+        run_id="run-one",
+        branch_id="branch-entry-fork",
+    )
+    assert target_slots is not None and len(target_slots) == 1
+    assert target_validations is not None and len(target_validations) == 1
+    target_slot = target_slots[0]
+    target_resolved = target_validations[0]
+    assert target_slot.branch_id == "branch-entry-fork"
+    assert target_slot.fingerprint != source_slot.fingerprint
+    assert target_resolved.slot == target_slot
+    assert target_resolved.fingerprint != source_resolved.fingerprint
+    assert target_resolved.validations[0].branch_id == "branch-entry-fork"
+    assert target_resolved.validations[0].source_slot_fingerprint == (
+        target_slot.fingerprint
+    )
+    assert repo.verify_branch_saved_revision_hash(
+        revision_id="revision-entry-fork"
+    )
+
+    with repo._session_factory() as session:
+        assert RunEntryDecisionSlotStore(session).list(
+            run_id="run-one",
+            branch_id="branch-entry-fork",
+        ) == (target_slot,)
+        assert ApplicationValidationSlotStore(session).list(
+            run_id="run-one",
+            branch_id="branch-entry-fork",
+        ) == (target_resolved,)
 
 
 @pytest.mark.pr_critical

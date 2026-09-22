@@ -1727,3 +1727,23 @@ Replay is still deliberately disabled: historical v4 receipts remain
 `status="historical_fork"` and `retryable=false`. The remaining step is to define
 the controlled promotion/idempotent read path that can expose a proven v4 target result
 as a canonical exact retry without mutating sporting state.
+
+
+
+## Replayable historical Simulation command receipts
+
+Materialized Branch forks can now promote only fully reconstructed Simulation history
+to `authoritative_simulation_historical_fork_receipt.v5`. A v5 receipt requires both
+an integrity-bound target request and an integrity-bound target public result, and is
+marked `retryable=true`.
+
+`AuthoritativeRunSimulationDriver` recognizes v5 before the normal live-operation
+receipt path. An exact retry must match the stored target request fingerprint and the
+stored target command payload byte-for-byte at the canonical JSON/model level. When it
+matches, the driver returns the stored target result directly and performs no Slot,
+Group, tournament, or sporting mutation. Reusing the same command id with a different
+request fails closed.
+
+Historical v1-v4 fork receipts remain read-only and cannot use this replay path. This
+keeps previously persisted audit receipts backward-compatible while making replayability
+an explicit schema capability rather than changing the meaning of older receipts.

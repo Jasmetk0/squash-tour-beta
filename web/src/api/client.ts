@@ -140,6 +140,10 @@ import type {
   AuthoritativeTournamentPreview,
   AuthoritativeTournamentCommandPayload,
   AuthoritativeTournamentResult,
+  AuthoritativeWeekPreviewPayload,
+  AuthoritativeWeekPreview,
+  AuthoritativeWeekCommandPayload,
+  AuthoritativeWeekExecution,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1636,6 +1640,70 @@ export async function simulateAuthoritativeNextTournament(
     !/^[0-9a-f]{64}$/.test(data.owned_tournament_source_fingerprint)
   ) {
     throw new Error('Authoritative Tournament result is invalid.')
+  }
+  return data
+}
+
+export async function previewAuthoritativeNextWeek(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeWeekPreviewPayload
+): Promise<AuthoritativeWeekPreview> {
+  const data = await request<AuthoritativeWeekPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/next-week/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_week_preview.v1' ||
+    data.target_week.season_index !== data.week.season_index ||
+    data.target_week.week !== data.week.week + 1 ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    (data.schedule_fingerprint != null &&
+      !/^[0-9a-f]{64}$/.test(data.schedule_fingerprint)) ||
+    !/^[0-9a-f]{64}$/.test(data.ranking_authority_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Week preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeNextWeek(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeWeekCommandPayload
+): Promise<AuthoritativeWeekExecution> {
+  const data = await request<AuthoritativeWeekExecution>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-week',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (data.schema_version === 'authoritative_week_progress.v1') {
+    verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+    if (
+      data.status !== 'blocked' ||
+      data.transition_blockers.length === 0 ||
+      data.completed_slot_count !== data.target_slot_ordinals.length
+    ) {
+      throw new Error('Authoritative Week progress response is invalid.')
+    }
+    return data
+  }
+  if (
+    data.schema_version !== 'authoritative_week_result.v1' ||
+    data.status !== 'complete' ||
+    data.completed_slot_count !== data.target_slot_ordinals.length ||
+    data.child_command_ids.length !== data.target_slot_ordinals.length ||
+    data.target_slot_ordinals.length !== data.target_group_ids.length ||
+    !/^[0-9a-f]{64}$/.test(data.ranking_authority_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.week_transition_request_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.official_ranking_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.player_lifecycle_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint)
+  ) {
+    throw new Error('Authoritative Week result is invalid.')
   }
   return data
 }

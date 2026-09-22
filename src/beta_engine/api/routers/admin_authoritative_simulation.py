@@ -23,6 +23,8 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeMatchDayCommand,
     AuthoritativeRoundCommand,
     AuthoritativeTournamentCommand,
+    AuthoritativeWeekPreviewRequest,
+    AuthoritativeWeekCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
@@ -940,6 +942,62 @@ def simulate_next_tournament(
             status_code=409,
             detail={
                 "code": "authoritative_tournament_simulation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/next-week/preview")
+def preview_next_week(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        request = AuthoritativeWeekPreviewRequest.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).preview_next_week(request)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_week_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/simulate-next-week", status_code=201)
+def simulate_next_week(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeWeekCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).simulate_next_week(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_week_simulation_conflict",
                 "message": str(exc),
             },
         ) from exc

@@ -1773,3 +1773,27 @@ accept non-empty downstream application-submission or first-Tour-entry component
 Those components remain guarded by the existing fork safety check until their validation
 authority, submission and trigger fingerprint chain is remapped explicitly. The new
 Entry/Validation maps are the prerequisite identity layer for that next slice.
+
+
+
+## Branch-fork identity for resolved Entry validation
+
+Materialized Saved Revision forks can now retarget non-empty Run Entry Decision Slot and
+Resolved Application Validation Slot components before Simulation history is rebuilt.
+The remap is explicit and ordered:
+
+1. Run Entry Decision Slot scope is moved from the source Branch to the target Branch,
+   producing a source→target Entry Slot fingerprint map.
+2. Each Resolved Application Validation Slot is rebuilt against its mapped target Entry
+   Slot. Every contained validation authority receives the target Branch id and the
+   mapped target source-slot fingerprint.
+3. The resulting resolved-validation source→target fingerprint map is passed into the
+   Simulation Position identity graph.
+4. Historical Simulation opening/closing Position evidence can therefore remap
+   non-empty `entry_validation_slots` field-by-field and remain eligible for the v5
+   exact-retry contract when all other identities are also reconstructable.
+
+Missing Entry Slot or resolved-validation mappings still fail closed; no fingerprint is
+guessed or text-rewritten. Non-empty downstream application submissions, first-entry
+triggers, and other Entry-pipeline Branch-owned components remain a separate fork-remap
+slice and continue to block materialization until their own identity chains are mapped.

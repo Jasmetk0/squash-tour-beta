@@ -29,6 +29,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeSeasonCommand,
     AuthoritativeFullSimulationPreviewRequest,
     AuthoritativeFullSimulationCommand,
+    AuthoritativeFullSimulationAbandonCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
@@ -1083,6 +1084,34 @@ def inspect_pending_full_simulations(
             status_code=409,
             detail={
                 "code": "authoritative_full_simulation_pending_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/full-simulation/abandon")
+def abandon_full_simulation(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeFullSimulationAbandonCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).abandon_full_simulation(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_full_simulation_abandon_conflict",
                 "message": str(exc),
             },
         ) from exc

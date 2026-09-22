@@ -346,6 +346,7 @@ def test_withdrawn_q_winner_and_lucky_loser_survive_canonical_points_and_ranking
                 player_id="LL",
                 draw_type="both",
                 qualifier=True,
+                main_entry_status="lucky_loser",
                 reached_stage="semifinal",
                 losses=2,
             ),
@@ -487,6 +488,41 @@ def test_withdrawn_q_winner_and_lucky_loser_survive_canonical_points_and_ranking
     published = {row.player_id: row.points for row in snapshot.rows}
     assert published["QW"] == 150
     assert published["LL"] == 500
+
+    week_three = RankingWeekCommandRunner(database, awards=None).execute(
+        RankingWeekCommand(
+            command_id="publish-week-three-after-ll",
+            tournaments=(),
+            context=RankingTransitionContext(
+                run_id="run",
+                branch_id="branch",
+                completed_week=snapshot.week,
+                target_week=RankingWeek(season_index=0, week=3),
+                policy=policy,
+                players=ranking_players,
+                discipline="none",
+            ),
+        )
+    )
+    assert week_three.week == RankingWeek(season_index=0, week=3)
+
+    with database() as session:
+        historical_sources = OwnedTournamentRankingSourceStore(session).history(
+            run_id="run",
+            branch_id="branch",
+        )
+    assert len(historical_sources) == 1
+    historical = historical_sources[0]
+    assert historical is not None
+    assert historical.fingerprint == source.fingerprint
+    assert historical.canonical_result is not None
+    ll_history = next(
+        player
+        for player in historical.canonical_result.players
+        if player.player_id == "LL"
+    )
+    assert ll_history.main_entry_status == "lucky_loser"
+    assert ll_history.qualifier is True
 
 
 @pytest.mark.pr_critical

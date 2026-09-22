@@ -1,10 +1,9 @@
 # Current implementation and next action
 
-Re-audited 18 September 2026 from merged PR #757 at
-`0b3441909f89983e97e12d342c0835db63fb7654`, plus the current bounded
-canonical Tournament Entry Field Admin HTTP slice. The audit compares merged code against the
-canonical Master Vision instead of treating PR descriptions or Fast CI as product
-authority.
+Re-audited 22 September 2026 from merged PR #940 on `buuk`, plus the
+current bounded Main-entry provenance fork/recovery guard. The audit compares merged
+code against the canonical Master Vision instead of treating PR descriptions or Fast CI
+as product authority.
 
 This branch adds the first Run/Branch/Week/global-slot-owned competitive match execution path: frozen same-slot inputs, complete Match Engine replay evidence, exactly-once Form/Sharpness/Fatigue effects, intra-week checkpoints, later-slot causal consumption, Saved Revision capture/restore, and terminal-state handoff to Weekly Development. See `docs/AUTHORITATIVE_SIMULATION_SLOT_MATCH_EFFECTS_V1.md`.
 
@@ -21,22 +20,22 @@ Replay remains production-covered by the existing multi-event HTTP acceptance.
 This file is an evidence/index snapshot, not product authority.
 Always verify the current remote head before acting. Product rules and decision
 statuses live in [Master Vision](SQUASH_ENGINE_MASTER_VISION.md); the development
-protocol is chapter 36. PR #757 is the latest merged implementation in this audit base.
+protocol is chapter 36. PR #940 is the latest merged implementation in this audit base; the current branch adds the bounded fork-provenance recovery guard.
 
 ## What exists, and where integration stops
 
 | Area | Evidence in audited code | Remaining boundary |
 |---|---|---|
 | Run foundation | `application/run_container_creation_service.py`, `run_working_draft_service.py`, `run_saved_revision_*`, DB revision models | New Run roots/revisions coexist with legacy simulation identities; full sporting state is not covered by every save/restore path |
-| Branch isolation/recovery | `infrastructure/db/repositories.py` validates ancestry, receipts and checkpoints; rejects ranking-bearing forks | Ranking identity remapping and complete sporting-world recovery remain |
-| Packages/players | World package, owned InitialWorld, lifecycle, `player_sporting_week_states`, and slot checkpoints | Canonical 57×0–200 sporting history and match-derived Form/Sharpness/Fatigue exist for the narrow slot slice; health and prospects remain open |
-| Tournament flow | Tournament Ranking Snapshot → Entry Field → Draw Input → Run-owned Draw → canonical Match topology/package → Tournament Result Authority; current branch adds Run-owned Point Award Authority and direct ranking-history materialization | Canonical events no longer use legacy DrawPackage, file-backed MatchPackage, SeasonEventResultsService extraction or SeasonPointAwardsService award generation as sporting/ranking producers. OwnedTournamentRankingSource v3 persists canonical result + point authorities and next-week ranking ingestion can run without a legacy award service. Legacy-shaped result/award DTOs remain compatibility children only. Multi-Q, dynamic Q-vs-BYE, WC/LL and post-draw repair remain fail-closed boundaries. |
-| Match engine | `domain/matches/match_engine.py`, immutable inputs/replay, `simulation_slots.py`, and Run/Branch slot persistence | Narrow four-player scheduling and later-slot sporting causality exist; general global scheduling, native 57-attribute Rally Setup, and finished realism remain open |
+| Branch isolation/recovery | Ranking-bearing materialized forks rebuild Official ranking chains, canonical tournament sources, lifecycle/sporting history, Tournament Ranking/Entry/WC/Draw authority and specialized Draw Revision evidence with target-owned fingerprints | Complete sporting-world recovery still has guarded authority families/legacy source shapes; unknown or unmapped evidence remains fail-closed |
+| Packages/players | World package, owned InitialWorld, lifecycle, `player_sporting_week_states`, slot checkpoints and completed-week sporting contexts | Canonical 57×0–200 sporting history and match-derived Form/Sharpness/Fatigue are integrated into authoritative slots; health and complete prospect sporting-profile materialization remain open |
+| Tournament flow | Tournament Ranking Snapshot → Entry Field → reviewed WC/RWC → Draw Input/Process/Revision → Run-owned Main/Q topology → canonical Result + Point/Prize authorities → `OwnedTournamentRankingSource v5` | Multi-Q, dynamic Q-vs-BYE and bracket-Q Lucky Loser can execute/close canonically. Group-Q LL cross-group ordering and the Master-undefined post-Main-start exhausted-source edge remain fail-closed; automatic Entry/WC eligibility policy remains deliberately Admin-reviewed rather than invented |
+| Match engine | `domain/matches/match_engine.py`, immutable inputs/replay, `simulation_slots.py`, sequential Match Day schedule v2 and Run/Branch persistence | Complete-binary Main draws through 128 positions plus canonical Q paths run through the authoritative slot driver; native full 57-attribute Rally Setup, health, travel/court scheduling and finished realism remain open |
 | Official ranking | `domain/rankings/official.py`, `application/ranking_week_command.py`, `infrastructure/db/authoritative_week_transition.py` | The supported Week 1→2 boundary now publishes an immutable Official Ranking and advances the scoped world clock atomically; Viewer/history consumers and broader lifecycle resolution remain |
 | Ranking Admin | `admin_ranking_candidates.py`, `RankingPreparationPanel.tsx`, `RankingResultCorrections.tsx` | Preview/confirm, manual input review, zeros, corrections and explicit supported tournament binding; minimum API flow exists but no broader tournament picker redesign |
 | Ranking Save | `saved_revision_rankings.py`, `ranking_revision_state.py`, `ranking_state_restore.py` | Owned source packages, candidates, inputs and audit survive explicit Save/reload/restore; still not full sporting-world recovery |
 | Week execution | `infrastructure/db/authoritative_week_transition.py` owns one `BEGIN IMMEDIATE`; owned complete tournament result manifests can resolve completed-match counts | Sporting development then between-week recovery, prospect-aware lifecycle, ranking/publication/event/receipt share the transaction; a missing/empty authoritative sporting context fails closed for the simulation-ready roster, while broader match-state updates and full prospect sporting-profile materialization remain outside it |
-| Season rollover | `rollover_service.py`, `run_bootstrap_service.py` use persisted MVP rollover/legacy simulation runs | Not the Master Season Closing + new-policy Week 1 + final Run completion contract |
+| Season rollover | Canonical Week/Season Transition, Season Closing marker/summary, Next Season and final-Run closure are wired into the authoritative simulation hierarchy | Broader release-grade whole-season/full-run validation and remaining recovery/public-history edges still need checkpoint coverage; legacy rollover paths remain compatibility-only |
 | Viewer/downstream | Legacy ranking/Race/Finals paths plus a canonical Viewer Next Gen read model exist | Next Gen now derives visibility from the selected Viewer Branch lifecycle and never from future pregeneration rows; broader Official ranking, entries/seeding and Finals still need historically faithful public integration |
 | Other pre-alpha scope | Master 31 remains authoritative; minimum canonical Match Reconstruction is implemented in the Run/Branch Admin simulation path | Reconstruction probability/forcing/nearest-match/session-retention remain open; player development/AI and broader lifecycle must not be dropped merely because ranking work dominated recent PRs |
 

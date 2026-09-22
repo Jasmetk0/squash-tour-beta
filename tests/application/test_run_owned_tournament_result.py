@@ -426,7 +426,13 @@ def test_historical_result_payload_without_main_entry_status_keeps_fingerprint()
         ).encode()
     ).hexdigest()
 
-    reopened = type(current).model_validate(historical_payload)
+    reopened = type(current).model_validate_json(
+        json.dumps(
+            historical_payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    )
 
     assert all(player.main_entry_status is None for player in reopened.players)
     assert reopened.fingerprint == expected

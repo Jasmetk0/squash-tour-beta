@@ -1819,6 +1819,18 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       screen.getByRole('button', { name: 'Save authoritative simulation' })
     ).toBeInTheDocument()
+    expect(
+      screen.getByText('Full Simulation parent Command ID')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Save authoritative simulation below, then retry this exact reviewed Full Simulation parent/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Do not discard this Full Simulation review/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByLabelText('Full Simulation completed season boundaries')
+    ).toHaveAttribute('max', String(fullSimulationPreview.remaining_seasons_including_current))
     const firstCommand = api.simulateAuthoritativeFullSimulation.mock.calls[0][2]
     expect(firstCommand).toMatchObject({
       command_id: expect.any(String),
@@ -1843,7 +1855,7 @@ describe('AuthoritativeSimulationPanel', () => {
     ).toBeInTheDocument()
     expect(
       screen.getByText(
-        /Review and commit the existing canonical Season Transition below/
+        /Review and commit the canonical Season Transition below/
       )
     ).toBeInTheDocument()
 

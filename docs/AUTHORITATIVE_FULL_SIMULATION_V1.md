@@ -108,6 +108,13 @@ The canonical Simulation panel exposes:
 6. current progressive checkpoint, blockers and completed-range counters;
 7. **Retry reviewed authoritative Full Simulation** with the same parent command ID.
 
+When the parent pauses, the Admin surface keeps the durable parent Command ID visible,
+shows completed-season and final-season-week counters, renders a season-boundary
+progress indicator, and gives checkpoint-specific next-action guidance. Discarding the
+review intentionally abandons that in-memory operator handle; normal prerequisite
+resolution must keep the review and retry the same parent identity so already-committed
+child work is observed rather than rerolled.
+
 The UI points to the existing Save, ordinary Season Transition and final Run closure
 controls instead of duplicating those authorities.
 

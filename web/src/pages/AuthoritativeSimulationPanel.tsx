@@ -157,6 +157,32 @@ function entryValidationKey(eventId: string, playerId: string): string {
   return `${eventId}\u001f${playerId}`
 }
 
+function fullSimulationCheckpointGuidance(
+  checkpoint: AuthoritativeFullSimulationProgress['checkpoint']
+): string {
+  switch (checkpoint) {
+    case 'season_transition_save_required':
+    case 'final_run_save_required':
+      return 'Save authoritative simulation below, then retry this exact reviewed Full Simulation parent.'
+    case 'season_transition_review_required':
+      return 'Review and commit the canonical Season Transition below, then retry this exact Full Simulation parent.'
+    case 'final_run_closure_review_required':
+      return 'Review and commit the final Run closure below, then retry this exact Full Simulation parent once more.'
+    case 'season_transition_prerequisite':
+    case 'final_run_closure_prerequisite':
+      return 'Resolve the listed transition prerequisite without discarding this review, then retry the same parent command.'
+    case 'entry_process_required':
+      return 'Resolve the current Entry/WC process decision, keep this review, then retry the same parent command.'
+    case 'week_preparation_required':
+    case 'week61_preparation_required':
+    case 'season_preparation_required':
+    case 'final_week_preparation_required':
+      return 'Complete the listed canonical preparation step, keep this review, then retry the same parent command.'
+    default:
+      return 'Resolve the listed canonical blocker, keep this review, then retry the same parent command.'
+  }
+}
+
 export function AuthoritativeSimulationPanel({
   runId,
   branchId,
@@ -2997,11 +3023,7 @@ export function AuthoritativeSimulationPanel({
               {fullSimulationProgress ? (
                 <>
                   <p role="alert" className="error">
-                    Full Simulation paused at {fullSimulationProgress.checkpoint}
-                    {' '}after {fullSimulationProgress.completed_season_count}
-                    {' '}completed season(s) and {
-                      fullSimulationProgress.final_completed_week_count
-                    } final-season completed week(s).
+                    Full Simulation paused at {fullSimulationProgress.checkpoint}.
                     {fullSimulationProgress.current_week
                       ? ` Current S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
                       : ''}
@@ -3009,32 +3031,52 @@ export function AuthoritativeSimulationPanel({
                       ? ` Resolve: ${fullSimulationProgress.blockers.join(', ')}.`
                       : ''}
                   </p>
+                  <MetadataList
+                    items={[
+                      {
+                        label: 'Full Simulation parent Command ID',
+                        value: fullSimulationCommandId
+                      },
+                      {
+                        label: 'Completed seasons',
+                        value: `${fullSimulationProgress.completed_season_count} / ${fullSimulationReview.remaining_seasons_including_current}`
+                      },
+                      {
+                        label: 'Final-season completed weeks',
+                        value: fullSimulationProgress.final_completed_week_count
+                      },
+                      {
+                        label: 'Current checkpoint',
+                        value: fullSimulationProgress.checkpoint
+                      }
+                    ]}
+                  />
+                  <label>
+                    Completed season boundaries
+                    <progress
+                      aria-label="Full Simulation completed season boundaries"
+                      value={Math.min(
+                        fullSimulationProgress.completed_season_count,
+                        fullSimulationReview.remaining_seasons_including_current
+                      )}
+                      max={Math.max(
+                        1,
+                        fullSimulationReview.remaining_seasons_including_current
+                      )}
+                    />
+                  </label>
+                  <p className="status">
+                    {fullSimulationCheckpointGuidance(
+                      fullSimulationProgress.checkpoint
+                    )}
+                  </p>
+                  <p className="status">
+                    Do not discard this Full Simulation review while you intend to
+                    resume it: the frozen parent Command ID is the durable retry
+                    identity for already-completed child work.
+                  </p>
                   {fullSimulationProgress.detail ? (
                     <p className="status">{fullSimulationProgress.detail}</p>
-                  ) : null}
-                  {(
-                    fullSimulationProgress.checkpoint ===
-                      'season_transition_save_required' ||
-                    fullSimulationProgress.checkpoint === 'final_run_save_required'
-                  ) ? (
-                    <p className="status">
-                      Use <strong>Save authoritative simulation</strong> below, then
-                      retry this exact reviewed Full Simulation command.
-                    </p>
-                  ) : null}
-                  {fullSimulationProgress.checkpoint ===
-                    'season_transition_review_required' ? (
-                    <p className="status">
-                      Review and commit the existing canonical Season Transition
-                      below, then retry this exact Full Simulation command.
-                    </p>
-                  ) : null}
-                  {fullSimulationProgress.checkpoint ===
-                    'final_run_closure_review_required' ? (
-                    <p className="status">
-                      Review and commit the existing final Run closure below, then
-                      retry this exact Full Simulation command once more.
-                    </p>
                   ) : null}
                 </>
               ) : null}

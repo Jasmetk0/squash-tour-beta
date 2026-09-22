@@ -165,6 +165,25 @@ def _validate_command_rows_shape(rows):
                         raise ValueError(
                             "Saved historical simulation fork target request scope is corrupt"
                         )
+                    target_scope = target_basis.get("scope")
+                    target_draft = target_basis.get("draft")
+                    if (
+                        target_scope != [
+                            row.run_id,
+                            row.branch_id,
+                            target_scope[2]
+                            if isinstance(target_scope, list)
+                            and len(target_scope) == 3
+                            and isinstance(target_scope[2], int)
+                            else None,
+                        ]
+                        or target_basis.get("branch_head")
+                        != target_base_revision_id
+                        or target_draft != [target_base_revision_id, "clean", 0]
+                    ):
+                        raise ValueError(
+                            "Saved historical simulation fork target Position scope is corrupt"
+                        )
                     actual_target_position_fingerprint = hashlib.sha256(
                         json.dumps(
                             target_basis,

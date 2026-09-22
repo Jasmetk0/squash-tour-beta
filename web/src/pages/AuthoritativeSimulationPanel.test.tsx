@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   previewAuthoritativeFullSimulation: vi.fn(),
   simulateAuthoritativeFullSimulation: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(),
+  getAuthoritativeFullSimulationHistory: vi.fn(),
   abandonAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
@@ -590,6 +591,13 @@ beforeEach(() => {
     branch_id: 'branch-a',
     operations: [],
     legacy_pending_count: 0
+  })
+  api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
+    schema_version: 'authoritative_full_simulation_history.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    items: [],
+    item_count: 0
   })
   api.abandonAuthoritativeFullSimulation.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_abandon_result.v1',
@@ -1888,6 +1896,80 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       api.simulateAuthoritativeFullSimulation.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
+  })
+
+  it('shows pending, abandoned and completed Full Simulation parent history', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_history.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      items: [
+        {
+          command_id: 'full-pending',
+          status: 'pending',
+          start_week: { season_index: 2, week: 17 },
+          final_week: { season_index: 49, week: 61 },
+          completed_seasons: [2, 3],
+          completed_season_count: 2,
+          final_completed_weeks: [],
+          final_completed_week_count: 0,
+          operator_label: 'Primary admin',
+          audit_reason: 'Run to closure',
+          abandonment: null
+        },
+        {
+          command_id: 'full-abandoned',
+          status: 'abandoned',
+          start_week: { season_index: 4, week: 1 },
+          final_week: { season_index: 49, week: 61 },
+          completed_seasons: [4],
+          completed_season_count: 1,
+          final_completed_weeks: [],
+          final_completed_week_count: 0,
+          operator_label: 'Original admin',
+          audit_reason: 'Old run',
+          abandonment: {
+            operator_label: 'Override admin',
+            audit_reason: 'Superseded by reviewed replacement',
+            committed_child_work_persists: true,
+            completed_seasons: [4],
+            final_completed_weeks: []
+          }
+        },
+        {
+          command_id: 'full-complete',
+          status: 'complete',
+          start_week: { season_index: 5, week: 1 },
+          final_week: { season_index: 49, week: 61 },
+          completed_seasons: [5, 6, 49],
+          completed_season_count: 3,
+          final_completed_weeks: [{ season_index: 49, week: 61 }],
+          final_completed_week_count: 1,
+          operator_label: 'Completion admin',
+          audit_reason: 'Finish canonical Run',
+          abandonment: null
+        }
+      ],
+      item_count: 3
+    })
+
+    renderPanel()
+
+    const history = await screen.findByRole('list', {
+      name: 'Full Simulation parent history'
+    })
+    expect(history).toHaveTextContent('full-pending · pending')
+    expect(history).toHaveTextContent('full-abandoned · abandoned')
+    expect(history).toHaveTextContent(
+      'abandoned by Override admin — Superseded by reviewed replacement'
+    )
+    expect(history).toHaveTextContent('full-complete · complete')
+    expect(history).toHaveTextContent('Completion admin')
   })
 
   it('abandons a pending Full Simulation only after explicit child-work acknowledgement', async () => {

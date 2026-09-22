@@ -348,6 +348,7 @@ def test_canonical_result_keeps_withdrawn_q_winner_separate_from_lucky_loser():
     assert q_match.loser_player_id == lucky_loser
 
 
+@pytest.mark.pr_critical
 def test_canonical_result_preserves_wild_card_main_entry_provenance():
     initial = TournamentDrawAuthorityBuilder.build(
         draw_input=_input(),
@@ -396,6 +397,7 @@ def test_canonical_result_preserves_wild_card_main_entry_provenance():
     )
 
 
+@pytest.mark.pr_critical
 def test_historical_result_payload_without_main_entry_status_keeps_fingerprint():
     draw = TournamentDrawAuthorityBuilder.build(
         draw_input=_input(),

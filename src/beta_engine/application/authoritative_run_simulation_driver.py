@@ -288,6 +288,39 @@ class AuthoritativeWeekCommand(AuthoritativeWeekPreviewRequest):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeSeasonPreviewRequest(FrozenInput):
+    """Reviewed progressive orchestration request through one season boundary."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("Next Season operator and audit reason must be non-empty")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+
+class AuthoritativeSeasonCommand(AuthoritativeSeasonPreviewRequest):
+    """Durable progressive parent that reaches the next Season boundary."""
+
+    expected_start_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 
 class MatchReconstructionGameScore(FrozenInput):
     """Exact game score in frozen player-A / player-B order."""

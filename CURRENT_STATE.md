@@ -1500,3 +1500,13 @@ or boundary work; it marks the durable parent receipt `abandoned`, preserves the
 frozen progress/audit evidence, prevents retry of that parent, and releases the
 Run/Branch for a replacement Full Simulation reviewed from the current canonical
 state.
+
+
+## Full Simulation durable lifecycle history
+
+Simulation Admin can now inspect durable Full Simulation parent history for one
+Run/Branch across `pending`, `abandoned` and `complete` states. History exposes
+Command ID, reviewed range, progress counters and available operator/audit metadata;
+abandonment actor/reason remains separate from the original parent audit. Newly
+completed receipts retain the original operator/reason, while older completed receipts
+may report those legacy fields as unknown instead of inventing provenance.

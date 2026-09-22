@@ -4355,6 +4355,107 @@ class AuthoritativeRunSimulationDriver:
                 "legacy_pending_count": legacy_pending_count,
             }
 
+    def inspect_full_simulation_history(
+        self, *, run_id: str, branch_id: str
+    ) -> dict:
+        """Return durable Full Simulation parent lifecycle history for one Branch."""
+
+        with self.factory() as session:
+            receipts = session.scalars(
+                select(AuthoritativeSimulationCommandModel).where(
+                    AuthoritativeSimulationCommandModel.run_id == run_id,
+                    AuthoritativeSimulationCommandModel.branch_id == branch_id,
+                )
+            ).all()
+
+            items: list[dict] = []
+            for receipt in receipts:
+                try:
+                    payload = json.loads(receipt.result_json)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        "simulation command receipt JSON is corrupt"
+                    ) from exc
+
+                schema = payload.get("schema_version")
+                if schema == "authoritative_full_simulation_operation.v1":
+                    resume_payload = payload.get("resume_command")
+                    review = payload.get("review")
+                    operator_label = None
+                    audit_reason = None
+                    start_week = payload.get("start_week")
+                    final_week = payload.get("final_week")
+                    if resume_payload is not None:
+                        command = AuthoritativeFullSimulationCommand.model_validate(
+                            resume_payload
+                        )
+                        operator_label = command.operator_label
+                        audit_reason = command.audit_reason
+                    if review is not None:
+                        start_week = review.get("start_week", start_week)
+                        final_week = review.get("final_week", final_week)
+
+                    abandonment = payload.get("abandonment")
+                    items.append(
+                        {
+                            "command_id": receipt.command_id,
+                            "status": receipt.status,
+                            "start_week": start_week,
+                            "final_week": final_week,
+                            "completed_seasons": list(
+                                payload.get("completed_seasons", [])
+                            ),
+                            "completed_season_count": len(
+                                payload.get("completed_seasons", [])
+                            ),
+                            "final_completed_weeks": list(
+                                payload.get("final_completed_weeks", [])
+                            ),
+                            "final_completed_week_count": len(
+                                payload.get("final_completed_weeks", [])
+                            ),
+                            "operator_label": operator_label,
+                            "audit_reason": audit_reason,
+                            "abandonment": abandonment,
+                        }
+                    )
+                    continue
+
+                if schema == "authoritative_full_simulation_result.v1":
+                    items.append(
+                        {
+                            "command_id": receipt.command_id,
+                            "status": receipt.status,
+                            "start_week": payload.get("start_week"),
+                            "final_week": payload.get("final_week"),
+                            "completed_seasons": list(
+                                payload.get("completed_seasons", [])
+                            ),
+                            "completed_season_count": len(
+                                payload.get("completed_seasons", [])
+                            ),
+                            "final_completed_weeks": list(
+                                payload.get("final_completed_weeks", [])
+                            ),
+                            "final_completed_week_count": len(
+                                payload.get("final_completed_weeks", [])
+                            ),
+                            "operator_label": payload.get("operator_label"),
+                            "audit_reason": payload.get("audit_reason"),
+                            "abandonment": None,
+                        }
+                    )
+
+            items.sort(key=lambda item: item["command_id"])
+            return {
+                "schema_version":
+                    "authoritative_full_simulation_history.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "items": items,
+                "item_count": len(items),
+            }
+
     def abandon_full_simulation(
         self, command: AuthoritativeFullSimulationAbandonCommand
     ) -> dict:
@@ -4629,6 +4730,8 @@ class AuthoritativeRunSimulationDriver:
                             )
                         ],
                         "run_status": COMPLETED_RUN_STATUS,
+                        "operator_label": command.operator_label,
+                        "audit_reason": command.audit_reason,
                         **completed,
                         "adoption": "committed",
                     }

@@ -155,6 +155,7 @@ import type {
   AuthoritativeFullSimulationPendingCollection,
   AuthoritativeFullSimulationAbandonPayload,
   AuthoritativeFullSimulationAbandonResult,
+  AuthoritativeFullSimulationHistory,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1774,6 +1775,31 @@ export async function simulateAuthoritativeNextSeason(
     data.target_week.week !== 1
   ) {
     throw new Error('Authoritative Season result is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeFullSimulationHistory(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeFullSimulationHistory> {
+  const data = await request<AuthoritativeFullSimulationHistory>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/history'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_history.v1' ||
+    data.item_count !== data.items.length
+  ) {
+    throw new Error('Full Simulation history response is invalid.')
+  }
+  for (const item of data.items) {
+    if (
+      item.completed_season_count !== item.completed_seasons.length ||
+      item.final_completed_week_count !== item.final_completed_weeks.length
+    ) {
+      throw new Error('Full Simulation history item is invalid.')
+    }
   }
   return data
 }

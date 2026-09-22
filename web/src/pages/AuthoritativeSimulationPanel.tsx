@@ -35,6 +35,7 @@ import {
   previewAuthoritativeFullSimulation,
   simulateAuthoritativeFullSimulation,
   getPendingAuthoritativeFullSimulations,
+  getAuthoritativeFullSimulationHistory,
   abandonAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
@@ -362,6 +363,13 @@ export function AuthoritativeSimulationPanel({
     retry: false
   })
 
+  const fullSimulationHistoryQuery = useQuery({
+    queryKey: ['authoritative-full-simulation-history', runId, branchId],
+    queryFn: () => getAuthoritativeFullSimulationHistory(runId, branchId),
+    enabled,
+    retry: false
+  })
+
   const pendingFullSimulationQuery = useQuery({
     queryKey: ['authoritative-full-simulation-pending', runId, branchId],
     queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId),
@@ -564,6 +572,7 @@ export function AuthoritativeSimulationPanel({
       queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-pending', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-history', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }
@@ -2621,6 +2630,37 @@ export function AuthoritativeSimulationPanel({
             <p className="error">
               Pending Full Simulation inspection failed: {
                 formatApiError(pendingFullSimulationQuery.error)
+              }
+            </p>
+          ) : null}
+          {fullSimulationHistoryQuery.data?.items.length ? (
+            <div>
+              <h5>Full Simulation parent history</h5>
+              <ol aria-label="Full Simulation parent history">
+                {fullSimulationHistoryQuery.data.items.map((item) => (
+                  <li key={item.command_id}>
+                    <code>{item.command_id}</code>
+                    {' · '}{item.status}
+                    {item.start_week
+                      ? ` · S${item.start_week.season_index} W${item.start_week.week}`
+                      : ''}
+                    {' · '}{item.completed_season_count} completed season(s)
+                    {item.operator_label ? ` · ${item.operator_label}` : ''}
+                    {item.abandonment ? (
+                      <span>
+                        {' · abandoned by '}{item.abandonment.operator_label}
+                        {' — '}{item.abandonment.audit_reason}
+                      </span>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+          {fullSimulationHistoryQuery.error ? (
+            <p className="error">
+              Full Simulation history failed: {
+                formatApiError(fullSimulationHistoryQuery.error)
               }
             </p>
           ) : null}

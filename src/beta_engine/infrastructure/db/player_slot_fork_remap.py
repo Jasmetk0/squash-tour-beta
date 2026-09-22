@@ -404,10 +404,6 @@ def _retarget_simulation_command_receipt_as_historical(
         and request_evidence.get("schema_version")
         == "authoritative_simulation_request_evidence.v2"
     ):
-        if position_identity_graph is None:
-            raise SimulationSlotForkRemapUnsupportedError(
-                "Simulation v2 request evidence requires a target Position identity graph"
-            )
         source_command = request_evidence.get("command")
         source_basis = request_evidence.get("opening_position_basis")
         mode = request_evidence.get("mode")
@@ -425,27 +421,32 @@ def _retarget_simulation_command_receipt_as_historical(
             raise SimulationSlotForkRemapUnsupportedError(
                 "Simulation source request evidence cannot be reconstructed safely"
             )
-        target_basis = _retarget_simulation_opening_position_basis(
-            source_basis,
-            graph=position_identity_graph,
-        )
-        target_command = dict(source_command)
-        target_command.update(
-            {
-                "branch_id": target_branch_id,
-                "expected_revision_id": target_base_revision_id,
-                "expected_position_fingerprint": fingerprint(target_basis),
-            }
-        )
-        target_request_evidence = {
-            "schema_version": "authoritative_simulation_request_evidence.v2",
-            "mode": mode,
-            "command": target_command,
-            "opening_position_basis": target_basis,
-        }
-        target_request_fingerprint = fingerprint(
-            {"mode": mode, "command": target_command}
-        )
+        if position_identity_graph is not None:
+            try:
+                target_basis = _retarget_simulation_opening_position_basis(
+                    source_basis,
+                    graph=position_identity_graph,
+                )
+            except SimulationSlotForkRemapUnsupportedError:
+                target_basis = None
+            if target_basis is not None:
+                target_command = dict(source_command)
+                target_command.update(
+                    {
+                        "branch_id": target_branch_id,
+                        "expected_revision_id": target_base_revision_id,
+                        "expected_position_fingerprint": fingerprint(target_basis),
+                    }
+                )
+                target_request_evidence = {
+                    "schema_version": "authoritative_simulation_request_evidence.v2",
+                    "mode": mode,
+                    "command": target_command,
+                    "opening_position_basis": target_basis,
+                }
+                target_request_fingerprint = fingerprint(
+                    {"mode": mode, "command": target_command}
+                )
 
     historical_schema = (
         "authoritative_simulation_historical_fork_receipt.v3"

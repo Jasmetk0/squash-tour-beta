@@ -1510,3 +1510,12 @@ Command ID, reviewed range, progress counters and available operator/audit metad
 abandonment actor/reason remains separate from the original parent audit. Newly
 completed receipts retain the original operator/reason, while older completed receipts
 may report those legacy fields as unknown instead of inventing provenance.
+
+
+## Full Simulation parent detail inspection
+
+Each durable Full Simulation history row can now be inspected read-only as normalized
+parent detail. Admin can see the receipt request fingerprint, Saved Revision boundary
+IDs, canonical child Command IDs across season/final-week/empty-week/Week-61 work,
+available preview fingerprint and abandonment audit without mutating or reopening the
+parent.

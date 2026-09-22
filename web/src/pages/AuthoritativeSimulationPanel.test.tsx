@@ -36,6 +36,8 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextWeek: vi.fn(),
   previewAuthoritativeNextSeason: vi.fn(),
   simulateAuthoritativeNextSeason: vi.fn(),
+  previewAuthoritativeFullSimulation: vi.fn(),
+  simulateAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -413,6 +415,52 @@ const seasonResult = {
     position_fingerprint: '1'.repeat(64)
   },
   adoption: 'committed' as const
+}
+
+const fullSimulationPreview = {
+  schema_version: 'authoritative_full_simulation_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  start_week: week,
+  final_week: { season_index: 49, week: 61 },
+  remaining_weeks_including_current: 2912,
+  remaining_seasons_including_current: 48,
+  initial_action: 'next_season' as const,
+  initial_transition_blockers: ['pending_authoritative_groups'],
+  season_child_mode: 'canonical_next_season' as const,
+  final_season_mode: 'canonical_final_run_closure' as const,
+  explicit_boundary_policy:
+    'save_and_review_required_at_every_season_boundary' as const,
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  preview_fingerprint: '2'.repeat(64)
+}
+
+const fullSimulationSaveProgress = {
+  schema_version: 'authoritative_full_simulation_progress.v1' as const,
+  status: 'blocked' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  start_week: week,
+  current_week: { season_index: 2, week: 61 },
+  final_week: { season_index: 49, week: 61 },
+  completed_seasons: [],
+  completed_season_count: 0,
+  final_completed_weeks: [],
+  final_completed_week_count: 0,
+  checkpoint: 'season_transition_save_required' as const,
+  blockers: ['season_transition_save_required'],
+  detail: 'Save the current canonical world explicitly.',
+  position: seasonBoundaryPosition,
+  child_progress: seasonSaveProgress
+}
+
+const fullSimulationReviewProgress = {
+  ...fullSimulationSaveProgress,
+  checkpoint: 'season_transition_review_required' as const,
+  blockers: ['season_transition_review_required'],
+  detail: 'Review and commit the existing canonical Season Transition.',
+  child_progress: seasonReviewProgress
 }
 
 const editedSchedule = {
@@ -865,6 +913,8 @@ beforeEach(() => {
   api.simulateAuthoritativeNextWeek.mockResolvedValue(weekResult)
   api.previewAuthoritativeNextSeason.mockResolvedValue(seasonPreview)
   api.simulateAuthoritativeNextSeason.mockResolvedValue(seasonResult)
+  api.previewAuthoritativeFullSimulation.mockResolvedValue(fullSimulationPreview)
+  api.simulateAuthoritativeFullSimulation.mockResolvedValue(fullSimulationReviewProgress)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1709,6 +1759,100 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.simulateAuthoritativeNextSeason.mock.calls[2][2].command_id).toBe(
       firstCommand.command_id
     )
+  })
+
+  it('keeps one reviewed Full Simulation parent across season checkpoints', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeFullSimulation
+      .mockResolvedValueOnce(fullSimulationSaveProgress)
+      .mockResolvedValueOnce(fullSimulationReviewProgress)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.type(
+      screen.getByLabelText('Full Simulation operator'),
+      'Commissioner'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Full Simulation audit reason'),
+      'Advance the reviewed complete Run'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Full Simulation' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeFullSimulation).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          command_id: expect.any(String),
+          operator_label: 'Commissioner',
+          audit_reason: 'Advance the reviewed complete Run'
+        }
+      )
+    )
+    expect(
+      await screen.findByRole('heading', {
+        name: /Reviewed canonical Full Simulation/
+      })
+    ).toHaveTextContent('S2 W17')
+    expect(screen.getByText('canonical_next_season')).toBeInTheDocument()
+    expect(screen.getByText('canonical_final_run_closure')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Simulate reviewed authoritative Full Simulation'
+      })
+    )
+
+    expect(
+      await screen.findByText(
+        /Full Simulation paused at season_transition_save_required/
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Save authoritative simulation' })
+    ).toBeInTheDocument()
+    const firstCommand = api.simulateAuthoritativeFullSimulation.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      command_id: expect.any(String),
+      operator_label: 'Commissioner',
+      audit_reason: 'Advance the reviewed complete Run',
+      expected_start_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7',
+      expected_preview_fingerprint: '2'.repeat(64)
+    })
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Retry reviewed authoritative Full Simulation'
+      })
+    )
+    expect(
+      await screen.findByText(
+        /Full Simulation paused at season_transition_review_required/
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Review and commit the existing canonical Season Transition below/
+      )
+    ).toBeInTheDocument()
+
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeFullSimulation).toHaveBeenCalledTimes(2)
+    )
+    expect(
+      api.simulateAuthoritativeFullSimulation.mock.calls[1][2].command_id
+    ).toBe(firstCommand.command_id)
   })
 
   it('reviews the current Entry slot with minimal explicit Admin verdicts', async () => {

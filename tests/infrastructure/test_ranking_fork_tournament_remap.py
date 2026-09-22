@@ -46,6 +46,7 @@ def _canonical_source(*, with_prize_money: bool) -> OwnedTournamentRankingSource
     champion = TournamentPlayerResultAuthority(
         player_id="player-a",
         draw_type="main",
+        main_entry_status="wild_card",
         reached_stage="champion",
         final_round_number=1,
         last_match_id="match-final",
@@ -54,6 +55,7 @@ def _canonical_source(*, with_prize_money: bool) -> OwnedTournamentRankingSource
     finalist = TournamentPlayerResultAuthority(
         player_id="player-b",
         draw_type="main",
+        main_entry_status="direct",
         reached_stage="finalist",
         final_round_number=1,
         eliminated_by_player_id="player-a",
@@ -236,6 +238,19 @@ def test_canonical_tournament_source_remaps_branch_scoped_authorities(
     assert target.binding.expected_award_fingerprint == target.canonical_awards.fingerprint
     assert target.canonical_result.fingerprint != source.canonical_result.fingerprint
     assert target.canonical_awards.fingerprint != source.canonical_awards.fingerprint
+    source_statuses = {
+        player.player_id: player.main_entry_status
+        for player in source.canonical_result.players
+    }
+    target_statuses = {
+        player.player_id: player.main_entry_status
+        for player in target.canonical_result.players
+    }
+    assert source_statuses == {
+        "player-a": "wild_card",
+        "player-b": "direct",
+    }
+    assert target_statuses == source_statuses
 
     source_versions = prepare_canonical_tournament_ranking_sources(
         source.binding,

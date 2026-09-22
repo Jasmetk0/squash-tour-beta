@@ -313,7 +313,9 @@ def test_saved_submission_remaps_branch_and_validation_fingerprint(database):
     assert mapped.application_id == submission.application_id
     assert mapped.validation_authority_id == submission.validation_authority_id
     assert mapped.validation_authority_fingerprint == target_validation_fingerprint
-    assert fingerprint_map == {submission.fingerprint: mapped.fingerprint}
+    assert fingerprint_map == {
+        submission.fingerprint: (mapped.application_id, mapped.fingerprint)
+    }
 
     with pytest.raises(
         ValueError,

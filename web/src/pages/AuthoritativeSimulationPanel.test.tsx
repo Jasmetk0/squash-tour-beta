@@ -2004,7 +2004,7 @@ describe('AuthoritativeSimulationPanel', () => {
       name: 'Full Simulation parent detail'
     })
     expect(detail).toHaveTextContent('full-complete')
-    expect(detail).toHaveTextContent('receipt request fingerprint')
+    expect(detail).toHaveTextContent('Receipt request fingerprint')
     expect(detail).toHaveTextContent('season-child-5, season-child-6')
     expect(detail).toHaveTextContent('revision-final')
     expect(detail).toHaveTextContent('Finish canonical Run')

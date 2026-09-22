@@ -1587,3 +1587,18 @@ recalculated while each player's `main_entry_status` remains unchanged.
 This closes the recovery contract introduced by canonical Main-entry result provenance:
 forking a ranking-bearing Branch cannot silently degrade a Wild Card entrant into an
 undifferentiated Main participant.
+
+
+## Self-describing Simulation command receipts
+
+New canonical `Simulate Next Match` / `Simulate Next Slot` receipts now retain
+private frozen request evidence inside their persisted receipt JSON:
+`authoritative_simulation_request_evidence.v1` carries the original mode and exact
+`AuthoritativeSimulationCommand` payload. The private evidence is preserved by Saved
+Revision capture but stripped from the public command result, so first execution and
+exact retry retain the same API/result shape.
+
+Historical receipts without request evidence remain readable and unchanged. This is
+the prerequisite for safe schema-by-schema Branch-fork remapping of simulation command
+receipts; the request fingerprint can now be rebuilt under target Branch / Saved
+Revision identity instead of being copied blindly.

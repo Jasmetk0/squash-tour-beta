@@ -117,6 +117,7 @@ class SimulationPositionForkIdentityGraph:
     result_fingerprints: dict[str, str]
     terminal_checkpoint_payloads: dict[str, str]
     owned_tournament_fingerprints: dict[str, str]
+    sporting_context_fingerprints: dict[str, str]
     week_tournament_lock_fingerprints: dict[str, str]
     tournament_authority_fingerprints: dict[str, str]
     sporting_fingerprints: dict[str, str]
@@ -873,6 +874,9 @@ def remap_coupled_player_slot_history(
     tournament_ranking_authority_map: dict[
         str, TournamentRankingSnapshotAuthority
     ] | None = None,
+    lifecycle_fingerprint_map: dict[str, str] | None = None,
+    ranking_snapshot_fingerprint_map: dict[str, str] | None = None,
+    transition_authority_fingerprint_map: dict[str, str] | None = None,
 ) -> CoupledPlayerSlotForkRemap | None:
     """Remap sporting + completed Slot core in canonical week order.
 
@@ -894,6 +898,11 @@ def remap_coupled_player_slot_history(
         return None
 
     tournament_ranking_authority_map = tournament_ranking_authority_map or {}
+    lifecycle_fingerprint_map = lifecycle_fingerprint_map or {}
+    ranking_snapshot_fingerprint_map = ranking_snapshot_fingerprint_map or {}
+    transition_authority_fingerprint_map = (
+        transition_authority_fingerprint_map or {}
+    )
 
     auxiliary = set(source_slot_component) - {
         "fingerprint",
@@ -956,14 +965,6 @@ def remap_coupled_player_slot_history(
         raise SimulationSlotForkRemapUnsupportedError(
             "Simulation command history requires a target Saved Revision id"
         )
-    target_command_rows: list[AuthoritativeSimulationCommandModel] = [
-        _retarget_simulation_command_receipt_as_historical(
-            row,
-            target_branch_id=target_branch_id,
-            target_base_revision_id=target_base_revision_id or "",
-        )
-        for row in source_command_rows
-    ]
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
@@ -1432,6 +1433,7 @@ def remap_coupled_player_slot_history(
     all_group_commands: dict[str, str] = {}
     all_terminal_payloads: dict[str, str] = {}
     sporting_fingerprint_map: dict[str, str] = {}
+    sporting_context_fingerprint_map: dict[str, str] = {}
     remapped_context_by_week: dict[int, CompletedWeekSportingContext] = {}
 
     previous_target: PlayerSportingWeekState | None = None
@@ -1562,6 +1564,9 @@ def remap_coupled_player_slot_history(
             source_context.model_copy(update=context_updates).model_dump_json()
         )
         target_contexts.append(target_context)
+        sporting_context_fingerprint_map[source_context.fingerprint] = (
+            target_context.fingerprint
+        )
         remapped_context_by_week[week_ordinal] = target_context
 
     if set(slots_by_week) - {state.week.ordinal for state in source_states}:
@@ -2372,6 +2377,36 @@ def remap_coupled_player_slot_history(
             row.group_id,
         ),
     )
+    position_identity_graph = SimulationPositionForkIdentityGraph(
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        target_base_revision_id=target_base_revision_id or "",
+        schedule_fingerprints=schedule_fingerprint_map,
+        slot_plan_fingerprints=all_slot_plans,
+        group_command_fingerprints=all_group_commands,
+        result_fingerprints=all_results,
+        terminal_checkpoint_payloads=all_terminal_payloads,
+        owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
+        week_tournament_lock_fingerprints=week_tournament_lock_fingerprint_map,
+        tournament_authority_fingerprints=adopted_authority_fingerprint_map,
+        sporting_fingerprints=sporting_fingerprint_map,
+        lifecycle_fingerprints=lifecycle_fingerprint_map,
+        transition_authority_fingerprints=transition_authority_fingerprint_map,
+        ranking_snapshot_fingerprints=ranking_snapshot_fingerprint_map,
+        terminal_checkpoint_fingerprints=all_terminals,
+        sporting_context_fingerprints=sporting_context_fingerprint_map,
+    )
+    target_command_rows: list[AuthoritativeSimulationCommandModel] = [
+        _retarget_simulation_command_receipt_as_historical(
+            row,
+            target_branch_id=target_branch_id,
+            target_base_revision_id=target_base_revision_id or "",
+            position_identity_graph=position_identity_graph,
+        )
+        for row in source_command_rows
+    ]
+
     merged_simulation_component = simulation_component(
         target_slots,
         target_groups,
@@ -2418,4 +2453,5 @@ def remap_coupled_player_slot_history(
             adopted_authority_fingerprint_map
         ),
         owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
+        sporting_context_fingerprints=sporting_context_fingerprint_map,
     )

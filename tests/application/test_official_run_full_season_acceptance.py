@@ -9,6 +9,10 @@ from beta_engine.api.deps import (
     get_season_match_service,
     get_season_point_awards_service,
 )
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.infrastructure.db.authoritative_week_transition import (
+    AuthoritativeWeekTransitionRunner,
+)
 from beta_engine.infrastructure.db.models import (
     PlayerSportingWeekStateModel,
     PublishedOfficialRankingModel,
@@ -213,7 +217,10 @@ def _roots(server: ApiServer, run_id: str, branch_id: str) -> tuple[str, str, st
 
 
 @pytest.mark.pr_critical
-def test_canonical_next_week_finishes_week_one_and_publishes_week_two(tmp_path):
+def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
+    tmp_path,
+    monkeypatch,
+):
     server, week_one_package = _server_state(tmp_path)
     pool_path = tmp_path / "next-week-initial-pool.json"
     server.app.state.initial_player_pool_config_path = pool_path
@@ -336,6 +343,28 @@ def test_canonical_next_week_finishes_week_one_and_publishes_week_two(tmp_path):
             "expected_revision_id": preview["expected_revision_id"],
             "expected_preview_fingerprint": preview["preview_fingerprint"],
         }
+        original_execute = AuthoritativeWeekTransitionRunner.execute
+        injected = {"raised": False}
+
+        def lose_parent_response(self, transition_command, **kwargs):
+            result = original_execute(self, transition_command, **kwargs)
+            if not injected["raised"]:
+                injected["raised"] = True
+                raise ValueError("lost response after committed Week Transition")
+            return result
+
+        monkeypatch.setattr(
+            AuthoritativeWeekTransitionRunner,
+            "execute",
+            lose_parent_response,
+        )
+        status, lost = _request(
+            "POST",
+            sim_root + "/simulate-next-week",
+            command,
+        )
+        assert status == 409, lost
+
         status, result = _request(
             "POST",
             sim_root + "/simulate-next-week",

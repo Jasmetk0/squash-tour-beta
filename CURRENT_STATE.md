@@ -1660,3 +1660,19 @@ Historical v1 fork receipts remain readable. Retry is still intentionally disabl
 this slice establishes the target revision identity required for later reconstruction
 of a complete target-owned exact-retry request without claiming that the remapped
 opening Position or public result payload is ready yet.
+
+
+
+## Simulation Position source-to-target identity graph
+
+Coupled sporting/Simulation Slot Branch remap now exposes the exact source-to-target
+identity graph needed to reconstruct historical Simulation opening Positions. The graph
+covers sporting-state fingerprints, Week Simulation Schedule fingerprints, Slot-plan
+fingerprints, Group command fingerprints, terminal checkpoint payloads, Week Tournament
+Lock fingerprints, Adopted Tournament Authority fingerprints and owned tournament source
+fingerprints, alongside the existing Result/effect/terminal-checkpoint maps.
+
+This is evidence only: historical Simulation receipts remain read-only and
+`retryable=false`. The next exact-retry slice can rebuild `opening_position_basis`
+field-by-field from explicit maps instead of performing permissive recursive hash
+replacement.

@@ -7802,34 +7802,13 @@ class AuthoritativeRunSimulationDriver:
             )
             if draw is None:
                 continue
-            main_records = {
-                (match.round_number, match.bracket_position): match
-                for match in package.main_draw_matches
-                if match.match_id in plans
-            }
-            main_slots = {slot.slot_index: slot for slot in draw.main.slots}
-            for node in draw.main.nodes:
-                if node.round_number != 1:
-                    continue
-                record = main_records.get(
-                    (node.round_number, node.round_sequence)
+            q_ll_rest_protected_groups.update(
+                self._q_ll_rest_protected_group_ids(
+                    draw=draw,
+                    package=package,
+                    executable_group_ids=set(plans),
                 )
-                if record is None:
-                    continue
-                for source in (node.source_top, node.source_bottom):
-                    if not source.startswith("slot:"):
-                        continue
-                    slot = main_slots.get(int(source.removeprefix("slot:")))
-                    if slot is None:
-                        raise ValueError(
-                            "Match Day schedule cannot resolve canonical Main slot"
-                        )
-                    if (
-                        slot.entrant_kind == "qualifier_placeholder"
-                        or slot.entry_status == "lucky_loser"
-                    ):
-                        q_ll_rest_protected_groups.add(record.match_id)
-                        break
+            )
 
         day_by_group: dict[str, int] = {}
         for group_id in sorted(plans):
@@ -7966,6 +7945,44 @@ class AuthoritativeRunSimulationDriver:
                 "ordering its dependent match: " + ", ".join(sorted(missing))
             )
         return max(scheduled_position_by_group[feeder_id] for feeder_id in feeder_ids)
+
+    @staticmethod
+    def _q_ll_rest_protected_group_ids(
+        *,
+        draw,
+        package,
+        executable_group_ids: set[str],
+    ) -> set[str]:
+        """Return Main R1 groups whose entrant provenance requires extra rest."""
+
+        main_records = {
+            (match.round_number, match.bracket_position): match
+            for match in package.main_draw_matches
+            if match.match_id in executable_group_ids
+        }
+        main_slots = {slot.slot_index: slot for slot in draw.main.slots}
+        protected: set[str] = set()
+        for node in draw.main.nodes:
+            if node.round_number != 1:
+                continue
+            record = main_records.get((node.round_number, node.round_sequence))
+            if record is None:
+                continue
+            for source in (node.source_top, node.source_bottom):
+                if not source.startswith("slot:"):
+                    continue
+                slot = main_slots.get(int(source.removeprefix("slot:")))
+                if slot is None:
+                    raise ValueError(
+                        "Match Day schedule cannot resolve canonical Main slot"
+                    )
+                if (
+                    slot.entrant_kind == "qualifier_placeholder"
+                    or slot.entry_status == "lucky_loser"
+                ):
+                    protected.add(record.match_id)
+                    break
+        return protected
 
     @classmethod
     def _fair_rest_schedule_sort_key(

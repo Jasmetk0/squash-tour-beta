@@ -32,6 +32,8 @@ import {
   simulateAuthoritativeNextWeek,
   previewAuthoritativeNextSeason,
   simulateAuthoritativeNextSeason,
+  previewAuthoritativeFullSimulation,
+  simulateAuthoritativeFullSimulation,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -51,6 +53,8 @@ import type {
   AuthoritativeWeekProgress,
   AuthoritativeSeasonPreview,
   AuthoritativeSeasonProgress,
+  AuthoritativeFullSimulationPreview,
+  AuthoritativeFullSimulationProgress,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -209,6 +213,13 @@ export function AuthoritativeSimulationPanel({
     useState<AuthoritativeSeasonPreview | null>(null)
   const [nextSeasonProgress, setNextSeasonProgress] =
     useState<AuthoritativeSeasonProgress | null>(null)
+  const [fullSimulationCommandId, setFullSimulationCommandId] = useState(newCommandId)
+  const [fullSimulationOperator, setFullSimulationOperator] = useState('')
+  const [fullSimulationReason, setFullSimulationReason] = useState('')
+  const [fullSimulationReview, setFullSimulationReview] =
+    useState<AuthoritativeFullSimulationPreview | null>(null)
+  const [fullSimulationProgress, setFullSimulationProgress] =
+    useState<AuthoritativeFullSimulationProgress | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -354,6 +365,14 @@ export function AuthoritativeSimulationPanel({
     setNextSeasonReason('')
     setNextSeasonReview(null)
     setNextSeasonProgress(null)
+  }, [runId, branchId])
+
+  useEffect(() => {
+    setFullSimulationCommandId(newCommandId())
+    setFullSimulationOperator('')
+    setFullSimulationReason('')
+    setFullSimulationReview(null)
+    setFullSimulationProgress(null)
   }, [runId, branchId])
 
   useEffect(() => {
@@ -1110,6 +1129,93 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const fullSimulationPreviewMutation = useMutation({
+    mutationFn: () => {
+      const operator = fullSimulationOperator.trim()
+      const reason = fullSimulationReason.trim()
+      if (!operator || !reason) {
+        throw new Error('Full Simulation requires an operator label and audit reason.')
+      }
+      return previewAuthoritativeFullSimulation(runId, branchId, {
+        command_id: fullSimulationCommandId,
+        operator_label: operator,
+        audit_reason: reason
+      })
+    },
+    onSuccess: (preview) => {
+      setFullSimulationReview(preview)
+      setFullSimulationProgress(null)
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setFullSimulationReview(null)
+        setFullSimulationProgress(null)
+        setFullSimulationCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const fullSimulationMutation = useMutation({
+    mutationFn: () => {
+      if (!fullSimulationReview) {
+        throw new Error('Review the canonical Full Simulation range first.')
+      }
+      return simulateAuthoritativeFullSimulation(runId, branchId, {
+        command_id: fullSimulationCommandId,
+        operator_label: fullSimulationOperator.trim(),
+        audit_reason: fullSimulationReason.trim(),
+        expected_start_week: fullSimulationReview.start_week,
+        expected_position_fingerprint:
+          fullSimulationReview.expected_position_fingerprint,
+        expected_revision_id: fullSimulationReview.expected_revision_id,
+        expected_preview_fingerprint: fullSimulationReview.preview_fingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      if (result.schema_version === 'authoritative_full_simulation_progress.v1') {
+        setFullSimulationProgress(result)
+        if (result.position) {
+          queryClient.setQueryData(
+            ['authoritative-simulation-position', runId, branchId],
+            result.position
+          )
+        }
+        await Promise.all([
+          refreshCanonicalSimulation(),
+          queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+          queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+        ])
+        return
+      }
+      setFullSimulationProgress(null)
+      setFullSimulationReview(null)
+      setFullSimulationCommandId(newCommandId())
+      setFullSimulationOperator('')
+      setFullSimulationReason('')
+      setConfirmed(false)
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
+        queryClient.invalidateQueries({ queryKey: ['authoritative-season-transition-preflight', runId, branchId] })
+      ])
+    },
+    onError: async () => {
+      // Preserve the reviewed Full Simulation parent across partial season work,
+      // explicit Save boundaries, process reopen and final Run closure.
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['saved-revisions', runId, branchId] })
+      ])
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1498,6 +1604,8 @@ export function AuthoritativeSimulationPanel({
     nextWeekMutation.isPending ||
     nextSeasonPreviewMutation.isPending ||
     nextSeasonMutation.isPending ||
+    fullSimulationPreviewMutation.isPending ||
+    fullSimulationMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1540,7 +1648,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season / Full Simulation → Save / reviewed boundaries.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -2327,6 +2435,26 @@ export function AuthoritativeSimulationPanel({
                 onChange={(event) => setNextSeasonReason(event.target.value)}
               />
             </label>
+            <label>
+              Full Simulation operator
+              <input
+                aria-label="Full Simulation operator"
+                value={fullSimulationOperator}
+                maxLength={128}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                onChange={(event) => setFullSimulationOperator(event.target.value)}
+              />
+            </label>
+            <label>
+              Full Simulation audit reason
+              <textarea
+                aria-label="Full Simulation audit reason"
+                value={fullSimulationReason}
+                maxLength={2000}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                onChange={(event) => setFullSimulationReason(event.target.value)}
+              />
+            </label>
           </div>
           <div className="quick-actions">
             <button
@@ -2405,6 +2533,17 @@ export function AuthoritativeSimulationPanel({
               }
             >
               Review authoritative Next Season
+            </button>
+            <button
+              type="button"
+              onClick={() => fullSimulationPreviewMutation.mutate()}
+              disabled={
+                !fullSimulationOperator.trim() ||
+                !fullSimulationReason.trim() ||
+                actionPending
+              }
+            >
+              Review authoritative Full Simulation
             </button>
           </div>
           {nextMatchDayReview ? (
@@ -2793,6 +2932,136 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {fullSimulationReview ? (
+            <>
+              <h5>
+                Reviewed canonical Full Simulation · S
+                {fullSimulationReview.start_week.season_index} W
+                {fullSimulationReview.start_week.week} → final S
+                {fullSimulationReview.final_week.season_index} W
+                {fullSimulationReview.final_week.week}
+              </h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Start',
+                    value: `Season index ${fullSimulationReview.start_week.season_index} · Week ${fullSimulationReview.start_week.week}`
+                  },
+                  {
+                    label: 'Final boundary',
+                    value: `Season index ${fullSimulationReview.final_week.season_index} · Week ${fullSimulationReview.final_week.week}`
+                  },
+                  {
+                    label: 'Remaining seasons including current',
+                    value: fullSimulationReview.remaining_seasons_including_current
+                  },
+                  {
+                    label: 'Remaining weeks including current',
+                    value: fullSimulationReview.remaining_weeks_including_current
+                  },
+                  {
+                    label: 'Initial action',
+                    value: fullSimulationReview.initial_action
+                  },
+                  {
+                    label: 'Ordinary season child',
+                    value: fullSimulationReview.season_child_mode
+                  },
+                  {
+                    label: 'Final season',
+                    value: fullSimulationReview.final_season_mode
+                  },
+                  {
+                    label: 'Explicit boundaries',
+                    value: fullSimulationReview.explicit_boundary_policy
+                  },
+                  {
+                    label: 'Saved Revision at review',
+                    value: fullSimulationReview.expected_revision_id
+                  }
+                ]}
+              />
+              {fullSimulationReview.initial_transition_blockers.length ? (
+                <p className="status">
+                  Initial canonical blockers: {
+                    fullSimulationReview.initial_transition_blockers.join(', ')
+                  }.
+                </p>
+              ) : null}
+              <p className="status">
+                Ordinary seasons compose reviewed Next Season children. The final
+                2049/50 season never fabricates a 2050/51 Week 1: it ends through
+                the existing canonical final Run closure. Saves and transition
+                confirmations remain explicit.
+              </p>
+              {fullSimulationProgress ? (
+                <>
+                  <p role="alert" className="error">
+                    Full Simulation paused at {fullSimulationProgress.checkpoint}
+                    {' '}after {fullSimulationProgress.completed_season_count}
+                    {' '}completed season(s) and {
+                      fullSimulationProgress.final_completed_week_count
+                    } final-season completed week(s).
+                    {fullSimulationProgress.current_week
+                      ? ` Current S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
+                      : ''}
+                    {fullSimulationProgress.blockers.length
+                      ? ` Resolve: ${fullSimulationProgress.blockers.join(', ')}.`
+                      : ''}
+                  </p>
+                  {fullSimulationProgress.detail ? (
+                    <p className="status">{fullSimulationProgress.detail}</p>
+                  ) : null}
+                  {(
+                    fullSimulationProgress.checkpoint ===
+                      'season_transition_save_required' ||
+                    fullSimulationProgress.checkpoint === 'final_run_save_required'
+                  ) ? (
+                    <p className="status">
+                      Use <strong>Save authoritative simulation</strong> below, then
+                      retry this exact reviewed Full Simulation command.
+                    </p>
+                  ) : null}
+                  {fullSimulationProgress.checkpoint ===
+                    'season_transition_review_required' ? (
+                    <p className="status">
+                      Review and commit the existing canonical Season Transition
+                      below, then retry this exact Full Simulation command.
+                    </p>
+                  ) : null}
+                  {fullSimulationProgress.checkpoint ===
+                    'final_run_closure_review_required' ? (
+                    <p className="status">
+                      Review and commit the existing final Run closure below, then
+                      retry this exact Full Simulation command once more.
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => fullSimulationMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  {fullSimulationProgress
+                    ? 'Retry reviewed authoritative Full Simulation'
+                    : 'Simulate reviewed authoritative Full Simulation'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFullSimulationReview(null)
+                    setFullSimulationProgress(null)
+                    setFullSimulationCommandId(newCommandId())
+                  }}
+                  disabled={fullSimulationMutation.isPending}
+                >
+                  Discard Full Simulation review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2848,6 +3117,17 @@ export function AuthoritativeSimulationPanel({
           {nextSeasonMutation.error ? (
             <p className="error">
               Authoritative Next Season failed: {formatApiError(nextSeasonMutation.error)}.
+              The reviewed parent command is preserved for exact retry.
+            </p>
+          ) : null}
+          {fullSimulationPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Full Simulation preview failed: {formatApiError(fullSimulationPreviewMutation.error)}
+            </p>
+          ) : null}
+          {fullSimulationMutation.error ? (
+            <p className="error">
+              Authoritative Full Simulation failed: {formatApiError(fullSimulationMutation.error)}.
               The reviewed parent command is preserved for exact retry.
             </p>
           ) : null}

@@ -4,6 +4,8 @@ import pytest
 from sqlalchemy import select
 
 from beta_engine.application.authoritative_run_simulation_driver import (
+    AuthoritativeFullSimulationCommand,
+    AuthoritativeFullSimulationPreviewRequest,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
@@ -317,6 +319,97 @@ def test_atomic_final_season_writer_commits_one_complete_final_state(database, m
         assert len(session.scalars(select(BranchSavedRevisionModel)).all()) == 2
         assert len(session.scalars(select(SeasonClosingRankingModel)).all()) == 1
         assert len(session.scalars(select(BranchRevisionAuditEventModel)).all()) == 1
+
+
+@pytest.mark.pr_critical
+def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypatch):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+
+    def frozen_final_position(
+        self,
+        session,
+        run_id,
+        branch_id,
+        allow_missing_schedule=False,
+    ):
+        assert (run_id, branch_id) == ("run", "branch")
+        return position
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        frozen_final_position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+
+    preview_request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="full-simulation-final-edge",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Final acceptance admin",
+        audit_reason="Review the final canonical Run closure boundary",
+    )
+    preview = driver.preview_full_simulation(preview_request)
+    assert preview["start_week"] == FINAL_WEEK.model_dump(mode="json")
+    assert preview["final_week"] == FINAL_WEEK.model_dump(mode="json")
+    assert preview["remaining_weeks_including_current"] == 1
+    assert preview["remaining_seasons_including_current"] == 1
+    assert preview["initial_action"] == "final_season_range"
+
+    command = AuthoritativeFullSimulationCommand(
+        **preview_request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    progress = driver.simulate_full_simulation(command)
+    assert progress["schema_version"] == "authoritative_full_simulation_progress.v1"
+    assert progress["status"] == "blocked"
+    assert progress["checkpoint"] == "final_run_closure_review_required"
+    assert progress["completed_season_count"] == 0
+    assert progress["final_completed_week_count"] == 1
+    preflight = progress["season_transition_preflight"]
+    assert preflight["final_season"] is True
+    assert preflight["ready_for_execution"] is True
+    assert preflight["saved_revision_id"] == "revision-before-final"
+
+    final_command = _command(preflight["preflight_fingerprint"])
+    final_result = driver.finalize_final_season(final_command)
+    assert final_result.run_status == COMPLETED_RUN_STATUS
+    assert final_result.saved_revision_id == "revision-final"
+
+    result = driver.simulate_full_simulation(command)
+    assert result["schema_version"] == "authoritative_full_simulation_result.v1"
+    assert result["status"] == "complete"
+    assert result["run_status"] == COMPLETED_RUN_STATUS
+    assert result["final_week"] == FINAL_WEEK.model_dump(mode="json")
+    assert result["completed_seasons"] == [49]
+    assert result["completed_season_count"] == 1
+    assert result["final_saved_revision_id"] == "revision-final"
+    assert len(result["closure_marker_fingerprint"]) == 64
+    assert len(result["season_summary_fingerprint"]) == 64
+
+    assert driver.simulate_full_simulation(command) == result
 
 
 @pytest.mark.pr_critical

@@ -1452,6 +1452,88 @@ export type AuthoritativeSeasonExecution =
   | AuthoritativeSeasonProgress
   | AuthoritativeSeasonResult
 
+export type AuthoritativeFullSimulationPreviewPayload = {
+  command_id: string
+  operator_label: string
+  audit_reason: string
+}
+
+export type AuthoritativeFullSimulationPreview = {
+  schema_version: 'authoritative_full_simulation_preview.v1'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  final_week: AuthoritativeRankingWeek
+  remaining_weeks_including_current: number
+  remaining_seasons_including_current: number
+  initial_action: 'next_season' | 'final_season_range'
+  initial_transition_blockers: string[]
+  season_child_mode: 'canonical_next_season'
+  final_season_mode: 'canonical_final_run_closure'
+  explicit_boundary_policy: 'save_and_review_required_at_every_season_boundary'
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  preview_fingerprint: string
+}
+
+export type AuthoritativeFullSimulationCommandPayload =
+  AuthoritativeFullSimulationPreviewPayload & {
+    expected_start_week: AuthoritativeRankingWeek
+    expected_position_fingerprint: string
+    expected_revision_id: string
+    expected_preview_fingerprint: string
+  }
+
+export type AuthoritativeFullSimulationProgress = {
+  schema_version: 'authoritative_full_simulation_progress.v1'
+  status: 'blocked'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  current_week: AuthoritativeRankingWeek | null
+  final_week: AuthoritativeRankingWeek
+  completed_seasons: number[]
+  completed_season_count: number
+  final_completed_weeks: AuthoritativeRankingWeek[]
+  final_completed_week_count: number
+  checkpoint:
+    | AuthoritativeSeasonProgress['checkpoint']
+    | 'season_preparation_required'
+    | 'final_week_preparation_required'
+    | 'final_run_save_required'
+    | 'final_run_closure_prerequisite'
+    | 'final_run_closure_review_required'
+  blockers: string[]
+  detail: string | null
+  position: AuthoritativeSimulationPosition | null
+  child_progress?: AuthoritativeSeasonProgress | AuthoritativeWeekProgress
+  season_transition_preflight?: AuthoritativeSeasonTransitionPreflight
+}
+
+export type AuthoritativeFullSimulationResult = {
+  schema_version: 'authoritative_full_simulation_result.v1'
+  status: 'complete'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  final_week: AuthoritativeRankingWeek
+  completed_seasons: number[]
+  completed_season_count: number
+  season_child_command_ids: string[]
+  final_week_child_command_ids: string[]
+  final_empty_week_child_command_ids: string[]
+  final_week61_slot_child_command_ids: string[]
+  run_status: 'completed'
+  final_saved_revision_id: string
+  closure_marker_fingerprint: string
+  season_summary_fingerprint: string
+  adoption: 'committed'
+}
+
+export type AuthoritativeFullSimulationExecution =
+  | AuthoritativeFullSimulationProgress
+  | AuthoritativeFullSimulationResult
+
 export type MatchReconstructionGameScore = {
   player_a_points: number
   player_b_points: number

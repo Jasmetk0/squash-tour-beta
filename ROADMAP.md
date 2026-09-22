@@ -306,13 +306,18 @@ canonical Season Transition has actually moved Position to next Season Week 1. T
 same parent survives reopen and every checkpoint without rerolling completed weeks.
 Final 2049/50 closure stays on its dedicated terminal path.
 
-Full Simulation remains compatibility-only until it composes this canonical season
-boundary across the complete Run. See
+**Full Simulation is now canonical** across the complete remaining Run. Ordinary
+seasons are deterministic Next Season children; the final 2049/50 season uses
+canonical Week/empty-week/slot evidence and terminates only through the existing final
+Run closure. Every Save and ordinary/final transition confirmation remains an explicit
+progress checkpoint, while the same parent command survives reopen and exact retry.
+This closes the long-range Simulation orchestration stack for the pre-alpha path. See
 `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`,
 `docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`,
 `docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md`,
 `docs/AUTHORITATIVE_WEEK_ORCHESTRATION_V1.md` and
-`docs/AUTHORITATIVE_SEASON_ORCHESTRATION_V1.md`.
+`docs/AUTHORITATIVE_SEASON_ORCHESTRATION_V1.md` and
+`docs/AUTHORITATIVE_FULL_SIMULATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

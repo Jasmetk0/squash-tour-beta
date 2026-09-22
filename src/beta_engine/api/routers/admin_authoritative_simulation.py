@@ -27,6 +27,8 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeWeekCommand,
     AuthoritativeSeasonPreviewRequest,
     AuthoritativeSeasonCommand,
+    AuthoritativeFullSimulationPreviewRequest,
+    AuthoritativeFullSimulationCommand,
     AuthoritativeMatchReconstructionPreviewRequest,
     AuthoritativeMatchReconstructionCommitCommand,
     AuthoritativeWalkoverCommand,
@@ -1056,6 +1058,62 @@ def simulate_next_season(
             status_code=409,
             detail={
                 "code": "authoritative_season_simulation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/full-simulation/preview")
+def preview_full_simulation(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        request = AuthoritativeFullSimulationPreviewRequest.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).preview_full_simulation(request)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_full_simulation_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post("/simulate-full-simulation", status_code=201)
+def simulate_full_simulation(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeFullSimulationCommand.model_validate(
+            {**payload, "run_id": run_id, "branch_id": branch_id}
+        )
+        return _driver(runtime, matches, awards).simulate_full_simulation(command)
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_full_simulation_conflict",
                 "message": str(exc),
             },
         ) from exc

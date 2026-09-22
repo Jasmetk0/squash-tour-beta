@@ -148,6 +148,10 @@ import type {
   AuthoritativeSeasonPreview,
   AuthoritativeSeasonCommandPayload,
   AuthoritativeSeasonExecution,
+  AuthoritativeFullSimulationPreviewPayload,
+  AuthoritativeFullSimulationPreview,
+  AuthoritativeFullSimulationCommandPayload,
+  AuthoritativeFullSimulationExecution,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1767,6 +1771,72 @@ export async function simulateAuthoritativeNextSeason(
     data.target_week.week !== 1
   ) {
     throw new Error('Authoritative Season result is invalid.')
+  }
+  return data
+}
+
+export async function previewAuthoritativeFullSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeFullSimulationPreviewPayload
+): Promise<AuthoritativeFullSimulationPreview> {
+  const data = await request<AuthoritativeFullSimulationPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_preview.v1' ||
+    data.final_week.season_index !== 49 ||
+    data.final_week.week !== 61 ||
+    data.remaining_weeks_including_current < 1 ||
+    data.remaining_seasons_including_current < 1 ||
+    data.season_child_mode !== 'canonical_next_season' ||
+    data.final_season_mode !== 'canonical_final_run_closure' ||
+    data.explicit_boundary_policy !==
+      'save_and_review_required_at_every_season_boundary' ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Full Simulation preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeFullSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeFullSimulationCommandPayload
+): Promise<AuthoritativeFullSimulationExecution> {
+  const data = await request<AuthoritativeFullSimulationExecution>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-full-simulation',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (data.schema_version === 'authoritative_full_simulation_progress.v1') {
+    if (
+      data.status !== 'blocked' ||
+      data.completed_season_count !== data.completed_seasons.length ||
+      data.final_completed_week_count !== data.final_completed_weeks.length
+    ) {
+      throw new Error('Authoritative Full Simulation progress response is invalid.')
+    }
+    if (data.position) {
+      verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+    }
+    return data
+  }
+  if (
+    data.schema_version !== 'authoritative_full_simulation_result.v1' ||
+    data.status !== 'complete' ||
+    data.run_status !== 'completed' ||
+    data.final_week.season_index !== 49 ||
+    data.final_week.week !== 61 ||
+    data.completed_season_count !== data.completed_seasons.length ||
+    !/^[0-9a-f]{64}$/.test(data.closure_marker_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.season_summary_fingerprint)
+  ) {
+    throw new Error('Authoritative Full Simulation result is invalid.')
   }
   return data
 }

@@ -7793,6 +7793,44 @@ class AuthoritativeRunSimulationDriver:
                 + ", ".join(missing)
             )
 
+        q_ll_rest_protected_groups: set[str] = set()
+        for package in packages:
+            draw = TournamentDrawAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=package.event_id,
+            )
+            if draw is None:
+                continue
+            main_records = {
+                (match.round_number, match.bracket_position): match
+                for match in package.main_draw_matches
+                if match.match_id in plans
+            }
+            main_slots = {slot.slot_index: slot for slot in draw.main.slots}
+            for node in draw.main.nodes:
+                if node.round_number != 1:
+                    continue
+                record = main_records.get(
+                    (node.round_number, node.round_sequence)
+                )
+                if record is None:
+                    continue
+                for source in (node.source_top, node.source_bottom):
+                    if not source.startswith("slot:"):
+                        continue
+                    slot = main_slots.get(int(source.removeprefix("slot:")))
+                    if slot is None:
+                        raise ValueError(
+                            "Match Day schedule cannot resolve canonical Main slot"
+                        )
+                    if (
+                        slot.entrant_kind == "qualifier_placeholder"
+                        or slot.entry_status == "lucky_loser"
+                    ):
+                        q_ll_rest_protected_groups.add(record.match_id)
+                        break
+
         day_by_group: dict[str, int] = {}
         for group_id in sorted(plans):
             event_id, draw_phase, round_number, _ = match_meta[group_id]
@@ -7833,6 +7871,7 @@ class AuthoritativeRunSimulationDriver:
                         self._plan_feeders(plans[group_id]),
                         scheduled_position_by_group,
                     ),
+                    1 if group_id in q_ll_rest_protected_groups else 0,
                     self._deterministic_schedule_tiebreak(
                         run_id=run_id,
                         branch_id=branch_id,

@@ -59,6 +59,43 @@ def _validate_command_rows_shape(rows):
                 "Saved simulation command request evidence fingerprint is corrupt"
             )
 
+        position_evidence = payload.get("_position_evidence")
+        if position_evidence is None:
+            continue
+        if (
+            position_evidence.get("schema_version")
+            != "authoritative_simulation_position_evidence.v1"
+        ):
+            raise ValueError("Saved simulation command Position evidence schema is invalid")
+        before = position_evidence.get("before")
+        after = position_evidence.get("after")
+        if not isinstance(before, dict):
+            raise ValueError("Saved simulation command before-Position evidence is invalid")
+        before_fingerprint = hashlib.sha256(
+            json.dumps(before, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        if before_fingerprint != command.get("expected_position_fingerprint"):
+            raise ValueError(
+                "Saved simulation command before-Position evidence fingerprint is corrupt"
+            )
+        if row.status == "pending":
+            if after is not None:
+                raise ValueError(
+                    "Pending simulation command cannot carry after-Position evidence"
+                )
+            continue
+        if row.status != "complete":
+            raise ValueError("Saved simulation command receipt status is invalid")
+        if not isinstance(after, dict):
+            raise ValueError("Saved simulation command after-Position evidence is invalid")
+        after_fingerprint = hashlib.sha256(
+            json.dumps(after, sort_keys=True, separators=(",", ":")).encode()
+        ).hexdigest()
+        if after_fingerprint != payload.get("position_fingerprint"):
+            raise ValueError(
+                "Saved simulation command after-Position evidence fingerprint is corrupt"
+            )
+
 
 def _validate_entry_field_rows(rows):
     from beta_engine.infrastructure.db.tournament_entry_field import (

@@ -297,12 +297,22 @@ executes sport through deterministic Next Slot children, then freezes and execut
 the existing atomic Week Transition. Known non-progress prerequisites fail the wider
 preview closed; later legitimate checkpoints return resumable blocked progress while
 preserving the exact parent command. Week 61 remains a Season Transition boundary.
-Full Season remains compatibility-only until it composes these canonical week/season
-boundaries with progressive validation. See
+**Next Season is now canonical** as a progressive reviewed parent. It composes
+ordinary weeks through exact Next Week children, closes only Calendar-proven empty
+weeks through audited Empty Week children, and stops on explicit process decisions.
+At Week 61 it finishes sporting evidence, requires a real explicit Save, exposes the
+existing Season Transition preflight/review checkpoint, and completes only after the
+canonical Season Transition has actually moved Position to next Season Week 1. The
+same parent survives reopen and every checkpoint without rerolling completed weeks.
+Final 2049/50 closure stays on its dedicated terminal path.
+
+Full Simulation remains compatibility-only until it composes this canonical season
+boundary across the complete Run. See
 `docs/AUTHORITATIVE_MATCH_DAY_ORCHESTRATION_V1.md`,
 `docs/AUTHORITATIVE_ROUND_ORCHESTRATION_V1.md`,
-`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md` and
-`docs/AUTHORITATIVE_WEEK_ORCHESTRATION_V1.md`.
+`docs/AUTHORITATIVE_TOURNAMENT_ORCHESTRATION_V1.md`,
+`docs/AUTHORITATIVE_WEEK_ORCHESTRATION_V1.md` and
+`docs/AUTHORITATIVE_SEASON_ORCHESTRATION_V1.md`.
 
 The next canonical boundary is now partially integrated rather than client-authored:
 once Position reports `week_ready_for_transition`, a new server-derived Week

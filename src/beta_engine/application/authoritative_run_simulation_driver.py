@@ -88,6 +88,7 @@ from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
 )
+from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.domain.tournaments.models import CalendarEvent
@@ -143,7 +144,16 @@ from beta_engine.infrastructure.db.player_sporting_state import (
     put_completed_context,
 )
 from beta_engine.infrastructure.db.authoritative_week_transition import (
+    AuthoritativeWeekTransitionRunner,
+    derive_persisted_week_transition_command,
     preview_persisted_week_transition,
+)
+from beta_engine.infrastructure.db.ranking_transition_authority import (
+    RankingTransitionAuthorityStore,
+    derive_ranking_transition_authority,
+)
+from beta_engine.application.authoritative_week_transition import (
+    AuthoritativeWeekTransitionCommand,
 )
 
 
@@ -232,6 +242,46 @@ class AuthoritativeTournamentCommand(FrozenInput):
     expected_week: RankingWeek
     expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_revision_id: str = Field(min_length=1)
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeWeekPreviewRequest(FrozenInput):
+    """Read-only review request for the full current-week canonical range."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("Next Week operator and audit reason must be non-empty")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+    @property
+    def audit(self) -> RankingCommandAudit:
+        return RankingCommandAudit(
+            actor_label=self.operator_label,
+            reason=self.audit_reason,
+        )
+
+
+class AuthoritativeWeekCommand(AuthoritativeWeekPreviewRequest):
+    """Reviewed resumable orchestration through the next Week Transition."""
+
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
     @property
     def fingerprint(self) -> str:

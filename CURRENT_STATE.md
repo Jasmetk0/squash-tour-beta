@@ -1676,3 +1676,26 @@ This is evidence only: historical Simulation receipts remain read-only and
 `retryable=false`. The next exact-retry slice can rebuild `opening_position_basis`
 field-by-field from explicit maps instead of performing permissive recursive hash
 replacement.
+
+
+
+## Reconstructed target Simulation opening Position evidence
+
+Materialized Branch remap can now reconstruct `authoritative_simulation_request_evidence.v2`
+under target Branch identity instead of preserving only the source request. The
+reconstruction is field-by-field and fail-closed: scope, schedule, Slot plans and
+terminal payloads, Group command/result fingerprints, owned tournament sources,
+Week Tournament Lock, adopted tournament authority, sporting/lifecycle state,
+Ranking Transition authority, Official Ranking world head, terminal sporting
+checkpoint and explicit empty-week context must each resolve through a dedicated
+source-to-target mapping.
+
+The reconstructed command binds `expected_revision_id` to the target materialized
+fork Saved Revision and recomputes `expected_position_fingerprint` from the rebuilt
+target `opening_position_basis`. Historical fork receipts carrying this evidence use
+schema v3 and bind both the target request evidence fingerprint and the future canonical
+target request fingerprint into their own integrity hash.
+
+This still does **not** enable replay: v3 historical receipts remain
+`status="historical_fork"` and `retryable=false`. Target request identity is now
+provable; safe target result replay/idempotent command behavior remains the next slice.

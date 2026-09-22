@@ -2787,12 +2787,21 @@ class SimulationPersistenceRepository:
                         "fingerprint": remapped_ranking.fingerprint,
                         "state": remapped_ranking.model_dump(mode="json"),
                     }
+                    source_lifecycle_states = (
+                        load_saved_lifecycle(
+                            source_revision.payload,
+                            run_id=run_id,
+                            branch_id=source_branch_id,
+                        )
+                        or ()
+                    )
                     remapped_lifecycle_component = remap_saved_lifecycle_component(
                         source_revision.payload,
                         run_id=run_id,
                         source_branch_id=source_branch_id,
                         target_branch_id=branch_id,
                     )
+                    remapped_lifecycle_states = ()
                     if remapped_lifecycle_component is not None:
                         target_payload["content"][PLAYER_LIFECYCLE_COMPONENT_KEY] = (
                             remapped_lifecycle_component
@@ -2812,6 +2821,31 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
+                    source_to_target_lifecycle_fingerprint = {
+                        source.fingerprint: target.fingerprint
+                        for source, target in zip(
+                            source_lifecycle_states,
+                            remapped_lifecycle_states,
+                            strict=True,
+                        )
+                    }
+                    source_to_target_ranking_snapshot_fingerprint = {
+                        source.snapshot.fingerprint: target.snapshot.fingerprint
+                        for source, target in zip(
+                            source_ranking.entries,
+                            remapped_ranking.entries,
+                            strict=True,
+                        )
+                    }
+                    source_to_target_transition_authority_fingerprint = {
+                        source.fingerprint: target.fingerprint
+                        for source, target in zip(
+                            source_ranking.transition_authorities,
+                            remapped_ranking.transition_authorities,
+                            strict=True,
+                        )
+                    }
+
                     source_to_target_tournament_ranking_authority = {
                         source.fingerprint: target
                         for source, target in zip(
@@ -2834,6 +2868,15 @@ class SimulationPersistenceRepository:
                                 ),
                                 tournament_ranking_authority_map=(
                                     source_to_target_tournament_ranking_authority
+                                ),
+                                lifecycle_fingerprint_map=(
+                                    source_to_target_lifecycle_fingerprint
+                                ),
+                                ranking_snapshot_fingerprint_map=(
+                                    source_to_target_ranking_snapshot_fingerprint
+                                ),
+                                transition_authority_fingerprint_map=(
+                                    source_to_target_transition_authority_fingerprint
                                 ),
                             )
                         except (

@@ -4524,6 +4524,280 @@ def test_simulation_command_receipt_fork_is_read_only_historical_audit():
 
 
 @pytest.mark.pr_critical
+def test_simulation_command_receipt_fork_reconstructs_target_position_identity():
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        SimulationPositionForkIdentityGraph,
+        _retarget_simulation_command_receipt_as_historical,
+    )
+    from beta_engine.infrastructure.db.simulation_slot_state import (
+        _validate_command_rows_shape,
+    )
+
+    source_basis = {
+        "scope": ["run", "branch", 0],
+        "schedule": "source-schedule",
+        "entry_slot_ordinals": [],
+        "wc_slot_ordinals": [],
+        "week_tournament_lock": "source-lock",
+        "week_tournament_lock_conflicts": [],
+        "entry_validation_slots": [],
+        "current_slot_kind": "match",
+        "current_slot_ordinal": 2,
+        "proposed_schedule_requirement": ["event-one"],
+        "slots": [
+            ["slot-one", "complete", "source-plan-one", "source-terminal-json"],
+            ["slot-two", "pending", "source-plan-two", None],
+        ],
+        "groups": [["group-one", "source-command-fp", "source-result-fp"]],
+        "owned": [["event-one", "source-owned-fp"]],
+        "tournament_authority": "source-tournament-authority",
+        "sporting": "source-sporting",
+        "lifecycle": "source-lifecycle",
+        "branch_head": "source-revision",
+        "draft": ["source-revision", "clean", 0],
+        "transition_authority": "source-transition",
+        "world": [0, "source-ranking"],
+        "terminal": "source-terminal-fp",
+        "empty_week_context": "source-empty-context",
+    }
+    source_command = {
+        "command_id": "slot-command-v2",
+        "run_id": "run",
+        "branch_id": "branch",
+        "expected_week": {"season_index": 0, "week": 1},
+        "expected_position_fingerprint": fingerprint(source_basis),
+        "expected_revision_id": "source-revision",
+        "group_id": None,
+    }
+    source_evidence = {
+        "schema_version": "authoritative_simulation_request_evidence.v2",
+        "mode": "slot",
+        "command": source_command,
+        "opening_position_basis": source_basis,
+    }
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id="slot-command-v2",
+        request_fingerprint=fingerprint(
+            {"mode": "slot", "command": source_command}
+        ),
+        status="complete",
+        result_json=json.dumps(
+            {
+                "position_fingerprint": "f" * 64,
+                "_request_evidence": source_evidence,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    graph = SimulationPositionForkIdentityGraph(
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        schedule_fingerprints={"source-schedule": "target-schedule"},
+        slot_plan_fingerprints={
+            "source-plan-one": "target-plan-one",
+            "source-plan-two": "target-plan-two",
+        },
+        group_command_fingerprints={
+            "source-command-fp": "target-command-fp",
+        },
+        result_fingerprints={"source-result-fp": "target-result-fp"},
+        terminal_checkpoint_payloads={
+            "source-terminal-json": "target-terminal-json",
+        },
+        owned_tournament_fingerprints={
+            "source-owned-fp": "target-owned-fp",
+        },
+        week_tournament_lock_fingerprints={
+            "source-lock": "target-lock",
+        },
+        tournament_authority_fingerprints={
+            "source-tournament-authority": "target-tournament-authority",
+        },
+        sporting_fingerprints={"source-sporting": "target-sporting"},
+        lifecycle_fingerprints={"source-lifecycle": "target-lifecycle"},
+        transition_authority_fingerprints={
+            "source-transition": "target-transition",
+        },
+        ranking_snapshot_fingerprints={"source-ranking": "target-ranking"},
+        terminal_checkpoint_fingerprints={
+            "source-terminal-fp": "target-terminal-fp",
+        },
+        sporting_context_fingerprints={
+            "source-empty-context": "target-empty-context",
+        },
+    )
+
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        position_identity_graph=graph,
+    )
+    payload = json.loads(target_row.result_json)
+    target_evidence = payload["target_request_evidence"]
+    target_command = target_evidence["command"]
+    target_basis = target_evidence["opening_position_basis"]
+
+    assert payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v3"
+    )
+    assert payload["retryable"] is False
+    assert target_command["branch_id"] == "target"
+    assert target_command["expected_revision_id"] == "target-revision"
+    assert target_basis["scope"] == ["run", "target", 0]
+    assert target_basis["branch_head"] == "target-revision"
+    assert target_basis["draft"] == ["target-revision", "clean", 0]
+    assert target_basis["schedule"] == "target-schedule"
+    assert target_basis["slots"][0][2:] == [
+        "target-plan-one",
+        "target-terminal-json",
+    ]
+    assert target_basis["groups"][0][1:] == [
+        "target-command-fp",
+        "target-result-fp",
+    ]
+    assert target_basis["owned"] == [["event-one", "target-owned-fp"]]
+    assert target_basis["tournament_authority"] == "target-tournament-authority"
+    assert target_basis["sporting"] == "target-sporting"
+    assert target_basis["lifecycle"] == "target-lifecycle"
+    assert target_basis["transition_authority"] == "target-transition"
+    assert target_basis["world"] == [0, "target-ranking"]
+    assert target_basis["terminal"] == "target-terminal-fp"
+    assert target_basis["empty_week_context"] == "target-empty-context"
+    assert target_command["expected_position_fingerprint"] == fingerprint(
+        target_basis
+    )
+    assert payload["target_request_fingerprint"] == fingerprint(
+        {"mode": "slot", "command": target_command}
+    )
+
+    _validate_command_rows_shape([target_row])
+
+    tampered = json.loads(target_row.result_json)
+    tampered["target_request_evidence"]["opening_position_basis"]["scope"][1] = (
+        "tampered-target"
+    )
+    target_row.result_json = json.dumps(
+        tampered,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation fork target request evidence is corrupt",
+    ):
+        _validate_command_rows_shape([target_row])
+
+
+@pytest.mark.pr_critical
+def test_simulation_command_receipt_fork_keeps_v2_when_target_position_is_unsupported():
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        SimulationPositionForkIdentityGraph,
+        _retarget_simulation_command_receipt_as_historical,
+    )
+
+    source_basis = {
+        "scope": ["run", "branch", 0],
+        "schedule": None,
+        "entry_slot_ordinals": [1],
+        "wc_slot_ordinals": [],
+        "week_tournament_lock": None,
+        "week_tournament_lock_conflicts": [],
+        "entry_validation_slots": [[1, "source-entry-validation-fp"]],
+        "current_slot_kind": "match",
+        "current_slot_ordinal": 2,
+        "proposed_schedule_requirement": [],
+        "slots": [],
+        "groups": [],
+        "owned": [],
+        "tournament_authority": None,
+        "sporting": None,
+        "lifecycle": None,
+        "branch_head": "source-revision",
+        "draft": ["source-revision", "clean", 0],
+        "transition_authority": None,
+        "world": None,
+        "terminal": None,
+        "empty_week_context": None,
+    }
+    source_command = {
+        "command_id": "unsupported-v2-command",
+        "run_id": "run",
+        "branch_id": "branch",
+        "expected_week": {"season_index": 0, "week": 1},
+        "expected_position_fingerprint": fingerprint(source_basis),
+        "expected_revision_id": "source-revision",
+        "group_id": None,
+    }
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id="unsupported-v2-command",
+        request_fingerprint=fingerprint(
+            {"mode": "slot", "command": source_command}
+        ),
+        status="complete",
+        result_json=json.dumps(
+            {
+                "_request_evidence": {
+                    "schema_version": "authoritative_simulation_request_evidence.v2",
+                    "mode": "slot",
+                    "command": source_command,
+                    "opening_position_basis": source_basis,
+                }
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    graph = SimulationPositionForkIdentityGraph(
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        schedule_fingerprints={},
+        slot_plan_fingerprints={},
+        group_command_fingerprints={},
+        result_fingerprints={},
+        terminal_checkpoint_payloads={},
+        owned_tournament_fingerprints={},
+        week_tournament_lock_fingerprints={},
+        tournament_authority_fingerprints={},
+        sporting_fingerprints={},
+        lifecycle_fingerprints={},
+        transition_authority_fingerprints={},
+        ranking_snapshot_fingerprints={},
+        terminal_checkpoint_fingerprints={},
+        sporting_context_fingerprints={},
+    )
+
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id="target-revision",
+        position_identity_graph=graph,
+    )
+    payload = json.loads(target_row.result_json)
+
+    assert payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v2"
+    )
+    assert "target_request_evidence" not in payload
+    assert payload["retryable"] is False
+
+    from beta_engine.infrastructure.db.simulation_slot_state import (
+        _validate_command_rows_shape,
+    )
+
+    _validate_command_rows_shape([target_row])
+
+
+@pytest.mark.pr_critical
 def test_coupled_sporting_v2_and_slot_history_remap_real_week(tmp_path):
     session, _, plan, results, checkpoint = run_semifinals(
         tmp_path / "coupled-fork-remap.sqlite",

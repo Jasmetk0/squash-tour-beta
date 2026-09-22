@@ -105,11 +105,275 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
 )
 
 
+@dataclass(frozen=True)
+class SimulationPositionForkIdentityGraph:
+    run_id: str
+    source_branch_id: str
+    target_branch_id: str
+    target_base_revision_id: str
+    schedule_fingerprints: dict[str, str]
+    slot_plan_fingerprints: dict[str, str]
+    group_command_fingerprints: dict[str, str]
+    result_fingerprints: dict[str, str]
+    terminal_checkpoint_payloads: dict[str, str]
+    owned_tournament_fingerprints: dict[str, str]
+    week_tournament_lock_fingerprints: dict[str, str]
+    tournament_authority_fingerprints: dict[str, str]
+    sporting_fingerprints: dict[str, str]
+    lifecycle_fingerprints: dict[str, str]
+    transition_authority_fingerprints: dict[str, str]
+    ranking_snapshot_fingerprints: dict[str, str]
+    terminal_checkpoint_fingerprints: dict[str, str]
+    sporting_context_fingerprints: dict[str, str]
+
+
+_POSITION_BASIS_KEYS = {
+    "scope",
+    "schedule",
+    "entry_slot_ordinals",
+    "wc_slot_ordinals",
+    "week_tournament_lock",
+    "week_tournament_lock_conflicts",
+    "entry_validation_slots",
+    "current_slot_kind",
+    "current_slot_ordinal",
+    "proposed_schedule_requirement",
+    "slots",
+    "groups",
+    "owned",
+    "tournament_authority",
+    "sporting",
+    "lifecycle",
+    "branch_head",
+    "draft",
+    "transition_authority",
+    "world",
+    "terminal",
+    "empty_week_context",
+}
+
+
+def _map_optional_position_identity(
+    value,
+    *,
+    mapping: dict[str, str],
+    label: str,
+):
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise SimulationSlotForkRemapUnsupportedError(
+            f"Simulation opening Position {label} identity is invalid"
+        )
+    return _mapped_fingerprint(value, fingerprint_map=mapping, label=label)
+
+
+def _retarget_simulation_opening_position_basis(
+    source_basis: dict,
+    *,
+    graph: SimulationPositionForkIdentityGraph,
+) -> dict:
+    """Rebuild one historical opening Position from explicit target identity maps."""
+
+    if set(source_basis) != _POSITION_BASIS_KEYS:
+        unknown = sorted(set(source_basis) ^ _POSITION_BASIS_KEYS)
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation opening Position basis schema is unsupported: "
+            + ", ".join(unknown)
+        )
+
+    scope = source_basis["scope"]
+    if (
+        not isinstance(scope, list)
+        or len(scope) != 3
+        or scope[0] != graph.run_id
+        or scope[1] != graph.source_branch_id
+        or not isinstance(scope[2], int)
+    ):
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation opening Position scope is corrupt"
+        )
+
+    entry_validation_slots = source_basis["entry_validation_slots"]
+    if entry_validation_slots:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation opening Position with resolved Entry validation identity "
+            "cannot yet be retargeted"
+        )
+
+    target_slots = []
+    for item in source_basis["slots"]:
+        if not isinstance(item, (list, tuple)) or len(item) != 4:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position Slot identity is corrupt"
+            )
+        slot_id, status, plan_fingerprint, terminal_payload = item
+        target_slots.append(
+            [
+                slot_id,
+                status,
+                _mapped_fingerprint(
+                    plan_fingerprint,
+                    fingerprint_map=graph.slot_plan_fingerprints,
+                    label="Simulation Slot plan",
+                ),
+                (
+                    None
+                    if terminal_payload is None
+                    else _mapped_fingerprint(
+                        terminal_payload,
+                        fingerprint_map=graph.terminal_checkpoint_payloads,
+                        label="Simulation Slot terminal checkpoint payload",
+                    )
+                ),
+            ]
+        )
+
+    target_groups = []
+    for item in source_basis["groups"]:
+        if not isinstance(item, (list, tuple)) or len(item) != 3:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position Group identity is corrupt"
+            )
+        group_id, command_fingerprint, result_fingerprint = item
+        target_groups.append(
+            [
+                group_id,
+                _mapped_fingerprint(
+                    command_fingerprint,
+                    fingerprint_map=graph.group_command_fingerprints,
+                    label="Simulation Group command",
+                ),
+                _mapped_fingerprint(
+                    result_fingerprint,
+                    fingerprint_map=graph.result_fingerprints,
+                    label="Simulation Group result",
+                ),
+            ]
+        )
+
+    target_owned = []
+    for item in source_basis["owned"]:
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position owned tournament identity is corrupt"
+            )
+        event_id, source_fingerprint = item
+        target_owned.append(
+            [
+                event_id,
+                (
+                    None
+                    if source_fingerprint is None
+                    else _mapped_fingerprint(
+                        source_fingerprint,
+                        fingerprint_map=graph.owned_tournament_fingerprints,
+                        label="Owned Tournament Ranking Source",
+                    )
+                ),
+            ]
+        )
+
+    source_draft = source_basis["draft"]
+    if (
+        not isinstance(source_draft, (list, tuple))
+        or len(source_draft) != 3
+        or not isinstance(source_draft[0], str)
+        or not isinstance(source_draft[1], str)
+        or not isinstance(source_draft[2], int)
+    ):
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Simulation opening Position Working Draft identity is corrupt"
+        )
+
+    source_world = source_basis["world"]
+    target_world = None
+    if source_world is not None:
+        if (
+            not isinstance(source_world, (list, tuple))
+            or len(source_world) != 2
+            or not isinstance(source_world[0], int)
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position World identity is corrupt"
+            )
+        target_world = [
+            source_world[0],
+            _mapped_fingerprint(
+                source_world[1],
+                fingerprint_map=graph.ranking_snapshot_fingerprints,
+                label="Official Ranking World head",
+            ),
+        ]
+
+    return {
+        "scope": [graph.run_id, graph.target_branch_id, scope[2]],
+        "schedule": _map_optional_position_identity(
+            source_basis["schedule"],
+            mapping=graph.schedule_fingerprints,
+            label="Week Simulation Schedule",
+        ),
+        "entry_slot_ordinals": source_basis["entry_slot_ordinals"],
+        "wc_slot_ordinals": source_basis["wc_slot_ordinals"],
+        "week_tournament_lock": _map_optional_position_identity(
+            source_basis["week_tournament_lock"],
+            mapping=graph.week_tournament_lock_fingerprints,
+            label="Week Tournament Lock",
+        ),
+        "week_tournament_lock_conflicts": source_basis[
+            "week_tournament_lock_conflicts"
+        ],
+        "entry_validation_slots": [],
+        "current_slot_kind": source_basis["current_slot_kind"],
+        "current_slot_ordinal": source_basis["current_slot_ordinal"],
+        "proposed_schedule_requirement": source_basis[
+            "proposed_schedule_requirement"
+        ],
+        "slots": target_slots,
+        "groups": target_groups,
+        "owned": target_owned,
+        "tournament_authority": _map_optional_position_identity(
+            source_basis["tournament_authority"],
+            mapping=graph.tournament_authority_fingerprints,
+            label="Adopted Tournament Authority",
+        ),
+        "sporting": _map_optional_position_identity(
+            source_basis["sporting"],
+            mapping=graph.sporting_fingerprints,
+            label="Player sporting state",
+        ),
+        "lifecycle": _map_optional_position_identity(
+            source_basis["lifecycle"],
+            mapping=graph.lifecycle_fingerprints,
+            label="Player lifecycle state",
+        ),
+        "branch_head": graph.target_base_revision_id,
+        "draft": [graph.target_base_revision_id, "clean", 0],
+        "transition_authority": _map_optional_position_identity(
+            source_basis["transition_authority"],
+            mapping=graph.transition_authority_fingerprints,
+            label="Ranking Transition Authority",
+        ),
+        "world": target_world,
+        "terminal": _map_optional_position_identity(
+            source_basis["terminal"],
+            mapping=graph.terminal_checkpoint_fingerprints,
+            label="terminal sporting checkpoint",
+        ),
+        "empty_week_context": _map_optional_position_identity(
+            source_basis["empty_week_context"],
+            mapping=graph.sporting_context_fingerprints,
+            label="empty-week sporting context",
+        ),
+    }
+
+
 def _retarget_simulation_command_receipt_as_historical(
     row: AuthoritativeSimulationCommandModel,
     *,
     target_branch_id: str,
     target_base_revision_id: str,
+    position_identity_graph: SimulationPositionForkIdentityGraph | None = None,
 ) -> AuthoritativeSimulationCommandModel:
     try:
         source_result = json.loads(row.result_json)
@@ -133,8 +397,64 @@ def _retarget_simulation_command_receipt_as_historical(
         else None
     )
 
+    target_request_evidence = None
+    target_request_fingerprint = None
+    if (
+        isinstance(request_evidence, dict)
+        and request_evidence.get("schema_version")
+        == "authoritative_simulation_request_evidence.v2"
+    ):
+        source_command = request_evidence.get("command")
+        source_basis = request_evidence.get("opening_position_basis")
+        mode = request_evidence.get("mode")
+        if (
+            mode not in {"match", "slot"}
+            or not isinstance(source_command, dict)
+            or not isinstance(source_basis, dict)
+            or source_command.get("run_id") != row.run_id
+            or source_command.get("branch_id") != row.branch_id
+            or source_command.get("command_id") != row.command_id
+            or source_command.get("expected_revision_id") != source_basis.get("branch_head")
+            or source_command.get("expected_position_fingerprint")
+            != fingerprint(source_basis)
+        ):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation source request evidence cannot be reconstructed safely"
+            )
+        if position_identity_graph is not None:
+            try:
+                target_basis = _retarget_simulation_opening_position_basis(
+                    source_basis,
+                    graph=position_identity_graph,
+                )
+            except SimulationSlotForkRemapUnsupportedError:
+                target_basis = None
+            if target_basis is not None:
+                target_command = dict(source_command)
+                target_command.update(
+                    {
+                        "branch_id": target_branch_id,
+                        "expected_revision_id": target_base_revision_id,
+                        "expected_position_fingerprint": fingerprint(target_basis),
+                    }
+                )
+                target_request_evidence = {
+                    "schema_version": "authoritative_simulation_request_evidence.v2",
+                    "mode": mode,
+                    "command": target_command,
+                    "opening_position_basis": target_basis,
+                }
+                target_request_fingerprint = fingerprint(
+                    {"mode": mode, "command": target_command}
+                )
+
+    historical_schema = (
+        "authoritative_simulation_historical_fork_receipt.v3"
+        if target_request_evidence is not None
+        else "authoritative_simulation_historical_fork_receipt.v2"
+    )
     historical = {
-        "schema_version": "authoritative_simulation_historical_fork_receipt.v2",
+        "schema_version": historical_schema,
         "run_id": row.run_id,
         "branch_id": target_branch_id,
         "command_id": row.command_id,
@@ -147,22 +467,44 @@ def _retarget_simulation_command_receipt_as_historical(
         "retryable": False,
         "provenance": (
             "materialized Branch fork preserves source Simulation command history "
-            "as read-only audit evidence; target exact retry requires a remapped "
-            "opening Position identity and is intentionally unsupported"
+            "as read-only audit evidence; target request identity is reconstructed "
+            "when possible, while result replay remains intentionally disabled"
         ),
     }
-    request_fingerprint = fingerprint(
-        {
-            "schema_version": "authoritative_simulation_historical_fork_request.v2",
-            "run_id": row.run_id,
-            "branch_id": target_branch_id,
-            "command_id": row.command_id,
-            "target_base_revision_id": target_base_revision_id,
-            "source_branch_id": row.branch_id,
-            "source_request_fingerprint": row.request_fingerprint,
-            "source_request_evidence_fingerprint": request_evidence_fingerprint,
-        }
-    )
+    if target_request_evidence is not None:
+        historical.update(
+            {
+                "target_request_evidence": target_request_evidence,
+                "target_request_evidence_fingerprint": fingerprint(
+                    target_request_evidence
+                ),
+                "target_request_fingerprint": target_request_fingerprint,
+            }
+        )
+    historical_request = {
+        "schema_version": (
+            "authoritative_simulation_historical_fork_request.v3"
+            if target_request_evidence is not None
+            else "authoritative_simulation_historical_fork_request.v2"
+        ),
+        "run_id": row.run_id,
+        "branch_id": target_branch_id,
+        "command_id": row.command_id,
+        "target_base_revision_id": target_base_revision_id,
+        "source_branch_id": row.branch_id,
+        "source_request_fingerprint": row.request_fingerprint,
+        "source_request_evidence_fingerprint": request_evidence_fingerprint,
+    }
+    if target_request_evidence is not None:
+        historical_request.update(
+            {
+                "target_request_evidence_fingerprint": fingerprint(
+                    target_request_evidence
+                ),
+                "target_request_fingerprint": target_request_fingerprint,
+            }
+        )
+    request_fingerprint = fingerprint(historical_request)
     return AuthoritativeSimulationCommandModel(
         run_id=row.run_id,
         branch_id=target_branch_id,
@@ -192,6 +534,7 @@ class CoupledPlayerSlotForkRemap:
     week_tournament_lock_fingerprints: dict[str, str]
     adopted_tournament_authority_fingerprints: dict[str, str]
     owned_tournament_fingerprints: dict[str, str]
+    sporting_context_fingerprints: dict[str, str]
 
 
 def _retarget_frozen_evidence(
@@ -535,6 +878,9 @@ def remap_coupled_player_slot_history(
     tournament_ranking_authority_map: dict[
         str, TournamentRankingSnapshotAuthority
     ] | None = None,
+    lifecycle_fingerprint_map: dict[str, str] | None = None,
+    ranking_snapshot_fingerprint_map: dict[str, str] | None = None,
+    transition_authority_fingerprint_map: dict[str, str] | None = None,
 ) -> CoupledPlayerSlotForkRemap | None:
     """Remap sporting + completed Slot core in canonical week order.
 
@@ -556,6 +902,11 @@ def remap_coupled_player_slot_history(
         return None
 
     tournament_ranking_authority_map = tournament_ranking_authority_map or {}
+    lifecycle_fingerprint_map = lifecycle_fingerprint_map or {}
+    ranking_snapshot_fingerprint_map = ranking_snapshot_fingerprint_map or {}
+    transition_authority_fingerprint_map = (
+        transition_authority_fingerprint_map or {}
+    )
 
     auxiliary = set(source_slot_component) - {
         "fingerprint",
@@ -618,14 +969,6 @@ def remap_coupled_player_slot_history(
         raise SimulationSlotForkRemapUnsupportedError(
             "Simulation command history requires a target Saved Revision id"
         )
-    target_command_rows: list[AuthoritativeSimulationCommandModel] = [
-        _retarget_simulation_command_receipt_as_historical(
-            row,
-            target_branch_id=target_branch_id,
-            target_base_revision_id=target_base_revision_id or "",
-        )
-        for row in source_command_rows
-    ]
     target_entry_rows: list[TournamentEntryFieldVersionModel] = []
     target_wc_rows: list[TournamentWildCardAuthorityModel] = []
     target_draw_input_rows: list[TournamentDrawInputAuthorityModel] = []
@@ -1094,6 +1437,7 @@ def remap_coupled_player_slot_history(
     all_group_commands: dict[str, str] = {}
     all_terminal_payloads: dict[str, str] = {}
     sporting_fingerprint_map: dict[str, str] = {}
+    sporting_context_fingerprint_map: dict[str, str] = {}
     remapped_context_by_week: dict[int, CompletedWeekSportingContext] = {}
 
     previous_target: PlayerSportingWeekState | None = None
@@ -1224,6 +1568,9 @@ def remap_coupled_player_slot_history(
             source_context.model_copy(update=context_updates).model_dump_json()
         )
         target_contexts.append(target_context)
+        sporting_context_fingerprint_map[source_context.fingerprint] = (
+            target_context.fingerprint
+        )
         remapped_context_by_week[week_ordinal] = target_context
 
     if set(slots_by_week) - {state.week.ordinal for state in source_states}:
@@ -2034,6 +2381,36 @@ def remap_coupled_player_slot_history(
             row.group_id,
         ),
     )
+    position_identity_graph = SimulationPositionForkIdentityGraph(
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        target_base_revision_id=target_base_revision_id or "",
+        schedule_fingerprints=schedule_fingerprint_map,
+        slot_plan_fingerprints=all_slot_plans,
+        group_command_fingerprints=all_group_commands,
+        result_fingerprints=all_results,
+        terminal_checkpoint_payloads=all_terminal_payloads,
+        owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
+        week_tournament_lock_fingerprints=week_tournament_lock_fingerprint_map,
+        tournament_authority_fingerprints=adopted_authority_fingerprint_map,
+        sporting_fingerprints=sporting_fingerprint_map,
+        lifecycle_fingerprints=lifecycle_fingerprint_map,
+        transition_authority_fingerprints=transition_authority_fingerprint_map,
+        ranking_snapshot_fingerprints=ranking_snapshot_fingerprint_map,
+        terminal_checkpoint_fingerprints=all_terminals,
+        sporting_context_fingerprints=sporting_context_fingerprint_map,
+    )
+    target_command_rows: list[AuthoritativeSimulationCommandModel] = [
+        _retarget_simulation_command_receipt_as_historical(
+            row,
+            target_branch_id=target_branch_id,
+            target_base_revision_id=target_base_revision_id or "",
+            position_identity_graph=position_identity_graph,
+        )
+        for row in source_command_rows
+    ]
+
     merged_simulation_component = simulation_component(
         target_slots,
         target_groups,
@@ -2080,4 +2457,5 @@ def remap_coupled_player_slot_history(
             adopted_authority_fingerprint_map
         ),
         owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
+        sporting_context_fingerprints=sporting_context_fingerprint_map,
     )

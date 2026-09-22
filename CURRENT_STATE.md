@@ -1481,3 +1481,11 @@ parents after browser/process state loss, restore the original Command ID plus
 operator/audit metadata, and continue the same deterministic parent without rerolling
 already-committed child work. Pending receipts created before this resume metadata are
 reported explicitly as legacy rather than guessed or silently replaced.
+
+
+## Full Simulation single-parent concurrency guard
+
+A Run/Branch may now own at most one pending canonical Full Simulation parent.
+Previewing or starting a competing parent fails closed while the existing durable
+parent remains pending, and Simulation Admin disables new Full Simulation review while
+showing the resumable parent. Exact retry of the existing parent remains unchanged.

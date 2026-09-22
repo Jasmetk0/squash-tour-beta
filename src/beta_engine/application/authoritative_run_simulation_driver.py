@@ -7866,19 +7866,16 @@ class AuthoritativeRunSimulationDriver:
         for match_day_ordinal in sorted(by_day):
             ordered_groups = sorted(
                 by_day[match_day_ordinal],
-                key=lambda group_id: (
-                    *self._fair_rest_feeder_position(
-                        self._plan_feeders(plans[group_id]),
-                        scheduled_position_by_group,
+                key=lambda group_id: self._fair_rest_schedule_sort_key(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    group_id=group_id,
+                    feeder_ids=self._plan_feeders(plans[group_id]),
+                    scheduled_position_by_group=scheduled_position_by_group,
+                    q_ll_rest_protected=(
+                        group_id in q_ll_rest_protected_groups
                     ),
-                    1 if group_id in q_ll_rest_protected_groups else 0,
-                    self._deterministic_schedule_tiebreak(
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        week=week,
-                        group_id=group_id,
-                    ),
-                    group_id,
                 ),
             )
 
@@ -7969,6 +7966,43 @@ class AuthoritativeRunSimulationDriver:
                 "ordering its dependent match: " + ", ".join(sorted(missing))
             )
         return max(scheduled_position_by_group[feeder_id] for feeder_id in feeder_ids)
+
+    @classmethod
+    def _fair_rest_schedule_sort_key(
+        cls,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        group_id: str,
+        feeder_ids: tuple[str, ...],
+        scheduled_position_by_group: dict[str, tuple[int, int]],
+        q_ll_rest_protected: bool,
+    ) -> tuple[int, int, int, str, str]:
+        """Lexicographic bounded Master §13.4 ordering evidence.
+
+        Earlier priorities remain dominant: feeder chronology is compared before
+        Qualification/Lucky-Loser protection. Q/LL protection only moves a Main
+        match later when the already-implemented feeder/rest evidence is equal.
+        Deterministic randomness remains the final sporting-neutral tie-break.
+        """
+
+        feeder_day, feeder_order = cls._fair_rest_feeder_position(
+            feeder_ids,
+            scheduled_position_by_group,
+        )
+        return (
+            feeder_day,
+            feeder_order,
+            1 if q_ll_rest_protected else 0,
+            cls._deterministic_schedule_tiebreak(
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                group_id=group_id,
+            ),
+            group_id,
+        )
 
     @staticmethod
     def _deterministic_schedule_tiebreak(

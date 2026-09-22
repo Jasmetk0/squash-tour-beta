@@ -133,7 +133,9 @@ explicit checkpoints.
 ## Scope limits
 
 - Final 2049/50 closure remains the dedicated final Season Transition.
-- `Full Simulation` remains compatibility-only.
+- Canonical `Full Simulation` now composes this boundary across the complete
+  remaining Run and terminates through the dedicated 2049/50 final closure. See
+  `docs/AUTHORITATIVE_FULL_SIMULATION_V1.md`.
 - Entry/WC and other authored process decisions are never automated by the long-range
   parent.
 - Live progress streaming, immediate pause/cancel and background-job UX remain a

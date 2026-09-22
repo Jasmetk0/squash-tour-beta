@@ -37,6 +37,7 @@ def _validate_command_rows_shape(rows):
             in {
                 "authoritative_simulation_historical_fork_receipt.v1",
                 "authoritative_simulation_historical_fork_receipt.v2",
+                "authoritative_simulation_historical_fork_receipt.v3",
             }
         ):
             if (
@@ -86,10 +87,10 @@ def _validate_command_rows_shape(rows):
                     )
 
             historical_schema = payload["schema_version"]
-            if (
-                historical_schema
-                == "authoritative_simulation_historical_fork_receipt.v2"
-            ):
+            if historical_schema in {
+                "authoritative_simulation_historical_fork_receipt.v2",
+                "authoritative_simulation_historical_fork_receipt.v3",
+            }:
                 target_base_revision_id = payload.get("target_base_revision_id")
                 if (
                     not isinstance(target_base_revision_id, str)
@@ -99,7 +100,12 @@ def _validate_command_rows_shape(rows):
                         "Saved historical simulation fork receipt target revision is corrupt"
                     )
                 expected_request = {
-                    "schema_version": "authoritative_simulation_historical_fork_request.v2",
+                    "schema_version": (
+                        "authoritative_simulation_historical_fork_request.v3"
+                        if historical_schema
+                        == "authoritative_simulation_historical_fork_receipt.v3"
+                        else "authoritative_simulation_historical_fork_request.v2"
+                    ),
                     "run_id": row.run_id,
                     "branch_id": row.branch_id,
                     "command_id": row.command_id,
@@ -108,6 +114,90 @@ def _validate_command_rows_shape(rows):
                     "source_request_fingerprint": source_request_fingerprint,
                     "source_request_evidence_fingerprint": source_evidence_fingerprint,
                 }
+                if (
+                    historical_schema
+                    == "authoritative_simulation_historical_fork_receipt.v3"
+                ):
+                    target_evidence = payload.get("target_request_evidence")
+                    target_evidence_fingerprint = payload.get(
+                        "target_request_evidence_fingerprint"
+                    )
+                    target_request_fingerprint = payload.get(
+                        "target_request_fingerprint"
+                    )
+                    if (
+                        not isinstance(target_evidence, dict)
+                        or not isinstance(target_evidence_fingerprint, str)
+                        or not isinstance(target_request_fingerprint, str)
+                    ):
+                        raise ValueError(
+                            "Saved historical simulation fork target request evidence is missing"
+                        )
+                    actual_target_evidence_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            target_evidence,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    if (
+                        actual_target_evidence_fingerprint
+                        != target_evidence_fingerprint
+                    ):
+                        raise ValueError(
+                            "Saved historical simulation fork target request evidence is corrupt"
+                        )
+                    target_mode = target_evidence.get("mode")
+                    target_command = target_evidence.get("command")
+                    target_basis = target_evidence.get("opening_position_basis")
+                    if (
+                        target_evidence.get("schema_version")
+                        != "authoritative_simulation_request_evidence.v2"
+                        or target_mode not in {"match", "slot"}
+                        or not isinstance(target_command, dict)
+                        or not isinstance(target_basis, dict)
+                        or target_command.get("run_id") != row.run_id
+                        or target_command.get("branch_id") != row.branch_id
+                        or target_command.get("command_id") != row.command_id
+                        or target_command.get("expected_revision_id")
+                        != target_base_revision_id
+                    ):
+                        raise ValueError(
+                            "Saved historical simulation fork target request scope is corrupt"
+                        )
+                    actual_target_position_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            target_basis,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    if (
+                        target_command.get("expected_position_fingerprint")
+                        != actual_target_position_fingerprint
+                    ):
+                        raise ValueError(
+                            "Saved historical simulation fork target Position basis is corrupt"
+                        )
+                    actual_target_request_fingerprint = hashlib.sha256(
+                        json.dumps(
+                            {"mode": target_mode, "command": target_command},
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        ).encode()
+                    ).hexdigest()
+                    if actual_target_request_fingerprint != target_request_fingerprint:
+                        raise ValueError(
+                            "Saved historical simulation fork target request fingerprint is corrupt"
+                        )
+                    expected_request.update(
+                        {
+                            "target_request_evidence_fingerprint": (
+                                target_evidence_fingerprint
+                            ),
+                            "target_request_fingerprint": target_request_fingerprint,
+                        }
+                    )
             else:
                 expected_request = {
                     "schema_version": "authoritative_simulation_historical_fork_request.v1",

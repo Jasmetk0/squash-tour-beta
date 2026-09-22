@@ -695,6 +695,7 @@ class AuthoritativeSimulationPosition(FrozenInput):
     run_id: str
     branch_id: str
     current_week: RankingWeek
+    position_basis: dict | None = Field(default=None, exclude=True)
     current_slot_kind: Literal["entry", "match"] | None = None
     current_slot_id: str | None
     slot_ordinal: int | None
@@ -5807,11 +5808,24 @@ class AuthoritativeRunSimulationDriver:
             return payload
 
     @staticmethod
-    def _simulation_receipt_request_evidence(command, *, mode: Literal["match", "slot"]) -> dict:
+    def _simulation_receipt_request_evidence(
+        command,
+        *,
+        mode: Literal["match", "slot"],
+        opening_position: AuthoritativeSimulationPosition,
+    ) -> dict:
+        if opening_position.position_basis is None:
+            raise ValueError("opening Simulation Position basis is unavailable")
+        if fingerprint(opening_position.position_basis) != opening_position.position_fingerprint:
+            raise ValueError("opening Simulation Position basis fingerprint is corrupt")
         return {
-            "schema_version": "authoritative_simulation_request_evidence.v1",
+            "schema_version": "authoritative_simulation_request_evidence.v2",
             "mode": mode,
             "command": command.model_dump(mode="json"),
+            "opening_position": {
+                "fingerprint": opening_position.position_fingerprint,
+                "basis": opening_position.position_basis,
+            },
         }
 
     @staticmethod
@@ -5821,10 +5835,6 @@ class AuthoritativeRunSimulationDriver:
         return result
 
     def _mutate(self, command, *, mode: Literal["match", "slot"], fault_at=None):
-        request_evidence = self._simulation_receipt_request_evidence(
-            command,
-            mode=mode,
-        )
         request_fp = fingerprint(
             {"mode": mode, "command": command.model_dump(mode="json")}
         )
@@ -5850,6 +5860,11 @@ class AuthoritativeRunSimulationDriver:
             else:
                 before = self._position(session, command.run_id, command.branch_id)
                 self._validate_expected(session, command, before)
+                request_evidence = self._simulation_receipt_request_evidence(
+                    command,
+                    mode=mode,
+                    opening_position=before,
+                )
                 packages, authority_fp = self._authority_package(
                     session,
                     command.run_id,
@@ -5903,6 +5918,10 @@ class AuthoritativeRunSimulationDriver:
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if receipt is None:
                 raise ValueError("pending simulation command receipt disappeared")
+            pending_payload = json.loads(receipt.result_json)
+            request_evidence = pending_payload.get("_request_evidence")
+            if request_evidence is None:
+                raise ValueError("pending simulation command request evidence disappeared")
             receipt.status = "complete"
             receipt.result_json = json.dumps(
                 {
@@ -8931,6 +8950,7 @@ class AuthoritativeRunSimulationDriver:
             transition_blockers=tuple(blockers),
             terminal_sporting_fingerprint=terminal.fingerprint if terminal else None,
             position_fingerprint=fingerprint(body),
+            position_basis=body,
         )
 
     def _ensure_current_slot(self, session, command, packages):

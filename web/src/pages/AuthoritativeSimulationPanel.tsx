@@ -2307,6 +2307,26 @@ export function AuthoritativeSimulationPanel({
                 onChange={(event) => setNextWeekReason(event.target.value)}
               />
             </label>
+            <label>
+              Next Season operator
+              <input
+                aria-label="Next Season operator"
+                value={nextSeasonOperator}
+                maxLength={128}
+                disabled={Boolean(nextSeasonReview) || nextSeasonMutation.isPending}
+                onChange={(event) => setNextSeasonOperator(event.target.value)}
+              />
+            </label>
+            <label>
+              Next Season audit reason
+              <textarea
+                aria-label="Next Season audit reason"
+                value={nextSeasonReason}
+                maxLength={2000}
+                disabled={Boolean(nextSeasonReview) || nextSeasonMutation.isPending}
+                onChange={(event) => setNextSeasonReason(event.target.value)}
+              />
+            </label>
           </div>
           <div className="quick-actions">
             <button
@@ -2373,6 +2393,18 @@ export function AuthoritativeSimulationPanel({
               }
             >
               Review authoritative Next Week
+            </button>
+            <button
+              type="button"
+              onClick={() => nextSeasonPreviewMutation.mutate()}
+              disabled={
+                position.current_week.season_index >= 49 ||
+                !nextSeasonOperator.trim() ||
+                !nextSeasonReason.trim() ||
+                actionPending
+              }
+            >
+              Review authoritative Next Season
             </button>
           </div>
           {nextMatchDayReview ? (
@@ -2656,6 +2688,111 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {nextSeasonReview ? (
+            <>
+              <h5>
+                Reviewed canonical Season · S{nextSeasonReview.start_week.season_index} W
+                {nextSeasonReview.start_week.week} → S
+                {nextSeasonReview.target_week.season_index} W
+                {nextSeasonReview.target_week.week}
+              </h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Start',
+                    value: `Season index ${nextSeasonReview.start_week.season_index} · Week ${nextSeasonReview.start_week.week}`
+                  },
+                  {
+                    label: 'Target',
+                    value: `Season index ${nextSeasonReview.target_week.season_index} · Week ${nextSeasonReview.target_week.week}`
+                  },
+                  {
+                    label: 'Weeks including current',
+                    value: nextSeasonReview.weeks_including_current
+                  },
+                  {
+                    label: 'Initial action',
+                    value: nextSeasonReview.initial_action
+                  },
+                  {
+                    label: 'Empty-week policy',
+                    value: nextSeasonReview.auto_empty_week_policy
+                  },
+                  {
+                    label: 'Season Transition',
+                    value: nextSeasonReview.season_transition_mode
+                  },
+                  {
+                    label: 'Saved Revision at review',
+                    value: nextSeasonReview.expected_revision_id
+                  }
+                ]}
+              />
+              {nextSeasonReview.initial_transition_blockers.length ? (
+                <p className="status">
+                  Initial canonical blockers: {
+                    nextSeasonReview.initial_transition_blockers.join(', ')
+                  }.
+                </p>
+              ) : null}
+              <p className="status">
+                This parent can cross ordinary weeks and Calendar-proven empty weeks.
+                It will stop instead of inventing Entry/WC decisions, a hidden Save, or
+                a hidden Season Transition confirmation.
+              </p>
+              {nextSeasonProgress ? (
+                <>
+                  <p role="alert" className="error">
+                    Next Season paused at {nextSeasonProgress.checkpoint} after {
+                      nextSeasonProgress.completed_week_count
+                    } completed week(s). Current Week {
+                      nextSeasonProgress.current_week.week
+                    }.
+                    {nextSeasonProgress.blockers.length
+                      ? ` Resolve: ${nextSeasonProgress.blockers.join(', ')}.`
+                      : ''}
+                  </p>
+                  {nextSeasonProgress.detail ? (
+                    <p className="status">{nextSeasonProgress.detail}</p>
+                  ) : null}
+                  {nextSeasonProgress.checkpoint === 'season_transition_save_required' ? (
+                    <p className="status">
+                      Use <strong>Save authoritative simulation</strong> below, then retry
+                      this exact reviewed Next Season command.
+                    </p>
+                  ) : null}
+                  {nextSeasonProgress.checkpoint === 'season_transition_review_required' ? (
+                    <p className="status">
+                      Review and commit the existing canonical Season Transition below,
+                      then retry this exact Next Season command once more.
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextSeasonMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  {nextSeasonProgress
+                    ? 'Retry reviewed authoritative Next Season'
+                    : 'Simulate reviewed authoritative Next Season'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextSeasonReview(null)
+                    setNextSeasonProgress(null)
+                    setNextSeasonCommandId(newCommandId())
+                  }}
+                  disabled={nextSeasonMutation.isPending}
+                >
+                  Discard Next Season review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2701,6 +2838,17 @@ export function AuthoritativeSimulationPanel({
             <p className="error">
               Authoritative Next Week failed: {formatApiError(nextWeekMutation.error)}.
               The reviewed command is preserved for exact retry.
+            </p>
+          ) : null}
+          {nextSeasonPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Season preview failed: {formatApiError(nextSeasonPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextSeasonMutation.error ? (
+            <p className="error">
+              Authoritative Next Season failed: {formatApiError(nextSeasonMutation.error)}.
+              The reviewed parent command is preserved for exact retry.
             </p>
           ) : null}
         </>

@@ -1668,7 +1668,7 @@ describe('AuthoritativeSimulationPanel', () => {
       await screen.findByText(/Next Season paused at season_transition_save_required/)
     ).toHaveTextContent('45 completed week')
     expect(
-      screen.getByText(/Save authoritative simulation/)
+      screen.getByRole('button', { name: 'Save authoritative simulation' })
     ).toBeInTheDocument()
     const firstCommand = api.simulateAuthoritativeNextSeason.mock.calls[0][2]
     expect(firstCommand).toMatchObject({

@@ -293,9 +293,10 @@ def _remap_tournament_sources(
         if source.schema_version not in {
             "owned_tournament_ranking_source.v4",
             "owned_tournament_ranking_source.v5",
+            "owned_tournament_ranking_source.v6",
         }:
             raise RankingForkRemapUnsupportedError(
-                "Ranking fork supports only canonical v4/v5 tournament sources"
+                "Ranking fork supports only canonical v4/v5/v6 tournament sources"
             )
         if source.canonical_result is None or source.canonical_awards is None:
             raise RankingForkRemapUnsupportedError(
@@ -337,24 +338,30 @@ def _remap_tournament_sources(
             ).model_dump_json()
         )
 
-        original_versions = prepare_canonical_tournament_ranking_sources(
-            source.binding,
-            source.canonical_result,
-            source.canonical_awards,
-        )
-        target_versions = prepare_canonical_tournament_ranking_sources(
-            target_source.binding,
-            target_result,
-            target_awards,
-        )
-        if len(original_versions) != len(target_versions):
-            raise RankingForkRemapUnsupportedError(
-                "Canonical tournament ranking projection changed during remap"
+        if source.schema_version == "owned_tournament_ranking_source.v6":
+            if not source.binding.closing_only or not target_source.binding.closing_only:
+                raise RankingForkRemapUnsupportedError(
+                    "Final Closing tournament source lost Closing-only binding"
+                )
+        else:
+            original_versions = prepare_canonical_tournament_ranking_sources(
+                source.binding,
+                source.canonical_result,
+                source.canonical_awards,
             )
-        for original_version, target_version in zip(
-            original_versions, target_versions, strict=True
-        ):
-            result_version_map[original_version.fingerprint] = target_version
+            target_versions = prepare_canonical_tournament_ranking_sources(
+                target_source.binding,
+                target_result,
+                target_awards,
+            )
+            if len(original_versions) != len(target_versions):
+                raise RankingForkRemapUnsupportedError(
+                    "Canonical tournament ranking projection changed during remap"
+                )
+            for original_version, target_version in zip(
+                original_versions, target_versions, strict=True
+            ):
+                result_version_map[original_version.fingerprint] = target_version
 
         tournament_editions.add(binding.edition_id)
         by_edition[binding.edition_id] = target_source

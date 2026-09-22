@@ -3037,6 +3037,373 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def preview_next_week(self, request: AuthoritativeWeekPreviewRequest) -> dict:
+        """Freeze the current week and its canonical transition prerequisites."""
+
+        with self.factory() as session:
+            return self._next_week_plan(session, request=request)
+
+    @staticmethod
+    def _week_slot_child_command_id(
+        parent_command_id: str, slot_ordinal: int
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|week-slot|{slot_ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"week-slot:{digest}"
+
+    @staticmethod
+    def _week_authority_child_command_id(parent_command_id: str) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|week-ranking-authority".encode()
+        ).hexdigest()[:24]
+        return f"week-authority:{digest}"
+
+    @staticmethod
+    def _week_transition_child_command_id(parent_command_id: str) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|week-transition".encode()
+        ).hexdigest()[:24]
+        return f"week-transition:{digest}"
+
+    def simulate_next_week(self, command: AuthoritativeWeekCommand) -> dict:
+        """Finish current-week sport and publish the canonical Week Transition."""
+
+        request_fp = fingerprint(
+            {"mode": "week", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError("Week command ID already has a different request")
+                if receipt.status == "complete":
+                    return json.loads(receipt.result_json)
+                if receipt.status != "pending":
+                    raise ValueError("Week command receipt has an invalid status")
+                frozen = json.loads(receipt.result_json)
+            else:
+                before = self._position(session, command.run_id, command.branch_id)
+                self._validate_expected(session, command, before)
+                preview_request = AuthoritativeWeekPreviewRequest(
+                    command_id=command.command_id,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    operator_label=command.operator_label,
+                    audit_reason=command.audit_reason,
+                )
+                plan = self._next_week_plan(session, request=preview_request)
+                if plan["preview_fingerprint"] != command.expected_preview_fingerprint:
+                    raise ValueError("Next Week preview changed before commit")
+                if plan["week"] != command.expected_week.model_dump(mode="json"):
+                    raise ValueError("Next Week reviewed Ranking Week is stale")
+                if plan["expected_revision_id"] != command.expected_revision_id:
+                    raise ValueError("Next Week reviewed Saved Revision is stale")
+
+                target_week = RankingWeek.model_validate(plan["target_week"])
+                authority_store = RankingTransitionAuthorityStore(session)
+                authority = authority_store.get(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    target_ordinal=target_week.ordinal,
+                )
+                if authority is None:
+                    authority = derive_ranking_transition_authority(
+                        session,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=plan["ranking_authority_command_id"],
+                        audit=command.audit,
+                    )
+                    if (
+                        authority.fingerprint
+                        != plan["ranking_authority_fingerprint"]
+                    ):
+                        raise ValueError(
+                            "Next Week Ranking Transition Authority changed "
+                            "since preview"
+                        )
+                    authority = authority_store.append(authority)
+                elif authority.fingerprint != plan["ranking_authority_fingerprint"]:
+                    raise ValueError(
+                        "Next Week existing Ranking Transition Authority changed"
+                    )
+
+                frozen = {
+                    "schema_version": "authoritative_week_operation.v1",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "week": plan["week"],
+                    "target_week": plan["target_week"],
+                    "schedule_fingerprint": plan["schedule_fingerprint"],
+                    "target_slot_ordinals": plan["target_slot_ordinals"],
+                    "target_group_ids": plan["target_group_ids"],
+                    "ranking_authority_mode": plan["ranking_authority_mode"],
+                    "ranking_authority_command_id": plan[
+                        "ranking_authority_command_id"
+                    ],
+                    "ranking_authority_fingerprint": authority.fingerprint,
+                    "child_commands": {
+                        str(slot_ordinal): None
+                        for slot_ordinal in plan["target_slot_ordinals"]
+                    },
+                    "week_transition": None,
+                }
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps(
+                            frozen, sort_keys=True, separators=(",", ":")
+                        ),
+                    )
+                )
+
+        target_ordinals = tuple(int(x) for x in frozen["target_slot_ordinals"])
+        for slot_ordinal in target_ordinals:
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                self._require_writable_scope(
+                    session, command.run_id, command.branch_id
+                )
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Week parent receipt disappeared")
+                if parent.status == "complete":
+                    return json.loads(parent.result_json)
+
+                current_frozen = json.loads(parent.result_json)
+                stored_child = current_frozen["child_commands"].get(
+                    str(slot_ordinal)
+                )
+                if stored_child is None:
+                    schedule = self._schedule(
+                        session,
+                        command.run_id,
+                        command.branch_id,
+                        command.expected_week,
+                    )
+                    if (
+                        schedule is None
+                        or schedule.fingerprint
+                        != current_frozen["schedule_fingerprint"]
+                    ):
+                        raise ValueError("Week Schedule changed during Next Week")
+                    branch = session.get(RunBranchModel, command.branch_id)
+                    if (
+                        branch is None
+                        or branch.run_id != command.run_id
+                        or branch.saved_head_revision_id
+                        != command.expected_revision_id
+                    ):
+                        raise ValueError("expected Branch head is stale")
+                    position = self._position(
+                        session, command.run_id, command.branch_id
+                    )
+                    if position.current_week != command.expected_week:
+                        raise ValueError(
+                            "Next Week crossed Week Transition before its "
+                            "sporting children completed"
+                        )
+                    if (
+                        position.current_slot_kind != "match"
+                        or position.slot_ordinal != slot_ordinal
+                    ):
+                        raise ValueError(
+                            "Next Week chronology drifted before the next frozen slot"
+                        )
+                    child = AuthoritativeSimulationCommand(
+                        command_id=self._week_slot_child_command_id(
+                            command.command_id, slot_ordinal
+                        ),
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=command.expected_week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=command.expected_revision_id,
+                    )
+                    current_frozen["child_commands"][str(slot_ordinal)] = (
+                        child.model_dump(mode="json")
+                    )
+                    parent.result_json = json.dumps(
+                        current_frozen, sort_keys=True, separators=(",", ":")
+                    )
+                else:
+                    child = AuthoritativeSimulationCommand.model_validate(
+                        stored_child
+                    )
+
+            self.simulate_next_slot(child)
+
+        transition_payload = None
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            parent = session.get(AuthoritativeSimulationCommandModel, key)
+            if parent is None or parent.request_fingerprint != request_fp:
+                raise ValueError("Week parent receipt disappeared")
+            if parent.status == "complete":
+                return json.loads(parent.result_json)
+            frozen = json.loads(parent.result_json)
+            transition_payload = frozen.get("week_transition")
+
+            if transition_payload is None:
+                position = self._position(
+                    session, command.run_id, command.branch_id
+                )
+                if position.current_week != command.expected_week:
+                    raise ValueError(
+                        "Next Week source week changed before transition was frozen"
+                    )
+                if not position.week_ready_for_transition:
+                    return {
+                        "schema_version": "authoritative_week_progress.v1",
+                        "status": "blocked",
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "completed_week": command.expected_week.model_dump(
+                            mode="json"
+                        ),
+                        "target_week": frozen["target_week"],
+                        "target_slot_ordinals": list(target_ordinals),
+                        "completed_slot_count": len(target_ordinals),
+                        "transition_blockers": list(position.transition_blockers),
+                        "position": position.model_dump(mode="json"),
+                    }
+
+                transition_command = derive_persisted_week_transition_command(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=self._week_transition_child_command_id(
+                        command.command_id
+                    ),
+                )
+                if (
+                    transition_command.completed_week != command.expected_week
+                    or transition_command.target_week.model_dump(mode="json")
+                    != frozen["target_week"]
+                    or transition_command.authority_fingerprint
+                    != frozen["ranking_authority_fingerprint"]
+                ):
+                    raise ValueError(
+                        "Next Week Week Transition boundary changed before execution"
+                    )
+                transition_preview = AuthoritativeWeekTransitionRunner(
+                    self.factory, self.awards_service
+                ).preview(transition_command)
+                transition_payload = {
+                    "command": transition_command.model_dump(mode="json"),
+                    "request_fingerprint": transition_command.fingerprint,
+                    "expected_ranking_fingerprint": (
+                        transition_preview.official_ranking_fingerprint
+                    ),
+                    "expected_lifecycle_fingerprint": (
+                        transition_preview.player_lifecycle_fingerprint
+                    ),
+                    "expected_sporting_fingerprint": (
+                        transition_preview.player_sporting_fingerprint
+                    ),
+                }
+                frozen["week_transition"] = transition_payload
+                parent.result_json = json.dumps(
+                    frozen, sort_keys=True, separators=(",", ":")
+                )
+
+        transition_command = AuthoritativeWeekTransitionCommand.model_validate(
+            transition_payload["command"]
+        )
+        transition_result = AuthoritativeWeekTransitionRunner(
+            self.factory, self.awards_service
+        ).execute(
+            transition_command,
+            expected_ranking_fingerprint=transition_payload[
+                "expected_ranking_fingerprint"
+            ],
+            expected_lifecycle_fingerprint=transition_payload[
+                "expected_lifecycle_fingerprint"
+            ],
+            expected_sporting_fingerprint=transition_payload[
+                "expected_sporting_fingerprint"
+            ],
+        )
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            parent = session.get(AuthoritativeSimulationCommandModel, key)
+            if parent is None or parent.request_fingerprint != request_fp:
+                raise ValueError("Week parent receipt disappeared")
+            if parent.status == "complete":
+                return json.loads(parent.result_json)
+            frozen = json.loads(parent.result_json)
+            if (
+                transition_result.completed_week != command.expected_week
+                or transition_result.target_week.model_dump(mode="json")
+                != frozen["target_week"]
+                or transition_result.official_ranking_fingerprint
+                != transition_payload["expected_ranking_fingerprint"]
+                or transition_result.player_lifecycle_fingerprint
+                != transition_payload["expected_lifecycle_fingerprint"]
+                or transition_result.player_sporting_fingerprint
+                != transition_payload["expected_sporting_fingerprint"]
+            ):
+                raise ValueError(
+                    "Next Week transition result differs from frozen preview"
+                )
+
+            payload = {
+                "schema_version": "authoritative_week_result.v1",
+                "status": "complete",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "completed_week": command.expected_week.model_dump(mode="json"),
+                "target_week": frozen["target_week"],
+                "schedule_fingerprint": frozen["schedule_fingerprint"],
+                "target_slot_ordinals": list(target_ordinals),
+                "target_group_ids": list(frozen["target_group_ids"]),
+                "child_command_ids": [
+                    frozen["child_commands"][str(slot_ordinal)]["command_id"]
+                    for slot_ordinal in target_ordinals
+                ],
+                "completed_slot_count": len(target_ordinals),
+                "ranking_authority_mode": frozen["ranking_authority_mode"],
+                "ranking_authority_command_id": frozen[
+                    "ranking_authority_command_id"
+                ],
+                "ranking_authority_fingerprint": frozen[
+                    "ranking_authority_fingerprint"
+                ],
+                "week_transition_command_id": transition_result.command_id,
+                "week_transition_request_fingerprint": transition_payload[
+                    "request_fingerprint"
+                ],
+                "official_ranking_fingerprint": (
+                    transition_result.official_ranking_fingerprint
+                ),
+                "player_lifecycle_fingerprint": (
+                    transition_result.player_lifecycle_fingerprint
+                ),
+                "player_sporting_fingerprint": (
+                    transition_result.player_sporting_fingerprint
+                ),
+                "world_event_kind": transition_result.world_event_kind,
+                "adoption": "committed",
+            }
+            parent.status = "complete"
+            parent.result_json = json.dumps(
+                payload, sort_keys=True, separators=(",", ":")
+            )
+            session.flush()
+            return payload
+
     def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
         """Commit one Master §15.9 W/O without simulating a competitive match.
 

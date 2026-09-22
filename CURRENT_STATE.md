@@ -1587,3 +1587,15 @@ recalculated while each player's `main_entry_status` remains unchanged.
 This closes the recovery contract introduced by canonical Main-entry result provenance:
 forking a ranking-bearing Branch cannot silently degrade a Wild Card entrant into an
 undifferentiated Main participant.
+
+
+## Historical ranking weeks preserve Main-entry provenance
+
+PR-critical ranking coverage now proves that canonical tournament-source provenance
+remains immutable after later RankingWeek preparation. A Lucky Loser participant keeps
+`main_entry_status="lucky_loser"` and independent Qualification provenance through
+the Week-2 publication, then a later Week-3 ranking preparation leaves the historical
+`OwnedTournamentRankingSource` fingerprint and canonical Result payload unchanged.
+
+This guards the Gate-3 historical-read path: later ranking work cannot silently rewrite
+how an earlier tournament participant reached Main.

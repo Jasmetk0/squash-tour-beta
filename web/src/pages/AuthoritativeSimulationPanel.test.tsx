@@ -34,6 +34,8 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeNextTournament: vi.fn(),
   previewAuthoritativeNextWeek: vi.fn(),
   simulateAuthoritativeNextWeek: vi.fn(),
+  previewAuthoritativeNextSeason: vi.fn(),
+  simulateAuthoritativeNextSeason: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -325,6 +327,91 @@ const weekResult = {
   player_lifecycle_fingerprint: 'b'.repeat(64),
   player_sporting_fingerprint: 'd'.repeat(64),
   world_event_kind: 'week_transition_completed' as const,
+  adoption: 'committed' as const
+}
+
+const seasonCompletedWeeks = Array.from(
+  { length: 45 },
+  (_, index) => ({ season_index: 2, week: 17 + index })
+)
+
+const seasonPreview = {
+  schema_version: 'authoritative_season_preview.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  start_week: week,
+  target_week: { season_index: 3, week: 1 },
+  weeks_including_current: 45,
+  initial_action: 'next_week',
+  initial_transition_blockers: ['pending_authoritative_groups'],
+  auto_empty_week_policy: 'calendar_proven_audited_child_only' as const,
+  season_transition_mode: 'explicit_save_and_review_checkpoint' as const,
+  expected_position_fingerprint: 'a'.repeat(64),
+  expected_revision_id: 'revision-7',
+  preview_fingerprint: '4'.repeat(64)
+}
+
+const seasonBoundaryPosition = {
+  ...position,
+  current_week: { season_index: 2, week: 61 },
+  current_slot_kind: null,
+  current_slot_id: null,
+  slot_ordinal: null,
+  unresolved_group_ids: [],
+  eligible_match_ids: [],
+  blocked_match_ids: [],
+  current_slot_complete: true,
+  supported_tournament_complete: true,
+  week_ready_for_transition: false,
+  transition_blockers: ['season_transition_required'],
+  terminal_sporting_fingerprint: 'e'.repeat(64),
+  position_fingerprint: 'f'.repeat(64)
+}
+
+const seasonSaveProgress = {
+  schema_version: 'authoritative_season_progress.v1' as const,
+  status: 'blocked' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  start_week: week,
+  current_week: { season_index: 2, week: 61 },
+  target_week: { season_index: 3, week: 1 },
+  completed_weeks: seasonCompletedWeeks,
+  completed_week_count: 45,
+  checkpoint: 'season_transition_save_required' as const,
+  blockers: ['season_transition_save_required'],
+  detail: 'Save the current canonical world explicitly.',
+  position: seasonBoundaryPosition
+}
+
+const seasonReviewProgress = {
+  ...seasonSaveProgress,
+  checkpoint: 'season_transition_review_required' as const,
+  blockers: ['season_transition_review_required'],
+  detail: 'Review and commit canonical Season Transition.'
+}
+
+const seasonResult = {
+  schema_version: 'authoritative_season_result.v1' as const,
+  status: 'complete' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  start_week: week,
+  target_week: { season_index: 3, week: 1 },
+  completed_weeks: seasonCompletedWeeks,
+  completed_week_count: 45,
+  week_child_command_ids: ['season-week:one'],
+  empty_week_child_command_ids: ['season-empty:one'],
+  week61_slot_child_command_ids: [],
+  season_transition_observed: true as const,
+  saved_revision_id: 'revision-season-3',
+  position: {
+    ...seasonBoundaryPosition,
+    current_week: { season_index: 3, week: 1 },
+    transition_blockers: [],
+    terminal_sporting_fingerprint: null,
+    position_fingerprint: '1'.repeat(64)
+  },
   adoption: 'committed' as const
 }
 
@@ -776,6 +863,8 @@ beforeEach(() => {
   api.simulateAuthoritativeNextTournament.mockResolvedValue(tournamentResult)
   api.previewAuthoritativeNextWeek.mockResolvedValue(weekPreview)
   api.simulateAuthoritativeNextWeek.mockResolvedValue(weekResult)
+  api.previewAuthoritativeNextSeason.mockResolvedValue(seasonPreview)
+  api.simulateAuthoritativeNextSeason.mockResolvedValue(seasonResult)
   api.saveAuthoritativeSimulation.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1524,6 +1613,100 @@ describe('AuthoritativeSimulationPanel', () => {
       expect(api.simulateAuthoritativeNextWeek).toHaveBeenCalledTimes(2)
     )
     expect(api.simulateAuthoritativeNextWeek.mock.calls[1][2].command_id).toBe(
+      firstCommand.command_id
+    )
+  })
+
+  it('keeps one reviewed Next Season parent across explicit boundary checkpoints', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.simulateAuthoritativeNextSeason
+      .mockResolvedValueOnce(seasonSaveProgress)
+      .mockResolvedValueOnce(seasonReviewProgress)
+      .mockResolvedValueOnce(seasonResult)
+    renderPanel()
+
+    await screen.findByText('Execute current canonical position')
+    await userEvent.type(
+      screen.getByLabelText('Next Season operator'),
+      'Commissioner'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Next Season audit reason'),
+      'Advance reviewed season'
+    )
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Review authoritative Next Season' })
+    )
+
+    await waitFor(() =>
+      expect(api.previewAuthoritativeNextSeason).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          command_id: expect.any(String),
+          operator_label: 'Commissioner',
+          audit_reason: 'Advance reviewed season'
+        }
+      )
+    )
+    expect(
+      await screen.findByRole('heading', { name: /Reviewed canonical Season/ })
+    ).toHaveTextContent('S2 W17')
+    expect(screen.getByText('calendar_proven_audited_child_only')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    const commit = screen.getByRole('button', {
+      name: 'Simulate reviewed authoritative Next Season'
+    })
+    await userEvent.click(commit)
+
+    expect(
+      await screen.findByText(/Next Season paused at season_transition_save_required/)
+    ).toHaveTextContent('45 completed week')
+    expect(
+      screen.getByRole('button', { name: 'Save authoritative simulation' })
+    ).toBeInTheDocument()
+    const firstCommand = api.simulateAuthoritativeNextSeason.mock.calls[0][2]
+    expect(firstCommand).toMatchObject({
+      command_id: expect.any(String),
+      operator_label: 'Commissioner',
+      audit_reason: 'Advance reviewed season',
+      expected_start_week: week,
+      expected_position_fingerprint: 'a'.repeat(64),
+      expected_revision_id: 'revision-7',
+      expected_preview_fingerprint: '4'.repeat(64)
+    })
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Retry reviewed authoritative Next Season'
+      })
+    )
+    expect(
+      await screen.findByText(/Next Season paused at season_transition_review_required/)
+    ).toBeInTheDocument()
+    expect(
+      screen.getByText(/Review and commit the existing canonical Season Transition/)
+    ).toBeInTheDocument()
+
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: 'Retry reviewed authoritative Next Season'
+      })
+    )
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextSeason).toHaveBeenCalledTimes(3)
+    )
+    expect(api.simulateAuthoritativeNextSeason.mock.calls[1][2].command_id).toBe(
+      firstCommand.command_id
+    )
+    expect(api.simulateAuthoritativeNextSeason.mock.calls[2][2].command_id).toBe(
       firstCommand.command_id
     )
   })

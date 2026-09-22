@@ -432,6 +432,15 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     )
     assert len(participant_ids) == 4
 
+    season_review = {
+        "command_id": "official-full-season-next-season",
+        "operator_label": "Official Run acceptance admin",
+        "audit_reason": (
+            "Advance the reviewed canonical 2000/01 season through its "
+            "explicit Season Transition boundary"
+        ),
+    }
+
     with server:
         status, countries = _request("GET", server.base_url + "/world/countries")
         assert status == 200, countries
@@ -495,66 +504,82 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         _prepare_initial_ranking(ranking_root)
         revision = _save_ranking(None, ranking_root)
 
-        for slot_index in (1, 2):
-            position = _request("GET", sim_root + "/position")[1]
-            assert position["current_week"] == {
-                "season_index": 0,
-                "week": 1,
-            }
-            status, simulated = _request(
-                "POST",
-                sim_root + "/simulate-next-slot",
-                {
-                    "command_id": f"official-full-season-week-1-slot-{slot_index}",
-                    "run_id": run_id,
-                    "branch_id": branch_id,
-                    "expected_week": position["current_week"],
-                    "expected_position_fingerprint": position[
-                        "position_fingerprint"
-                    ],
-                    "expected_revision_id": revision,
-                },
-            )
-            assert status == 200, simulated
+        status, proposed = _request(
+            "GET",
+            sim_root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed
+        status, adopted_schedule = _request(
+            "POST",
+            sim_root + "/week-schedule/adopt-proposal",
+            {
+                "request_id": "official-full-season-week-1-schedule",
+                "expected_week": proposed["schedule"]["week"],
+                "expected_schedule_fingerprint": proposed[
+                    "schedule_fingerprint"
+                ],
+                "expected_position_fingerprint": proposed[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted_schedule
 
-        completed_week_one = _request("GET", sim_root + "/position")[1]
-        assert completed_week_one["supported_tournament_complete"] is True
-        revision = _advance_week(
-            ranking_root=ranking_root,
-            transition_root=transition_root,
-            completed_week=1,
-            revision=revision,
+        status, position = _request("GET", sim_root + "/position")
+        assert status == 200, position
+        assert position["current_week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+
+        status, preview = _request(
+            "POST",
+            sim_root + "/next-season/preview",
+            season_review,
+        )
+        assert status == 200, preview
+        assert preview["schema_version"] == "authoritative_season_preview.v1"
+        assert preview["start_week"] == {"season_index": 0, "week": 1}
+        assert preview["target_week"] == {"season_index": 1, "week": 1}
+        assert preview["weeks_including_current"] == 61
+        assert preview["expected_revision_id"] == revision
+        assert preview["auto_empty_week_policy"] == (
+            "calendar_proven_audited_child_only"
+        )
+        assert preview["season_transition_mode"] == (
+            "explicit_save_and_review_checkpoint"
         )
 
-        for week in range(2, 31):
-            revision = _complete_empty_week(
-                sim_root=sim_root,
-                revision=revision,
-                week=week,
-            )
-            revision = _advance_week(
-                ranking_root=ranking_root,
-                transition_root=transition_root,
-                completed_week=week,
-                revision=revision,
-            )
-
-        before_save = _request("GET", sim_root + "/position")[1]
-        assert before_save["current_week"] == {
-            "season_index": 0,
-            "week": 31,
+        season_command = {
+            **season_review,
+            "expected_start_week": preview["start_week"],
+            "expected_position_fingerprint": preview[
+                "expected_position_fingerprint"
+            ],
+            "expected_revision_id": preview["expected_revision_id"],
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
         }
-        # Persist the exact mid-season world before shutting the process down.
-        # Position identity intentionally includes the Saved Revision head and
-        # Working Draft base/version, so compare reopen against the canonical
-        # post-Save position rather than the stale pre-Save fingerprint.
-        revision = _save_ranking(None, ranking_root)
-        before_reopen = _request("GET", sim_root + "/position")[1]
-        assert before_reopen["current_week"] == before_save["current_week"]
-        assert before_reopen["position_fingerprint"] != before_save[
-            "position_fingerprint"
-        ]
-        head_before_reopen = revision
+        status, progress = _request(
+            "POST",
+            sim_root + "/simulate-next-season",
+            season_command,
+        )
+        assert status == 201, progress
+        assert progress["schema_version"] == "authoritative_season_progress.v1"
+        assert progress["status"] == "blocked"
+        assert progress["checkpoint"] == "season_transition_save_required"
+        assert progress["current_week"] == {"season_index": 0, "week": 61}
+        assert progress["target_week"] == {"season_index": 1, "week": 1}
+        assert progress["completed_week_count"] == 61
+        assert progress["blockers"] == ["season_transition_save_required"]
+
+        # The durable parent and every already-completed child survive process reopen.
+        boundary_position = _request("GET", sim_root + "/position")[1]
+        assert boundary_position["current_week"] == {
+            "season_index": 0,
+            "week": 61,
+        }
+        boundary_head = revision
 
     reopened = ApiServer(database_url=f"sqlite:///{db_path}")
     reopened.app.dependency_overrides[get_season_match_service] = lambda: matches
@@ -565,49 +590,50 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             reopened, run_id, branch_id
         )
         loaded = _request("GET", sim_root + "/position")[1]
-        assert loaded["current_week"] == before_reopen["current_week"]
-        assert loaded["position_fingerprint"] == before_reopen["position_fingerprint"]
-        revision = head_before_reopen
+        assert loaded["current_week"] == boundary_position["current_week"]
 
-        for week in range(31, 61):
-            revision = _complete_empty_week(
-                sim_root=sim_root,
-                revision=revision,
-                week=week,
-            )
-            revision = _advance_week(
-                ranking_root=ranking_root,
-                transition_root=transition_root,
-                completed_week=week,
-                revision=revision,
-            )
-
-        revision = _complete_empty_week(
-            sim_root=sim_root,
-            revision=revision,
-            week=61,
+        # Exact retry before Save stays on the same explicit checkpoint.
+        status, retry_before_save = _request(
+            "POST",
+            sim_root + "/simulate-next-season",
+            season_command,
         )
-        # Persist the full Week-61 Working Draft before Season Transition.
-        # Ranking Save captures ranking, lifecycle, sporting, and simulation
-        # components atomically, including the explicit empty-week evidence.
+        assert status == 201, retry_before_save
+        assert (
+            retry_before_save["checkpoint"]
+            == "season_transition_save_required"
+        )
+        assert retry_before_save["completed_week_count"] == 61
+
+        # Persist the exact Week-61 world. The Next Season parent must observe the
+        # new head rather than creating a hidden Save of its own.
         revision = _save_ranking(None, ranking_root)
-        status, preflight = _request(
-            "GET",
-            sim_root + "/season-transition/preflight",
+        assert revision != boundary_head
+
+        status, transition_checkpoint = _request(
+            "POST",
+            sim_root + "/simulate-next-season",
+            season_command,
         )
-        assert status == 200, preflight
-        assert preflight["completed_week"] == {
+        assert status == 201, transition_checkpoint
+        assert transition_checkpoint["status"] == "blocked"
+        assert (
+            transition_checkpoint["checkpoint"]
+            == "season_transition_review_required"
+        )
+        transition_preflight = transition_checkpoint[
+            "season_transition_preflight"
+        ]
+        assert transition_preflight["completed_week"] == {
             "season_index": 0,
             "week": 61,
         }
-        assert preflight["target_week"] == {
+        assert transition_preflight["target_week"] == {
             "season_index": 1,
             "week": 1,
         }
-        assert preflight["ready_for_execution"] is True, preflight[
-            "state_blockers"
-        ]
-        assert preflight["saved_revision_id"] == revision
+        assert transition_preflight["ready_for_execution"] is True
+        assert transition_preflight["saved_revision_id"] == revision
 
         status, configuration = _request(
             "POST",
@@ -617,7 +643,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         assert status == 200, configuration
         assert (
             configuration["configuration_fingerprint"]
-            == preflight["default_configuration_fingerprint"]
+            == transition_preflight["default_configuration_fingerprint"]
         )
 
         status, rollover = _request(
@@ -625,11 +651,13 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             sim_root + "/season-transition/advance",
             {
                 "command_id": "official-full-season-rollover",
-                "expected_preflight_fingerprint": preflight[
+                "expected_preflight_fingerprint": transition_preflight[
                     "preflight_fingerprint"
                 ],
                 "expected_saved_revision_id": revision,
-                "expected_draft_version": preflight["draft_version"],
+                "expected_draft_version": transition_preflight[
+                    "draft_version"
+                ],
                 "configuration": configuration["configuration"],
                 "season_saved_revision_id": "official-full-season-s1-revision",
                 "audit_event_id": "official-full-season-s1-audit",
@@ -641,6 +669,28 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "week": 1,
         }
         assert rollover["world_event_kind"] == "season_transition_completed"
+
+        # The exact same parent request now observes the reviewed Season Transition
+        # and becomes complete rather than replaying any of its 61-week children.
+        status, season_result = _request(
+            "POST",
+            sim_root + "/simulate-next-season",
+            season_command,
+        )
+        assert status == 201, season_result
+        assert season_result["schema_version"] == "authoritative_season_result.v1"
+        assert season_result["status"] == "complete"
+        assert season_result["target_week"] == {
+            "season_index": 1,
+            "week": 1,
+        }
+        assert season_result["completed_week_count"] == 61
+        assert season_result["season_transition_observed"] is True
+        assert _request(
+            "POST",
+            sim_root + "/simulate-next-season",
+            season_command,
+        ) == (201, season_result)
 
         next_season_position = _request("GET", sim_root + "/position")[1]
         assert next_season_position["current_week"] == {
@@ -674,3 +724,4 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         assert sporting[-1].fingerprint == rollover[
             "player_sporting_fingerprint"
         ]
+

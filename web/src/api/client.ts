@@ -144,6 +144,10 @@ import type {
   AuthoritativeWeekPreview,
   AuthoritativeWeekCommandPayload,
   AuthoritativeWeekExecution,
+  AuthoritativeSeasonPreviewPayload,
+  AuthoritativeSeasonPreview,
+  AuthoritativeSeasonCommandPayload,
+  AuthoritativeSeasonExecution,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1704,6 +1708,65 @@ export async function simulateAuthoritativeNextWeek(
     !/^[0-9a-f]{64}$/.test(data.player_sporting_fingerprint)
   ) {
     throw new Error('Authoritative Week result is invalid.')
+  }
+  return data
+}
+
+export async function previewAuthoritativeNextSeason(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeSeasonPreviewPayload
+): Promise<AuthoritativeSeasonPreview> {
+  const data = await request<AuthoritativeSeasonPreview>(
+    authoritativeSimulationRoot(runId, branchId) + '/next-season/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_season_preview.v1' ||
+    data.target_week.season_index !== data.start_week.season_index + 1 ||
+    data.target_week.week !== 1 ||
+    data.weeks_including_current !== 62 - data.start_week.week ||
+    data.auto_empty_week_policy !== 'calendar_proven_audited_child_only' ||
+    data.season_transition_mode !== 'explicit_save_and_review_checkpoint' ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.preview_fingerprint)
+  ) {
+    throw new Error('Authoritative Season preview response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeNextSeason(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeSeasonCommandPayload
+): Promise<AuthoritativeSeasonExecution> {
+  const data = await request<AuthoritativeSeasonExecution>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-season',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (data.schema_version === 'authoritative_season_progress.v1') {
+    if (
+      data.status !== 'blocked' ||
+      !data.checkpoint ||
+      data.completed_week_count !== data.completed_weeks.length
+    ) {
+      throw new Error('Authoritative Season progress response is invalid.')
+    }
+    return data
+  }
+  if (
+    data.schema_version !== 'authoritative_season_result.v1' ||
+    data.status !== 'complete' ||
+    data.completed_week_count !== data.completed_weeks.length ||
+    data.season_transition_observed !== true ||
+    data.target_week.season_index !== data.start_week.season_index + 1 ||
+    data.target_week.week !== 1
+  ) {
+    throw new Error('Authoritative Season result is invalid.')
   }
   return data
 }

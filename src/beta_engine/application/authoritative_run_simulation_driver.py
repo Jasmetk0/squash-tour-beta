@@ -288,6 +288,39 @@ class AuthoritativeWeekCommand(AuthoritativeWeekPreviewRequest):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeSeasonPreviewRequest(FrozenInput):
+    """Reviewed progressive orchestration request through one season boundary."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError("Next Season operator and audit reason must be non-empty")
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+
+class AuthoritativeSeasonCommand(AuthoritativeSeasonPreviewRequest):
+    """Durable progressive parent that reaches the next Season boundary."""
+
+    expected_start_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 
 class MatchReconstructionGameScore(FrozenInput):
     """Exact game score in frozen player-A / player-B order."""
@@ -3450,6 +3483,664 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def preview_next_season(
+        self, request: AuthoritativeSeasonPreviewRequest
+    ) -> dict:
+        """Review one progressive season range without mutating future weeks."""
+
+        with self.factory() as session:
+            return self._next_season_plan(session, request=request)
+
+    @staticmethod
+    def _season_week_child_command_id(
+        parent_command_id: str, week: RankingWeek
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|season-week|{week.ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"season-week:{digest}"
+
+    @staticmethod
+    def _season_empty_week_child_command_id(
+        parent_command_id: str, week: RankingWeek
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|season-empty-week|{week.ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"season-empty:{digest}"
+
+    @staticmethod
+    def _season_week61_slot_child_command_id(
+        parent_command_id: str, slot_ordinal: int
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|season-week61-slot|{slot_ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"season-w61-slot:{digest}"
+
+    @staticmethod
+    def _season_progress_payload(
+        *,
+        command: AuthoritativeSeasonCommand,
+        frozen: dict,
+        position: AuthoritativeSimulationPosition,
+        checkpoint: str,
+        blockers: tuple[str, ...] = (),
+        detail: str | None = None,
+        season_transition_preflight: dict | None = None,
+    ) -> dict:
+        payload = {
+            "schema_version": "authoritative_season_progress.v1",
+            "status": "blocked",
+            "run_id": command.run_id,
+            "branch_id": command.branch_id,
+            "start_week": frozen["start_week"],
+            "current_week": position.current_week.model_dump(mode="json"),
+            "target_week": frozen["target_week"],
+            "completed_weeks": list(frozen["completed_weeks"]),
+            "completed_week_count": len(frozen["completed_weeks"]),
+            "checkpoint": checkpoint,
+            "blockers": list(blockers),
+            "detail": detail,
+            "position": position.model_dump(mode="json"),
+        }
+        if season_transition_preflight is not None:
+            payload["season_transition_preflight"] = season_transition_preflight
+        return payload
+
+    def simulate_next_season(self, command: AuthoritativeSeasonCommand) -> dict:
+        """Progress through one season and stop only at explicit canonical boundaries.
+
+        Ordinary weeks are delegated to Next Week. Calendar-proven empty weeks use
+        the existing audited empty-week authority. Week 61 finishes competitive
+        slots but deliberately requires an explicit Saved Revision and the existing
+        reviewed Season Transition surface before this parent can complete.
+        """
+
+        request_fp = fingerprint(
+            {"mode": "season", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "Season command ID already has a different request"
+                    )
+                if receipt.status == "complete":
+                    return json.loads(receipt.result_json)
+                if receipt.status != "pending":
+                    raise ValueError("Season command receipt has an invalid status")
+                frozen = json.loads(receipt.result_json)
+            else:
+                before = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
+                if before.current_week != command.expected_start_week:
+                    raise ValueError("Next Season reviewed start week is stale")
+                if (
+                    before.position_fingerprint
+                    != command.expected_position_fingerprint
+                ):
+                    raise ValueError("Next Season reviewed Position is stale")
+                branch = session.get(RunBranchModel, command.branch_id)
+                if (
+                    branch is None
+                    or branch.run_id != command.run_id
+                    or branch.saved_head_revision_id
+                    != command.expected_revision_id
+                ):
+                    raise ValueError("Next Season reviewed Saved Revision is stale")
+                plan = self._next_season_plan(
+                    session,
+                    request=AuthoritativeSeasonPreviewRequest(
+                        command_id=command.command_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    ),
+                )
+                if plan["preview_fingerprint"] != command.expected_preview_fingerprint:
+                    raise ValueError("Next Season preview changed before commit")
+                frozen = {
+                    "schema_version": "authoritative_season_operation.v1",
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "start_week": plan["start_week"],
+                    "target_week": plan["target_week"],
+                    "initial_saved_revision_id": command.expected_revision_id,
+                    "completed_weeks": [],
+                    "week_children": {},
+                    "empty_week_children": {},
+                    "week61_slot_children": {},
+                    "boundary_saved_revision_id": None,
+                    "boundary_position_fingerprint": None,
+                }
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps(
+                            frozen, sort_keys=True, separators=(",", ":")
+                        ),
+                    )
+                )
+
+        start_week = RankingWeek.model_validate(frozen["start_week"])
+        target_week = RankingWeek.model_validate(frozen["target_week"])
+
+        for _ in range(512):
+            with self.factory() as session:
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Season parent receipt disappeared")
+                if parent.status == "complete":
+                    return json.loads(parent.result_json)
+                frozen = json.loads(parent.result_json)
+                position = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
+                branch = session.get(RunBranchModel, command.branch_id)
+                if (
+                    branch is None
+                    or branch.run_id != command.run_id
+                    or branch.saved_head_revision_id is None
+                ):
+                    raise ValueError("Next Season lost its Saved Revision-backed Branch")
+                current_saved_revision_id = branch.saved_head_revision_id
+
+            if position.current_week == target_week:
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError("Season parent receipt disappeared")
+                    if parent.status == "complete":
+                        return json.loads(parent.result_json)
+                    frozen = json.loads(parent.result_json)
+                    payload = {
+                        "schema_version": "authoritative_season_result.v1",
+                        "status": "complete",
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "start_week": frozen["start_week"],
+                        "target_week": frozen["target_week"],
+                        "completed_weeks": list(frozen["completed_weeks"]),
+                        "completed_week_count": len(frozen["completed_weeks"]),
+                        "week_child_command_ids": [
+                            item["command"]["command_id"]
+                            for _, item in sorted(
+                                frozen["week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "empty_week_child_command_ids": [
+                            command_id
+                            for _, command_id in sorted(
+                                frozen["empty_week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "week61_slot_child_command_ids": [
+                            item["command_id"]
+                            for _, item in sorted(
+                                frozen["week61_slot_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "season_transition_observed": True,
+                        "saved_revision_id": current_saved_revision_id,
+                        "position": position.model_dump(mode="json"),
+                        "adoption": "committed",
+                    }
+                    parent.status = "complete"
+                    parent.result_json = json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    )
+                    session.flush()
+                    return payload
+
+            if position.current_week.season_index != start_week.season_index:
+                raise ValueError(
+                    "Next Season chronology crossed an unexpected Season boundary"
+                )
+
+            week = position.current_week
+            if position.current_slot_kind == "entry":
+                return self._season_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    position=position,
+                    checkpoint="entry_process_required",
+                    blockers=("entry_process_required",),
+                    detail=(
+                        "Resolve the current Entry/application decision surface, "
+                        "then retry this exact Next Season command."
+                    ),
+                )
+
+            if week.week < 61:
+                empty_week_already_proved = (
+                    str(week.ordinal) in frozen["empty_week_children"]
+                )
+                if (
+                    position.current_slot_kind == "match"
+                    or position.terminal_sporting_fingerprint is not None
+                    or empty_week_already_proved
+                ):
+                    week_key = str(week.ordinal)
+                    stored = frozen["week_children"].get(week_key)
+                    if stored is None:
+                        child_id = self._season_week_child_command_id(
+                            command.command_id, week
+                        )
+                        preview_request = AuthoritativeWeekPreviewRequest(
+                            command_id=child_id,
+                            run_id=command.run_id,
+                            branch_id=command.branch_id,
+                            operator_label=command.operator_label,
+                            audit_reason=command.audit_reason,
+                        )
+                        try:
+                            child_preview = self.preview_next_week(preview_request)
+                        except ValueError as exc:
+                            return self._season_progress_payload(
+                                command=command,
+                                frozen=frozen,
+                                position=position,
+                                checkpoint="week_preparation_required",
+                                blockers=tuple(position.transition_blockers),
+                                detail=str(exc),
+                            )
+                        child = AuthoritativeWeekCommand(
+                            **preview_request.model_dump(mode="json"),
+                            expected_week=week,
+                            expected_position_fingerprint=child_preview[
+                                "expected_position_fingerprint"
+                            ],
+                            expected_revision_id=child_preview[
+                                "expected_revision_id"
+                            ],
+                            expected_preview_fingerprint=child_preview[
+                                "preview_fingerprint"
+                            ],
+                        )
+                        with self.factory.begin() as session:
+                            session.execute(text("BEGIN IMMEDIATE"))
+                            parent = session.get(
+                                AuthoritativeSimulationCommandModel, key
+                            )
+                            if (
+                                parent is None
+                                or parent.request_fingerprint != request_fp
+                            ):
+                                raise ValueError("Season parent receipt disappeared")
+                            frozen_now = json.loads(parent.result_json)
+                            existing = frozen_now["week_children"].get(week_key)
+                            if existing is None:
+                                current = self._position(
+                                    session,
+                                    command.run_id,
+                                    command.branch_id,
+                                    allow_missing_schedule=True,
+                                )
+                                branch_now = session.get(
+                                    RunBranchModel, command.branch_id
+                                )
+                                if (
+                                    current.current_week != week
+                                    or current.position_fingerprint
+                                    != child.expected_position_fingerprint
+                                    or branch_now is None
+                                    or branch_now.saved_head_revision_id
+                                    != child.expected_revision_id
+                                ):
+                                    raise ValueError(
+                                        "Next Season Week child changed before freeze"
+                                    )
+                                frozen_now["week_children"][week_key] = {
+                                    "command": child.model_dump(mode="json"),
+                                    "preview_fingerprint": child_preview[
+                                        "preview_fingerprint"
+                                    ],
+                                }
+                                parent.result_json = json.dumps(
+                                    frozen_now,
+                                    sort_keys=True,
+                                    separators=(",", ":"),
+                                )
+                                frozen = frozen_now
+                                stored = frozen_now["week_children"][week_key]
+                            else:
+                                stored = existing
+                    child = AuthoritativeWeekCommand.model_validate_json(
+                        json.dumps(stored["command"])
+                    )
+                    child_result = self.simulate_next_week(child)
+                    if (
+                        child_result.get("schema_version")
+                        == "authoritative_week_progress.v1"
+                    ):
+                        with self.factory() as session:
+                            current = self._position(
+                                session,
+                                command.run_id,
+                                command.branch_id,
+                                allow_missing_schedule=True,
+                            )
+                        return self._season_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            position=current,
+                            checkpoint="week_transition_prerequisite",
+                            blockers=tuple(
+                                child_result.get("transition_blockers", ())
+                            ),
+                            detail=(
+                                "The current canonical Next Week child paused. "
+                                "Resolve its explicit prerequisite and retry the "
+                                "same Next Season command."
+                            ),
+                        )
+
+                    completed = child_result["completed_week"]
+                    with self.factory.begin() as session:
+                        session.execute(text("BEGIN IMMEDIATE"))
+                        parent = session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if (
+                            parent is None
+                            or parent.request_fingerprint != request_fp
+                        ):
+                            raise ValueError("Season parent receipt disappeared")
+                        frozen_now = json.loads(parent.result_json)
+                        if completed not in frozen_now["completed_weeks"]:
+                            frozen_now["completed_weeks"].append(completed)
+                        parent.result_json = json.dumps(
+                            frozen_now,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                    continue
+
+                child_id = self._season_empty_week_child_command_id(
+                    command.command_id, week
+                )
+                with self.factory() as session:
+                    existing_child = session.get(
+                        AuthoritativeSimulationCommandModel,
+                        (command.run_id, command.branch_id, child_id),
+                    )
+                if existing_child is not None:
+                    if existing_child.status != "complete":
+                        raise ValueError(
+                            "Next Season empty-week child receipt is incomplete"
+                        )
+                    empty_result = json.loads(existing_child.result_json)
+                else:
+                    empty_command = AuthoritativeEmptyWeekCompletionCommand(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=current_saved_revision_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    )
+                    try:
+                        empty_result = self.complete_empty_week(empty_command)
+                    except ValueError as exc:
+                        return self._season_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            position=position,
+                            checkpoint="week_preparation_required",
+                            blockers=tuple(position.transition_blockers),
+                            detail=str(exc),
+                        )
+
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError("Season parent receipt disappeared")
+                    frozen_now = json.loads(parent.result_json)
+                    frozen_now["empty_week_children"][str(week.ordinal)] = child_id
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
+            # Week 61 never uses ordinary Next Week. Finish its sporting proof,
+            # then require the explicit Save + reviewed Season Transition surface.
+            if position.current_slot_kind == "match":
+                if position.slot_ordinal is None:
+                    raise ValueError("Week 61 current match slot has no ordinal")
+                slot_key = str(position.slot_ordinal)
+                stored_slot = frozen["week61_slot_children"].get(slot_key)
+                if stored_slot is None:
+                    child = AuthoritativeSimulationCommand(
+                        command_id=self._season_week61_slot_child_command_id(
+                            command.command_id, position.slot_ordinal
+                        ),
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=current_saved_revision_id,
+                    )
+                    with self.factory.begin() as session:
+                        session.execute(text("BEGIN IMMEDIATE"))
+                        parent = session.get(
+                            AuthoritativeSimulationCommandModel, key
+                        )
+                        if (
+                            parent is None
+                            or parent.request_fingerprint != request_fp
+                        ):
+                            raise ValueError("Season parent receipt disappeared")
+                        frozen_now = json.loads(parent.result_json)
+                        current = self._position(
+                            session,
+                            command.run_id,
+                            command.branch_id,
+                            allow_missing_schedule=True,
+                        )
+                        branch_now = session.get(RunBranchModel, command.branch_id)
+                        if (
+                            current.current_week != week
+                            or current.slot_ordinal != position.slot_ordinal
+                            or current.position_fingerprint
+                            != child.expected_position_fingerprint
+                            or branch_now is None
+                            or branch_now.saved_head_revision_id
+                            != child.expected_revision_id
+                        ):
+                            raise ValueError(
+                                "Next Season Week 61 slot changed before freeze"
+                            )
+                        frozen_now["week61_slot_children"][slot_key] = (
+                            child.model_dump(mode="json")
+                        )
+                        parent.result_json = json.dumps(
+                            frozen_now,
+                            sort_keys=True,
+                            separators=(",", ":"),
+                        )
+                        frozen = frozen_now
+                        stored_slot = frozen_now["week61_slot_children"][
+                            slot_key
+                        ]
+                child = AuthoritativeSimulationCommand.model_validate_json(
+                    json.dumps(stored_slot)
+                )
+                self.simulate_next_slot(child)
+                continue
+
+            week61_empty_already_proved = (
+                str(week.ordinal) in frozen["empty_week_children"]
+            )
+            if (
+                position.terminal_sporting_fingerprint is None
+                and not week61_empty_already_proved
+            ):
+                child_id = self._season_empty_week_child_command_id(
+                    command.command_id, week
+                )
+                with self.factory() as session:
+                    existing_child = session.get(
+                        AuthoritativeSimulationCommandModel,
+                        (command.run_id, command.branch_id, child_id),
+                    )
+                if existing_child is not None:
+                    if existing_child.status != "complete":
+                        raise ValueError(
+                            "Next Season Week 61 empty-week receipt is incomplete"
+                        )
+                else:
+                    empty_command = AuthoritativeEmptyWeekCompletionCommand(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=current_saved_revision_id,
+                        operator_label=command.operator_label,
+                        audit_reason=command.audit_reason,
+                    )
+                    try:
+                        self.complete_empty_week(empty_command)
+                    except ValueError as exc:
+                        return self._season_progress_payload(
+                            command=command,
+                            frozen=frozen,
+                            position=position,
+                            checkpoint="week61_preparation_required",
+                            blockers=tuple(position.transition_blockers),
+                            detail=str(exc),
+                        )
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError("Season parent receipt disappeared")
+                    frozen_now = json.loads(parent.result_json)
+                    frozen_now["empty_week_children"][str(week.ordinal)] = child_id
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                continue
+
+            # Week 61 sporting is complete.
+            with self.factory.begin() as session:
+                session.execute(text("BEGIN IMMEDIATE"))
+                parent = session.get(AuthoritativeSimulationCommandModel, key)
+                if parent is None or parent.request_fingerprint != request_fp:
+                    raise ValueError("Season parent receipt disappeared")
+                frozen_now = json.loads(parent.result_json)
+                week_payload = week.model_dump(mode="json")
+                if week_payload not in frozen_now["completed_weeks"]:
+                    frozen_now["completed_weeks"].append(week_payload)
+                mutated_by_parent = bool(
+                    frozen_now["week_children"]
+                    or frozen_now["empty_week_children"]
+                    or frozen_now["week61_slot_children"]
+                )
+                boundary_head = frozen_now.get("boundary_saved_revision_id")
+                if mutated_by_parent and boundary_head is None:
+                    frozen_now["boundary_saved_revision_id"] = (
+                        current_saved_revision_id
+                    )
+                    frozen_now["boundary_position_fingerprint"] = (
+                        position.position_fingerprint
+                    )
+                    parent.result_json = json.dumps(
+                        frozen_now, sort_keys=True, separators=(",", ":")
+                    )
+                    frozen = frozen_now
+                    return self._season_progress_payload(
+                        command=command,
+                        frozen=frozen_now,
+                        position=position,
+                        checkpoint="season_transition_save_required",
+                        blockers=("season_transition_save_required",),
+                        detail=(
+                            "Week 61 sporting evidence was produced during this "
+                            "Next Season operation. Save the current canonical "
+                            "world explicitly, then retry the same command."
+                        ),
+                    )
+                frozen = frozen_now
+
+            if (
+                frozen.get("boundary_saved_revision_id") is not None
+                and current_saved_revision_id
+                == frozen["boundary_saved_revision_id"]
+            ):
+                return self._season_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    position=position,
+                    checkpoint="season_transition_save_required",
+                    blockers=("season_transition_save_required",),
+                    detail=(
+                        "The Week 61 boundary has not been saved since this "
+                        "Next Season operation reached it."
+                    ),
+                )
+
+            preflight = self.season_transition_preflight(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            if not preflight.ready_for_execution:
+                return self._season_progress_payload(
+                    command=command,
+                    frozen=frozen,
+                    position=position,
+                    checkpoint="season_transition_prerequisite",
+                    blockers=tuple(
+                        (*preflight.state_blockers, *preflight.implementation_gaps)
+                    ),
+                    detail=(
+                        "Canonical Season Transition is not ready. Resolve the "
+                        "listed boundary prerequisite and retry this exact command."
+                    ),
+                    season_transition_preflight=preflight.model_dump(mode="json"),
+                )
+
+            return self._season_progress_payload(
+                command=command,
+                frozen=frozen,
+                position=position,
+                checkpoint="season_transition_review_required",
+                blockers=("season_transition_review_required",),
+                detail=(
+                    "Week 61 is saved and canonical Season Transition preflight "
+                    "is ready. Review/commit the existing Season Transition, then "
+                    "retry this exact Next Season command to finalize the parent."
+                ),
+                season_transition_preflight=preflight.model_dump(mode="json"),
+            )
+
+        raise ValueError("Next Season exceeded the bounded orchestration step budget")
+
     def commit_post_cutoff_walkover(self, command: AuthoritativeWalkoverCommand):
         """Commit one Master §15.9 W/O without simulating a competitive match.
 
@@ -5215,6 +5906,86 @@ class AuthoritativeRunSimulationDriver:
             "expected_position_fingerprint": position.position_fingerprint,
             "expected_revision_id": branch.saved_head_revision_id,
             "initial_transition_blockers": list(position.transition_blockers),
+        }
+        return {
+            **body,
+            "preview_fingerprint": fingerprint(body),
+        }
+
+    def _next_season_plan(
+        self,
+        session: Session,
+        *,
+        request: AuthoritativeSeasonPreviewRequest,
+    ) -> dict:
+        position = self._position(
+            session,
+            request.run_id,
+            request.branch_id,
+            allow_missing_schedule=True,
+        )
+        start_week = position.current_week
+        if start_week.season_index >= 49:
+            raise ValueError(
+                "Next Season does not own final 2049/50 closure; use canonical final Season Transition"
+            )
+
+        branch = session.get(RunBranchModel, request.branch_id)
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == request.branch_id
+            )
+        )
+        if (
+            branch is None
+            or branch.run_id != request.run_id
+            or draft is None
+            or branch.saved_head_revision_id is None
+        ):
+            raise ValueError("Next Season requires a Saved Revision-backed Run/Branch")
+        if branch.read_only or branch.status != "active":
+            raise ValueError("Next Season requires a writable active Branch")
+        if draft.status != "clean":
+            raise ValueError("Next Season requires a clean Working Draft at review")
+        if draft.base_revision_id != branch.saved_head_revision_id:
+            raise ValueError("Next Season Working Draft base is not the Saved head")
+
+        if position.current_slot_kind == "entry":
+            initial_action = "blocked_entry_process"
+        elif start_week.week == 61:
+            initial_action = (
+                "finish_week_61_matches"
+                if position.current_slot_kind == "match"
+                else (
+                    "season_transition_boundary"
+                    if position.terminal_sporting_fingerprint is not None
+                    else "prove_or_prepare_week_61"
+                )
+            )
+        elif position.current_slot_kind == "match":
+            initial_action = "next_week"
+        elif position.terminal_sporting_fingerprint is not None:
+            initial_action = "next_week_transition"
+        else:
+            initial_action = "prove_empty_or_prepare_week"
+
+        target_week = RankingWeek(
+            season_index=start_week.season_index + 1,
+            week=1,
+        )
+        body = {
+            "schema_version": "authoritative_season_preview.v1",
+            "run_id": request.run_id,
+            "branch_id": request.branch_id,
+            "start_week": start_week.model_dump(mode="json"),
+            "target_week": target_week.model_dump(mode="json"),
+            "weeks_including_current": 62 - start_week.week,
+            "initial_action": initial_action,
+            "initial_transition_blockers": list(position.transition_blockers),
+            "auto_empty_week_policy": "calendar_proven_audited_child_only",
+            "season_transition_mode": "explicit_save_and_review_checkpoint",
+            "expected_position_fingerprint": position.position_fingerprint,
+            "expected_revision_id": branch.saved_head_revision_id,
         }
         return {
             **body,

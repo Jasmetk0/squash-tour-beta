@@ -94,7 +94,11 @@ errors. Discarding the review is explicit.
 ## Scope limits
 
 - Week 61 uses Season Transition.
-- `Next Season` and `Full Simulation` remain wider follow-up ranges.
+- Canonical `Next Season` is now implemented separately in
+  `docs/AUTHORITATIVE_SEASON_ORCHESTRATION_V1.md`. It composes reviewed Next Week
+  children plus audited Calendar-proven empty-week children, then stops at explicit
+  Week-61 Save and Season Transition review checkpoints.
+- `Full Simulation` remains a wider follow-up range.
 - Canonical empty-week evidence remains an explicit audited operation; Next Week does
   not invent zero-match evidence.
 - Future long-running job UX (live progress, safe stop, immediate pause) remains a

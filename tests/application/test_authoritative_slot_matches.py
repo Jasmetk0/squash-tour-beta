@@ -1020,8 +1020,12 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
     driver, factory, week = _driver_fixture(tmp_path / "receipt-request-evidence")
     command, _ = _driver_command(driver, week, "receipt-slot")
 
+    public_before = driver.position(run_id="run", branch_id="branch")
+    assert "position_basis" not in public_before.model_dump(mode="json")
+
     first = driver.simulate_next_slot(command)
     assert "_request_evidence" not in first
+    assert "position_basis" not in first
 
     with factory() as session:
         receipt = session.get(
@@ -1031,11 +1035,15 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
         assert receipt is not None
         stored = json.loads(receipt.result_json)
         evidence = stored["_request_evidence"]
-        assert evidence == {
-            "schema_version": "authoritative_simulation_request_evidence.v1",
-            "mode": "slot",
-            "command": command.model_dump(mode="json"),
-        }
+        assert evidence["schema_version"] == (
+            "authoritative_simulation_request_evidence.v2"
+        )
+        assert evidence["mode"] == "slot"
+        assert evidence["command"] == command.model_dump(mode="json")
+        opening = evidence["opening_position"]
+        assert opening["fingerprint"] == command.expected_position_fingerprint
+        assert fingerprint(opening["basis"]) == opening["fingerprint"]
+        assert opening["basis"]["scope"] == ["run", "branch", week.ordinal]
         assert receipt.request_fingerprint == fingerprint(
             {"mode": "slot", "command": command.model_dump(mode="json")}
         )

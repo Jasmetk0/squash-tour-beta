@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { ComponentProps } from 'react'
@@ -2019,6 +2019,50 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_history.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      items: [
+        {
+          command_id: 'full-parent-reload',
+          status: 'pending',
+          start_week: fullSimulationPreview.start_week,
+          final_week: fullSimulationPreview.final_week,
+          completed_seasons: [2, 3, 4],
+          completed_season_count: 3,
+          final_completed_weeks: [],
+          final_completed_week_count: 0,
+          operator_label: 'Original operator',
+          audit_reason: 'Original reason',
+          abandonment: null
+        }
+      ],
+      item_count: 1
+    })
+    api.getAuthoritativeFullSimulationParentDetail.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_parent_detail.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      command_id: 'full-parent-reload',
+      status: 'pending',
+      receipt_request_fingerprint: 'f'.repeat(64),
+      start_week: fullSimulationPreview.start_week,
+      final_week: fullSimulationPreview.final_week,
+      initial_saved_revision_id: 'revision-7',
+      completed_seasons: [2, 3, 4],
+      final_completed_weeks: [],
+      season_child_command_ids: ['season-child-2', 'season-child-3'],
+      final_week_child_command_ids: [],
+      final_empty_week_child_command_ids: [],
+      final_week61_slot_child_command_ids: [],
+      final_boundary_saved_revision_id: null,
+      final_boundary_position_fingerprint: null,
+      operator_label: 'Original operator',
+      audit_reason: 'Original reason',
+      preview_fingerprint: fullSimulationPreview.preview_fingerprint,
+      abandonment: null
+    })
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_pending_collection.v1',
       run_id: 'run-a',
@@ -2051,6 +2095,15 @@ describe('AuthoritativeSimulationPanel', () => {
     await screen.findByRole('list', {
       name: 'Resumable Full Simulation parents'
     })
+    const history = await screen.findByRole('list', {
+      name: 'Full Simulation parent history'
+    })
+    await userEvent.click(
+      within(history).getByRole('button', { name: 'Inspect parent' })
+    )
+    await waitFor(() =>
+      expect(api.getAuthoritativeFullSimulationParentDetail).toHaveBeenCalledTimes(1)
+    )
     await userEvent.click(
       screen.getByRole('button', { name: 'Prepare abandon' })
     )
@@ -2092,6 +2145,11 @@ describe('AuthoritativeSimulationPanel', () => {
           confirm_committed_child_work_persists: true
         }
       )
+    )
+    await waitFor(() =>
+      expect(
+        api.getAuthoritativeFullSimulationParentDetail.mock.calls.length
+      ).toBeGreaterThan(1)
     )
   })
 

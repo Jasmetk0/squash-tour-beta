@@ -34,6 +34,7 @@ import {
   simulateAuthoritativeNextSeason,
   previewAuthoritativeFullSimulation,
   simulateAuthoritativeFullSimulation,
+  getPendingAuthoritativeFullSimulations,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -55,6 +56,7 @@ import type {
   AuthoritativeSeasonProgress,
   AuthoritativeFullSimulationPreview,
   AuthoritativeFullSimulationProgress,
+  AuthoritativeFullSimulationPendingOperation,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -351,6 +353,13 @@ export function AuthoritativeSimulationPanel({
     retry: false
   })
 
+  const pendingFullSimulationQuery = useQuery({
+    queryKey: ['authoritative-full-simulation-pending', runId, branchId],
+    queryFn: () => getPendingAuthoritativeFullSimulations(runId, branchId),
+    enabled,
+    retry: false
+  })
+
   const seasonTransitionPreflightQuery = useQuery({
     queryKey: [
       'authoritative-season-transition-preflight',
@@ -545,6 +554,7 @@ export function AuthoritativeSimulationPanel({
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-full-simulation-pending', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field'] })
     ])
   }
@@ -1154,6 +1164,17 @@ export function AuthoritativeSimulationPanel({
       ])
     }
   })
+
+  function resumePendingFullSimulation(
+    operation: AuthoritativeFullSimulationPendingOperation
+  ): void {
+    setFullSimulationCommandId(operation.command.command_id)
+    setFullSimulationOperator(operation.command.operator_label)
+    setFullSimulationReason(operation.command.audit_reason)
+    setFullSimulationReview(operation.review)
+    setFullSimulationProgress(null)
+    setConfirmed(false)
+  }
 
   const fullSimulationPreviewMutation = useMutation({
     mutationFn: () => {
@@ -2420,6 +2441,46 @@ export function AuthoritativeSimulationPanel({
             />{' '}
             I reviewed the current canonical position and Saved Revision head.
           </label>
+          {pendingFullSimulationQuery.data?.operations.length ? (
+            <div>
+              <h5>Resumable Full Simulation parents</h5>
+              <p className="status">
+                These durable parents survived page/process state loss. Resume the
+                exact parent instead of creating a new Full Simulation command.
+              </p>
+              <ol aria-label="Resumable Full Simulation parents">
+                {pendingFullSimulationQuery.data.operations.map((operation) => (
+                  <li key={operation.command.command_id}>
+                    <code>{operation.command.command_id}</code>
+                    {' · '}S{operation.review.start_week.season_index} W
+                    {operation.review.start_week.week}
+                    {' · '}{operation.completed_season_count} completed season(s)
+                    <button
+                      type="button"
+                      onClick={() => resumePendingFullSimulation(operation)}
+                      disabled={actionPending}
+                    >
+                      Resume this Full Simulation
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
+          {pendingFullSimulationQuery.data?.legacy_pending_count ? (
+            <p role="alert" className="error">
+              {pendingFullSimulationQuery.data.legacy_pending_count} older pending Full
+              Simulation parent(s) predate durable browser-resume metadata. They remain
+              backend-resumable only when their original command payload is still known.
+            </p>
+          ) : null}
+          {pendingFullSimulationQuery.error ? (
+            <p className="error">
+              Pending Full Simulation inspection failed: {
+                formatApiError(pendingFullSimulationQuery.error)
+              }
+            </p>
+          ) : null}
           <div className="form-grid">
             <label>
               Next Week operator

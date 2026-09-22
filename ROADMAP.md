@@ -37,8 +37,11 @@ terminal identity, explicit BYE auto-advance and the single-Q promotion edge are
 projected from the canonical bracket. Legacy MatchPackage remains only a temporary
 execution/result payload and must bind one-to-one to canonical nodes. New frozen
 tournament authority v5 includes the exact Draw Authority fingerprint. Multi-Q sections and dynamic qualifier-vs-BYE auto-advance now execute through
-the canonical Run-owned path; WC/LL and broader post-draw repair still fail closed
-rather than borrowing legacy DrawPackage policy.
+the canonical Run-owned path. Bracket Qualification can also continue from real
+authoritative Q receipts through frozen Lucky Loser vacancy/fill into repaired Main
+execution and canonical tournament close. Group-Qualification LL cross-group ordering
+and the explicitly undefined exhausted-source edge remain fail-closed rather than
+borrowing legacy DrawPackage policy.
 
 Qualification promotion plus unambiguous one-player BYEs now execute through the
 authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a

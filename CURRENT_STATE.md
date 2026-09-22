@@ -1542,3 +1542,22 @@ Tournament Result + Point Award source with the Qualification winner's Main BYE 
 Qualification component both intact. The PR-critical acceptance proves the path from
 Ranking Snapshot -> Entry Field -> Draw -> repaired Main BYE -> schedule -> simulated
 groups -> Owned Tournament Ranking Source.
+
+
+## Bracket Qualification -> Lucky Loser -> canonical close
+
+A production-backed smoke acceptance now exercises the bracket-Qualification Lucky
+Loser path across the actual authoritative layers rather than only authority-builder
+or fork/restore slices. Canonical Qualification semifinal/final receipts are written
+by the Simulation Slot executor, frozen LL vacancy/fill consumes those receipts and
+selects the actual eligible Q loser, the repaired Draw remains compatible with the
+same deterministic Week topology, and AuthoritativeRunSimulationDriver finishes Main
+through canonical tournament close.
+
+The acceptance reached supported tournament completion after the LL repair, proving
+that repaired Main execution can close through the Run/Branch-owned result/ranking
+source path without legacy DrawPackage execution. Detailed Lucky Loser additive
+Qualification/Main point semantics remain covered by the existing focused
+PR-critical point-authority tests. This end-to-end LL acceptance is deliberately
+marked `smoke`, not `pr_critical`, because its full Match Engine path is too slow
+for the fast per-PR gate; it belongs in targeted/full release validation.

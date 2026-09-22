@@ -5015,6 +5015,166 @@ class AuthoritativeRunSimulationDriver:
             "preview_fingerprint": fingerprint(body),
         }
 
+    def _next_week_plan(
+        self,
+        session: Session,
+        *,
+        request: AuthoritativeWeekPreviewRequest,
+    ) -> dict:
+        position = self._position(session, request.run_id, request.branch_id)
+        week = position.current_week
+        if week.week == 61:
+            raise ValueError(
+                "Next Week stops at Week 61; canonical Season Transition is required"
+            )
+        if position.current_slot_kind == "entry":
+            raise ValueError(
+                "Next Week cannot cross unresolved Entry application validation"
+            )
+
+        branch = session.get(RunBranchModel, request.branch_id)
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == request.branch_id
+            )
+        )
+        if (
+            branch is None
+            or branch.run_id != request.run_id
+            or draft is None
+            or branch.saved_head_revision_id is None
+        ):
+            raise ValueError("Next Week requires a Saved Revision-backed Run/Branch")
+        if draft.status != "clean":
+            raise ValueError(
+                "Next Week requires a clean Working Draft before the wider operation"
+            )
+        if draft.base_revision_id != branch.saved_head_revision_id:
+            raise ValueError("Next Week Working Draft base is not the Saved head")
+
+        schedule = self._schedule(
+            session, request.run_id, request.branch_id, week
+        )
+        targets = ()
+        if position.current_slot_kind == "match":
+            if (
+                schedule is None
+                or schedule.schema_version != "week_simulation_schedule.v2"
+            ):
+                raise ValueError(
+                    "Next Week requires an adopted Week Simulation Schedule v2"
+                )
+            if position.slot_ordinal is None:
+                raise ValueError("Next Week current match slot has no ordinal")
+            targets = tuple(
+                slot
+                for slot in schedule.slots
+                if slot.ordinal >= position.slot_ordinal
+            )
+            if not targets or targets[0].ordinal != position.slot_ordinal:
+                raise ValueError(
+                    "Next Week current match slot is absent from the Week Schedule"
+                )
+            ordinals = tuple(slot.ordinal for slot in targets)
+            expected = tuple(range(ordinals[0], ordinals[-1] + 1))
+            if ordinals != expected:
+                missing = sorted(set(expected) - set(ordinals))
+                reserved = set(
+                    self._entry_slot_ordinals(
+                        session, request.run_id, request.branch_id, week
+                    )
+                ) | set(
+                    self._wc_slot_ordinals(
+                        session, request.run_id, request.branch_id, week
+                    )
+                )
+                if reserved.intersection(missing):
+                    raise ValueError(
+                        "Next Week cannot cross a non-match Entry/WC process slot"
+                    )
+                raise ValueError(
+                    "Next Week requires consecutive global Simulation Slots"
+                )
+        elif (
+            schedule is not None
+            and schedule.schema_version != "week_simulation_schedule.v2"
+        ):
+            raise ValueError(
+                "Next Week requires Week Simulation Schedule v2 when one exists"
+            )
+
+        allowed_in_progress = {
+            "pending_authoritative_groups",
+            "tournament_source_missing",
+            "terminal_sporting_checkpoint_missing",
+            "week_transition_sporting_preflight_failed",
+            "ranking_transition_authority_missing",
+        }
+        hard_blockers = tuple(
+            blocker
+            for blocker in position.transition_blockers
+            if blocker not in allowed_in_progress
+        )
+        if hard_blockers:
+            raise ValueError(
+                "Next Week preflight is blocked: " + ", ".join(hard_blockers)
+            )
+
+        target_week = RankingWeek(
+            season_index=week.season_index,
+            week=week.week + 1,
+        )
+        authority_store = RankingTransitionAuthorityStore(session)
+        authority = authority_store.get(
+            run_id=request.run_id,
+            branch_id=request.branch_id,
+            target_ordinal=target_week.ordinal,
+        )
+        authority_command_id = self._week_authority_child_command_id(
+            request.command_id
+        )
+        if authority is None:
+            authority = derive_ranking_transition_authority(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                command_id=authority_command_id,
+                audit=request.audit,
+            )
+            authority_mode = "derived"
+        else:
+            authority_mode = "existing"
+
+        target_ordinals = tuple(slot.ordinal for slot in targets)
+        body = {
+            "schema_version": "authoritative_week_preview.v1",
+            "run_id": request.run_id,
+            "branch_id": request.branch_id,
+            "week": week.model_dump(mode="json"),
+            "target_week": target_week.model_dump(mode="json"),
+            "schedule_fingerprint": schedule.fingerprint if schedule else None,
+            "target_slot_ordinals": list(target_ordinals),
+            "target_group_ids": [
+                group_id
+                for slot in targets
+                for group_id in slot.group_ids
+            ],
+            "ranking_authority_mode": authority_mode,
+            "ranking_authority_command_id": (
+                authority_command_id
+                if authority_mode == "derived"
+                else authority.adopted_by_command_id
+            ),
+            "ranking_authority_fingerprint": authority.fingerprint,
+            "expected_position_fingerprint": position.position_fingerprint,
+            "expected_revision_id": branch.saved_head_revision_id,
+            "initial_transition_blockers": list(position.transition_blockers),
+        }
+        return {
+            **body,
+            "preview_fingerprint": fingerprint(body),
+        }
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)

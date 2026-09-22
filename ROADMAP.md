@@ -20,7 +20,7 @@ Legacy `start_day`, list/event ordering and draw-round arithmetic are not substi
 position, split Next Match and Next Slot without redirecting legacy simulation.
 Independent same-slot groups now commit atomically and resume after failure, while
 transition readiness reuses the authoritative match/effect sporting preflight.
-General draws, Qualification, WC/LL, Entries, AI-authored/general scheduling, and health remain Gate 3 work.
+General canonical Main/Qualification draws, explicit Entry/WC authority, bracket-Qualification Lucky Loser execution and dynamic qualifier-vs-BYE closure are now production-backed. Remaining Gate 3 boundaries include group-Qualification LL cross-group ordering, the explicitly undefined exhausted-source edge, automatic Entry/WC eligibility policy, broader AI-authored/general scheduling and health.
 The repeated-flow acceptance now proves three completed authoritative RankingWeeks
 (Week 1 → Week 2 → Week 3 → Week 4), and a production-backed acceptance repeats
 eight-player/seven-match Main Draws across the same three-week chain with ranking
@@ -43,17 +43,17 @@ execution and canonical tournament close. Group-Qualification LL cross-group ord
 and the explicitly undefined exhausted-source edge remain fail-closed rather than
 borrowing legacy DrawPackage policy.
 
-Qualification promotion plus unambiguous one-player BYEs now execute through the
-authoritative tournament/ranking bridge. Wild-card provenance from #738 remains a
-useful primitive. The #739/#740 pre-/post-draw replacement shortcut producers are
-now fail-closed after the post-merge canon audit; already persisted packages remain
-historically readable. Canonical pre-draw field rebalance now has a Run/Branch application command over
-the frozen Tournament Ranking Snapshot and Entry/Application payload, plus a
-separate canonical Run/Branch Admin HTTP boundary for field inspection and guarded
-withdrawal mutation. The older simulation-run Admin endpoint remains legacy rather
-than being silently reinterpreted. Later replacement work must
-still proceed through Qualification/Main Draw repair phases, RWC/WC handling, Lucky
-Loser priority and the per-player first-real-match replacement cutoff.
+Qualification promotion plus unambiguous one-player BYEs execute through the
+authoritative tournament/ranking bridge. Canonical pre-draw field rebalance, reviewed
+WC/RWC assignment, Draw process windows, append-only Draw repair, replacement-source
+authority and bracket-Qualification Lucky Loser vacancy/fill now operate on the
+Run/Branch-owned authority chain. The legacy #739/#740 shortcut producers remain
+fail-closed/read-only compatibility history rather than sporting authority. Recent
+acceptance proves dynamic qualifier-vs-BYE closure and real Qualification receipts ->
+Lucky Loser -> repaired Main -> canonical tournament close. The remaining replacement
+boundaries are the explicitly undecided group-Qualification LL cross-group ordering
+and post-Main-start/all-sources-exhausted policy; these stay fail-closed rather than
+inventing Master rules.
 
 ## Active pre-alpha dependency path (audit after #728 plus current driver slice)
 

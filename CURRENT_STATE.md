@@ -1602,3 +1602,17 @@ Historical receipts without request evidence remain readable and unchanged. This
 the prerequisite for safe schema-by-schema Branch-fork remapping of simulation command
 receipts; the request fingerprint can now be rebuilt under target Branch / Saved
 Revision identity instead of being copied blindly.
+
+
+## Simulation receipt Position evidence
+
+New self-describing `Simulate Next Match` / `Simulate Next Slot` receipts also
+retain the exact internal Position fingerprint body from immediately before and after
+the command. Saved Revision validation recomputes both hashes: the before body must
+match the reviewed `expected_position_fingerprint`, while a completed receipt's after
+body must match the public result `position_fingerprint`.
+
+This keeps the metadata private from the Admin response while making future
+materialized-Branch receipt remapping deterministic. A fork adapter can now retarget
+the stored Position body through the existing source->target fingerprint maps and
+recompute target request/result identity instead of guessing or reusing source hashes.

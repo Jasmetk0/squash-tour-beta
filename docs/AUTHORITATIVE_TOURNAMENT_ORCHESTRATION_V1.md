@@ -72,7 +72,8 @@ Schedule.
 
 ## Scope limits
 
-This slice does not yet define canonical `Next Week`, `Next Season` or
-`Full Simulation`. Those wider ranges must inherit all contained operation-scoped
-prerequisites and explicitly compose process windows and Week/Season Transition
-boundaries rather than hiding them.
+Canonical `Next Week` is now implemented separately in
+`docs/AUTHORITATIVE_WEEK_ORCHESTRATION_V1.md`. It inherits the contained sporting
+prerequisites, freezes every remaining current-week competitive slot and composes the
+existing atomic Week Transition without hiding process blockers. `Next Season` and
+`Full Simulation` remain wider follow-up ranges.

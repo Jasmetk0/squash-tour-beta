@@ -1303,6 +1303,79 @@ export type AuthoritativeTournamentResult = {
   adoption: 'committed'
 }
 
+export type AuthoritativeWeekPreviewPayload = {
+  command_id: string
+  operator_label: string
+  audit_reason: string
+}
+
+export type AuthoritativeWeekPreview = {
+  schema_version: 'authoritative_week_preview.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  schedule_fingerprint: string | null
+  target_slot_ordinals: number[]
+  target_group_ids: string[]
+  ranking_authority_mode: 'derived' | 'existing'
+  ranking_authority_command_id: string
+  ranking_authority_fingerprint: string
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  initial_transition_blockers: string[]
+  preview_fingerprint: string
+}
+
+export type AuthoritativeWeekCommandPayload =
+  AuthoritativeWeekPreviewPayload & {
+    expected_week: AuthoritativeRankingWeek
+    expected_position_fingerprint: string
+    expected_revision_id: string
+    expected_preview_fingerprint: string
+  }
+
+export type AuthoritativeWeekProgress = {
+  schema_version: 'authoritative_week_progress.v1'
+  status: 'blocked'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  target_slot_ordinals: number[]
+  completed_slot_count: number
+  transition_blockers: string[]
+  position: AuthoritativeSimulationPosition
+}
+
+export type AuthoritativeWeekResult = {
+  schema_version: 'authoritative_week_result.v1'
+  status: 'complete'
+  run_id: string
+  branch_id: string
+  completed_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  schedule_fingerprint: string | null
+  target_slot_ordinals: number[]
+  target_group_ids: string[]
+  child_command_ids: string[]
+  completed_slot_count: number
+  ranking_authority_mode: 'derived' | 'existing'
+  ranking_authority_command_id: string
+  ranking_authority_fingerprint: string
+  week_transition_command_id: string
+  week_transition_request_fingerprint: string
+  official_ranking_fingerprint: string
+  player_lifecycle_fingerprint: string
+  player_sporting_fingerprint: string
+  world_event_kind: 'week_transition_completed'
+  adoption: 'committed'
+}
+
+export type AuthoritativeWeekExecution =
+  | AuthoritativeWeekProgress
+  | AuthoritativeWeekResult
+
 export type MatchReconstructionGameScore = {
   player_a_points: number
   player_b_points: number

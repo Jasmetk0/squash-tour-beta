@@ -67,7 +67,7 @@ from test_authoritative_slot_matches import _driver_command, session_at
 from test_season_entry_list_service import make_service
 
 
-pytestmark = pytest.mark.smoke
+pytestmark = [pytest.mark.smoke, pytest.mark.pr_critical]
 
 
 def test_dynamic_qualifier_vs_bye_closes_through_authoritative_run_flow(tmp_path):

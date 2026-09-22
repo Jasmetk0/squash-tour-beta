@@ -1631,3 +1631,18 @@ the command's expected Position fingerprint.
 This closes the next prerequisite for target-Branch exact-retry reconstruction:
 receipt remap can now reason from the original Position inputs instead of treating the
 opening Position fingerprint as an opaque hash.
+
+
+## Main-entry provenance recovery and historical ranking invariants
+
+PR-critical recovery coverage now proves that canonical Tournament Result
+`main_entry_status` survives two independent historical paths. Saved Revision ranking
+restore can move backward to an empty ranking component and forward again while
+preserving exact Owned Tournament Ranking Source, Result, Point Award and Prize Money
+fingerprints together with Wild Card/direct provenance.
+
+Later RankingWeek preparation also leaves an earlier Lucky Loser tournament source
+immutable: the LL keeps `main_entry_status="lucky_loser"` and its independent
+Qualification provenance while subsequent ranking publication advances normally.
+Together these guards prevent recovery or later ranking work from silently rewriting
+how a historical participant reached Main.

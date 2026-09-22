@@ -1551,6 +1551,28 @@ export type AuthoritativeFullSimulationPendingCollection = {
   legacy_pending_count: number
 }
 
+export type AuthoritativeFullSimulationAbandonPayload = {
+  target_command_id: string
+  operator_label: string
+  audit_reason: string
+  confirm_committed_child_work_persists: true
+}
+
+export type AuthoritativeFullSimulationAbandonResult = {
+  schema_version: 'authoritative_full_simulation_abandon_result.v1'
+  run_id: string
+  branch_id: string
+  target_command_id: string
+  status: 'abandoned'
+  committed_child_work_persists: true
+  completed_seasons: number[]
+  completed_season_count: number
+  final_completed_weeks: AuthoritativeRankingWeek[]
+  final_completed_week_count: number
+  operator_label: string
+  audit_reason: string
+}
+
 
 export type MatchReconstructionGameScore = {
   player_a_points: number

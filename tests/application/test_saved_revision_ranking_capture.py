@@ -468,6 +468,7 @@ def test_ranking_fork_remaps_valid_application_submission_and_first_entry_trigge
     assert target_trigger.trigger_kind == "valid_tournament_application"
     assert target_trigger.source_evidence_id == source_submission.application_id
     assert target_trigger.source_evidence_fingerprint == target_submission.fingerprint
+    assert target_trigger == target_submission.to_tour_entry_trigger()
     assert target_trigger.fingerprint != source_trigger.fingerprint
 
     with repo._session_factory() as session:

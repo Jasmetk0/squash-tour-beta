@@ -2454,7 +2454,13 @@ class AuthoritativeRunSimulationDriver:
                     raise ValueError("Match Day command receipt has an invalid status")
                 frozen = json.loads(receipt.result_json)
             else:
-                before = self._position(session, command.run_id, command.branch_id)
+                before_position_evidence: dict = {}
+                before = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    evidence_out=before_position_evidence,
+                )
                 self._validate_expected(session, command, before)
                 plan = self._next_match_day_plan(
                     session,
@@ -5818,6 +5824,7 @@ class AuthoritativeRunSimulationDriver:
     def _public_simulation_receipt_result(payload: dict) -> dict:
         result = dict(payload)
         result.pop("_request_evidence", None)
+        result.pop("_position_evidence", None)
         return result
 
     def _mutate(self, command, *, mode: Literal["match", "slot"], fault_at=None):
@@ -5873,6 +5880,11 @@ class AuthoritativeRunSimulationDriver:
                                 "target_group_ids": targets,
                                 "authority_fingerprint": authority_fp,
                                 "_request_evidence": request_evidence,
+                                "_position_evidence": {
+                                    "schema_version": "authoritative_simulation_position_evidence.v1",
+                                    "before": before_position_evidence,
+                                    "after": None,
+                                },
                             },
                             sort_keys=True,
                             separators=(",", ":"),
@@ -5898,7 +5910,13 @@ class AuthoritativeRunSimulationDriver:
             self._require_writable_scope(session, command.run_id, command.branch_id)
             packages = self._pending_package(session, command, request_fp)
             self._advance_or_close(session, command, packages, fault_at=fault_at)
-            after = self._position(session, command.run_id, command.branch_id)
+            after_position_evidence: dict = {}
+            after = self._position(
+                session,
+                command.run_id,
+                command.branch_id,
+                evidence_out=after_position_evidence,
+            )
             payload = after.model_dump(mode="json")
             receipt = session.get(AuthoritativeSimulationCommandModel, key)
             if receipt is None:
@@ -5908,6 +5926,15 @@ class AuthoritativeRunSimulationDriver:
                 {
                     **payload,
                     "_request_evidence": request_evidence,
+                    "_position_evidence": {
+                        "schema_version": "authoritative_simulation_position_evidence.v1",
+                        "before": (
+                            json.loads(receipt.result_json)
+                            .get("_position_evidence", {})
+                            .get("before")
+                        ),
+                        "after": after_position_evidence,
+                    },
                 },
                 sort_keys=True,
                 separators=(",", ":"),
@@ -8523,7 +8550,15 @@ class AuthoritativeRunSimulationDriver:
             )
         return tuple(plan.feeder_group_ids or ())
 
-    def _position(self, session, run_id, branch_id, *, allow_missing_schedule=False):
+    def _position(
+        self,
+        session,
+        run_id,
+        branch_id,
+        *,
+        allow_missing_schedule=False,
+        evidence_out: dict | None = None,
+    ):
         week = self._current_week(session, run_id, branch_id)
         frozen = session.get(
             AdoptedTournamentAuthorityModel, (run_id, branch_id, week.ordinal)
@@ -8893,6 +8928,9 @@ class AuthoritativeRunSimulationDriver:
             ),
         }
         ready = not blockers
+        if evidence_out is not None:
+            evidence_out.clear()
+            evidence_out.update(body)
         return AuthoritativeSimulationPosition(
             run_id=run_id,
             branch_id=branch_id,

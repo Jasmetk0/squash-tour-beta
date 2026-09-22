@@ -39,6 +39,7 @@ const api = vi.hoisted(() => ({
   previewAuthoritativeFullSimulation: vi.fn(),
   simulateAuthoritativeFullSimulation: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(),
+  abandonAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
   commitAuthoritativeMatchReconstruction: vi.fn(),
@@ -589,6 +590,20 @@ beforeEach(() => {
     branch_id: 'branch-a',
     operations: [],
     legacy_pending_count: 0
+  })
+  api.abandonAuthoritativeFullSimulation.mockResolvedValue({
+    schema_version: 'authoritative_full_simulation_abandon_result.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    target_command_id: 'full-parent-reload',
+    status: 'abandoned',
+    committed_child_work_persists: true,
+    completed_seasons: [2, 3, 4],
+    completed_season_count: 3,
+    final_completed_weeks: [],
+    final_completed_week_count: 0,
+    operator_label: 'Commissioner',
+    audit_reason: 'Stop long parent'
   })
   api.inspectAuthoritativeEntryDecisionSlot.mockResolvedValue({
     run_id: 'run-a',
@@ -1873,6 +1888,88 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(
       api.simulateAuthoritativeFullSimulation.mock.calls[1][2].command_id
     ).toBe(firstCommand.command_id)
+  })
+
+  it('abandons a pending Full Simulation only after explicit child-work acknowledgement', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
+      schema_version: 'authoritative_full_simulation_pending_collection.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      operations: [
+        {
+          command: {
+            command_id: 'full-parent-reload',
+            operator_label: 'Original operator',
+            audit_reason: 'Original reason',
+            expected_start_week: fullSimulationPreview.start_week,
+            expected_position_fingerprint:
+              fullSimulationPreview.expected_position_fingerprint,
+            expected_revision_id: fullSimulationPreview.expected_revision_id,
+            expected_preview_fingerprint:
+              fullSimulationPreview.preview_fingerprint
+          },
+          review: fullSimulationPreview,
+          completed_seasons: [2, 3, 4],
+          completed_season_count: 3,
+          final_completed_weeks: [],
+          final_completed_week_count: 0
+        }
+      ],
+      legacy_pending_count: 0
+    })
+
+    renderPanel()
+
+    await screen.findByRole('list', {
+      name: 'Resumable Full Simulation parents'
+    })
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Prepare abandon' })
+    )
+
+    expect(
+      screen.getByText(/Already committed child work remains part of the canonical Run\/Branch/)
+    ).toBeInTheDocument()
+    const abandonButton = screen.getByRole('button', {
+      name: 'Abandon pending Full Simulation'
+    })
+    expect(abandonButton).toBeDisabled()
+
+    await userEvent.type(
+      screen.getByLabelText('Full Simulation abandon operator'),
+      'Commissioner'
+    )
+    await userEvent.type(
+      screen.getByLabelText('Full Simulation abandon audit reason'),
+      'Stop long parent'
+    )
+    expect(abandonButton).toBeDisabled()
+
+    await userEvent.click(
+      screen.getByLabelText(
+        'Confirm committed Full Simulation child work persists'
+      )
+    )
+    expect(abandonButton).toBeEnabled()
+    await userEvent.click(abandonButton)
+
+    await waitFor(() =>
+      expect(api.abandonAuthoritativeFullSimulation).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        {
+          target_command_id: 'full-parent-reload',
+          operator_label: 'Commissioner',
+          audit_reason: 'Stop long parent',
+          confirm_committed_child_work_persists: true
+        }
+      )
+    )
   })
 
   it('restores a durable pending Full Simulation parent after page state loss', async () => {

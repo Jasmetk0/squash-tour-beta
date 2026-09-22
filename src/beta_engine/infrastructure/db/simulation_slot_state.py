@@ -39,14 +39,19 @@ def _validate_command_rows_shape(rows):
                 "authoritative_simulation_historical_fork_receipt.v2",
                 "authoritative_simulation_historical_fork_receipt.v3",
                 "authoritative_simulation_historical_fork_receipt.v4",
+                "authoritative_simulation_historical_fork_receipt.v5",
             }
         ):
+            expected_retryable = (
+                payload.get("schema_version")
+                == "authoritative_simulation_historical_fork_receipt.v5"
+            )
             if (
                 row.status != "historical_fork"
                 or payload.get("run_id") != row.run_id
                 or payload.get("branch_id") != row.branch_id
                 or payload.get("command_id") != row.command_id
-                or payload.get("retryable") is not False
+                or payload.get("retryable") is not expected_retryable
             ):
                 raise ValueError(
                     "Saved historical simulation fork receipt scope is corrupt"
@@ -92,6 +97,7 @@ def _validate_command_rows_shape(rows):
                 "authoritative_simulation_historical_fork_receipt.v2",
                 "authoritative_simulation_historical_fork_receipt.v3",
                 "authoritative_simulation_historical_fork_receipt.v4",
+                "authoritative_simulation_historical_fork_receipt.v5",
             }:
                 target_base_revision_id = payload.get("target_base_revision_id")
                 if (
@@ -103,14 +109,19 @@ def _validate_command_rows_shape(rows):
                     )
                 expected_request = {
                     "schema_version": (
-                        "authoritative_simulation_historical_fork_request.v4"
+                        "authoritative_simulation_historical_fork_request.v5"
                         if historical_schema
-                        == "authoritative_simulation_historical_fork_receipt.v4"
+                        == "authoritative_simulation_historical_fork_receipt.v5"
                         else (
-                            "authoritative_simulation_historical_fork_request.v3"
+                            "authoritative_simulation_historical_fork_request.v4"
                             if historical_schema
-                            == "authoritative_simulation_historical_fork_receipt.v3"
-                            else "authoritative_simulation_historical_fork_request.v2"
+                            == "authoritative_simulation_historical_fork_receipt.v4"
+                            else (
+                                "authoritative_simulation_historical_fork_request.v3"
+                                if historical_schema
+                                == "authoritative_simulation_historical_fork_receipt.v3"
+                                else "authoritative_simulation_historical_fork_request.v2"
+                            )
                         )
                     ),
                     "run_id": row.run_id,
@@ -126,6 +137,7 @@ def _validate_command_rows_shape(rows):
                     in {
                         "authoritative_simulation_historical_fork_receipt.v3",
                         "authoritative_simulation_historical_fork_receipt.v4",
+                        "authoritative_simulation_historical_fork_receipt.v5",
                     }
                 ):
                     target_evidence = payload.get("target_request_evidence")
@@ -254,7 +266,10 @@ def _validate_command_rows_shape(rows):
                             )
                     if (
                         historical_schema
-                        == "authoritative_simulation_historical_fork_receipt.v4"
+                        in {
+                            "authoritative_simulation_historical_fork_receipt.v4",
+                            "authoritative_simulation_historical_fork_receipt.v5",
+                        }
                     ):
                         target_result = payload.get("target_result")
                         target_result_fingerprint = payload.get(

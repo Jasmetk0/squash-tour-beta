@@ -4821,9 +4821,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
     target_closing_basis = target_evidence["closing_position_basis"]
 
     assert payload["schema_version"] == (
-        "authoritative_simulation_historical_fork_receipt.v4"
+        "authoritative_simulation_historical_fork_receipt.v5"
     )
-    assert payload["retryable"] is False
+    assert payload["retryable"] is True
     assert target_evidence["schema_version"] == (
         "authoritative_simulation_request_evidence.v3"
     )
@@ -4862,6 +4862,224 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
         match="historical simulation fork target result identity is corrupt",
     ):
         _validate_command_rows_shape([target_row])
+
+
+@pytest.mark.pr_critical
+def test_historical_v4_receipt_remains_read_only():
+    command = AuthoritativeSimulationCommand(
+        command_id="legacy-v4-command",
+        run_id="run",
+        branch_id="target",
+        expected_week=RankingWeek(season_index=0, week=1),
+        expected_position_fingerprint="1" * 64,
+        expected_revision_id="target-revision",
+        group_id=None,
+    )
+    row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="target",
+        command_id=command.command_id,
+        request_fingerprint="2" * 64,
+        status="historical_fork",
+        result_json=json.dumps(
+            {
+                "schema_version": "authoritative_simulation_historical_fork_receipt.v4",
+                "retryable": False,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation command is not retryable",
+    ):
+        AuthoritativeRunSimulationDriver._historical_simulation_retry_result(
+            row,
+            command=command,
+            mode="slot",
+            request_fingerprint=fingerprint(
+                {"mode": "slot", "command": command.model_dump(mode="json")}
+            ),
+        )
+
+
+@pytest.mark.pr_critical
+def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_path):
+    from beta_engine.infrastructure.db.player_slot_fork_remap import (
+        SimulationPositionForkIdentityGraph,
+        _retarget_simulation_command_receipt_as_historical,
+    )
+
+    driver, factory, week = _driver_fixture(tmp_path / "historical-v5-retry")
+    opening_basis = {
+        "scope": ["run", "branch", week.ordinal],
+        "schedule": None,
+        "entry_slot_ordinals": [],
+        "wc_slot_ordinals": [],
+        "week_tournament_lock": None,
+        "week_tournament_lock_conflicts": [],
+        "entry_validation_slots": [],
+        "current_slot_kind": "match",
+        "current_slot_ordinal": 1,
+        "proposed_schedule_requirement": [],
+        "slots": [],
+        "groups": [],
+        "owned": [],
+        "tournament_authority": None,
+        "sporting": None,
+        "lifecycle": None,
+        "branch_head": "source-revision",
+        "draft": ["source-revision", "clean", 0],
+        "transition_authority": None,
+        "world": None,
+        "terminal": None,
+        "empty_week_context": None,
+    }
+    closing_basis = {
+        **opening_basis,
+        "current_slot_kind": None,
+        "current_slot_ordinal": None,
+    }
+    source_command = AuthoritativeSimulationCommand(
+        command_id="historical-retry-command",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=fingerprint(opening_basis),
+        expected_revision_id="source-revision",
+        group_id=None,
+    )
+    source_evidence = {
+        "schema_version": "authoritative_simulation_request_evidence.v3",
+        "mode": "slot",
+        "command": source_command.model_dump(mode="json"),
+        "opening_position_basis": opening_basis,
+        "closing_position_basis": closing_basis,
+    }
+    source_result = {
+        "run_id": "run",
+        "branch_id": "branch",
+        "current_week": week.model_dump(mode="json"),
+        "current_slot_kind": None,
+        "current_slot_id": None,
+        "slot_ordinal": None,
+        "unresolved_group_ids": [],
+        "eligible_match_ids": [],
+        "blocked_match_ids": [],
+        "current_slot_complete": True,
+        "supported_tournament_complete": False,
+        "week_ready_for_transition": False,
+        "transition_blockers": ["tournament_source_missing"],
+        "terminal_sporting_fingerprint": None,
+        "position_fingerprint": fingerprint(closing_basis),
+        "_request_evidence": source_evidence,
+    }
+    source_row = AuthoritativeSimulationCommandModel(
+        run_id="run",
+        branch_id="branch",
+        command_id=source_command.command_id,
+        request_fingerprint=fingerprint(
+            {"mode": "slot", "command": source_command.model_dump(mode="json")}
+        ),
+        status="complete",
+        result_json=json.dumps(
+            source_result,
+            sort_keys=True,
+            separators=(",", ":"),
+        ),
+    )
+    target_revision = "target-revision"
+    graph = SimulationPositionForkIdentityGraph(
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        target_base_revision_id=target_revision,
+        schedule_fingerprints={},
+        slot_plan_fingerprints={},
+        group_command_fingerprints={},
+        result_fingerprints={},
+        terminal_checkpoint_payloads={},
+        owned_tournament_fingerprints={},
+        week_tournament_lock_fingerprints={},
+        tournament_authority_fingerprints={},
+        sporting_fingerprints={},
+        lifecycle_fingerprints={},
+        transition_authority_fingerprints={},
+        ranking_snapshot_fingerprints={},
+        terminal_checkpoint_fingerprints={},
+        sporting_context_fingerprints={},
+    )
+    target_row = _retarget_simulation_command_receipt_as_historical(
+        source_row,
+        target_branch_id="target",
+        target_base_revision_id=target_revision,
+        position_identity_graph=graph,
+    )
+    target_payload = json.loads(target_row.result_json)
+    assert target_payload["schema_version"] == (
+        "authoritative_simulation_historical_fork_receipt.v5"
+    )
+    assert target_payload["retryable"] is True
+    target_command = AuthoritativeSimulationCommand.model_validate(
+        target_payload["target_request_evidence"]["command"]
+    )
+
+    with factory.begin() as session:
+        session.add(
+            RunBranchModel(
+                branch_id="target",
+                run_id="run",
+                display_name="Target fork",
+                saved_head_revision_id=target_revision,
+            )
+        )
+        session.add(target_row)
+
+    with factory() as session:
+        before_slots = len(session.scalars(select(SimulationSlotModel)).all())
+        before_groups = len(session.scalars(select(SimulationEventGroupModel)).all())
+
+    replayed = driver.simulate_next_slot(target_command)
+    assert replayed == target_payload["target_result"]
+
+    with factory() as session:
+        assert len(session.scalars(select(SimulationSlotModel)).all()) == before_slots
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups
+        stored = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "target", target_command.command_id),
+        )
+        assert stored is not None
+        assert stored.status == "historical_fork"
+        assert json.loads(stored.result_json) == target_payload
+
+    changed = target_command.model_copy(
+        update={"expected_position_fingerprint": "0" * 64}
+    )
+    with pytest.raises(
+        ValueError,
+        match="simulation command ID already has a different request",
+    ):
+        driver.simulate_next_slot(changed)
+
+    with factory.begin() as session:
+        stored = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "target", target_command.command_id),
+        )
+        tampered = json.loads(stored.result_json)
+        tampered["target_result"]["current_slot_complete"] = False
+        stored.result_json = json.dumps(
+            tampered,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation replay evidence is corrupt",
+    ):
+        driver.simulate_next_slot(target_command)
 
 
 @pytest.mark.pr_critical

@@ -364,6 +364,29 @@ class AuthoritativeFullSimulationCommand(
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeFullSimulationAbandonCommand(FrozenInput):
+    """Explicitly abandon one pending Full Simulation parent without rollback."""
+
+    target_command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    operator_label: str = Field(min_length=1, max_length=128)
+    audit_reason: str = Field(min_length=1, max_length=2000)
+    confirm_committed_child_work_persists: Literal[True]
+
+    @model_validator(mode="after")
+    def trim_audit(self):
+        operator = self.operator_label.strip()
+        reason = self.audit_reason.strip()
+        if not operator or not reason:
+            raise ValueError(
+                "Full Simulation abandon operator and audit reason must be non-empty"
+            )
+        object.__setattr__(self, "operator_label", operator)
+        object.__setattr__(self, "audit_reason", reason)
+        return self
+
+
 
 class MatchReconstructionGameScore(FrozenInput):
     """Exact game score in frozen player-A / player-B order."""
@@ -4330,6 +4353,77 @@ class AuthoritativeRunSimulationDriver:
                 "branch_id": branch_id,
                 "operations": operations,
                 "legacy_pending_count": legacy_pending_count,
+            }
+
+    def abandon_full_simulation(
+        self, command: AuthoritativeFullSimulationAbandonCommand
+    ) -> dict:
+        """Release one pending Full Simulation parent without undoing child commits."""
+
+        key = (command.run_id, command.branch_id, command.target_command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(
+                session, command.run_id, command.branch_id
+            )
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is None:
+                raise ValueError("pending Full Simulation parent was not found")
+            if receipt.status != "pending":
+                raise ValueError(
+                    "Full Simulation parent is not pending and cannot be abandoned"
+                )
+            try:
+                frozen = json.loads(receipt.result_json)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    "pending Full Simulation parent JSON is corrupt"
+                ) from exc
+            if (
+                frozen.get("schema_version")
+                != "authoritative_full_simulation_operation.v1"
+            ):
+                raise ValueError(
+                    "target command is not a pending Full Simulation parent"
+                )
+
+            abandonment = {
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
+                "committed_child_work_persists": True,
+                "completed_seasons": list(
+                    frozen.get("completed_seasons", [])
+                ),
+                "final_completed_weeks": list(
+                    frozen.get("final_completed_weeks", [])
+                ),
+            }
+            frozen["abandonment"] = abandonment
+            receipt.status = "abandoned"
+            receipt.result_json = json.dumps(
+                frozen, sort_keys=True, separators=(",", ":")
+            )
+            session.flush()
+
+            return {
+                "schema_version":
+                    "authoritative_full_simulation_abandon_result.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "target_command_id": command.target_command_id,
+                "status": "abandoned",
+                "committed_child_work_persists": True,
+                "completed_seasons": abandonment["completed_seasons"],
+                "completed_season_count": len(
+                    abandonment["completed_seasons"]
+                ),
+                "final_completed_weeks":
+                    abandonment["final_completed_weeks"],
+                "final_completed_week_count": len(
+                    abandonment["final_completed_weeks"]
+                ),
+                "operator_label": command.operator_label,
+                "audit_reason": command.audit_reason,
             }
 
     @staticmethod

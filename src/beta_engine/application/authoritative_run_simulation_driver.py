@@ -2949,7 +2949,9 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=command.branch_id,
             )
             target_sources = tuple(
-                source for source in sources if source.event_id == frozen["event_id"]
+                source
+                for source in sources
+                if source.binding.event_id == frozen["event_id"]
             )
             if len(target_sources) != 1:
                 raise ValueError(

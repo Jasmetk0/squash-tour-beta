@@ -9,6 +9,10 @@ from beta_engine.api.deps import (
     get_season_match_service,
     get_season_point_awards_service,
 )
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.infrastructure.db.authoritative_week_transition import (
+    AuthoritativeWeekTransitionRunner,
+)
 from beta_engine.infrastructure.db.models import (
     PlayerSportingWeekStateModel,
     PublishedOfficialRankingModel,
@@ -210,6 +214,194 @@ def _roots(server: ApiServer, run_id: str, branch_id: str) -> tuple[str, str, st
         "/authoritative-simulation"
     )
     return ranking_root, transition_root, sim_root
+
+
+@pytest.mark.pr_critical
+def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
+    tmp_path,
+    monkeypatch,
+):
+    server, week_one_package = _server_state(tmp_path)
+    pool_path = tmp_path / "next-week-initial-pool.json"
+    server.app.state.initial_player_pool_config_path = pool_path
+    participant_ids = tuple(
+        dict.fromkeys(
+            player_id
+            for match in sorted(
+                (
+                    item
+                    for item in week_one_package.main_draw_matches
+                    if item.round_number == 1
+                ),
+                key=lambda item: item.bracket_position,
+            )
+            for player_id in (match.top_player_id, match.bottom_player_id)
+        )
+    )
+    assert len(participant_ids) == 4
+
+    with server:
+        status, countries = _request("GET", server.base_url + "/world/countries")
+        assert status == 200, countries
+        country_code = countries["countries"][0]["code"]
+        for index, player_id in enumerate(participant_ids):
+            status, created = _request(
+                "POST",
+                server.base_url + "/admin/players/custom",
+                _custom_player(player_id, index, country_code),
+            )
+            assert status == 200, created
+
+        run_id, branch_id, revision = _create_run(
+            server,
+            display_name="Canonical Next Week acceptance",
+        )
+        world_root = (
+            f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"
+            "/initial-world"
+        )
+        adoption = {
+            "command_id": "next-week-adopt-world",
+            "source_season": "2000/2001",
+            "bootstrap_seed": 200001,
+            "audit_label": "Next Week acceptance admin",
+            "audit_reason": "Prepare canonical Next Week acceptance",
+            "official_run": True,
+        }
+        status, world_preview = _request(
+            "POST",
+            world_root + "/preview",
+            adoption,
+        )
+        assert status == 200, world_preview
+        status, adopted = _post_headers(
+            world_root,
+            adoption,
+            {
+                "X-Initial-World-Preview-Fingerprint": world_preview[
+                    "fingerprint"
+                ]
+            },
+        )
+        assert status == 201, adopted
+        revision = _save_initial_world(world_root)
+
+        ranking_root, _, sim_root = _roots(server, run_id, branch_id)
+        _prepare_initial_ranking(ranking_root)
+        revision = _save_ranking(None, ranking_root)
+
+        status, proposed = _request(
+            "GET",
+            sim_root + "/week-schedule/proposal",
+        )
+        assert status == 200, proposed
+        status, adopted_schedule = _request(
+            "POST",
+            sim_root + "/week-schedule/adopt-proposal",
+            {
+                "request_id": "next-week-schedule",
+                "expected_week": proposed["schedule"]["week"],
+                "expected_schedule_fingerprint": proposed[
+                    "schedule_fingerprint"
+                ],
+                "expected_position_fingerprint": proposed[
+                    "position_fingerprint"
+                ],
+            },
+        )
+        assert status == 201, adopted_schedule
+
+        status, position = _request("GET", sim_root + "/position")
+        assert status == 200, position
+        assert position["current_week"] == {"season_index": 0, "week": 1}
+        assert position["current_slot_kind"] == "match"
+
+        preview_request = {
+            "command_id": "canonical-next-week-1",
+            "operator_label": "Next Week acceptance admin",
+            "audit_reason": "Advance the reviewed complete Week 1 range",
+        }
+        status, preview = _request(
+            "POST",
+            sim_root + "/next-week/preview",
+            preview_request,
+        )
+        assert status == 200, preview
+        assert preview["schema_version"] == "authoritative_week_preview.v1"
+        assert preview["week"] == {"season_index": 0, "week": 1}
+        assert preview["target_week"] == {"season_index": 0, "week": 2}
+        assert preview["target_slot_ordinals"]
+        assert preview["ranking_authority_mode"] == "derived"
+        assert preview["expected_revision_id"] == revision
+
+        command = {
+            **preview_request,
+            "expected_week": preview["week"],
+            "expected_position_fingerprint": preview[
+                "expected_position_fingerprint"
+            ],
+            "expected_revision_id": preview["expected_revision_id"],
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+        }
+        original_execute = AuthoritativeWeekTransitionRunner.execute
+        injected = {"raised": False}
+
+        def lose_parent_response(self, transition_command, **kwargs):
+            result = original_execute(self, transition_command, **kwargs)
+            if not injected["raised"]:
+                injected["raised"] = True
+                raise ValueError("lost response after committed Week Transition")
+            return result
+
+        monkeypatch.setattr(
+            AuthoritativeWeekTransitionRunner,
+            "execute",
+            lose_parent_response,
+        )
+        status, lost = _request(
+            "POST",
+            sim_root + "/simulate-next-week",
+            command,
+        )
+        assert status == 409, lost
+
+        status, result = _request(
+            "POST",
+            sim_root + "/simulate-next-week",
+            command,
+        )
+        assert status == 201, result
+        assert result["schema_version"] == "authoritative_week_result.v1"
+        assert result["status"] == "complete"
+        assert result["completed_week"] == {"season_index": 0, "week": 1}
+        assert result["target_week"] == {"season_index": 0, "week": 2}
+        assert result["completed_slot_count"] == len(
+            preview["target_slot_ordinals"]
+        )
+        assert result["ranking_authority_fingerprint"] == preview[
+            "ranking_authority_fingerprint"
+        ]
+        assert result["world_event_kind"] == "week_transition_completed"
+        assert _request(
+            "POST",
+            sim_root + "/simulate-next-week",
+            command,
+        ) == (201, result)
+
+        status, after = _request("GET", sim_root + "/position")
+        assert status == 200, after
+        assert after["current_week"] == {"season_index": 0, "week": 2}
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            week_two = session.get(
+                PublishedOfficialRankingModel,
+                (run_id, branch_id, RankingWeek(season_index=0, week=2).ordinal),
+            )
+            assert week_two is not None
+            assert (
+                week_two.snapshot_fingerprint
+                == result["official_ranking_fingerprint"]
+            )
 
 
 @pytest.mark.pr_critical

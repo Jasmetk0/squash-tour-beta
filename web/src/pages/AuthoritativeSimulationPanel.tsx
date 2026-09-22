@@ -28,6 +28,8 @@ import {
   simulateAuthoritativeNextRound,
   previewAuthoritativeNextTournament,
   simulateAuthoritativeNextTournament,
+  previewAuthoritativeNextWeek,
+  simulateAuthoritativeNextWeek,
   inspectAuthoritativeMatchReconstruction,
   previewAuthoritativeMatchReconstruction,
   commitAuthoritativeMatchReconstruction,
@@ -43,6 +45,8 @@ import type {
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
+  AuthoritativeWeekPreview,
+  AuthoritativeWeekProgress,
   AuthoritativeWeekSchedule,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
@@ -187,6 +191,13 @@ export function AuthoritativeSimulationPanel({
   const [nextTournamentCommandId, setNextTournamentCommandId] = useState(newCommandId)
   const [nextTournamentReview, setNextTournamentReview] =
     useState<AuthoritativeTournamentPreview | null>(null)
+  const [nextWeekCommandId, setNextWeekCommandId] = useState(newCommandId)
+  const [nextWeekOperator, setNextWeekOperator] = useState('')
+  const [nextWeekReason, setNextWeekReason] = useState('')
+  const [nextWeekReview, setNextWeekReview] =
+    useState<AuthoritativeWeekPreview | null>(null)
+  const [nextWeekProgress, setNextWeekProgress] =
+    useState<AuthoritativeWeekProgress | null>(null)
   const [weekTransitionCommandId, setWeekTransitionCommandId] = useState(newCommandId)
   const [weekTransitionReview, setWeekTransitionReview] =
     useState<DerivedAuthoritativeWeekTransitionPreview | null>(null)
@@ -342,6 +353,11 @@ export function AuthoritativeSimulationPanel({
     setNextRoundReview(null)
     setNextTournamentCommandId(newCommandId())
     setNextTournamentReview(null)
+    setNextWeekCommandId(newCommandId())
+    setNextWeekOperator('')
+    setNextWeekReason('')
+    setNextWeekReview(null)
+    setNextWeekProgress(null)
     setReconstructionCandidateCount('10')
     setReconstructionWinnerId('')
     setReconstructionMatchScore('')
@@ -914,6 +930,83 @@ export function AuthoritativeSimulationPanel({
     }
   })
 
+  const nextWeekPreviewMutation = useMutation({
+    mutationFn: () => {
+      const operator = nextWeekOperator.trim()
+      const reason = nextWeekReason.trim()
+      if (!operator || !reason) {
+        throw new Error('Next Week requires an operator label and audit reason.')
+      }
+      return previewAuthoritativeNextWeek(runId, branchId, {
+        command_id: nextWeekCommandId,
+        operator_label: operator,
+        audit_reason: reason
+      })
+    },
+    onSuccess: (preview) => {
+      setNextWeekReview(preview)
+      setNextWeekProgress(null)
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setNextWeekReview(null)
+        setNextWeekProgress(null)
+        setNextWeekCommandId(newCommandId())
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const nextWeekMutation = useMutation({
+    mutationFn: () => {
+      if (!nextWeekReview) {
+        throw new Error('Review the current canonical Week before simulation.')
+      }
+      return simulateAuthoritativeNextWeek(runId, branchId, {
+        command_id: nextWeekCommandId,
+        operator_label: nextWeekOperator.trim(),
+        audit_reason: nextWeekReason.trim(),
+        expected_week: nextWeekReview.week,
+        expected_position_fingerprint:
+          nextWeekReview.expected_position_fingerprint,
+        expected_revision_id: nextWeekReview.expected_revision_id,
+        expected_preview_fingerprint: nextWeekReview.preview_fingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      if (result.schema_version === 'authoritative_week_progress.v1') {
+        setNextWeekProgress(result)
+        queryClient.setQueryData(
+          ['authoritative-simulation-position', runId, branchId],
+          result.position
+        )
+        await refreshCanonicalSimulation()
+        return
+      }
+      setNextWeekProgress(null)
+      setNextWeekReview(null)
+      setNextWeekCommandId(newCommandId())
+      setNextWeekOperator('')
+      setNextWeekReason('')
+      setConfirmed(false)
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['ranking-candidates', runId, branchId] })
+      ])
+    },
+    onError: async () => {
+      // Keep the exact reviewed parent command. A 409 or lost response can happen
+      // after durable child/transition work committed, so retry must reuse it.
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({ queryKey: ['admin-run-branches', runId] }),
+        queryClient.invalidateQueries({ queryKey: ['run-branches', runId] })
+      ])
+    }
+  })
+
   const entryValidationMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -1298,6 +1391,8 @@ export function AuthoritativeSimulationPanel({
     nextRoundMutation.isPending ||
     nextTournamentPreviewMutation.isPending ||
     nextTournamentMutation.isPending ||
+    nextWeekPreviewMutation.isPending ||
+    nextWeekMutation.isPending ||
     reconstructionPreviewMutation.isPending ||
     reconstructionCommitMutation.isPending ||
     entryValidationMutation.isPending ||
@@ -1340,7 +1435,7 @@ export function AuthoritativeSimulationPanel({
   return (
     <SectionCard title="Canonical authoritative sporting simulation">
       <p className="status">
-        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament → Save.
+        Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week → Save.
         It does not use the legacy simulation-run binding.
       </p>
 
@@ -2086,6 +2181,28 @@ export function AuthoritativeSimulationPanel({
             />{' '}
             I reviewed the current canonical position and Saved Revision head.
           </label>
+          <div className="form-grid">
+            <label>
+              Next Week operator
+              <input
+                aria-label="Next Week operator"
+                value={nextWeekOperator}
+                maxLength={128}
+                disabled={Boolean(nextWeekReview) || nextWeekMutation.isPending}
+                onChange={(event) => setNextWeekOperator(event.target.value)}
+              />
+            </label>
+            <label>
+              Next Week audit reason
+              <textarea
+                aria-label="Next Week audit reason"
+                value={nextWeekReason}
+                maxLength={2000}
+                disabled={Boolean(nextWeekReview) || nextWeekMutation.isPending}
+                onChange={(event) => setNextWeekReason(event.target.value)}
+              />
+            </label>
+          </div>
           <div className="quick-actions">
             <button
               type="button"
@@ -2136,6 +2253,21 @@ export function AuthoritativeSimulationPanel({
               }
             >
               Review authoritative Next Tournament
+            </button>
+            <button
+              type="button"
+              onClick={() => nextWeekPreviewMutation.mutate()}
+              disabled={
+                currentEntrySlot ||
+                position.current_week.week === 61 ||
+                !nextWeekOperator.trim() ||
+                !nextWeekReason.trim() ||
+                (position.current_slot_kind === 'match' &&
+                  schedule?.schema_version !== 'week_simulation_schedule.v2') ||
+                actionPending
+              }
+            >
+              Review authoritative Next Week
             </button>
           </div>
           {nextMatchDayReview ? (
@@ -2338,6 +2470,87 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {nextWeekReview ? (
+            <>
+              <h5>
+                Reviewed canonical Week · S{nextWeekReview.week.season_index} W
+                {nextWeekReview.week.week} → W{nextWeekReview.target_week.week}
+              </h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Current week',
+                    value: `Season index ${nextWeekReview.week.season_index} · Week ${nextWeekReview.week.week}`
+                  },
+                  {
+                    label: 'Target week',
+                    value: `Season index ${nextWeekReview.target_week.season_index} · Week ${nextWeekReview.target_week.week}`
+                  },
+                  {
+                    label: 'Remaining competitive slots',
+                    value: nextWeekReview.target_slot_ordinals.length
+                  },
+                  {
+                    label: 'Ranking authority',
+                    value: nextWeekReview.ranking_authority_mode
+                  },
+                  {
+                    label: 'Saved Revision',
+                    value: nextWeekReview.expected_revision_id
+                  },
+                  {
+                    label: 'Ranking authority fingerprint',
+                    value: nextWeekReview.ranking_authority_fingerprint
+                  }
+                ]}
+              />
+              {nextWeekReview.target_slot_ordinals.length ? (
+                <p className="status">
+                  Frozen remaining global slots: {nextWeekReview.target_slot_ordinals.join(', ')}.
+                </p>
+              ) : (
+                <p className="status">
+                  Sporting work is already complete; this reviewed range starts at Week Transition.
+                </p>
+              )}
+              {nextWeekReview.initial_transition_blockers.length ? (
+                <p className="status">
+                  Expected in-progress blockers at review: {
+                    nextWeekReview.initial_transition_blockers.join(', ')
+                  }.
+                </p>
+              ) : null}
+              {nextWeekProgress ? (
+                <p role="alert" className="error">
+                  Next Week paused after {nextWeekProgress.completed_slot_count} sporting slot(s).
+                  Resolve: {nextWeekProgress.transition_blockers.join(', ')}. Retry this exact
+                  reviewed command afterward.
+                </p>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => nextWeekMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  {nextWeekProgress
+                    ? 'Retry reviewed authoritative Next Week'
+                    : 'Simulate reviewed authoritative Next Week'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNextWeekReview(null)
+                    setNextWeekProgress(null)
+                    setNextWeekCommandId(newCommandId())
+                  }}
+                  disabled={nextWeekMutation.isPending}
+                >
+                  Discard Next Week review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2372,6 +2585,17 @@ export function AuthoritativeSimulationPanel({
           {nextTournamentMutation.error ? (
             <p className="error">
               Authoritative Next Tournament failed: {formatApiError(nextTournamentMutation.error)}
+            </p>
+          ) : null}
+          {nextWeekPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Week preview failed: {formatApiError(nextWeekPreviewMutation.error)}
+            </p>
+          ) : null}
+          {nextWeekMutation.error ? (
+            <p className="error">
+              Authoritative Next Week failed: {formatApiError(nextWeekMutation.error)}.
+              The reviewed command is preserved for exact retry.
             </p>
           ) : null}
         </>

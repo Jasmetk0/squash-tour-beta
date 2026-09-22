@@ -5063,6 +5063,24 @@ def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_p
     ):
         driver.simulate_next_slot(changed)
 
+    with factory.begin() as session:
+        stored = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "target", target_command.command_id),
+        )
+        tampered = json.loads(stored.result_json)
+        tampered["target_result"]["current_slot_complete"] = False
+        stored.result_json = json.dumps(
+            tampered,
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+    with pytest.raises(
+        ValueError,
+        match="historical simulation replay evidence is corrupt",
+    ):
+        driver.simulate_next_slot(target_command)
+
 
 @pytest.mark.pr_critical
 def test_simulation_command_receipt_fork_keeps_v2_when_target_position_is_unsupported():

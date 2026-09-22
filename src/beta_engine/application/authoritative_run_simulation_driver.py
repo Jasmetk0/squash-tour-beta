@@ -4184,12 +4184,49 @@ class AuthoritativeRunSimulationDriver:
 
         raise ValueError("Next Season exceeded the bounded orchestration step budget")
 
+    @staticmethod
+    def _pending_full_simulation_command_ids(
+        session: Session, *, run_id: str, branch_id: str
+    ) -> tuple[str, ...]:
+        command_ids: list[str] = []
+        receipts = session.scalars(
+            select(AuthoritativeSimulationCommandModel).where(
+                AuthoritativeSimulationCommandModel.run_id == run_id,
+                AuthoritativeSimulationCommandModel.branch_id == branch_id,
+                AuthoritativeSimulationCommandModel.status == "pending",
+            )
+        ).all()
+        for receipt in receipts:
+            try:
+                payload = json.loads(receipt.result_json)
+            except json.JSONDecodeError as exc:
+                raise ValueError(
+                    "pending simulation command receipt JSON is corrupt"
+                ) from exc
+            if (
+                payload.get("schema_version")
+                == "authoritative_full_simulation_operation.v1"
+            ):
+                command_ids.append(receipt.command_id)
+        return tuple(sorted(command_ids))
+
     def preview_full_simulation(
         self, request: AuthoritativeFullSimulationPreviewRequest
     ) -> dict:
         """Review the complete remaining Run range without mutating it."""
 
         with self.factory() as session:
+            active = self._pending_full_simulation_command_ids(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+            )
+            if active:
+                raise ValueError(
+                    "Full Simulation already has a pending parent for this "
+                    f"Run/Branch: {active[0]}. Resume or finish it before "
+                    "reviewing another Full Simulation."
+                )
             return self._full_simulation_plan(session, request=request)
 
     def inspect_pending_full_simulations(
@@ -4514,6 +4551,17 @@ class AuthoritativeRunSimulationDriver:
                 self._require_writable_scope(
                     session, command.run_id, command.branch_id
                 )
+                active = self._pending_full_simulation_command_ids(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                )
+                if active:
+                    raise ValueError(
+                        "Full Simulation already has a pending parent for this "
+                        f"Run/Branch: {active[0]}. Resume or finish it before "
+                        "starting another Full Simulation."
+                    )
                 before = self._position(
                     session,
                     command.run_id,

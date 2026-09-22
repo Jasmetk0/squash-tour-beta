@@ -1370,6 +1370,51 @@ def test_fair_rest_feeder_position_tracks_latest_prior_match():
 
 
 @pytest.mark.pr_critical
+def test_fair_rest_schedule_key_protects_q_ll_only_after_feeder_priority():
+    week = RankingWeek(season_index=0, week=7)
+    positions = {
+        "late-feeder": (1, 4),
+    }
+
+    direct = AuthoritativeRunSimulationDriver._fair_rest_schedule_sort_key(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="direct-main",
+        feeder_ids=(),
+        scheduled_position_by_group=positions,
+        q_ll_rest_protected=False,
+    )
+    protected = AuthoritativeRunSimulationDriver._fair_rest_schedule_sort_key(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="ll-main",
+        feeder_ids=(),
+        scheduled_position_by_group=positions,
+        q_ll_rest_protected=True,
+    )
+    later_feeder = AuthoritativeRunSimulationDriver._fair_rest_schedule_sort_key(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        group_id="dependent-main",
+        feeder_ids=("late-feeder",),
+        scheduled_position_by_group=positions,
+        q_ll_rest_protected=False,
+    )
+
+    # Master §13.4 priority 4: equal rest evidence gives Q/LL the later order.
+    assert direct[:3] == (0, 0, 0)
+    assert protected[:3] == (0, 0, 1)
+    assert direct < protected
+
+    # Higher feeder/rest evidence remains lexicographically dominant over Q/LL.
+    assert later_feeder[:2] == (1, 4)
+    assert protected < later_feeder
+
+
+@pytest.mark.pr_critical
 def test_topological_schedule_proposal_parallelizes_independent_tournaments(tmp_path):
     driver, _, week, first, second = _multi_driver_fixture(
         tmp_path / "proposal-multi"

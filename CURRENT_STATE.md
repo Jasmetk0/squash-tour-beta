@@ -1561,3 +1561,17 @@ Qualification/Main point semantics remain covered by the existing focused
 PR-critical point-authority tests. This end-to-end LL acceptance is deliberately
 marked `smoke`, not `pr_critical`, because its full Match Engine path is too slow
 for the fast per-PR gate; it belongs in targeted/full release validation.
+
+
+## Canonical Main-entry result provenance
+
+New canonical Tournament Result authorities now retain how each player entered the
+Main Draw. `TournamentPlayerResultAuthority.main_entry_status` distinguishes
+`direct`, `wild_card` and `lucky_loser` for players materialized in canonical
+Main slots, while Qualification promotion remains represented independently by the
+existing `qualifier` flag. This preserves WC/RWC and LL provenance after tournament
+close without changing sporting outcomes or point rules.
+
+The field is optional and omitted when absent, so historical
+`tournament_result_authority.v1` payloads reopen with their original fingerprints
+instead of being silently rewritten.

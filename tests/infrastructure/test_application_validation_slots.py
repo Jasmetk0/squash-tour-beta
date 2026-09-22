@@ -324,6 +324,61 @@ def test_saved_validation_slots_remap_branch_and_source_slot_identity(database):
 
 
 @pytest.mark.pr_critical
+def test_saved_validation_slots_remap_through_target_entry_slot_identity(database):
+    resolved = _resolved(all_invalid=True)
+    payload = {"content": {}}
+    with database.begin() as session:
+        ApplicationValidationSlotStore(session).append(resolved)
+        capture_saved_application_validation_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_entry_slot = resolved.slot.model_copy(update={"branch_id": "target"})
+    component, resolved_map, validation_map = (
+        remap_saved_application_validation_slots_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            entry_slot_fingerprint_map={
+                resolved.slot.fingerprint: target_entry_slot.fingerprint
+            },
+        )
+    )
+    assert component is not None
+    target_payload = {
+        "content": {
+            APPLICATION_VALIDATION_SLOT_COMPONENT_KEY: component,
+        }
+    }
+    target = load_saved_application_validation_slots(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None
+    assert len(target) == 1
+    assert target[0].slot == target_entry_slot
+    assert all(item.branch_id == "target" for item in target[0].validations)
+    assert all(
+        item.source_slot_fingerprint == target_entry_slot.fingerprint
+        for item in target[0].validations
+    )
+    assert resolved_map == {resolved.fingerprint: target[0].fingerprint}
+    assert validation_map == {
+        source.fingerprint: mapped.fingerprint
+        for source, mapped in zip(
+            resolved.validations,
+            target[0].validations,
+            strict=True,
+        )
+    }
+
+
+@pytest.mark.pr_critical
 def test_saved_component_round_trip_restores_validation_slots(database):
     empty_payload = {"content": {}}
     with database.begin() as session:

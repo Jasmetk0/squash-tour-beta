@@ -5254,6 +5254,86 @@ class AuthoritativeRunSimulationDriver:
             "preview_fingerprint": fingerprint(body),
         }
 
+    def _next_season_plan(
+        self,
+        session: Session,
+        *,
+        request: AuthoritativeSeasonPreviewRequest,
+    ) -> dict:
+        position = self._position(
+            session,
+            request.run_id,
+            request.branch_id,
+            allow_missing_schedule=True,
+        )
+        start_week = position.current_week
+        if start_week.season_index >= 49:
+            raise ValueError(
+                "Next Season does not own final 2049/50 closure; use canonical final Season Transition"
+            )
+
+        branch = session.get(RunBranchModel, request.branch_id)
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == request.branch_id
+            )
+        )
+        if (
+            branch is None
+            or branch.run_id != request.run_id
+            or draft is None
+            or branch.saved_head_revision_id is None
+        ):
+            raise ValueError("Next Season requires a Saved Revision-backed Run/Branch")
+        if branch.read_only or branch.status != "active":
+            raise ValueError("Next Season requires a writable active Branch")
+        if draft.status != "clean":
+            raise ValueError("Next Season requires a clean Working Draft at review")
+        if draft.base_revision_id != branch.saved_head_revision_id:
+            raise ValueError("Next Season Working Draft base is not the Saved head")
+
+        if position.current_slot_kind == "entry":
+            initial_action = "blocked_entry_process"
+        elif start_week.week == 61:
+            initial_action = (
+                "finish_week_61_matches"
+                if position.current_slot_kind == "match"
+                else (
+                    "season_transition_boundary"
+                    if position.terminal_sporting_fingerprint is not None
+                    else "prove_or_prepare_week_61"
+                )
+            )
+        elif position.current_slot_kind == "match":
+            initial_action = "next_week"
+        elif position.terminal_sporting_fingerprint is not None:
+            initial_action = "next_week_transition"
+        else:
+            initial_action = "prove_empty_or_prepare_week"
+
+        target_week = RankingWeek(
+            season_index=start_week.season_index + 1,
+            week=1,
+        )
+        body = {
+            "schema_version": "authoritative_season_preview.v1",
+            "run_id": request.run_id,
+            "branch_id": request.branch_id,
+            "start_week": start_week.model_dump(mode="json"),
+            "target_week": target_week.model_dump(mode="json"),
+            "weeks_including_current": 62 - start_week.week,
+            "initial_action": initial_action,
+            "initial_transition_blockers": list(position.transition_blockers),
+            "auto_empty_week_policy": "calendar_proven_audited_child_only",
+            "season_transition_mode": "explicit_save_and_review_checkpoint",
+            "expected_position_fingerprint": position.position_fingerprint,
+            "expected_revision_id": branch.saved_head_revision_id,
+        }
+        return {
+            **body,
+            "preview_fingerprint": fingerprint(body),
+        }
+
     def inspect_schedule(self, *, run_id, branch_id):
         with self.factory() as session:
             week = self._current_week(session, run_id, branch_id)

@@ -4456,6 +4456,135 @@ class AuthoritativeRunSimulationDriver:
                 "item_count": len(items),
             }
 
+    def inspect_full_simulation_parent(
+        self, *, run_id: str, branch_id: str, command_id: str
+    ) -> dict:
+        """Return normalized detail for one durable Full Simulation parent receipt."""
+
+        with self.factory() as session:
+            receipt = session.get(
+                AuthoritativeSimulationCommandModel,
+                (run_id, branch_id, command_id),
+            )
+            if receipt is None:
+                raise ValueError("Full Simulation parent was not found")
+            try:
+                payload = json.loads(receipt.result_json)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Full Simulation parent JSON is corrupt") from exc
+
+            schema = payload.get("schema_version")
+            if schema not in {
+                "authoritative_full_simulation_operation.v1",
+                "authoritative_full_simulation_result.v1",
+            }:
+                raise ValueError("target command is not a Full Simulation parent")
+
+            if schema == "authoritative_full_simulation_operation.v1":
+                season_child_ids = [
+                    item["command"]["command_id"]
+                    for _, item in sorted(
+                        payload.get("season_children", {}).items(),
+                        key=lambda pair: int(pair[0]),
+                    )
+                ]
+                final_week_child_ids = [
+                    item["command"]["command_id"]
+                    for _, item in sorted(
+                        payload.get("final_week_children", {}).items(),
+                        key=lambda pair: int(pair[0]),
+                    )
+                ]
+                final_empty_week_child_ids = [
+                    child_id
+                    for _, child_id in sorted(
+                        payload.get("final_empty_week_children", {}).items(),
+                        key=lambda pair: int(pair[0]),
+                    )
+                ]
+                final_week61_slot_child_ids = [
+                    item["command_id"]
+                    for _, item in sorted(
+                        payload.get("final_week61_slot_children", {}).items(),
+                        key=lambda pair: int(pair[0]),
+                    )
+                ]
+                resume = payload.get("resume_command") or {}
+                review = payload.get("review") or {}
+                return {
+                    "schema_version":
+                        "authoritative_full_simulation_parent_detail.v1",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "command_id": command_id,
+                    "status": receipt.status,
+                    "receipt_request_fingerprint": receipt.request_fingerprint,
+                    "start_week": review.get("start_week", payload.get("start_week")),
+                    "final_week": review.get("final_week", payload.get("final_week")),
+                    "initial_saved_revision_id": payload.get(
+                        "initial_saved_revision_id"
+                    ),
+                    "completed_seasons": list(
+                        payload.get("completed_seasons", [])
+                    ),
+                    "final_completed_weeks": list(
+                        payload.get("final_completed_weeks", [])
+                    ),
+                    "season_child_command_ids": season_child_ids,
+                    "final_week_child_command_ids": final_week_child_ids,
+                    "final_empty_week_child_command_ids":
+                        final_empty_week_child_ids,
+                    "final_week61_slot_child_command_ids":
+                        final_week61_slot_child_ids,
+                    "final_boundary_saved_revision_id": payload.get(
+                        "final_boundary_saved_revision_id"
+                    ),
+                    "final_boundary_position_fingerprint": payload.get(
+                        "final_boundary_position_fingerprint"
+                    ),
+                    "operator_label": resume.get("operator_label"),
+                    "audit_reason": resume.get("audit_reason"),
+                    "preview_fingerprint": review.get("preview_fingerprint"),
+                    "abandonment": payload.get("abandonment"),
+                }
+
+            return {
+                "schema_version":
+                    "authoritative_full_simulation_parent_detail.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "command_id": command_id,
+                "status": receipt.status,
+                "receipt_request_fingerprint": receipt.request_fingerprint,
+                "start_week": payload.get("start_week"),
+                "final_week": payload.get("final_week"),
+                "initial_saved_revision_id": None,
+                "completed_seasons": list(payload.get("completed_seasons", [])),
+                "final_completed_weeks": list(
+                    payload.get("final_completed_weeks", [])
+                ),
+                "season_child_command_ids": list(
+                    payload.get("season_child_command_ids", [])
+                ),
+                "final_week_child_command_ids": list(
+                    payload.get("final_week_child_command_ids", [])
+                ),
+                "final_empty_week_child_command_ids": list(
+                    payload.get("final_empty_week_child_command_ids", [])
+                ),
+                "final_week61_slot_child_command_ids": list(
+                    payload.get("final_week61_slot_child_command_ids", [])
+                ),
+                "final_boundary_saved_revision_id": payload.get(
+                    "final_saved_revision_id"
+                ),
+                "final_boundary_position_fingerprint": None,
+                "operator_label": payload.get("operator_label"),
+                "audit_reason": payload.get("audit_reason"),
+                "preview_fingerprint": None,
+                "abandonment": None,
+            }
+
     def abandon_full_simulation(
         self, command: AuthoritativeFullSimulationAbandonCommand
     ) -> dict:

@@ -548,7 +548,7 @@ def _retarget_simulation_command_receipt_as_historical(
                 )
 
     historical_schema = (
-        "authoritative_simulation_historical_fork_receipt.v4"
+        "authoritative_simulation_historical_fork_receipt.v5"
         if target_result is not None
         else (
             "authoritative_simulation_historical_fork_receipt.v3"
@@ -567,11 +567,11 @@ def _retarget_simulation_command_receipt_as_historical(
         "source_request_fingerprint": row.request_fingerprint,
         "source_request_evidence_fingerprint": request_evidence_fingerprint,
         "source_result": source_result,
-        "retryable": False,
+        "retryable": target_result is not None,
         "provenance": (
-            "materialized Branch fork preserves source Simulation command history "
-            "as read-only audit evidence; target request identity is reconstructed "
-            "when possible, while result replay remains intentionally disabled"
+            "materialized Branch fork preserves source Simulation command history; "
+            "exact target retry is enabled only when target request and result "
+            "identity are both reconstructed and integrity-bound"
         ),
     }
     if target_request_evidence is not None:
@@ -593,7 +593,7 @@ def _retarget_simulation_command_receipt_as_historical(
         )
     historical_request = {
         "schema_version": (
-            "authoritative_simulation_historical_fork_request.v4"
+            "authoritative_simulation_historical_fork_request.v5"
             if target_result is not None
             else (
                 "authoritative_simulation_historical_fork_request.v3"

@@ -1032,13 +1032,20 @@ def test_next_slot_receipt_preserves_private_request_evidence_without_changing_r
         stored = json.loads(receipt.result_json)
         evidence = stored["_request_evidence"]
         assert evidence["schema_version"] == (
-            "authoritative_simulation_request_evidence.v2"
+            "authoritative_simulation_request_evidence.v3"
         )
         assert evidence["mode"] == "slot"
         assert evidence["command"] == command.model_dump(mode="json")
         assert fingerprint(evidence["opening_position_basis"]) == (
             command.expected_position_fingerprint
         )
+        assert fingerprint(evidence["closing_position_basis"]) == (
+            first["position_fingerprint"]
+        )
+        assert evidence["closing_position_basis"]["scope"][:2] == [
+            "run",
+            "branch",
+        ]
         assert receipt.request_fingerprint == fingerprint(
             {"mode": "slot", "command": command.model_dump(mode="json")}
         )

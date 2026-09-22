@@ -100,6 +100,14 @@ must resume or finish the existing parent first. This prevents two long-range
 orchestrations from racing through the same canonical Branch while preserving exact
 retry for the already-existing parent.
 
+A pending parent may also be explicitly abandoned. Abandon is an audited control-plane
+action, not rollback: the operator must provide a label and reason and explicitly
+acknowledge that already committed child work remains canonical. The durable parent
+receipt changes from `pending` to `abandoned` and preserves its frozen operation,
+progress and abandonment audit metadata. The old parent cannot be resumed after
+abandonment; a replacement Full Simulation may be reviewed from the current canonical
+Run/Branch state.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

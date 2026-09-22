@@ -6,6 +6,7 @@ from sqlalchemy import select
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
     AuthoritativeFullSimulationPreviewRequest,
+    AuthoritativeFullSimulationAbandonCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
@@ -37,6 +38,7 @@ from beta_engine.infrastructure.db.engine import (
 )
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
+    AuthoritativeSimulationCommandModel,
     Base,
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
@@ -428,6 +430,46 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     with pytest.raises(ValueError, match="already has a pending parent"):
         driver.simulate_full_simulation(competing_command)
 
+    abandoned = driver.abandon_full_simulation(
+        AuthoritativeFullSimulationAbandonCommand(
+            target_command_id=command.command_id,
+            run_id="run",
+            branch_id="branch",
+            operator_label="Final acceptance admin",
+            audit_reason="Stop this parent but preserve committed canonical work",
+            confirm_committed_child_work_persists=True,
+        )
+    )
+    assert abandoned["schema_version"] == (
+        "authoritative_full_simulation_abandon_result.v1"
+    )
+    assert abandoned["status"] == "abandoned"
+    assert abandoned["committed_child_work_persists"] is True
+    assert abandoned["final_completed_week_count"] == 1
+    assert driver.inspect_pending_full_simulations(
+        run_id="run",
+        branch_id="branch",
+    )["operations"] == []
+
+    with database() as session:
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert receipt is not None
+        assert receipt.status == "abandoned"
+        stored = json.loads(receipt.result_json)
+        assert stored["abandonment"]["committed_child_work_persists"] is True
+        assert stored["abandonment"]["audit_reason"] == (
+            "Stop this parent but preserve committed canonical work"
+        )
+
+    replacement_preview = driver.preview_full_simulation(competing_request)
+    assert replacement_preview["start_week"] == FINAL_WEEK.model_dump(mode="json")
+    with pytest.raises(ValueError, match="invalid status"):
+        driver.simulate_full_simulation(command)
+
+    # Continue the canonical final closure independently of the abandoned parent.
     final_command = _command(preflight["preflight_fingerprint"])
     final_result = driver.finalize_final_season(final_command)
     assert final_result.run_status == COMPLETED_RUN_STATUS

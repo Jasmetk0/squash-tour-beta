@@ -156,6 +156,7 @@ import type {
   AuthoritativeFullSimulationAbandonPayload,
   AuthoritativeFullSimulationAbandonResult,
   AuthoritativeFullSimulationHistory,
+  AuthoritativeFullSimulationParentDetail,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1775,6 +1776,27 @@ export async function simulateAuthoritativeNextSeason(
     data.target_week.week !== 1
   ) {
     throw new Error('Authoritative Season result is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeFullSimulationParentDetail(
+  runId: string,
+  branchId: string,
+  commandId: string
+): Promise<AuthoritativeFullSimulationParentDetail> {
+  const data = await request<AuthoritativeFullSimulationParentDetail>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/full-simulation/parents/' +
+      encodeURIComponent(commandId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_parent_detail.v1' ||
+    data.command_id !== commandId ||
+    !/^[0-9a-f]{64}$/.test(data.receipt_request_fingerprint)
+  ) {
+    throw new Error('Full Simulation parent detail response is invalid.')
   }
   return data
 }

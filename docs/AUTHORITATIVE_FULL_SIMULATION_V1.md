@@ -108,6 +108,15 @@ progress and abandonment audit metadata. The old parent cannot be resumed after
 abandonment; a replacement Full Simulation may be reviewed from the current canonical
 Run/Branch state.
 
+
+Full Simulation parent receipts are also inspectable as durable Run/Branch history.
+The history surface includes pending, abandoned and completed parents with Command ID,
+start/final range, completed-season/final-week counters and available operator/audit
+metadata. Abandoned parents expose the abandonment actor/reason separately. Newly
+completed parents persist the original operator and audit reason in the terminal
+result receipt; older completed receipts may legitimately show those fields as
+unknown rather than reconstructing or guessing them.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

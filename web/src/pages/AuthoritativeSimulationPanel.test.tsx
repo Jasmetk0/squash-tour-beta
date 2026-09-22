@@ -40,6 +40,7 @@ const api = vi.hoisted(() => ({
   simulateAuthoritativeFullSimulation: vi.fn(),
   getPendingAuthoritativeFullSimulations: vi.fn(),
   getAuthoritativeFullSimulationHistory: vi.fn(),
+  getAuthoritativeFullSimulationParentDetail: vi.fn(),
   abandonAuthoritativeFullSimulation: vi.fn(),
   inspectAuthoritativeMatchReconstruction: vi.fn(),
   previewAuthoritativeMatchReconstruction: vi.fn(),
@@ -598,6 +599,29 @@ beforeEach(() => {
     branch_id: 'branch-a',
     items: [],
     item_count: 0
+  })
+  api.getAuthoritativeFullSimulationParentDetail.mockResolvedValue({
+    schema_version: 'authoritative_full_simulation_parent_detail.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    command_id: 'full-complete',
+    status: 'complete',
+    receipt_request_fingerprint: 'f'.repeat(64),
+    start_week: { season_index: 5, week: 1 },
+    final_week: { season_index: 49, week: 61 },
+    initial_saved_revision_id: 'revision-5',
+    completed_seasons: [5, 6, 49],
+    final_completed_weeks: [{ season_index: 49, week: 61 }],
+    season_child_command_ids: ['season-child-5', 'season-child-6'],
+    final_week_child_command_ids: ['final-week-child'],
+    final_empty_week_child_command_ids: ['empty-week-child'],
+    final_week61_slot_child_command_ids: ['week61-slot-child'],
+    final_boundary_saved_revision_id: 'revision-final',
+    final_boundary_position_fingerprint: null,
+    operator_label: 'Completion admin',
+    audit_reason: 'Finish canonical Run',
+    preview_fingerprint: null,
+    abandonment: null
   })
   api.abandonAuthoritativeFullSimulation.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_abandon_result.v1',
@@ -1970,6 +1994,23 @@ describe('AuthoritativeSimulationPanel', () => {
     )
     expect(history).toHaveTextContent('full-complete · complete')
     expect(history).toHaveTextContent('Completion admin')
+
+    const inspectButtons = screen.getAllByRole('button', {
+      name: 'Inspect parent'
+    })
+    await userEvent.click(inspectButtons[2])
+
+    const detail = await screen.findByRole('group', {
+      name: 'Full Simulation parent detail'
+    })
+    expect(detail).toHaveTextContent('full-complete')
+    expect(detail).toHaveTextContent('Receipt request fingerprint')
+    expect(detail).toHaveTextContent('season-child-5, season-child-6')
+    expect(detail).toHaveTextContent('revision-final')
+    expect(detail).toHaveTextContent('Finish canonical Run')
+    expect(
+      api.getAuthoritativeFullSimulationParentDetail
+    ).toHaveBeenCalledWith('run-a', 'branch-a', 'full-complete')
   })
 
   it('abandons a pending Full Simulation only after explicit child-work acknowledgement', async () => {

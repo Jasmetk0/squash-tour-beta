@@ -117,6 +117,13 @@ completed parents persist the original operator and audit reason in the terminal
 result receipt; older completed receipts may legitimately show those fields as
 unknown rather than reconstructing or guessing them.
 
+
+Each history row can be inspected as normalized parent detail. The detail surface
+exposes the receipt request fingerprint, Saved Revision boundary identifiers,
+season/final-week/empty-week/Week-61 child Command IDs, available preview fingerprint
+and abandonment audit. It is read-only and derived from the durable parent receipt;
+it does not reopen, retry or mutate the orchestration.
+
 The parent freezes deterministic identities for:
 
 - every ordinary-season `Next Season` child;

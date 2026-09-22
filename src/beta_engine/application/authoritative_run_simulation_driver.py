@@ -3302,8 +3302,8 @@ class AuthoritativeRunSimulationDriver:
                 )
 
         if transition_payload is None:
-            transition_command = AuthoritativeWeekTransitionCommand.model_validate(
-                transition_command_payload
+            transition_command = AuthoritativeWeekTransitionCommand.model_validate_json(
+                json.dumps(transition_command_payload)
             )
             transition_preview = AuthoritativeWeekTransitionRunner(
                 self.factory, self.awards_service
@@ -3363,8 +3363,8 @@ class AuthoritativeRunSimulationDriver:
                     )
                     transition_payload = candidate_transition_payload
 
-        transition_command = AuthoritativeWeekTransitionCommand.model_validate(
-            transition_payload["command"]
+        transition_command = AuthoritativeWeekTransitionCommand.model_validate_json(
+            json.dumps(transition_payload["command"])
         )
         transition_result = AuthoritativeWeekTransitionRunner(
             self.factory, self.awards_service

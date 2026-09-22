@@ -163,6 +163,7 @@ from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
     capture_saved_run_entry_decision_slots,
     load_saved_run_entry_decision_slots,
+    remap_saved_run_entry_decision_slots_component,
     restore_saved_run_entry_decision_slots,
     validate_saved_entry_match_slot_collisions,
 )
@@ -170,6 +171,7 @@ from beta_engine.infrastructure.db.application_validation_slots import (
     APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
     capture_saved_application_validation_slots,
     load_saved_application_validation_slots,
+    remap_saved_application_validation_slots_component,
     restore_saved_application_validation_slots,
 )
 from beta_engine.infrastructure.db.tournament_application_submissions import (
@@ -2625,6 +2627,8 @@ class SimulationPersistenceRepository:
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
                         PLAYER_SPORTING_COMPONENT_KEY,
                         SIMULATION_SLOT_COMPONENT_KEY,
+                        RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
+                        APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2854,6 +2858,34 @@ class SimulationPersistenceRepository:
                             strict=True,
                         )
                     }
+                    remapped_entry_component, source_to_target_entry_slot = (
+                        remap_saved_run_entry_decision_slots_component(
+                            source_revision.payload,
+                            run_id=run_id,
+                            source_branch_id=source_branch_id,
+                            target_branch_id=branch_id,
+                        )
+                    )
+                    (
+                        remapped_validation_component,
+                        source_to_target_resolved_validation,
+                        _source_to_target_validation_authority,
+                    ) = remap_saved_application_validation_slots_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        entry_slot_fingerprint_map=source_to_target_entry_slot,
+                    )
+                    if remapped_entry_component is not None:
+                        target_payload["content"][
+                            RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY
+                        ] = remapped_entry_component
+                    if remapped_validation_component is not None:
+                        target_payload["content"][
+                            APPLICATION_VALIDATION_SLOT_COMPONENT_KEY
+                        ] = remapped_validation_component
+
                     coupled_player_slot = None
                     if SIMULATION_SLOT_COMPONENT_KEY in source_content:
                         try:
@@ -2877,6 +2909,9 @@ class SimulationPersistenceRepository:
                                 ),
                                 transition_authority_fingerprint_map=(
                                     source_to_target_transition_authority_fingerprint
+                                ),
+                                entry_validation_fingerprint_map=(
+                                    source_to_target_resolved_validation
                                 ),
                             )
                         except (
@@ -2921,6 +2956,35 @@ class SimulationPersistenceRepository:
                             put_completed_context(session, sporting_context)
                         for sporting_state in sporting_states:
                             put_sporting(session, sporting_state)
+
+                    if remapped_entry_component is not None:
+                        try:
+                            restore_saved_run_entry_decision_slots(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped Run entry-decision slots could not be installed: "
+                                f"{exc}"
+                            ) from exc
+                    if remapped_validation_component is not None:
+                        try:
+                            restore_saved_application_validation_slots(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped application validation slots could not be installed: "
+                                f"{exc}"
+                            ) from exc
 
                     if coupled_player_slot is not None:
                         target_payload["content"][SIMULATION_SLOT_COMPONENT_KEY] = (

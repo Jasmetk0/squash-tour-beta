@@ -4547,7 +4547,7 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
         "wc_slot_ordinals": [],
         "week_tournament_lock": "source-lock",
         "week_tournament_lock_conflicts": [],
-        "entry_validation_slots": [],
+        "entry_validation_slots": [[1, "source-entry-validation-fp"]],
         "current_slot_kind": "match",
         "current_slot_ordinal": 2,
         "proposed_schedule_requirement": ["event-one"],
@@ -4637,6 +4637,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
         sporting_context_fingerprints={
             "source-empty-context": "target-empty-context",
         },
+        entry_validation_fingerprints={
+            "source-entry-validation-fp": "target-entry-validation-fp",
+        },
     )
 
     target_row = _retarget_simulation_command_receipt_as_historical(
@@ -4660,6 +4663,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_position_identity()
     assert target_basis["branch_head"] == "target-revision"
     assert target_basis["draft"] == ["target-revision", "clean", 0]
     assert target_basis["schedule"] == "target-schedule"
+    assert target_basis["entry_validation_slots"] == [
+        [1, "target-entry-validation-fp"]
+    ]
     assert target_basis["slots"][0][2:] == [
         "target-plan-one",
         "target-terminal-json",
@@ -4714,11 +4720,11 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
     opening_basis = {
         "scope": ["run", "branch", 0],
         "schedule": None,
-        "entry_slot_ordinals": [],
+        "entry_slot_ordinals": [1],
         "wc_slot_ordinals": [],
         "week_tournament_lock": None,
         "week_tournament_lock_conflicts": [],
-        "entry_validation_slots": [],
+        "entry_validation_slots": [[1, "source-entry-validation-fp"]],
         "current_slot_kind": "match",
         "current_slot_ordinal": 1,
         "proposed_schedule_requirement": [],
@@ -4807,6 +4813,9 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
         ranking_snapshot_fingerprints={},
         terminal_checkpoint_fingerprints={},
         sporting_context_fingerprints={},
+        entry_validation_fingerprints={
+            "source-entry-validation-fp": "target-entry-validation-fp",
+        },
     )
 
     target_row = _retarget_simulation_command_receipt_as_historical(
@@ -4829,6 +4838,12 @@ def test_simulation_command_receipt_fork_reconstructs_target_public_result():
     )
     assert target_closing_basis["scope"] == ["run", "target", 0]
     assert target_closing_basis["branch_head"] == "target-revision"
+    assert target_evidence["opening_position_basis"]["entry_validation_slots"] == [
+        [1, "target-entry-validation-fp"]
+    ]
+    assert target_closing_basis["entry_validation_slots"] == [
+        [1, "target-entry-validation-fp"]
+    ]
     assert target_result["branch_id"] == "target"
     assert target_result["position_fingerprint"] == fingerprint(
         target_closing_basis
@@ -5083,7 +5098,7 @@ def test_historical_v5_exact_retry_returns_target_result_without_execution(tmp_p
 
 
 @pytest.mark.pr_critical
-def test_simulation_command_receipt_fork_keeps_v2_when_target_position_is_unsupported():
+def test_simulation_command_receipt_fork_keeps_v2_when_entry_validation_mapping_is_missing():
     from beta_engine.infrastructure.db.player_slot_fork_remap import (
         SimulationPositionForkIdentityGraph,
         _retarget_simulation_command_receipt_as_historical,

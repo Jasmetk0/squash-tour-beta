@@ -276,6 +276,82 @@ def load_saved_application_validation_slots(
     return slots
 
 
+def remap_saved_application_validation_slots_component(
+    payload: dict,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    entry_slot_fingerprint_map: dict[str, str],
+) -> tuple[dict | None, dict[str, str], dict[str, str]]:
+    """Retarget resolved Entry-validation authority through an explicit Slot map."""
+
+    source = load_saved_application_validation_slots(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if source is None:
+        return None, {}, {}
+
+    target_slots = []
+    resolved_fingerprint_map: dict[str, str] = {}
+    validation_fingerprint_map: dict[str, str] = {}
+    for resolved in source:
+        try:
+            target_source_slot_fingerprint = entry_slot_fingerprint_map[
+                resolved.slot.fingerprint
+            ]
+        except KeyError as exc:
+            raise ValueError(
+                "Application validation references an Entry Slot without a target mapping"
+            ) from exc
+
+        target_slot = resolved.slot.model_copy(
+            update={"branch_id": target_branch_id}
+        )
+        if target_slot.fingerprint != target_source_slot_fingerprint:
+            raise ValueError(
+                "Application validation Entry Slot mapping does not match rebuilt target identity"
+            )
+
+        target_validations = tuple(
+            validation.model_copy(
+                update={
+                    "branch_id": target_branch_id,
+                    "source_slot_fingerprint": target_slot.fingerprint,
+                }
+            )
+            for validation in resolved.validations
+        )
+        target_resolved = ResolvedApplicationValidationSlot(
+            slot=target_slot,
+            validations=target_validations,
+        )
+        target_slots.append(target_resolved)
+        resolved_fingerprint_map[resolved.fingerprint] = target_resolved.fingerprint
+        validation_fingerprint_map.update(
+            {
+                source_validation.fingerprint: target_validation.fingerprint
+                for source_validation, target_validation in zip(
+                    resolved.validations,
+                    target_validations,
+                    strict=True,
+                )
+            }
+        )
+
+    target = tuple(target_slots)
+    return (
+        {
+            "fingerprint": _component_fingerprint(target),
+            "slots": [item.model_dump(mode="json") for item in target],
+        },
+        resolved_fingerprint_map,
+        validation_fingerprint_map,
+    )
+
+
 def restore_saved_application_validation_slots(
     session: Session,
     *,

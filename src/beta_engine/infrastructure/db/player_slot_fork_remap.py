@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
@@ -125,6 +125,7 @@ class SimulationPositionForkIdentityGraph:
     ranking_snapshot_fingerprints: dict[str, str]
     terminal_checkpoint_fingerprints: dict[str, str]
     sporting_context_fingerprints: dict[str, str]
+    entry_validation_fingerprints: dict[str, str] = field(default_factory=dict)
 
 
 _POSITION_BASIS_KEYS = {
@@ -194,11 +195,26 @@ def _retarget_simulation_opening_position_basis(
             "Simulation opening Position scope is corrupt"
         )
 
-    entry_validation_slots = source_basis["entry_validation_slots"]
-    if entry_validation_slots:
-        raise SimulationSlotForkRemapUnsupportedError(
-            "Simulation opening Position with resolved Entry validation identity "
-            "cannot yet be retargeted"
+    target_entry_validation_slots = []
+    for item in source_basis["entry_validation_slots"]:
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position Entry validation identity is corrupt"
+            )
+        decision_slot_ordinal, validation_fingerprint = item
+        if not isinstance(decision_slot_ordinal, int):
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Simulation opening Position Entry validation ordinal is corrupt"
+            )
+        target_entry_validation_slots.append(
+            [
+                decision_slot_ordinal,
+                _mapped_fingerprint(
+                    validation_fingerprint,
+                    fingerprint_map=graph.entry_validation_fingerprints,
+                    label="resolved Entry validation Slot",
+                ),
+            ]
         )
 
     target_slots = []
@@ -323,7 +339,7 @@ def _retarget_simulation_opening_position_basis(
         "week_tournament_lock_conflicts": source_basis[
             "week_tournament_lock_conflicts"
         ],
-        "entry_validation_slots": [],
+        "entry_validation_slots": target_entry_validation_slots,
         "current_slot_kind": source_basis["current_slot_kind"],
         "current_slot_ordinal": source_basis["current_slot_ordinal"],
         "proposed_schedule_requirement": source_basis[
@@ -651,6 +667,7 @@ class CoupledPlayerSlotForkRemap:
     adopted_tournament_authority_fingerprints: dict[str, str]
     owned_tournament_fingerprints: dict[str, str]
     sporting_context_fingerprints: dict[str, str]
+    entry_validation_fingerprints: dict[str, str]
 
 
 def _retarget_frozen_evidence(
@@ -997,6 +1014,7 @@ def remap_coupled_player_slot_history(
     lifecycle_fingerprint_map: dict[str, str] | None = None,
     ranking_snapshot_fingerprint_map: dict[str, str] | None = None,
     transition_authority_fingerprint_map: dict[str, str] | None = None,
+    entry_validation_fingerprint_map: dict[str, str] | None = None,
 ) -> CoupledPlayerSlotForkRemap | None:
     """Remap sporting + completed Slot core in canonical week order.
 
@@ -1023,6 +1041,7 @@ def remap_coupled_player_slot_history(
     transition_authority_fingerprint_map = (
         transition_authority_fingerprint_map or {}
     )
+    entry_validation_fingerprint_map = entry_validation_fingerprint_map or {}
 
     auxiliary = set(source_slot_component) - {
         "fingerprint",
@@ -2516,6 +2535,7 @@ def remap_coupled_player_slot_history(
         ranking_snapshot_fingerprints=ranking_snapshot_fingerprint_map,
         terminal_checkpoint_fingerprints=all_terminals,
         sporting_context_fingerprints=sporting_context_fingerprint_map,
+        entry_validation_fingerprints=entry_validation_fingerprint_map,
     )
     target_command_rows: list[AuthoritativeSimulationCommandModel] = [
         _retarget_simulation_command_receipt_as_historical(
@@ -2574,4 +2594,5 @@ def remap_coupled_player_slot_history(
         ),
         owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
         sporting_context_fingerprints=sporting_context_fingerprint_map,
+        entry_validation_fingerprints=entry_validation_fingerprint_map,
     )

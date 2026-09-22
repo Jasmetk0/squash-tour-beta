@@ -1750,3 +1750,50 @@ an explicit schema capability rather than changing the meaning of older receipts
 
 A v5 retry is result replay, not Simulation re-execution: it returns the already
 reconstructed target-owned public result and leaves authoritative state unchanged.
+
+
+
+## Entry validation Branch-fork identity bridge
+
+Run-owned Entry decision slots and resolved Application Validation slots now have
+explicit Branch retarget helpers. Entry-slot remap changes only Run/Branch scope and
+recomputes the slot fingerprint while preserving the frozen compatibility Entry-batch
+and per-decision evidence. Resolved validation remap then binds every validation to the
+rebuilt target Entry-slot fingerprint, recomputes individual validation fingerprints,
+and exposes both source-to-target resolved-slot and validation-authority maps.
+
+Simulation Position fork reconstruction can consume the resolved-slot fingerprint map
+for non-empty `entry_validation_slots`. It preserves decision-slot ordinals and replaces
+only the Branch-owned resolved-validation fingerprint, failing closed when the mapping
+is absent or malformed. This removes the previous unconditional unsupported fallback
+for resolved Entry validation identity.
+
+This slice intentionally does **not** yet make ranking-bearing materialized Branch forks
+accept non-empty downstream application-submission or first-Tour-entry components.
+Those components remain guarded by the existing fork safety check until their validation
+authority, submission and trigger fingerprint chain is remapped explicitly. The new
+Entry/Validation maps are the prerequisite identity layer for that next slice.
+
+
+
+## Branch-fork identity for resolved Entry validation
+
+Materialized Saved Revision forks can now retarget non-empty Run Entry Decision Slot and
+Resolved Application Validation Slot components before Simulation history is rebuilt.
+The remap is explicit and ordered:
+
+1. Run Entry Decision Slot scope is moved from the source Branch to the target Branch,
+   producing a source→target Entry Slot fingerprint map.
+2. Each Resolved Application Validation Slot is rebuilt against its mapped target Entry
+   Slot. Every contained validation authority receives the target Branch id and the
+   mapped target source-slot fingerprint.
+3. The resulting resolved-validation source→target fingerprint map is passed into the
+   Simulation Position identity graph.
+4. Historical Simulation opening/closing Position evidence can therefore remap
+   non-empty `entry_validation_slots` field-by-field and remain eligible for the v5
+   exact-retry contract when all other identities are also reconstructable.
+
+Missing Entry Slot or resolved-validation mappings still fail closed; no fingerprint is
+guessed or text-rewritten. Non-empty downstream application submissions, first-entry
+triggers, and other Entry-pipeline Branch-owned components remain a separate fork-remap
+slice and continue to block materialization until their own identity chains are mapped.

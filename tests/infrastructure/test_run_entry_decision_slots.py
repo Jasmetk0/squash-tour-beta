@@ -31,6 +31,7 @@ from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotStore,
     capture_saved_run_entry_decision_slots,
     load_saved_run_entry_decision_slots,
+    remap_saved_run_entry_decision_slots_component,
     restore_saved_run_entry_decision_slots,
     validate_saved_entry_match_slot_collisions,
 )
@@ -381,6 +382,86 @@ def test_match_after_entry_slot_requires_validation_completion(tmp_path):
         _resolve_entry_slot(session, authority)
         plan = _match_plan(executor, ordinal=2)
         assert plan.ordinal == 2
+    finally:
+        session.close()
+
+
+@pytest.mark.pr_critical
+def test_saved_entry_slots_remap_branch_identity_with_explicit_fingerprint_map(tmp_path):
+    session = session_at(tmp_path / "saved-entry-slot-remap.sqlite")
+    _ensure_scope(session)
+    try:
+        authority = _entry_slot()
+        RunEntryDecisionSlotStore(session).append(authority)
+        payload = {"content": {}}
+        capture_saved_run_entry_decision_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+    finally:
+        session.close()
+
+    component, fingerprint_map = remap_saved_run_entry_decision_slots_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+    )
+    assert component is not None
+    target_payload = {
+        "content": {RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY: component}
+    }
+    target = load_saved_run_entry_decision_slots(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None
+    assert len(target) == 1
+    assert target[0].branch_id == "target"
+    assert target[0].source_entry_batch_fingerprint == (
+        authority.source_entry_batch_fingerprint
+    )
+    assert target[0].decisions == authority.decisions
+    assert fingerprint_map == {authority.fingerprint: target[0].fingerprint}
+    assert target[0].fingerprint != authority.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_saved_entry_slots_remap_branch_identity_and_fingerprint(tmp_path):
+    session = session_at(tmp_path / "entry-slot-fork-remap.sqlite")
+    _ensure_scope(session)
+    try:
+        source = _entry_slot()
+        RunEntryDecisionSlotStore(session).append(source)
+        payload = {"content": {}}
+        capture_saved_run_entry_decision_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        component, mapping = remap_saved_run_entry_decision_slots_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+        )
+        assert component is not None
+        target_payload = {"content": {RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY: component}}
+        target = load_saved_run_entry_decision_slots(
+            target_payload,
+            run_id="run",
+            branch_id="target",
+        )
+        assert target is not None
+        assert len(target) == 1
+        assert target[0].branch_id == "target"
+        assert target[0].decisions == source.decisions
+        assert mapping == {source.fingerprint: target[0].fingerprint}
     finally:
         session.close()
 

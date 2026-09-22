@@ -15,6 +15,7 @@ from beta_engine.infrastructure.db.application_validation_slots import (
     ApplicationValidationSlotStore,
     capture_saved_application_validation_slots,
     load_saved_application_validation_slots,
+    remap_saved_application_validation_slots_component,
     record_resolved_application_validation_slot,
     restore_saved_application_validation_slots,
 )
@@ -266,6 +267,115 @@ def test_conflicting_same_slot_fails_before_rewriting_downstream_history(databas
         assert submissions[0].validation_authority_fingerprint == (
             first.validations[0].fingerprint
         )
+
+
+@pytest.mark.pr_critical
+def test_saved_validation_slots_remap_branch_and_source_slot_identity(database):
+    resolved = _resolved()
+    payload = {"content": {}}
+    with database.begin() as session:
+        ApplicationValidationSlotStore(session).append(resolved)
+        capture_saved_application_validation_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_slot = resolved.slot.model_copy(update={"branch_id": "target"})
+    component, resolved_map, validation_map = (
+        remap_saved_application_validation_slots_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            entry_slot_fingerprint_map={
+                resolved.slot.fingerprint: target_slot.fingerprint
+            },
+        )
+    )
+    assert component is not None
+    target_payload = {
+        "content": {APPLICATION_VALIDATION_SLOT_COMPONENT_KEY: component}
+    }
+    target = load_saved_application_validation_slots(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None
+    assert len(target) == 1
+    rebuilt = target[0]
+    assert rebuilt.slot == target_slot
+    assert all(item.branch_id == "target" for item in rebuilt.validations)
+    assert all(
+        item.source_slot_fingerprint == target_slot.fingerprint
+        for item in rebuilt.validations
+    )
+    assert resolved_map == {resolved.fingerprint: rebuilt.fingerprint}
+    assert validation_map == {
+        source.fingerprint: target_validation.fingerprint
+        for source, target_validation in zip(
+            resolved.validations,
+            rebuilt.validations,
+            strict=True,
+        )
+    }
+
+
+@pytest.mark.pr_critical
+def test_saved_validation_slots_remap_through_target_entry_slot_identity(database):
+    resolved = _resolved(all_invalid=True)
+    payload = {"content": {}}
+    with database.begin() as session:
+        ApplicationValidationSlotStore(session).append(resolved)
+        capture_saved_application_validation_slots(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_entry_slot = resolved.slot.model_copy(update={"branch_id": "target"})
+    component, resolved_map, validation_map = (
+        remap_saved_application_validation_slots_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            entry_slot_fingerprint_map={
+                resolved.slot.fingerprint: target_entry_slot.fingerprint
+            },
+        )
+    )
+    assert component is not None
+    target_payload = {
+        "content": {
+            APPLICATION_VALIDATION_SLOT_COMPONENT_KEY: component,
+        }
+    }
+    target = load_saved_application_validation_slots(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None
+    assert len(target) == 1
+    assert target[0].slot == target_entry_slot
+    assert all(item.branch_id == "target" for item in target[0].validations)
+    assert all(
+        item.source_slot_fingerprint == target_entry_slot.fingerprint
+        for item in target[0].validations
+    )
+    assert resolved_map == {resolved.fingerprint: target[0].fingerprint}
+    assert validation_map == {
+        source.fingerprint: mapped.fingerprint
+        for source, mapped in zip(
+            resolved.validations,
+            target[0].validations,
+            strict=True,
+        )
+    }
 
 
 @pytest.mark.pr_critical

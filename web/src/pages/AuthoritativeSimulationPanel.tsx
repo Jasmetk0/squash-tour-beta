@@ -2435,6 +2435,26 @@ export function AuthoritativeSimulationPanel({
                 onChange={(event) => setNextSeasonReason(event.target.value)}
               />
             </label>
+            <label>
+              Full Simulation operator
+              <input
+                aria-label="Full Simulation operator"
+                value={fullSimulationOperator}
+                maxLength={128}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                onChange={(event) => setFullSimulationOperator(event.target.value)}
+              />
+            </label>
+            <label>
+              Full Simulation audit reason
+              <textarea
+                aria-label="Full Simulation audit reason"
+                value={fullSimulationReason}
+                maxLength={2000}
+                disabled={Boolean(fullSimulationReview) || fullSimulationMutation.isPending}
+                onChange={(event) => setFullSimulationReason(event.target.value)}
+              />
+            </label>
           </div>
           <div className="quick-actions">
             <button
@@ -2513,6 +2533,17 @@ export function AuthoritativeSimulationPanel({
               }
             >
               Review authoritative Next Season
+            </button>
+            <button
+              type="button"
+              onClick={() => fullSimulationPreviewMutation.mutate()}
+              disabled={
+                !fullSimulationOperator.trim() ||
+                !fullSimulationReason.trim() ||
+                actionPending
+              }
+            >
+              Review authoritative Full Simulation
             </button>
           </div>
           {nextMatchDayReview ? (
@@ -2901,6 +2932,136 @@ export function AuthoritativeSimulationPanel({
               </div>
             </>
           ) : null}
+          {fullSimulationReview ? (
+            <>
+              <h5>
+                Reviewed canonical Full Simulation · S
+                {fullSimulationReview.start_week.season_index} W
+                {fullSimulationReview.start_week.week} → final S
+                {fullSimulationReview.final_week.season_index} W
+                {fullSimulationReview.final_week.week}
+              </h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Start',
+                    value: `Season index ${fullSimulationReview.start_week.season_index} · Week ${fullSimulationReview.start_week.week}`
+                  },
+                  {
+                    label: 'Final boundary',
+                    value: `Season index ${fullSimulationReview.final_week.season_index} · Week ${fullSimulationReview.final_week.week}`
+                  },
+                  {
+                    label: 'Remaining seasons including current',
+                    value: fullSimulationReview.remaining_seasons_including_current
+                  },
+                  {
+                    label: 'Remaining weeks including current',
+                    value: fullSimulationReview.remaining_weeks_including_current
+                  },
+                  {
+                    label: 'Initial action',
+                    value: fullSimulationReview.initial_action
+                  },
+                  {
+                    label: 'Ordinary season child',
+                    value: fullSimulationReview.season_child_mode
+                  },
+                  {
+                    label: 'Final season',
+                    value: fullSimulationReview.final_season_mode
+                  },
+                  {
+                    label: 'Explicit boundaries',
+                    value: fullSimulationReview.explicit_boundary_policy
+                  },
+                  {
+                    label: 'Saved Revision at review',
+                    value: fullSimulationReview.expected_revision_id
+                  }
+                ]}
+              />
+              {fullSimulationReview.initial_transition_blockers.length ? (
+                <p className="status">
+                  Initial canonical blockers: {
+                    fullSimulationReview.initial_transition_blockers.join(', ')
+                  }.
+                </p>
+              ) : null}
+              <p className="status">
+                Ordinary seasons compose reviewed Next Season children. The final
+                2049/50 season never fabricates a 2050/51 Week 1: it ends through
+                the existing canonical final Run closure. Saves and transition
+                confirmations remain explicit.
+              </p>
+              {fullSimulationProgress ? (
+                <>
+                  <p role="alert" className="error">
+                    Full Simulation paused at {fullSimulationProgress.checkpoint}
+                    {' '}after {fullSimulationProgress.completed_season_count}
+                    {' '}completed season(s) and {
+                      fullSimulationProgress.final_completed_week_count
+                    } final-season completed week(s).
+                    {fullSimulationProgress.current_week
+                      ? ` Current S${fullSimulationProgress.current_week.season_index} W${fullSimulationProgress.current_week.week}.`
+                      : ''}
+                    {fullSimulationProgress.blockers.length
+                      ? ` Resolve: ${fullSimulationProgress.blockers.join(', ')}.`
+                      : ''}
+                  </p>
+                  {fullSimulationProgress.detail ? (
+                    <p className="status">{fullSimulationProgress.detail}</p>
+                  ) : null}
+                  {(
+                    fullSimulationProgress.checkpoint ===
+                      'season_transition_save_required' ||
+                    fullSimulationProgress.checkpoint === 'final_run_save_required'
+                  ) ? (
+                    <p className="status">
+                      Use <strong>Save authoritative simulation</strong> below, then
+                      retry this exact reviewed Full Simulation command.
+                    </p>
+                  ) : null}
+                  {fullSimulationProgress.checkpoint ===
+                    'season_transition_review_required' ? (
+                    <p className="status">
+                      Review and commit the existing canonical Season Transition
+                      below, then retry this exact Full Simulation command.
+                    </p>
+                  ) : null}
+                  {fullSimulationProgress.checkpoint ===
+                    'final_run_closure_review_required' ? (
+                    <p className="status">
+                      Review and commit the existing final Run closure below, then
+                      retry this exact Full Simulation command once more.
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => fullSimulationMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  {fullSimulationProgress
+                    ? 'Retry reviewed authoritative Full Simulation'
+                    : 'Simulate reviewed authoritative Full Simulation'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFullSimulationReview(null)
+                    setFullSimulationProgress(null)
+                    setFullSimulationCommandId(newCommandId())
+                  }}
+                  disabled={fullSimulationMutation.isPending}
+                >
+                  Discard Full Simulation review
+                </button>
+              </div>
+            </>
+          ) : null}
           {nextMatchMutation.error ? (
             <p className="error">Authoritative Next Match failed: {formatApiError(nextMatchMutation.error)}</p>
           ) : null}
@@ -2956,6 +3117,17 @@ export function AuthoritativeSimulationPanel({
           {nextSeasonMutation.error ? (
             <p className="error">
               Authoritative Next Season failed: {formatApiError(nextSeasonMutation.error)}.
+              The reviewed parent command is preserved for exact retry.
+            </p>
+          ) : null}
+          {fullSimulationPreviewMutation.error ? (
+            <p className="error">
+              Authoritative Full Simulation preview failed: {formatApiError(fullSimulationPreviewMutation.error)}
+            </p>
+          ) : null}
+          {fullSimulationMutation.error ? (
+            <p className="error">
+              Authoritative Full Simulation failed: {formatApiError(fullSimulationMutation.error)}.
               The reviewed parent command is preserved for exact retry.
             </p>
           ) : null}

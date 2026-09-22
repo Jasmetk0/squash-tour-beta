@@ -1376,6 +1376,82 @@ export type AuthoritativeWeekExecution =
   | AuthoritativeWeekProgress
   | AuthoritativeWeekResult
 
+export type AuthoritativeSeasonPreviewPayload = {
+  command_id: string
+  operator_label: string
+  audit_reason: string
+}
+
+export type AuthoritativeSeasonPreview = {
+  schema_version: 'authoritative_season_preview.v1'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  weeks_including_current: number
+  initial_action: string
+  initial_transition_blockers: string[]
+  auto_empty_week_policy: 'calendar_proven_audited_child_only'
+  season_transition_mode: 'explicit_save_and_review_checkpoint'
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  preview_fingerprint: string
+}
+
+export type AuthoritativeSeasonCommandPayload =
+  AuthoritativeSeasonPreviewPayload & {
+    expected_start_week: AuthoritativeRankingWeek
+    expected_position_fingerprint: string
+    expected_revision_id: string
+    expected_preview_fingerprint: string
+  }
+
+export type AuthoritativeSeasonProgress = {
+  schema_version: 'authoritative_season_progress.v1'
+  status: 'blocked'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  current_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  completed_weeks: AuthoritativeRankingWeek[]
+  completed_week_count: number
+  checkpoint:
+    | 'entry_process_required'
+    | 'week_preparation_required'
+    | 'week_transition_prerequisite'
+    | 'week61_preparation_required'
+    | 'season_transition_save_required'
+    | 'season_transition_prerequisite'
+    | 'season_transition_review_required'
+  blockers: string[]
+  detail: string | null
+  position: AuthoritativeSimulationPosition
+  season_transition_preflight?: AuthoritativeSeasonTransitionPreflight
+}
+
+export type AuthoritativeSeasonResult = {
+  schema_version: 'authoritative_season_result.v1'
+  status: 'complete'
+  run_id: string
+  branch_id: string
+  start_week: AuthoritativeRankingWeek
+  target_week: AuthoritativeRankingWeek
+  completed_weeks: AuthoritativeRankingWeek[]
+  completed_week_count: number
+  week_child_command_ids: string[]
+  empty_week_child_command_ids: string[]
+  week61_slot_child_command_ids: string[]
+  season_transition_observed: true
+  saved_revision_id: string
+  position: AuthoritativeSimulationPosition
+  adoption: 'committed'
+}
+
+export type AuthoritativeSeasonExecution =
+  | AuthoritativeSeasonProgress
+  | AuthoritativeSeasonResult
+
 export type MatchReconstructionGameScore = {
   player_a_points: number
   player_b_points: number

@@ -1489,3 +1489,14 @@ A Run/Branch may now own at most one pending canonical Full Simulation parent.
 Previewing or starting a competing parent fails closed while the existing durable
 parent remains pending, and Simulation Admin disables new Full Simulation review while
 showing the resumable parent. Exact retry of the existing parent remains unchanged.
+
+
+## Full Simulation explicit abandon
+
+Pending canonical Full Simulation parents can now be abandoned through an explicit,
+audited Admin action. Abandon requires operator/reason plus acknowledgement that
+already committed child work persists. It never rolls back canonical weeks, seasons
+or boundary work; it marks the durable parent receipt `abandoned`, preserves the
+frozen progress/audit evidence, prevents retry of that parent, and releases the
+Run/Branch for a replacement Full Simulation reviewed from the current canonical
+state.

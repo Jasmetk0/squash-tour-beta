@@ -153,6 +153,8 @@ import type {
   AuthoritativeFullSimulationCommandPayload,
   AuthoritativeFullSimulationExecution,
   AuthoritativeFullSimulationPendingCollection,
+  AuthoritativeFullSimulationAbandonPayload,
+  AuthoritativeFullSimulationAbandonResult,
   AuthoritativeMatchReconstructionState,
   AuthoritativeMatchReconstructionPreviewPayload,
   AuthoritativeMatchReconstructionPreview,
@@ -1804,6 +1806,29 @@ export async function getPendingAuthoritativeFullSimulations(
     ) {
       throw new Error('Pending Full Simulation operation is invalid.')
     }
+  }
+  return data
+}
+
+export async function abandonAuthoritativeFullSimulation(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeFullSimulationAbandonPayload
+): Promise<AuthoritativeFullSimulationAbandonResult> {
+  const data = await request<AuthoritativeFullSimulationAbandonResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/full-simulation/abandon',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_full_simulation_abandon_result.v1' ||
+    data.status !== 'abandoned' ||
+    data.committed_child_work_persists !== true ||
+    data.completed_season_count !== data.completed_seasons.length ||
+    data.final_completed_week_count !== data.final_completed_weeks.length ||
+    data.target_command_id !== payload.target_command_id
+  ) {
+    throw new Error('Full Simulation abandon response is invalid.')
   }
   return data
 }

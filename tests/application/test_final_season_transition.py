@@ -6,6 +6,7 @@ from sqlalchemy import select
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationCommand,
     AuthoritativeFullSimulationPreviewRequest,
+    AuthoritativeFullSimulationAbandonCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
@@ -37,6 +38,7 @@ from beta_engine.infrastructure.db.engine import (
 )
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldStateModel,
+    AuthoritativeSimulationCommandModel,
     Base,
     BranchRevisionAuditEventModel,
     BranchSavedRevisionModel,
@@ -445,6 +447,106 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     assert len(result["season_summary_fingerprint"]) == 64
 
     assert driver.simulate_full_simulation(command) == result
+
+
+@pytest.mark.pr_critical
+def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work(
+    database, monkeypatch
+):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preview_request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="full-simulation-abandon",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Original admin",
+        audit_reason="Start reviewed final-range parent",
+    )
+    preview = driver.preview_full_simulation(preview_request)
+    command = AuthoritativeFullSimulationCommand(
+        **preview_request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    progress = driver.simulate_full_simulation(command)
+    assert progress["checkpoint"] == "final_run_closure_review_required"
+    assert progress["final_completed_week_count"] == 1
+
+    abandoned = driver.abandon_full_simulation(
+        AuthoritativeFullSimulationAbandonCommand(
+            target_command_id=command.command_id,
+            run_id="run",
+            branch_id="branch",
+            operator_label="Override admin",
+            audit_reason="Stop parent while retaining committed canonical work",
+            confirm_committed_child_work_persists=True,
+        )
+    )
+    assert abandoned["status"] == "abandoned"
+    assert abandoned["committed_child_work_persists"] is True
+    assert abandoned["final_completed_week_count"] == 1
+    pending = driver.inspect_pending_full_simulations(
+        run_id="run",
+        branch_id="branch",
+    )
+    assert pending["operations"] == []
+    assert pending["legacy_pending_count"] == 0
+
+    with database() as session:
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert receipt is not None
+        assert receipt.status == "abandoned"
+        stored = json.loads(receipt.result_json)
+        assert stored["final_completed_weeks"] == [
+            FINAL_WEEK.model_dump(mode="json")
+        ]
+        assert stored["abandonment"]["committed_child_work_persists"] is True
+        assert stored["abandonment"]["audit_reason"] == (
+            "Stop parent while retaining committed canonical work"
+        )
+
+    replacement = AuthoritativeFullSimulationPreviewRequest(
+        command_id="full-simulation-replacement",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Replacement admin",
+        audit_reason="Review from the canonical state left by abandoned parent",
+    )
+    replacement_preview = driver.preview_full_simulation(replacement)
+    assert replacement_preview["start_week"] == FINAL_WEEK.model_dump(mode="json")
+
+    with pytest.raises(ValueError, match="invalid status"):
+        driver.simulate_full_simulation(command)
 
 
 @pytest.mark.pr_critical

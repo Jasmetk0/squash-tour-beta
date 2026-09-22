@@ -117,7 +117,6 @@ class SimulationPositionForkIdentityGraph:
     result_fingerprints: dict[str, str]
     terminal_checkpoint_payloads: dict[str, str]
     owned_tournament_fingerprints: dict[str, str]
-    sporting_context_fingerprints: dict[str, str]
     week_tournament_lock_fingerprints: dict[str, str]
     tournament_authority_fingerprints: dict[str, str]
     sporting_fingerprints: dict[str, str]
@@ -464,20 +463,23 @@ def _retarget_simulation_command_receipt_as_historical(
         "source_request_fingerprint": row.request_fingerprint,
         "source_request_evidence_fingerprint": request_evidence_fingerprint,
         "source_result": source_result,
-        "target_request_evidence": target_request_evidence,
-        "target_request_evidence_fingerprint": (
-            fingerprint(target_request_evidence)
-            if target_request_evidence is not None
-            else None
-        ),
-        "target_request_fingerprint": target_request_fingerprint,
         "retryable": False,
         "provenance": (
             "materialized Branch fork preserves source Simulation command history "
-            "as read-only audit evidence; target exact retry requires a remapped "
-            "opening Position identity and is intentionally unsupported"
+            "as read-only audit evidence; target request identity is reconstructed "
+            "when possible, while result replay remains intentionally disabled"
         ),
     }
+    if target_request_evidence is not None:
+        historical.update(
+            {
+                "target_request_evidence": target_request_evidence,
+                "target_request_evidence_fingerprint": fingerprint(
+                    target_request_evidence
+                ),
+                "target_request_fingerprint": target_request_fingerprint,
+            }
+        )
     historical_request = {
         "schema_version": (
             "authoritative_simulation_historical_fork_request.v3"
@@ -531,6 +533,7 @@ class CoupledPlayerSlotForkRemap:
     week_tournament_lock_fingerprints: dict[str, str]
     adopted_tournament_authority_fingerprints: dict[str, str]
     owned_tournament_fingerprints: dict[str, str]
+    sporting_context_fingerprints: dict[str, str]
 
 
 def _retarget_frozen_evidence(

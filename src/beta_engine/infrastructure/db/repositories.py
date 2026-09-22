@@ -157,6 +157,7 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PLAYER_TOUR_ENTRY_COMPONENT_KEY,
     capture_saved_tour_entry_triggers,
     load_saved_tour_entry_triggers,
+    remap_saved_tour_entry_triggers_component,
     restore_saved_tour_entry_triggers,
 )
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
@@ -178,6 +179,7 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
     TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
     capture_saved_application_submissions,
     load_saved_application_submissions,
+    remap_saved_application_submissions_component,
     restore_saved_application_submissions,
 )
 from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
@@ -2629,6 +2631,8 @@ class SimulationPersistenceRepository:
                         SIMULATION_SLOT_COMPONENT_KEY,
                         RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
                         APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
+                        TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
+                        PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2869,13 +2873,37 @@ class SimulationPersistenceRepository:
                     (
                         remapped_validation_component,
                         source_to_target_resolved_validation,
-                        _source_to_target_validation_authority,
+                        source_to_target_validation_authority,
                     ) = remap_saved_application_validation_slots_component(
                         source_revision.payload,
                         run_id=run_id,
                         source_branch_id=source_branch_id,
                         target_branch_id=branch_id,
                         entry_slot_fingerprint_map=source_to_target_entry_slot,
+                    )
+                    (
+                        remapped_submission_component,
+                        source_to_target_application_submission,
+                    ) = remap_saved_application_submissions_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        validation_fingerprint_map=(
+                            source_to_target_validation_authority
+                        ),
+                    )
+                    (
+                        remapped_tour_entry_component,
+                        _source_to_target_tour_entry_trigger,
+                    ) = remap_saved_tour_entry_triggers_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        application_submission_fingerprint_map=(
+                            source_to_target_application_submission
+                        ),
                     )
                     if remapped_entry_component is not None:
                         target_payload["content"][
@@ -2885,6 +2913,14 @@ class SimulationPersistenceRepository:
                         target_payload["content"][
                             APPLICATION_VALIDATION_SLOT_COMPONENT_KEY
                         ] = remapped_validation_component
+                    if remapped_submission_component is not None:
+                        target_payload["content"][
+                            TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY
+                        ] = remapped_submission_component
+                    if remapped_tour_entry_component is not None:
+                        target_payload["content"][
+                            PLAYER_TOUR_ENTRY_COMPONENT_KEY
+                        ] = remapped_tour_entry_component
 
                     coupled_player_slot = None
                     if SIMULATION_SLOT_COMPONENT_KEY in source_content:
@@ -2983,6 +3019,34 @@ class SimulationPersistenceRepository:
                         except ValueError as exc:
                             raise SavedRevisionBranchForkConflictError(
                                 "remapped application validation slots could not be installed: "
+                                f"{exc}"
+                            ) from exc
+                    if remapped_submission_component is not None:
+                        try:
+                            restore_saved_application_submissions(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped application submissions could not be installed: "
+                                f"{exc}"
+                            ) from exc
+                    if remapped_tour_entry_component is not None:
+                        try:
+                            restore_saved_tour_entry_triggers(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped player Tour-entry triggers could not be installed: "
                                 f"{exc}"
                             ) from exc
 

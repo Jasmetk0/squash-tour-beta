@@ -4475,6 +4475,7 @@ class AuthoritativeRunSimulationDriver:
                 )
 
         for _ in range(128):
+            run_completed = False
             with self.factory() as session:
                 parent = session.get(AuthoritativeSimulationCommandModel, key)
                 if parent is None or parent.request_fingerprint != request_fp:
@@ -4483,104 +4484,91 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
                 frozen = json.loads(parent.result_json)
                 run = session.get(RunContainerModel, command.run_id)
-                completed = self._completed_run_closure_evidence(
-                    session,
-                    run_id=command.run_id,
-                    branch_id=command.branch_id,
+                run_completed = (
+                    run is not None and run.status == COMPLETED_RUN_STATUS
                 )
-                if completed is not None:
-                    # Re-enter the top-level completion transaction on the next loop
-                    # iteration rather than duplicating the final receipt writer here.
-                    pass
-                if run is not None and run.status == COMPLETED_RUN_STATUS:
-                    with self.factory.begin() as write_session:
-                        write_session.execute(text("BEGIN IMMEDIATE"))
-                        parent_write = write_session.get(
-                            AuthoritativeSimulationCommandModel, key
-                        )
-                        if parent_write is None:
-                            raise ValueError(
-                                "Full Simulation parent receipt disappeared"
-                            )
-                        frozen_write = json.loads(parent_write.result_json)
-                        completed_write = self._completed_run_closure_evidence(
-                            write_session,
-                            run_id=command.run_id,
-                            branch_id=command.branch_id,
-                        )
-                        if completed_write is None:
-                            raise ValueError(
-                                "completed Run lacks final closure evidence"
-                            )
-                        seasons = list(frozen_write["completed_seasons"])
-                        if FINAL_WEEK.season_index not in seasons:
-                            seasons.append(FINAL_WEEK.season_index)
-                        payload = {
-                            "schema_version": "authoritative_full_simulation_result.v1",
-                            "status": "complete",
-                            "run_id": command.run_id,
-                            "branch_id": command.branch_id,
-                            "start_week": frozen_write["start_week"],
-                            "final_week": frozen_write["final_week"],
-                            "completed_seasons": seasons,
-                            "completed_season_count": len(seasons),
-                            "season_child_command_ids": [
-                                item["command"]["command_id"]
-                                for _, item in sorted(
-                                    frozen_write["season_children"].items(),
-                                    key=lambda pair: int(pair[0]),
-                                )
-                            ],
-                            "final_week_child_command_ids": [
-                                item["command"]["command_id"]
-                                for _, item in sorted(
-                                    frozen_write["final_week_children"].items(),
-                                    key=lambda pair: int(pair[0]),
-                                )
-                            ],
-                            "final_empty_week_child_command_ids": [
-                                command_id
-                                for _, command_id in sorted(
-                                    frozen_write[
-                                        "final_empty_week_children"
-                                    ].items(),
-                                    key=lambda pair: int(pair[0]),
-                                )
-                            ],
-                            "final_week61_slot_child_command_ids": [
-                                item["command_id"]
-                                for _, item in sorted(
-                                    frozen_write[
-                                        "final_week61_slot_children"
-                                    ].items(),
-                                    key=lambda pair: int(pair[0]),
-                                )
-                            ],
-                            "run_status": COMPLETED_RUN_STATUS,
-                            **completed_write,
-                            "adoption": "committed",
-                        }
-                        parent_write.status = "complete"
-                        parent_write.result_json = json.dumps(
-                            payload,
-                            sort_keys=True,
-                            separators=(",", ":"),
-                        )
-                        write_session.flush()
-                        return payload
-
-                position = self._position(
-                    session,
-                    command.run_id,
-                    command.branch_id,
-                    allow_missing_schedule=True,
-                )
-                branch = session.get(RunBranchModel, command.branch_id)
-                if branch is None or branch.saved_head_revision_id is None:
-                    raise ValueError(
-                        "Full Simulation lost its Saved Revision-backed Branch"
+                if not run_completed:
+                    position = self._position(
+                        session,
+                        command.run_id,
+                        command.branch_id,
+                        allow_missing_schedule=True,
                     )
-                current_saved_revision_id = branch.saved_head_revision_id
+                    branch = session.get(RunBranchModel, command.branch_id)
+                    if branch is None or branch.saved_head_revision_id is None:
+                        raise ValueError(
+                            "Full Simulation lost its Saved Revision-backed Branch"
+                        )
+                    current_saved_revision_id = branch.saved_head_revision_id
+
+            if run_completed:
+                with self.factory.begin() as session:
+                    session.execute(text("BEGIN IMMEDIATE"))
+                    parent = session.get(AuthoritativeSimulationCommandModel, key)
+                    if parent is None or parent.request_fingerprint != request_fp:
+                        raise ValueError(
+                            "Full Simulation parent receipt disappeared"
+                        )
+                    frozen = json.loads(parent.result_json)
+                    completed = self._completed_run_closure_evidence(
+                        session,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                    )
+                    if completed is None:
+                        raise ValueError(
+                            "completed Run lacks final closure evidence"
+                        )
+                    seasons = list(frozen["completed_seasons"])
+                    if FINAL_WEEK.season_index not in seasons:
+                        seasons.append(FINAL_WEEK.season_index)
+                    payload = {
+                        "schema_version": "authoritative_full_simulation_result.v1",
+                        "status": "complete",
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "start_week": frozen["start_week"],
+                        "final_week": frozen["final_week"],
+                        "completed_seasons": seasons,
+                        "completed_season_count": len(seasons),
+                        "season_child_command_ids": [
+                            item["command"]["command_id"]
+                            for _, item in sorted(
+                                frozen["season_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_week_child_command_ids": [
+                            item["command"]["command_id"]
+                            for _, item in sorted(
+                                frozen["final_week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_empty_week_child_command_ids": [
+                            command_id
+                            for _, command_id in sorted(
+                                frozen["final_empty_week_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "final_week61_slot_child_command_ids": [
+                            item["command_id"]
+                            for _, item in sorted(
+                                frozen["final_week61_slot_children"].items(),
+                                key=lambda pair: int(pair[0]),
+                            )
+                        ],
+                        "run_status": COMPLETED_RUN_STATUS,
+                        **completed,
+                        "adoption": "committed",
+                    }
+                    parent.status = "complete"
+                    parent.result_json = json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    )
+                    session.flush()
+                    return payload
 
             if position.current_week.season_index < FINAL_WEEK.season_index:
                 season_index = position.current_week.season_index

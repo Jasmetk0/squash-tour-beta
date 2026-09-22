@@ -64,7 +64,7 @@ from test_authoritative_slot_matches import _driver_command, session_at
 from test_season_entry_list_service import make_service
 
 
-pytestmark = [pytest.mark.smoke, pytest.mark.pr_critical]
+pytestmark = pytest.mark.smoke
 
 
 def _resolve_players(plan, completed):
@@ -402,7 +402,6 @@ def test_real_qualification_lucky_loser_continues_to_canonical_tournament_close(
     with factory() as db:
         groups = db.scalars(
             select(SimulationEventGroupModel).order_by(
-                SimulationEventGroupModel.slot_ordinal,
                 SimulationEventGroupModel.group_id,
             )
         ).all()

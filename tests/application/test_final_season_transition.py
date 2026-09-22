@@ -461,6 +461,19 @@ def test_full_simulation_observes_reviewed_final_run_closure(database, monkeypat
     )
     assert completed_item["completed_season_count"] == 1
 
+    detail = driver.inspect_full_simulation_parent(
+        run_id="run",
+        branch_id="branch",
+        command_id=command.command_id,
+    )
+    assert detail["schema_version"] == (
+        "authoritative_full_simulation_parent_detail.v1"
+    )
+    assert detail["status"] == "complete"
+    assert detail["operator_label"] == "Final acceptance admin"
+    assert detail["final_boundary_saved_revision_id"] == "revision-final"
+    assert len(detail["receipt_request_fingerprint"]) == 64
+
     assert driver.simulate_full_simulation(command) == result
 
 
@@ -546,6 +559,18 @@ def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work
     assert abandoned_item["abandonment"]["operator_label"] == "Override admin"
     assert abandoned_item["abandonment"]["committed_child_work_persists"] is True
     assert abandoned_item["final_completed_week_count"] == 1
+
+    abandoned_detail = driver.inspect_full_simulation_parent(
+        run_id="run",
+        branch_id="branch",
+        command_id=command.command_id,
+    )
+    assert abandoned_detail["status"] == "abandoned"
+    assert abandoned_detail["operator_label"] == "Original admin"
+    assert abandoned_detail["abandonment"]["operator_label"] == "Override admin"
+    assert abandoned_detail["final_completed_weeks"] == [
+        FINAL_WEEK.model_dump(mode="json")
+    ]
 
     with database() as session:
         receipt = session.get(

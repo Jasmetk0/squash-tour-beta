@@ -1575,3 +1575,16 @@ close without changing sporting outcomes or point rules.
 The field is optional and omitted when absent, so historical
 `tournament_result_authority.v1` payloads reopen with their original fingerprints
 instead of being silently rewritten.
+
+
+## Branch fork preserves Main-entry result provenance
+
+Canonical tournament-source Branch remapping now has PR-critical coverage that
+Main-entry provenance survives identity rebinding. A source Tournament Result carrying
+`wild_card` / `direct` Main-entry status is rebound to the target Branch together
+with Point Award and optional Prize Money authorities; Branch-scoped fingerprints are
+recalculated while each player's `main_entry_status` remains unchanged.
+
+This closes the recovery contract introduced by canonical Main-entry result provenance:
+forking a ranking-bearing Branch cannot silently degrade a Wild Card entrant into an
+undifferentiated Main participant.

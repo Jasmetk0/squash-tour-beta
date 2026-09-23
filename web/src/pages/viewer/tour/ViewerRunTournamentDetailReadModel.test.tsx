@@ -16,6 +16,7 @@ const api = vi.hoisted(() => ({
   },
   getEvent: vi.fn(),
   getRun: vi.fn(),
+  getViewerTournamentEntryField: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn()
@@ -64,6 +65,21 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     api.listRaceSnapshots.mockResolvedValue({
       run_id: 'run alpha',
       snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT/1', payload: {} }]
+    })
+    api.getViewerTournamentEntryField.mockResolvedValue({
+      schema_version: 'viewer_tournament_entry_field.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT/1',
+      field_sequence: 2,
+      mode: 'pre_draw_repair',
+      main_draw_capacity: 32,
+      active_main_entrant_count: 30,
+      effective_main_bye_count: 2,
+      direct_main_player_ids: ['P-001', 'P-002'],
+      qualification_player_ids: ['P-003'],
+      alternate_player_ids: ['P-004'],
+      withdrawn_player_ids: ['P-099']
     })
   })
 

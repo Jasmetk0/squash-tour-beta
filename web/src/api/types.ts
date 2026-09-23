@@ -6827,6 +6827,26 @@ export type DryRunValidationSummary = {
 }
 
 
+export type ViewerOfficialRankingRow = {
+  rank: number
+  player_id: string
+  points: number
+}
+
+export type ViewerOfficialRanking = {
+  schema_version: 'viewer_official_ranking.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  season_index: number
+  week: number
+  week_ordinal: number
+  snapshot_fingerprint: string
+  policy_id: string
+  best_n: number
+  row_count: number
+  rows: ViewerOfficialRankingRow[]
+}
+
 export type ViewerOfficialRunContext = {
   product_run_id: string
   product_run_display_name: string

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getEvent, getRun, getViewerTournamentEntryField, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -215,6 +215,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const entryFieldQuery = useQuery({
+    queryKey: ['viewer-tournament-entry-field', runId, eventId],
+    queryFn: () => getViewerTournamentEntryField(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -329,6 +335,40 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               </>
             ) : null}
           </SectionCard>
+
+          {event ? (
+            <SectionCard title="Canonical Entry Field">
+              {entryFieldQuery.isLoading ? <p className="status">Loading canonical Entry Field…</p> : null}
+              {entryFieldQuery.error && !isApiNotFound(entryFieldQuery.error) ? (
+                <p className="error">Failed to load canonical Entry Field: {formatApiError(entryFieldQuery.error)}</p>
+              ) : null}
+              {isApiNotFound(entryFieldQuery.error) ? (
+                <EmptyState message="Canonical Entry Field is not available for this tournament yet." />
+              ) : null}
+              {entryFieldQuery.data ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Viewer Branch', value: entryFieldQuery.data.viewer_branch_id },
+                      { label: 'Field version', value: entryFieldQuery.data.field_sequence },
+                      { label: 'Field mode', value: entryFieldQuery.data.mode === 'initial' ? 'Initial field' : 'Rebalanced field' },
+                      { label: 'Main capacity', value: entryFieldQuery.data.main_draw_capacity },
+                      { label: 'Active Main entrants', value: entryFieldQuery.data.active_main_entrant_count },
+                      { label: 'Effective Main BYEs', value: entryFieldQuery.data.effective_main_bye_count }
+                    ]}
+                  />
+                  <MetadataList
+                    items={[
+                      { label: 'Direct Main', value: entryFieldQuery.data.direct_main_player_ids.length ? entryFieldQuery.data.direct_main_player_ids.join(', ') : 'None' },
+                      { label: 'Qualification', value: entryFieldQuery.data.qualification_player_ids.length ? entryFieldQuery.data.qualification_player_ids.join(', ') : 'None' },
+                      { label: 'Alternates', value: entryFieldQuery.data.alternate_player_ids.length ? entryFieldQuery.data.alternate_player_ids.join(', ') : 'None' },
+                      { label: 'Withdrawn', value: entryFieldQuery.data.withdrawn_player_ids.length ? entryFieldQuery.data.withdrawn_player_ids.join(', ') : 'None' }
+                    ]}
+                  />
+                </>
+              ) : null}
+            </SectionCard>
+          ) : null}
 
           {event ? (
             <SectionCard title="Source context links">

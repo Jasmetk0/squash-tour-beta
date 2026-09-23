@@ -69,6 +69,7 @@ import type {
   RunContainer,
   RunContainerListResponse,
   ViewerOfficialRunContext,
+  ViewerTournamentEntryField,
   ViewerOfficialRanking,
   ViewerOfficialRankingHistory,
   RunBranch,
@@ -953,6 +954,10 @@ export function getViewerOfficialRunContext(productRunId: string): Promise<Viewe
 
 export function getViewerOfficialRanking(productRunId: string): Promise<ViewerOfficialRanking> {
   return request(`/viewer/runs/${encodeURIComponent(productRunId)}/rankings/current`)
+}
+
+export function getViewerTournamentEntryField(productRunId: string, eventId: string): Promise<ViewerTournamentEntryField> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/entry-field`)
 }
 
 export function listViewerOfficialRankingHistory(productRunId: string): Promise<ViewerOfficialRankingHistory> {

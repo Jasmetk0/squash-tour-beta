@@ -1859,3 +1859,8 @@ Viewer can now resolve the selected Viewer Branch's current published Official R
 ### Canonical Viewer ranking history
 
 Run-scoped Viewer ranking history and detail now consume the selected Viewer Branch's validated `PublishedOfficialRanking` chain directly. History is bounded by `AuthoritativeWorldState.current_ordinal`, validates every stored publication payload/fingerprint and sorts newest-first; detail rejects future ordinals. The existing ranking Viewer URLs remain stable while their backing authority is no longer the legacy SimulationRun ranking-snapshot store. Race still uses the legacy snapshot reader and remains a separate migration slice.
+
+
+### Canonical Viewer Tournament Entry Field
+
+Viewer Tournament Detail can now resolve the selected Viewer Branch's canonical Tournament Entry Field through a dedicated read-only projection. Main entrants, Qualification entrants, below-cut alternates, withdrawals, Main capacity and effective BYEs come from Branch-owned field authority; internal fingerprints, frozen application evidence, diagnostics and Admin lock metadata are not exposed. Existing Viewer tournament event/result context remains compatibility-backed and is not reclassified as canonical by this slice. See `docs/VIEWER_TOURNAMENT_ENTRY_FIELD_V1.md`.

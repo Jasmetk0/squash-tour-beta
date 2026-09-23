@@ -238,8 +238,13 @@ def remap_saved_tour_entry_triggers_component(
                 f"Player Tour-entry trigger references {evidence_label} without a target mapping"
             ) from exc
         if trigger.source_evidence_id != target_source_evidence_id:
+            if trigger.trigger_kind == "valid_tournament_application":
+                raise ValueError(
+                    "Player Tour-entry trigger application id differs from mapped submission"
+                )
             raise ValueError(
-                f"Player Tour-entry trigger evidence id differs from mapped {evidence_label}"
+                "Player Tour-entry trigger evidence id differs from mapped "
+                "definitive Wild Card assignment"
             )
         mapped = trigger.model_copy(
             update={

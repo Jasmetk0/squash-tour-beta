@@ -6827,6 +6827,22 @@ export type DryRunValidationSummary = {
 }
 
 
+export type ViewerTournamentEntryField = {
+  schema_version: 'viewer_tournament_entry_field.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  event_id: string
+  field_sequence: number
+  mode: 'initial' | 'pre_draw_repair'
+  main_draw_capacity: number
+  active_main_entrant_count: number
+  effective_main_bye_count: number
+  direct_main_player_ids: string[]
+  qualification_player_ids: string[]
+  alternate_player_ids: string[]
+  withdrawn_player_ids: string[]
+}
+
 export type ViewerOfficialRankingRow = {
   rank: number
   player_id: string

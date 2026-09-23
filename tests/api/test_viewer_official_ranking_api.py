@@ -136,3 +136,76 @@ def test_viewer_current_ranking_fails_closed_when_publication_and_world_head_dis
         assert status == 409
         assert payload["detail"]["code"] == "viewer_official_ranking_unavailable"
         assert "does not match the public world head" in payload["detail"]["message"]
+
+
+@pytest.mark.pr_critical
+def test_viewer_ranking_history_lists_only_public_branch_publications_and_detail_is_historical(
+    tmp_path,
+) -> None:
+    path = tmp_path / "viewer-ranking-history.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        branch_id, _ = _canonical_run(server)
+        week_one = RankingWeek(season_index=0, week=1)
+        week_two = RankingWeek(season_index=0, week=2)
+        week_three = RankingWeek(season_index=0, week=3)
+        opening = _ranking(branch_id=branch_id, week=week_one)
+        current = _ranking(branch_id=branch_id, week=week_two, previous=opening)
+        future = _ranking(branch_id=branch_id, week=week_three, previous=current)
+
+        with _database_session(path) as session:
+            session.add_all(
+                [
+                    PublishedOfficialRankingModel(
+                        run_id="run",
+                        branch_id=branch_id,
+                        week_ordinal=opening.week.ordinal,
+                        snapshot_fingerprint=opening.fingerprint,
+                        payload_json=opening.model_dump_json(),
+                    ),
+                    PublishedOfficialRankingModel(
+                        run_id="run",
+                        branch_id=branch_id,
+                        week_ordinal=current.week.ordinal,
+                        snapshot_fingerprint=current.fingerprint,
+                        payload_json=current.model_dump_json(),
+                    ),
+                    PublishedOfficialRankingModel(
+                        run_id="run",
+                        branch_id=branch_id,
+                        week_ordinal=future.week.ordinal,
+                        snapshot_fingerprint=future.fingerprint,
+                        payload_json=future.model_dump_json(),
+                    ),
+                    AuthoritativeWorldStateModel(
+                        run_id="run",
+                        branch_id=branch_id,
+                        current_ordinal=current.week.ordinal,
+                        ranking_fingerprint=current.fingerprint,
+                    ),
+                ]
+            )
+
+        root = f"{server.base_url}/viewer/runs/{quote('run', safe='')}/rankings"
+        status, history = _request("GET", root + "/history")
+        assert status == 200
+        assert history["schema_version"] == "viewer_official_ranking_history.v1"
+        assert history["viewer_branch_id"] == branch_id
+        assert history["public_head_ordinal"] == current.week.ordinal
+        assert history["publication_count"] == 2
+        assert [item["week_ordinal"] for item in history["publications"]] == [
+            current.week.ordinal,
+            opening.week.ordinal,
+        ]
+        assert future.week.ordinal not in {
+            item["week_ordinal"] for item in history["publications"]
+        }
+
+        status, detail = _request("GET", root + f"/history/{opening.week.ordinal}")
+        assert status == 200
+        assert detail["week"] == 1
+        assert detail["snapshot_fingerprint"] == opening.fingerprint
+
+        status, blocked = _request("GET", root + f"/history/{future.week.ordinal}")
+        assert status == 409
+        assert blocked["detail"]["code"] == "viewer_official_ranking_unavailable"
+        assert "future publication" in blocked["detail"]["message"]

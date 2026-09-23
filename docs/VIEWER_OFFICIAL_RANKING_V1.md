@@ -35,3 +35,8 @@ The top-level MSA Rankings Viewer page uses this endpoint for its current Top 10
 preview. Legacy ranking snapshot pages remain available as compatibility/history
 surfaces; migrating their complete historical timeline to the canonical Branch-owned
 publication chain is a separate follow-up.
+
+
+## Historical publication timeline
+
+The run-scoped Viewer ranking routes now use the same canonical Branch-owned publication chain. `GET /viewer/runs/{product_run_id}/rankings/history` lists only validated publications at or before the selected Viewer Branch public world head, newest first. `GET /viewer/runs/{product_run_id}/rankings/history/{week_ordinal}` reads one exact historical publication and rejects any requested ordinal beyond the public head. The existing Viewer URLs `/viewer/runs/:runId/rankings` and `/viewer/runs/:runId/rankings/:snapshotSequence` are retained for navigation compatibility, but the trailing identity now resolves canonical ranking week ordinal rather than a legacy SimulationRun snapshot sequence.

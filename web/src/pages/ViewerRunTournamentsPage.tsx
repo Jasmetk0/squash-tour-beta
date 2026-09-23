@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -242,6 +242,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const wildCardsQuery = useQuery({
+    queryKey: ['viewer-tournament-wild-cards', runId, eventId],
+    queryFn: () => getViewerTournamentWildCards(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -386,6 +392,37 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                       { label: 'Withdrawn', value: entryFieldQuery.data.withdrawn_player_ids.length ? entryFieldQuery.data.withdrawn_player_ids.join(', ') : 'None' }
                     ]}
                   />
+                </>
+              ) : null}
+            </SectionCard>
+          ) : null}
+
+          {event ? (
+            <SectionCard title="Definitive Wild Cards">
+              {wildCardsQuery.isLoading ? <p className="status">Loading definitive Wild Cards…</p> : null}
+              {wildCardsQuery.error ? (
+                <p className="error">Failed to load definitive Wild Cards: {formatApiError(wildCardsQuery.error)}</p>
+              ) : null}
+              {wildCardsQuery.data?.assignment_count === 0 ? (
+                <EmptyState message="No definitive Wild Card assignments are recorded for this tournament." />
+              ) : null}
+              {wildCardsQuery.data && wildCardsQuery.data.assignments.length > 0 ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Viewer Branch', value: wildCardsQuery.data.viewer_branch_id },
+                      { label: 'Definitive assignments', value: wildCardsQuery.data.assignment_count }
+                    ]}
+                  />
+                  <ul className="item-list" aria-label="Definitive Wild Card assignments">
+                    {wildCardsQuery.data.assignments.map((assignment) => (
+                      <li key={assignment.wildcard_index}>
+                        {assignment.source === 'reserve_wc'
+                          ? `WC #${assignment.wildcard_index} · ${assignment.player_id} · Reserve WC #${assignment.reserve_ordinal}`
+                          : `WC #${assignment.wildcard_index} · ${assignment.player_id} · Original WC`}
+                      </li>
+                    ))}
+                  </ul>
                 </>
               ) : null}
             </SectionCard>

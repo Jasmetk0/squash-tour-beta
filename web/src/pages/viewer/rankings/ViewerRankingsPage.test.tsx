@@ -51,9 +51,8 @@ describe('ViewerRankingsPage', () => {
 
     renderRankings()
 
-    expect(await screen.findByText('Current Official Ranking')).toBeInTheDocument()
+    expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
     expect(api.getViewerOfficialRanking).toHaveBeenCalledWith('run alpha')
-    expect(screen.getByText('branch-viewer')).toBeInTheDocument()
     expect(screen.getByText('2003')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Current Top 10 Official Ranking table' })).toHaveTextContent('player-a')
     expect(screen.getByRole('table', { name: 'Current Top 10 Official Ranking table' })).toHaveTextContent('1234')

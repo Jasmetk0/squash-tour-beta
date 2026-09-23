@@ -70,6 +70,7 @@ import type {
   RunContainerListResponse,
   ViewerOfficialRunContext,
   ViewerOfficialRanking,
+  ViewerOfficialRankingHistory,
   RunBranch,
   RunBranchListResponse,
   CreateRunBranchFromSavedRevisionRequest,
@@ -952,6 +953,14 @@ export function getViewerOfficialRunContext(productRunId: string): Promise<Viewe
 
 export function getViewerOfficialRanking(productRunId: string): Promise<ViewerOfficialRanking> {
   return request(`/viewer/runs/${encodeURIComponent(productRunId)}/rankings/current`)
+}
+
+export function listViewerOfficialRankingHistory(productRunId: string): Promise<ViewerOfficialRankingHistory> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/rankings/history`)
+}
+
+export function getViewerOfficialRankingHistoryDetail(productRunId: string, weekOrdinal: number): Promise<ViewerOfficialRanking> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/rankings/history/${weekOrdinal}`)
 }
 
 export function listRunBranches(runId?: string): Promise<RunBranchListResponse> {

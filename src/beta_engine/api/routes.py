@@ -47,6 +47,7 @@ from beta_engine.api.routers.viewer_run_context import router as viewer_run_cont
 from beta_engine.api.routers.viewer_rankings import router as viewer_rankings_router
 from beta_engine.api.routers.viewer_tournament_entry_fields import router as viewer_tournament_entry_fields_router
 from beta_engine.api.routers.viewer_tournament_draws import router as viewer_tournament_draws_router
+from beta_engine.api.routers.viewer_tournament_wild_cards import router as viewer_tournament_wild_cards_router
 from beta_engine.api.routers.prospects import router as prospects_router
 
 router = APIRouter()
@@ -94,4 +95,5 @@ router.include_router(viewer_run_context_router)
 router.include_router(viewer_rankings_router)
 router.include_router(viewer_tournament_entry_fields_router)
 router.include_router(viewer_tournament_draws_router)
+router.include_router(viewer_tournament_wild_cards_router)
 router.include_router(prospects_router)

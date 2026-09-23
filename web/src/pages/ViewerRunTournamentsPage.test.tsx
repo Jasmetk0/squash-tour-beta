@@ -10,6 +10,7 @@ const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
+  getViewerTournamentDraw: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
@@ -261,6 +262,25 @@ describe('ViewerRunTournamentDetailPage', () => {
       alternate_player_ids: ['P-004'],
       withdrawn_player_ids: ['P-099']
     })
+    api.getViewerTournamentDraw.mockResolvedValue({
+      schema_version: 'viewer_tournament_draw.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT-1',
+      revision_count: 1,
+      main: {
+        draw_type: 'main',
+        section_id: null,
+        bracket_size: 4,
+        slots: [
+          { slot_index: 1, entrant_kind: 'player', player_id: 'P-001', placeholder_id: null, seed_number: 1, entry_status: null },
+          { slot_index: 2, entrant_kind: 'bye', player_id: null, placeholder_id: null, seed_number: null, entry_status: null },
+          { slot_index: 3, entrant_kind: 'qualifier_placeholder', player_id: null, placeholder_id: 'Q1', seed_number: null, entry_status: null },
+          { slot_index: 4, entrant_kind: 'player', player_id: 'P-002', placeholder_id: null, seed_number: 2, entry_status: 'wild_card' }
+        ]
+      },
+      qualification_sections: []
+    })
   })
 
   it('renders parseable tournament result preview with collapsed technical data', async () => {
@@ -289,6 +309,13 @@ describe('ViewerRunTournamentDetailPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Canonical Draw' })).toBeInTheDocument()
+    expect(api.getViewerTournamentDraw).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
+    expect(screen.getByRole('list', { name: 'Canonical Main draw slots' })).toBeInTheDocument()
+    expect(screen.getByText('#1 · P-001 · seed 1')).toBeInTheDocument()
+    expect(screen.getByText('#2 · BYE')).toBeInTheDocument()
+    expect(screen.getByText('#3 · Q1')).toBeInTheDocument()
+    expect(screen.getByText('#4 · P-002 · seed 2 · wild card')).toBeInTheDocument()
     expect(api.getViewerTournamentEntryField).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
     expect(screen.getByText('branch-viewer')).toBeInTheDocument()
     expect(screen.getByText('P-001, P-002')).toBeInTheDocument()

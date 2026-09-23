@@ -13,6 +13,7 @@ from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
 )
 from test_simulation_api import ApiServer, _request
 from test_visible_prospects_api import _canonical_run
+from tests.api.test_viewer_tournament_entry_field_api import _repository
 
 
 def _assignment(
@@ -49,7 +50,8 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
     path = tmp_path / "viewer-wild-cards.sqlite"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         branch_id, _ = _canonical_run(server, "run")
-        with server.app.state.runtime.repository._session_factory.begin() as session:
+        repository = _repository(f"sqlite:///{path}")
+        with repository._session_factory.begin() as session:
             store = DefinitiveWildCardAssignmentStore(session)
             store.append(
                 _assignment(

@@ -1825,3 +1825,27 @@ available.
 Tour-entry triggers backed by `definitive_wild_card_assignment` remain fail-closed in
 this slice. Non-empty definitive Wild Card assignment history still requires its own
 source→target authority remap before those triggers can be materialized safely.
+
+
+
+## Definitive Wild Card and first Tour-entry Branch-fork identity
+
+Materialized Saved Revision forks now complete the first-entry identity chain for
+Definitive Wild Card assignments as well as valid tournament applications:
+
+- the coupled Simulation Slot fork remap exposes its already-rebuilt frozen tournament
+  identity graph, including source Entry Field and Tournament Wild Card authority
+  fingerprints;
+- each definitive WC/RWC assignment is rebuilt for the target Branch only through those
+  explicit source → target fingerprints, preserving command id, WC index, chronology,
+  player/event facts and field sequence;
+- the assignment remap exposes source assignment fingerprint → target
+  `(source_evidence_id, fingerprint)` identity;
+- `definitive_wild_card_assignment` Player Tour-entry triggers then bind to that exact
+  target assignment, while application-backed triggers continue to bind to the remapped
+  valid submission identity;
+- missing WC authority, Entry Field, assignment or evidence-id mappings fail closed.
+
+The installation dependency is now Entry Slot → Application Validation → Application
+Submission plus coupled tournament/Simulation identity → Definitive Wild Card Assignment
+→ Player Tour-entry Trigger. No generic fingerprint substitution is used.

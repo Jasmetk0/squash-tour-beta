@@ -668,6 +668,7 @@ class CoupledPlayerSlotForkRemap:
     owned_tournament_fingerprints: dict[str, str]
     sporting_context_fingerprints: dict[str, str]
     entry_validation_fingerprints: dict[str, str]
+    frozen_fingerprints: dict[str, str]
 
 
 def _retarget_frozen_evidence(
@@ -2536,6 +2537,7 @@ def remap_coupled_player_slot_history(
         terminal_checkpoint_fingerprints=all_terminals,
         sporting_context_fingerprints=sporting_context_fingerprint_map,
         entry_validation_fingerprints=entry_validation_fingerprint_map,
+        frozen_fingerprints=dict(target_frozen_fingerprint_map),
     )
     target_command_rows: list[AuthoritativeSimulationCommandModel] = [
         _retarget_simulation_command_receipt_as_historical(

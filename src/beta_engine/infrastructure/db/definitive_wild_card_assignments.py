@@ -290,6 +290,67 @@ def load_saved_definitive_wild_card_assignments(
     return assignments
 
 
+def remap_saved_definitive_wild_card_assignments_component(
+    payload: dict,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    frozen_fingerprint_map: dict[str, str],
+) -> tuple[dict | None, dict[str, tuple[str, str]]]:
+    """Retarget definitive WC assignments through mapped WC + Entry Field identity."""
+
+    source = load_saved_definitive_wild_card_assignments(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if source is None:
+        return None, {}
+
+    target = []
+    identity_map: dict[str, tuple[str, str]] = {}
+    for assignment in source:
+        try:
+            target_wc_fingerprint = frozen_fingerprint_map[
+                assignment.source_wild_card_authority_fingerprint
+            ]
+        except KeyError as exc:
+            raise ValueError(
+                "Definitive Wild Card assignment references WC authority without a target mapping"
+            ) from exc
+        try:
+            target_entry_field_fingerprint = frozen_fingerprint_map[
+                assignment.source_entry_field_fingerprint
+            ]
+        except KeyError as exc:
+            raise ValueError(
+                "Definitive Wild Card assignment references Entry Field without a target mapping"
+            ) from exc
+
+        mapped = assignment.model_copy(
+            update={
+                "branch_id": target_branch_id,
+                "source_wild_card_authority_fingerprint": target_wc_fingerprint,
+                "source_entry_field_fingerprint": target_entry_field_fingerprint,
+            }
+        )
+        target.append(mapped)
+        identity_map[assignment.fingerprint] = (
+            mapped.source_evidence_id,
+            mapped.fingerprint,
+        )
+
+    target_tuple = tuple(target)
+    return (
+        {
+            "fingerprint": _component_fingerprint(target_tuple),
+            "assignments": [item.model_dump(mode="json") for item in target_tuple],
+        },
+        identity_map,
+    )
+
+
 def restore_saved_definitive_wild_card_assignments(
     session: Session,
     *,

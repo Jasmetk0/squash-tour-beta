@@ -160,7 +160,7 @@ def test_saved_application_trigger_remaps_to_target_submission_evidence(database
 
 
 @pytest.mark.pr_critical
-def test_saved_wild_card_trigger_requires_separate_fork_evidence_mapping(database):
+def test_saved_wild_card_trigger_remaps_to_target_assignment_evidence(database):
     trigger = _trigger(
         trigger_kind="definitive_wild_card_assignment",
         source_evidence_id="wc-assignment",
@@ -175,23 +175,64 @@ def test_saved_wild_card_trigger_requires_separate_fork_evidence_mapping(databas
             branch_id="branch",
         )
 
+    target_assignment_fingerprint = "b" * 64
+    component, fingerprint_map = remap_saved_tour_entry_triggers_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        application_submission_identity_map={},
+        definitive_wild_card_assignment_identity_map={
+            trigger.source_evidence_fingerprint: (
+                trigger.source_evidence_id,
+                target_assignment_fingerprint,
+            )
+        },
+    )
+    assert component is not None
+    target_payload = {"content": {PLAYER_TOUR_ENTRY_COMPONENT_KEY: component}}
+    target = load_saved_tour_entry_triggers(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None and len(target) == 1
+    mapped = target[0]
+    assert mapped.branch_id == "target"
+    assert mapped.source_evidence_id == trigger.source_evidence_id
+    assert mapped.source_evidence_fingerprint == target_assignment_fingerprint
+    assert fingerprint_map == {trigger.fingerprint: mapped.fingerprint}
+
     with pytest.raises(
         ValueError,
-        match="requires a separate target evidence remap",
+        match="definitive Wild Card assignment without a target mapping",
     ):
         remap_saved_tour_entry_triggers_component(
             payload,
             run_id="run",
             source_branch_id="branch",
             target_branch_id="target",
-            application_submission_identity_map={
-                trigger.source_evidence_fingerprint: (
-                    trigger.source_evidence_id,
-                    "b" * 64,
-                ),
-            },
+            application_submission_identity_map={},
+            definitive_wild_card_assignment_identity_map={},
         )
 
+    with pytest.raises(
+        ValueError,
+        match="evidence id differs from mapped definitive Wild Card assignment",
+    ):
+        remap_saved_tour_entry_triggers_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            application_submission_identity_map={},
+            definitive_wild_card_assignment_identity_map={
+                trigger.source_evidence_fingerprint: (
+                    "different-wc-assignment",
+                    target_assignment_fingerprint,
+                )
+            },
+        )
 
 @pytest.mark.pr_critical
 def test_saved_component_round_trip_restores_exact_trigger_history(database):

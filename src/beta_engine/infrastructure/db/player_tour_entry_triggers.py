@@ -200,8 +200,11 @@ def remap_saved_tour_entry_triggers_component(
     source_branch_id: str,
     target_branch_id: str,
     application_submission_identity_map: dict[str, tuple[str, str]],
+    definitive_wild_card_assignment_identity_map: dict[
+        str, tuple[str, str]
+    ] | None = None,
 ) -> tuple[dict | None, dict[str, str]]:
-    """Retarget first Tour-entry triggers backed by valid application submissions."""
+    """Retarget first Tour-entry triggers through explicit target evidence identity."""
 
     source = load_saved_tour_entry_triggers(
         payload,
@@ -211,28 +214,37 @@ def remap_saved_tour_entry_triggers_component(
     if source is None:
         return None, {}
 
+    wc_identity_map = definitive_wild_card_assignment_identity_map or {}
     target = []
     fingerprint_map: dict[str, str] = {}
     for trigger in source:
-        if trigger.trigger_kind != "valid_tournament_application":
+        if trigger.trigger_kind == "valid_tournament_application":
+            identity_map = application_submission_identity_map
+            evidence_label = "application submission"
+        elif trigger.trigger_kind == "definitive_wild_card_assignment":
+            identity_map = wc_identity_map
+            evidence_label = "definitive Wild Card assignment"
+        else:
             raise ValueError(
                 "Player Tour-entry trigger kind requires a separate target evidence remap"
             )
+
         try:
-            (
-                target_source_evidence_id,
-                target_source_fingerprint,
-            ) = application_submission_identity_map[
+            target_source_evidence_id, target_source_fingerprint = identity_map[
                 trigger.source_evidence_fingerprint
             ]
         except KeyError as exc:
             raise ValueError(
-                "Player Tour-entry trigger references application submission "
-                "without a target mapping"
+                f"Player Tour-entry trigger references {evidence_label} without a target mapping"
             ) from exc
         if trigger.source_evidence_id != target_source_evidence_id:
+            if trigger.trigger_kind == "valid_tournament_application":
+                raise ValueError(
+                    "Player Tour-entry trigger application id differs from mapped submission"
+                )
             raise ValueError(
-                "Player Tour-entry trigger application id differs from mapped submission"
+                "Player Tour-entry trigger evidence id differs from mapped "
+                "definitive Wild Card assignment"
             )
         mapped = trigger.model_copy(
             update={
@@ -251,7 +263,6 @@ def remap_saved_tour_entry_triggers_component(
         },
         fingerprint_map,
     )
-
 
 def restore_saved_tour_entry_triggers(
     session: Session,

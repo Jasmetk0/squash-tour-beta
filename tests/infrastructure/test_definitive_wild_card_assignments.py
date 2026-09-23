@@ -30,6 +30,7 @@ from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
     capture_saved_definitive_wild_card_assignments,
     load_saved_definitive_wild_card_assignments,
     record_definitive_wild_card_assignment,
+    remap_saved_definitive_wild_card_assignments_component,
     restore_saved_definitive_wild_card_assignments,
 )
 
@@ -248,6 +249,74 @@ def test_wc_assignment_identity_conflict_does_not_change_first_trigger(database)
             branch_id="branch",
             player_id="prospect-1",
         ) == first.to_tour_entry_trigger()
+
+
+@pytest.mark.pr_critical
+def test_saved_definitive_wc_remaps_branch_and_frozen_source_identity(database):
+    assignment = _assignment()
+    payload = {"content": {}}
+    with database.begin() as session:
+        DefinitiveWildCardAssignmentStore(session).append(assignment)
+        capture_saved_definitive_wild_card_assignments(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_wc_fingerprint = "c" * 64
+    target_field_fingerprint = "d" * 64
+    component, identity_map = remap_saved_definitive_wild_card_assignments_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        frozen_fingerprint_map={
+            assignment.source_wild_card_authority_fingerprint: target_wc_fingerprint,
+            assignment.source_entry_field_fingerprint: target_field_fingerprint,
+        },
+    )
+    assert component is not None
+    target_payload = {
+        "content": {DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY: component}
+    }
+    target = load_saved_definitive_wild_card_assignments(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None and len(target) == 1
+    mapped = target[0]
+    assert mapped.branch_id == "target"
+    assert mapped.source_evidence_id == assignment.source_evidence_id
+    assert mapped.source_wild_card_authority_fingerprint == target_wc_fingerprint
+    assert mapped.source_entry_field_fingerprint == target_field_fingerprint
+    assert mapped.fingerprint != assignment.fingerprint
+    assert identity_map == {
+        assignment.fingerprint: (mapped.source_evidence_id, mapped.fingerprint)
+    }
+
+    with pytest.raises(ValueError, match="WC authority without a target mapping"):
+        remap_saved_definitive_wild_card_assignments_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            frozen_fingerprint_map={
+                assignment.source_entry_field_fingerprint: target_field_fingerprint,
+            },
+        )
+
+    with pytest.raises(ValueError, match="Entry Field without a target mapping"):
+        remap_saved_definitive_wild_card_assignments_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            frozen_fingerprint_map={
+                assignment.source_wild_card_authority_fingerprint: target_wc_fingerprint,
+            },
+        )
 
 
 @pytest.mark.pr_critical

@@ -113,7 +113,7 @@ function drawSlotLabel(slot: {
   if (slot.entrant_kind === 'bye') return `#${slot.slot_index} · BYE`
   const identity = slot.player_id ?? slot.placeholder_id ?? 'Unknown'
   const seed = slot.seed_number == null ? '' : ` · seed ${slot.seed_number}`
-  const status = slot.entry_status == null ? '' : ` · ${slot.entry_status.replaceAll('_', ' ')}`
+  const status = slot.entry_status == null ? '' : ` · ${slot.entry_status.replace(/_/g, ' ')}`
   return `#${slot.slot_index} · ${identity}${seed}${status}`
 }
 

@@ -1,5 +1,62 @@
 # Current implementation and next action
 
+## Active handoff — 23 September 2026, after #965
+
+Implementation baseline: `buuk` commit `26d46ea6b5c457622a108f4fb819d03efdb3dd8a`.
+This checkpoint takes precedence over older implementation-status/next-step
+paragraphs below; it does not override product rules. The older entries are retained
+as historical evidence, not a claim that every past limitation still applies.
+
+### Audit evidence and limits
+
+- Inventory: #730–#965, 236 PRs; 218 merged, 17 closed unmerged, #951 open.
+  All merged PR final heads had successful Fast CI when checked. This is not
+  exhaustive code-review or full-regression clearance. #742/#860/#864 were
+  intermediate-branch merges; their changes were subsequently landed by
+  #744/#865/#866. Do not equate a PR's merged label with arrival on buuk.
+- Completed local checks: 108 selected frontend tests and production web build;
+  26 tests from #951 against the current implementation. Broader backend runs
+  were interrupted by environment failure; no full backend/season/release pass
+  is claimed. Existing revision tests also have failing expectations requiring
+  classification against current contracts, not blind deletion.
+- #951 has a CURRENT_STATE merge conflict at this baseline. Its tests passing
+  locally does not make the PR merge-ready; update/revalidate its final head.
+
+### Confirmed boundaries to address
+
+1. Viewer #961–#965 still calls `get_viewer_official_run_context`, requiring
+   legacy SimulationRun/checkpoint bindings. Real HTTP reads from a newly
+   created canonical Product Run returned 409, including an installed canonical
+   Entry Field. Resolve Viewer context from canonical saved Run/Branch identity.
+2. New Viewer projections read live authority tables rather than the selected
+   Branch's last Saved Revision. A legacy-backed HTTP reproduction exposed a
+   newly generated Draw with no Saved Revision before or after generation.
+   Apply Master §8.1 / PAQ-014: draft changes remain invisible until explicit Save.
+   Enforce saved public-time/announcement boundaries as well as branch scope.
+3. Materialized ranking/history fork adapters exist, but repository branch
+   creation explicitly rejects Saved Revisions containing `initial_world`
+   (and guards Season Closure). Full sporting-world forks are not complete.
+4. Direct targeted simulation-test collection hits a circular import:
+   authoritative_slot_matches -> db/__init__ -> repositories ->
+   player_slot_fork_remap -> tournament_draw_revision ->
+   tournament_lucky_loser_authority -> authoritative_slot_matches.
+   Initializing the app first bypassed it; that workaround is not a fix.
+
+Static follow-ups, **not reproduced failures**: verify Full Simulation abandonment
+during an already-running request (later child scheduling does not consistently
+check abandoned status); verify continuation of an earlier Branch inside a globally
+Completed Run against the Season Transition/Full Simulation status guards.
+
+### Immediate implementation objective
+
+Repair the shared canonical Viewer Saved Revision boundary first. Prove with real
+HTTP/file-backed SQLite: a saved canonical Run needs no legacy binding; unsaved
+ranking/Entry/Draw/WC changes remain invisible; Save exposes the exact new state;
+saved Viewer Branch switching, reopen, historical visibility and corruption guards
+remain correct. Keep absent public data unavailable rather than falling back to
+live Admin tables. Preserve deterministic sporting behavior. Recheck this priority
+against current buuk before implementation.
+
 Re-audited 22 September 2026 from merged PR #940 on `buuk`, plus the
 current bounded Main-entry provenance fork/recovery guard. The audit compares merged
 code against the canonical Master Vision instead of treating PR descriptions or Fast CI

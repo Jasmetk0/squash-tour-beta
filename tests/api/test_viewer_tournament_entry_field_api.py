@@ -3,21 +3,94 @@ from __future__ import annotations
 import pytest
 from urllib.parse import quote
 
-from tests.api.test_admin_tournament_entry_fields_api import _install_entry_field
+from tests.api.test_admin_tournament_entry_fields_api import (
+    _application,
+    _ranking_snapshot,
+)
 from test_simulation_api import ApiServer, _request
 from test_visible_prospects_api import _canonical_run
+
+from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
+from beta_engine.infrastructure.db import (
+    DatabaseSettings,
+    SimulationPersistenceRepository,
+    create_session_factory,
+    create_sqlite_engine,
+)
+from beta_engine.infrastructure.db.models import PublishedOfficialRankingModel
+from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
+from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
+    TournamentRankingSnapshotAuthorityStore,
+)
+
+
+def _repository(database_url: str) -> SimulationPersistenceRepository:
+    engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    return SimulationPersistenceRepository(
+        engine=engine,
+        session_factory=create_session_factory(engine),
+    )
+
+
+def _install_viewer_entry_field(
+    *,
+    database_url: str,
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+):
+    snapshot = _ranking_snapshot(run_id=run_id, branch_id=branch_id)
+    applications = (
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="A", window="main"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="C", window="main"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="D", window="main"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="B", window="qualification"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="E", window="qualification"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="F", window="qualification"),
+        _application(run_id=run_id, branch_id=branch_id, event_id=event_id, player_id="G", window="qualification"),
+    )
+    repository = _repository(database_url)
+    with repository._session_factory.begin() as session:
+        session.add(
+            PublishedOfficialRankingModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=snapshot.week.ordinal,
+                snapshot_fingerprint=snapshot.fingerprint,
+                payload_json=snapshot.model_dump_json(),
+            )
+        )
+        session.flush()
+        TournamentRankingSnapshotAuthorityStore(session).adopt(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            ranking_week=snapshot.week,
+            command_id="adopt-viewer-ranking",
+        )
+        return TournamentEntryFieldStore(session).stage_initial(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            applications=applications,
+            capacity=TournamentEntryFieldCapacity(
+                main_draw_size=4,
+                qualification_draw_size=2,
+                qualifier_spots=1,
+            ),
+            command_id="initial-viewer-field",
+        )
 
 
 @pytest.mark.pr_critical
 def test_viewer_entry_field_projects_selected_branch_public_sporting_state(tmp_path) -> None:
-    with ApiServer(
-        database_url=f"sqlite:///{tmp_path / 'viewer-entry-field.sqlite'}"
-    ) as server:
+    database_url = f"sqlite:///{tmp_path / 'viewer-entry-field.sqlite'}"
+    with ApiServer(database_url=database_url) as server:
         run_id = "run"
         branch_id, _ = _canonical_run(server, run_id)
         event_id = "viewer-event"
-        field = _install_entry_field(
-            server,
+        field = _install_viewer_entry_field(
+            database_url=database_url,
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,

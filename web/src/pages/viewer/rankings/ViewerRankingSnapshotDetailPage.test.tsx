@@ -10,10 +10,6 @@ const api = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../api/client', () => api)
-vi.mock('../../../viewer/ViewerProductRunRouteContext', () => ({
-  useViewerProductRunRouteContext: () => ({ productRunId: 'run alpha' })
-}))
-
 function renderDetail(route = '/viewer/runs/run%20alpha/rankings/1'): void {
   renderWithViewerProviders(
     <Routes>

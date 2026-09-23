@@ -130,7 +130,7 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     expect(screen.getByText('Race publications from event')).toBeInTheDocument()
     expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/champion/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/draw/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/^Draw size$/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

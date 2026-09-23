@@ -27,6 +27,16 @@ coherent vertical slice per PR; prefer integration blockers over isolated polish
 Update current-state evidence when its boundary changes, and consolidate Master
 updates at checkpoints/on request. Return the complete Master after changing it.
 Consider an integration checkpoint after 5–10 significant PRs or a subsystem.
+In the ordinary ChatGPT + Codex workflow, ChatGPT owns planning, Master continuity
+and review coordination; Codex owns repository implementation, debugging, tests and
+PR preparation. The user owns product decisions and merge. Prepare one complete
+Codex task at a time; do not duplicate implementation in both environments.
+Pre-alpha scope comes from the entire Master, especially chapter 31, not merely
+the current integration path. Include decided rules and sufficiently specified
+strong directions; preserve PROVISIONAL/OPEN/DEFERRED labels. Resolve necessary
+product gaps with the user and reconcile the complete pre-alpha Master before
+release. Follow docs/PRE_ALPHA_TEST_POLICY.md for focused PR checks and full
+internal-release gates; never present red/pending final-head checks as merge-ready.
 Do not claim full integration from mocks or green smoke CI. For risky changes,
 perform a distinct adversarial review pass. Technical/documentation choices are
 autonomous; genuinely open product mechanics require the owner's decision.

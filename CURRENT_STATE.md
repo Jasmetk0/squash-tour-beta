@@ -1869,3 +1869,8 @@ Viewer Tournament Detail can now resolve the selected Viewer Branch's canonical 
 ### Canonical Viewer Tournament Draw
 
 Viewer Tournament Detail now resolves the selected Viewer Branch's effective canonical Tournament Draw. Main and Qualification slot composition, seeds, BYEs, qualifier/LL placeholders and public WC/LL slot status are exposed from Branch-owned Draw authority, including the current effective bracket after append-only revisions. Command IDs, fingerprints, draw seed/algorithm internals, idealized slot metadata and revision provenance remain Admin-only. See `docs/VIEWER_TOURNAMENT_DRAW_V1.md`.
+
+
+### Canonical Viewer definitive Wild Cards
+
+Viewer Tournament Detail now exposes only persisted definitive WC/RWC assignments from the selected Viewer Branch. Public output includes WC slot, player identity, original-vs-reserve source and RWC ordinal where applicable. Preliminary nominations, unfilled slots, Admin review metadata, fingerprints, chronology/provenance and first-Tour-entry trigger internals remain hidden. An event with no definitive WC assignment returns an empty canonical public collection rather than using legacy wildcard action logs. See `docs/VIEWER_TOURNAMENT_WILD_CARDS_V1.md`.

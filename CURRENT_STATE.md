@@ -1849,3 +1849,8 @@ Definitive Wild Card assignments as well as valid tournament applications:
 The installation dependency is now Entry Slot → Application Validation → Application
 Submission plus coupled tournament/Simulation identity → Definitive Wild Card Assignment
 → Player Tour-entry Trigger. No generic fingerprint substitution is used.
+
+
+## Canonical Viewer Official Ranking
+
+Viewer can now resolve the selected Viewer Branch's current published Official Ranking directly from canonical Run/Branch persistence. The read model binds the exact `AuthoritativeWorldState.current_ordinal` to the matching `PublishedOfficialRanking`, validates the trusted stored fingerprint and exposes only rank/player/points plus public week/policy metadata. Persisted later-week publications are ignored until the public world head advances, so precomputed future evidence cannot leak into Viewer. The top-level MSA Rankings page consumes this canonical projection instead of using legacy SimulationRun ranking snapshots as its current-ranking authority. Historical canonical ranking navigation remains a follow-up. See `docs/VIEWER_OFFICIAL_RANKING_V1.md`.

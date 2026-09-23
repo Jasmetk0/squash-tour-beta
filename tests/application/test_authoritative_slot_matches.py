@@ -6711,6 +6711,7 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
     ).count() == 1
 
 
+@pytest.mark.pr_critical
 def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
     session, _, _, _, _ = run_semifinals(
         tmp_path / "materialized-fork-mixed-restore.sqlite",

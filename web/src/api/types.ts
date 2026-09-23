@@ -6847,6 +6847,25 @@ export type ViewerOfficialRanking = {
   rows: ViewerOfficialRankingRow[]
 }
 
+export type ViewerOfficialRankingHistoryItem = {
+  season_index: number
+  week: number
+  week_ordinal: number
+  snapshot_fingerprint: string
+  policy_id: string
+  best_n: number
+  row_count: number
+}
+
+export type ViewerOfficialRankingHistory = {
+  schema_version: 'viewer_official_ranking_history.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  public_head_ordinal: number
+  publication_count: number
+  publications: ViewerOfficialRankingHistoryItem[]
+}
+
 export type ViewerOfficialRunContext = {
   product_run_id: string
   product_run_display_name: string

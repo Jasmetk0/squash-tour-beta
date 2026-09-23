@@ -186,6 +186,7 @@ from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
     DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
     capture_saved_definitive_wild_card_assignments,
     load_saved_definitive_wild_card_assignments,
+    remap_saved_definitive_wild_card_assignments_component,
     restore_saved_definitive_wild_card_assignments,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
@@ -2632,6 +2633,7 @@ class SimulationPersistenceRepository:
                         RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY,
                         APPLICATION_VALIDATION_SLOT_COMPONENT_KEY,
                         TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
+                        DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
@@ -2893,18 +2895,6 @@ class SimulationPersistenceRepository:
                             source_to_target_validation_authority
                         ),
                     )
-                    (
-                        remapped_tour_entry_component,
-                        _source_to_target_tour_entry_trigger,
-                    ) = remap_saved_tour_entry_triggers_component(
-                        source_revision.payload,
-                        run_id=run_id,
-                        source_branch_id=source_branch_id,
-                        target_branch_id=branch_id,
-                        application_submission_identity_map=(
-                            source_to_target_application_submission
-                        ),
-                    )
                     if remapped_entry_component is not None:
                         target_payload["content"][
                             RUN_ENTRY_DECISION_SLOT_COMPONENT_KEY
@@ -2917,11 +2907,6 @@ class SimulationPersistenceRepository:
                         target_payload["content"][
                             TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY
                         ] = remapped_submission_component
-                    if remapped_tour_entry_component is not None:
-                        target_payload["content"][
-                            PLAYER_TOUR_ENTRY_COMPONENT_KEY
-                        ] = remapped_tour_entry_component
-
                     coupled_player_slot = None
                     if SIMULATION_SLOT_COMPONENT_KEY in source_content:
                         try:
@@ -2963,6 +2948,44 @@ class SimulationPersistenceRepository:
                                 "Simulation Slot Saved Revision requires captured "
                                 "player sporting history for Branch remapping"
                             )
+
+                    (
+                        remapped_definitive_wc_component,
+                        source_to_target_definitive_wc_assignment,
+                    ) = remap_saved_definitive_wild_card_assignments_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        frozen_fingerprint_map=(
+                            coupled_player_slot.frozen_fingerprints
+                            if coupled_player_slot is not None
+                            else {}
+                        ),
+                    )
+                    (
+                        remapped_tour_entry_component,
+                        _source_to_target_tour_entry_trigger,
+                    ) = remap_saved_tour_entry_triggers_component(
+                        source_revision.payload,
+                        run_id=run_id,
+                        source_branch_id=source_branch_id,
+                        target_branch_id=branch_id,
+                        application_submission_identity_map=(
+                            source_to_target_application_submission
+                        ),
+                        definitive_wild_card_assignment_identity_map=(
+                            source_to_target_definitive_wc_assignment
+                        ),
+                    )
+                    if remapped_definitive_wc_component is not None:
+                        target_payload["content"][
+                            DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY
+                        ] = remapped_definitive_wc_component
+                    if remapped_tour_entry_component is not None:
+                        target_payload["content"][
+                            PLAYER_TOUR_ENTRY_COMPONENT_KEY
+                        ] = remapped_tour_entry_component
 
                     remapped_sporting_component = (
                         coupled_player_slot.sporting_component
@@ -3033,6 +3056,20 @@ class SimulationPersistenceRepository:
                         except ValueError as exc:
                             raise SavedRevisionBranchForkConflictError(
                                 "remapped application submissions could not be installed: "
+                                f"{exc}"
+                            ) from exc
+                    if remapped_definitive_wc_component is not None:
+                        try:
+                            restore_saved_definitive_wild_card_assignments(
+                                session,
+                                current_payload={"content": {}},
+                                target_payload=target_payload,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped definitive Wild Card assignments could not be installed: "
                                 f"{exc}"
                             ) from exc
                     if remapped_tour_entry_component is not None:

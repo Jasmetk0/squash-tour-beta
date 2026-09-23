@@ -4,7 +4,8 @@ import pytest
 from urllib.parse import quote
 
 from tests.api.test_admin_tournament_entry_fields_api import _install_entry_field
-from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
+from test_simulation_api import ApiServer, _request
+from test_visible_prospects_api import _canonical_run
 
 
 @pytest.mark.pr_critical
@@ -12,10 +13,8 @@ def test_viewer_entry_field_projects_selected_branch_public_sporting_state(tmp_p
     with ApiServer(
         database_url=f"sqlite:///{tmp_path / 'viewer-entry-field.sqlite'}"
     ) as server:
-        run_id, branch_id, _ = _create_run(
-            server,
-            display_name="Viewer Entry Field",
-        )
+        run_id = "run"
+        branch_id, _ = _canonical_run(server, run_id)
         event_id = "viewer-event"
         field = _install_entry_field(
             server,
@@ -60,10 +59,8 @@ def test_viewer_entry_field_returns_not_found_when_selected_branch_has_no_field(
     with ApiServer(
         database_url=f"sqlite:///{tmp_path / 'viewer-entry-field-missing.sqlite'}"
     ) as server:
-        run_id, _, _ = _create_run(
-            server,
-            display_name="Viewer Entry Field Missing",
-        )
+        run_id = "run"
+        _canonical_run(server, run_id)
 
         status, _ = _request(
             "GET",

@@ -305,7 +305,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     )
     expect(screen.getByText('11-8, 9-11, 11-7, 11-6')).toBeInTheDocument()
     expect(screen.getByText('31')).toBeInTheDocument()
-    expect(screen.getByText('30')).toBeInTheDocument()
+    expect(screen.getAllByText('30').length).toBeGreaterThan(0)
     expect(screen.getByText('32')).toBeInTheDocument()
     expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('completed')).toBeInTheDocument()

@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerTournamentEntryField, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -100,6 +100,21 @@ function completionStatus(event: EventRecord, completedEventIds: Set<string>): s
 
 function displayValue(value: unknown): number | string {
   return safeText(value)
+}
+
+function drawSlotLabel(slot: {
+  slot_index: number
+  entrant_kind: string
+  player_id: string | null
+  placeholder_id: string | null
+  seed_number: number | null
+  entry_status: string | null
+}): string {
+  if (slot.entrant_kind === 'bye') return `#${slot.slot_index} · BYE`
+  const identity = slot.player_id ?? slot.placeholder_id ?? 'Unknown'
+  const seed = slot.seed_number == null ? '' : ` · seed ${slot.seed_number}`
+  const status = slot.entry_status == null ? '' : ` · ${slot.entry_status.replaceAll('_', ' ')}`
+  return `#${slot.slot_index} · ${identity}${seed}${status}`
 }
 
 function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
@@ -218,6 +233,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const entryFieldQuery = useQuery({
     queryKey: ['viewer-tournament-entry-field', runId, eventId],
     queryFn: () => getViewerTournamentEntryField(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
+  const drawQuery = useQuery({
+    queryKey: ['viewer-tournament-draw', runId, eventId],
+    queryFn: () => getViewerTournamentDraw(runId, eventId),
     enabled: Boolean(runId && eventId),
     retry: false
   })
@@ -365,6 +386,48 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                       { label: 'Withdrawn', value: entryFieldQuery.data.withdrawn_player_ids.length ? entryFieldQuery.data.withdrawn_player_ids.join(', ') : 'None' }
                     ]}
                   />
+                </>
+              ) : null}
+            </SectionCard>
+          ) : null}
+
+          {event ? (
+            <SectionCard title="Canonical Draw">
+              {drawQuery.isLoading ? <p className="status">Loading canonical Draw…</p> : null}
+              {drawQuery.error && !isApiNotFound(drawQuery.error) ? (
+                <p className="error">Failed to load canonical Draw: {formatApiError(drawQuery.error)}</p>
+              ) : null}
+              {isApiNotFound(drawQuery.error) ? (
+                <EmptyState message="Canonical Draw is not available for this tournament yet." />
+              ) : null}
+              {drawQuery.data ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Viewer Branch', value: drawQuery.data.viewer_branch_id },
+                      { label: 'Draw revisions', value: drawQuery.data.revision_count },
+                      { label: 'Main bracket size', value: drawQuery.data.main.bracket_size },
+                      { label: 'Qualification sections', value: drawQuery.data.qualification_sections.length }
+                    ]}
+                  />
+                  <div>
+                    <strong>Main slots</strong>
+                    <ul className="item-list" aria-label="Canonical Main draw slots">
+                      {drawQuery.data.main.slots.map((slot) => (
+                        <li key={slot.slot_index}>{drawSlotLabel(slot)}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  {drawQuery.data.qualification_sections.map((section, index) => (
+                    <div key={section.section_id ?? `qualification-${index + 1}`}>
+                      <strong>{section.section_id ? `Qualification ${section.section_id}` : 'Qualification'}</strong>
+                      <ul className="item-list" aria-label={section.section_id ? `Canonical Qualification ${section.section_id} slots` : 'Canonical Qualification slots'}>
+                        {section.slots.map((slot) => (
+                          <li key={slot.slot_index}>{drawSlotLabel(slot)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
                 </>
               ) : null}
             </SectionCard>

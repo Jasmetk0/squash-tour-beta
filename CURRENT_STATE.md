@@ -1854,3 +1854,8 @@ Submission plus coupled tournament/Simulation identity → Definitive Wild Card 
 ## Canonical Viewer Official Ranking
 
 Viewer can now resolve the selected Viewer Branch's current published Official Ranking directly from canonical Run/Branch persistence. The read model binds the exact `AuthoritativeWorldState.current_ordinal` to the matching `PublishedOfficialRanking`, validates the trusted stored fingerprint and exposes only rank/player/points plus public week/policy metadata. Persisted later-week publications are ignored until the public world head advances, so precomputed future evidence cannot leak into Viewer. The top-level MSA Rankings page consumes this canonical projection instead of using legacy SimulationRun ranking snapshots as its current-ranking authority. Historical canonical ranking navigation remains a follow-up. See `docs/VIEWER_OFFICIAL_RANKING_V1.md`.
+
+
+### Canonical Viewer ranking history
+
+Run-scoped Viewer ranking history and detail now consume the selected Viewer Branch's validated `PublishedOfficialRanking` chain directly. History is bounded by `AuthoritativeWorldState.current_ordinal`, validates every stored publication payload/fingerprint and sorts newest-first; detail rejects future ordinals. The existing ranking Viewer URLs remain stable while their backing authority is no longer the legacy SimulationRun ranking-snapshot store. Race still uses the legacy snapshot reader and remains a separate migration slice.

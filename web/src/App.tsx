@@ -24,6 +24,7 @@ import {
 import { ViewerHomePage } from './pages/viewer/ViewerHomePage'
 import { ViewerRunBrowserPage } from './pages/viewer/ViewerRunBrowserPage'
 import {
+  ViewerOfficialRankingHistoryPage,
   ViewerRankingSnapshotDetailPage,
   ViewerRankingsPage,
   ViewerRacePage,
@@ -238,7 +239,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/history" element={<ViewerHistoryPage />} />
         <Route path="viewer/runs" element={<ViewerRunBrowserPage />} />
         <Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}>
-        <Route path="rankings" element={<ViewerRunSnapshotListPage mode="ranking" />} />
+        <Route path="rankings" element={<ViewerOfficialRankingHistoryPage />} />
         <Route path="rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
         <Route path="race" element={<ViewerRunSnapshotListPage mode="race" />} />
         <Route path="race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />

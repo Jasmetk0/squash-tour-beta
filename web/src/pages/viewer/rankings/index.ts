@@ -4,3 +4,5 @@ export { ViewerSnapshotLandingPage } from './ViewerSnapshotLandingPage'
 export type { ViewerSnapshotLandingConfig, ViewerSnapshotLandingMode } from './ViewerSnapshotLandingPage'
 export { ViewerRankingSnapshotDetailPage } from './ViewerRankingSnapshotDetailPage'
 export { ViewerRaceSnapshotDetailPage } from './ViewerRaceSnapshotDetailPage'
+
+export { ViewerOfficialRankingHistoryPage } from './ViewerOfficialRankingHistoryPage'

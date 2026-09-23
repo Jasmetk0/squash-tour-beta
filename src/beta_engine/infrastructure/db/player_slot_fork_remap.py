@@ -2537,7 +2537,6 @@ def remap_coupled_player_slot_history(
         terminal_checkpoint_fingerprints=all_terminals,
         sporting_context_fingerprints=sporting_context_fingerprint_map,
         entry_validation_fingerprints=entry_validation_fingerprint_map,
-        frozen_fingerprints=dict(target_frozen_fingerprint_map),
     )
     target_command_rows: list[AuthoritativeSimulationCommandModel] = [
         _retarget_simulation_command_receipt_as_historical(
@@ -2597,4 +2596,5 @@ def remap_coupled_player_slot_history(
         owned_tournament_fingerprints=dict(v1_source_fingerprint_map),
         sporting_context_fingerprints=sporting_context_fingerprint_map,
         entry_validation_fingerprints=entry_validation_fingerprint_map,
+        frozen_fingerprints=dict(target_frozen_fingerprint_map),
     )

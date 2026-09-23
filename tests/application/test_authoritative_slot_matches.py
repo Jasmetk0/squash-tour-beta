@@ -89,6 +89,9 @@ from beta_engine.domain.tournaments.entry_field import (
 from beta_engine.domain.tournaments.wild_card_authority import (
     TournamentWildCardAuthorityBuilder,
 )
+from beta_engine.domain.tournaments.definitive_wild_card_assignment import (
+    DefinitiveWildCardAssignmentAuthority,
+)
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthorityBuilder,
 )
@@ -176,6 +179,21 @@ from beta_engine.infrastructure.db.tournament_draw_process_authority import (
 )
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
+)
+from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
+    DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
+    capture_saved_definitive_wild_card_assignments,
+    load_saved_definitive_wild_card_assignments,
+    record_definitive_wild_card_assignment,
+    remap_saved_definitive_wild_card_assignments_component,
+    restore_saved_definitive_wild_card_assignments,
+)
+from beta_engine.infrastructure.db.player_tour_entry_triggers import (
+    PLAYER_TOUR_ENTRY_COMPONENT_KEY,
+    capture_saved_tour_entry_triggers,
+    load_saved_tour_entry_triggers,
+    remap_saved_tour_entry_triggers_component,
+    restore_saved_tour_entry_triggers,
 )
 from beta_engine.infrastructure.db.tournament_walkover_authority import (
     TournamentWalkoverAuthorityStore,
@@ -6693,6 +6711,7 @@ def test_source_bound_pre_q_revision_materializes_on_target_branch(tmp_path):
     ).count() == 1
 
 
+@pytest.mark.pr_critical
 def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
     session, _, _, _, _ = run_semifinals(
         tmp_path / "materialized-fork-mixed-restore.sqlite",
@@ -6804,6 +6823,19 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         reserve_wild_card_player_ids=("fork-mixed-p5", "fork-mixed-p6"),
     )
     assert source_wc.active_wild_card_player_ids == ("fork-mixed-p4",)
+    source_assignment = DefinitiveWildCardAssignmentAuthority.from_resolution(
+        authority=source_wc,
+        wildcard_index=1,
+        assignment_week=WEEK,
+        decision_slot_ordinal=1,
+        provenance="materialized fork WC first-entry integration",
+    )
+    source_assignment_commit = record_definitive_wild_card_assignment(
+        session,
+        source_assignment,
+    )
+    source_trigger = source_assignment_commit.first_tour_entry_trigger
+    assert source_trigger == source_assignment.to_tour_entry_trigger()
 
     source_input = TournamentDrawInputAuthorityStore(session).commit(
         run_id="run",
@@ -6862,6 +6894,18 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         run_id="run",
         branch_id="branch",
     )
+    capture_saved_definitive_wild_card_assignments(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
+    capture_saved_tour_entry_triggers(
+        session,
+        source_payload,
+        run_id="run",
+        branch_id="branch",
+    )
 
     session.add(
         RunBranchModel(
@@ -6903,10 +6947,34 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         },
     )
     assert remapped is not None
+    (
+        remapped_definitive_wc_component,
+        definitive_wc_identity_map,
+    ) = remap_saved_definitive_wild_card_assignments_component(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        frozen_fingerprint_map=remapped.frozen_fingerprints,
+    )
+    assert remapped_definitive_wc_component is not None
+    remapped_tour_entry_component, _ = remap_saved_tour_entry_triggers_component(
+        source_payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        application_submission_identity_map={},
+        definitive_wild_card_assignment_identity_map=definitive_wc_identity_map,
+    )
+    assert remapped_tour_entry_component is not None
 
     fork_root_payload = {
         "content": {
             "simulation_slot_match_state": remapped.simulation_component,
+            DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY: (
+                remapped_definitive_wc_component
+            ),
+            PLAYER_TOUR_ENTRY_COMPONENT_KEY: remapped_tour_entry_component,
         }
     }
     restore_saved_simulation_slots(
@@ -6916,6 +6984,45 @@ def test_materialized_fork_mixed_revision_restore_equivalence(tmp_path):
         run_id="run",
         branch_id="target",
     )
+    restore_saved_definitive_wild_card_assignments(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    restore_saved_tour_entry_triggers(
+        session,
+        current_payload={"content": {}},
+        target_payload=fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    target_assignments = load_saved_definitive_wild_card_assignments(
+        fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    target_triggers = load_saved_tour_entry_triggers(
+        fork_root_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target_assignments is not None and len(target_assignments) == 1
+    assert target_triggers is not None and len(target_triggers) == 1
+    target_assignment = target_assignments[0]
+    target_trigger = target_triggers[0]
+    assert target_assignment.branch_id == "target"
+    assert target_assignment.source_evidence_id == source_assignment.source_evidence_id
+    assert target_assignment.fingerprint != source_assignment.fingerprint
+    assert target_assignment.source_wild_card_authority_fingerprint == (
+        remapped.frozen_fingerprints[source_wc.fingerprint]
+    )
+    assert target_assignment.source_entry_field_fingerprint == (
+        remapped.frozen_fingerprints[field.fingerprint]
+    )
+    assert target_trigger == target_assignment.to_tour_entry_trigger()
+    assert target_trigger.fingerprint != source_trigger.fingerprint
 
     fork_component = _live_component_with_saved_shape(
         session,

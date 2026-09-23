@@ -6,6 +6,9 @@ import { expectNoForbiddenViewerActions, renderWithViewerProviders } from '../..
 import { ViewerRankingSnapshotDetailPage } from './ViewerRankingSnapshotDetailPage'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error {
+    status = 500
+  },
   getViewerOfficialRankingHistoryDetail: vi.fn()
 }))
 

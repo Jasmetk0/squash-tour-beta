@@ -1172,3 +1172,8 @@ Current and historical MSA Official Ranking reads now share one canonical select
 ### Viewer Entry downstream integration
 
 The first post-ranking downstream Viewer bridge now consumes the selected Viewer Branch's canonical Tournament Entry Field on Tournament Detail. The public projection exposes sporting field composition only and does not leak Admin provenance/fingerprint internals. Tournament event/result history, WC/draw public presentation, Race and Finals remain separate migrations; legacy data is not promoted merely to make those surfaces appear canonical.
+
+
+### Viewer Draw downstream integration
+
+The Viewer tournament downstream chain now reaches canonical Entry Field → effective Draw on the selected Viewer Branch. The Draw projection is sporting-only and revision-aware; it does not expose authority fingerprints, command provenance or generation internals. Public WC-specific presentation, canonical tournament result/history migration, Race and Finals remain separate future slices rather than being inferred from legacy surfaces.

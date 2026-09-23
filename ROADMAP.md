@@ -1167,3 +1167,8 @@ The first historically faithful Viewer ranking bridge now reads the selected Vie
 ### Viewer ranking legacy-detachment follow-up
 
 Current and historical MSA Official Ranking reads now share one canonical selected-Viewer-Branch authority: current head, publication timeline and exact historical detail are all bounded by the public `AuthoritativeWorldState`. The legacy SimulationRun ranking snapshot store is no longer the authority behind the top-level or run-scoped Viewer ranking routes. Race and broader downstream public consumers (Entry/seeding/Finals/statistics) remain separate migrations.
+
+
+### Viewer Entry downstream integration
+
+The first post-ranking downstream Viewer bridge now consumes the selected Viewer Branch's canonical Tournament Entry Field on Tournament Detail. The public projection exposes sporting field composition only and does not leak Admin provenance/fingerprint internals. Tournament event/result history, WC/draw public presentation, Race and Finals remain separate migrations; legacy data is not promoted merely to make those surfaces appear canonical.

@@ -317,7 +317,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getByText('#3 · Q1')).toBeInTheDocument()
     expect(screen.getByText('#4 · P-002 · seed 2 · wild card')).toBeInTheDocument()
     expect(api.getViewerTournamentEntryField).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByText('branch-viewer')).toBeInTheDocument()
+    expect(screen.getAllByText('branch-viewer').length).toBeGreaterThanOrEqual(2)
     expect(screen.getByText('P-001, P-002')).toBeInTheDocument()
     expect(screen.getByText('P-003')).toBeInTheDocument()
     expect(screen.getByText('P-004')).toBeInTheDocument()

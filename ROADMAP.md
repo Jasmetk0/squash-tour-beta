@@ -1162,3 +1162,8 @@ This closes the main recovery-evidence gap left after strict LL/pre-Q fingerprin
 ## Canonical Viewer Official Ranking read model
 
 The first historically faithful Viewer ranking bridge now reads the selected Viewer Branch's exact current published Official Ranking from `AuthoritativeWorldState` + `PublishedOfficialRanking`. It validates stored scope/fingerprint identity and deliberately ignores persisted future publications until the public world head reaches them. The top-level MSA Rankings page renders this current canonical table. Next Viewer ranking work is the historical Branch-owned publication timeline/detail path and then downstream Entry/seeding/Finals public integration; legacy snapshot pages remain compatibility history meanwhile.
+
+
+### Viewer ranking legacy-detachment follow-up
+
+Current and historical MSA Official Ranking reads now share one canonical selected-Viewer-Branch authority: current head, publication timeline and exact historical detail are all bounded by the public `AuthoritativeWorldState`. The legacy SimulationRun ranking snapshot store is no longer the authority behind the top-level or run-scoped Viewer ranking routes. Race and broader downstream public consumers (Entry/seeding/Finals/statistics) remain separate migrations.

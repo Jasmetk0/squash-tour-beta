@@ -193,6 +193,66 @@ def load_saved_tour_entry_triggers(
     return triggers
 
 
+def remap_saved_tour_entry_triggers_component(
+    payload: dict,
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    application_submission_identity_map: dict[str, tuple[str, str]],
+) -> tuple[dict | None, dict[str, str]]:
+    """Retarget first Tour-entry triggers backed by valid application submissions."""
+
+    source = load_saved_tour_entry_triggers(
+        payload,
+        run_id=run_id,
+        branch_id=source_branch_id,
+    )
+    if source is None:
+        return None, {}
+
+    target = []
+    fingerprint_map: dict[str, str] = {}
+    for trigger in source:
+        if trigger.trigger_kind != "valid_tournament_application":
+            raise ValueError(
+                "Player Tour-entry trigger kind requires a separate target evidence remap"
+            )
+        try:
+            (
+                target_source_evidence_id,
+                target_source_fingerprint,
+            ) = application_submission_identity_map[
+                trigger.source_evidence_fingerprint
+            ]
+        except KeyError as exc:
+            raise ValueError(
+                "Player Tour-entry trigger references application submission "
+                "without a target mapping"
+            ) from exc
+        if trigger.source_evidence_id != target_source_evidence_id:
+            raise ValueError(
+                "Player Tour-entry trigger application id differs from mapped submission"
+            )
+        mapped = trigger.model_copy(
+            update={
+                "branch_id": target_branch_id,
+                "source_evidence_fingerprint": target_source_fingerprint,
+            }
+        )
+        target.append(mapped)
+        fingerprint_map[trigger.fingerprint] = mapped.fingerprint
+
+    target_tuple = tuple(target)
+    return (
+        {
+            "fingerprint": _component_fingerprint(target_tuple),
+            "triggers": [item.model_dump(mode="json") for item in target_tuple],
+        },
+        fingerprint_map,
+    )
+
+
 def restore_saved_tour_entry_triggers(
     session: Session,
     *,

@@ -1797,3 +1797,31 @@ Missing Entry Slot or resolved-validation mappings still fail closed; no fingerp
 guessed or text-rewritten. Non-empty downstream application submissions, first-entry
 triggers, and other Entry-pipeline Branch-owned components remain a separate fork-remap
 slice and continue to block materialization until their own identity chains are mapped.
+
+
+
+## Application submission and first Tour-entry Branch-fork identity
+
+Materialized Saved Revision forks now continue the Entry identity chain beyond resolved
+validation for application-backed Tour entry:
+
+- each valid Tournament Application Submission is rebuilt for the target Branch and its
+  `validation_authority_fingerprint` is replaced only through the explicit mapped
+  validation-authority identity from the resolved Entry-validation component;
+- the submission remap exposes source submission fingerprint → target
+  `(application_id, fingerprint)` identity, so downstream consumers can verify both the
+  evidence hash and the stable application id;
+- each `valid_tournament_application` Player Tour-entry trigger is rebuilt for the
+  target Branch from that mapped submission identity;
+- the remapper requires the trigger's `source_evidence_id` to equal the mapped target
+  submission application id and rewrites only the source evidence fingerprint;
+- the resulting target trigger is exactly the canonical
+  `target_submission.to_tour_entry_trigger()` projection.
+
+Fork installation order is now Entry Decision Slot → Resolved Application Validation →
+Application Submission → Player Tour-entry Trigger before the materialized fork becomes
+available.
+
+Tour-entry triggers backed by `definitive_wild_card_assignment` remain fail-closed in
+this slice. Non-empty definitive Wild Card assignment history still requires its own
+source→target authority remap before those triggers can be materialized safely.

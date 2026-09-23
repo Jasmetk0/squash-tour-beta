@@ -18,6 +18,7 @@ from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PlayerTourEntryTriggerStore,
     capture_saved_tour_entry_triggers,
     load_saved_tour_entry_triggers,
+    remap_saved_tour_entry_triggers_component,
     restore_saved_tour_entry_triggers,
 )
 
@@ -97,6 +98,99 @@ def test_tour_entry_store_is_one_time_and_exact_retry_is_idempotent(database):
                     source_evidence_fingerprint="b" * 64,
                 )
             )
+
+
+@pytest.mark.pr_critical
+def test_saved_application_trigger_remaps_to_target_submission_evidence(database):
+    trigger = _trigger()
+    payload = {"content": {}}
+    with database.begin() as session:
+        PlayerTourEntryTriggerStore(session).append(trigger)
+        capture_saved_tour_entry_triggers(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_submission_fingerprint = "b" * 64
+    component, fingerprint_map = remap_saved_tour_entry_triggers_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        application_submission_identity_map={
+            trigger.source_evidence_fingerprint: (
+                trigger.source_evidence_id,
+                target_submission_fingerprint,
+            ),
+        },
+    )
+    assert component is not None
+    target_payload = {"content": {PLAYER_TOUR_ENTRY_COMPONENT_KEY: component}}
+    target = load_saved_tour_entry_triggers(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None and len(target) == 1
+    mapped = target[0]
+    assert mapped.branch_id == "target"
+    assert mapped.player_id == trigger.player_id
+    assert mapped.source_evidence_id == trigger.source_evidence_id
+    assert mapped.source_evidence_fingerprint == target_submission_fingerprint
+    assert fingerprint_map == {trigger.fingerprint: mapped.fingerprint}
+
+    with pytest.raises(
+        ValueError,
+        match="application id differs from mapped submission",
+    ):
+        remap_saved_tour_entry_triggers_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            application_submission_identity_map={
+                trigger.source_evidence_fingerprint: (
+                    "different-application",
+                    target_submission_fingerprint,
+                ),
+            },
+        )
+
+
+@pytest.mark.pr_critical
+def test_saved_wild_card_trigger_requires_separate_fork_evidence_mapping(database):
+    trigger = _trigger(
+        trigger_kind="definitive_wild_card_assignment",
+        source_evidence_id="wc-assignment",
+    )
+    payload = {"content": {}}
+    with database.begin() as session:
+        PlayerTourEntryTriggerStore(session).append(trigger)
+        capture_saved_tour_entry_triggers(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    with pytest.raises(
+        ValueError,
+        match="requires a separate target evidence remap",
+    ):
+        remap_saved_tour_entry_triggers_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            application_submission_identity_map={
+                trigger.source_evidence_fingerprint: (
+                    trigger.source_evidence_id,
+                    "b" * 64,
+                ),
+            },
+        )
 
 
 @pytest.mark.pr_critical

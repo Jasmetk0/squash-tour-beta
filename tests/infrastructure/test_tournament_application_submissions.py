@@ -26,6 +26,7 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
     load_saved_application_submissions,
     record_valid_application_submission,
     record_valid_application_submission_batch,
+    remap_saved_application_submissions_component,
     restore_saved_application_submissions,
 )
 
@@ -270,6 +271,63 @@ def test_application_id_conflict_does_not_change_first_trigger(database):
             branch_id="branch",
             player_id="prospect-1",
         ) == first.to_tour_entry_trigger()
+
+
+@pytest.mark.pr_critical
+def test_saved_submission_remaps_branch_and_validation_fingerprint(database):
+    submission = _submission()
+    payload = {"content": {}}
+    with database.begin() as session:
+        TournamentApplicationSubmissionStore(session).append(submission)
+        capture_saved_application_submissions(
+            session,
+            payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+    target_validation_fingerprint = "b" * 64
+    component, fingerprint_map = remap_saved_application_submissions_component(
+        payload,
+        run_id="run",
+        source_branch_id="branch",
+        target_branch_id="target",
+        validation_fingerprint_map={
+            submission.validation_authority_fingerprint: target_validation_fingerprint,
+        },
+    )
+    assert component is not None
+    target_payload = {
+        "content": {
+            TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY: component,
+        }
+    }
+    target = load_saved_application_submissions(
+        target_payload,
+        run_id="run",
+        branch_id="target",
+    )
+    assert target is not None and len(target) == 1
+    mapped = target[0]
+    assert mapped.branch_id == "target"
+    assert mapped.application_id == submission.application_id
+    assert mapped.validation_authority_id == submission.validation_authority_id
+    assert mapped.validation_authority_fingerprint == target_validation_fingerprint
+    assert fingerprint_map == {
+        submission.fingerprint: (mapped.application_id, mapped.fingerprint)
+    }
+
+    with pytest.raises(
+        ValueError,
+        match="validation authority without a target mapping",
+    ):
+        remap_saved_application_submissions_component(
+            payload,
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="target",
+            validation_fingerprint_map={},
+        )
 
 
 @pytest.mark.pr_critical

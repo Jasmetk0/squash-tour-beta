@@ -1177,3 +1177,8 @@ The first post-ranking downstream Viewer bridge now consumes the selected Viewer
 ### Viewer Draw downstream integration
 
 The Viewer tournament downstream chain now reaches canonical Entry Field → effective Draw on the selected Viewer Branch. The Draw projection is sporting-only and revision-aware; it does not expose authority fingerprints, command provenance or generation internals. Public WC-specific presentation, canonical tournament result/history migration, Race and Finals remain separate future slices rather than being inferred from legacy surfaces.
+
+
+### Viewer Wild Card downstream integration
+
+The selected Viewer Branch now supplies a definitive public WC/RWC projection alongside canonical Entry Field and effective Draw. Only persisted definitive assignments are public; nomination/review state and first-entry/provenance internals stay Admin-side. Canonical tournament results/history, Race and Finals remain separate downstream migrations.

@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn()
@@ -100,6 +101,17 @@ describe('ViewerRunTournamentDetailPage read model', () => {
         ]
       },
       qualification_sections: []
+    })
+    api.getViewerTournamentWildCards.mockResolvedValue({
+      schema_version: 'viewer_tournament_wild_cards.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT/1',
+      assignment_count: 2,
+      assignments: [
+        { wildcard_index: 1, player_id: 'P-WC', source: 'original_wc', reserve_ordinal: null },
+        { wildcard_index: 2, player_id: 'P-RWC', source: 'reserve_wc', reserve_ordinal: 3 }
+      ]
     })
   })
 

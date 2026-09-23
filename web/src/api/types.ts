@@ -6843,6 +6843,22 @@ export type ViewerTournamentEntryField = {
   withdrawn_player_ids: string[]
 }
 
+export type ViewerTournamentWildCardAssignment = {
+  wildcard_index: number
+  player_id: string
+  source: 'original_wc' | 'reserve_wc'
+  reserve_ordinal: number | null
+}
+
+export type ViewerTournamentWildCards = {
+  schema_version: 'viewer_tournament_wild_cards.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  event_id: string
+  assignment_count: number
+  assignments: ViewerTournamentWildCardAssignment[]
+}
+
 export type ViewerTournamentDrawSlot = {
   slot_index: number
   entrant_kind: 'player' | 'qualifier_placeholder' | 'lucky_loser_placeholder' | 'bye'

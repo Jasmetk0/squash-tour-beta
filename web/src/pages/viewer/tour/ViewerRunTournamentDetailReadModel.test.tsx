@@ -17,6 +17,7 @@ const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
+  getViewerTournamentDraw: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn()
@@ -80,6 +81,25 @@ describe('ViewerRunTournamentDetailPage read model', () => {
       qualification_player_ids: ['P-003'],
       alternate_player_ids: ['P-004'],
       withdrawn_player_ids: ['P-099']
+    })
+    api.getViewerTournamentDraw.mockResolvedValue({
+      schema_version: 'viewer_tournament_draw.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT/1',
+      revision_count: 1,
+      main: {
+        draw_type: 'main',
+        section_id: null,
+        bracket_size: 4,
+        slots: [
+          { slot_index: 1, entrant_kind: 'player', player_id: 'P-001', placeholder_id: null, seed_number: 1, entry_status: null },
+          { slot_index: 2, entrant_kind: 'bye', player_id: null, placeholder_id: null, seed_number: null, entry_status: null },
+          { slot_index: 3, entrant_kind: 'qualifier_placeholder', player_id: null, placeholder_id: 'Q1', seed_number: null, entry_status: null },
+          { slot_index: 4, entrant_kind: 'player', player_id: 'P-002', placeholder_id: null, seed_number: 2, entry_status: 'wild_card' }
+        ]
+      },
+      qualification_sections: []
     })
   })
 

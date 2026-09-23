@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
@@ -281,6 +282,17 @@ describe('ViewerRunTournamentDetailPage', () => {
       },
       qualification_sections: []
     })
+    api.getViewerTournamentWildCards.mockResolvedValue({
+      schema_version: 'viewer_tournament_wild_cards.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT-1',
+      assignment_count: 2,
+      assignments: [
+        { wildcard_index: 1, player_id: 'P-WC', source: 'original_wc', reserve_ordinal: null },
+        { wildcard_index: 2, player_id: 'P-RWC', source: 'reserve_wc', reserve_ordinal: 3 }
+      ]
+    })
   })
 
   it('renders parseable tournament result preview with collapsed technical data', async () => {
@@ -310,6 +322,10 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Canonical Draw' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Definitive Wild Cards' })).toBeInTheDocument()
+    expect(api.getViewerTournamentWildCards).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
+    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #1 · P-WC · Original WC')
+    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #2 · P-RWC · Reserve WC #3')
     expect(api.getViewerTournamentDraw).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
     expect(screen.getByRole('list', { name: 'Canonical Main draw slots' })).toBeInTheDocument()
     expect(screen.getByText('#1 · P-001 · seed 1')).toBeInTheDocument()

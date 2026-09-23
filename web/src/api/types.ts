@@ -6843,6 +6843,32 @@ export type ViewerTournamentEntryField = {
   withdrawn_player_ids: string[]
 }
 
+export type ViewerTournamentDrawSlot = {
+  slot_index: number
+  entrant_kind: 'player' | 'qualifier_placeholder' | 'lucky_loser_placeholder' | 'bye'
+  player_id: string | null
+  placeholder_id: string | null
+  seed_number: number | null
+  entry_status: 'wild_card' | 'lucky_loser' | null
+}
+
+export type ViewerTournamentDrawBracket = {
+  draw_type: 'qualification' | 'main'
+  section_id: string | null
+  bracket_size: number
+  slots: ViewerTournamentDrawSlot[]
+}
+
+export type ViewerTournamentDraw = {
+  schema_version: 'viewer_tournament_draw.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  event_id: string
+  revision_count: number
+  main: ViewerTournamentDrawBracket
+  qualification_sections: ViewerTournamentDrawBracket[]
+}
+
 export type ViewerOfficialRankingRow = {
   rank: number
   player_id: string

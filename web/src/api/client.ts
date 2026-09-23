@@ -70,6 +70,7 @@ import type {
   RunContainerListResponse,
   ViewerOfficialRunContext,
   ViewerTournamentEntryField,
+  ViewerTournamentDraw,
   ViewerOfficialRanking,
   ViewerOfficialRankingHistory,
   RunBranch,
@@ -958,6 +959,10 @@ export function getViewerOfficialRanking(productRunId: string): Promise<ViewerOf
 
 export function getViewerTournamentEntryField(productRunId: string, eventId: string): Promise<ViewerTournamentEntryField> {
   return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/entry-field`)
+}
+
+export function getViewerTournamentDraw(productRunId: string, eventId: string): Promise<ViewerTournamentDraw> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/draw`)
 }
 
 export function listViewerOfficialRankingHistory(productRunId: string): Promise<ViewerOfficialRankingHistory> {

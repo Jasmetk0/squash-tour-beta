@@ -9,6 +9,7 @@ import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './Viewe
 const api = vi.hoisted(() => ({
   getEvent: vi.fn(),
   getRun: vi.fn(),
+  getViewerTournamentEntryField: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
   listRaceSnapshots: vi.fn(),
@@ -245,6 +246,21 @@ describe('ViewerRunTournamentDetailPage', () => {
       template_id: 'WT-PLAT',
       tournament_result: { secret_debug_marker: 'event-detail-hidden-payload' }
     })
+    api.getViewerTournamentEntryField.mockResolvedValue({
+      schema_version: 'viewer_tournament_entry_field.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      event_id: 'EVENT-1',
+      field_sequence: 2,
+      mode: 'pre_draw_repair',
+      main_draw_capacity: 32,
+      active_main_entrant_count: 30,
+      effective_main_bye_count: 2,
+      direct_main_player_ids: ['P-001', 'P-002'],
+      qualification_player_ids: ['P-003'],
+      alternate_player_ids: ['P-004'],
+      withdrawn_player_ids: ['P-099']
+    })
   })
 
   it('renders parseable tournament result preview with collapsed technical data', async () => {
@@ -272,6 +288,13 @@ describe('ViewerRunTournamentDetailPage', () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
 
     expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
+    expect(api.getViewerTournamentEntryField).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
+    expect(screen.getByText('branch-viewer')).toBeInTheDocument()
+    expect(screen.getByText('P-001, P-002')).toBeInTheDocument()
+    expect(screen.getByText('P-003')).toBeInTheDocument()
+    expect(screen.getByText('P-004')).toBeInTheDocument()
+    expect(screen.getByText('P-099')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/players/P-001/career'

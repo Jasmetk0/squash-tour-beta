@@ -21,6 +21,10 @@ from beta_engine.infrastructure.db import (
     create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import PublishedOfficialRankingModel
+from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
+    TournamentEntryFieldVersionModel,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
@@ -179,6 +183,70 @@ def test_viewer_entry_field_projects_selected_branch_public_sporting_state(
             field.below_qualification_cut_player_ids
         )
         assert payload["withdrawn_player_ids"] == list(field.withdrawn_player_ids)
+
+        # A successful sporting Viewer GET is a pure read.
+        repository = _repository(database_url)
+        with repository._session_factory() as session:
+            before = (
+                session.query(BranchSavedRevisionModel).count(),
+                session.query(TournamentEntryFieldVersionModel).count(),
+            )
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/tournaments/{event_id}/entry-field",
+            )[0]
+            == 200
+        )
+        with repository._session_factory() as session:
+            assert before == (
+                session.query(BranchSavedRevisionModel).count(),
+                session.query(TournamentEntryFieldVersionModel).count(),
+            )
+
+        admin_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{event_id}/entry-field"
+        )
+        status, repaired = _request(
+            "POST",
+            admin_root + "/pre-draw-withdrawal",
+            {
+                "schema_version": "canonical_pre_draw_withdrawal_command.v1",
+                "command_id": "viewer-live-withdrawal",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "expected_field_fingerprint": field.fingerprint,
+                "withdrawn_player_ids": ["D"],
+            },
+        )
+        assert status == 200
+        assert repaired["field_sequence"] == 2
+
+        # Live sequence B remains invisible until Save.
+        assert (
+            _request(
+                "GET",
+                (
+                    f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                    f"/tournaments/{event_id}/entry-field"
+                ),
+            )[1]
+            == payload
+        )
+        save_simulation(server, run_id, branch_id)
+        status, published_repair = _request(
+            "GET",
+            (
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                f"/tournaments/{event_id}/entry-field"
+            ),
+        )
+        assert status == 200
+        assert published_repair["field_sequence"] == 2
+        assert published_repair["withdrawn_player_ids"] == ["D"]
+        assert published_repair != payload
 
         # Viewer projection deliberately excludes authority/provenance internals.
         assert "field_fingerprint" not in payload

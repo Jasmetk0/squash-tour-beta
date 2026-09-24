@@ -18,6 +18,12 @@ from tests.api.test_viewer_tournament_entry_field_api import (
     _repository,
 )
 from tests.api.viewer_saved_revision_helpers import save_simulation
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
 
 
 @pytest.mark.pr_critical
@@ -105,6 +111,52 @@ def test_viewer_draw_projects_effective_selected_branch_bracket_without_internal
             "nodes",
         ):
             assert forbidden not in serialized
+
+        with repository._session_factory.begin() as session:
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="viewer-live-process",
+                main_process_window_count=5,
+                qualification_process_window_count=3,
+            )
+            revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="viewer-live-redraw",
+                withdrawn_player_ids=("C",),
+                main_process_window_ordinal=1,
+                qualification_process_window_ordinal=1,
+                repair_draw_seed=987654,
+            )
+
+        # The live effective Draw B cannot cross the saved boundary.
+        assert (
+            _request(
+                "GET",
+                (
+                    f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                    f"/tournaments/{event_id}/draw"
+                ),
+            )[1]
+            == payload
+        )
+        save_simulation(server, run_id, branch_id)
+        status, revised = _request(
+            "GET",
+            (
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                f"/tournaments/{event_id}/draw"
+            ),
+        )
+        assert status == 200
+        assert revised["revision_count"] == 1
+        assert revised != payload
+        assert (
+            revision.successor_draw.fingerprint != revision.predecessor_draw_fingerprint
+        )
 
 
 @pytest.mark.pr_critical

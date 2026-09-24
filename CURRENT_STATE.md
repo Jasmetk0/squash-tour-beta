@@ -16,10 +16,12 @@ definitive WC/RWC projections consume only those validated saved components; abs
 components remain unavailable and never fall back to live Admin tables. Nullable
 legacy context fields remain compatibility metadata.
 
-`tests/api/test_viewer_saved_revision_boundary_api.py` exercises the real FastAPI
-stack over file-backed SQLite, including a canonical empty Run with no legacy
-binding, process reopen, absent-component behavior and corrupt Saved Revision hash
-failure. The broader recovery gap remains unchanged: not every sporting authority
+`tests/api/test_viewer_saved_revision_boundary_api.py` and the focused Viewer API
+modules exercise the real FastAPI stack over file-backed SQLite, including a
+canonical Run with no legacy binding, saved-versus-live Ranking/Entry/Draw/WC
+visibility, saved Viewer Branch switching, sporting-data process reopen, pure reads,
+absent components, and revision/component corruption failures. The broader recovery
+gap remains unchanged: not every sporting authority
 family can yet be forked/restored, and InitialWorld/complete-world branch recovery
 is still intentionally guarded rather than silently partial.
 

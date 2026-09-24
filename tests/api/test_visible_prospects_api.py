@@ -258,7 +258,7 @@ def test_viewer_next_gen_uses_lifecycle_visibility_and_never_future_pregeneratio
 
 
 @pytest.mark.pr_critical
-def test_current_viewer_stops_exposing_prospect_after_midweek_tour_entry_but_history_stays_exact(
+def test_legacy_live_prospect_state_is_not_a_viewer_fallback_but_admin_history_stays_exact(
     tmp_path,
 ) -> None:
     path = tmp_path / "visible-prospect-tour-entry.db"
@@ -325,10 +325,9 @@ def test_current_viewer_stops_exposing_prospect_after_midweek_tour_entry_but_his
             "GET",
             f"{server.base_url}/viewer/runs/run/prospects/next-gen",
         )
-        assert status == 200, current
-        assert current["week"] == {"season_index": 0, "week": 2}
-        assert current["total"] == 0
-        assert current["prospects"] == []
+        assert status == 409, current
+        assert current["detail"]["code"] == "prospect_read_model_unavailable"
+        assert "no Saved Revision boundary" in current["detail"]["message"]
 
         # Explicit historical week access remains the exact immutable week-opening
         # snapshot until Time Machine supports a slot-level as-of cursor.

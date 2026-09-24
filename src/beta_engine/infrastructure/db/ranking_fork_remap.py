@@ -13,6 +13,10 @@ import hashlib
 import json
 
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+from beta_engine.application.initial_world import (
+    InitialWorldState,
+    derive_initial_ranking_inputs,
+)
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.ranking_tournament_ingestion import (
     prepare_canonical_tournament_ranking_sources,
@@ -115,7 +119,10 @@ def _remap_publication_world_state(
             raise RankingForkRemapUnsupportedError(
                 "Authoritative world head differs from frozen source ranking history"
             )
-        if not publications or publications[-1]["week_ordinal"] != world["current_ordinal"]:
+        if (
+            not publications
+            or publications[-1]["week_ordinal"] != world["current_ordinal"]
+        ):
             raise RankingForkRemapUnsupportedError(
                 "Authoritative world head is not the latest Official Ranking publication"
             )
@@ -222,9 +229,7 @@ def _remap_point_awards(authority, *, target_branch_id: str, result_fingerprint:
         if award.qualification_point_stage is not None:
             payload["qualification_point_stage"] = award.qualification_point_stage
             payload["qualification_points_awarded"] = award.qualification_points_awarded
-        awards.append(
-            award.model_copy(update={"award_fingerprint": _hash(payload)})
-        )
+        awards.append(award.model_copy(update={"award_fingerprint": _hash(payload)}))
     return authority.__class__.model_validate_json(
         authority.model_copy(
             update={
@@ -253,9 +258,7 @@ def _remap_prize_awards(authority, *, target_branch_id: str, result_fingerprint:
                 "edition_prize_money_config_fingerprint": authority.edition_prize_money_config_fingerprint,
             }
         )
-        awards.append(
-            award.model_copy(update={"award_fingerprint": award_fingerprint})
-        )
+        awards.append(award.model_copy(update={"award_fingerprint": award_fingerprint}))
     return authority.__class__.model_validate_json(
         authority.model_copy(
             update={
@@ -440,9 +443,9 @@ def _resolve_result_versions(
     latest: dict[tuple[str, str], object] = {}
     for version in versions:
         if version.effective_week.ordinal <= week.ordinal:
-            latest[
-                (version.result.edition_id, version.result.player_id)
-            ] = version.result
+            latest[(version.result.edition_id, version.result.player_id)] = (
+                version.result
+            )
     return tuple(latest[key] for key in sorted(latest))
 
 
@@ -483,9 +486,7 @@ def _remap_zero_sources(
                 "Ranking zero source scope does not match the source Branch"
             )
         previous = latest_by_zero_id.get(zero.zero_id)
-        expected_previous = (
-            previous.fingerprint if previous is not None else None
-        )
+        expected_previous = previous.fingerprint if previous is not None else None
         remapped_version = RankingZeroVersion(
             effective_week=version.effective_week,
             zero=zero.model_copy(update={"branch_id": target_branch_id}),
@@ -512,7 +513,6 @@ def _remap_command_zero_versions(
             )
         remapped.append(mapped)
     return tuple(remapped)
-
 
 
 def _remap_tournament_ranking_snapshot_authorities(
@@ -562,6 +562,7 @@ def _remap_tournament_ranking_snapshot_authorities(
         remapped.append(target)
     return tuple(remapped), by_source_fingerprint
 
+
 def remap_source_free_ranking_state_for_branch(
     source: RankingRevisionState,
     *,
@@ -569,6 +570,8 @@ def remap_source_free_ranking_state_for_branch(
     source_branch_id: str,
     target_branch_id: str,
     target_base_revision_id: str | None = None,
+    source_initial_world: InitialWorldState | None = None,
+    target_initial_world: InitialWorldState | None = None,
 ) -> RankingRevisionState:
     """Rebuild one result-free ranking lineage, including versioned zero history.
 
@@ -677,10 +680,48 @@ def remap_source_free_ranking_state_for_branch(
                     "Ranking bootstrap command does not exactly match frozen evidence"
                 )
             if original.initial_world_fingerprint is not None:
-                raise RankingForkRemapUnsupportedError(
-                    "Ranking bootstrap tied to InitialWorld requires player-snapshot remapping first"
-                )
-            if original.audit is not None or original.discipline == "resolved_zeros":
+                if source_initial_world is None or target_initial_world is None:
+                    raise RankingForkRemapUnsupportedError(
+                        "InitialWorld-backed ranking fork requires both validated worlds"
+                    )
+                if (
+                    (source_initial_world.run_id, source_initial_world.branch_id)
+                    != (run_id, source_branch_id)
+                    or (target_initial_world.run_id, target_initial_world.branch_id)
+                    != (run_id, target_branch_id)
+                    or original.initial_world_fingerprint
+                    != source_initial_world.fingerprint
+                ):
+                    raise RankingForkRemapUnsupportedError(
+                        "Ranking bootstrap InitialWorld linkage does not match the fork worlds"
+                    )
+                try:
+                    source_policy, source_players = derive_initial_ranking_inputs(
+                        source_initial_world
+                    )
+                    target_policy, target_players = derive_initial_ranking_inputs(
+                        target_initial_world
+                    )
+                except ValueError as exc:
+                    raise RankingForkRemapUnsupportedError(str(exc)) from exc
+                if (
+                    original.policy != source_policy
+                    or original.players != source_players
+                    or entry.inputs.players != source_players
+                    or target_players != source_players
+                    or target_policy != source_policy
+                ):
+                    raise RankingForkRemapUnsupportedError(
+                        "Ranking bootstrap players/policy do not derive from InitialWorld"
+                    )
+                target_initial_world_fingerprint = target_initial_world.fingerprint
+            else:
+                if source_initial_world is not None or target_initial_world is not None:
+                    raise RankingForkRemapUnsupportedError(
+                        "Captured InitialWorld is not linked by the ranking bootstrap"
+                    )
+                target_initial_world_fingerprint = None
+            if original.discipline == "resolved_zeros":
                 raise RankingForkRemapUnsupportedError(
                     "Ranking bootstrap fork supports only none/stored_zeros discipline"
                 )
@@ -696,6 +737,7 @@ def remap_source_free_ranking_state_for_branch(
                     update={
                         "branch_id": target_branch_id,
                         "zero_versions": command_zero_versions,
+                        "initial_world_fingerprint": target_initial_world_fingerprint,
                     }
                 ).model_dump_json()
             )
@@ -712,11 +754,10 @@ def remap_source_free_ranking_state_for_branch(
                 if original.discipline == "stored_zeros"
                 else ()
             )
-            if (
-                entry.inputs.zeros_from_history
-                != (original.discipline == "stored_zeros")
-                or entry.inputs.disciplinary_zeros
-                != tuple(sorted(original_resolved_zeros, key=lambda z: z.zero_id))
+            if entry.inputs.zeros_from_history != (
+                original.discipline == "stored_zeros"
+            ) or entry.inputs.disciplinary_zeros != tuple(
+                sorted(original_resolved_zeros, key=lambda z: z.zero_id)
             ):
                 raise RankingForkRemapUnsupportedError(
                     "Ranking bootstrap zero manifest does not match stored zero history"
@@ -798,9 +839,7 @@ def remap_source_free_ranking_state_for_branch(
                     raise RankingForkRemapUnsupportedError(
                         "Ranking command transition authority does not match frozen command evidence"
                     )
-                referenced_transition_fingerprints.add(
-                    original.authority_fingerprint
-                )
+                referenced_transition_fingerprints.add(original.authority_fingerprint)
             if previous is None or original.context.completed_week != previous.week:
                 raise RankingForkRemapUnsupportedError(
                     "Ranking weekly command lineage is not consecutive"
@@ -817,7 +856,9 @@ def remap_source_free_ranking_state_for_branch(
             command_tournaments = []
             for binding in original.tournaments:
                 source_tournament = source_tournament_by_edition.get(binding.edition_id)
-                target_tournament = remapped_tournament_by_edition.get(binding.edition_id)
+                target_tournament = remapped_tournament_by_edition.get(
+                    binding.edition_id
+                )
                 if (
                     source_tournament is None
                     or target_tournament is None
@@ -864,11 +905,10 @@ def remap_source_free_ranking_state_for_branch(
                 if original.context.discipline == "stored_zeros"
                 else ()
             )
-            if (
-                entry.inputs.zeros_from_history
-                != (original.context.discipline == "stored_zeros")
-                or entry.inputs.disciplinary_zeros
-                != tuple(sorted(original_resolved_zeros, key=lambda z: z.zero_id))
+            if entry.inputs.zeros_from_history != (
+                original.context.discipline == "stored_zeros"
+            ) or entry.inputs.disciplinary_zeros != tuple(
+                sorted(original_resolved_zeros, key=lambda z: z.zero_id)
             ):
                 raise RankingForkRemapUnsupportedError(
                     "Ranking weekly zero manifest does not match stored zero history"
@@ -921,9 +961,7 @@ def remap_source_free_ranking_state_for_branch(
         )
         previous = snapshot
 
-    source_zero_fingerprints = {
-        version.fingerprint for version in source.zero_sources
-    }
+    source_zero_fingerprints = {version.fingerprint for version in source.zero_sources}
     if referenced_zero_fingerprints != source_zero_fingerprints:
         raise RankingForkRemapUnsupportedError(
             "Saved zero history is not completely owned by stored ranking commands"

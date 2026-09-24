@@ -1,5 +1,20 @@
 # Current implementation and next action
 
+## Active implementation — InitialWorld materialized Branch forks
+
+The current branch closes the previously guarded InitialWorld fork root: InitialWorld-only
+and InitialWorld-backed-ranking Saved Revisions receive target-owned, typed, atomically
+installed worlds while preserving the source revision as shared ancestry. Ranking bootstrap
+evidence is rebuilt against the target world; lifecycle/sporting historical-origin fields
+retain their existing provenance semantics. Real HTTP/file-backed SQLite coverage exercises
+source removal, nested materialization, ranking linkage, existing restore/reopen, and Viewer
+non-switching. Follow-up acceptance separately proves target Week 2 divergence/Save,
+restore to the materialized root, process reopen, deterministic continuation, corrupt
+InitialWorld/ranking linkage rejection, and rollback after target-world installation.
+Detailed Simulation Slot Replay remains covered by the existing materialized
+fork fixtures; this change does not newly convert those large fixtures to an InitialWorld
+origin.
+
 ## Active checkpoint — 24 September 2026, after merged #967
 
 Implementation baseline: `buuk` commit

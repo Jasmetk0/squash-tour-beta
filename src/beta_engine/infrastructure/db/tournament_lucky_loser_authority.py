@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from sqlalchemy import select
 
-from beta_engine.application.authoritative_slot_matches import (
-    AuthoritativeSlotMatchExecutor,
-)
 from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserAutoByeTerminalEvidence,
     TournamentLuckyLoserOrderAuthority,
@@ -15,6 +12,9 @@ from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserQualificationWinnerEvidence,
 )
 from beta_engine.infrastructure.db.models import SimulationEventGroupModel
+from beta_engine.infrastructure.db.authoritative_group_state import (
+    load_authoritative_group,
+)
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
@@ -36,9 +36,7 @@ def _auto_bye_terminal_evidence(
     section_id: str,
 ) -> TournamentLuckyLoserAutoByeTerminalEvidence | None:
     players = tuple(
-        slot.player_id
-        for slot in bracket.slots
-        if slot.player_id is not None
+        slot.player_id for slot in bracket.slots if slot.player_id is not None
     )
     if len(players) != 1:
         return None
@@ -70,9 +68,7 @@ def _auto_bye_terminal_evidence(
             return memo[node_id]
         node = nodes.get(node_id)
         if node is None:
-            raise ValueError(
-                "Auto-BYE Qualification source references missing node"
-            )
+            raise ValueError("Auto-BYE Qualification source references missing node")
         top = resolve_source(node.source_top)
         bottom = resolve_source(node.source_bottom)
         if top is _REQUIRES_MATCH or bottom is _REQUIRES_MATCH:
@@ -129,7 +125,9 @@ class TournamentLuckyLoserOrderAuthorityStore:
         rows_by_match = {}
         for row in rows:
             if row.match_id in rows_by_match:
-                raise ValueError("Qualification winner evidence found duplicate match receipt")
+                raise ValueError(
+                    "Qualification winner evidence found duplicate match receipt"
+                )
             rows_by_match[row.match_id] = row
 
         matches = []
@@ -156,12 +154,14 @@ class TournamentLuckyLoserOrderAuthorityStore:
             row = rows_by_match.get(terminal.node_id)
             if row is None:
                 continue
-            loaded = AuthoritativeSlotMatchExecutor._load_group(row)
+            loaded = load_authoritative_group(row)
             if loaded.authoritative_input.event_id != event_id:
                 continue
             result = loaded.result
             if result.match_id != terminal.node_id:
-                raise ValueError("Qualification terminal receipt/result identity mismatch")
+                raise ValueError(
+                    "Qualification terminal receipt/result identity mismatch"
+                )
             if result.winner_player_id == player_id:
                 matches.append(
                     TournamentLuckyLoserQualificationWinnerEvidence(
@@ -229,9 +229,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
         auto_bye_evidence = []
         for index, bracket in enumerate(draw.qualification_brackets, start=1):
             section_id = bracket.section_id or f"Q{index}"
-            player_count = sum(
-                slot.player_id is not None for slot in bracket.slots
-            )
+            player_count = sum(slot.player_id is not None for slot in bracket.slots)
             if player_count == 0:
                 raise TournamentLuckyLoserOrderUnavailable(
                     "Qualification section has no player to resolve"
@@ -248,7 +246,9 @@ class TournamentLuckyLoserOrderAuthorityStore:
                 auto_bye_evidence.append(auto_bye)
             for node in bracket.nodes:
                 if node.node_id in node_meta:
-                    raise ValueError("Qualification Draw contains duplicate node identity")
+                    raise ValueError(
+                        "Qualification Draw contains duplicate node identity"
+                    )
                 node_meta[node.node_id] = (section_id, node.round_number)
             terminal = max(
                 bracket.nodes,
@@ -266,9 +266,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
         evidence = []
         seen_matches: set[str] = set()
         resolved_terminals: set[str] = set()
-        auto_bye_terminal_ids = {
-            item.match_id for item in auto_bye_evidence
-        }
+        auto_bye_terminal_ids = {item.match_id for item in auto_bye_evidence}
         for row in rows:
             meta = node_meta.get(row.match_id)
             if meta is None:
@@ -277,7 +275,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
                 raise ValueError(
                     "Auto-BYE Qualification terminal cannot have competitive receipt"
                 )
-            loaded = AuthoritativeSlotMatchExecutor._load_group(row)
+            loaded = load_authoritative_group(row)
             protected = loaded.authoritative_input
             result = loaded.result
             if protected.event_id != event_id:
@@ -301,9 +299,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
             if row.match_id in terminal_ids:
                 resolved_terminals.add(row.match_id)
 
-        resolved_terminal_ids = (
-            resolved_terminals | auto_bye_terminal_ids
-        )
+        resolved_terminal_ids = resolved_terminals | auto_bye_terminal_ids
         if resolved_terminal_ids != terminal_ids:
             raise TournamentLuckyLoserOrderUnavailable(
                 "Lucky Loser order is unavailable until Qualification is complete"

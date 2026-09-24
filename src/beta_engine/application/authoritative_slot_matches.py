@@ -72,6 +72,14 @@ from beta_engine.domain.simulation_slots import (
     project_player,
     projected_engine_player,
 )
+from beta_engine.infrastructure.db.authoritative_group_state import (
+    AuthoritativeGroupResult,
+    AuthoritativeTournamentGroupResult,
+    AuthoritativeWalkoverGroupResult,
+    load_authoritative_group,
+)
+
+
 from beta_engine.infrastructure.db.models import (
     ResolvedApplicationValidationSlotModel,
     RunEntryDecisionSlotAuthorityModel,
@@ -83,31 +91,6 @@ from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 
 MATCH_ENGINE_VERSION = "match_engine_v10"
-
-
-@dataclass(frozen=True)
-class AuthoritativeGroupResult:
-    authoritative_input: AuthoritativeMatchInput
-    result: MatchResult
-    result_fingerprint: str
-    effects: tuple[PlayerMatchSportingEffect, PlayerMatchSportingEffect]
-    terminal_checkpoint: PlayerSportingCheckpoint
-    exact_retry: bool = False
-
-
-@dataclass(frozen=True)
-class AuthoritativeWalkoverGroupResult:
-    authoritative_input: TournamentWalkoverAuthority
-    result: TournamentWalkoverResult
-    result_fingerprint: str
-    effects: tuple[PlayerMatchSportingEffect, ...]
-    terminal_checkpoint: PlayerSportingCheckpoint
-    exact_retry: bool = False
-
-
-AuthoritativeTournamentGroupResult = (
-    AuthoritativeGroupResult | AuthoritativeWalkoverGroupResult
-)
 
 
 @dataclass(frozen=True)
@@ -353,9 +336,7 @@ def publish_authoritative_tournament_to_existing_completion(
             match.result_fingerprint = group.result_fingerprint
             match.match_input_snapshot = None
             match.simulation_seed = None
-            match.result_notes = (
-                "canonical post-cutoff W/O; no Match Engine simulation"
-            )
+            match.result_notes = "canonical post-cutoff W/O; no Match Engine simulation"
             continue
         match.top_player_id = (
             group.authoritative_input.engine_input.context.player_a.player.player_id
@@ -518,8 +499,7 @@ def build_authoritative_tournament_ranking_packages(
         authoritative=authoritative,
     )
     canonical_payload = (
-        package.metadata.match_engine_version
-        == "run_owned_match_package_projection.v1"
+        package.metadata.match_engine_version == "run_owned_match_package_projection.v1"
     )
     result_draw_service = (
         _NoLegacyDrawReader()
@@ -626,6 +606,7 @@ class AuthoritativeSlotMatchExecutor:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (
             wild_card_decision_slot_ordinals,
         )
+
         wc_ordinals = wild_card_decision_slot_ordinals(
             self.session,
             run_id=run_id,
@@ -697,9 +678,7 @@ class AuthoritativeSlotMatchExecutor:
                 item for item in wc_ordinals if gap_start <= item < ordinal
             }
             if completed_nonmatch_ordinals != missing_ordinals:
-                unresolved = sorted(
-                    missing_ordinals - completed_nonmatch_ordinals
-                )
+                unresolved = sorted(missing_ordinals - completed_nonmatch_ordinals)
                 raise ValueError(
                     "match slot cannot pass unresolved entry-decision slots: "
                     f"{unresolved}"
@@ -1038,9 +1017,7 @@ class AuthoritativeSlotMatchExecutor:
         if authority.group_id not in plan.group_ids:
             raise ValueError("walkover group is not included in the slot plan")
         event_plan = next(
-            item
-            for item in plan.match_events
-            if item.group_id == authority.group_id
+            item for item in plan.match_events if item.group_id == authority.group_id
         )
         if (authority.event_id, authority.match_id) != (
             event_plan.event_id,
@@ -1083,9 +1060,7 @@ class AuthoritativeSlotMatchExecutor:
                 )
             loaded = self._load_group(existing, exact_retry=True)
             if not isinstance(loaded, AuthoritativeWalkoverGroupResult):
-                raise ValueError(
-                    "existing event group is not the expected W/O receipt"
-                )
+                raise ValueError("existing event group is not the expected W/O receipt")
             return loaded
 
         result = authority.result
@@ -1220,186 +1195,7 @@ class AuthoritativeSlotMatchExecutor:
     def _load_group(
         row, exact_retry: bool = False
     ) -> AuthoritativeTournamentGroupResult:
-        payload = json.loads(row.payload_json)
-        if payload.get("schema_version") == "authoritative_walkover_group.v1":
-            authority = TournamentWalkoverAuthority.model_validate_json(
-                json.dumps(payload.get("walkover_authority"))
-            )
-            result = TournamentWalkoverResult.model_validate_json(
-                json.dumps(payload.get("result"))
-            )
-            result_fp = fingerprint(
-                {
-                    "authority": authority.fingerprint,
-                    "result": result.model_dump(mode="json"),
-                }
-            )
-            command = fingerprint(
-                {
-                    "kind": "authoritative_walkover_group.v1",
-                    "authority": authority.model_dump(mode="json"),
-                }
-            )
-            if (
-                authority.run_id,
-                authority.branch_id,
-                authority.week.ordinal,
-                authority.slot_id,
-                authority.group_id,
-                authority.match_id,
-            ) != (
-                row.run_id,
-                row.branch_id,
-                row.week_ordinal,
-                row.slot_id,
-                row.group_id,
-                row.match_id,
-            ):
-                raise ValueError("persisted W/O group scope or match mismatch")
-            if (
-                authority.fingerprint != row.match_input_fingerprint
-                or payload.get("result_fingerprint") != row.result_fingerprint
-                or result_fp != row.result_fingerprint
-                or command != row.command_fingerprint
-                or result != authority.result
-            ):
-                raise ValueError("persisted W/O authority/result fingerprint mismatch")
-            terminal = PlayerSportingCheckpoint(
-                run_id=authority.run_id,
-                branch_id=authority.branch_id,
-                week=authority.week,
-                slot_id=authority.slot_id,
-                slot_ordinal=0,
-                opening_week_fingerprint=authority.slot_start_fingerprint,
-                slot_start_fingerprint=authority.slot_start_fingerprint,
-                predecessor_checkpoint_fingerprint=None,
-                applied_effect_fingerprints=(),
-                players=(),
-            )
-            return AuthoritativeWalkoverGroupResult(
-                authoritative_input=authority,
-                result=result,
-                result_fingerprint=row.result_fingerprint,
-                effects=(),
-                terminal_checkpoint=terminal,
-                exact_retry=exact_retry,
-            )
-
-        protected = AuthoritativeMatchInput.model_validate_json(
-            json.dumps(payload["authoritative_input"])
-        )
-        result = MatchResult.model_validate(payload["result"])
-        effects = tuple(
-            PlayerMatchSportingEffect.model_validate_json(json.dumps(value))
-            for value in payload["effects"]
-        )
-        if len(effects) != 2:
-            raise ValueError("authoritative competitive match requires two effects")
-        paired_effects = cast(
-            tuple[PlayerMatchSportingEffect, PlayerMatchSportingEffect], effects
-        )
-        recomputed_result_fingerprint = fingerprint(
-            {
-                "input": protected.fingerprint,
-                "result": result.model_dump(mode="json"),
-            }
-        )
-        if (
-            protected.fingerprint != row.match_input_fingerprint
-            or payload["result_fingerprint"] != row.result_fingerprint
-            or recomputed_result_fingerprint != row.result_fingerprint
-        ):
-            raise ValueError("persisted match input/result fingerprint mismatch")
-        if (
-            protected.run_id,
-            protected.branch_id,
-            protected.week.ordinal,
-            protected.slot_id,
-            protected.group_id,
-            protected.match_id,
-        ) != (
-            row.run_id,
-            row.branch_id,
-            row.week_ordinal,
-            row.slot_id,
-            row.group_id,
-            row.match_id,
-        ) or result.match_id != protected.match_id:
-            raise ValueError("persisted authoritative group scope or match mismatch")
-        if any(
-            effect.match_input_fingerprint != protected.fingerprint
-            or effect.authoritative_result_fingerprint != row.result_fingerprint
-            for effect in paired_effects
-        ):
-            raise ValueError("persisted match/effect evidence mismatch")
-        projections = {item.player_id: item for item in protected.player_projections}
-        try:
-            policy = MatchSportingEffectsPolicy.model_validate_json(
-                json.dumps(payload["effects_policy"])
-            )
-        except (KeyError, ValueError) as exc:
-            raise ValueError(
-                "persisted match effects policy is missing or corrupt"
-            ) from exc
-        if any(
-            effect.player_id not in projections
-            or effect.pre_match_sporting_fingerprint != protected.slot_start_fingerprint
-            or effect.policy_id != policy.policy_id
-            or effect.policy_fingerprint != policy.fingerprint
-            or (
-                effect.form_before,
-                effect.sharpness_before,
-                effect.fatigue_before,
-            )
-            != (
-                projections[effect.player_id].current_form,
-                projections[effect.player_id].match_sharpness,
-                projections[effect.player_id].long_term_fatigue,
-            )
-            or effect.form_after
-            != min(
-                policy.form_max,
-                max(policy.form_min, effect.form_before + effect.form_delta),
-            )
-            or effect.sharpness_after
-            != min(
-                policy.sharpness_max,
-                max(
-                    policy.sharpness_min,
-                    effect.sharpness_before + effect.sharpness_delta,
-                ),
-            )
-            or effect.fatigue_after
-            != min(
-                policy.fatigue_max,
-                max(policy.fatigue_min, effect.fatigue_before + effect.fatigue_delta),
-            )
-            for effect in paired_effects
-        ):
-            raise ValueError("persisted match effect semantics are corrupt")
-        # The caller reads the current validated slot head separately; replay never reads player state.
-        terminal = PlayerSportingCheckpoint(
-            run_id=protected.run_id,
-            branch_id=protected.branch_id,
-            week=protected.week,
-            slot_id=protected.slot_id,
-            slot_ordinal=0,
-            opening_week_fingerprint=protected.slot_start_fingerprint,
-            slot_start_fingerprint=protected.slot_start_fingerprint,
-            predecessor_checkpoint_fingerprint=None,
-            applied_effect_fingerprints=tuple(
-                sorted(e.fingerprint for e in paired_effects)
-            ),
-            players=(),
-        )
-        return AuthoritativeGroupResult(
-            protected,
-            result,
-            row.result_fingerprint,
-            paired_effects,
-            terminal,
-            exact_retry,
-        )
+        return load_authoritative_group(row, exact_retry=exact_retry)
 
     def _get_slot(self, run_id, branch_id, week, slot_id):
         row = self.session.get(

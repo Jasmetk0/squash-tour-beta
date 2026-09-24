@@ -1,5 +1,28 @@
 # Current implementation and next action
 
+## Open PR boundary — canonical Viewer Saved Revision reads
+
+Implementation base: local `buuk` mirror commit
+`1ecffbe060e66785bb1fa35e3a77f55c6fa928be` (merged PR #966). Network access to
+GitHub was unavailable while preparing this branch, so this is deliberately not a
+claim that the open work below is merged or that the remote head was re-verified.
+
+This branch replaces the legacy SimulationRun/checkpoint prerequisite with one
+read-only resolver from Product Run to its saved Viewer Branch head. The resolver
+validates Saved Revision ownership, payload identity and content hash, then applies
+the existing ranking, simulation-slot and definitive-WC component validators.
+Official Ranking/history, Tournament Entry Field, effective Draw/revisions and
+definitive WC/RWC projections consume only those validated saved components; absent
+components remain unavailable and never fall back to live Admin tables. Nullable
+legacy context fields remain compatibility metadata.
+
+`tests/api/test_viewer_saved_revision_boundary_api.py` exercises the real FastAPI
+stack over file-backed SQLite, including a canonical empty Run with no legacy
+binding, process reopen, absent-component behavior and corrupt Saved Revision hash
+failure. The broader recovery gap remains unchanged: not every sporting authority
+family can yet be forked/restored, and InitialWorld/complete-world branch recovery
+is still intentionally guarded rather than silently partial.
+
 ## Active handoff — 23 September 2026, after #965
 
 Implementation baseline: `buuk` commit `26d46ea6b5c457622a108f4fb819d03efdb3dd8a`.

@@ -202,6 +202,7 @@ from beta_engine.infrastructure.db.player_sporting_state import (
 from beta_engine.infrastructure.db.simulation_slot_state import (
     COMPONENT_KEY as SIMULATION_SLOT_COMPONENT_KEY,
     capture_saved_simulation_slots,
+    load_saved_simulation_slot_component,
     restore_saved_simulation_slots,
 )
 from beta_engine.infrastructure.db.player_slot_fork_remap import (
@@ -641,14 +642,26 @@ class ViewerOfficialRunContext:
     official_branch_status: str
     official_branch_read_only: bool
     official_branch_seed: int | None
-    legacy_simulation_run_id: str
-    head_checkpoint_id: str
-    head_checkpoint_kind: str
+    saved_head_revision_id: str
+    legacy_simulation_run_id: str | None
+    head_checkpoint_id: str | None
+    head_checkpoint_kind: str | None
     current_season: int | None
     current_week: int | None
     current_event_id: str | None
     current_event_sequence: int | None
-    resolution_version: str = "viewer_official_branch_v1"
+    resolution_version: str = "viewer_saved_revision_v2"
+
+
+@dataclass(frozen=True)
+class ViewerSavedRevisionSnapshot:
+    """Verified immutable public boundary shared by Viewer read models."""
+
+    context: ViewerOfficialRunContext
+    revision: BranchSavedRevisionRecord
+    ranking: object | None
+    simulation_slot_component: dict[str, object] | None
+    definitive_wild_cards: tuple[object, ...] | None
 
 
 class BranchExecutionTargetResolutionError(ValueError):
@@ -5029,55 +5042,73 @@ class SimulationPersistenceRepository:
     def get_viewer_official_run_context(
         self, *, product_run_id: str
     ) -> ViewerOfficialRunContext:
-        """Resolve the current official Branch and legacy Viewer namespace without mutation."""
+        """Resolve the saved Viewer Branch head without requiring legacy state."""
+        return self.get_viewer_saved_revision_snapshot(
+            product_run_id=product_run_id
+        ).context
+
+    def get_viewer_saved_revision_snapshot(
+        self, *, product_run_id: str
+    ) -> ViewerSavedRevisionSnapshot:
+        """Resolve and validate the sole immutable source for Viewer reads."""
         with self._session_factory() as session:
             container = session.get(RunContainerModel, product_run_id)
             if container is None:
                 raise ViewerOfficialRunContextNotFoundError(
                     f"product run {product_run_id} was not found"
                 )
-            official_branch_id = (container.official_branch_id or "").strip()
-            if not official_branch_id:
+            viewer_branch_id = (container.official_branch_id or "").strip()
+            if not viewer_branch_id:
                 raise ViewerOfficialRunContextConflictError(
-                    "product run has no official branch"
+                    "product run has no Viewer Branch"
                 )
-            branch = session.get(RunBranchModel, official_branch_id)
+            branch = session.get(RunBranchModel, viewer_branch_id)
             if branch is None or branch.run_id != product_run_id:
                 raise ViewerOfficialRunContextConflictError(
-                    "official branch is missing or belongs to another product run"
+                    "Viewer Branch is missing or belongs to another product run"
                 )
-            legacy_simulation_run_id = (branch.legacy_simulation_run_id or "").strip()
-            if (
-                not legacy_simulation_run_id
-                or session.get(SimulationRunModel, legacy_simulation_run_id) is None
-            ):
+            revision_id = (branch.saved_head_revision_id or "").strip()
+            if not revision_id:
                 raise ViewerOfficialRunContextConflictError(
-                    "official branch has no valid legacy simulation run binding"
+                    "Viewer Branch has no Saved Revision boundary"
                 )
-            state = session.get(BranchStateModel, official_branch_id)
-            if state is None or state.run_id != product_run_id:
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            if model is None:
                 raise ViewerOfficialRunContextConflictError(
-                    "official branch state is missing or belongs to another product run"
+                    "Viewer Branch Saved Revision was not found"
                 )
-            if branch.head_checkpoint_id != state.head_checkpoint_id:
-                raise ViewerOfficialRunContextConflictError(
-                    "official branch and branch state heads disagree"
+            try:
+                revision = self._validated_saved_revision_in_session(
+                    session=session, model=model
                 )
-            head_checkpoint_id = (state.head_checkpoint_id or "").strip()
-            if not head_checkpoint_id:
-                raise ViewerOfficialRunContextConflictError(
-                    "official branch has no effective head checkpoint"
+                if (revision.run_id, revision.branch_id) != (
+                    product_run_id, viewer_branch_id
+                ):
+                    raise ValueError(
+                        "Viewer Saved Revision scope does not match its Run/Branch"
+                    )
+                ranking = load_saved_ranking_component(
+                    revision.payload, run_id=product_run_id, branch_id=viewer_branch_id
                 )
-            checkpoint = session.get(BranchCheckpointModel, head_checkpoint_id)
-            if (
-                checkpoint is None
-                or checkpoint.branch_id != official_branch_id
-                or checkpoint.run_id != product_run_id
-            ):
-                raise ViewerOfficialRunContextConflictError(
-                    "effective head checkpoint is missing or incoherent"
+                simulation = load_saved_simulation_slot_component(
+                    revision.payload, run_id=product_run_id, branch_id=viewer_branch_id
                 )
-            return ViewerOfficialRunContext(
+                wild_cards = load_saved_definitive_wild_card_assignments(
+                    revision.payload, run_id=product_run_id, branch_id=viewer_branch_id
+                )
+            except (BranchRevisionStateConflictError, TypeError, ValueError) as exc:
+                raise ViewerOfficialRunContextConflictError(str(exc)) from exc
+
+            # Legacy fields remain nullable compatibility metadata only.
+            state = session.get(BranchStateModel, viewer_branch_id)
+            checkpoint = None
+            if state is not None and state.run_id == product_run_id and state.head_checkpoint_id:
+                candidate = session.get(BranchCheckpointModel, state.head_checkpoint_id)
+                if candidate is not None and (candidate.run_id, candidate.branch_id) == (
+                    product_run_id, viewer_branch_id
+                ):
+                    checkpoint = candidate
+            context = ViewerOfficialRunContext(
                 product_run_id=container.run_id,
                 product_run_display_name=container.display_name or container.run_id,
                 product_run_status=container.status,
@@ -5088,13 +5119,19 @@ class SimulationPersistenceRepository:
                 official_branch_status=branch.status,
                 official_branch_read_only=bool(branch.read_only),
                 official_branch_seed=branch.branch_seed,
-                legacy_simulation_run_id=legacy_simulation_run_id,
-                head_checkpoint_id=checkpoint.checkpoint_id,
-                head_checkpoint_kind=checkpoint.kind,
-                current_season=state.current_season,
-                current_week=state.current_week,
-                current_event_id=state.current_event_id,
-                current_event_sequence=state.current_event_sequence,
+                saved_head_revision_id=revision.revision_id,
+                legacy_simulation_run_id=(branch.legacy_simulation_run_id or "").strip() or None,
+                head_checkpoint_id=checkpoint.checkpoint_id if checkpoint else None,
+                head_checkpoint_kind=checkpoint.kind if checkpoint else None,
+                current_season=state.current_season if state else None,
+                current_week=state.current_week if state else None,
+                current_event_id=state.current_event_id if state else None,
+                current_event_sequence=state.current_event_sequence if state else None,
+            )
+            return ViewerSavedRevisionSnapshot(
+                context=context, revision=revision, ranking=ranking,
+                simulation_slot_component=simulation,
+                definitive_wild_cards=wild_cards,
             )
 
     def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:

@@ -15,9 +15,6 @@ from beta_engine.infrastructure.db import (
     ViewerOfficialRunContextConflictError,
     ViewerOfficialRunContextNotFoundError,
 )
-from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
-    DefinitiveWildCardAssignmentStore,
-)
 
 
 router = APIRouter(tags=["viewer-tournament-wild-cards"])
@@ -33,16 +30,15 @@ def get_viewer_tournament_wild_cards(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ) -> ViewerTournamentWildCards:
     try:
-        context = runtime.repository.get_viewer_official_run_context(
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
             product_run_id=product_run_id
         )
-        with runtime.repository._session_factory() as session:
-            return resolve_viewer_tournament_wild_cards(
-                DefinitiveWildCardAssignmentStore(session),
-                run_id=product_run_id,
-                branch_id=context.official_branch_id,
-                event_id=event_id,
-            )
+        return resolve_viewer_tournament_wild_cards(
+            snapshot.definitive_wild_cards,
+            run_id=product_run_id,
+            branch_id=snapshot.context.official_branch_id,
+            event_id=event_id,
+        )
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except (ViewerOfficialRunContextConflictError, ValueError) as exc:

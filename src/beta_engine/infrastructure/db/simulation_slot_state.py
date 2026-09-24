@@ -1280,6 +1280,12 @@ def _load(payload, *, run_id, branch_id):
     return component
 
 
+def load_saved_simulation_slot_component(payload, *, run_id: str, branch_id: str):
+    """Expose restore-grade validation to immutable read projections."""
+
+    return _load(payload, run_id=run_id, branch_id=branch_id)
+
+
 def _validate_saved_entry_fields_against_live_ranking_authority(
     session, component, *, run_id: str, branch_id: str
 ) -> None:

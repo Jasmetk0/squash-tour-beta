@@ -6,10 +6,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from beta_engine.application.authoritative_tournament_draw import (
-    CanonicalTournamentDrawService,
-)
-from beta_engine.domain.tournaments.draw_authority import TournamentDrawBracket
+from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority, TournamentDrawBracket
+from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
 
 
 class ViewerTournamentDrawSlot(BaseModel):
@@ -63,30 +61,32 @@ def _project_bracket(bracket: TournamentDrawBracket) -> ViewerTournamentDrawBrac
 
 
 def resolve_viewer_tournament_draw(
-    service: CanonicalTournamentDrawService,
+    component: dict | None,
     *,
     run_id: str,
     branch_id: str,
     event_id: str,
 ) -> ViewerTournamentDraw:
-    authority = service.inspect_effective_authority(
-        run_id=run_id,
-        branch_id=branch_id,
-        event_id=event_id,
+    if component is None:
+        raise KeyError("Viewer Saved Revision has no Tournament Draw component")
+    initial_rows = [row for row in component.get("draw_authorities", ()) if row["event_id"] == event_id]
+    if len(initial_rows) != 1:
+        raise KeyError(f"Tournament Draw {event_id!r} is not present in Viewer Saved Revision")
+    authority = TournamentDrawAuthority.model_validate_json(initial_rows[0]["payload_json"])
+    revision_rows = sorted(
+        (row for row in component.get("draw_revisions", ()) if row["event_id"] == event_id),
+        key=lambda row: row["sequence"],
     )
-    revisions = service.inspect_revision_history(
-        run_id=run_id,
-        branch_id=branch_id,
-        event_id=event_id,
-    )
+    revisions = [TournamentDrawRevision.model_validate_json(row["payload_json"]) for row in revision_rows]
+    effective = revisions[-1].successor_draw if revisions else authority
     return ViewerTournamentDraw(
         product_run_id=run_id,
         viewer_branch_id=branch_id,
         event_id=event_id,
-        revision_count=len(revisions.revisions),
-        main=_project_bracket(authority.main),
+        revision_count=len(revisions),
+        main=_project_bracket(effective.main),
         qualification_sections=tuple(
             _project_bracket(bracket)
-            for bracket in authority.qualification_brackets
+            for bracket in effective.qualification_brackets
         ),
     )

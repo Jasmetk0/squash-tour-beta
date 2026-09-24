@@ -6,9 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
-    DefinitiveWildCardAssignmentStore,
-)
+from beta_engine.domain.tournaments.definitive_wild_card_assignment import DefinitiveWildCardAssignmentAuthority
 
 
 class ViewerTournamentWildCardAssignment(BaseModel):
@@ -30,15 +28,17 @@ class ViewerTournamentWildCards(BaseModel):
 
 
 def resolve_viewer_tournament_wild_cards(
-    store: DefinitiveWildCardAssignmentStore,
+    saved_assignments: tuple[DefinitiveWildCardAssignmentAuthority, ...] | None,
     *,
     run_id: str,
     branch_id: str,
     event_id: str,
 ) -> ViewerTournamentWildCards:
+    if saved_assignments is None:
+        raise ValueError("Viewer Saved Revision has no definitive Wild Card component")
     assignments = tuple(
         assignment
-        for assignment in store.list(run_id=run_id, branch_id=branch_id)
+        for assignment in saved_assignments
         if assignment.event_id == event_id
     )
     return ViewerTournamentWildCards(

@@ -10,11 +10,11 @@ Product Run HTTP acceptance. The sequence below starts from the next unresolved
 dependency; it is not a declaration that every later gap has already been exhaustively
 audited.
 
-1. Close real sporting-world recovery gaps: InitialWorld-bearing Saved Revision
-   forks, complete supported world-state materialization, divergent continuation,
-   Save/Restore/reopen and historical Replay. Preserve fail-closed behavior for
-   unsupported authority families instead of copying source identity. Re-check the
-   direct-test circular-import seam if it blocks this recovery gate.
+1. InitialWorld-bearing Saved Revision materialization is implemented on the current
+   branch, including InitialWorld-only/nested and InitialWorld-backed ranking roots.
+   Continue auditing complete supported-world divergence/restore/Replay fixtures and
+   preserve fail-closed behavior for unsupported authority families. Re-check the
+   direct-test circular-import seam only if it blocks that recovery gate.
 2. Verify resumable orchestration integrity, especially concurrent abandonment,
    restart and checkpoints. Reproduce the Completed-Run alternate-Branch boundary
    before changing it, then exercise the integrated sporting flow.

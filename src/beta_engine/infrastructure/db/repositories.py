@@ -142,6 +142,7 @@ from beta_engine.infrastructure.db.initial_world_state import (
     get_initial_world,
     load_saved_initial_world,
     put_initial_world,
+    remap_saved_initial_world_for_branch,
     restore_saved_initial_world,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import (
@@ -2492,6 +2493,11 @@ class SimulationPersistenceRepository:
                 raise SavedRevisionBranchForkNotFoundError(
                     f"source Branch {source_branch_id!r} was not found in Run {run_id!r}"
                 )
+            source_model = session.get(BranchSavedRevisionModel, source_revision_id)
+            if source_model is not None and source_model.run_id != run_id:
+                raise SavedRevisionBranchForkConflictError(
+                    "the source Saved Revision belongs to another Run"
+                )
             try:
                 lineage = self._validated_branch_revision_lineage_in_session(
                     session=session,
@@ -2516,7 +2522,9 @@ class SimulationPersistenceRepository:
                 raise SavedRevisionBranchForkConflictError(
                     "the source Saved Revision content is invalid"
                 )
-            return RANKING_COMPONENT_KEY in content
+            return bool(
+                {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY} & set(content)
+            )
 
     def create_branch_from_saved_revision_atomically(
         self,
@@ -2595,11 +2603,16 @@ class SimulationPersistenceRepository:
                     )
 
                 remapped_ranking = None
-                materialize_fork_root = RANKING_COMPONENT_KEY in source_content
+                remapped_initial_world = None
+                source_initial_world = None
+                materialize_fork_root = bool(
+                    {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY}
+                    & set(source_content)
+                )
                 if materialize_fork_root:
                     if materialized_fork_revision_id is None:
                         raise SavedRevisionBranchForkConflictError(
-                            "ranking-bearing fork requires a materialized fork revision id"
+                            "Branch-owned world fork requires a materialized fork revision id"
                         )
                     fork_safe_empty_components: set[str] = set()
                     empty_component_loaders = (
@@ -2636,6 +2649,7 @@ class SimulationPersistenceRepository:
                             fork_safe_empty_components.add(component_key)
 
                     unsupported_content = set(source_content) - {
+                        INITIAL_WORLD_COMPONENT_KEY,
                         RANKING_COMPONENT_KEY,
                         RUN_PROSPECT_SOURCE_COMPONENT_KEY,
                         PLAYER_LIFECYCLE_COMPONENT_KEY,
@@ -2655,20 +2669,33 @@ class SimulationPersistenceRepository:
                             + ", ".join(sorted(unsupported_content))
                         )
                     try:
+                        if INITIAL_WORLD_COMPONENT_KEY in source_content:
+                            source_initial_world = load_saved_initial_world(
+                                source_revision.payload,
+                                run_id=run_id,
+                                branch_id=source_branch_id,
+                            )
+                            remapped_initial_world = remap_saved_initial_world_for_branch(
+                                source_revision.payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                            )
                         source_ranking = load_saved_ranking_component(
                             source_revision.payload,
                             run_id=run_id,
                             branch_id=source_branch_id,
                         )
-                        if source_ranking is None:
-                            raise ValueError("ranking component is missing")
-                        remapped_ranking = remap_source_free_ranking_state_for_branch(
-                            source_ranking,
-                            run_id=run_id,
-                            source_branch_id=source_branch_id,
-                            target_branch_id=branch_id,
-                            target_base_revision_id=materialized_fork_revision_id,
-                        )
+                        if source_ranking is not None:
+                            remapped_ranking = remap_source_free_ranking_state_for_branch(
+                                source_ranking,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                                target_base_revision_id=materialized_fork_revision_id,
+                                source_initial_world=source_initial_world,
+                                target_initial_world=remapped_initial_world,
+                            )
                     except (ValueError, RankingForkRemapUnsupportedError) as exc:
                         raise SavedRevisionBranchForkConflictError(
                             f"ranking-bearing fork cannot be remapped safely: {exc}"
@@ -2678,11 +2705,6 @@ class SimulationPersistenceRepository:
                         "materialized fork revision id was supplied for a shared-history fork"
                     )
 
-                if INITIAL_WORLD_COMPONENT_KEY in source_content:
-                    raise SavedRevisionBranchForkConflictError(
-                        "Branch creation from initial-world Saved Revisions requires "
-                        "player snapshot identity remapping, which is not yet supported"
-                    )
                 if SEASON_CLOSURE_COMPONENT_KEY in source_content:
                     raise SavedRevisionBranchForkConflictError(
                         "Branch creation from final Season Closure revisions requires "
@@ -2770,25 +2792,38 @@ class SimulationPersistenceRepository:
                 session.flush()
 
                 if materialize_fork_root:
-                    assert remapped_ranking is not None
                     assert materialized_fork_revision_id is not None
-                    try:
-                        installed = install_ranking_revision_state(
-                            session,
-                            remapped_ranking.model_dump_json(),
-                            expected_fingerprint=remapped_ranking.fingerprint,
-                            run_id=run_id,
-                            branch_id=branch_id,
-                            allow_empty_fork_target=True,
-                        )
-                    except ValueError as exc:
-                        raise SavedRevisionBranchForkConflictError(
-                            f"remapped ranking state could not be installed: {exc}"
-                        ) from exc
-                    if installed.fingerprint != remapped_ranking.fingerprint:
-                        raise SavedRevisionBranchForkConflictError(
-                            "remapped ranking state did not install exactly"
-                        )
+                    if remapped_initial_world is not None:
+                        try:
+                            installed_world = put_initial_world(
+                                session, remapped_initial_world
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"remapped InitialWorld could not be installed: {exc}"
+                            ) from exc
+                        if installed_world.fingerprint != remapped_initial_world.fingerprint:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped InitialWorld did not install exactly"
+                            )
+                    if remapped_ranking is not None:
+                        try:
+                            installed = install_ranking_revision_state(
+                                session,
+                                remapped_ranking.model_dump_json(),
+                                expected_fingerprint=remapped_ranking.fingerprint,
+                                run_id=run_id,
+                                branch_id=branch_id,
+                                allow_empty_fork_target=True,
+                            )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"remapped ranking state could not be installed: {exc}"
+                            ) from exc
+                        if installed.fingerprint != remapped_ranking.fingerprint:
+                            raise SavedRevisionBranchForkConflictError(
+                                "remapped ranking state did not install exactly"
+                            )
 
                     target_payload = viewer_branch_saved_revision_payload(
                         base_payload=source_revision.payload,
@@ -2806,10 +2841,16 @@ class SimulationPersistenceRepository:
                             source_revision.payload
                         ),
                     )
-                    target_payload["content"][RANKING_COMPONENT_KEY] = {
-                        "fingerprint": remapped_ranking.fingerprint,
-                        "state": remapped_ranking.model_dump(mode="json"),
-                    }
+                    if remapped_initial_world is not None:
+                        target_payload["content"][INITIAL_WORLD_COMPONENT_KEY] = {
+                            "fingerprint": remapped_initial_world.fingerprint,
+                            "state": remapped_initial_world.model_dump(mode="json"),
+                        }
+                    if remapped_ranking is not None:
+                        target_payload["content"][RANKING_COMPONENT_KEY] = {
+                            "fingerprint": remapped_ranking.fingerprint,
+                            "state": remapped_ranking.model_dump(mode="json"),
+                        }
                     source_lifecycle_states = (
                         load_saved_lifecycle(
                             source_revision.payload,
@@ -2839,8 +2880,8 @@ class SimulationPersistenceRepository:
                     source_to_target_tournament_fingerprint = {
                         source.fingerprint: target.fingerprint
                         for source, target in zip(
-                            source_ranking.tournament_sources,
-                            remapped_ranking.tournament_sources,
+                            source_ranking.tournament_sources if source_ranking else (),
+                            remapped_ranking.tournament_sources if remapped_ranking else (),
                             strict=True,
                         )
                     }
@@ -2855,16 +2896,16 @@ class SimulationPersistenceRepository:
                     source_to_target_ranking_snapshot_fingerprint = {
                         source.snapshot.fingerprint: target.snapshot.fingerprint
                         for source, target in zip(
-                            source_ranking.entries,
-                            remapped_ranking.entries,
+                            source_ranking.entries if source_ranking else (),
+                            remapped_ranking.entries if remapped_ranking else (),
                             strict=True,
                         )
                     }
                     source_to_target_transition_authority_fingerprint = {
                         source.fingerprint: target.fingerprint
                         for source, target in zip(
-                            source_ranking.transition_authorities,
-                            remapped_ranking.transition_authorities,
+                            source_ranking.transition_authorities if source_ranking else (),
+                            remapped_ranking.transition_authorities if remapped_ranking else (),
                             strict=True,
                         )
                     }
@@ -2872,8 +2913,8 @@ class SimulationPersistenceRepository:
                     source_to_target_tournament_ranking_authority = {
                         source.fingerprint: target
                         for source, target in zip(
-                            source_ranking.tournament_ranking_snapshot_authorities,
-                            remapped_ranking.tournament_ranking_snapshot_authorities,
+                            source_ranking.tournament_ranking_snapshot_authorities if source_ranking else (),
+                            remapped_ranking.tournament_ranking_snapshot_authorities if remapped_ranking else (),
                             strict=True,
                         )
                     }
@@ -3121,11 +3162,17 @@ class SimulationPersistenceRepository:
                         "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
                         "summary": (
                             f"Forked Branch from {source_revision_id} with remapped "
-                            "source-free ranking identity"
+                            "Branch-owned world identity"
                         ),
                         "source_branch_id": source_branch_id,
                         "source_saved_revision_id": source_revision_id,
-                        "ranking_fingerprint": remapped_ranking.fingerprint,
+                        "ranking_fingerprint": (
+                            remapped_ranking.fingerprint if remapped_ranking else None
+                        ),
+                        "initial_world_fingerprint": (
+                            remapped_initial_world.fingerprint
+                            if remapped_initial_world else None
+                        ),
                     }
                     sequence = source_revision.sequence + 1
                     revision_hash = saved_revision_content_hash(

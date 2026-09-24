@@ -6,10 +6,10 @@ A Branch created from a ranking-bearing Saved Revision cannot safely share that 
 as its own head because Official Ranking snapshots, command receipts and fingerprints are
 bound to the source Branch identity.
 
-This adapter now supports the safely reconstructible **source-free Official Ranking
-history** case: Week 1 bootstrap followed by any consecutive sequence of weekly ranking
-commands whose frozen inputs contain no tournament results, corrections, disciplinary
-zeros, transition authority, InitialWorld binding, or publication/archive authority.
+The materialized adapter supports both source-free and InitialWorld-backed bootstrap
+roots. For the latter it requires the validated source world and its target-owned remap,
+derives players and policy from those worlds, and rebuilds the bootstrap dependency on
+the target InitialWorld fingerprint rather than copying source identity.
 
 ## Supported source
 
@@ -25,7 +25,8 @@ week and must have exactly one stored canonical `RankingWeekCommand` receipt.
 Every command is revalidated against its frozen manifest, target week, policy and roster.
 The chain must contain no tournament result sources, corrections, zero history,
 transition authorities, Tournament Ranking Snapshot authorities, Season Closing Ranking
-archives, authoritative Week/Season Transition state, or InitialWorld binding.
+archives or unsupported authoritative state. Supported downstream authority families
+continue through their explicit identity adapters; unknown components remain fail-closed.
 
 ## Materialized fork root
 

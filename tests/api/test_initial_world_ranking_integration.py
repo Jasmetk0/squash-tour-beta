@@ -6,9 +6,13 @@ import sqlite3
 from urllib import error, request
 
 import pytest
+from sqlalchemy import text
 
 from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+from beta_engine.infrastructure.db.ranking_revision_state import (
+    capture_ranking_revision_state,
+)
 from beta_engine.domain.run_revisions import saved_revision_content_hash
 
 from test_saved_revision_history_api import ApiServer, _create_run, _request
@@ -114,6 +118,7 @@ def _initial_world_row_count(path):
         ).fetchone()[0]
 
 
+@pytest.mark.pr_critical
 @pytest.mark.smoke
 def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_path):
     db = tmp_path / "world.db"
@@ -232,6 +237,77 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         )
         assert status == 201
 
+        # InitialWorld alone is enough to require a target-owned materialized root.
+        status, world_fork = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": branch_id,
+                "source_saved_revision_id": world_saved["saved_revision"][
+                    "revision_id"
+                ],
+            },
+        )
+        assert status == 201, world_fork
+        world_fork_id = world_fork["branch_id"]
+        assert (
+            world_fork["saved_head_revision_id"]
+            != world_saved["saved_revision"]["revision_id"]
+        )
+        fork_world_root = (
+            f"{server.base_url}/admin/players/runs/{run_id}/branches/"
+            f"{world_fork_id}/initial-world"
+        )
+        status, fork_owned = _request("GET", fork_world_root)
+        assert status == 200
+        assert fork_owned["branch_id"] == world_fork_id
+        source_world_state = server.app.state.runtime.repository.get_initial_world(
+            run_id=run_id, branch_id=branch_id
+        )
+        fork_world_state = server.app.state.runtime.repository.get_initial_world(
+            run_id=run_id, branch_id=world_fork_id
+        )
+        assert fork_world_state.fingerprint != source_world_state.fingerprint
+        for provenance_field in (
+            "source_kind",
+            "source_season",
+            "source_fingerprint",
+            "bootstrap_seed",
+            "bootstrap_fingerprint",
+            "adopted_by_command_id",
+            "adoption_request_fingerprint",
+        ):
+            assert fork_owned[provenance_field] == original_owned[provenance_field]
+        assert fork_owned["players"] == original_owned["players"]
+        assert fork_owned["policies"] == original_owned["policies"]
+        assert _request("GET", world_root)[1] == original_owned
+        assert world_fork["is_viewer_branch"] is False
+
+        # A nested fork rematerializes again rather than inheriting its parent's
+        # Branch-scoped world identity.
+        status, nested_fork = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": world_fork_id,
+                "source_saved_revision_id": world_fork["saved_head_revision_id"],
+            },
+        )
+        assert status == 201, nested_fork
+        nested_world = _request(
+            "GET",
+            f"{server.base_url}/admin/players/runs/{run_id}/branches/"
+            f"{nested_fork['branch_id']}/initial-world",
+        )[1]
+        assert nested_world["branch_id"] == nested_fork["branch_id"]
+        nested_world_state = server.app.state.runtime.repository.get_initial_world(
+            run_id=run_id, branch_id=nested_fork["branch_id"]
+        )
+        assert nested_world_state.fingerprint not in {
+            source_world_state.fingerprint,
+            fork_world_state.fingerprint,
+        }
+
         ranking_root = f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/ranking-candidates"
         preparation = {
             "command_id": "derive-initial-ranking",
@@ -333,6 +409,62 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
         assert status == 201
         ranked_revision = ranked_saved["saved_revision"]["revision_id"]
         world_revision = world_saved["saved_revision"]["revision_id"]
+
+        # The linked bootstrap is rebuilt against the target-owned InitialWorld;
+        # neither the source command nor stable player identities are rewritten.
+        repository = server.app.state.runtime.repository
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            source_ranking_before = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=branch_id
+            )
+        status, ranking_fork = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches",
+            {
+                "source_branch_id": branch_id,
+                "source_saved_revision_id": ranked_revision,
+            },
+        )
+        assert status == 201, ranking_fork
+        ranking_fork_id = ranking_fork["branch_id"]
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/admin/players/runs/{run_id}/branches/"
+                f"{ranking_fork_id}/initial-world",
+            )[0]
+            == 200
+        )
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            target_ranking = capture_ranking_revision_state(
+                session, run_id=run_id, branch_id=ranking_fork_id
+            )
+        target_command = RankingBootstrapCommand.model_validate_json(
+            target_ranking.entries[0].receipts[0].request_payload_json
+        )
+        source_command = RankingBootstrapCommand.model_validate_json(
+            source_ranking_before.entries[0].receipts[0].request_payload_json
+        )
+        assert target_command.branch_id == ranking_fork_id
+        target_world_state = server.app.state.runtime.repository.get_initial_world(
+            run_id=run_id, branch_id=ranking_fork_id
+        )
+        assert (
+            target_command.initial_world_fingerprint == target_world_state.fingerprint
+        )
+        assert target_command.fingerprint != source_command.fingerprint
+        assert target_command.players == source_command.players
+        assert target_ranking.fingerprint != source_ranking_before.fingerprint
+        with repository._session_factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            assert (
+                capture_ranking_revision_state(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                == source_ranking_before
+            )
         _, immutable_legacy = _make_legacy_revision_without_sporting(db, world_revision)
         restore_legacy = (
             f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
@@ -360,11 +492,15 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
                 ).fetchone()[0]
             )
             live_row = connection.execute(
-                "SELECT fingerprint,payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+                "SELECT fingerprint,payload_json FROM player_lifecycle_week_states "
+                "WHERE run_id=? AND branch_id=? AND week_ordinal=0",
+                (run_id, branch_id),
             ).fetchone()
             live = json.loads(live_row[1])
             sporting_live_row = connection.execute(
-                "SELECT fingerprint,payload_json FROM player_sporting_week_states WHERE week_ordinal=0"
+                "SELECT fingerprint,payload_json FROM player_sporting_week_states "
+                "WHERE run_id=? AND branch_id=? AND week_ordinal=0",
+                (run_id, branch_id),
             ).fetchone()
             sporting_live = json.loads(sporting_live_row[1])
             stored_legacy = json.loads(
@@ -424,7 +560,9 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
             assert (
                 json.loads(
                     connection.execute(
-                        "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+                        "SELECT payload_json FROM player_lifecycle_week_states "
+                        "WHERE run_id=? AND branch_id=? AND week_ordinal=0",
+                        (run_id, branch_id),
                     ).fetchone()[0]
                 )
                 == live
@@ -442,7 +580,9 @@ def test_production_pool_to_owned_world_derived_ranking_save_reopen_restore(tmp_
             assert (
                 json.loads(
                     connection.execute(
-                        "SELECT payload_json FROM player_lifecycle_week_states WHERE week_ordinal=0"
+                        "SELECT payload_json FROM player_lifecycle_week_states "
+                        "WHERE run_id=? AND branch_id=? AND week_ordinal=0",
+                        (run_id, branch_id),
                     ).fetchone()[0]
                 )
                 == live

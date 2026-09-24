@@ -1,5 +1,25 @@
 # Current implementation and next action
 
+## Active checkpoint — 24 September 2026, orchestration integrity implementation
+
+Implementation baseline: `buuk` commit
+`d1be5ade3b8a2950ecd2897a693e6cfbeb7c0dc1` (merged PR #970).
+
+The current branch separates global Run lifecycle from Branch sporting finality and
+adds a transaction-local Full Simulation abandonment fence. Nested child/progress
+writers validate the originating parent after SQLite writer ownership; abandonment
+therefore preserves earlier committed children while preventing every later sporting
+or progress commit. Completed Runs permit unfinished active Branches to continue and
+install their own final closure without a status downgrade or Viewer switch.
+
+Focused PR-critical coverage includes active interleaving at the writer boundary,
+the existing durable abandoned-parent/replacement path, Completed-Run unfinished
+Branch preview, second-Branch-style final closure/idempotent retry, and the existing
+same-Branch Full Simulation completion observation.
+
+**Next action:** refresh/audit the Master-to-code pre-alpha coverage table. Do not
+automatically widen this slice into another feature area.
+
 ## Active checkpoint — 24 September 2026, after merged #969
 
 Implementation baseline: `buuk` commit

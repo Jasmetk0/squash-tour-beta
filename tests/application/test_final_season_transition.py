@@ -1,4 +1,5 @@
 import json
+import threading
 
 import pytest
 from sqlalchemy import select
@@ -600,6 +601,184 @@ def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work
 
     with pytest.raises(ValueError, match="invalid status"):
         driver.simulate_full_simulation(command)
+
+
+@pytest.mark.pr_critical
+def test_active_full_simulation_abandon_fences_the_next_writer_transaction(
+    database, monkeypatch
+):
+    """Abandon wins before the next child/progress writer and becomes durable."""
+
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+
+    review_driver = AuthoritativeRunSimulationDriver(database, None, None)
+    request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="actively-abandoned-parent",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Worker",
+        audit_reason="Prove the active execution fence",
+    )
+    preview = review_driver.preview_full_simulation(request)
+    command = AuthoritativeFullSimulationCommand(
+        **request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+
+    parent_created = threading.Event()
+    release_worker = threading.Event()
+    checks = 0
+
+    def pause_after_parent_creation():
+        nonlocal checks
+        checks += 1
+        if checks == 2:
+            parent_created.set()
+            assert release_worker.wait(timeout=10)
+
+    worker_driver = AuthoritativeRunSimulationDriver(
+        database,
+        None,
+        None,
+        full_simulation_before_transaction_check=pause_after_parent_creation,
+    )
+    failures: list[BaseException] = []
+
+    def run_worker():
+        try:
+            worker_driver.simulate_full_simulation(command)
+        except BaseException as exc:  # captured for deterministic thread assertion
+            failures.append(exc)
+
+    thread = threading.Thread(target=run_worker)
+    thread.start()
+    assert parent_created.wait(timeout=10)
+    abandoned = review_driver.abandon_full_simulation(
+        AuthoritativeFullSimulationAbandonCommand(
+            target_command_id=command.command_id,
+            run_id="run",
+            branch_id="branch",
+            operator_label="Canceller",
+            audit_reason="Cancel while the original invocation is active",
+            confirm_committed_child_work_persists=True,
+        )
+    )
+    release_worker.set()
+    thread.join(timeout=10)
+
+    assert not thread.is_alive()
+    assert abandoned["status"] == "abandoned"
+    assert len(failures) == 1
+    assert "execution is fenced" in str(failures[0])
+    with database() as session:
+        receipt = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert receipt is not None
+        assert receipt.status == "abandoned"
+        stored = json.loads(receipt.result_json)
+        assert stored["completed_seasons"] == []
+        assert stored["final_completed_weeks"] == []
+        assert stored["season_children"] == {}
+        assert stored["final_week_children"] == {}
+
+
+@pytest.mark.pr_critical
+def test_completed_run_allows_unfinished_branch_full_simulation_preview(
+    database, monkeypatch
+):
+    """Global lifecycle completion is not sporting finality for this Branch."""
+
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    preview = AuthoritativeRunSimulationDriver(
+        database, None, None
+    ).preview_full_simulation(
+        AuthoritativeFullSimulationPreviewRequest(
+            command_id="completed-run-unfinished-branch",
+            run_id="run",
+            branch_id="branch",
+            operator_label="Alternative timeline admin",
+            audit_reason="Continue this unfinished alternative Branch",
+        )
+    )
+    assert preview["start_week"] == FINAL_WEEK.model_dump(mode="json")
+    assert preview["initial_action"] == "final_season_range"
+
+
+@pytest.mark.pr_critical
+def test_second_branch_final_closure_is_idempotent_in_completed_run(
+    database, monkeypatch
+):
+    """A Branch may install its own closure without cycling global lifecycle."""
+
+    _patch_saved_revision_captures(monkeypatch)
+    command = _command()
+    with database.begin() as session:
+        _install_final_boundary(session)
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+
+    with database.begin() as session:
+        result = commit_final_season_transition(session, command)
+        assert result.saved_revision_id == "revision-final"
+        assert result.run_status == COMPLETED_RUN_STATUS
+    with database.begin() as session:
+        retry = commit_final_season_transition(session, command)
+        assert retry == result
+    with database() as session:
+        assert session.get(RunContainerModel, "run").status == COMPLETED_RUN_STATUS
+        assert len(session.scalars(select(SeasonClosingRankingModel)).all()) == 1
+        assert len(session.scalars(select(BranchRevisionAuditEventModel)).all()) == 1
 
 
 @pytest.mark.pr_critical

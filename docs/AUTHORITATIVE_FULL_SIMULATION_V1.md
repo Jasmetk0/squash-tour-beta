@@ -68,14 +68,22 @@ Admin then commits the already-existing final Run closure. Full Simulation does 
 create a second Closing Ranking, Season Closure Marker, Saved Revision writer or Run
 status transition.
 
-## Completed Run observation
+## Branch completion and Run lifecycle
 
-The canonical final closure changes the Run to `completed`, so the pending Full
-Simulation parent has a special read-only completion path.
+`Run.status == completed` records the global lifecycle milestone; it does not assert
+that every alternative Branch has reached sporting finality. Branch finality is
+resolved only from that Branch's own head: a canonical final-season closure Saved
+Revision with valid embedded 2049/50 Week 61 evidence.
+
+Consequently an active, writable unfinished Branch may continue and may start or
+resume Full Simulation while its Run remains `completed`. Its own final Season
+Transition installs its own closure revision and completes its own Full Simulation
+parent without downgrading the Run to `working` or creating a second global lifecycle
+transition. A Branch whose head already has valid final closure evidence rejects a
+new Full Simulation as already completed. Archived/read-only scopes remain blocked.
 
 On retry it requires:
 
-- Run status `completed`;
 - the selected Branch head to be a final-season closure Saved Revision;
 - valid embedded Season Closure evidence;
 - closure marker boundary exactly 2049/50 Week 61.
@@ -107,6 +115,15 @@ receipt changes from `pending` to `abandoned` and preserves its frozen operation
 progress and abandonment audit metadata. The old parent cannot be resumed after
 abandonment; a replacement Full Simulation may be reviewed from the current canonical
 Run/Branch state.
+
+The committed `pending -> abandoned` transaction is also the execution linearization
+point. Every later child or parent-progress writer in the Full → Season → Week →
+Slot/Transition tree acquires SQLite writer ownership and validates the originating
+parent identity, request fingerprint and `pending` status in that same transaction.
+If abandonment committed first, that writer fails before sporting or progress state
+is written. If a child writer acquired ownership first, it may commit and abandonment
+is ordered after it; that already-committed child remains canonical. No late worker
+may add children/counters, replace abandonment metadata or mark the parent complete.
 
 
 Full Simulation parent receipts are also inspectable as durable Run/Branch history.

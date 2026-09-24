@@ -225,8 +225,13 @@ def commit_final_season_transition(
         raise ValueError("Final season transition Run/Branch scope is incomplete")
     if run.read_only or branch.read_only or branch.status != "active":
         raise ValueError("Final season transition requires a writable active Branch")
-    if not is_pre_completion_run_status(run.status):
-        raise ValueError("Final season transition requires a Working Run")
+    if not (
+        is_pre_completion_run_status(run.status)
+        or run.status == COMPLETED_RUN_STATUS
+    ):
+        raise ValueError(
+            "Final season transition requires a Working or Completed Run"
+        )
     if (
         branch.saved_head_revision_id != command.expected_saved_revision_id
         or draft.base_revision_id != command.expected_saved_revision_id

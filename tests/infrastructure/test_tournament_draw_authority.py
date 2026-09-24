@@ -6,6 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
+import beta_engine.infrastructure.db.tournament_lucky_loser_authority as lucky_loser_db
+
 from beta_engine.domain.rankings.official import (
     OfficialRankingPlayer,
     OfficialRankingPolicy,
@@ -3987,6 +3989,7 @@ def _fake_q_receipts(session, monkeypatch, draw, *, include_final):
             ),
         )
 
+    monkeypatch.setattr(lucky_loser_db, "load_authoritative_group", fake_load)
     monkeypatch.setattr(
         AuthoritativeSlotMatchExecutor,
         "_load_group",
@@ -4082,6 +4085,7 @@ def _fake_single_real_q_terminal(session, monkeypatch, draw):
             ),
         )
 
+    monkeypatch.setattr(lucky_loser_db, "load_authoritative_group", fake_load)
     monkeypatch.setattr(
         AuthoritativeSlotMatchExecutor,
         "_load_group",
@@ -4796,6 +4800,7 @@ def test_multi_q_lucky_loser_order_is_global_and_fills_exact_main_vacancy(
             "_load_group",
             staticmethod(fake_load),
         )
+        monkeypatch.setattr(lucky_loser_db, "load_authoritative_group", fake_load)
         _mock_cutoff_resolution(
             monkeypatch,
             q_player_ids=draw_input.qualification_player_ids,

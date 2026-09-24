@@ -59,7 +59,10 @@ def _request(
     http_request = request.Request(url, data=body, method=method)
     http_request.add_header("content-type", "application/json")
     try:
-        with request.urlopen(http_request, timeout=60) as response:
+        # The real full-season HTTP acceptance can legitimately spend more than one
+        # minute inside a single synchronous orchestration request on slower CI
+        # runners. Keep the transport timeout above that bounded production flow.
+        with request.urlopen(http_request, timeout=120) as response:
             raw = response.read().decode()
             return response.status, (json.loads(raw) if raw else {})
     except error.HTTPError as exc:

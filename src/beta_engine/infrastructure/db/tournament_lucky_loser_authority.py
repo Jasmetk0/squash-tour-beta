@@ -12,6 +12,9 @@ from beta_engine.domain.tournaments.lucky_loser_authority import (
     TournamentLuckyLoserQualificationWinnerEvidence,
 )
 from beta_engine.infrastructure.db.models import SimulationEventGroupModel
+from beta_engine.infrastructure.db.authoritative_group_state import (
+    load_authoritative_group,
+)
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
@@ -25,17 +28,6 @@ class TournamentLuckyLoserOrderUnavailable(ValueError):
 
 
 _REQUIRES_MATCH = object()
-
-
-def _load_authoritative_group(row):
-    # Keep the infrastructure package importable while the application executor is
-    # itself importing DB models. This dependency is needed only while resolving
-    # persisted LL evidence, never at module initialization.
-    from beta_engine.application.authoritative_slot_matches import (
-        AuthoritativeSlotMatchExecutor,
-    )
-
-    return AuthoritativeSlotMatchExecutor._load_group(row)
 
 
 def _auto_bye_terminal_evidence(
@@ -162,7 +154,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
             row = rows_by_match.get(terminal.node_id)
             if row is None:
                 continue
-            loaded = _load_authoritative_group(row)
+            loaded = load_authoritative_group(row)
             if loaded.authoritative_input.event_id != event_id:
                 continue
             result = loaded.result
@@ -283,7 +275,7 @@ class TournamentLuckyLoserOrderAuthorityStore:
                 raise ValueError(
                     "Auto-BYE Qualification terminal cannot have competitive receipt"
                 )
-            loaded = _load_authoritative_group(row)
+            loaded = load_authoritative_group(row)
             protected = loaded.authoritative_input
             result = loaded.result
             if protected.event_id != event_id:

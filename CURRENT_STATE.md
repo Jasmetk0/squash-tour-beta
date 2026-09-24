@@ -8,7 +8,10 @@ installed worlds while preserving the source revision as shared ancestry. Rankin
 evidence is rebuilt against the target world; lifecycle/sporting historical-origin fields
 retain their existing provenance semantics. Real HTTP/file-backed SQLite coverage exercises
 source removal, nested materialization, ranking linkage, existing restore/reopen, and Viewer
-non-switching. Detailed Simulation Slot Replay remains covered by the existing materialized
+non-switching. Follow-up acceptance separately proves target Week 2 divergence/Save,
+restore to the materialized root, process reopen, deterministic continuation, corrupt
+InitialWorld/ranking linkage rejection, and rollback after target-world installation.
+Detailed Simulation Slot Replay remains covered by the existing materialized
 fork fixtures; this change does not newly convert those large fixtures to an InitialWorld
 origin.
 

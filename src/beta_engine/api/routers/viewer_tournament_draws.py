@@ -7,9 +7,6 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
-from beta_engine.application.authoritative_tournament_draw import (
-    CanonicalTournamentDrawService,
-)
 from beta_engine.application.viewer_tournament_draw_read_model import (
     ViewerTournamentDraw,
     resolve_viewer_tournament_draw,
@@ -33,13 +30,13 @@ def get_viewer_tournament_draw(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ) -> ViewerTournamentDraw:
     try:
-        context = runtime.repository.get_viewer_official_run_context(
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
             product_run_id=product_run_id
         )
         return resolve_viewer_tournament_draw(
-            CanonicalTournamentDrawService(runtime.repository._session_factory),
+            snapshot.simulation_slot_component,
             run_id=product_run_id,
-            branch_id=context.official_branch_id,
+            branch_id=snapshot.context.official_branch_id,
             event_id=event_id,
         )
     except ViewerOfficialRunContextNotFoundError as exc:

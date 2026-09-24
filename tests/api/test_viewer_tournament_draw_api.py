@@ -10,19 +10,30 @@ from beta_engine.application.authoritative_tournament_draw import (
     CanonicalTournamentDrawService,
 )
 from test_simulation_api import ApiServer, _request
-from test_visible_prospects_api import _canonical_run
+from tests.api.viewer_saved_revision_helpers import (
+    canonical_product_run as _canonical_run,
+)
 from tests.api.test_viewer_tournament_entry_field_api import (
     _install_viewer_entry_field,
     _repository,
 )
+from tests.api.viewer_saved_revision_helpers import save_simulation
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
 
 
 @pytest.mark.pr_critical
-def test_viewer_draw_projects_effective_selected_branch_bracket_without_internal_authority(tmp_path) -> None:
+def test_viewer_draw_projects_effective_selected_branch_bracket_without_internal_authority(
+    tmp_path,
+) -> None:
     database_url = f"sqlite:///{tmp_path / 'viewer-draw.sqlite'}"
     with ApiServer(database_url=database_url) as server:
         run_id = "run"
-        branch_id, _ = _canonical_run(server, run_id)
+        branch_id, run_id = _canonical_run(server, run_id)
         event_id = "viewer-event"
         field = _install_viewer_entry_field(
             database_url=database_url,
@@ -52,6 +63,15 @@ def test_viewer_draw_projects_effective_selected_branch_bracket_without_internal
                 expected_draw_input_fingerprint=committed.draw_input_fingerprint,
             )
         )
+        # The live Draw is not public until the canonical simulation Save.
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/tournaments/{event_id}/draw",
+            )[0]
+            == 404
+        )
+        save_simulation(server, run_id, branch_id)
 
         status, payload = _request(
             "GET",
@@ -92,13 +112,59 @@ def test_viewer_draw_projects_effective_selected_branch_bracket_without_internal
         ):
             assert forbidden not in serialized
 
+        with repository._session_factory.begin() as session:
+            TournamentDrawProcessAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="viewer-live-process",
+                main_process_window_count=5,
+                qualification_process_window_count=3,
+            )
+            revision = TournamentDrawRevisionStore(session).full_redraw_withdrawal(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id="viewer-live-redraw",
+                withdrawn_player_ids=("C",),
+                main_process_window_ordinal=1,
+                qualification_process_window_ordinal=1,
+                repair_draw_seed=987654,
+            )
+
+        # The live effective Draw B cannot cross the saved boundary.
+        assert (
+            _request(
+                "GET",
+                (
+                    f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                    f"/tournaments/{event_id}/draw"
+                ),
+            )[1]
+            == payload
+        )
+        save_simulation(server, run_id, branch_id)
+        status, revised = _request(
+            "GET",
+            (
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                f"/tournaments/{event_id}/draw"
+            ),
+        )
+        assert status == 200
+        assert revised["revision_count"] == 1
+        assert revised != payload
+        assert (
+            revision.successor_draw.fingerprint != revision.predecessor_draw_fingerprint
+        )
+
 
 @pytest.mark.pr_critical
 def test_viewer_draw_returns_not_found_before_canonical_draw_exists(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'viewer-draw-missing.sqlite'}"
     with ApiServer(database_url=database_url) as server:
         run_id = "run"
-        branch_id, _ = _canonical_run(server, run_id)
+        branch_id, run_id = _canonical_run(server, run_id)
         _install_viewer_entry_field(
             database_url=database_url,
             run_id=run_id,

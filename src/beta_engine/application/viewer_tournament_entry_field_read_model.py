@@ -6,9 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from beta_engine.application.authoritative_pre_draw_withdrawal import (
-    CanonicalPreDrawWithdrawalService,
-)
+from beta_engine.domain.tournaments.entry_field import TournamentEntryField
 
 
 class ViewerTournamentEntryField(BaseModel):
@@ -30,24 +28,26 @@ class ViewerTournamentEntryField(BaseModel):
 
 
 def resolve_viewer_tournament_entry_field(
-    service: CanonicalPreDrawWithdrawalService,
+    component: dict | None,
     *,
     run_id: str,
     branch_id: str,
     event_id: str,
 ) -> ViewerTournamentEntryField:
-    state = service.inspect(
-        run_id=run_id,
-        branch_id=branch_id,
-        event_id=event_id,
-    )
+    if component is None:
+        raise KeyError("Viewer Saved Revision has no Tournament Entry Field component")
+    rows = [row for row in component.get("entry_fields", ()) if row["event_id"] == event_id]
+    if not rows:
+        raise KeyError(f"Tournament Entry Field {event_id!r} is not present in Viewer Saved Revision")
+    row = max(rows, key=lambda item: item["sequence"])
+    state = TournamentEntryField.model_validate_json(row["payload_json"])
     return ViewerTournamentEntryField(
         product_run_id=run_id,
         viewer_branch_id=branch_id,
         event_id=event_id,
-        field_sequence=state.field_sequence,
+        field_sequence=row["sequence"],
         mode=state.mode,
-        main_draw_capacity=state.main_draw_capacity,
+        main_draw_capacity=state.capacity.main_draw_size,
         active_main_entrant_count=state.active_main_entrant_count,
         effective_main_bye_count=state.effective_main_bye_count,
         direct_main_player_ids=state.direct_main_player_ids,

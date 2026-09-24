@@ -31,15 +31,10 @@ def get_viewer_current_official_ranking(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ) -> ViewerOfficialRanking:
     try:
-        context = runtime.repository.get_viewer_official_run_context(
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
             product_run_id=product_run_id
         )
-        with runtime.repository._session_factory() as session:
-            return resolve_viewer_official_ranking(
-                session,
-                run_id=product_run_id,
-                branch_id=context.official_branch_id,
-            )
+        return resolve_viewer_official_ranking(snapshot.ranking)
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except (ViewerOfficialRunContextConflictError, ValueError) as exc:
@@ -58,15 +53,10 @@ def get_viewer_official_ranking_history(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ) -> ViewerOfficialRankingHistory:
     try:
-        context = runtime.repository.get_viewer_official_run_context(
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
             product_run_id=product_run_id
         )
-        with runtime.repository._session_factory() as session:
-            return resolve_viewer_official_ranking_history(
-                session,
-                run_id=product_run_id,
-                branch_id=context.official_branch_id,
-            )
+        return resolve_viewer_official_ranking_history(snapshot.ranking)
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except (ViewerOfficialRunContextConflictError, ValueError) as exc:
@@ -86,16 +76,12 @@ def get_viewer_official_ranking_detail(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ) -> ViewerOfficialRanking:
     try:
-        context = runtime.repository.get_viewer_official_run_context(
+        snapshot = runtime.repository.get_viewer_saved_revision_snapshot(
             product_run_id=product_run_id
         )
-        with runtime.repository._session_factory() as session:
-            return resolve_viewer_official_ranking_at(
-                session,
-                run_id=product_run_id,
-                branch_id=context.official_branch_id,
-                week_ordinal=week_ordinal,
-            )
+        return resolve_viewer_official_ranking_at(
+            snapshot.ranking, week_ordinal=week_ordinal
+        )
     except ViewerOfficialRunContextNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except (ViewerOfficialRunContextConflictError, ValueError) as exc:

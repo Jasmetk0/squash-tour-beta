@@ -12,12 +12,19 @@ from beta_engine.infrastructure.db.definitive_wild_card_assignments import (
     DefinitiveWildCardAssignmentStore,
 )
 from test_simulation_api import ApiServer, _request
-from test_visible_prospects_api import _canonical_run
-from tests.api.test_viewer_tournament_entry_field_api import _repository
+from tests.api.viewer_saved_revision_helpers import (
+    canonical_product_run as _canonical_run,
+    save_simulation,
+)
+from tests.api.test_viewer_tournament_entry_field_api import (
+    _repository,
+    _install_viewer_entry_field,
+)
 
 
 def _assignment(
     *,
+    run_id: str,
     branch_id: str,
     event_id: str,
     player_id: str,
@@ -26,7 +33,7 @@ def _assignment(
     reserve_ordinal: int | None = None,
 ) -> DefinitiveWildCardAssignmentAuthority:
     return DefinitiveWildCardAssignmentAuthority(
-        run_id="run",
+        run_id=run_id,
         branch_id=branch_id,
         event_id=event_id,
         player_id=player_id,
@@ -49,12 +56,19 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
 ) -> None:
     path = tmp_path / "viewer-wild-cards.sqlite"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        branch_id, _ = _canonical_run(server, "run")
+        branch_id, run_id = _canonical_run(server, "run")
+        _install_viewer_entry_field(
+            database_url=f"sqlite:///{path}",
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id="event-a",
+        )
         repository = _repository(f"sqlite:///{path}")
         with repository._session_factory.begin() as session:
             store = DefinitiveWildCardAssignmentStore(session)
             store.append(
                 _assignment(
+                    run_id=run_id,
                     branch_id=branch_id,
                     event_id="event-a",
                     player_id="PLAYER-WC",
@@ -64,6 +78,7 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
             )
             store.append(
                 _assignment(
+                    run_id=run_id,
                     branch_id=branch_id,
                     event_id="event-a",
                     player_id="PLAYER-RWC",
@@ -74,6 +89,7 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
             )
             store.append(
                 _assignment(
+                    run_id=run_id,
                     branch_id=branch_id,
                     event_id="other-event",
                     player_id="OTHER",
@@ -82,10 +98,20 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
                 )
             )
 
+        # Definitive live assignments do not bypass the Saved Revision boundary.
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/tournaments/event-a/wild-cards",
+            )[0]
+            == 409
+        )
+        save_simulation(server, run_id, branch_id)
+
         status, payload = _request(
             "GET",
             (
-                f"{server.base_url}/viewer/runs/{quote('run', safe='')}"
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
                 "/tournaments/event-a/wild-cards"
             ),
         )
@@ -93,7 +119,7 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
         assert status == 200
         assert payload == {
             "schema_version": "viewer_tournament_wild_cards.v1",
-            "product_run_id": "run",
+            "product_run_id": run_id,
             "viewer_branch_id": branch_id,
             "event_id": "event-a",
             "assignment_count": 2,
@@ -125,6 +151,65 @@ def test_viewer_wild_cards_expose_only_public_definitive_assignments_for_selecte
         ):
             assert forbidden not in serialized
 
+        with repository._session_factory.begin() as session:
+            DefinitiveWildCardAssignmentStore(session).append(
+                _assignment(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id="event-a",
+                    player_id="PLAYER-WC-NEW",
+                    wildcard_index=3,
+                    source="reserve_wc",
+                    reserve_ordinal=4,
+                )
+            )
+
+        # Live assignment B remains invisible until the next Save.
+        assert (
+            _request(
+                "GET",
+                (
+                    f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                    "/tournaments/event-a/wild-cards"
+                ),
+            )[1]
+            == payload
+        )
+        status, inspected = _request(
+            "GET",
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/tournaments/event-a/entry-field",
+        )
+        assert status == 200
+        status, repaired = _request(
+            "POST",
+            (
+                f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+                "/tournaments/event-a/entry-field/pre-draw-withdrawal"
+            ),
+            {
+                "schema_version": "canonical_pre_draw_withdrawal_command.v1",
+                "command_id": "viewer-wc-save-boundary",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": "event-a",
+                "expected_field_fingerprint": inspected["field_fingerprint"],
+                "withdrawn_player_ids": ["D"],
+            },
+        )
+        assert status == 200, repaired
+        save_simulation(server, run_id, branch_id)
+        status, published = _request(
+            "GET",
+            (
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+                "/tournaments/event-a/wild-cards"
+            ),
+        )
+        assert status == 200
+        assert published["assignment_count"] == 3
+        assert published["assignments"][-1]["player_id"] == "PLAYER-WC-NEW"
+        assert published != payload
+
 
 @pytest.mark.pr_critical
 def test_viewer_wild_cards_return_empty_public_projection_before_any_definitive_assignment(
@@ -132,13 +217,11 @@ def test_viewer_wild_cards_return_empty_public_projection_before_any_definitive_
 ) -> None:
     path = tmp_path / "viewer-wild-cards-empty.sqlite"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        branch_id, _ = _canonical_run(server, "run")
+        branch_id, run_id = _canonical_run(server, "run")
 
         status, payload = _request(
             "GET",
-            f"{server.base_url}/viewer/runs/run/tournaments/event/wild-cards",
+            f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/tournaments/event/wild-cards",
         )
-        assert status == 200
-        assert payload["viewer_branch_id"] == branch_id
-        assert payload["assignment_count"] == 0
-        assert payload["assignments"] == []
+        assert status == 409
+        assert payload["detail"]["code"] == "viewer_tournament_wild_cards_unavailable"

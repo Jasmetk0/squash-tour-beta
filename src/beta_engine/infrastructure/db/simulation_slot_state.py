@@ -30,18 +30,16 @@ def _validate_command_rows_shape(rows):
         try:
             payload = json.loads(row.result_json)
         except (TypeError, ValueError) as exc:
-            raise ValueError("Saved simulation command receipt JSON is corrupt") from exc
-        if (
-            isinstance(payload, dict)
-            and payload.get("schema_version")
-            in {
-                "authoritative_simulation_historical_fork_receipt.v1",
-                "authoritative_simulation_historical_fork_receipt.v2",
-                "authoritative_simulation_historical_fork_receipt.v3",
-                "authoritative_simulation_historical_fork_receipt.v4",
-                "authoritative_simulation_historical_fork_receipt.v5",
-            }
-        ):
+            raise ValueError(
+                "Saved simulation command receipt JSON is corrupt"
+            ) from exc
+        if isinstance(payload, dict) and payload.get("schema_version") in {
+            "authoritative_simulation_historical_fork_receipt.v1",
+            "authoritative_simulation_historical_fork_receipt.v2",
+            "authoritative_simulation_historical_fork_receipt.v3",
+            "authoritative_simulation_historical_fork_receipt.v4",
+            "authoritative_simulation_historical_fork_receipt.v5",
+        }:
             expected_retryable = (
                 payload.get("schema_version")
                 == "authoritative_simulation_historical_fork_receipt.v5"
@@ -58,9 +56,8 @@ def _validate_command_rows_shape(rows):
                 )
             source_branch_id = payload.get("source_branch_id")
             source_request_fingerprint = payload.get("source_request_fingerprint")
-            if (
-                not isinstance(source_branch_id, str)
-                or not isinstance(source_request_fingerprint, str)
+            if not isinstance(source_branch_id, str) or not isinstance(
+                source_request_fingerprint, str
             ):
                 raise ValueError(
                     "Saved historical simulation fork receipt source identity is corrupt"
@@ -132,14 +129,11 @@ def _validate_command_rows_shape(rows):
                     "source_request_fingerprint": source_request_fingerprint,
                     "source_request_evidence_fingerprint": source_evidence_fingerprint,
                 }
-                if (
-                    historical_schema
-                    in {
-                        "authoritative_simulation_historical_fork_receipt.v3",
-                        "authoritative_simulation_historical_fork_receipt.v4",
-                        "authoritative_simulation_historical_fork_receipt.v5",
-                    }
-                ):
+                if historical_schema in {
+                    "authoritative_simulation_historical_fork_receipt.v3",
+                    "authoritative_simulation_historical_fork_receipt.v4",
+                    "authoritative_simulation_historical_fork_receipt.v5",
+                }:
                     target_evidence = payload.get("target_request_evidence")
                     target_evidence_fingerprint = payload.get(
                         "target_request_evidence_fingerprint"
@@ -193,7 +187,8 @@ def _validate_command_rows_shape(rows):
                     target_scope = target_basis.get("scope")
                     target_draft = target_basis.get("draft")
                     if (
-                        target_scope != [
+                        target_scope
+                        != [
                             row.run_id,
                             row.branch_id,
                             target_scope[2]
@@ -202,8 +197,7 @@ def _validate_command_rows_shape(rows):
                             and isinstance(target_scope[2], int)
                             else None,
                         ]
-                        or target_basis.get("branch_head")
-                        != target_base_revision_id
+                        or target_basis.get("branch_head") != target_base_revision_id
                         or target_draft != [target_base_revision_id, "clean", 0]
                     ):
                         raise ValueError(
@@ -264,13 +258,10 @@ def _validate_command_rows_shape(rows):
                             raise ValueError(
                                 "Saved historical simulation fork target closing Position scope is corrupt"
                             )
-                    if (
-                        historical_schema
-                        in {
-                            "authoritative_simulation_historical_fork_receipt.v4",
-                            "authoritative_simulation_historical_fork_receipt.v5",
-                        }
-                    ):
+                    if historical_schema in {
+                        "authoritative_simulation_historical_fork_receipt.v4",
+                        "authoritative_simulation_historical_fork_receipt.v5",
+                    }:
                         target_result = payload.get("target_result")
                         target_result_fingerprint = payload.get(
                             "target_result_fingerprint"
@@ -338,7 +329,9 @@ def _validate_command_rows_shape(rows):
                 )
             continue
 
-        evidence = payload.get("_request_evidence") if isinstance(payload, dict) else None
+        evidence = (
+            payload.get("_request_evidence") if isinstance(payload, dict) else None
+        )
         if evidence is None:
             # Historical receipts predate self-describing request evidence.
             continue
@@ -348,7 +341,9 @@ def _validate_command_rows_shape(rows):
             "authoritative_simulation_request_evidence.v2",
             "authoritative_simulation_request_evidence.v3",
         }:
-            raise ValueError("Saved simulation command request evidence schema is invalid")
+            raise ValueError(
+                "Saved simulation command request evidence schema is invalid"
+            )
         mode = evidence.get("mode")
         command = evidence.get("command")
         if mode not in {"match", "slot"} or not isinstance(command, dict):
@@ -358,7 +353,9 @@ def _validate_command_rows_shape(rows):
             or command.get("branch_id") != row.branch_id
             or command.get("command_id") != row.command_id
         ):
-            raise ValueError("Saved simulation command request evidence scope is corrupt")
+            raise ValueError(
+                "Saved simulation command request evidence scope is corrupt"
+            )
         expected = hashlib.sha256(
             json.dumps(
                 {"mode": mode, "command": command},
@@ -379,9 +376,7 @@ def _validate_command_rows_shape(rows):
                 raise ValueError(
                     "Saved simulation command opening Position basis is missing"
                 )
-            expected_position_fingerprint = command.get(
-                "expected_position_fingerprint"
-            )
+            expected_position_fingerprint = command.get("expected_position_fingerprint")
             if (
                 not isinstance(expected_position_fingerprint, str)
                 or hashlib.sha256(
@@ -474,9 +469,13 @@ def _validate_wild_card_rows_shape(rows):
     event_keys = [(row.run_id, row.branch_id, row.event_id) for row in rows]
     command_keys = [(row.run_id, row.branch_id, row.command_id) for row in rows]
     if len(event_keys) != len(set(event_keys)):
-        raise ValueError("Saved Tournament WC authority contains duplicate event authority")
+        raise ValueError(
+            "Saved Tournament WC authority contains duplicate event authority"
+        )
     if len(command_keys) != len(set(command_keys)):
-        raise ValueError("Saved Tournament WC authority contains duplicate command identity")
+        raise ValueError(
+            "Saved Tournament WC authority contains duplicate command identity"
+        )
     for row in rows:
         authority = TournamentWildCardAuthority.model_validate_json(row.payload_json)
         if (
@@ -507,9 +506,13 @@ def _validate_draw_input_rows_shape(rows):
     event_keys = [(row.run_id, row.branch_id, row.event_id) for row in rows]
     command_keys = [(row.run_id, row.branch_id, row.command_id) for row in rows]
     if len(event_keys) != len(set(event_keys)):
-        raise ValueError("Saved Tournament Draw Input contains duplicate event authority")
+        raise ValueError(
+            "Saved Tournament Draw Input contains duplicate event authority"
+        )
     if len(command_keys) != len(set(command_keys)):
-        raise ValueError("Saved Tournament Draw Input contains duplicate command identity")
+        raise ValueError(
+            "Saved Tournament Draw Input contains duplicate command identity"
+        )
     for row in rows:
         committed = TournamentDrawInputAuthority.model_validate_json(row.payload_json)
         if (
@@ -564,7 +567,9 @@ def _validate_draw_authority_rows_shape(rows):
 
 
 def _validate_draw_revision_rows_shape(rows):
-    from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
+    from beta_engine.domain.tournaments.draw_revision_authority import (
+        TournamentDrawRevision,
+    )
 
     by_event = {}
     for row in rows:
@@ -597,6 +602,56 @@ def _validate_draw_revision_rows_shape(rows):
                 raise ValueError("Saved Tournament Draw revision row is corrupt")
 
 
+def _validate_saved_viewer_tournament_chains(component):
+    """Validate cross-row tournament identities without consulting live state."""
+
+    draw_inputs = {
+        (row["run_id"], row["branch_id"], row["event_id"]): row
+        for row in component.get("draw_inputs", ())
+    }
+    draws = {
+        (row["run_id"], row["branch_id"], row["event_id"]): row
+        for row in component.get("draw_authorities", ())
+    }
+    fields_by_key = {}
+    for row in component.get("entry_fields", ()):
+        fields_by_key[
+            (row["run_id"], row["branch_id"], row["event_id"], row["sequence"])
+        ] = row
+    for key, draw_input in draw_inputs.items():
+        field = fields_by_key.get((*key, draw_input["field_sequence"]))
+        if (
+            field is None
+            or field["field_fingerprint"] != draw_input["entry_field_fingerprint"]
+        ):
+            raise ValueError(
+                "Saved Tournament Draw Input references a missing Entry Field"
+            )
+    for key, draw in draws.items():
+        draw_input = draw_inputs.get(key)
+        if (
+            draw_input is None
+            or draw_input["authority_fingerprint"] != draw["draw_input_fingerprint"]
+        ):
+            raise ValueError("Saved Tournament Draw references a missing Draw Input")
+    revisions_by_key = {}
+    for row in component.get("draw_revisions", ()):
+        revisions_by_key.setdefault(
+            (row["run_id"], row["branch_id"], row["event_id"]), []
+        ).append(row)
+    for key, rows in revisions_by_key.items():
+        initial = draws.get(key)
+        if initial is None:
+            raise ValueError("Saved Tournament Draw revision has no initial Draw")
+        predecessor = initial["authority_fingerprint"]
+        for row in sorted(rows, key=lambda item: item["sequence"]):
+            if row["predecessor_draw_fingerprint"] != predecessor:
+                raise ValueError(
+                    "Saved Tournament Draw revision predecessor chain is corrupt"
+                )
+            predecessor = row["successor_draw_fingerprint"]
+
+
 def _validate_draw_process_rows_shape(rows):
     from beta_engine.domain.tournaments.draw_process_authority import (
         TournamentDrawProcessAuthority,
@@ -605,9 +660,13 @@ def _validate_draw_process_rows_shape(rows):
     event_keys = [(row.run_id, row.branch_id, row.event_id) for row in rows]
     command_keys = [(row.run_id, row.branch_id, row.command_id) for row in rows]
     if len(event_keys) != len(set(event_keys)):
-        raise ValueError("Saved Tournament Draw process contains duplicate event authority")
+        raise ValueError(
+            "Saved Tournament Draw process contains duplicate event authority"
+        )
     if len(command_keys) != len(set(command_keys)):
-        raise ValueError("Saved Tournament Draw process contains duplicate command identity")
+        raise ValueError(
+            "Saved Tournament Draw process contains duplicate command identity"
+        )
     for row in rows:
         authority = TournamentDrawProcessAuthority.model_validate_json(row.payload_json)
         if (
@@ -1100,13 +1159,20 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             TournamentDrawRevisionModel.run_id == run_id,
             TournamentDrawRevisionModel.branch_id == branch_id,
         )
-        .order_by(TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence)
+        .order_by(
+            TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence
+        )
     ).all()
     if draw_revisions:
-        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        from beta_engine.infrastructure.db.tournament_draw_revision import (
+            TournamentDrawRevisionStore,
+        )
+
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({row.event_id for row in draw_revisions}):
-            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+            revision_store.history(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
     week_tournament_locks = session.scalars(
         select(WeekTournamentLockAuthorityModel)
         .where(
@@ -1255,6 +1321,7 @@ def _load(payload, *, run_id, branch_id):
     )
     if calculated["fingerprint"] != component["fingerprint"]:
         raise ValueError("Saved simulation-slot component fingerprint mismatch")
+    _validate_saved_viewer_tournament_chains(component)
     if any(
         (value["run_id"], value["branch_id"]) != (run_id, branch_id)
         for kind in (
@@ -1278,6 +1345,12 @@ def _load(payload, *, run_id, branch_id):
     ):
         raise ValueError("Saved simulation-slot component scope mismatch")
     return component
+
+
+def load_saved_simulation_slot_component(payload, *, run_id: str, branch_id: str):
+    """Expose restore-grade validation to immutable read projections."""
+
+    return _load(payload, run_id=run_id, branch_id=branch_id)
 
 
 def _validate_saved_entry_fields_against_live_ranking_authority(
@@ -1438,7 +1511,9 @@ def _validate_saved_draw_revisions_against_target_draw(component) -> None:
         raise ValueError("Saved Draw revisions require saved initial Draw authority")
 
     from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
-    from beta_engine.domain.tournaments.draw_revision_authority import TournamentDrawRevision
+    from beta_engine.domain.tournaments.draw_revision_authority import (
+        TournamentDrawRevision,
+    )
 
     initial_by_event = {
         value["event_id"]: TournamentDrawAuthority.model_validate_json(
@@ -1816,13 +1891,20 @@ def restore_saved_simulation_slots(
             TournamentDrawRevisionModel.run_id == run_id,
             TournamentDrawRevisionModel.branch_id == branch_id,
         )
-        .order_by(TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence)
+        .order_by(
+            TournamentDrawRevisionModel.event_id, TournamentDrawRevisionModel.sequence
+        )
     ).all()
     if live_draw_revisions:
-        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        from beta_engine.infrastructure.db.tournament_draw_revision import (
+            TournamentDrawRevisionStore,
+        )
+
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({row.event_id for row in live_draw_revisions}):
-            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+            revision_store.history(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
     live_draw_process_authorities = session.scalars(
         select(TournamentDrawProcessAuthorityModel)
         .where(
@@ -2065,16 +2147,19 @@ def restore_saved_simulation_slots(
         )
 
         process_store = TournamentDrawProcessAuthorityStore(session)
-        for event_id in sorted(
-            {value["event_id"] for value in target_draw_process}
-        ):
+        for event_id in sorted({value["event_id"] for value in target_draw_process}):
             process_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_draw_revisions = (target or {}).get("draw_revisions", [])
     if target_draw_revisions:
-        from beta_engine.infrastructure.db.tournament_draw_revision import TournamentDrawRevisionStore
+        from beta_engine.infrastructure.db.tournament_draw_revision import (
+            TournamentDrawRevisionStore,
+        )
+
         revision_store = TournamentDrawRevisionStore(session)
         for event_id in sorted({value["event_id"] for value in target_draw_revisions}):
-            revision_store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+            revision_store.history(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
 
     installed_component = _live_component_with_saved_shape(
         session,
@@ -2082,9 +2167,9 @@ def restore_saved_simulation_slots(
         branch_id=branch_id,
         shape_hint=target,
     )
-    if (installed_component or {}).get("fingerprint") != (
-        target or {}
-    ).get("fingerprint"):
+    if (installed_component or {}).get("fingerprint") != (target or {}).get(
+        "fingerprint"
+    ):
         raise ValueError(
             "Installed simulation-slot state differs from Saved Revision target"
         )

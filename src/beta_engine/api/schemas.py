@@ -1982,9 +1982,10 @@ class ViewerOfficialRunContextResponse(BaseModel):
     official_branch_status: str
     official_branch_read_only: bool
     official_branch_seed: int | None = None
-    legacy_simulation_run_id: str
-    head_checkpoint_id: str
-    head_checkpoint_kind: str
+    saved_head_revision_id: str
+    legacy_simulation_run_id: str | None = None
+    head_checkpoint_id: str | None = None
+    head_checkpoint_kind: str | None = None
     current_season: int | None = None
     current_week: int | None = None
     current_event_id: str | None = None

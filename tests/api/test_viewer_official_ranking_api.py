@@ -4,7 +4,11 @@ import pytest
 from urllib.parse import quote
 
 from test_simulation_api import ApiServer, _request
-from test_visible_prospects_api import _canonical_run, _database_session
+from test_visible_prospects_api import _database_session
+from tests.api.viewer_saved_revision_helpers import (
+    canonical_product_run as _canonical_run,
+    save_ranking,
+)
 
 from beta_engine.domain.rankings.official import (
     OfficialRankingPlayer,
@@ -18,9 +22,9 @@ from beta_engine.infrastructure.db.models import (
 )
 
 
-def _ranking(*, branch_id: str, week: RankingWeek, previous=None):
+def _ranking(*, run_id: str, branch_id: str, week: RankingWeek, previous=None):
     return calculate_official_ranking(
-        run_id="run",
+        run_id=run_id,
         branch_id=branch_id,
         week=week,
         policy=OfficialRankingPolicy(policy_id="viewer-ranking-policy", best_n=15),
@@ -47,47 +51,55 @@ def test_viewer_current_ranking_uses_public_world_head_and_ignores_future_public
 ) -> None:
     path = tmp_path / "viewer-official-ranking.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        branch_id, _ = _canonical_run(server)
+        branch_id, run_id = _canonical_run(server)
         week_one = RankingWeek(season_index=0, week=1)
         week_two = RankingWeek(season_index=0, week=2)
         week_three = RankingWeek(season_index=0, week=3)
-        opening = _ranking(branch_id=branch_id, week=week_one)
-        current = _ranking(branch_id=branch_id, week=week_two, previous=opening)
-        future = _ranking(branch_id=branch_id, week=week_three, previous=current)
+        opening = _ranking(run_id=run_id, branch_id=branch_id, week=week_one)
+        current = _ranking(
+            run_id=run_id, branch_id=branch_id, week=week_two, previous=opening
+        )
+        future = _ranking(
+            run_id=run_id, branch_id=branch_id, week=week_three, previous=current
+        )
 
         with _database_session(path) as session:
             session.add_all(
                 [
                     PublishedOfficialRankingModel(
-                        run_id="run",
+                        run_id=run_id,
                         branch_id=branch_id,
                         week_ordinal=current.week.ordinal,
                         snapshot_fingerprint=current.fingerprint,
                         payload_json=current.model_dump_json(),
                     ),
-                    PublishedOfficialRankingModel(
-                        run_id="run",
-                        branch_id=branch_id,
-                        week_ordinal=future.week.ordinal,
-                        snapshot_fingerprint=future.fingerprint,
-                        payload_json=future.model_dump_json(),
-                    ),
                     AuthoritativeWorldStateModel(
-                        run_id="run",
+                        run_id=run_id,
                         branch_id=branch_id,
                         current_ordinal=current.week.ordinal,
                         ranking_fingerprint=current.fingerprint,
                     ),
                 ]
             )
+        save_ranking(server, run_id, branch_id)
+        with _database_session(path) as session:
+            session.add(
+                PublishedOfficialRankingModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=future.week.ordinal,
+                    snapshot_fingerprint=future.fingerprint,
+                    payload_json=future.model_dump_json(),
+                )
+            )
 
         status, payload = _request(
             "GET",
-            f"{server.base_url}/viewer/runs/{quote('run', safe='')}/rankings/current",
+            f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/rankings/current",
         )
         assert status == 200
         assert payload["schema_version"] == "viewer_official_ranking.v1"
-        assert payload["product_run_id"] == "run"
+        assert payload["product_run_id"] == run_id
         assert payload["viewer_branch_id"] == branch_id
         assert payload["season_index"] == 0
         assert payload["week"] == 2
@@ -99,21 +111,43 @@ def test_viewer_current_ranking_uses_public_world_head_and_ignores_future_public
         assert payload["row_count"] == 2
         assert [row["player_id"] for row in payload["rows"]] == ["player-a", "player-b"]
 
+        # Advancing only live authority still changes nothing; the next canonical
+        # Save is the publication boundary.
+        with _database_session(path) as session:
+            world = session.get(AuthoritativeWorldStateModel, (run_id, branch_id))
+            world.current_ordinal = future.week.ordinal
+            world.ranking_fingerprint = future.fingerprint
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/rankings/current",
+            )[1]["snapshot_fingerprint"]
+            == current.fingerprint
+        )
+        save_ranking(server, run_id, branch_id)
+        assert (
+            _request(
+                "GET",
+                f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/rankings/current",
+            )[1]["snapshot_fingerprint"]
+            == future.fingerprint
+        )
+
 
 @pytest.mark.pr_critical
-def test_viewer_current_ranking_fails_closed_when_publication_and_world_head_disagree(
+def test_viewer_current_ranking_does_not_fallback_to_incoherent_live_publication(
     tmp_path,
 ) -> None:
     path = tmp_path / "viewer-official-ranking-corrupt.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        branch_id, _ = _canonical_run(server)
+        branch_id, run_id = _canonical_run(server)
         week = RankingWeek(season_index=0, week=1)
-        ranking = _ranking(branch_id=branch_id, week=week)
+        ranking = _ranking(run_id=run_id, branch_id=branch_id, week=week)
 
         with _database_session(path) as session:
             session.add(
                 PublishedOfficialRankingModel(
-                    run_id="run",
+                    run_id=run_id,
                     branch_id=branch_id,
                     week_ordinal=week.ordinal,
                     snapshot_fingerprint=ranking.fingerprint,
@@ -122,7 +156,7 @@ def test_viewer_current_ranking_fails_closed_when_publication_and_world_head_dis
             )
             session.add(
                 AuthoritativeWorldStateModel(
-                    run_id="run",
+                    run_id=run_id,
                     branch_id=branch_id,
                     current_ordinal=week.ordinal,
                     ranking_fingerprint="f" * 64,
@@ -131,11 +165,11 @@ def test_viewer_current_ranking_fails_closed_when_publication_and_world_head_dis
 
         status, payload = _request(
             "GET",
-            f"{server.base_url}/viewer/runs/{quote('run', safe='')}/rankings/current",
+            f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/rankings/current",
         )
         assert status == 409
         assert payload["detail"]["code"] == "viewer_official_ranking_unavailable"
-        assert "does not match the public world head" in payload["detail"]["message"]
+        assert "no ranking component" in payload["detail"]["message"]
 
 
 @pytest.mark.pr_critical
@@ -144,48 +178,56 @@ def test_viewer_ranking_history_lists_only_public_branch_publications_and_detail
 ) -> None:
     path = tmp_path / "viewer-ranking-history.db"
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        branch_id, _ = _canonical_run(server)
+        branch_id, run_id = _canonical_run(server)
         week_one = RankingWeek(season_index=0, week=1)
         week_two = RankingWeek(season_index=0, week=2)
         week_three = RankingWeek(season_index=0, week=3)
-        opening = _ranking(branch_id=branch_id, week=week_one)
-        current = _ranking(branch_id=branch_id, week=week_two, previous=opening)
-        future = _ranking(branch_id=branch_id, week=week_three, previous=current)
+        opening = _ranking(run_id=run_id, branch_id=branch_id, week=week_one)
+        current = _ranking(
+            run_id=run_id, branch_id=branch_id, week=week_two, previous=opening
+        )
+        future = _ranking(
+            run_id=run_id, branch_id=branch_id, week=week_three, previous=current
+        )
 
         with _database_session(path) as session:
             session.add_all(
                 [
                     PublishedOfficialRankingModel(
-                        run_id="run",
+                        run_id=run_id,
                         branch_id=branch_id,
                         week_ordinal=opening.week.ordinal,
                         snapshot_fingerprint=opening.fingerprint,
                         payload_json=opening.model_dump_json(),
                     ),
                     PublishedOfficialRankingModel(
-                        run_id="run",
+                        run_id=run_id,
                         branch_id=branch_id,
                         week_ordinal=current.week.ordinal,
                         snapshot_fingerprint=current.fingerprint,
                         payload_json=current.model_dump_json(),
                     ),
-                    PublishedOfficialRankingModel(
-                        run_id="run",
-                        branch_id=branch_id,
-                        week_ordinal=future.week.ordinal,
-                        snapshot_fingerprint=future.fingerprint,
-                        payload_json=future.model_dump_json(),
-                    ),
                     AuthoritativeWorldStateModel(
-                        run_id="run",
+                        run_id=run_id,
                         branch_id=branch_id,
                         current_ordinal=current.week.ordinal,
                         ranking_fingerprint=current.fingerprint,
                     ),
                 ]
             )
+        save_ranking(server, run_id, branch_id)
+        with _database_session(path) as session:
+            session.add(
+                PublishedOfficialRankingModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=future.week.ordinal,
+                    snapshot_fingerprint=future.fingerprint,
+                    payload_json=future.model_dump_json(),
+                )
+            )
 
-        root = f"{server.base_url}/viewer/runs/{quote('run', safe='')}/rankings"
+        root = f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}/rankings"
         status, history = _request("GET", root + "/history")
         assert status == 200
         assert history["schema_version"] == "viewer_official_ranking_history.v1"

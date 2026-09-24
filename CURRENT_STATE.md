@@ -1,29 +1,67 @@
 # Current implementation and next action
 
-## Open PR boundary — canonical Viewer Saved Revision reads
+## Active checkpoint — 24 September 2026, after merged #967
 
-Implementation base: local `buuk` mirror commit
-`1ecffbe060e66785bb1fa35e3a77f55c6fa928be` (merged PR #966). Network access to
-GitHub was unavailable while preparing this branch, so this is deliberately not a
-claim that the open work below is merged or that the remote head was re-verified.
+Implementation baseline: `buuk` commit
+`e0d95cab030939218000885fcefabf63ebcff47b` (merged PR #967).
+This checkpoint takes precedence over older implementation-status and next-step
+paragraphs below; those older sections remain historical evidence, not current
+instructions.
 
-This branch replaces the legacy SimulationRun/checkpoint prerequisite with one
-read-only resolver from Product Run to its saved Viewer Branch head. The resolver
-validates Saved Revision ownership, payload identity and content hash, then applies
-the existing ranking, simulation-slot and definitive-WC component validators.
-Official Ranking/history, Tournament Entry Field, effective Draw/revisions and
-definitive WC/RWC projections consume only those validated saved components; absent
-components remain unavailable and never fall back to live Admin tables. Nullable
-legacy context fields remain compatibility metadata.
+### Completed Viewer boundary
 
-`tests/api/test_viewer_saved_revision_boundary_api.py` and the focused Viewer API
-modules exercise the real FastAPI stack over file-backed SQLite, including a
-canonical Run with no legacy binding, saved-versus-live Ranking/Entry/Draw/WC
-visibility, saved Viewer Branch switching, sporting-data process reopen, pure reads,
-absent components, and revision/component corruption failures. The broader recovery
-gap remains unchanged: not every sporting authority
-family can yet be forked/restored, and InitialWorld/complete-world branch recovery
-is still intentionally guarded rather than silently partial.
+PR #967 moved canonical Viewer reads behind one immutable Saved Revision boundary:
+
+- Product Run -> saved Viewer Branch -> that Branch's verified
+  `saved_head_revision_id` -> immutable `BranchSavedRevision`.
+- Canonical Product Runs no longer require a legacy SimulationRun/checkpoint binding
+  for Viewer reads.
+- Official Ranking/history, Tournament Entry Field, effective Draw/revisions and
+  definitive WC/RWC read validated Saved Revision components only. Missing or
+  corrupt saved data fails closed; mutable Admin/live authorities are never a
+  Viewer fallback.
+- Ranking, Entry, Draw and WC acceptance all prove the same publication contract:
+  Saved A -> newer live B remains invisible -> Save -> Viewer B.
+- Viewer Branch selection remains unsaved until Save. After Save, Viewer resolves
+  the newly selected Branch's own latest Saved Revision, not the editing Branch's
+  selection-change revision.
+- Viewer public time no longer follows mutable `BranchState`; legacy
+  simulation/checkpoint fields are nullable compatibility metadata.
+- Real HTTP + file-backed SQLite coverage includes reopen, pure reads, historical
+  ranking bounds, scope/hash/component corruption and fail-closed behavior.
+
+Final #967 head:
+`bf86228e5f4b399dad2d512a0069f961f1a5d6d3`.
+
+Fast CI #1733 on that final head completed successfully:
+**23 passed, 2505 deselected**.
+
+### Current highest-priority implementation objective
+
+Move to the next dependency in the Master-scoped pre-alpha path:
+**complete sporting-world Branch recovery/forking around InitialWorld and the
+remaining materialized-world boundary.**
+
+Start from the actual current `buuk` state and verify before implementation.
+The next slice should focus on:
+
+1. reproduce the currently guarded InitialWorld-bearing Saved Revision fork path;
+2. make a materialized target Branch own the complete supported world state rather
+   than copying source identity or weakening fail-closed guards;
+3. prove source/target divergence, Save, restore/reopen and historical Replay;
+4. preserve determinism, provenance, fingerprint remapping and Run/Branch isolation;
+5. include the selected Viewer Branch/Saved Revision consequences where recovery
+   changes Branch history;
+6. re-check the known direct-test circular-import boundary if it blocks the targeted
+   recovery tests, fixing only the smallest architecturally correct seam.
+
+Do not expand this slice into unrelated orchestration or new sporting rules.
+After the recovery slice, re-evaluate the previously static follow-ups for
+Full Simulation abandonment/restart and continuation of an alternate Branch when a
+Run is globally Completed.
+
+PR #951 remains open and non-mergeable at this checkpoint. Do not merge or rebase it
+implicitly as part of the next recovery slice.
 
 ## Active handoff — 23 September 2026, after #965
 

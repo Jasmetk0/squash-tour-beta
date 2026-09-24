@@ -13,6 +13,9 @@ from sqlalchemy.orm import Session
 from beta_engine.application.season_closing_ranking_resolution import (
     stage_canonical_season_closing_ranking,
 )
+from beta_engine.application.full_simulation_execution_guard import (
+    require_pending_full_simulation_guard,
+)
 from beta_engine.application.season_closure_resolution import (
     resolve_canonical_season_closure_package,
 )
@@ -29,7 +32,10 @@ from beta_engine.application.season_transition_sporting import (
     stage_season_transition_sporting,
 )
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
-from beta_engine.domain.run_containers import is_pre_completion_run_status
+from beta_engine.domain.run_containers import (
+    COMPLETED_RUN_STATUS,
+    is_pre_completion_run_status,
+)
 from beta_engine.domain.run_revisions import (
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
@@ -337,6 +343,7 @@ def commit_ordinary_season_transition(
 
     if not session.in_transaction():
         raise ValueError("Season Transition requires a caller transaction")
+    require_pending_full_simulation_guard(session)
     command = OrdinarySeasonTransitionCommand.model_validate_json(
         command.model_dump_json()
     )
@@ -366,8 +373,11 @@ def commit_ordinary_season_transition(
         raise ValueError("Season Transition Run/Branch scope is incomplete")
     if run.read_only or branch.read_only or branch.status != "active":
         raise ValueError("Season Transition requires a writable active Branch")
-    if not is_pre_completion_run_status(run.status):
-        raise ValueError("Season Transition requires a Working Run")
+    if not (
+        is_pre_completion_run_status(run.status)
+        or run.status == COMPLETED_RUN_STATUS
+    ):
+        raise ValueError("Season Transition requires a Working or Completed Run")
     if (
         branch.saved_head_revision_id != command.expected_saved_revision_id
         or draft.base_revision_id != command.expected_saved_revision_id

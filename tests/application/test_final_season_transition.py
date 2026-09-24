@@ -1,5 +1,6 @@
 import json
 import threading
+from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import select
@@ -11,6 +12,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationPosition,
 )
+from beta_engine.application.run_branch_creation_service import RunBranchCreationService
 import beta_engine.application.final_season_transition as final_transition
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
@@ -22,7 +24,11 @@ from beta_engine.domain.rankings.official import (
     OfficialRankingPolicy,
     calculate_official_ranking,
 )
-from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS, WORKING_RUN_STATUS
+from beta_engine.domain.run_containers import (
+    ARCHIVED_RUN_STATUS,
+    COMPLETED_RUN_STATUS,
+    WORKING_RUN_STATUS,
+)
 from beta_engine.domain.run_revisions import (
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
@@ -54,6 +60,7 @@ from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     load_saved_revision_season_closure,
 )
+from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
 
 @pytest.fixture
@@ -589,6 +596,23 @@ def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work
             "Stop parent while retaining committed canonical work"
         )
 
+    database_url = str(database.kw["bind"].url)
+    database.kw["bind"].dispose()
+    reopened_engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    reopened_database = create_session_factory(reopened_engine)
+    reopened_driver = AuthoritativeRunSimulationDriver(reopened_database, None, None)
+
+    reopened_pending = reopened_driver.inspect_pending_full_simulations(
+        run_id="run", branch_id="branch"
+    )
+    assert reopened_pending["operations"] == []
+    assert reopened_driver.inspect_full_simulation_history(
+        run_id="run", branch_id="branch"
+    )["items"][0] == abandoned_item
+    assert reopened_driver.inspect_full_simulation_parent(
+        run_id="run", branch_id="branch", command_id=command.command_id
+    ) == abandoned_detail
+
     replacement = AuthoritativeFullSimulationPreviewRequest(
         command_id="full-simulation-replacement",
         run_id="run",
@@ -596,11 +620,12 @@ def test_full_simulation_abandon_releases_parent_without_rolling_back_child_work
         operator_label="Replacement admin",
         audit_reason="Review from the canonical state left by abandoned parent",
     )
-    replacement_preview = driver.preview_full_simulation(replacement)
+    replacement_preview = reopened_driver.preview_full_simulation(replacement)
     assert replacement_preview["start_week"] == FINAL_WEEK.model_dump(mode="json")
 
     with pytest.raises(ValueError, match="invalid status"):
-        driver.simulate_full_simulation(command)
+        reopened_driver.simulate_full_simulation(command)
+    reopened_engine.dispose()
 
 
 @pytest.mark.pr_critical
@@ -757,6 +782,138 @@ def test_completed_run_allows_unfinished_branch_full_simulation_preview(
 
 
 @pytest.mark.pr_critical
+def test_pending_branch_parent_ignores_other_branch_run_completion(
+    database, monkeypatch
+):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=("season_transition_required",),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    request = AuthoritativeFullSimulationPreviewRequest(
+        command_id="pending-branch-b",
+        run_id="run",
+        branch_id="branch",
+        operator_label="Branch B admin",
+        audit_reason="Keep B pending while another Branch completes",
+    )
+    preview = driver.preview_full_simulation(request)
+    command = AuthoritativeFullSimulationCommand(
+        **request.model_dump(mode="json"),
+        expected_start_week=FINAL_WEEK,
+        expected_position_fingerprint=preview["expected_position_fingerprint"],
+        expected_revision_id=preview["expected_revision_id"],
+        expected_preview_fingerprint=preview["preview_fingerprint"],
+    )
+    first = driver.simulate_full_simulation(command)
+    assert first["checkpoint"] == "final_run_closure_review_required"
+
+    with database.begin() as session:
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="other-final-branch",
+                display_name="Timeline 2",
+                status="active",
+                read_only=0,
+                saved_head_revision_id=None,
+            )
+        )
+
+    retry = driver.simulate_full_simulation(command)
+    assert retry["schema_version"] == "authoritative_full_simulation_progress.v1"
+    assert retry["checkpoint"] == "final_run_closure_review_required"
+    with database() as session:
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert parent.status == "pending"
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    ("run_status", "run_read_only", "branch_read_only", "branch_status"),
+    (
+        (ARCHIVED_RUN_STATUS, 0, 0, "active"),
+        (COMPLETED_RUN_STATUS, 1, 0, "active"),
+        (COMPLETED_RUN_STATUS, 0, 1, "active"),
+        (COMPLETED_RUN_STATUS, 0, 0, "archived"),
+    ),
+)
+def test_full_simulation_preview_blocks_archived_or_read_only_scope(
+    database,
+    monkeypatch,
+    run_status,
+    run_read_only,
+    branch_read_only,
+    branch_status,
+):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+        run = session.get(RunContainerModel, "run")
+        branch = session.get(RunBranchModel, "branch")
+        run.status = run_status
+        run.read_only = run_read_only
+        branch.read_only = branch_read_only
+        branch.status = branch_status
+    position = AuthoritativeSimulationPosition(
+        run_id="run",
+        branch_id="branch",
+        current_week=FINAL_WEEK,
+        current_slot_id=None,
+        slot_ordinal=None,
+        unresolved_group_ids=(),
+        eligible_match_ids=(),
+        blocked_match_ids=(),
+        current_slot_complete=True,
+        supported_tournament_complete=True,
+        week_ready_for_transition=True,
+        transition_blockers=(),
+        terminal_sporting_fingerprint="d" * 64,
+        position_fingerprint="e" * 64,
+    )
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id, allow_missing_schedule=False: position,
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    with pytest.raises(ValueError, match="writable active Branch"):
+        driver.preview_full_simulation(
+            AuthoritativeFullSimulationPreviewRequest(
+                command_id="blocked-scope",
+                run_id="run",
+                branch_id="branch",
+                operator_label="Scope admin",
+                audit_reason="Archived/read-only scope must fail closed",
+            )
+        )
+
+
+@pytest.mark.pr_critical
 def test_second_branch_final_closure_is_idempotent_in_completed_run(
     database, monkeypatch
 ):
@@ -779,6 +936,66 @@ def test_second_branch_final_closure_is_idempotent_in_completed_run(
         assert session.get(RunContainerModel, "run").status == COMPLETED_RUN_STATUS
         assert len(session.scalars(select(SeasonClosingRankingModel)).all()) == 1
         assert len(session.scalars(select(BranchRevisionAuditEventModel)).all()) == 1
+
+
+@pytest.mark.pr_critical
+def test_archived_run_preserves_valid_branch_final_closure_evidence(
+    database, monkeypatch
+):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+        commit_final_season_transition(session, _command())
+        session.get(RunContainerModel, "run").status = ARCHIVED_RUN_STATUS
+
+    with database() as session:
+        evidence = AuthoritativeRunSimulationDriver._branch_final_closure_evidence(
+            session, run_id="run", branch_id="branch"
+        )
+    assert evidence["final_saved_revision_id"] == "revision-final"
+
+
+@pytest.mark.pr_critical
+def test_canonical_completed_run_forks_its_historical_revision_without_viewer_switch(
+    database, monkeypatch
+):
+    _patch_saved_revision_captures(monkeypatch)
+    with database.begin() as session:
+        _install_final_boundary(session)
+        commit_final_season_transition(session, _command())
+
+    identities: Iterator[str] = iter(("branch-b", "draft-b"))
+    repository = SimulationPersistenceRepository(
+        engine=database.kw["bind"], session_factory=database
+    )
+    created = RunBranchCreationService(
+        repository=repository,
+        id_factory=lambda _kind: next(identities),
+    ).create_from_saved_revision(
+        run_id="run",
+        source_branch_id="branch",
+        source_saved_revision_id="revision-before-final",
+    )
+
+    assert created.branch_id == "branch-b"
+    assert created.status == "active"
+    assert created.read_only is False
+    assert created.saved_head_revision_id == "revision-before-final"
+    with database() as session:
+        run = session.get(RunContainerModel, "run")
+        source = session.get(RunBranchModel, "branch")
+        target = session.get(RunBranchModel, "branch-b")
+        target_draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == "branch-b"
+            )
+        )
+        assert run.status == COMPLETED_RUN_STATUS
+        assert run.official_branch_id == "branch"
+        assert source.saved_head_revision_id == "revision-final"
+        assert target.saved_head_revision_id == "revision-before-final"
+        assert target_draft.status == CLEAN_WORKING_DRAFT_STATUS
+        assert target_draft.base_revision_id == "revision-before-final"
 
 
 @pytest.mark.pr_critical

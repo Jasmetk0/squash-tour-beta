@@ -10,6 +10,11 @@ InitialWorld-only/nested forks, InitialWorld-backed ranking, target divergence/S
 restore/reopen, deterministic continuation, corruption rejection and late rollback.
 The sequence below starts from the next unresolved dependency.
 
+The intervening orchestration-integrity slice now distinguishes Branch sporting
+finality from global Run lifecycle, fences abandoned Full Simulation writers, permits
+ordinary/final continuation on unfinished Branches in Completed Runs, and keeps
+Archived Runs mutation-blocking. The next dependency remains the coverage audit.
+
 1. Refresh/audit the compact Master-to-code pre-alpha coverage table in CURRENT_STATE
    (chapter/PAQ, decision status, pre-alpha applicability, implementation/test
    evidence, remaining gap). Use it to select the next missing required decided

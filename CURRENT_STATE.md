@@ -10,12 +10,16 @@ adds a transaction-local Full Simulation abandonment fence. Nested child/progres
 writers validate the originating parent after SQLite writer ownership; abandonment
 therefore preserves earlier committed children while preventing every later sporting
 or progress commit. Completed Runs permit unfinished active Branches to continue and
-install their own final closure without a status downgrade or Viewer switch.
+cross ordinary Season Transition boundaries, create historical alternative Branches,
+and install their own final closure without a status downgrade or Viewer switch.
+Archived Runs remain mutation-blocking while their Branch closure evidence remains
+valid historical state.
 
 Focused PR-critical coverage includes active interleaving at the writer boundary,
 the existing durable abandoned-parent/replacement path, Completed-Run unfinished
-Branch preview, second-Branch-style final closure/idempotent retry, and the existing
-same-Branch Full Simulation completion observation.
+Branch preview, ordinary transition in a Completed Run, historical Branch creation,
+durable reopen/replacement, second-Branch-style final closure/idempotent retry,
+Archived guards and the existing same-Branch Full Simulation completion observation.
 
 **Next action:** refresh/audit the Master-to-code pre-alpha coverage table. Do not
 automatically widen this slice into another feature area.

@@ -9,13 +9,11 @@ from __future__ import annotations
 
 import hashlib
 import json
-from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import Any, Callable, Literal
 
 from pydantic import Field, model_validator
-from sqlalchemy import event, select, text
-from sqlalchemy.engine import Engine
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.authoritative_slot_matches import (
@@ -33,6 +31,10 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionCommand,
     FinalSeasonTransitionResult,
     commit_final_season_transition,
+)
+from beta_engine.application.full_simulation_execution_guard import (
+    ACTIVE_FULL_SIMULATION_GUARD,
+    FullSimulationExecutionGuard,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
@@ -94,7 +96,11 @@ from beta_engine.domain.players.sporting import (
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
-from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS
+from beta_engine.domain.run_containers import (
+    ARCHIVED_RUN_STATUS,
+    COMPLETED_RUN_STATUS,
+    is_pre_completion_run_status,
+)
 from beta_engine.domain.run_revisions import FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
 from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
@@ -168,69 +174,6 @@ from beta_engine.application.authoritative_week_transition import (
 AUTHORITATIVE_EMPTY_WEEK_PROVENANCE = (
     "explicit Run/Branch empty-week completion against frozen season Calendar authority"
 )
-
-
-@dataclass(frozen=True, slots=True)
-class _FullSimulationExecutionGuard:
-    """Invocation-local fence checked by every transaction in the child tree."""
-
-    run_id: str
-    branch_id: str
-    command_id: str
-    request_fingerprint: str
-    before_transaction_check: Callable[[], None] | None = None
-
-
-_ACTIVE_FULL_SIMULATION_GUARD: ContextVar[
-    _FullSimulationExecutionGuard | None
-] = ContextVar("active_full_simulation_execution_guard", default=None)
-
-
-@event.listens_for(Session, "before_flush")
-def _fence_full_simulation_transaction(session, flush_context, instances) -> None:
-    """Linearize every nested child writer after the durable parent status.
-
-    Child services acquire SQLite ``BEGIN IMMEDIATE`` before they flush. The status
-    query therefore runs in that same transaction after writer ownership has been
-    acquired. A missing row is allowed only for the transaction that creates a new
-    parent; all later child/progress transactions see that row.
-    """
-
-    guard = _ACTIVE_FULL_SIMULATION_GUARD.get()
-    if guard is None:
-        return
-    row = session.connection().exec_driver_sql(
-        "SELECT request_fingerprint, status "
-        "FROM authoritative_simulation_commands "
-        "WHERE run_id = ? AND branch_id = ? AND command_id = ?",
-        (guard.run_id, guard.branch_id, guard.command_id),
-    ).first()
-    if row is None:
-        return
-    if row[0] != guard.request_fingerprint:
-        raise ValueError("Full Simulation execution guard fingerprint mismatch")
-    if row[1] == "abandoned":
-        raise ValueError(
-            "Full Simulation parent has an invalid status: abandoned; "
-            "execution is fenced"
-        )
-    if row[1] != "pending":
-        raise ValueError("Full Simulation execution guard found an invalid status")
-
-
-@event.listens_for(Engine, "before_cursor_execute")
-def _pause_before_full_simulation_writer(
-    connection, cursor, statement, parameters, context, executemany
-) -> None:
-    """Expose a deterministic pre-lock interleaving seam to concurrency tests."""
-
-    guard = _ACTIVE_FULL_SIMULATION_GUARD.get()
-    if (
-        guard is not None
-        and guard.before_transaction_check is not None
-        and statement.strip().upper() == "BEGIN IMMEDIATE"
-    ):
-        guard.before_transaction_check()
 
 
 class AuthoritativeEmptyWeekCompletionCommand(FrozenInput):
@@ -4826,8 +4769,8 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("Branch Saved Revision head identity is corrupt")
         if revision.kind != FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND:
             return None
-        if run.status != COMPLETED_RUN_STATUS:
-            raise ValueError("final-closed Branch belongs to a non-Completed Run")
+        if is_pre_completion_run_status(run.status):
+            raise ValueError("final-closed Branch belongs to a Working Run")
         try:
             payload = json.loads(revision.payload_json)
         except json.JSONDecodeError as exc:
@@ -4861,8 +4804,8 @@ class AuthoritativeRunSimulationDriver:
         )
         key = (command.run_id, command.branch_id, command.command_id)
 
-        guard_token = _ACTIVE_FULL_SIMULATION_GUARD.set(
-            _FullSimulationExecutionGuard(
+        guard_token = ACTIVE_FULL_SIMULATION_GUARD.set(
+            FullSimulationExecutionGuard(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 command_id=command.command_id,
@@ -4879,7 +4822,7 @@ class AuthoritativeRunSimulationDriver:
                 key=key,
             )
         finally:
-            _ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+            ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
 
     def _simulate_full_simulation_guarded(
         self,
@@ -6184,7 +6127,12 @@ class AuthoritativeRunSimulationDriver:
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("authoritative simulation Run/Branch scope does not exist")
-        if run.read_only or branch.read_only or branch.status != "active":
+        if (
+            run.read_only
+            or run.status == ARCHIVED_RUN_STATUS
+            or branch.read_only
+            or branch.status != "active"
+        ):
             raise ValueError("authoritative simulation Run/Branch is not writable")
 
     @staticmethod
@@ -7834,7 +7782,12 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "Full Simulation requires a Saved Revision-backed Run/Branch"
             )
-        if run.read_only or branch.read_only or branch.status != "active":
+        if (
+            run.read_only
+            or run.status == ARCHIVED_RUN_STATUS
+            or branch.read_only
+            or branch.status != "active"
+        ):
             raise ValueError("Full Simulation requires a writable active Branch")
         if self._branch_final_closure_evidence(
             session, run_id=request.run_id, branch_id=request.branch_id

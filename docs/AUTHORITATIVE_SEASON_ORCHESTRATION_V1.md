@@ -97,6 +97,12 @@ the normal atomic rollover command.
 Once the world has actually reached next Season Week 1, retrying the exact same parent
 marks it complete.
 
+Global Run lifecycle does not replace Branch chronology. A writable active unfinished
+Branch may perform this ordinary transition when its Run is already `completed`
+because another Branch reached final closure. The transition keeps the Run Completed
+and records `completed` in its new Saved Revision. Archived Runs and read-only or
+inactive Branches remain blocked.
+
 ## Durable retry and reopen
 
 The parent receipt freezes deterministic IDs for:

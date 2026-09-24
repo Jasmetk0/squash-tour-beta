@@ -34,7 +34,7 @@ from beta_engine.domain.rankings.official import (
     calculate_official_ranking,
     load_official_ranking_snapshot,
 )
-from beta_engine.domain.run_containers import WORKING_RUN_STATUS
+from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS, WORKING_RUN_STATUS
 from beta_engine.domain.run_revisions import (
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
@@ -534,6 +534,51 @@ def test_driver_commits_complete_ordinary_season_transition_and_retry(database, 
         assert event.week_ordinal == result.target_week.ordinal
         audit = session.get(BranchRevisionAuditEventModel, "audit-season-1")
         assert audit.saved_revision_id == "revision-season-1"
+
+    assert driver.advance_season(command) == result
+
+
+@pytest.mark.pr_critical
+def test_completed_run_allows_idempotent_ordinary_transition_on_active_branch(
+    database, monkeypatch
+):
+    with database.begin() as session:
+        completed = _install_boundary(session)
+        _install_week1_prospect(session)
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: _position(completed),
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preflight = driver.season_transition_preflight(run_id="run", branch_id="branch")
+    assert preflight.ready_for_execution is True
+    with database() as session:
+        configuration = resolve_season_transition_configuration(
+            session, run_id="run", branch_id="branch"
+        )
+    command = _command(configuration, preflight.preflight_fingerprint)
+
+    result = driver.advance_season(command)
+    assert result.target_week == RankingWeek(season_index=1, week=1)
+    with database() as session:
+        run = session.get(RunContainerModel, "run")
+        branch = session.get(RunBranchModel, "branch")
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == "branch"
+            )
+        )
+        revision = session.get(BranchSavedRevisionModel, result.saved_revision_id)
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert run.status == COMPLETED_RUN_STATUS
+        assert branch.saved_head_revision_id == result.saved_revision_id
+        assert draft.base_revision_id == result.saved_revision_id
+        assert draft.status == CLEAN_WORKING_DRAFT_STATUS
+        assert world.current_ordinal == result.target_week.ordinal
+        assert json.loads(revision.payload_json)["run"]["status"] == COMPLETED_RUN_STATUS
 
     assert driver.advance_season(command) == result
 

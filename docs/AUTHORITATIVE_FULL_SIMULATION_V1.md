@@ -81,6 +81,15 @@ Transition installs its own closure revision and completes its own Full Simulati
 parent without downgrading the Run to `working` or creating a second global lifecycle
 transition. A Branch whose head already has valid final closure evidence rejects a
 new Full Simulation as already completed. Archived/read-only scopes remain blocked.
+The same rule applies at non-final Week 61 boundaries: ordinary Season Transition on
+an alternative Branch is allowed while the Run remains `completed`, its new Saved
+Revision records that actual global status, and the Run is never downgraded to
+`working`.
+
+Archival changes mutation permission, not historical sporting truth. An archived Run
+cannot preview or commit new authoritative simulation, but a valid final-closure head
+on one of its Branches remains valid closure evidence rather than being reported as
+corruption.
 
 On retry it requires:
 
@@ -124,6 +133,12 @@ If abandonment committed first, that writer fails before sporting or progress st
 is written. If a child writer acquired ownership first, it may commit and abandonment
 is ordered after it; that already-committed child remains canonical. No late worker
 may add children/counters, replace abandonment metadata or mark the parent complete.
+
+The guard covers the complete current child tree: Full/Next Season and Next Week
+parent progress, Next Slot sporting receipts/state, audited Empty Week completion,
+Week Transition, and ordinary/final Season Transition. ORM mutation paths are fenced
+at flush; Week Transition and both Season Transition writers additionally perform an
+explicit in-transaction guard check before their mixed ORM/Core persistence stages.
 
 
 Full Simulation parent receipts are also inspectable as durable Run/Branch history.

@@ -2,35 +2,40 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Active pre-alpha sequence — post-#965 checkpoint
+## Active pre-alpha sequence — post-#967 checkpoint
 
 Read the active checkpoint at the top of [CURRENT_STATE.md](CURRENT_STATE.md).
-The following is a dependency-based plan, not a declaration that every gap has
-already been audited or that passing one season completes pre-alpha.
+PR #967 completed the canonical Viewer Saved Revision isolation step with real
+Product Run HTTP acceptance. The sequence below starts from the next unresolved
+dependency; it is not a declaration that every later gap has already been exhaustively
+audited.
 
-1. Repair canonical Viewer saved-state isolation, with real Product Run HTTP
-   acceptance. Reproduce/fix the import cycle when needed for the targeted gate.
-2. Close real sporting-world recovery gaps: InitialWorld-bearing Saved Revision
-   forks, divergent continuation, Save/Restore and historical Replay. Validate
-   the Completed-Run alternate-Branch boundary; do not weaken fail-closed guards.
-3. Verify resumable orchestration integrity, especially concurrent abandonment,
-   restart and checkpoints; then exercise the integrated sporting flow.
-4. Maintain one compact Master-to-code coverage table in CURRENT_STATE (chapter/PAQ,
-   decision status, pre-alpha applicability, implementation/test evidence, gap).
-   Use it to select the next missing required feature, including Packages,
-   player development/AI, health, scheduling, ranking consumers and minimum
-   Reconstruction where the Master requires them. This list is not an audited
-   assertion that each entire subsystem is absent.
-5. After implementing the decided and sufficiently specified strong directions,
-   reconcile the complete Master pre-alpha scope with the owner: close remaining
-   PRODUCT questions, record approved minimal defaults/deferments explicitly,
-   and implement the resulting missing work. Blocking questions surface earlier
-   when needed; implementation never silently resolves them.
+1. Close real sporting-world recovery gaps: InitialWorld-bearing Saved Revision
+   forks, complete supported world-state materialization, divergent continuation,
+   Save/Restore/reopen and historical Replay. Preserve fail-closed behavior for
+   unsupported authority families instead of copying source identity. Re-check the
+   direct-test circular-import seam if it blocks this recovery gate.
+2. Verify resumable orchestration integrity, especially concurrent abandonment,
+   restart and checkpoints. Reproduce the Completed-Run alternate-Branch boundary
+   before changing it, then exercise the integrated sporting flow.
+3. Maintain one compact Master-to-code coverage table in CURRENT_STATE
+   (chapter/PAQ, decision status, pre-alpha applicability, implementation/test
+   evidence, gap). Use it to select the next missing required feature, including
+   Packages, player development/AI, health, scheduling, ranking consumers and
+   minimum Reconstruction where the Master requires them. This list is not an
+   audited assertion that each entire subsystem is absent.
+4. Continue the decided and sufficiently specified pre-alpha feature work selected
+   from that coverage map, using one coherent vertical slice per PR and keeping
+   technical implementation choices separate from unresolved PRODUCT decisions.
+5. Reconcile the complete Master pre-alpha scope with the owner: close remaining
+   PRODUCT questions, record approved minimal defaults/deferments explicitly, and
+   implement the resulting missing work. Blocking questions surface earlier when
+   needed; implementation never silently resolves them.
 6. Release gate: both Master §31.3 flows, required scope coverage, recovery/
    determinism/public-history checks, complete backend and frontend/build suites,
    and an agreed representative performance baseline. Then consolidate and return
-   the complete updated Master. Do not declare pre-alpha complete from green CI
-   or a narrow fixture alone.
+   the complete updated Master. Do not declare pre-alpha complete from green CI or
+   a narrow fixture alone.
 
 ## Implemented narrow tournament integration
 

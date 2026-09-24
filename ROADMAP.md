@@ -2,40 +2,39 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Active pre-alpha sequence — post-#967 checkpoint
+## Active pre-alpha sequence — post-#969 checkpoint
 
 Read the active checkpoint at the top of [CURRENT_STATE.md](CURRENT_STATE.md).
-PR #967 completed the canonical Viewer Saved Revision isolation step with real
-Product Run HTTP acceptance. The sequence below starts from the next unresolved
-dependency; it is not a declaration that every later gap has already been exhaustively
-audited.
+PR #969 completed the InitialWorld materialized-Branch boundary, including
+InitialWorld-only/nested forks, InitialWorld-backed ranking, target divergence/Save,
+restore/reopen, deterministic continuation, corruption rejection and late rollback.
+The sequence below starts from the next unresolved dependency.
 
-1. InitialWorld-bearing Saved Revision materialization is implemented on the current
-   branch, including InitialWorld-only/nested and InitialWorld-backed ranking roots.
-   Continue auditing complete supported-world divergence/restore/Replay fixtures and
-   preserve fail-closed behavior for unsupported authority families. Re-check the
-   direct-test circular-import seam only if it blocks that recovery gate.
-2. Verify resumable orchestration integrity, especially concurrent abandonment,
-   restart and checkpoints. Reproduce the Completed-Run alternate-Branch boundary
-   before changing it, then exercise the integrated sporting flow.
-3. Maintain one compact Master-to-code coverage table in CURRENT_STATE
+1. Verify resumable orchestration integrity. Reproduce abandonment/cancellation while
+   Full Simulation is already running and prove that no later child work can commit
+   after abandonment. Reproduce continuation of an earlier alternative Branch after
+   the Run has globally reached Completed and separate Run-level completion from
+   Branch-level continuation semantics where current guards conflate them. Cover
+   checkpoints, restart/reopen, exact retry and integrated sporting continuation.
+2. Refresh the compact Master-to-code pre-alpha coverage table in CURRENT_STATE
    (chapter/PAQ, decision status, pre-alpha applicability, implementation/test
-   evidence, gap). Use it to select the next missing required feature, including
-   Packages, player development/AI, health, scheduling, ranking consumers and
-   minimum Reconstruction where the Master requires them. This list is not an
-   audited assertion that each entire subsystem is absent.
-4. Continue the decided and sufficiently specified pre-alpha feature work selected
-   from that coverage map, using one coherent vertical slice per PR and keeping
-   technical implementation choices separate from unresolved PRODUCT decisions.
-5. Reconcile the complete Master pre-alpha scope with the owner: close remaining
-   PRODUCT questions, record approved minimal defaults/deferments explicitly, and
-   implement the resulting missing work. Blocking questions surface earlier when
-   needed; implementation never silently resolves them.
+   evidence, remaining gap). Use it to select the next missing required decided
+   feature rather than assuming recovery or ranking work remains the highest priority.
+3. Continue decided and sufficiently specified pre-alpha feature work selected from
+   that coverage map, including Packages, player development/AI, health, scheduling,
+   ranking/downstream consumers and minimum Reconstruction wherever the Master
+   requires them. Keep one coherent vertical slice per PR.
+4. Surface true PRODUCT questions to the owner when they block implementation.
+   Record approved minimal defaults/deferments explicitly; technical implementation
+   must not silently resolve OPEN product questions.
+5. Reconcile the complete Master pre-alpha scope with the owner after the known
+   decided implementation gaps are closed, then implement any resulting required
+   consequences.
 6. Release gate: both Master §31.3 flows, required scope coverage, recovery/
    determinism/public-history checks, complete backend and frontend/build suites,
    and an agreed representative performance baseline. Then consolidate and return
-   the complete updated Master. Do not declare pre-alpha complete from green CI or
-   a narrow fixture alone.
+   the complete updated Master. Do not declare pre-alpha complete from green Fast CI
+   or one narrow fixture alone.
 
 ## Implemented narrow tournament integration
 

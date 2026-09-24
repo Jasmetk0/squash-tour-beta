@@ -1,5 +1,65 @@
 # Current implementation and next action
 
+## Active checkpoint — 24 September 2026, after merged #969
+
+Implementation baseline: `buuk` commit
+`7e53986de52402524ea08cac412d585a3e55aeb3` (merged PR #969).
+This checkpoint supersedes the older post-#967 implementation objective below;
+older sections remain historical evidence and must not be treated as current work.
+
+### Completed recovery boundary
+
+PR #969 closes the guarded InitialWorld materialized-Branch fork path:
+
+- InitialWorld-only and InitialWorld-backed-ranking Saved Revisions create
+  target-owned materialized fork roots with shared immutable ancestry.
+- Target InitialWorld identity is Branch-scoped while historical adoption provenance
+  is retained rather than fabricated.
+- InitialWorld-backed ranking bootstrap is rebuilt against the target InitialWorld
+  fingerprint and revalidated from server-derived players/policy.
+- Target Branches can diverge, Save independently, restore to their materialized
+  fork root, reopen the same SQLite database, and continue deterministically while
+  the source Branch remains unchanged.
+- Nested InitialWorld materialization, corruption rejection and late transactional
+  rollback are covered by focused acceptance.
+- The direct authoritative-slot test collection cycle was removed by extracting
+  persisted authoritative-group decoding to a shared lower-level infrastructure
+  helper rather than importing the application executor from Lucky-Loser persistence.
+
+Final #969 head:
+`3d8806432cd50f3af697cd1e3e29f6016dcf035d`.
+
+Fast CI #1736 on that final head completed successfully:
+**4 passed, 2527 deselected**.
+
+Large Simulation Slot Replay remains covered by the existing materialized-fork
+recovery fixtures rather than a newly converted InitialWorld-origin fixture. Do not
+describe the entire recovery surface as exhaustively closed.
+
+### Current highest-priority implementation objective
+
+Move to **resumable orchestration integrity** before widening feature delivery.
+
+First reproduce the two previously static boundaries against the current `buuk`:
+
+1. abandonment/cancellation while Full Simulation is already running, including
+   whether later child work can still be scheduled or committed after abandonment;
+2. continuation of an earlier alternative Branch when the Run has globally reached
+   `Completed`, including the Season Transition / Full Simulation guards that may
+   incorrectly treat Run-level completion as Branch-level finality.
+
+Then implement only the smallest coherent correction proven necessary and exercise
+the real integrated sporting flow with checkpoints/restart/reopen. Preserve
+determinism, explicit RNG, Branch isolation, Saved Revision/Working Draft semantics,
+Viewer Saved Revision isolation and idempotent recovery.
+
+After that slice, build/refresh the compact Master-to-code pre-alpha coverage table
+and use it to choose the next missing decided feature rather than continuing recovery
+work without evidence.
+
+PR #951 remains open and non-mergeable. Do not merge or implicitly fold it into the
+orchestration slice.
+
 ## Active implementation — InitialWorld materialized Branch forks
 
 The current branch closes the previously guarded InitialWorld fork root: InitialWorld-only

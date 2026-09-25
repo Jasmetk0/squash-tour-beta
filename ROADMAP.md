@@ -4,13 +4,13 @@
 
 1. Project the first-season Entry AI roster from Run-owned InitialWorld + lifecycle +
    sporting state instead of `season_active_players.json`.
-2. Drive Week-1 application creation through authoritative Entry decision-slot preview/
-   commit plus explicit validation review.
-3. Feed the resulting valid submission authority into the existing canonical Entry
+2. Support both deterministic AI Entry proposals and explicit Admin-reviewed Main/Q intents as producers of the same Run-owned Entry decision-slot authority.
+3. Drive release-gating Week-1 application creation through explicit Entry review plus explicit validation, without seed-tuning AI behavior.
+4. Feed the resulting valid submission authority into the existing canonical Entry
    Field → Draw Input → Draw pipeline.
-4. Fail closed for later-season active identities without a Run-owned profile bridge;
+5. Fail closed for later-season active identities without a Run-owned profile bridge;
    do not reintroduce the legacy active-player registry as fallback.
-5. Re-run Master §31.3 and follow the next observed compatibility dependency, expected
+6. Re-run Master §31.3 and follow the next observed compatibility dependency, expected
    around Calendar/Entry metadata or legacy result/point-award projection.
 
 

@@ -3,7 +3,7 @@
 ## Active pre-alpha sequence — complete World bootstrap ownership
 
 1. **Run-owned generation preview:** this branch moves player identity generation data
-   into source World Packages, materializes it through the canonical Package backbone,
+   into the Official FAX World source Package (with optional support for other World Packages), materializes it through the canonical Package backbone,
    and generates deterministic read-only initial pools entirely from Run-owned World
    state.
 2. **Next:** add reviewed confirm/adoption from that Run-owned generated pool into

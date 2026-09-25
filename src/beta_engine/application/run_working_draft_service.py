@@ -10,6 +10,10 @@ from beta_engine.infrastructure.db import (
     ViewerBranchSaveResult,
     ViewerBranchWorkingDraftRecord,
 )
+from beta_engine.infrastructure.db.run_package_state import (
+    get_run_package_state,
+    load_saved_run_package_state,
+)
 
 EntityIdFactory = Callable[[str], str]
 
@@ -71,10 +75,30 @@ class RunWorkingDraftService:
         audit_event_id = _validated_entity_id(
             self.id_factory("revision-audit-event"), kind="revision audit event"
         )
+        draft = self.get_viewer_branch_draft(run_id=run_id, branch_id=branch_id)
+        expected_package_fingerprint = None
+        if draft.proposed_viewer_branch_id == draft.saved_viewer_branch_id:
+            with self.repository._session_factory() as session:
+                package_state = get_run_package_state(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                saved_revision = self.repository.get_branch_saved_revision(
+                    revision_id=draft.base_saved_revision_id
+                )
+                saved_package_state = load_saved_run_package_state(
+                    saved_revision.payload, run_id=run_id, branch_id=branch_id
+                )
+                if (package_state.fingerprint if package_state else None) != (
+                    saved_package_state.fingerprint if saved_package_state else None
+                ):
+                    expected_package_fingerprint = (
+                        package_state.fingerprint if package_state else None
+                    )
         return self.repository.save_viewer_branch_selection_atomically(
             run_id=run_id,
             branch_id=branch_id,
             expected_draft_version=expected_draft_version,
+            expected_run_package_fingerprint=expected_package_fingerprint,
             revision_id=revision_id,
             audit_event_id=audit_event_id,
         )

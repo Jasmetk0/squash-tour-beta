@@ -43,6 +43,7 @@ from beta_engine.infrastructure.db.models import (
     ResolvedApplicationValidationSlotModel,
     RunEntryDecisionSlotAuthorityModel,
     RunProspectModel,
+    RunPackageStateModel,
     SeasonClosingRankingModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
@@ -80,6 +81,7 @@ from beta_engine.infrastructure.db.saved_revision_season_closure import (
 from beta_engine.infrastructure.db.simulation_slot_state import (
     COMPONENT_KEY as SIMULATION_SLOT_COMPONENT_KEY,
 )
+from beta_engine.infrastructure.db.run_package_state import RUN_PACKAGE_COMPONENT_KEY
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TOURNAMENT_APPLICATION_SUBMISSION_COMPONENT_KEY,
 )
@@ -128,6 +130,11 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
         component_key=INITIAL_WORLD_COMPONENT_KEY,
         label="initial world",
         models=(InitialWorldStateModel,),
+    ),
+    SavedRevisionComponentCoverage(
+        component_key=RUN_PACKAGE_COMPONENT_KEY,
+        label="Run Package state",
+        models=(RunPackageStateModel,),
     ),
     SavedRevisionComponentCoverage(
         component_key=PLAYER_LIFECYCLE_COMPONENT_KEY,

@@ -696,6 +696,33 @@ class BranchSavedRevisionModel(Base):
     )
 
 
+class RunPackageStateModel(Base):
+    """Sole live, Branch-owned canonical Package snapshot."""
+    __tablename__ = "run_package_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunPackageIdentityAllocatorModel(Base):
+    """Run-wide monotonic ID high-water mark; IDs are never recycled."""
+    __tablename__ = "run_package_identity_allocators"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    next_run_local_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+
+class RunPackageApplicationReceiptModel(Base):
+    """Immutable command receipt and Package provenance evidence."""
+    __tablename__ = "run_package_application_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class BranchWorkingDraftModel(Base):
     """Current mutable draft based on a Branch's last Saved Revision."""
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from sqlalchemy import select
+import json
 import pytest
 
 from beta_engine.api.deps import (
@@ -15,6 +16,7 @@ from beta_engine.infrastructure.db.authoritative_week_transition import (
     AuthoritativeWeekTransitionRunner,
 )
 from beta_engine.infrastructure.db.models import (
+    PlayerLifecycleWeekStateModel,
     PlayerSportingWeekStateModel,
     PublishedOfficialRankingModel,
 )
@@ -1013,6 +1015,35 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "week": 1,
         }
 
+        # Destroy the legacy active-player compatibility registry. The current
+        # Season-1 Entry roster must still be reconstructed entirely from Run-owned
+        # lifecycle/sporting/player-profile authority.
+        legacy_registry = matches.active_players_service._load_registry()
+        legacy_registry.players_by_season.clear()
+        legacy_registry.bootstrap_metadata_by_season.clear()
+        matches.active_players_service._save_registry(legacy_registry)
+
+        status, season_two_entry_roster = _request(
+            "GET",
+            sim_root + "/entry-roster",
+        )
+        assert status == 200, season_two_entry_roster
+        assert season_two_entry_roster["week"] == {
+            "season_index": 1,
+            "week": 1,
+        }
+        assert season_two_entry_roster["season"] == "2001/2002"
+        assert season_two_entry_roster["source"] == (
+            "run_owned_lifecycle_sporting_profiles.v1"
+        )
+        assert set(generated_ids).issubset(
+            set(season_two_entry_roster["player_ids"])
+        )
+        assert all(
+            player["season"] == "2001/2002"
+            for player in season_two_entry_roster["players"]
+        )
+
         with reopened.app.state.runtime.repository._session_factory() as session:
             rankings = session.scalars(
                 select(PublishedOfficialRankingModel)
@@ -1021,6 +1052,14 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                     PublishedOfficialRankingModel.branch_id == branch_id,
                 )
                 .order_by(PublishedOfficialRankingModel.week_ordinal)
+            ).all()
+            lifecycle = session.scalars(
+                select(PlayerLifecycleWeekStateModel)
+                .where(
+                    PlayerLifecycleWeekStateModel.run_id == run_id,
+                    PlayerLifecycleWeekStateModel.branch_id == branch_id,
+                )
+                .order_by(PlayerLifecycleWeekStateModel.week_ordinal)
             ).all()
             sporting = session.scalars(
                 select(PlayerSportingWeekStateModel)
@@ -1032,7 +1071,22 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             ).all()
 
         assert [row.week_ordinal for row in rankings] == list(range(62))
+        assert [row.week_ordinal for row in lifecycle] == list(range(62))
         assert [row.week_ordinal for row in sporting] == list(range(62))
+
+        season_two_lifecycle = json.loads(lifecycle[-1].payload_json)
+        season_two_sporting = json.loads(sporting[-1].payload_json)
+        active_lifecycle_ids = {
+            player["player_id"]
+            for player in season_two_lifecycle["players"]
+            if player["status"] == "active"
+        }
+        sporting_ids = {
+            player["player_id"] for player in season_two_sporting["players"]
+        }
+        assert set(season_two_entry_roster["player_ids"]) == (
+            active_lifecycle_ids & sporting_ids
+        )
         assert rankings[-1].snapshot_fingerprint == rollover[
             "official_ranking_fingerprint"
         ]

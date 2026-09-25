@@ -10,8 +10,8 @@ This branch removes both fixture-owned shortcuts:
   projection from InitialWorld + current lifecycle + current sporting state;
 - the projection optionally binds the current published Official Ranking points and
   never reads or writes `season_active_players.json`;
-- the release-gating Week-1 applications are created through the existing
-  Entry-decision-slot authority and explicit Admin validation review;
+- authoritative Entry slots can still be proposed by the deterministic Entry AI, while a new explicit Admin-reviewed Entry-decision boundary can freeze reviewed Main/Q application intents without tuning an AI seed;
+- the release-gating Week-1 applications use that explicit Entry-decision boundary followed by the existing explicit Admin validation review;
 - valid `TournamentApplicationSubmissionAuthority` rows therefore arise from
   resolved Run-owned Entry evidence instead of direct fixture insertion;
 - canonical Entry Field → Draw Input → Draw then consumes those persisted valid

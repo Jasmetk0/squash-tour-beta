@@ -74,7 +74,7 @@ from beta_engine.application.run_entry_decision_slot import (
     freeze_entry_batch_proposal_as_run_slot,
 )
 from beta_engine.application.run_owned_entry_roster import (
-    RunOwnedInitialEntryRosterService,
+    RunOwnedEntryRosterService,
 )
 from beta_engine.domain.tournaments.application_validation_authority import (
     ResolvedApplicationValidationSlot,
@@ -829,6 +829,34 @@ class AuthoritativeRunSimulationDriver:
             ),
         )
 
+    def inspect_entry_roster(self, *, run_id: str, branch_id: str) -> dict:
+        """Expose the current Run-owned Entry compatibility roster for audit/UI."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+            roster = RunOwnedEntryRosterService(
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            ).get_active_players(season=season)
+            return {
+                "schema_version": "run_owned_entry_roster_inspection.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "season": season,
+                "player_count": len(roster.players),
+                "player_ids": [player.player_id for player in roster.players],
+                "players": [
+                    player.model_dump(mode="json") for player in roster.players
+                ],
+                "summary": roster.summary.model_dump(mode="json"),
+                "source": "run_owned_lifecycle_sporting_profiles.v1",
+            }
+
     def position(
         self, *, run_id: str, branch_id: str
     ) -> AuthoritativeSimulationPosition:
@@ -1061,7 +1089,7 @@ class AuthoritativeRunSimulationDriver:
         """Scope the compatibility Entry engine to authoritative Run-owned roster truth."""
 
         base = self.match_service.draw_service.entry_list_service
-        roster = RunOwnedInitialEntryRosterService(
+        roster = RunOwnedEntryRosterService(
             session=session,
             run_id=run_id,
             branch_id=branch_id,
@@ -1104,7 +1132,7 @@ class AuthoritativeRunSimulationDriver:
                 )
 
             season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-            roster = RunOwnedInitialEntryRosterService(
+            roster = RunOwnedEntryRosterService(
                 session=session,
                 run_id=command.run_id,
                 branch_id=command.branch_id,

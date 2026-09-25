@@ -1713,7 +1713,12 @@ class AuthoritativeRunSimulationDriver:
                 decision_slot_ordinal=command.decision_slot_ordinal,
             )
             if existing_validation is None:
-                position = self._position(session, command.run_id, command.branch_id)
+                position = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
                 if (
                     position.position_fingerprint
                     != command.expected_position_fingerprint

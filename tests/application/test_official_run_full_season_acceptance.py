@@ -725,6 +725,20 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         ranking_root, transition_root, sim_root = _roots(
             reopened, run_id, branch_id
         )
+        reopened_package_root = (
+            f"{reopened.base_url}/admin/runs/{run_id}/branches/{branch_id}/packages"
+        )
+        status, reopened_calendar = _request(
+            "GET",
+            reopened_package_root + "/calendar/calendar-2000-2001",
+        )
+        assert status == 200, reopened_calendar
+        assert reopened_calendar["season"] == "2000/2001"
+        assert week_one_package.event_id in {
+            event["event_id"]
+            for event in reopened_calendar["calendar"]["events"]
+        }
+
         loaded = _request("GET", sim_root + "/position")[1]
         assert loaded["current_week"] == boundary_position["current_week"]
 

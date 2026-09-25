@@ -4,7 +4,12 @@ from typing import Literal
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, ConfigDict
 
-from beta_engine.api.deps import get_run_package_service, get_world_package_run_adapter
+from beta_engine.api.deps import (
+    get_calendar_package_run_adapter,
+    get_run_package_service,
+    get_world_package_run_adapter,
+)
+from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.application.run_package_service import (
     RunPackageConflictError,
     RunPackageNotFoundError,
@@ -210,6 +215,93 @@ def get_run_world_generation(
         if state is None:
             raise RunPackageNotFoundError("Run Package state was not found")
         projection = adapter.project_generation(state, package_id=package_id)
+        return {
+            **projection.model_dump(mode="json"),
+            "fingerprint": projection.fingerprint,
+            "content_fingerprint": projection.content_fingerprint,
+        }
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/source-calendar/{season_key}/preview")
+def preview_source_calendar(
+    run_id: str,
+    branch_id: str,
+    season_key: str,
+    service: RunPackageService = Depends(get_run_package_service),
+    adapter: CalendarPackageRunAdapter = Depends(get_calendar_package_run_adapter),
+):
+    try:
+        season = season_key.replace("-", "/", 1)
+        document = adapter.build_document(season)
+        result = service.preview(
+            run_id=run_id, branch_id=branch_id, document=document
+        )
+        return {
+            **result.model_dump(mode="json"),
+            "preview_fingerprint": result.preview_fingerprint,
+        }
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except (RunPackageConflictError, RunPackageNotFoundError, ValueError) as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/source-calendar/{season_key}/confirm")
+def confirm_source_calendar(
+    run_id: str,
+    branch_id: str,
+    season_key: str,
+    request: SourceWorldConfirmRequest,
+    service: RunPackageService = Depends(get_run_package_service),
+    adapter: CalendarPackageRunAdapter = Depends(get_calendar_package_run_adapter),
+):
+    try:
+        season = season_key.replace("-", "/", 1)
+        document = adapter.build_document(season)
+        result = service.confirm(
+            run_id=run_id,
+            branch_id=branch_id,
+            document=document,
+            command_id=request.command_id,
+            expected_head_revision_id=request.expected_head_revision_id,
+            expected_draft_version=request.expected_draft_version,
+            expected_state_fingerprint=request.expected_state_fingerprint,
+            expected_preview_fingerprint=request.expected_preview_fingerprint,
+            conflict_resolutions=request.conflict_resolutions,
+            selected_entities=request.selected_entities,
+        )
+        return {
+            "state": result.state.model_dump(mode="json") if result.state else None,
+            "state_fingerprint": result.state.fingerprint if result.state else None,
+            "draft_version": result.draft_version,
+            "already_applied": result.already_applied,
+            "command_id": result.command_id,
+        }
+    except KeyError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except (RunPackageConflictError, ValueError) as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@router.get("/calendar/{package_id}")
+def get_run_calendar(
+    run_id: str,
+    branch_id: str,
+    package_id: str,
+    service: RunPackageService = Depends(get_run_package_service),
+    adapter: CalendarPackageRunAdapter = Depends(get_calendar_package_run_adapter),
+):
+    try:
+        state = service.get(run_id=run_id, branch_id=branch_id)
+        if state is None:
+            raise RunPackageNotFoundError("Run Package state was not found")
+        projection = adapter.project_calendar(state, package_id=package_id)
         return {
             **projection.model_dump(mode="json"),
             "fingerprint": projection.fingerprint,

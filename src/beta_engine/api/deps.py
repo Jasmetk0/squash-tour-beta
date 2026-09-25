@@ -12,6 +12,7 @@ from beta_engine.application.api_services import SimulationApiService
 from beta_engine.application.config_validation_service import ConfigValidationService
 from beta_engine.application.category_service import CategoryService
 from beta_engine.application.calendar_template_service import CalendarTemplateService
+from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.initial_player_pool_service import InitialPlayerPoolService
 from beta_engine.application.planning_calendar_apply_audit_service import PlanningCalendarApplyAuditService
@@ -101,6 +102,12 @@ def get_runtime(request: Request) -> ApiRuntime:
 
 def get_run_package_service(request: Request) -> RunPackageService:
     return RunPackageService(repository=get_runtime(request).repository)
+
+
+def get_calendar_package_run_adapter(request: Request) -> CalendarPackageRunAdapter:
+    return CalendarPackageRunAdapter(
+        calendar_service=get_season_calendar_service(request)
+    )
 
 
 def get_run_world_initial_pool_preview_service(

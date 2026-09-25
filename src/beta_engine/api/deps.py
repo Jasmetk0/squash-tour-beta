@@ -70,6 +70,7 @@ from beta_engine.application.run_saved_revision_restore_service import (
 from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
+from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -93,6 +94,10 @@ def build_runtime(*, database_url: str | None = None) -> ApiRuntime:
 
 def get_runtime(request: Request) -> ApiRuntime:
     return request.app.state.runtime
+
+
+def get_run_package_service(request: Request) -> RunPackageService:
+    return RunPackageService(repository=get_runtime(request).repository)
 
 
 def get_simulation_api_service(request: Request) -> SimulationApiService:

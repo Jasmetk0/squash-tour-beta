@@ -2,17 +2,18 @@
 
 ## Active pre-alpha sequence — canonical Week-1 tournament ownership
 
-1. **Tournament ranking authority Admin boundary:** expose explicit adoption/inspection
+1. **Initial ranking publication:** publish the reviewed Week-1 bootstrap candidate and initialize authoritative world position before tournament ranking/field/draw authority is frozen.
+2. **Tournament ranking authority Admin boundary:** expose explicit adoption/inspection
    of a published Official Ranking for one Run/Branch/Event.
-2. **Official Week-1 canonical Draw:** build Entry Field → Draw Input → Draw authority
+3. **Official Week-1 canonical Draw:** build Entry Field → Draw Input → Draw authority
    from Run-owned generated players and remove the legacy Week-1 MatchPackage source
    before authoritative schedule proposal.
-3. MatchPackage becomes an in-memory compatibility projection from canonical Draw +
+4. MatchPackage becomes an in-memory compatibility projection from canonical Draw +
    Run-owned Calendar rather than fixture-owned tournament topology.
-4. **Next:** remove the remaining fixture seeding of valid applications and legacy
+5. **Next:** remove the remaining fixture seeding of valid applications and legacy
    active-player compatibility reads by routing those stages through Run-owned entry
    and roster authority.
-5. Keep re-running Master §31.3 Official Run → complete season → Save/reopen → Season
+6. Keep re-running Master §31.3 Official Run → complete season → Save/reopen → Season
    Transition → next Season Week 1 to expose the next live-global dependency.
 
 

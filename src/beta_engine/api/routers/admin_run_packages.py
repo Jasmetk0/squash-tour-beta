@@ -226,15 +226,16 @@ def get_run_world_generation(
         raise HTTPException(409, str(exc)) from exc
 
 
-@router.post("/source-calendar/{season}/preview")
+@router.post("/source-calendar/{season_key}/preview")
 def preview_source_calendar(
     run_id: str,
     branch_id: str,
-    season: str,
+    season_key: str,
     service: RunPackageService = Depends(get_run_package_service),
     adapter: CalendarPackageRunAdapter = Depends(get_calendar_package_run_adapter),
 ):
     try:
+        season = season_key.replace("-", "/", 1)
         document = adapter.build_document(season)
         result = service.preview(
             run_id=run_id, branch_id=branch_id, document=document
@@ -249,16 +250,17 @@ def preview_source_calendar(
         raise HTTPException(409, str(exc)) from exc
 
 
-@router.post("/source-calendar/{season}/confirm")
+@router.post("/source-calendar/{season_key}/confirm")
 def confirm_source_calendar(
     run_id: str,
     branch_id: str,
-    season: str,
+    season_key: str,
     request: SourceWorldConfirmRequest,
     service: RunPackageService = Depends(get_run_package_service),
     adapter: CalendarPackageRunAdapter = Depends(get_calendar_package_run_adapter),
 ):
     try:
+        season = season_key.replace("-", "/", 1)
         document = adapter.build_document(season)
         result = service.confirm(
             run_id=run_id,

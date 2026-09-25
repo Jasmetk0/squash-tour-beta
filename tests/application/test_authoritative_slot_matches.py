@@ -718,6 +718,14 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
             ("run", "branch", final.command_id),
         ) is None
 
+    # Remove the legacy active-player registry before the legacy-topology close.
+    # The authoritative driver must inject its Run-owned lifecycle/sporting roster
+    # into the read-only award projection instead of reading global player files.
+    legacy_players = service.active_players_service._load_registry()
+    legacy_players.players_by_season.clear()
+    legacy_players.bootstrap_metadata_by_season.clear()
+    service.active_players_service._save_registry(legacy_players)
+
     replacement_final = final.model_copy(update={"command_id": "final-replacement"})
     closed = driver.simulate_next_slot(replacement_final)
     assert closed["supported_tournament_complete"] is True

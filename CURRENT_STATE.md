@@ -1,5 +1,84 @@
 # Current implementation and next action
 
+## Active checkpoint — 25 September 2026, Master-to-code pre-alpha coverage audit
+
+Implementation baseline: `buuk` commit
+`fc4f72cc12650b7c6274c210b7ba2d33b1bb79fb` (merged PR #971).
+
+This checkpoint supersedes the older active objectives below. Those sections remain
+historical implementation evidence, not the current work queue.
+
+Master §31 currently contains 157 stable PAQs: 48 are marked RESOLVED and 109 remain
+OPEN. An OPEN PAQ is not automatically an implementation blocker: TECH may be closed
+autonomously without changing product canon, CALIBRATION needs a versioned measurable
+default, CONTENT belongs to concrete Official Run data, and PRODUCT must not be silently
+decided by code.
+
+### Mandatory §31.3 acceptance status
+
+- **Flow 2 — empty Run → two manual players → one standalone match: implemented.**
+  The canonical Run/Branch-owned flow is covered by
+  `docs/STANDALONE_MATCH_ACCEPTANCE_V1.md` and
+  `tests/application/test_standalone_match_acceptance.py`, without inventing
+  Calendar/Tournament/Package prerequisites.
+- **Flow 1 — Official Run → complete season → Save/reopen → Season Transition → next
+  Season Week 1: orchestration foundation implemented, full release acceptance not yet
+  closed.** Canonical Week/Season/Full Simulation, Saved Revision recovery, Branch
+  isolation and Completed-Run continuation are production-backed, but the repository
+  still lacks one canonical Official Run bootstrap/content path that supplies the
+  required Package/content/player/entry world end-to-end without fixture writers or
+  legacy config ownership.
+
+### Compact Master-to-code coverage
+
+| Master gate | Current code evidence | Audit status | Remaining pre-alpha boundary |
+|---|---|---|---|
+| §31.4 data model / identity / history (PAQ-007–013) | Run/Branch/Saved Revision identities, versioned fingerprints, immutable histories, provenance fields and fail-closed validation are widespread | **PARTIAL / TECH audit** | Consolidate the minimum entity/null/provenance/schema contract; migration and complete archive/delete matrix remain open |
+| §31.5 Runs / Save / Branch / recovery (PAQ-014–021) | Empty Run atomic first Save, clean Working Draft, Viewer-Save boundary, restore/history, materialized Branch forks, Completed-Run alternative history | **STRONG** | Selective logical-save packages, automatic checkpoint policy, recovery-draft/Undo/Compare minimum remain open but are not the next E2E blocker |
+| §31.6 Packages / Setup (PAQ-022–029) | Mature source World Package tooling and legacy/global config services; product canon requires World / Category / Series / Calendar / Setup Packages | **MAJOR GAP — NEXT TECH SLICE** | No single canonical five-type Package envelope + Run Working-Draft preview/apply + independent Run snapshot/provenance boundary. Source package tooling is not equivalent to Run-owned Package application |
+| §31.7 time / Slots / Week & Season transitions (PAQ-030–037) | Global Slot semantics, authoritative Week Transition, ordinary/final Season Transition, Next Week/Season/Full Simulation, durable abandonment/reopen | **STRONG** | Pause/Task Center PAQ-035 and release-grade performance remain later; synchronous resumable kernel is now coherent |
+| §31.8–10 players / development / state | InitialWorld, lifecycle, generated prospects, 57-attribute sporting records, weekly development, Form/Sharpness/Fatigue, match-derived effects | **PARTIAL** | Official pool/content and several versioned calibration defaults remain open; health is explicitly unsupported in canonical sporting state |
+| §31.11 Rally Match Engine (PAQ-063–073) | Canonical rally engine, deterministic seeds/replay, gameplans/effort, stamina/timing/interference contracts and authoritative slot persistence | **STRONG** | Calibration realism may evolve; health-driven W/O/medical/RET decision layer is not complete |
+| §31.12–13 tournaments / entries / draws | Tournament Ranking Snapshot → Entry Field → WC/RWC → Draw Input/Process/Revision → canonical Main/Q topology → Result/Points; schedules and bracket-Q LL paths exist | **STRONG SUPPORTED PATH / PARTIAL GENERALITY** | Group-Q LL ordering, exhausted-source edge and automatic Entry/WC player-AI policy remain product/calibration gaps and fail closed |
+| §31.14 Official Ranking | Versioned Official Ranking, Best-N capable policy, tournament sources, corrections/zeros, Week/Season publication, Viewer Saved-Revision reads | **STRONG FOUNDATION** | Official content tables, Protected Ranking and remaining policy/content PAQs must be closed for the concrete Official Run |
+| §31.15 Match Reconstruction | `docs/MATCH_RECONSTRUCTION_V1.md`; bounded natural candidate preview, hard winner/score constraints, read-only detail and selected-candidate commit | **MINIMUM IMPLEMENTED** | Full constraint catalog, forcing/nearest/probability/session policy remain open; do not expand before main acceptance needs it |
+| §31.16 player AI | Match effort/gameplan AI is deterministic and causal; entry decision-slot authority exists | **PARTIAL** | Tournament-choice/withdrawal AI, health decisions, inactivity/retirement and complete information-boundary contract remain open |
+| §31.17 Admin / Viewer UX | Run-scoped Admin flows, Viewer Saved Revision boundary and public ranking/entry/draw/WC projections exist | **PARTIAL / NOT FULL BACKEND GATE** | PAQ-119–126 remain PRODUCT decisions; complete frontend is explicitly not required for first backend pre-alpha |
+| §31.18 integrity / determinism / tests / performance | Transactional writers, corruption/rollback/reopen suites, explicit RNG/fingerprints, Fast CI + Full Suite policy, #969/#971 concurrency/recovery acceptance | **STRONG INTEGRITY / OPEN PERF** | Golden calibration matrix and concrete PAQ-006/133 performance budgets are not yet release-gated |
+| §31.19 Official Run content (PAQ-135–142) | Real World source datasets and many authored tournament/config fixtures exist | **MAJOR CONTENT BLOCKER** | One authoritative pre-alpha Official World/player/tour/category/calendar/template/points dataset plus expected acceptance scenarios is not yet frozen as Run-owned content |
+| §31.20 cross-cutting | Viewer public reads are Saved-Revision-only and fail closed against unsaved Admin truth | **PRIVACY STRONG / OTHER PARTIAL** | H2H/statistics, copy/Test Lab and broader historical Viewer catalogue remain secondary to the two mandatory flows |
+
+### Audit conclusion and next implementation slice
+
+The recent ranking/recovery/orchestration work is no longer the highest-value target.
+The next autonomous slice is the **canonical Package → Run snapshot/application
+backbone**, because Packages are explicitly required by §31.3/PAQ-002 and are a
+prerequisite for replacing fixture/legacy ownership in the Official Run acceptance.
+
+The slice should be technical and conservative:
+
+1. define a versioned common Package identity/envelope for the five canonical types
+   `World / Category / Series / Calendar / Setup`, reusing existing domain/config
+   payloads rather than inventing new sporting policy;
+2. preview one Package application against a Run/Branch Working Draft, classify
+   included / omitted / unresolved / invalid content, and preserve the Master
+   non-destructive partial-scope rule;
+3. commit only validated scope into an independent Run-owned snapshot with exact
+   source `package_id/version/fingerprint` provenance and no live link;
+4. preserve local Run changes and make exact repeat application idempotent; a changed
+   source/version must produce an explicit diff/update path rather than silent
+   overwrite;
+5. capture the resulting Package snapshot through Save/reopen/restore and materialized
+   Branch fork semantics before it can feed the Official Run bootstrap;
+6. keep concrete Official Run CONTENT (PAQ-135–142) and unresolved PRODUCT defaults
+   out of this technical PR.
+
+After the Package backbone, the coverage table should be refreshed again. The likely
+next gates are concrete Official Run content/bootstrap and the missing player
+AI/health/calibration minimums required by that selected acceptance dataset.
+
+PR #951 remains historical/open work and must not be implicitly folded into this path.
+
 ## Active checkpoint — 24 September 2026, orchestration integrity implementation
 
 Implementation baseline: `buuk` commit

@@ -6294,16 +6294,26 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "empty-week completion requires explicit season Calendar authority"
             )
-        evidence = fingerprint(
-            {
-                "schema_version": "empty_week_calendar_evidence.v2",
-                "season": season,
-                "week": week.model_dump(mode="json"),
-                "calendar_authority_mode": authority_mode,
-                "calendar_authority_fingerprint": authority_fingerprint,
-                "calendar": calendar.model_dump(mode="json"),
-            }
-        )
+        if authority_mode == "legacy":
+            evidence = fingerprint(
+                {
+                    "schema_version": "empty_week_calendar_evidence.v1",
+                    "season": season,
+                    "week": week.model_dump(mode="json"),
+                    "calendar": calendar.model_dump(mode="json"),
+                }
+            )
+        else:
+            evidence = fingerprint(
+                {
+                    "schema_version": "empty_week_calendar_evidence.v2",
+                    "season": season,
+                    "week": week.model_dump(mode="json"),
+                    "calendar_authority_mode": authority_mode,
+                    "calendar_authority_fingerprint": authority_fingerprint,
+                    "calendar": calendar.model_dump(mode="json"),
+                }
+            )
         return calendar, evidence
 
     @staticmethod
@@ -6546,9 +6556,12 @@ class AuthoritativeRunSimulationDriver:
                 ).all()
             )
             if draw_event_ids:
-                calendar = self.awards_service.calendar_service.get_calendar(
-                    season=season
-                ).calendar
+                calendar, _, _ = self._calendar_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    season=season,
+                )
                 if calendar is None:
                     raise ValueError(
                         "canonical Draw execution requires the season Calendar authority"

@@ -21,13 +21,23 @@ class InitialWorldState(BaseModel):
     season: Literal["2000/2001"] = "2000/2001"
     players: tuple[SeasonActivePlayer, ...]
     policies: tuple[OfficialRankingPolicy, ...] = ()
-    source_kind: Literal["production_initial_pool.v1", "manual_standalone.v1"]
+    source_kind: Literal[
+        "production_initial_pool.v1",
+        "manual_standalone.v1",
+        "run_world_generated_pool.v1",
+    ]
     source_season: str = Field(min_length=1)
     source_fingerprint: str = Field(min_length=1)
     world_package_id: str | None = Field(
         default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
     )
     world_country_content_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    world_generation_content_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    run_world_pool_preview_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     bootstrap_seed: int
@@ -59,6 +69,26 @@ class InitialWorldState(BaseModel):
         ):
             raise ValueError(
                 "Initial World World-Package provenance must be complete or absent"
+            )
+        if self.source_kind == "run_world_generated_pool.v1":
+            if (
+                self.world_package_id is None
+                or self.world_generation_content_fingerprint is None
+                or self.run_world_pool_preview_fingerprint is None
+            ):
+                raise ValueError(
+                    "Run-owned generated Initial World requires complete World generation provenance"
+                )
+            if self.source_fingerprint != self.run_world_pool_preview_fingerprint:
+                raise ValueError(
+                    "Run-owned generated Initial World source fingerprint must match its reviewed pool preview"
+                )
+        elif (
+            self.world_generation_content_fingerprint is not None
+            or self.run_world_pool_preview_fingerprint is not None
+        ):
+            raise ValueError(
+                "World generation provenance is reserved for Run-owned generated Initial World"
             )
         return self
 

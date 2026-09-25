@@ -20,7 +20,7 @@ from beta_engine.domain.players.initial_pool import (
 )
 from beta_engine.domain.players.models import HiddenCareerTraits
 
-SourceGeneration = Literal["initial_pool", "manual", "imported"]
+SourceGeneration = Literal["initial_pool", "annual_intake", "manual", "imported"]
 
 
 class SeasonActivePlayer(BaseModel):

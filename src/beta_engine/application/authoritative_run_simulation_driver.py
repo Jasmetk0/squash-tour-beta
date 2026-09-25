@@ -9084,9 +9084,9 @@ class AuthoritativeRunSimulationDriver:
         if (
             schedule is None
             and packages
+            and not entry_slot_ordinals
             and (
-                bool(entry_slot_ordinals)
-                or bool(wc_slot_ordinals)
+                bool(wc_slot_ordinals)
                 or len(packages) > 1
                 or len(
                     self._topology_for_session(

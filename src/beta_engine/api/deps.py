@@ -48,6 +48,7 @@ from beta_engine.application.world_package_clone_service import WorldPackageClon
 from beta_engine.application.world_package_countries_service import WorldPackageCountriesService
 from beta_engine.application.world_package_effective_population_service import WorldPackageEffectivePopulationService
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.world_package_validation_service import WorldPackageValidationService
 from beta_engine.application.world_package_weekly_intake_preview_service import WorldPackageWeeklyIntakePreviewService
 from beta_engine.application.run_weekly_intake_cohort_preview_service import RunWeeklyIntakeCohortPreviewService
@@ -335,6 +336,12 @@ def get_world_package_registry_service(request: Request) -> WorldPackageRegistry
     if configured_world_packages_root is not None:
         kwargs["world_packages_root"] = Path(configured_world_packages_root)
     return WorldPackageRegistryService(**kwargs)
+
+
+def get_world_package_run_adapter(request: Request) -> WorldPackageRunAdapter:
+    return WorldPackageRunAdapter(
+        registry_service=get_world_package_registry_service(request)
+    )
 
 
 def get_world_package_validation_service(request: Request) -> WorldPackageValidationService:

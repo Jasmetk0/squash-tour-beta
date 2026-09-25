@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Active implementation — World Package → Run semantic adapter
+
+Merged PR #974 established the canonical five-type Run Package authority/recovery
+backbone. This branch adds the first production semantic adapter on top of it:
+
+- directory-backed source World Package → canonical `World` Package document;
+- normal Run Package preview/confirm → independent Run/Branch-owned snapshot;
+- typed Run-owned `Country` projection from materialized `world.country.v1` entities;
+- server-side source preview/confirm that fails if source changes after review;
+- optional InitialWorld `world_package_id` binding that validates player country/
+  nationality codes against the explicit Run-owned World snapshot and freezes a
+  branch-independent World-country content fingerprint as provenance.
+
+No World Package becomes mandatory. `Official FAX World` remains an offered Official
+Run default, not a global Start gate. Multiple-World-Package priority is not invented:
+InitialWorld consumes a World snapshot only when the Admin explicitly names its
+`world_package_id`.
+
+See `docs/WORLD_PACKAGE_RUN_ADAPTER_V1.md`.
+
+**Next action after this PR:** re-audit the remaining Package → Official Run semantic
+gaps. Prioritize the smallest adapter that removes another legacy/global dependency from
+the Master §31.3 whole-season acceptance, likely Category/Calendar/tournament content
+rather than more Package persistence work.
+
 ## Active implementation — canonical Run Package snapshot backbone
 
 The current branch adds a common typed Package document for exactly `World / Category /

@@ -362,6 +362,9 @@ def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
         )
         assert status == 201, entry_field
         assert set(entry_field["direct_main_player_ids"]) == set(generated_ids)
+        status, entry_field_state = _request("GET", entry_field_root)
+        assert status == 200, entry_field_state
+        assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
 
         draw_root = tournament_root + "/draw"
         status, draw_input = _request(
@@ -372,7 +375,7 @@ def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "event_id": event_id,
-                "expected_field_fingerprint": entry_field["fingerprint"],
+                "expected_field_fingerprint": entry_field_state["field_fingerprint"],
                 "draw_seed": 200001,
             },
         )

@@ -1,5 +1,32 @@
 # Current implementation and next action
 
+## Active implementation — Official Week-1 topology moves to canonical Draw authority
+
+- the prepared Week-1 bootstrap ranking is now explicitly published before any tournament field/draw authority is created; this initializes the authoritative world clock at Week 1 instead of deferring first publication until the Week 1 → Week 2 transition;
+After #980, the release-gating Run owns World, InitialWorld and Season-0 Calendar.
+This branch removes the next fixture-owned sporting source from the Master §31.3 path:
+
+- a new Admin boundary adopts one published Official Ranking as a
+  Run/Branch/Event Tournament Ranking Snapshot authority;
+- the acceptance freezes valid Week-1 applications for the generated Run-owned players;
+- the existing canonical Entry Field → Draw Input → Tournament Draw pipeline builds the
+  Week-1 bracket;
+- the effective Tournament Draw authority is inspected and required to contain exactly
+  the generated Run-owned player identities;
+- the old Week-1 `SeasonEventMatchPackage` is removed from the legacy match registry
+  before schedule proposal;
+- authoritative simulation must therefore derive its compatibility MatchPackage from
+  canonical Draw + Run-owned Calendar or the release-gating test fails.
+
+This deliberately does not claim the application/entry process is fully production-owned
+yet. Valid application evidence is still seeded by the acceptance fixture and the
+legacy active-player registry remains as a compatibility input for older builders.
+
+**Next action after this PR:** move Week-1 valid application evidence and remaining
+active-player compatibility reads onto authoritative Run-owned entry/roster state, then
+re-audit the full-season gate for the next live-global dependency.
+
+
 ## Active implementation — Official Run acceptance applies Season-0 Calendar Package
 
 The Master §31.3 whole-season acceptance now exercises the Run-owned Calendar path

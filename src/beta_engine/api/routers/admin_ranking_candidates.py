@@ -11,6 +11,10 @@ from beta_engine.application.run_working_draft_service import RunWorkingDraftSer
 from beta_engine.application.season_point_awards_service import SeasonPointAwardsService
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.application.initial_world import derive_initial_ranking_inputs
+from beta_engine.application.initial_official_ranking_publication import (
+    InitialOfficialRankingPublication,
+    InitialOfficialRankingPublicationService,
+)
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Header
 
@@ -268,6 +272,40 @@ def prepare_derived_initial(
         expected=expected,
         expected_request=expected_request,
     )
+
+
+class InitialRankingPublicationRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    expected_ranking_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+@router.post(
+    "/publish-initial",
+    response_model=InitialOfficialRankingPublication,
+    status_code=201,
+)
+def publish_initial_ranking(
+    run_id: str,
+    branch_id: str,
+    payload: InitialRankingPublicationRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return InitialOfficialRankingPublicationService(
+            runtime.repository._session_factory
+        ).publish(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_ranking_fingerprint=payload.expected_ranking_fingerprint,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "initial_ranking_publication_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.post("/prepare/week/preview", response_model=RankingPreparationPreview)

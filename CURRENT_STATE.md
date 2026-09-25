@@ -1,5 +1,29 @@
 # Current implementation and next action
 
+## Active implementation — Official Run acceptance applies Season-0 Calendar Package
+
+The Master §31.3 whole-season acceptance now exercises the Run-owned Calendar path
+instead of merely having that capability available:
+
+- the authored 2000/2001 Calendar used by the acceptance is sourced through the
+  Calendar Package adapter;
+- `calendar-2000-2001` is previewed, confirmed and saved as its own Working Draft
+  checkpoint before InitialWorld adoption;
+- the release-gating Run inspects the typed Run-owned Calendar projection before
+  simulation starts;
+- process reopen verifies the same Calendar Package projection survives persistence;
+- authoritative simulation therefore resolves Season-0 Calendar content from the
+  applied Run snapshot introduced by #978/#979.
+
+The remaining release-gating content dependency is the concrete Week-1 tournament /
+match fixture. Calendar ownership is now exercised end-to-end; tournament topology
+and match source ownership are the next boundary.
+
+**Next action after this PR:** move the Week-1 tournament/match fixture behind a stable
+Run-owned source identity, preserving the existing canonical Draw and authoritative
+simulation contracts rather than introducing parallel tournament state.
+
+
 ## Active implementation — authoritative Calendar consumer prefers Run ownership
 
 Merged #978 established a typed Run-owned Calendar Package projection. This branch

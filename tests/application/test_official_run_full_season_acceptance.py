@@ -100,7 +100,7 @@ def _save_initial_world(world_root: str) -> str:
     return saved["saved_revision"]["revision_id"]
 
 
-def _prepare_initial_ranking(ranking_root: str) -> None:
+def _prepare_initial_ranking(ranking_root: str) -> str:
     payload = {
         "command_id": "official-full-season-initial-ranking",
         "audit": AUDIT,
@@ -120,6 +120,7 @@ def _prepare_initial_ranking(ranking_root: str) -> None:
         },
     )
     assert status == 201, candidate
+    return candidate["fingerprint"]
 
 
 def _derive_transition_authority(
@@ -630,8 +631,36 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         ranking_root, transition_root, sim_root = _roots(
             server, run_id, branch_id
         )
-        _prepare_initial_ranking(ranking_root)
+        initial_ranking_fingerprint = _prepare_initial_ranking(ranking_root)
         revision = _save_ranking(None, ranking_root)
+        status, published_initial = _request(
+            "POST",
+            ranking_root + "/publish-initial",
+            {
+                "expected_ranking_fingerprint": initial_ranking_fingerprint,
+            },
+        )
+        assert status == 201, published_initial
+        assert published_initial["week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+        assert (
+            published_initial["ranking_fingerprint"]
+            == initial_ranking_fingerprint
+        )
+        assert published_initial["exact_retry"] is False
+
+        status, published_retry = _request(
+            "POST",
+            ranking_root + "/publish-initial",
+            {
+                "expected_ranking_fingerprint": initial_ranking_fingerprint,
+            },
+        )
+        assert status == 201, published_retry
+        assert published_retry["ranking_fingerprint"] == initial_ranking_fingerprint
+        assert published_retry["exact_retry"] is True
 
         event_id = week_one_package.event_id
         tournament_root = (

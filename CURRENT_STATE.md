@@ -1,5 +1,35 @@
 # Current implementation and next action
 
+## Active implementation — Run-owned World player-generation preview
+
+Merged PR #975 connected directory-backed World metadata/geography/countries to the
+canonical Run Package state and allowed InitialWorld to bind explicitly to one
+Run-owned World snapshot.
+
+This branch closes the next legacy/global dependency inside that same World domain:
+
+- built-in World Packages now carry `generation/player_identity.json`;
+- the World Package semantic fingerprint includes that generation config;
+- canonical World Package application materializes it as
+  `world.player_identity.v1`;
+- Run Admin can inspect a typed Run-owned generation projection;
+- a new read-only Run-scoped initial-pool preview combines only the Run-owned country
+  projection + Run-owned player identity config with explicit season/seed/pool size;
+- source/global config edits after Package application cannot alter the preview.
+
+The preview does not persist players, mutate Working Draft, or create InitialWorld.
+That keeps this slice technical and deterministic while removing the global
+`config/player_generation/player_identity.json` dependency from the reviewed
+generation path.
+
+See `docs/WORLD_PACKAGE_RUN_ADAPTER_V1.md`.
+
+**Next action after this PR:** connect a reviewed Run-owned generated initial pool to
+InitialWorld without routing through the legacy global initial-pool file, preserving
+explicit preview/confirm and Saved Revision provenance. Category/Series/Calendar remain
+blocked on stronger canonical source identities rather than being guessed from legacy
+template strings.
+
 ## Active implementation — World Package → Run semantic adapter
 
 Merged PR #974 established the canonical five-type Run Package authority/recovery

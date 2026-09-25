@@ -479,6 +479,21 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert status == 200, applied_world
 
+        # Package application is its own reviewed Working Draft change. Save it
+        # before adopting InitialWorld so the later component-only Save remains
+        # narrow and cannot accidentally persist unrelated pending Package edits.
+        save_url = (
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}"
+            "/working-draft/save"
+        )
+        status, saved_package = _request(
+            "POST",
+            save_url,
+            {"expected_draft_version": applied_world["draft_version"]},
+        )
+        assert status == 201, saved_package
+        revision = saved_package["saved_revision"]["revision_id"]
+
         world_root = (
             f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"
             "/initial-world"

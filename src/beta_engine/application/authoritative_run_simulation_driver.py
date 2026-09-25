@@ -9757,6 +9757,12 @@ class AuthoritativeRunSimulationDriver:
                     result_seed=self._stable_seed(package, "result"),
                     award_seed=self._stable_seed(package, "awards"),
                     frozen_point_authority=point_authority,
+                    active_players_service=RunOwnedEntryRosterService(
+                        session=session,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=command.expected_week,
+                    ),
                 )
             first_publication_week, closing_eligibility_ordinal = (
                 self._ranking_source_boundary(command.expected_week)

@@ -60,6 +60,21 @@ class RunWorldCountryProjection(BaseModel):
     provenance: tuple[RunWorldCountryProvenance, ...]
 
     @property
+    def content_fingerprint(self) -> str:
+        """Branch-independent fingerprint of the exact materialized World content."""
+        return canonical_hash(
+            {
+                "package_id": self.package_id,
+                "countries": [
+                    country.model_dump(mode="json") for country in self.countries
+                ],
+                "provenance": [
+                    item.model_dump(mode="json") for item in self.provenance
+                ],
+            }
+        )
+
+    @property
     def fingerprint(self) -> str:
         return canonical_hash(self.model_dump(mode="json"))
 

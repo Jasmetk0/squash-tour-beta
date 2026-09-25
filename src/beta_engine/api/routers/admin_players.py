@@ -6,13 +6,17 @@ from beta_engine.api.deps import (
     get_initial_player_pool_service,
     get_initial_pool_season_bootstrap_service,
     get_runtime,
+    get_run_package_service,
     get_run_working_draft_service,
+    get_world_package_run_adapter,
 )
 from beta_engine.api.deps import ApiRuntime
 from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
 )
+from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.initial_world import (
     InitialWorldAdoptionRequest,
     InitialWorldState,
@@ -55,6 +59,8 @@ def _resolved_initial_world(
     branch_id: str,
     payload: InitialWorldAdoptionRequest,
     bootstrap: InitialPoolSeasonBootstrapService,
+    package_service: RunPackageService,
+    world_adapter: WorldPackageRunAdapter,
 ) -> InitialWorldState:
     result = bootstrap.bootstrap_from_initial_pool(
         season="2000/2001",
@@ -66,6 +72,31 @@ def _resolved_initial_world(
     best_n = 15 if payload.official_run else payload.best_n
     if best_n is None:  # model validation normally makes this unreachable
         raise ValueError("Custom Run requires an explicit first-season Best N")
+
+    world_country_content_fingerprint = None
+    if payload.world_package_id is not None:
+        package_state = package_service.get(run_id=run_id, branch_id=branch_id)
+        if package_state is None:
+            raise ValueError(
+                "Initial World requested a World Package, but Run Package state is empty"
+            )
+        projection = world_adapter.project_countries(
+            package_state, package_id=payload.world_package_id
+        )
+        configured_codes = {country.code for country in projection.countries}
+        referenced_codes = {
+            code
+            for player in result.players
+            for code in (player.country_code, player.nationality)
+        }
+        missing_codes = sorted(referenced_codes - configured_codes)
+        if missing_codes:
+            raise ValueError(
+                "Initial World players reference countries absent from Run World "
+                f"Package '{payload.world_package_id}': {', '.join(missing_codes)}"
+            )
+        world_country_content_fingerprint = projection.content_fingerprint
+
     return InitialWorldState(
         run_id=run_id,
         branch_id=branch_id,
@@ -76,6 +107,8 @@ def _resolved_initial_world(
         source_kind="production_initial_pool.v1",
         source_season=payload.source_season,
         source_fingerprint=result.metadata.source_initial_pool_fingerprint,
+        world_package_id=payload.world_package_id,
+        world_country_content_fingerprint=world_country_content_fingerprint,
         bootstrap_seed=payload.bootstrap_seed,
         bootstrap_fingerprint=result.metadata.bootstrap_fingerprint,
         adopted_by_command_id=payload.command_id,
@@ -95,6 +128,8 @@ def preview_initial_world(
     bootstrap: InitialPoolSeasonBootstrapService = Depends(
         get_initial_pool_season_bootstrap_service
     ),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    world_adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     # Validate product scope even though preview remains strictly read-only.
@@ -102,7 +137,14 @@ def preview_initial_world(
         branch = runtime.repository.get_run_branch(branch_id=branch_id)
         if branch is None or branch.run_id != run_id:
             raise KeyError("Initial-world Run/Branch scope not found")
-        state = _resolved_initial_world(run_id, branch_id, payload, bootstrap)
+        state = _resolved_initial_world(
+            run_id,
+            branch_id,
+            payload,
+            bootstrap,
+            package_service,
+            world_adapter,
+        )
         return {"preview_only": True, "state": state, "fingerprint": state.fingerprint}
     except (KeyError, ValueError) as exc:
         raise HTTPException(
@@ -122,6 +164,8 @@ def adopt_initial_world(
     bootstrap: InitialPoolSeasonBootstrapService = Depends(
         get_initial_pool_season_bootstrap_service
     ),
+    package_service: RunPackageService = Depends(get_run_package_service),
+    world_adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     try:
@@ -144,7 +188,14 @@ def adopt_initial_world(
                 current, policy=_lifecycle_policy(payload)
             )
             return current
-        state = _resolved_initial_world(run_id, branch_id, payload, bootstrap)
+        state = _resolved_initial_world(
+            run_id,
+            branch_id,
+            payload,
+            bootstrap,
+            package_service,
+            world_adapter,
+        )
         if state.fingerprint != expected:
             raise ValueError("Production initial-player source changed since preview")
         return runtime.repository.adopt_initial_world(

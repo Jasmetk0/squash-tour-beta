@@ -547,6 +547,19 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 match.bottom_player_id = player_id_map[match.bottom_player_id]
         matches._save_registry(match_registry)
 
+        active_registry = matches.active_players_service._load_registry()
+        active_players = active_registry.players_by_season["2000/2001"]
+        rebound_players = []
+        for player in active_players:
+            rebound_id = player_id_map.get(player.player_id)
+            rebound_players.append(
+                player.model_copy(update={"player_id": rebound_id})
+                if rebound_id is not None
+                else player
+            )
+        active_registry.players_by_season["2000/2001"] = rebound_players
+        matches.active_players_service._save_registry(active_registry)
+
         status, adopted = _post_headers(
             world_root + "/world-package",
             adoption,

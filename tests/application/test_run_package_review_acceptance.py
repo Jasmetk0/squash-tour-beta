@@ -31,6 +31,7 @@ from beta_engine.domain.run_packages import (
     RunPackageEntity,
     RunPackageState,
     SourceReference,
+    canonical_hash,
 )
 from pydantic import ValidationError
 from beta_engine.infrastructure.db import (
@@ -199,6 +200,8 @@ def test_package_id_type_is_immutable_and_selection_labels_are_strict():
         ).draft_version
         == 0
     )
+    with empty_repo._session_factory() as session:
+        assert session.get(RunPackageIdentityAllocatorModel, "run") is None
     with pytest.raises(RunPackageConflictError):
         _confirm(
             empty_service,
@@ -880,3 +883,74 @@ def test_corrupt_package_fork_component_and_late_failure_roll_back(tmp_path):
         assert session.get(BranchWorkingDraftModel, "target-draft") is None
         assert session.get(RunPackageStateModel, ("run", "target")) is None
         assert session.get(BranchSavedRevisionModel, "target-root") is None
+
+
+@pytest.mark.pr_critical
+def test_saved_state_source_baseline_requires_matching_package_version():
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    applied = _confirm(
+        service,
+        _doc(entities=(_entity("a", 1),)),
+        command="baseline",
+        draft=0,
+        state=None,
+    )
+    raw = applied.state.model_dump(mode="json")
+
+    def saved_payload(state):
+        return {
+            "content": {
+                "run_package_state": {
+                    "fingerprint": canonical_hash(state),
+                    "state": state,
+                }
+            }
+        }
+
+    orphan = json.loads(json.dumps(raw))
+    orphan["entities"][0]["source_package_version"] = 999
+    with pytest.raises(ValueError):
+        load_saved_run_package_state(
+            saved_payload(orphan), run_id="run", branch_id="branch"
+        )
+
+    wrong_fingerprint = json.loads(json.dumps(raw))
+    wrong_fingerprint["entities"][0]["source_package_fingerprint"] = "0" * 64
+    with pytest.raises(ValueError):
+        load_saved_run_package_state(
+            saved_payload(wrong_fingerprint), run_id="run", branch_id="branch"
+        )
+
+    duplicate_version = json.loads(json.dumps(raw))
+    duplicate_version["package_versions"].append(
+        json.loads(json.dumps(duplicate_version["package_versions"][0]))
+    )
+    with pytest.raises(ValueError):
+        load_saved_run_package_state(
+            saved_payload(duplicate_version), run_id="run", branch_id="branch"
+        )
+
+    malformed_hash = json.loads(json.dumps(raw))
+    malformed_hash["package_versions"][0]["source_fingerprint"] = "not-a-sha"
+    with pytest.raises(ValueError):
+        load_saved_run_package_state(
+            saved_payload(malformed_hash), run_id="run", branch_id="branch"
+        )
+
+
+@pytest.mark.pr_critical
+def test_v1_package_identity_rejects_reserved_delimiters():
+    for package_id in ("a/b", "a:b", "a@b", "a>b"):
+        with pytest.raises(ValidationError):
+            _doc(package_id, entities=())
+    for entity_id in ("a/b", "a:b", "a@b", "a>b"):
+        with pytest.raises(ValidationError):
+            _entity(entity_id, 1)
+    with pytest.raises(ValidationError):
+        SourceReference(
+            source_package_id="bad/package",
+            source_entity_id="entity",
+            expected_entity_kind="kind",
+        )

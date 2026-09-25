@@ -17,6 +17,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeApplicationValidationCommand,
     AuthoritativeEmptyWeekCompletionCommand,
     AuthoritativeExplicitApplicationValidationCommand,
+    AuthoritativeExplicitEntryDecisionSlotCommand,
     AuthoritativeEntryDecisionSlotCommand,
     AuthoritativeRunSimulationDriver,
     AuthoritativeSimulationCommand,
@@ -132,6 +133,36 @@ def prospect_bridge(
         raise HTTPException(
             status_code=409,
             detail={"code": "prospect_bridge_inspection_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post("/entry-decision-slot/review", status_code=201)
+def review_entry_decision_slot(
+    run_id: str,
+    branch_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        command = AuthoritativeExplicitEntryDecisionSlotCommand.model_validate_json(
+            json.dumps({**payload, "run_id": run_id, "branch_id": branch_id})
+        )
+        return _driver(runtime, matches, awards).commit_explicit_entry_decision_slot(
+            command
+        )
+    except ValidationError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "explicit_entry_decision_review_conflict",
+                "message": str(exc),
+            },
         ) from exc
 
 

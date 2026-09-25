@@ -25,6 +25,7 @@ from beta_engine.domain.run_containers import (
 )
 from beta_engine.domain.run_revisions import saved_revision_content_hash
 from beta_engine.domain.run_packages import (
+    AppliedPackageVersion,
     CanonicalPackageDocument,
     PackageEntity,
     PackageType,
@@ -449,18 +450,33 @@ def test_backward_forward_restore_reopen_and_retry_receipt(tmp_path):
 
 @pytest.mark.pr_critical
 def test_saved_component_corruption_fails_closed():
+    source_fingerprint = "1" * 64
     entity = RunPackageEntity(
         run_local_id=1,
         source_package_id="p",
         source_package_version=1,
-        source_package_fingerprint="source-fingerprint",
+        source_package_fingerprint=source_fingerprint,
         source_entity_id="a",
         entity_kind="kind",
         scope="scope",
         payload={},
-        source_baseline_fingerprint="x",
+        source_baseline_fingerprint="2" * 64,
     )
-    state = RunPackageState(run_id="run", branch_id="branch", entities=(entity,))
+    version = AppliedPackageVersion(
+        package_type=PackageType.WORLD,
+        package_id="p",
+        source_version=1,
+        source_fingerprint=source_fingerprint,
+        document_explicit_scope=("a",),
+        applied_entity_ids=("a",),
+        provenance={},
+    )
+    state = RunPackageState(
+        run_id="run",
+        branch_id="branch",
+        entities=(entity,),
+        package_versions=(version,),
+    )
     valid = {
         "content": {
             "run_package_state": {

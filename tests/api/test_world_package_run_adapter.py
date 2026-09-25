@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from urllib.parse import quote
+import json
 
 import pytest
 
@@ -54,6 +55,26 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
 ):
     url = f"sqlite:///{tmp_path / 'world-package-api.db'}"
     world_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    identity_path = (
+        world_root
+        / OFFICIAL_FAX_WORLD_ID
+        / "generation"
+        / "player_identity.json"
+    )
+    identity_path.write_text(
+        json.dumps(
+            {
+                "given_names": ["ApiRunGiven"],
+                "family_names": ["ApiRunFamily"],
+                "play_styles": ["api-run-style"],
+                "archetypes": ["api-run-archetype"],
+                "growth_curves": ["balanced"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     pool_path = tmp_path / "initial-pool.json"
 
     server = ApiServer(database_url=url)
@@ -116,6 +137,40 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
         content_fingerprint = projection["fingerprint"]
         run_country_codes = {country["code"] for country in projection["countries"]}
 
+        generation_url = base + f"/world/{OFFICIAL_FAX_WORLD_ID}/generation"
+        status, generation = _request("GET", generation_url)
+        assert status == 200, generation
+        assert generation["identity_config"]["given_names"] == ["ApiRunGiven"]
+
+        initial_pool_preview_url = (
+            f"{server.base_url}/admin/players/runs/{quote(run_id, safe='')}"
+            f"/branches/{quote(branch_id, safe='')}"
+            "/initial-pool/world-package/preview"
+        )
+        initial_pool_request = {
+            "world_package_id": OFFICIAL_FAX_WORLD_ID,
+            "season": "2000/2001",
+            "seed": 771,
+            "target_pool_size": 10,
+        }
+        status, run_pool_preview = _request(
+            "POST", initial_pool_preview_url, initial_pool_request
+        )
+        assert status == 200, run_pool_preview
+        assert run_pool_preview["preview_only"] is True
+        assert len(run_pool_preview["result"]["players"]) == 10
+        assert all(
+            player["name"].startswith("ApiRunGiven ApiRunFamily ")
+            for player in run_pool_preview["result"]["players"]
+        )
+        assert {
+            player["play_style"] for player in run_pool_preview["result"]["players"]
+        } == {"api-run-style"}
+        assert {
+            player["archetype"] for player in run_pool_preview["result"]["players"]
+        } == {"api-run-archetype"}
+        run_pool_preview_fingerprint = run_pool_preview["preview_fingerprint"]
+
         save_url = (
             f"{server.base_url}/run-containers/{quote(run_id, safe='')}"
             f"/branches/{quote(branch_id, safe='')}/working-draft/save"
@@ -132,6 +187,32 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
         status, still_run_owned = _request("GET", projection_url)
         assert status == 200, still_run_owned
         assert still_run_owned["fingerprint"] == projection_fingerprint
+
+        identity_path.write_text(
+            json.dumps(
+                {
+                    "given_names": ["ChangedSource"],
+                    "family_names": ["ChangedSourceFamily"],
+                    "play_styles": ["changed-source-style"],
+                    "archetypes": ["changed-source-archetype"],
+                    "growth_curves": ["late"],
+                },
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        status, unchanged_generation = _request("GET", generation_url)
+        assert status == 200, unchanged_generation
+        assert unchanged_generation["identity_config"]["given_names"] == ["ApiRunGiven"]
+        status, unchanged_pool_preview = _request(
+            "POST", initial_pool_preview_url, initial_pool_request
+        )
+        assert status == 200, unchanged_pool_preview
+        assert (
+            unchanged_pool_preview["preview_fingerprint"]
+            == run_pool_preview_fingerprint
+        )
 
         status, global_countries = _request("GET", server.base_url + "/world/countries")
         assert status == 200, global_countries
@@ -206,6 +287,21 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
         )
         assert status == 200, reopened_projection
         assert reopened_projection["fingerprint"] == projection_fingerprint
+        status, reopened_generation = _request(
+            "GET", base + f"/world/{OFFICIAL_FAX_WORLD_ID}/generation"
+        )
+        assert status == 200, reopened_generation
+        assert reopened_generation["identity_config"]["given_names"] == ["ApiRunGiven"]
+        reopened_pool_url = (
+            f"{reopened.base_url}/admin/players/runs/{quote(run_id, safe='')}"
+            f"/branches/{quote(branch_id, safe='')}"
+            "/initial-pool/world-package/preview"
+        )
+        status, reopened_pool = _request(
+            "POST", reopened_pool_url, initial_pool_request
+        )
+        assert status == 200, reopened_pool
+        assert reopened_pool["preview_fingerprint"] == run_pool_preview_fingerprint
         world_root_url = (
             f"{reopened.base_url}/admin/players/runs/{quote(run_id, safe='')}"
             f"/branches/{quote(branch_id, safe='')}/initial-world"

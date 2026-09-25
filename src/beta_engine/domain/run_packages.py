@@ -18,6 +18,26 @@ def canonical_hash(value: Any) -> str:
     ).hexdigest()
 
 
+def entity_content_fingerprint(
+    *,
+    entity_kind: str,
+    entity_schema_version: int,
+    scope: str,
+    payload: dict[str, Any],
+    references: tuple["SourceReference", ...],
+) -> str:
+    """Hash all technical content fields, excluding source identity/provenance."""
+    return canonical_hash(
+        {
+            "entity_kind": entity_kind,
+            "entity_schema_version": entity_schema_version,
+            "scope": scope,
+            "payload": payload,
+            "references": [item.model_dump(mode="json") for item in references],
+        }
+    )
+
+
 class PackageType(str, Enum):
     WORLD = "World"
     CATEGORY = "Category"
@@ -28,34 +48,40 @@ class PackageType(str, Enum):
 
 class SourceReference(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    source_package_id: str
-    source_entity_id: str
-    expected_entity_kind: str
+    source_package_id: str = Field(min_length=1)
+    source_entity_id: str = Field(min_length=1)
+    expected_entity_kind: str = Field(min_length=1)
     minimum_schema_version: int = 1
 
 
 class PackageEntity(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
-    source_entity_id: str
-    entity_kind: str
+    source_entity_id: str = Field(min_length=1)
+    entity_kind: str = Field(min_length=1)
     entity_schema_version: int = Field(default=1, ge=1)
-    scope: str
+    scope: str = Field(min_length=1)
     payload: dict[str, Any]
     references: tuple[SourceReference, ...] = ()
     valid: bool = True
 
     @property
     def fingerprint(self) -> str:
-        return canonical_hash(self.model_dump(mode="json"))
+        return entity_content_fingerprint(
+            entity_kind=self.entity_kind,
+            entity_schema_version=self.entity_schema_version,
+            scope=self.scope,
+            payload=self.payload,
+            references=self.references,
+        )
 
 
 class CanonicalPackageDocument(BaseModel):
     """Immutable reviewed input. Setup children are frozen full documents."""
 
     model_config = ConfigDict(frozen=True, extra="forbid")
-    schema_version: int = 1
+    schema_version: Literal[1] = 1
     package_type: PackageType
-    package_id: str
+    package_id: str = Field(min_length=1)
     source_version: int = Field(ge=1)
     provenance: dict[str, Any] = Field(default_factory=dict)
     explicit_scope: tuple[str, ...]
@@ -72,6 +98,9 @@ class CanonicalPackageDocument(BaseModel):
                 raise ValueError(
                     "Setup contains only non-Setup child Package documents"
                 )
+            child_ids = [child.package_id for child in self.children]
+            if self.package_id in child_ids or len(child_ids) != len(set(child_ids)):
+                raise ValueError("Setup and child package_id values must be unique")
         elif self.children:
             raise ValueError("Only Setup Packages may contain child documents")
         ids = [e.source_entity_id for e in self.entities]
@@ -90,11 +119,13 @@ class CanonicalPackageDocument(BaseModel):
 class RunPackageEntity(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
     run_local_id: int = Field(ge=1)
-    source_package_id: str
-    source_entity_id: str
-    entity_kind: str
+    source_package_id: str = Field(min_length=1)
+    source_package_version: int = Field(ge=1)
+    source_package_fingerprint: str = Field(min_length=1)
+    source_entity_id: str = Field(min_length=1)
+    entity_kind: str = Field(min_length=1)
     entity_schema_version: int = Field(default=1, ge=1)
-    scope: str
+    scope: str = Field(min_length=1)
     payload: dict[str, Any]
     source_baseline_fingerprint: str
     references: tuple[SourceReference, ...] = ()
@@ -102,11 +133,12 @@ class RunPackageEntity(BaseModel):
 
     @property
     def content_fingerprint(self) -> str:
-        return canonical_hash(
-            {
-                "payload": self.payload,
-                "references": [r.model_dump(mode="json") for r in self.references],
-            }
+        return entity_content_fingerprint(
+            entity_kind=self.entity_kind,
+            entity_schema_version=self.entity_schema_version,
+            scope=self.scope,
+            payload=self.payload,
+            references=self.references,
         )
 
 

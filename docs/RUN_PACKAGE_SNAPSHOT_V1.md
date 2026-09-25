@@ -28,6 +28,10 @@ An entity source identity is `(source_package_id, source_entity_id)`. Materializ
 allocates a monotonically increasing Run-local integer from a Run-wide high-water mark.
 The mapping is never based on a name, survives Save/restore, and is copied unchanged
 across shared-history Branch forks. The high-water mark is not rewound by restore.
+Each current entity also records the exact source Package version and source Package
+fingerprint that established its baseline. Manual edits and `keep_run` preserve that
+baseline; an accepted source update replaces it. Entity-content fingerprints cover kind,
+entity schema version, scope, payload and references.
 
 ## Preview and application
 
@@ -64,6 +68,10 @@ created.
 The Setup's own identity, version, fingerprint, ancestry and provenance are persisted with
 the exact applied selection and frozen child-version manifest even though Setup creates no
 sporting entity itself.
+Repeated partial applications of the same immutable Package/Setup version accumulate the
+state-level applied entity scope; each immutable command receipt still records only that
+command's reviewed selection. Conflicts in an unselected independent Setup child remain
+visible in preview but do not block selected valid children.
 
 ## Save, restore, and Branch fork
 

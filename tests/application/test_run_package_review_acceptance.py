@@ -4,6 +4,7 @@ import json
 from collections.abc import Iterator
 
 import pytest
+from sqlalchemy import event
 
 from beta_engine.application.run_container_creation_service import (
     RunContainerCreationService,
@@ -22,6 +23,7 @@ from beta_engine.domain.run_containers import (
     COMPLETED_RUN_STATUS,
     WORKING_RUN_STATUS,
 )
+from beta_engine.domain.run_revisions import saved_revision_content_hash
 from beta_engine.domain.run_packages import (
     CanonicalPackageDocument,
     PackageEntity,
@@ -30,6 +32,7 @@ from beta_engine.domain.run_packages import (
     RunPackageState,
     SourceReference,
 )
+from pydantic import ValidationError
 from beta_engine.infrastructure.db import (
     DatabaseSettings,
     SimulationPersistenceRepository,
@@ -37,9 +40,13 @@ from beta_engine.infrastructure.db import (
     create_sqlite_engine,
 )
 from beta_engine.infrastructure.db.models import (
+    BranchSavedRevisionModel,
+    BranchWorkingDraftModel,
+    RunBranchModel,
     RunContainerModel,
     RunPackageApplicationReceiptModel,
     RunPackageIdentityAllocatorModel,
+    RunPackageStateModel,
 )
 from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 
@@ -442,6 +449,8 @@ def test_saved_component_corruption_fails_closed():
     entity = RunPackageEntity(
         run_local_id=1,
         source_package_id="p",
+        source_package_version=1,
+        source_package_fingerprint="source-fingerprint",
         source_entity_id="a",
         entity_kind="kind",
         scope="scope",
@@ -573,3 +582,301 @@ def test_materialized_fork_divergence_and_nested_inheritance(tmp_path):
         == state_a.fingerprint
     )
     assert reopened.get(run_id="run", branch_id="c").entities == state_b.entities
+
+
+@pytest.mark.pr_critical
+def test_setup_unselected_conflicts_do_not_block_selected_independent_child():
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    category_v1 = _doc(
+        "category",
+        kind=PackageType.CATEGORY,
+        entities=(_entity("c", 1, kind="category"),),
+    )
+    initial = _confirm(service, category_v1, command="initial", draft=0, state=None)
+    divergent = _doc(
+        "category",
+        kind=PackageType.CATEGORY,
+        entities=(_entity("c", 2, kind="category"),),
+    )
+    bad_ref = SourceReference(
+        source_package_id="missing",
+        source_entity_id="m",
+        expected_entity_kind="category",
+        minimum_schema_version=2,
+    )
+    broken = _doc(
+        "series",
+        kind=PackageType.SERIES,
+        entities=(_entity("s", 1, kind="series", refs=(bad_ref,)),),
+    )
+    world = _doc("world", entities=(_entity("w", 1),))
+    setup = _doc("setup", kind=PackageType.SETUP, children=(world, divergent, broken))
+    applied = _confirm(
+        service,
+        setup,
+        command="setup-world",
+        draft=1,
+        state=initial.state.fingerprint,
+        selected=("world/w",),
+    )
+    assert any(e.source_package_id == "world" for e in applied.state.entities)
+    with pytest.raises(RunPackageConflictError):
+        _confirm(
+            service,
+            setup,
+            command="setup-broken",
+            draft=2,
+            state=applied.state.fingerprint,
+            selected=("category/c",),
+        )
+
+
+@pytest.mark.pr_critical
+def test_repeated_partial_application_accumulates_leaf_and_setup_provenance():
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    package = _doc(entities=(_entity("a", 1), _entity("b", 2)))
+    first = _confirm(
+        service, package, command="a", draft=0, state=None, selected=("p/a",)
+    )
+    second = _confirm(
+        service,
+        package,
+        command="b",
+        draft=1,
+        state=first.state.fingerprint,
+        selected=("p/b",),
+    )
+    assert next(
+        v for v in second.state.package_versions if v.package_id == "p"
+    ).applied_entity_ids == ("a", "b")
+    world = _doc("world", entities=(_entity("w", 1),))
+    category = _doc("category", kind=PackageType.CATEGORY, entities=(_entity("c", 1),))
+    setup = _doc("setup", kind=PackageType.SETUP, children=(world, category))
+    third = _confirm(
+        service,
+        setup,
+        command="sw",
+        draft=2,
+        state=second.state.fingerprint,
+        selected=("world/w",),
+    )
+    fourth = _confirm(
+        service,
+        setup,
+        command="sc",
+        draft=3,
+        state=third.state.fingerprint,
+        selected=("category/c",),
+    )
+    setup_version = next(
+        v for v in fourth.state.package_versions if v.package_id == "setup"
+    )
+    assert setup_version.applied_entity_ids == ("category/c", "world/w")
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("change", ["payload", "schema", "scope", "kind"])
+def test_entity_technical_content_changes_are_never_unchanged(change):
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    v1 = _doc(entities=(_entity("a", 1),))
+    _confirm(service, v1, command="v1", draft=0, state=None)
+    kwargs = {"identity": "a", "value": 1, "kind": "kind", "schema": 1}
+    if change == "payload":
+        kwargs["value"] = 2
+    if change == "schema":
+        kwargs["schema"] = 2
+    if change == "kind":
+        kwargs["kind"] = "other-kind"
+    changed = _entity(**kwargs)
+    if change == "scope":
+        changed = changed.model_copy(update={"scope": "other-scope"})
+    v2 = _doc(version=2, parent=v1.source_fingerprint, entities=(changed,))
+    preview = service.preview(run_id="run", branch_id="branch", document=v2)
+    assert "p/a" in preview.updates and "p/a" not in preview.unchanged
+
+
+@pytest.mark.pr_critical
+def test_entity_source_baseline_provenance_survives_manual_edit_save_and_reopen(
+    tmp_path,
+):
+    url = f"sqlite:///{tmp_path / 'provenance.db'}"
+    repository = _repo(url)
+    _empty(repository)
+    service = RunPackageService(repository)
+    v1 = _doc(entities=(_entity("a", 1),))
+    first = _confirm(service, v1, command="v1", draft=0, state=None)
+    v2 = _doc(version=2, parent=v1.source_fingerprint, entities=(_entity("a", 2),))
+    second = _confirm(service, v2, command="v2", draft=1, state=first.state.fingerprint)
+    edited = service.edit_entity(
+        run_id="run",
+        branch_id="branch",
+        run_local_id=1,
+        payload={"manual": True},
+        expected_draft_version=2,
+        expected_state_fingerprint=second.state.fingerprint,
+    )
+    entity = edited.entities[0]
+    assert (entity.source_package_version, entity.source_package_fingerprint) == (
+        2,
+        v2.source_fingerprint,
+    )
+    RunWorkingDraftService(repository, _ids("saved", "audit")).save(
+        run_id="run", branch_id="branch", expected_draft_version=3
+    )
+    reopened = (
+        RunPackageService(_repo(url)).get(run_id="run", branch_id="branch").entities[0]
+    )
+    assert (reopened.source_package_version, reopened.source_package_fingerprint) == (
+        2,
+        v2.source_fingerprint,
+    )
+
+
+@pytest.mark.pr_critical
+def test_setup_identity_and_v1_document_validation_fail_closed():
+    child = _doc("duplicate", entities=(_entity("a", 1),))
+    with pytest.raises(ValidationError):
+        _doc("duplicate", kind=PackageType.SETUP, children=(child,))
+    with pytest.raises(ValidationError):
+        _doc(
+            "setup",
+            kind=PackageType.SETUP,
+            children=(child, child.model_copy(update={"source_version": 2})),
+        )
+    with pytest.raises(ValidationError):
+        CanonicalPackageDocument(
+            package_id="p",
+            package_type=PackageType.WORLD,
+            source_version=1,
+            schema_version=2,
+            explicit_scope=(),
+        )
+    with pytest.raises(ValidationError):
+        _doc("", entities=())
+    with pytest.raises(ValidationError):
+        _entity("", 1)
+
+
+@pytest.mark.pr_critical
+def test_corrupt_application_receipt_fails_without_mutating_live_state():
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    package = _doc(entities=(_entity("a", 1),))
+    preview = service.preview(run_id="run", branch_id="branch", document=package)
+    applied = service.confirm(
+        run_id="run",
+        branch_id="branch",
+        document=package,
+        command_id="receipt",
+        expected_head_revision_id="r0",
+        expected_draft_version=0,
+        expected_state_fingerprint=None,
+        expected_preview_fingerprint=preview.preview_fingerprint,
+    )
+    with repository._session_factory.begin() as session:
+        row = session.get(
+            RunPackageApplicationReceiptModel, ("run", "branch", "receipt")
+        )
+        payload = json.loads(row.payload_json)
+        payload["command_id"] = "corrupt"
+        row.payload_json = json.dumps(payload)
+    with pytest.raises(RunPackageConflictError):
+        service.confirm(
+            run_id="run",
+            branch_id="branch",
+            document=package,
+            command_id="receipt",
+            expected_head_revision_id="r0",
+            expected_draft_version=0,
+            expected_state_fingerprint=None,
+            expected_preview_fingerprint=preview.preview_fingerprint,
+        )
+    assert (
+        service.get(run_id="run", branch_id="branch").fingerprint
+        == applied.state.fingerprint
+    )
+
+
+@pytest.mark.pr_critical
+def test_corrupt_package_fork_component_and_late_failure_roll_back(tmp_path):
+    url = f"sqlite:///{tmp_path / 'fork-integrity.db'}"
+    repository = _repo(url)
+    _empty(repository)
+    service = RunPackageService(repository)
+    _confirm(
+        service, _doc(entities=(_entity("a", 1),)), command="apply", draft=0, state=None
+    )
+    RunWorkingDraftService(repository, _ids("saved", "audit")).save(
+        run_id="run", branch_id="branch", expected_draft_version=1
+    )
+    with repository._session_factory.begin() as session:
+        row = session.get(BranchSavedRevisionModel, "saved")
+        payload = json.loads(row.payload_json)
+        summary = json.loads(row.change_summary_json)
+        payload["content"]["run_package_state"]["state"]["branch_id"] = "corrupt"
+        row.payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        row.content_hash = saved_revision_content_hash(
+            revision_id=row.revision_id,
+            run_id=row.run_id,
+            branch_id=row.branch_id,
+            sequence=row.sequence,
+            parent_revision_id=row.parent_revision_id,
+            kind=row.kind,
+            payload_schema_version=row.payload_schema_version,
+            payload=payload,
+            change_summary=summary,
+        )
+    with pytest.raises(Exception):
+        RunBranchCreationService(
+            repository, _ids("bad", "bad-draft", "bad-root")
+        ).create_from_saved_revision(
+            run_id="run", source_branch_id="branch", source_saved_revision_id="saved"
+        )
+    with repository._session_factory() as session:
+        assert session.get(RunBranchModel, "bad") is None
+        assert session.get(BranchWorkingDraftModel, "bad-draft") is None
+        assert session.get(RunPackageStateModel, ("run", "bad")) is None
+        assert session.get(BranchSavedRevisionModel, "bad-root") is None
+
+    clean = _repo(f"sqlite:///{tmp_path / 'fork-rollback.db'}")
+    _empty(clean)
+    clean_service = RunPackageService(clean)
+    _confirm(
+        clean_service,
+        _doc(entities=(_entity("a", 1),)),
+        command="apply",
+        draft=0,
+        state=None,
+    )
+    RunWorkingDraftService(clean, _ids("saved", "audit")).save(
+        run_id="run", branch_id="branch", expected_draft_version=1
+    )
+
+    def fail_target_revision(_mapper, _connection, target):
+        if target.revision_id == "target-root":
+            raise RuntimeError("injected late fork failure")
+
+    event.listen(BranchSavedRevisionModel, "before_insert", fail_target_revision)
+    try:
+        with pytest.raises(RuntimeError):
+            RunBranchCreationService(
+                clean, _ids("target", "target-draft", "target-root")
+            ).create_from_saved_revision(
+                run_id="run",
+                source_branch_id="branch",
+                source_saved_revision_id="saved",
+            )
+    finally:
+        event.remove(BranchSavedRevisionModel, "before_insert", fail_target_revision)
+    with clean._session_factory() as session:
+        assert session.get(RunBranchModel, "target") is None
+        assert session.get(BranchWorkingDraftModel, "target-draft") is None
+        assert session.get(RunPackageStateModel, ("run", "target")) is None
+        assert session.get(BranchSavedRevisionModel, "target-root") is None

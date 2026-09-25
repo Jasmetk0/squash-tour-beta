@@ -16,6 +16,7 @@ from beta_engine.domain.run_packages import (
     RunPackageEntity,
     RunPackageState,
     canonical_hash,
+    entity_content_fingerprint,
 )
 from beta_engine.domain.run_revisions import (
     DIRTY_WORKING_DRAFT_STATUS,
@@ -48,11 +49,12 @@ class RunPackageNotFoundError(ValueError):
 
 
 def _baseline(entity: PackageEntity) -> str:
-    return canonical_hash(
-        {
-            "payload": entity.payload,
-            "references": [r.model_dump(mode="json") for r in entity.references],
-        }
+    return entity_content_fingerprint(
+        entity_kind=entity.entity_kind,
+        entity_schema_version=entity.entity_schema_version,
+        scope=entity.scope,
+        payload=entity.payload,
+        references=entity.references,
     )
 
 
@@ -73,6 +75,35 @@ def _compatible(target, reference) -> bool:
         and target.entity_kind == reference.expected_entity_kind
         and target.entity_schema_version >= reference.minimum_schema_version
     )
+
+
+def _load_receipt_result(
+    receipt, *, run_id: str, branch_id: str
+) -> tuple[RunPackageState | None, int]:
+    try:
+        payload = json.loads(receipt.payload_json)
+        if (
+            not isinstance(payload, dict)
+            or payload.get("command_id") != receipt.command_id
+            or payload.get("request_fingerprint") != receipt.request_fingerprint
+            or not isinstance(payload.get("draft_version"), int)
+            or payload["draft_version"] < 0
+        ):
+            raise ValueError("receipt metadata mismatch")
+        raw_state = payload.get("state")
+        state = (
+            RunPackageState.model_validate(raw_state) if raw_state is not None else None
+        )
+        if state is not None and (state.run_id, state.branch_id) != (run_id, branch_id):
+            raise ValueError("receipt result scope mismatch")
+        fingerprint = state.fingerprint if state is not None else canonical_hash(None)
+        if fingerprint != receipt.result_fingerprint:
+            raise ValueError("receipt result fingerprint mismatch")
+        return state, payload["draft_version"]
+    except (KeyError, TypeError, json.JSONDecodeError, ValueError) as exc:
+        raise RunPackageConflictError(
+            f"Package application receipt is corrupt: {exc}"
+        ) from exc
 
 
 @dataclass(frozen=True, slots=True)
@@ -285,12 +316,12 @@ class RunPackageService:
                     raise RunPackageConflictError(
                         "command id was reused with a different request"
                     )
-                result = json.loads(receipt.payload_json)
+                receipt_state, receipt_draft_version = _load_receipt_result(
+                    receipt, run_id=run_id, branch_id=branch_id
+                )
                 return PackageApplyResult(
-                    RunPackageState.model_validate(result["state"])
-                    if result.get("state") is not None
-                    else None,
-                    result["draft_version"],
+                    receipt_state,
+                    receipt_draft_version,
                     True,
                     command_id,
                 )
@@ -331,16 +362,28 @@ class RunPackageService:
                 raise RunPackageConflictError("Conflict resolution is not reviewed")
             if any(item in selected for item in preview.invalid):
                 raise RunPackageConflictError("Selected logical bundle is invalid")
-            hard = [
-                c
-                for c in preview.conflicts
-                if c.endswith("source_history_divergence")
-                or c.endswith("divergent_ancestry")
-                or c.endswith("package_type_changed")
-                or c.endswith("incompatible_reference")
-            ]
+            selected_packages = {label.split("/", 1)[0] for label in selected}
+            hard = []
+            for conflict in preview.conflicts:
+                if conflict.endswith("incompatible_reference"):
+                    source_label, target_part = conflict.split("->", 1)
+                    target_label = target_part.rsplit(":", 1)[0]
+                    if source_label in selected or target_label in selected:
+                        hard.append(conflict)
+                    continue
+                if not (
+                    conflict.endswith("source_history_divergence")
+                    or conflict.endswith("divergent_ancestry")
+                    or conflict.endswith("package_type_changed")
+                ):
+                    continue
+                package_id = conflict.split("@", 1)[0].split(":", 1)[0]
+                if package_id == document.package_id or package_id in selected_packages:
+                    hard.append(conflict)
             if hard:
-                raise RunPackageConflictError("Package source history diverges")
+                raise RunPackageConflictError(
+                    "Selected Package scope has a hard conflict"
+                )
             for conflict in preview.conflicts:
                 if (
                     conflict.endswith(":local_divergence")
@@ -426,6 +469,25 @@ class RunPackageService:
                     ),
                     None,
                 )
+                if (
+                    existing_version is not None
+                    and existing_version.source_fingerprint
+                    == version.source_fingerprint
+                ):
+                    version = version.model_copy(
+                        update={
+                            "applied_entity_ids": tuple(
+                                sorted(
+                                    set(existing_version.applied_entity_ids)
+                                    | set(version.applied_entity_ids)
+                                )
+                            ),
+                            "conflict_resolutions": {
+                                **existing_version.conflict_resolutions,
+                                **version.conflict_resolutions,
+                            },
+                        }
+                    )
                 for entity in leaf.entities:
                     label = f"{leaf.package_id}/{entity.source_entity_id}"
                     if (
@@ -441,6 +503,8 @@ class RunPackageService:
                         if prior
                         else allocator.next_run_local_id,
                         source_package_id=leaf.package_id,
+                        source_package_version=leaf.source_version,
+                        source_package_fingerprint=leaf.source_fingerprint,
                         source_entity_id=entity.source_entity_id,
                         entity_kind=entity.entity_kind,
                         entity_schema_version=entity.entity_schema_version,

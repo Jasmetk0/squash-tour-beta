@@ -2,38 +2,42 @@
 
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
-## Active pre-alpha sequence — orchestration-integrity checkpoint
+## Active pre-alpha sequence — post-#971 coverage audit
 
 Read the active checkpoint at the top of [CURRENT_STATE.md](CURRENT_STATE.md).
-PR #969 completed the InitialWorld materialized-Branch boundary, including
-InitialWorld-only/nested forks, InitialWorld-backed ranking, target divergence/Save,
-restore/reopen, deterministic continuation, corruption rejection and late rollback.
-The sequence below starts from the next unresolved dependency.
+PR #971 closed the immediate Full Simulation abandonment / Completed-Run alternative
+Branch orchestration boundary. The subsequent Master-to-code audit now identifies the
+next dependency from §31.3 rather than continuing recovery work by inertia.
 
-The intervening orchestration-integrity slice now distinguishes Branch sporting
-finality from global Run lifecycle, fences abandoned Full Simulation writers, permits
-ordinary/final continuation on unfinished Branches in Completed Runs, and keeps
-Archived Runs mutation-blocking. The next dependency remains the coverage audit.
-
-1. Refresh/audit the compact Master-to-code pre-alpha coverage table in CURRENT_STATE
-   (chapter/PAQ, decision status, pre-alpha applicability, implementation/test
-   evidence, remaining gap). Use it to select the next missing required decided
-   feature rather than assuming recovery or ranking work remains the highest priority.
-2. Continue decided and sufficiently specified pre-alpha feature work selected from
-   that coverage map, including Packages, player development/AI, health, scheduling,
-   ranking/downstream consumers and minimum Reconstruction wherever the Master
-   requires them. Keep one coherent vertical slice per PR.
-3. Surface true PRODUCT questions to the owner when they block implementation.
-   Record approved minimal defaults/deferments explicitly; technical implementation
-   must not silently resolve OPEN product questions.
-4. Reconcile the complete Master pre-alpha scope with the owner after the known
-   decided implementation gaps are closed, then implement any resulting required
-   consequences.
+1. **Canonical Package → Run snapshot/application backbone.** Establish the common
+   versioned identity/envelope and Run-owned Working-Draft preview/apply boundary for
+   the five canonical Package types `World / Category / Series / Calendar / Setup`.
+   Reuse existing domain/config payloads. Preserve non-destructive partial scope,
+   unresolved-dependency visibility, independent Run snapshots, provenance, exact
+   retry/idempotence, explicit changed-version diff/update behavior and
+   Save/reopen/restore/fork coverage. Do not choose unresolved sporting PRODUCT or
+   CONTENT defaults in this technical slice.
+2. Refresh the coverage table after the Package slice and select the smallest
+   remaining dependency for the main Official Run §31.3 acceptance. Expected later
+   gates include freezing the concrete Official Run content/bootstrap set
+   (PAQ-135–142) and filling only the player AI/health/calibration minimum actually
+   required by that acceptance dataset.
+3. Surface true PRODUCT questions to the owner when they block the chosen flow.
+   TECH questions may be resolved autonomously; CALIBRATION requires a versioned,
+   measurable default; CONTENT belongs to the selected Official Run data rather than
+   an engine-wide hidden constant.
+4. Once the known implementation/data gaps are closed, reconcile the complete
+   pre-alpha Master scope with the owner and record approved minimal defaults or
+   deferments explicitly.
 5. Release gate: both Master §31.3 flows, required scope coverage, recovery/
-   determinism/public-history checks, complete backend and frontend/build suites,
-   and an agreed representative performance baseline. Then consolidate and return
-   the complete updated Master. Do not declare pre-alpha complete from green Fast CI
-   or one narrow fixture alone.
+   determinism/public-history checks, complete backend/frontend build suites where
+   applicable, and an agreed representative performance baseline. Do not declare
+   pre-alpha complete from Fast CI or a fixture-only whole-season path.
+
+The empty-Run → two manual players → standalone-match acceptance is already
+implemented. The main Official Run season acceptance remains the gating end-to-end
+flow; its orchestration foundation is present, but canonical Package/content bootstrap
+must replace fixture/legacy ownership before release-grade acceptance can be claimed.
 
 ## Implemented narrow tournament integration
 

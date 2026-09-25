@@ -1,5 +1,32 @@
 # Current implementation and next action
 
+## Active implementation — Run-owned Calendar semantic adapter
+
+After #977 the Official Run acceptance uses Run-owned World players, but Season-0
+Calendar/tournament content is still sourced from legacy file-backed services.
+
+This branch establishes the first Calendar ownership boundary without inventing
+Category/Series relationships:
+
+- one persisted authored season calendar maps to a canonical `Calendar` Package;
+- the stable authored `event_id` is preserved as each Calendar event source identity;
+- season metadata and every authored `SeasonCalendarEvent` are materialized into the
+  normal Run Package snapshot;
+- Run Admin can source-preview/source-confirm a URL-safe season key such as
+  `2000-2001` and inspect the typed Run-owned Calendar projection;
+- projection reads only Run Package state, so later source-calendar edits cannot mutate
+  an already applied Run snapshot;
+- a changed source under the same source version fails closed rather than silently
+  rewriting Run history.
+
+Category/Series strings remain authored Calendar payload fields only; this slice does
+not pretend that they are canonical Package references.
+
+**Next action after this PR:** connect authoritative season/week Calendar consumers to
+the Run-owned Calendar projection for a selected Run package, then move the concrete
+Week-1 tournament/match content behind its own stable Run-owned boundary.
+
+
 ## Active implementation — Official Run acceptance uses Run-owned World players
 
 Merged #976 established the production World Package → generated player pool →

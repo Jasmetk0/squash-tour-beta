@@ -72,6 +72,8 @@ from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
 from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_world_initial_pool_preview_service import RunWorldInitialPoolPreviewService
+from beta_engine.application.run_world_initial_world_service import RunWorldInitialWorldService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
@@ -99,6 +101,21 @@ def get_runtime(request: Request) -> ApiRuntime:
 
 def get_run_package_service(request: Request) -> RunPackageService:
     return RunPackageService(repository=get_runtime(request).repository)
+
+
+def get_run_world_initial_pool_preview_service(
+    request: Request,
+) -> RunWorldInitialPoolPreviewService:
+    return RunWorldInitialPoolPreviewService(
+        package_service=get_run_package_service(request),
+        world_adapter=get_world_package_run_adapter(request),
+    )
+
+
+def get_run_world_initial_world_service(request: Request) -> RunWorldInitialWorldService:
+    return RunWorldInitialWorldService(
+        preview_service=get_run_world_initial_pool_preview_service(request)
+    )
 
 
 def get_simulation_api_service(request: Request) -> SimulationApiService:

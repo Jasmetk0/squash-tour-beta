@@ -64,6 +64,8 @@ class WorldPackageRegistryService:
   m=self._read_json(path/'world.json'); keys=('world_id','name','type','status','source','editable','deletable','archivable','version','content_schema_version','package_format_version')
   payload={'world_metadata':{k:m[k] for k in keys if k in m},'countries':WorldPackageCountryStore(path).semantic_payload(),'continents':self._read_json(path/'geography/continents.json'),'regions':self._read_json(path/'geography/regions.json'),'travel_regions':self._read_json(path/'geography/travel_regions.json')}
   if (path/'geography/timezone_areas.json').is_file(): payload['timezone_areas']=self._read_json(path/'geography/timezone_areas.json')
+  player_identity=path/'generation/player_identity.json'
+  if player_identity.is_file(): payload['player_identity']=self._read_json(player_identity)
   return payload
  def _custom_package_dirs(self):
   root=self.world_packages_root/'custom'; return sorted((p for p in root.iterdir() if p.is_dir()),key=lambda p:p.name) if root.is_dir() else []

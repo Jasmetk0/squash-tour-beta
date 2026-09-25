@@ -1,5 +1,27 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — complete World bootstrap ownership
+
+1. **Run-owned World player bootstrap: implemented on this branch.** Player identity
+   generation data lives inside the World source Package, materializes through the
+   canonical Run Package backbone, generates deterministic read-only pools from
+   Run-owned state, and can be reviewed/confirmed directly into InitialWorld.
+2. The adopted InitialWorld freezes World-country, generation-config and exact
+   generated-pool provenance and survives normal Save/reopen without routing through
+   the global `initial_player_pool.json` path.
+3. **Next:** re-audit the concrete Official Run acceptance fixture and choose the
+   smallest remaining Package/content dependency needed for the complete-season flow.
+   Expected candidates remain Category hierarchy / Series / Calendar / tournament
+   content, but selection must follow an observed dependency rather than inertia.
+4. Do not canonize legacy Category/Calendar template strings as Package identities.
+   Category/Series/Calendar adapters must wait for or establish the Master-required
+   stable source IDs and unresolved-reference contract.
+5. Keep Official FAX source content as an offered default, never a universal Run
+   prerequisite.
+6. Main release gate remains Master §31.3 Official Run → complete season →
+   Save/reopen → Season Transition → next Season Week 1 without fixture-only or live
+   global-config ownership.
+
 ## Active pre-alpha sequence — first Package semantic adapter
 
 1. **World source → Run-owned countries:** this branch adapts existing directory-backed

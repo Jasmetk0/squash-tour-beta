@@ -1,5 +1,40 @@
 # Current implementation and next action
 
+## Active implementation — Run-owned World bootstrap ownership
+
+Merged PR #975 connected directory-backed World metadata/geography/countries to the
+canonical Run Package state and allowed InitialWorld to bind explicitly to one
+Run-owned World snapshot.
+
+This branch closes the next legacy/global dependency inside that same World domain:
+
+- `Official FAX World` now carries `generation/player_identity.json`; the adapter supports the same optional entity for other World Packages without expanding their content automatically;
+- the World Package semantic fingerprint includes that generation config;
+- canonical World Package application materializes it as
+  `world.player_identity.v1`;
+- Run Admin can inspect a typed Run-owned generation projection;
+- a new read-only Run-scoped initial-pool preview combines only the Run-owned country
+  projection + Run-owned player identity config with explicit season/seed/pool size;
+- reviewed preview/confirm can adopt that exact generated pool directly into
+  `InitialWorld`, with World-country, generation-config and pool-preview fingerprints
+  frozen as provenance;
+- the adoption path no longer routes through the legacy global
+  `config/simulation/initial_player_pool.json`;
+- source/global config edits after Package application cannot alter the reviewed pool;
+- InitialWorld Save/reopen preserves the Run-owned generation provenance.
+
+This closes the first canonical Official-Run player bootstrap path from an applied
+World Package into immutable InitialWorld state without a live global source dependency.
+The legacy initial-pool path remains available for unrelated callers during migration.
+
+See `docs/WORLD_PACKAGE_RUN_ADAPTER_V1.md`.
+
+**Next action after this PR:** re-audit the concrete Official Run acceptance path and
+select the smallest remaining Package/content dependency that prevents
+Official Run → complete season → Save/reopen → Season Transition → next Season Week 1.
+Do not infer Category/Series/Calendar Package identities from legacy template strings;
+establish stable source identities/unresolved-reference semantics first.
+
 ## Active implementation — World Package → Run semantic adapter
 
 Merged PR #974 established the canonical five-type Run Package authority/recovery

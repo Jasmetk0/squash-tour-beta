@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from collections.abc import Iterator
+import json
 
 import pytest
 
 from beta_engine.application.run_container_creation_service import RunContainerCreationService
 from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
+from beta_engine.application.run_world_initial_pool_preview_service import (
+    RunWorldInitialPoolPreviewRequest,
+    RunWorldInitialPoolPreviewService,
+)
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.world_package_run_adapter import (
     WORLD_COUNTRY_ENTITY_KIND,
+    WORLD_PLAYER_IDENTITY_ENTITY_KIND,
     WorldPackageRunAdapter,
 )
 from beta_engine.infrastructure.db import (
@@ -165,3 +171,172 @@ def test_run_world_projection_fails_closed_for_semantically_invalid_country(tmp_
     )
     with pytest.raises(ValueError, match="source identity"):
         adapter.project_countries(edited, package_id=OFFICIAL_FAX_WORLD_ID)
+
+
+@pytest.mark.pr_critical
+def test_run_owned_generation_config_drives_initial_pool_preview_without_live_source(
+    tmp_path,
+):
+    world_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    identity_path = (
+        world_root
+        / OFFICIAL_FAX_WORLD_ID
+        / "generation"
+        / "player_identity.json"
+    )
+    package_identity = {
+        "given_names": ["RunGiven"],
+        "family_names": ["RunFamily"],
+        "play_styles": ["run-package-style"],
+        "archetypes": ["run-package-archetype"],
+        "growth_curves": ["balanced"],
+    }
+    identity_path.write_text(
+        json.dumps(package_identity, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    registry = WorldPackageRegistryService(world_packages_root=world_root)
+    adapter = WorldPackageRunAdapter(registry_service=registry)
+    document = adapter.build_document(OFFICIAL_FAX_WORLD_ID)
+    generation_entities = [
+        entity
+        for entity in document.entities
+        if entity.entity_kind == WORLD_PLAYER_IDENTITY_ENTITY_KIND
+    ]
+    assert len(generation_entities) == 1
+    assert generation_entities[0].payload == package_identity
+
+    url = f"sqlite:///{tmp_path / 'world-generation.db'}"
+    repository = _repo(url)
+    _empty(repository)
+    package_service = RunPackageService(repository)
+    package_preview = package_service.preview(
+        run_id="run", branch_id="branch", document=document
+    )
+    applied = package_service.confirm(
+        run_id="run",
+        branch_id="branch",
+        document=document,
+        command_id="apply-world-generation",
+        expected_head_revision_id="r0",
+        expected_draft_version=0,
+        expected_state_fingerprint=None,
+        expected_preview_fingerprint=package_preview.preview_fingerprint,
+    )
+
+    generation = adapter.project_generation(
+        applied.state, package_id=OFFICIAL_FAX_WORLD_ID
+    )
+    assert generation.identity_config.model_dump(mode="json") == package_identity
+
+    request = RunWorldInitialPoolPreviewRequest(
+        world_package_id=OFFICIAL_FAX_WORLD_ID,
+        season="2000/2001",
+        seed=991,
+        target_pool_size=12,
+    )
+    service = RunWorldInitialPoolPreviewService(
+        package_service=package_service,
+        world_adapter=adapter,
+    )
+    first = service.preview(
+        run_id="run", branch_id="branch", request=request
+    )
+    second = service.preview(
+        run_id="run", branch_id="branch", request=request
+    )
+    assert first == second
+    assert first.preview_fingerprint == second.preview_fingerprint
+    assert len(first.result.players) == 12
+    assert all(
+        player.name.startswith("RunGiven RunFamily ")
+        for player in first.result.players
+    )
+    assert {
+        player.play_style for player in first.result.players
+    } == {"run-package-style"}
+    assert {
+        player.archetype for player in first.result.players
+    } == {"run-package-archetype"}
+
+    before_preview_fingerprint = first.preview_fingerprint
+    identity_path.write_text(
+        json.dumps(
+            {
+                **package_identity,
+                "given_names": ["ChangedSource"],
+                "family_names": ["ChangedFamily"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert (
+        adapter.build_document(OFFICIAL_FAX_WORLD_ID).source_fingerprint
+        != document.source_fingerprint
+    )
+
+    after_source_change = service.preview(
+        run_id="run", branch_id="branch", request=request
+    )
+    assert after_source_change.preview_fingerprint == before_preview_fingerprint
+    assert all(
+        player.name.startswith("RunGiven RunFamily ")
+        for player in after_source_change.result.players
+    )
+
+    RunWorkingDraftService(repository, _ids("r1", "audit")).save(
+        run_id="run", branch_id="branch", expected_draft_version=1
+    )
+    reopened_service = RunWorldInitialPoolPreviewService(
+        package_service=RunPackageService(_repo(url)),
+        world_adapter=adapter,
+    )
+    reopened = reopened_service.preview(
+        run_id="run", branch_id="branch", request=request
+    )
+    assert reopened.preview_fingerprint == before_preview_fingerprint
+
+
+@pytest.mark.pr_critical
+def test_run_world_generation_projection_fails_closed_on_invalid_identity_payload(
+    tmp_path,
+):
+    world_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    adapter = WorldPackageRunAdapter(
+        registry_service=WorldPackageRegistryService(world_packages_root=world_root)
+    )
+    document = adapter.build_document(OFFICIAL_FAX_WORLD_ID)
+    repository = _repo()
+    _empty(repository)
+    service = RunPackageService(repository)
+    preview = service.preview(
+        run_id="run", branch_id="branch", document=document
+    )
+    applied = service.confirm(
+        run_id="run",
+        branch_id="branch",
+        document=document,
+        command_id="apply-world",
+        expected_head_revision_id="r0",
+        expected_draft_version=0,
+        expected_state_fingerprint=None,
+        expected_preview_fingerprint=preview.preview_fingerprint,
+    )
+    generation_entity = next(
+        entity
+        for entity in applied.state.entities
+        if entity.entity_kind == WORLD_PLAYER_IDENTITY_ENTITY_KIND
+    )
+    broken = service.edit_entity(
+        run_id="run",
+        branch_id="branch",
+        run_local_id=generation_entity.run_local_id,
+        payload={**generation_entity.payload, "given_names": []},
+        expected_draft_version=1,
+        expected_state_fingerprint=applied.state.fingerprint,
+    )
+    with pytest.raises(ValueError):
+        adapter.project_generation(broken, package_id=OFFICIAL_FAX_WORLD_ID)

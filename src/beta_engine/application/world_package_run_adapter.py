@@ -21,6 +21,7 @@ from beta_engine.domain.run_packages import (
     RunPackageState,
     canonical_hash,
 )
+from beta_engine.infrastructure.world_config import PlayerIdentityConfig
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
 WORLD_METADATA_ENTITY_ID = "world.metadata"
@@ -28,6 +29,9 @@ WORLD_METADATA_ENTITY_KIND = "world.metadata.v1"
 WORLD_COUNTRY_ENTITY_KIND = "world.country.v1"
 WORLD_COUNTRY_SCOPE = "countries"
 WORLD_GEOGRAPHY_SCOPE = "geography"
+WORLD_PLAYER_IDENTITY_ENTITY_ID = "generation.player_identity"
+WORLD_PLAYER_IDENTITY_ENTITY_KIND = "world.player_identity.v1"
+WORLD_PLAYER_GENERATION_SCOPE = "player_generation"
 
 _GEOGRAPHY_SOURCES: tuple[tuple[str, str, str], ...] = (
     ("geography.continents", "continents", "world.geography.continents.v1"),
@@ -79,6 +83,38 @@ class RunWorldCountryProjection(BaseModel):
         return canonical_hash(self.model_dump(mode="json"))
 
 
+class RunWorldGenerationProjection(BaseModel):
+    """Typed Run-owned player-generation identity config."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    package_id: str
+    run_id: str
+    branch_id: str
+    run_package_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    run_local_id: int = Field(ge=1)
+    source_package_version: int = Field(ge=1)
+    source_package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    entity_content_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    identity_config: PlayerIdentityConfig
+
+    @property
+    def content_fingerprint(self) -> str:
+        return canonical_hash(
+            {
+                "package_id": self.package_id,
+                "source_package_version": self.source_package_version,
+                "source_package_fingerprint": self.source_package_fingerprint,
+                "entity_content_fingerprint": self.entity_content_fingerprint,
+                "identity_config": self.identity_config.model_dump(mode="json"),
+            }
+        )
+
+    @property
+    def fingerprint(self) -> str:
+        return canonical_hash(self.model_dump(mode="json"))
+
+
 @dataclass(slots=True)
 class WorldPackageRunAdapter:
     registry_service: WorldPackageRegistryService
@@ -117,10 +153,15 @@ class WorldPackageRunAdapter:
             for country in countries
         )
         entities.extend(self._geography_entities(package_root))
+        generation_entity = self._player_identity_entity(package_root)
+        if generation_entity is not None:
+            entities.append(generation_entity)
 
         scopes = {"world_metadata", WORLD_COUNTRY_SCOPE}
         if any(entity.scope == WORLD_GEOGRAPHY_SCOPE for entity in entities):
             scopes.add(WORLD_GEOGRAPHY_SCOPE)
+        if generation_entity is not None:
+            scopes.add(WORLD_PLAYER_GENERATION_SCOPE)
 
         return CanonicalPackageDocument(
             package_type=PackageType.WORLD,
@@ -201,6 +242,47 @@ class WorldPackageRunAdapter:
             countries=list(projection.countries),
         )
 
+    def project_generation(
+        self, state: RunPackageState, *, package_id: str
+    ) -> RunWorldGenerationProjection:
+        versions = [
+            version
+            for version in state.package_versions
+            if version.package_id == package_id
+            and version.package_type == PackageType.WORLD
+        ]
+        if not versions:
+            raise ValueError(
+                f"Run Package state has no applied World Package '{package_id}'"
+            )
+        matches = [
+            entity
+            for entity in state.entities
+            if entity.source_package_id == package_id
+            and entity.entity_kind == WORLD_PLAYER_IDENTITY_ENTITY_KIND
+        ]
+        if not matches:
+            raise ValueError(
+                f"Run World Package '{package_id}' has no materialized player identity config"
+            )
+        if len(matches) != 1:
+            raise ValueError(
+                f"Run World Package '{package_id}' has duplicate player identity config"
+            )
+        entity = matches[0]
+        identity_config = PlayerIdentityConfig.model_validate(entity.payload)
+        return RunWorldGenerationProjection(
+            package_id=package_id,
+            run_id=state.run_id,
+            branch_id=state.branch_id,
+            run_package_state_fingerprint=state.fingerprint,
+            run_local_id=entity.run_local_id,
+            source_package_version=entity.source_package_version,
+            source_package_fingerprint=entity.source_package_fingerprint,
+            entity_content_fingerprint=entity.content_fingerprint,
+            identity_config=identity_config,
+        )
+
     @staticmethod
     def _source_version(record: WorldPackageRegistryRecord) -> int:
         match = re.search(r"(?:^|[-_])v([1-9][0-9]*)$", record.version, re.IGNORECASE)
@@ -236,6 +318,19 @@ class WorldPackageRunAdapter:
         if not isinstance(value, dict):
             raise ValueError(f"{path} must contain a JSON object")
         return value
+
+    def _player_identity_entity(self, package_root: Path) -> PackageEntity | None:
+        path = package_root / "generation" / "player_identity.json"
+        if not path.is_file():
+            return None
+        config = PlayerIdentityConfig.model_validate(self._read_object(path))
+        return PackageEntity(
+            source_entity_id=WORLD_PLAYER_IDENTITY_ENTITY_ID,
+            entity_kind=WORLD_PLAYER_IDENTITY_ENTITY_KIND,
+            entity_schema_version=1,
+            scope=WORLD_PLAYER_GENERATION_SCOPE,
+            payload=config.model_dump(mode="json"),
+        )
 
     def _geography_entities(self, package_root: Path) -> list[PackageEntity]:
         entities: list[PackageEntity] = []

@@ -660,42 +660,34 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "week": 1,
         }
 
-        entry_preview_payload = {
-            "event_ids": [event_id],
-            "decision_slot_ordinal": 1,
-            "seed": 200001,
-        }
-        status, entry_preview = _request(
-            "POST",
-            sim_root + "/entry-decision-slot/preview",
-            entry_preview_payload,
-        )
-        assert status == 200, entry_preview
-        assert entry_preview["event_ids"] == [event_id]
-        assert entry_preview["decision_count"] == len(generated_ids)
-        assert {
-            decision["player_id"]
-            for decision in entry_preview["authority"]["decisions"]
-        } == set(generated_ids)
-
+        explicit_entry_reviews = [
+            {
+                "event_id": event_id,
+                "player_id": player_id,
+                "target": "MAIN",
+            }
+            for player_id in sorted(generated_ids)
+        ]
         status, entry_slot = _request(
             "POST",
-            sim_root + "/entry-decision-slot/commit",
+            sim_root + "/entry-decision-slot/review",
             {
                 "command_id": "official-week-1-entry-slot",
-                "expected_week": entry_preview["week"],
-                "expected_revision_id": entry_preview["expected_revision_id"],
+                "expected_week": {"season_index": 0, "week": 1},
+                "expected_revision_id": revision,
                 "decision_slot_ordinal": 1,
-                "event_ids": [event_id],
-                "seed": 200001,
-                "expected_entry_batch_fingerprint": entry_preview[
-                    "entry_batch_fingerprint"
-                ],
-                "expected_slot_fingerprint": entry_preview["slot_fingerprint"],
+                "operator_label": "Official Run acceptance admin",
+                "reason": "Review Week-1 tournament application intents",
+                "reviews": explicit_entry_reviews,
             },
         )
         assert status == 201, entry_slot
+        assert entry_slot["decision_mode"] == "explicit_admin_review.v1"
         assert entry_slot["decision_count"] == len(generated_ids)
+        assert {
+            decision["player_id"]
+            for decision in entry_slot["authority"]["decisions"]
+        } == set(generated_ids)
 
         status, entry_position = _request("GET", sim_root + "/position")
         assert status == 200, entry_position
@@ -720,7 +712,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             {
                 "command_id": "official-week-1-entry-validation",
                 "expected_week": entry_slot["week"],
-                "expected_revision_id": entry_preview["expected_revision_id"],
+                "expected_revision_id": revision,
                 "expected_position_fingerprint": entry_position[
                     "position_fingerprint"
                 ],

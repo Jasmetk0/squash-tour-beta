@@ -1,5 +1,20 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — Calendar content ownership
+
+1. **Calendar source → Run snapshot:** this branch packages one authored season calendar
+   using stable event IDs and exposes an immutable Run-owned typed Calendar projection.
+2. Category/Series labels remain payload data only; no unresolved product identity is
+   guessed into a source reference.
+3. **Next:** route authoritative Week/Season Calendar reads through an explicitly
+   selected Run-owned Calendar Package, preserving legacy callers during migration.
+4. Then migrate the remaining concrete Week-1 tournament/match fixture content into a
+   stable Run-owned source boundary.
+5. Release gate remains Master §31.3 Official Run → complete season → Save/reopen →
+   Season Transition → next Season Week 1 without fixture-only or live-global
+   ownership.
+
+
 ## Active pre-alpha sequence — remove fixture ownership from Official Run acceptance
 
 1. **World player bootstrap in whole-season acceptance:** this branch applies Official

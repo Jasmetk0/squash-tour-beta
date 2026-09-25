@@ -1,5 +1,22 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — first Package semantic adapter
+
+1. **World source → Run-owned countries:** this branch adapts existing directory-backed
+   World Packages into the canonical Run Package backbone and exposes a typed Run-owned
+   country projection. InitialWorld may explicitly bind to one named World Package
+   snapshot without introducing a live source link or implicit multi-Package priority.
+2. After merge, compare the remaining Official Run acceptance fixtures against Run-owned
+   Package content. Select the smallest next semantic adapter that replaces a real
+   legacy/global dependency (expected candidates: Category hierarchy / tournament
+   templates / Calendar content).
+3. Keep concrete Official FAX CONTENT separate from generic engine semantics. Built-in
+   Official packages are defaults, not mandatory requirements for arbitrary Runs.
+4. Continue to preserve the already-green empty-Run standalone-match flow and the
+   Package Save/restore/fork invariants while connecting consumers.
+5. The main release gate remains Master §31.3 Official Run → complete season →
+   Save/reopen → Season Transition → next Season Week 1 without fixture-only ownership.
+
 ## Active pre-alpha sequence — Run Package backbone implemented on this branch
 
 The canonical five-type Package document, Run/Branch-owned snapshot, preview/confirm,

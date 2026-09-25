@@ -1,5 +1,31 @@
 # Current implementation and next action
 
+## Active implementation — Official Run acceptance uses Run-owned World players
+
+Merged #976 established the production World Package → generated player pool →
+InitialWorld path. This branch now moves the Master §31.3 whole-season acceptance onto
+that path:
+
+- the acceptance applies `Official FAX World` through the canonical Run Package
+  preview/confirm boundary;
+- its first-season roster is generated only from the Run-owned World country +
+  player-identity snapshot;
+- InitialWorld is reviewed/confirmed through the Run-owned World adoption endpoint;
+- no custom players are written to the legacy global initial-pool file for this
+  whole-season flow;
+- the existing tournament/Calendar source fixture is explicitly rebound to those
+  generated player IDs instead of owning player creation.
+
+This is intentionally not a claim that tournament/Calendar bootstrap is Package-owned
+yet. The remaining fixture-owned Season-0 event/match content is now the clearest
+next dependency in the canonical Official Run bootstrap path.
+
+**Next action after this PR:** trace the Week-1 tournament/Calendar fixture back to its
+source services and establish the smallest stable Package/content identity boundary
+needed to materialize that content into the Run without guessing unresolved
+Category/Series/Calendar product semantics.
+
+
 ## Active implementation — Run-owned World bootstrap ownership
 
 Merged PR #975 connected directory-backed World metadata/geography/countries to the

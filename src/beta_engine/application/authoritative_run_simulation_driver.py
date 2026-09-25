@@ -16,6 +16,7 @@ from pydantic import Field, model_validator
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
@@ -127,6 +128,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     WeekSimulationScheduleModel,
 )
+from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
@@ -725,6 +727,52 @@ class AuthoritativeRunSimulationDriver:
     awards_service: SeasonPointAwardsService
     full_simulation_before_transaction_check: Callable[[], None] | None = None
 
+    def _calendar_authority(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        season: str,
+    ):
+        """Prefer immutable Run-owned Calendar Package state over live legacy files."""
+
+        state = get_run_package_state(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        package_id = CalendarPackageRunAdapter.package_id_for_season(season)
+        if state is not None and any(
+            version.package_id == package_id
+            and version.package_type.value == "Calendar"
+            for version in state.package_versions
+        ):
+            projection = CalendarPackageRunAdapter.project_calendar(
+                state,
+                package_id=package_id,
+            )
+            return (
+                projection.calendar,
+                "run_package",
+                projection.content_fingerprint,
+            )
+
+        resolved = self.awards_service.calendar_service.get_calendar(season=season)
+        if resolved.calendar is None:
+            return None, "legacy", None
+        return (
+            resolved.calendar,
+            "legacy",
+            fingerprint(
+                {
+                    "schema_version": "legacy_calendar_authority.v1",
+                    "season": season,
+                    "calendar": resolved.calendar.model_dump(mode="json"),
+                }
+            ),
+        )
+
     def position(
         self, *, run_id: str, branch_id: str
     ) -> AuthoritativeSimulationPosition:
@@ -765,7 +813,10 @@ class AuthoritativeRunSimulationDriver:
             self._validate_expected(session, command, before)
 
             calendar, calendar_evidence = self._empty_week_calendar_evidence(
-                command.expected_week
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
             )
             covering_events = tuple(
                 event.event_id
@@ -6192,9 +6243,12 @@ class AuthoritativeRunSimulationDriver:
             return ()
 
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        calendar = self.awards_service.calendar_service.get_calendar(
-            season=season
-        ).calendar
+        calendar, _, _ = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=season,
+        )
         if calendar is None:
             raise ValueError(
                 "Week Tournament Lock requires the season Calendar authority"
@@ -6221,22 +6275,45 @@ class AuthoritativeRunSimulationDriver:
         ).hexdigest()[:24]
         return f"week-lock-field:{digest}"
 
-    def _empty_week_calendar_evidence(self, week: RankingWeek):
+    def _empty_week_calendar_evidence(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        resolved = self.awards_service.calendar_service.get_calendar(season=season)
-        calendar = resolved.calendar
-        if calendar is None:
+        calendar, authority_mode, authority_fingerprint = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=season,
+        )
+        if calendar is None or authority_fingerprint is None:
             raise ValueError(
                 "empty-week completion requires explicit season Calendar authority"
             )
-        evidence = fingerprint(
-            {
-                "schema_version": "empty_week_calendar_evidence.v1",
-                "season": season,
-                "week": week.model_dump(mode="json"),
-                "calendar": calendar.model_dump(mode="json"),
-            }
-        )
+        if authority_mode == "legacy":
+            evidence = fingerprint(
+                {
+                    "schema_version": "empty_week_calendar_evidence.v1",
+                    "season": season,
+                    "week": week.model_dump(mode="json"),
+                    "calendar": calendar.model_dump(mode="json"),
+                }
+            )
+        else:
+            evidence = fingerprint(
+                {
+                    "schema_version": "empty_week_calendar_evidence.v2",
+                    "season": season,
+                    "week": week.model_dump(mode="json"),
+                    "calendar_authority_mode": authority_mode,
+                    "calendar_authority_fingerprint": authority_fingerprint,
+                    "calendar": calendar.model_dump(mode="json"),
+                }
+            )
         return calendar, evidence
 
     @staticmethod
@@ -6479,9 +6556,12 @@ class AuthoritativeRunSimulationDriver:
                 ).all()
             )
             if draw_event_ids:
-                calendar = self.awards_service.calendar_service.get_calendar(
-                    season=season
-                ).calendar
+                calendar, _, _ = self._calendar_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    season=season,
+                )
                 if calendar is None:
                     raise ValueError(
                         "canonical Draw execution requires the season Calendar authority"
@@ -6952,10 +7032,21 @@ class AuthoritativeRunSimulationDriver:
             separators=(",", ":"),
         )
 
-    def _freeze_calendar_event_snapshot(self, *, package, week):
-        calendar = self.awards_service.calendar_service.get_calendar(
-            season=package.season
-        ).calendar
+    def _freeze_calendar_event_snapshot(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        package,
+        week,
+    ):
+        calendar, _, _ = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=package.season,
+        )
         if calendar is None:
             raise ValueError(
                 "canonical tournament adoption requires Calendar authority"
@@ -7032,6 +7123,9 @@ class AuthoritativeRunSimulationDriver:
                 continue
 
             event = self._freeze_calendar_event_snapshot(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
                 package=package,
                 week=week,
             )

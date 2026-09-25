@@ -1,5 +1,27 @@
 # Current implementation and next action
 
+## Active implementation — authoritative Calendar consumer prefers Run ownership
+
+Merged #978 established a typed Run-owned Calendar Package projection. This branch
+moves the authoritative simulation driver onto that ownership boundary while keeping
+legacy Runs compatible:
+
+- authoritative Calendar resolution first inspects the current Run/Branch Package state;
+- if the deterministic `calendar-YYYY-YYYY` Package is applied, Week Tournament Lock,
+  canonical Draw execution, tournament Calendar snapshot freezing and empty-week proof
+  all read that immutable Run-owned projection;
+- Runs without a Calendar Package continue to use the legacy SeasonCalendarService;
+- legacy empty-week evidence keeps its historical v1 fingerprint contract;
+- Run-owned empty-week evidence records the Calendar Package content fingerprint and
+  authority mode explicitly;
+- source-calendar edits after Package application cannot alter authoritative Calendar
+  reads for that Run.
+
+**Next action after this PR:** apply the Season-0 Calendar Package inside the Master
+§31.3 Official Run acceptance, then remove the remaining live Calendar dependency from
+that release-gating flow before migrating Week-1 tournament/match source ownership.
+
+
 ## Active implementation — Run-owned Calendar semantic adapter
 
 After #977 the Official Run acceptance uses Run-owned World players, but Season-0

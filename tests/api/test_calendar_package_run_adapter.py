@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from beta_engine.application.authoritative_run_simulation_driver import AuthoritativeRunSimulationDriver
+
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
 from test_season_point_awards_service import make_points_service
@@ -62,6 +64,27 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         assert len(projection["provenance"]) == len(source.events)
         frozen_fingerprint = projection["content_fingerprint"]
 
+        driver = AuthoritativeRunSimulationDriver(
+            server.app.state.runtime.repository._session_factory,
+            points.result_service.match_service,
+            points,
+        )
+        with server.app.state.runtime.repository._session_factory() as session:
+            authoritative_calendar, mode, authority_fingerprint = (
+                driver._calendar_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    season="2000/2001",
+                )
+            )
+        assert authoritative_calendar is not None
+        assert mode == "run_package"
+        assert authority_fingerprint == frozen_fingerprint
+        assert {
+            event.event_id for event in authoritative_calendar.events
+        } == {event.event_id for event in source.events}
+
         registry = source_calendar_service._load_registry()
         changed = registry.calendars_by_season["2000/2001"]
         first = changed.events[0]
@@ -76,6 +99,23 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         assert all(
             not event["event_name"].endswith("SOURCE-EDIT")
             for event in unchanged["calendar"]["events"]
+        )
+
+        with server.app.state.runtime.repository._session_factory() as session:
+            authoritative_after_source_edit, mode, authority_fingerprint = (
+                driver._calendar_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    season="2000/2001",
+                )
+            )
+        assert authoritative_after_source_edit is not None
+        assert mode == "run_package"
+        assert authority_fingerprint == frozen_fingerprint
+        assert all(
+            not event.event_name.endswith("SOURCE-EDIT")
+            for event in authoritative_after_source_edit.events
         )
 
         status, changed_source_preview = _request(

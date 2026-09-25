@@ -1,5 +1,19 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — Run-owned Entry evidence
+
+1. Project the first-season Entry AI roster from Run-owned InitialWorld + lifecycle +
+   sporting state instead of `season_active_players.json`.
+2. Support both deterministic AI Entry proposals and explicit Admin-reviewed Main/Q intents as producers of the same Run-owned Entry decision-slot authority.
+3. Drive release-gating Week-1 application creation through explicit Entry review plus explicit validation, without seed-tuning AI behavior.
+4. Feed the resulting valid submission authority into the existing canonical Entry
+   Field → Draw Input → Draw pipeline.
+5. Fail closed for later-season active identities without a Run-owned profile bridge;
+   do not reintroduce the legacy active-player registry as fallback.
+6. Re-run Master §31.3 and follow the next observed compatibility dependency, expected
+   around Calendar/Entry metadata or legacy result/point-award projection.
+
+
 ## Active pre-alpha sequence — canonical Week-1 tournament ownership
 
 1. **Initial ranking publication:** publish the reviewed Week-1 bootstrap candidate and initialize authoritative world position before tournament ranking/field/draw authority is frozen.

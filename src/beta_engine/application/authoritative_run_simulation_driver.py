@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Literal
 
 from pydantic import Field, model_validator
@@ -73,9 +73,16 @@ from beta_engine.application.season_entry_batch_service import (
 from beta_engine.application.run_entry_decision_slot import (
     freeze_entry_batch_proposal_as_run_slot,
 )
+from beta_engine.application.run_owned_entry_roster import (
+    RunOwnedInitialEntryRosterService,
+)
 from beta_engine.domain.tournaments.application_validation_authority import (
     ResolvedApplicationValidationSlot,
     TournamentApplicationValidationAuthority,
+)
+from beta_engine.domain.tournaments.run_entry_decision_slot import (
+    EntryDecisionEvidence,
+    RunEntryDecisionSlotAuthority,
 )
 from beta_engine.infrastructure.db.application_validation_slots import (
     ApplicationValidationSlotStore,
@@ -497,6 +504,55 @@ class AuthoritativeWalkoverCommand(FrozenInput):
     expected_revision_id: str = Field(min_length=1)
     group_id: str = Field(min_length=1)
     withdrawn_player_id: str = Field(min_length=1)
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeExplicitEntryDecisionReview(FrozenInput):
+    """One explicit reviewed tournament application intent."""
+
+    event_id: str = Field(min_length=1)
+    player_id: str = Field(min_length=1)
+    target: Literal["MAIN", "QUALIFICATION"]
+
+
+class AuthoritativeExplicitEntryDecisionSlotCommand(FrozenInput):
+    """Guarded explicit Admin Entry decision slot over Run-owned roster truth."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_revision_id: str = Field(min_length=1)
+    decision_slot_ordinal: int = Field(ge=1)
+    operator_label: str = Field(min_length=1, max_length=128)
+    reason: str = Field(min_length=1, max_length=512)
+    reviews: tuple[AuthoritativeExplicitEntryDecisionReview, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_command(self):
+        if self.operator_label != self.operator_label.strip():
+            raise ValueError("Explicit Entry operator label must be trimmed")
+        if self.reason != self.reason.strip():
+            raise ValueError("Explicit Entry audit reason must be trimmed")
+        keys = tuple(
+            (review.event_id, review.player_id, review.target)
+            for review in self.reviews
+        )
+        if keys != tuple(sorted(keys)):
+            raise ValueError(
+                "Explicit Entry reviews must use canonical event/player/target order"
+            )
+        event_player_keys = tuple(
+            (review.event_id, review.player_id) for review in self.reviews
+        )
+        if len(set(event_player_keys)) != len(event_player_keys):
+            raise ValueError(
+                "Explicit Entry reviews contain duplicate event/player decisions"
+            )
+        return self
 
     @property
     def fingerprint(self) -> str:
@@ -994,55 +1050,201 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
-    def _validate_legacy_entry_roster_against_run(
+    def _run_owned_entry_list_service(
         self,
         session: Session,
         *,
         run_id: str,
         branch_id: str,
         week: RankingWeek,
-    ) -> None:
-        """Fail closed unless compatibility Entry AI sees the owned active sporting roster."""
+    ):
+        """Scope the compatibility Entry engine to authoritative Run-owned roster truth."""
 
-        lifecycle = get_lifecycle(
-            session,
+        base = self.match_service.draw_service.entry_list_service
+        roster = RunOwnedInitialEntryRosterService(
+            session=session,
             run_id=run_id,
             branch_id=branch_id,
             week=week,
         )
-        sporting = get_sporting(
-            session,
-            run_id=run_id,
-            branch_id=branch_id,
-            week=week,
-        )
-        if lifecycle is None or sporting is None:
-            raise ValueError(
-                "Authoritative Entry decisions require lifecycle and sporting roster"
-            )
-
-        sporting_ids = {player.player_id for player in sporting.players}
-        owned_ids = tuple(
-            sorted(
-                player.player_id
-                for player in lifecycle.players
-                if player.status == "active" and player.player_id in sporting_ids
-            )
-        )
+        # Materialize now so missing owned profile/lifecycle/sporting state fails
+        # before the deterministic Entry batch is built.
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        compatibility = (
-            self.match_service.draw_service.entry_list_service.active_players_service
-            .get_active_players(season=season)
-            .players
-        )
-        compatibility_ids = tuple(
-            sorted(player.player_id for player in compatibility)
-        )
-        if compatibility_ids != owned_ids:
-            raise ValueError(
-                "Compatibility Entry AI roster differs from authoritative "
-                "Run/Branch active sporting roster"
+        roster.get_active_players(season=season)
+        return replace(base, active_players_service=roster)
+
+    def commit_explicit_entry_decision_slot(
+        self,
+        command: AuthoritativeExplicitEntryDecisionSlotCommand,
+    ) -> dict:
+        """Persist one reviewed Entry slot without relying on AI application rolls."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            week = self._current_week(session, command.run_id, command.branch_id)
+            if week != command.expected_week:
+                raise ValueError("Explicit Entry decision week is stale")
+
+            branch = session.get(RunBranchModel, command.branch_id)
+            if (
+                branch is None
+                or branch.run_id != command.run_id
+                or branch.saved_head_revision_id != command.expected_revision_id
+            ):
+                raise ValueError("Explicit Entry decision Branch head is stale")
+            if self._schedule(
+                session,
+                command.run_id,
+                command.branch_id,
+                week,
+            ) is not None:
+                raise ValueError(
+                    "Explicit Entry decision must be committed before Week Schedule adoption"
+                )
+
+            season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+            roster = RunOwnedInitialEntryRosterService(
+                session=session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+            ).get_active_players(season=season)
+            active_by_id = {player.player_id: player for player in roster.players}
+            reviewed_player_ids = {review.player_id for review in command.reviews}
+            missing_players = sorted(reviewed_player_ids - set(active_by_id))
+            if missing_players:
+                raise ValueError(
+                    "Explicit Entry decision references player outside Run-owned active roster: "
+                    + ", ".join(missing_players)
+                )
+
+            calendar, calendar_source, calendar_fingerprint = self._calendar_authority(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                season=season,
             )
+            if calendar is None:
+                raise ValueError(
+                    "Explicit Entry decision requires the season Calendar authority"
+                )
+            events = {event.event_id: event for event in calendar.events}
+            reviewed_event_ids = {review.event_id for review in command.reviews}
+            missing_events = sorted(reviewed_event_ids - set(events))
+            if missing_events:
+                raise ValueError(
+                    "Explicit Entry decision references event outside season Calendar: "
+                    + ", ".join(missing_events)
+                )
+            wrong_week = sorted(
+                event_id
+                for event_id in reviewed_event_ids
+                if events[event_id].season_week != week.week
+            )
+            if wrong_week:
+                raise ValueError(
+                    "Explicit Entry decision currently requires current-week event(s): "
+                    + ", ".join(wrong_week)
+                )
+
+            active_players_fingerprint = fingerprint(
+                [
+                    player.model_dump(mode="json")
+                    for player in sorted(roster.players, key=lambda item: item.player_id)
+                ]
+            )
+            decision_payloads = []
+            decisions = []
+            for review in command.reviews:
+                decision_fingerprint = fingerprint(
+                    {
+                        "mode": "explicit_admin_entry_decision.v1",
+                        "command_id": command.command_id,
+                        "run_id": command.run_id,
+                        "branch_id": command.branch_id,
+                        "week_ordinal": week.ordinal,
+                        "decision_slot_ordinal": command.decision_slot_ordinal,
+                        "event_id": review.event_id,
+                        "player_id": review.player_id,
+                        "target": review.target,
+                        "active_players_fingerprint": active_players_fingerprint,
+                        "calendar_source": calendar_source,
+                        "calendar_fingerprint": calendar_fingerprint,
+                        "operator_label": command.operator_label,
+                        "reason": command.reason,
+                    }
+                )
+                decision = EntryDecisionEvidence(
+                    event_id=review.event_id,
+                    player_id=review.player_id,
+                    target=review.target,
+                    source_decision_fingerprint=decision_fingerprint,
+                )
+                decisions.append(decision)
+                decision_payloads.append(decision.model_dump(mode="json"))
+
+            canonical_decisions = tuple(
+                sorted(
+                    decisions,
+                    key=lambda item: (item.event_id, item.player_id, item.target),
+                )
+            )
+            application_decisions_fingerprint = fingerprint(
+                [
+                    item.model_dump(mode="json")
+                    for item in canonical_decisions
+                ]
+            )
+            entry_batch_fingerprint = fingerprint(
+                {
+                    "mode": "explicit_admin_entry_decision_slot.v1",
+                    "command": command.model_dump(mode="json"),
+                    "active_players_fingerprint": active_players_fingerprint,
+                    "calendar_source": calendar_source,
+                    "calendar_fingerprint": calendar_fingerprint,
+                    "application_decisions_fingerprint": (
+                        application_decisions_fingerprint
+                    ),
+                }
+            )
+            authority = RunEntryDecisionSlotAuthority(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=week,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+                source_entry_batch_fingerprint=entry_batch_fingerprint,
+                source_application_decisions_fingerprint=(
+                    application_decisions_fingerprint
+                ),
+                source_active_players_fingerprint=active_players_fingerprint,
+                decisions=canonical_decisions,
+            )
+            store = RunEntryDecisionSlotStore(session)
+            existing = store.get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=week.ordinal,
+                decision_slot_ordinal=command.decision_slot_ordinal,
+            )
+            stored = store.append(authority)
+            return {
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": week.model_dump(mode="json"),
+                "decision_slot_ordinal": command.decision_slot_ordinal,
+                "event_ids": sorted(reviewed_event_ids),
+                "entry_batch_fingerprint": entry_batch_fingerprint,
+                "application_decisions_fingerprint": (
+                    application_decisions_fingerprint
+                ),
+                "active_players_fingerprint": active_players_fingerprint,
+                "decision_count": len(stored.decisions),
+                "slot_fingerprint": stored.fingerprint,
+                "authority": stored.model_dump(mode="json"),
+                "decision_mode": "explicit_admin_review.v1",
+                "adoption": "exact_retry" if existing == stored else "committed",
+            }
 
     def preview_entry_decision_slot(
         self,
@@ -1067,14 +1269,14 @@ class AuthoritativeRunSimulationDriver:
             if branch is None or not branch.saved_head_revision_id:
                 raise ValueError("Entry decision preview requires a saved Branch head")
 
-            self._validate_legacy_entry_roster_against_run(
+            entry_service = self._run_owned_entry_list_service(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
                 week=week,
             )
             batch = SeasonEntryBatchService(
-                self.match_service.draw_service.entry_list_service
+                entry_service
             ).generate_overlapping_entry_lists(
                 event_ids=list(event_ids),
                 request=EntryBatchGenerateRequest(
@@ -1138,14 +1340,14 @@ class AuthoritativeRunSimulationDriver:
             ):
                 raise ValueError("Entry decision Branch head is stale")
 
-            self._validate_legacy_entry_roster_against_run(
+            entry_service = self._run_owned_entry_list_service(
                 session,
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 week=week,
             )
             batch = SeasonEntryBatchService(
-                self.match_service.draw_service.entry_list_service
+                entry_service
             ).generate_overlapping_entry_lists(
                 event_ids=list(command.event_ids),
                 request=EntryBatchGenerateRequest(
@@ -1511,7 +1713,12 @@ class AuthoritativeRunSimulationDriver:
                 decision_slot_ordinal=command.decision_slot_ordinal,
             )
             if existing_validation is None:
-                position = self._position(session, command.run_id, command.branch_id)
+                position = self._position(
+                    session,
+                    command.run_id,
+                    command.branch_id,
+                    allow_missing_schedule=True,
+                )
                 if (
                     position.position_fingerprint
                     != command.expected_position_fingerprint
@@ -8877,9 +9084,9 @@ class AuthoritativeRunSimulationDriver:
         if (
             schedule is None
             and packages
+            and not entry_slot_ordinals
             and (
-                bool(entry_slot_ordinals)
-                or bool(wc_slot_ordinals)
+                bool(wc_slot_ordinals)
                 or len(packages) > 1
                 or len(
                     self._topology_for_session(

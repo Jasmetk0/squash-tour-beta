@@ -1,5 +1,32 @@
 # Current implementation and next action
 
+## Active implementation — Run-owned Week-1 Entry roster and submissions
+
+After #981, Week-1 tournament topology is canonical, but the release gate still
+seeded valid applications directly and rewrote the legacy active-player JSON registry.
+This branch removes both fixture-owned shortcuts:
+
+- authoritative Entry preview/commit now receives a read-only Run-owned roster
+  projection from InitialWorld + current lifecycle + current sporting state;
+- the projection optionally binds the current published Official Ranking points and
+  never reads or writes `season_active_players.json`;
+- the release-gating Week-1 applications are created through the existing
+  Entry-decision-slot authority and explicit Admin validation review;
+- valid `TournamentApplicationSubmissionAuthority` rows therefore arise from
+  resolved Run-owned Entry evidence instead of direct fixture insertion;
+- canonical Entry Field → Draw Input → Draw then consumes those persisted valid
+  submissions as before.
+
+The roster bridge is deliberately first-season-only. If a later active lifecycle
+identity lacks an InitialWorld profile (for example a generated prospect), it fails
+closed. The next bridge must project those Run-owned prospect/player profiles explicitly;
+falling back to the legacy active-player registry is not allowed.
+
+**Next action after this PR:** re-run the Master §31.3 acceptance and audit the next
+live compatibility dependency, with particular attention to legacy Calendar/Entry
+event metadata and point-award builders.
+
+
 ## Active implementation — Official Week-1 topology moves to canonical Draw authority
 
 - the prepared Week-1 bootstrap ranking is now explicitly published before any tournament field/draw authority is created; this initializes the authoritative world clock at Week 1 instead of deferring first publication until the Week 1 → Week 2 transition;

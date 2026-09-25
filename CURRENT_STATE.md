@@ -1,5 +1,37 @@
 # Current implementation and next action
 
+## Active implementation — all-season Run-owned player compatibility bridge
+
+The #982 first-season Entry adapter is expanded into an all-season Run-owned roster
+projection.
+
+- lifecycle is the authority for active identity, age and retirement;
+- sporting week state is the authority for current player ability and the canonical
+  57 attributes;
+- InitialWorld supplies stable metadata for original players;
+- RunProspect supplies stable metadata/provenance for later generated prospects;
+- persisted prospect sporting-profile evidence is revalidated before projection;
+- current published Official Ranking points are bound when present;
+- the old seven Entry attributes are now a deterministic compatibility down-projection
+  of the **current** 57-attribute state rather than frozen initial-pool values;
+- prospect compatibility traits are deterministic from immutable trait seed under a
+  named technical adapter policy, not product canon;
+- authoritative Entry AI, explicit Entry review and the remaining legacy-topology
+  authoritative award projection all consume this Run-owned roster;
+- `season_active_players.json` is no longer a dependency of authoritative simulation;
+- a read-only Admin `/entry-roster` surface exposes the exact current projection.
+
+The Master §31.3 acceptance now deliberately empties the legacy active-player registry
+after Season-0 rollover and requires the Season-1 Week-1 Run-owned roster to reconstruct
+successfully.
+
+See [docs/RUN_OWNED_ENTRY_ROSTER_V2.md](docs/RUN_OWNED_ENTRY_ROSTER_V2.md).
+
+**Next after this PR:** re-audit remaining authoritative dependencies on mutable legacy
+Calendar/template/result registries. Prefer replacing a whole consumer chain rather than
+adding another file-backed synchronization shim.
+
+
 ## Active implementation — Run-owned Week-1 Entry roster and submissions
 
 After #981, Week-1 tournament topology is canonical, but the release gate still

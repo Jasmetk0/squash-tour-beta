@@ -8,6 +8,7 @@ from beta_engine.api.deps import (
     get_runtime,
     get_run_package_service,
     get_run_world_initial_pool_preview_service,
+    get_run_world_initial_world_service,
     get_run_working_draft_service,
     get_world_package_run_adapter,
 )
@@ -19,6 +20,10 @@ from beta_engine.application.run_package_service import RunPackageService
 from beta_engine.application.run_world_initial_pool_preview_service import (
     RunWorldInitialPoolPreviewRequest,
     RunWorldInitialPoolPreviewService,
+)
+from beta_engine.application.run_world_initial_world_service import (
+    RunWorldInitialWorldAdoptionRequest,
+    RunWorldInitialWorldService,
 )
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
@@ -45,7 +50,9 @@ from beta_engine.domain.players.initial_pool import (
 router = APIRouter(prefix="/admin/players", tags=["admin-players"])
 
 
-def _lifecycle_policy(payload: InitialWorldAdoptionRequest) -> PlayerLifecyclePolicy:
+def _lifecycle_policy(
+    payload: InitialWorldAdoptionRequest | RunWorldInitialWorldAdoptionRequest,
+) -> PlayerLifecyclePolicy:
     if payload.automatic_retirement_age is None or payload.official_run:
         return PlayerLifecyclePolicy(
             policy_id="official-fax-lifecycle.v1",
@@ -210,6 +217,101 @@ def adopt_initial_world(
         raise HTTPException(
             status_code=409,
             detail={"code": "initial_world_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/world-package/preview"
+)
+def preview_run_world_initial_world(
+    run_id: str,
+    branch_id: str,
+    payload: RunWorldInitialWorldAdoptionRequest,
+    service: RunWorldInitialWorldService = Depends(
+        get_run_world_initial_world_service
+    ),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        branch = runtime.repository.get_run_branch(branch_id=branch_id)
+        if branch is None or branch.run_id != run_id:
+            raise KeyError("Initial-world Run/Branch scope not found")
+        state = service.preview(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+        return {
+            "preview_only": True,
+            "state": state,
+            "fingerprint": state.fingerprint,
+        }
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "run_world_initial_world_unavailable",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-world/world-package",
+    status_code=201,
+)
+def adopt_run_world_initial_world(
+    run_id: str,
+    branch_id: str,
+    payload: RunWorldInitialWorldAdoptionRequest,
+    expected: str = Header(
+        alias="X-Initial-World-Preview-Fingerprint", pattern=r"^[0-9a-f]{64}$"
+    ),
+    service: RunWorldInitialWorldService = Depends(
+        get_run_world_initial_world_service
+    ),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    try:
+        current = runtime.repository.get_initial_world(
+            run_id=run_id, branch_id=branch_id
+        )
+        request_fingerprint = payload.fingerprint_for_scope(
+            run_id=run_id, branch_id=branch_id
+        )
+        if current is not None:
+            if (
+                current.adopted_by_command_id != payload.command_id
+                or current.adoption_request_fingerprint != request_fingerprint
+                or current.fingerprint != expected
+            ):
+                raise ValueError(
+                    "Initial-world adoption retry differs from the stored request"
+                )
+            runtime.repository.ensure_initial_world_lifecycle(
+                current, policy=_lifecycle_policy(payload)
+            )
+            return current
+
+        state = service.preview(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+        if state.fingerprint != expected:
+            raise ValueError(
+                "Run-owned generated player pool changed since reviewed preview"
+            )
+        return runtime.repository.adopt_initial_world(
+            state, lifecycle_policy=_lifecycle_policy(payload)
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "run_world_initial_world_conflict",
+                "message": str(exc),
+            },
         ) from exc
 
 

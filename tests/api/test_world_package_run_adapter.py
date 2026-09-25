@@ -214,43 +214,46 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
             == run_pool_preview_fingerprint
         )
 
-        status, global_countries = _request("GET", server.base_url + "/world/countries")
-        assert status == 200, global_countries
-        global_codes = {country["code"] for country in global_countries["countries"]}
-        country_code = next(code for code in sorted(run_country_codes) if code in global_codes)
-        status, custom = _request(
-            "POST",
-            server.base_url + "/admin/players/custom",
-            _custom_player(country_code),
-        )
-        assert status == 200, custom
-
         world_root_url = (
             f"{server.base_url}/admin/players/runs/{quote(run_id, safe='')}"
             f"/branches/{quote(branch_id, safe='')}/initial-world"
         )
-        adoption = {
-            "command_id": "adopt-world-bound-initial-world",
-            "source_season": "2000/2001",
-            "bootstrap_seed": 200001,
-            "audit_label": "World Package adapter acceptance",
-            "audit_reason": "Bind Initial World to Run-owned World Package countries",
+        world_generation_adoption = {
+            "command_id": "adopt-run-world-generated-initial-world",
+            "generation": initial_pool_request,
+            "audit_label": "Run-owned World bootstrap acceptance",
+            "audit_reason": (
+                "Adopt Initial World directly from the reviewed Run-owned generated pool"
+            ),
             "official_run": True,
-            "world_package_id": OFFICIAL_FAX_WORLD_ID,
         }
         status, initial_preview = _request(
-            "POST", world_root_url + "/preview", adoption
+            "POST",
+            world_root_url + "/world-package/preview",
+            world_generation_adoption,
         )
         assert status == 200, initial_preview
+        assert initial_preview["preview_only"] is True
+        assert initial_preview["state"]["source_kind"] == "run_world_generated_pool.v1"
+        assert initial_preview["state"]["source_fingerprint"] == run_pool_preview_fingerprint
         assert initial_preview["state"]["world_package_id"] == OFFICIAL_FAX_WORLD_ID
         assert (
-            initial_preview["state"]["world_country_content_fingerprint"]
-            is not None
+            initial_preview["state"]["world_generation_content_fingerprint"]
+            == generation["content_fingerprint"]
+        )
+        assert (
+            initial_preview["state"]["run_world_pool_preview_fingerprint"]
+            == run_pool_preview_fingerprint
+        )
+        assert len(initial_preview["state"]["players"]) == 10
+        assert all(
+            player["name"].startswith("ApiRunGiven ApiRunFamily ")
+            for player in initial_preview["state"]["players"]
         )
 
         status, adopted = _post_headers(
-            world_root_url,
-            adoption,
+            world_root_url + "/world-package",
+            world_generation_adoption,
             {
                 "X-Initial-World-Preview-Fingerprint": initial_preview[
                     "fingerprint"
@@ -259,6 +262,9 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
         )
         assert status == 201, adopted
         bound_content_fingerprint = adopted["world_country_content_fingerprint"]
+        bound_generation_fingerprint = adopted[
+            "world_generation_content_fingerprint"
+        ]
 
         status, save_preview = _request("GET", world_root_url + "/save/preview")
         assert status == 200, save_preview
@@ -313,3 +319,13 @@ def test_source_world_package_applies_to_run_and_binds_initial_world_without_liv
             reopened_world["world_country_content_fingerprint"]
             == bound_content_fingerprint
         )
+        assert (
+            reopened_world["world_generation_content_fingerprint"]
+            == bound_generation_fingerprint
+        )
+        assert (
+            reopened_world["run_world_pool_preview_fingerprint"]
+            == run_pool_preview_fingerprint
+        )
+        assert reopened_world["source_kind"] == "run_world_generated_pool.v1"
+        assert len(reopened_world["players"]) == 10

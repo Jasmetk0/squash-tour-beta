@@ -19,6 +19,7 @@ from beta_engine.domain.run_revisions import (
     SAVED_REVISION_FORK_WORKING_DRAFT_SCHEMA_VERSION,
     saved_revision_content_hash,
 )
+from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS
 from beta_engine.infrastructure.db import (
     BranchCreationIdentityConflictError,
     BranchDisplayNameConflictError,
@@ -162,6 +163,39 @@ def test_branch_from_saved_revision_shares_history_and_owns_clean_draft(
     assert (
         reloaded.get_run_container(run_id=run.run_id).viewer_branch_id == "branch-one"
     )
+
+
+@pytest.mark.pr_critical
+def test_completed_run_can_fork_historical_saved_revision_without_viewer_switch(
+    tmp_path,
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'completed-run-historical-fork.db'}"
+    repository = _repository(database_url)
+    run, source_state = _empty_run(repository)
+    with repository._session_factory.begin() as session:
+        persisted_run = session.get(RunContainerModel, run.run_id)
+        persisted_run.status = COMPLETED_RUN_STATUS
+
+    created = RunBranchCreationService(
+        repository=repository,
+        id_factory=_id_factory("branch-two", "draft-two"),
+    ).create_from_saved_revision(
+        run_id=run.run_id,
+        source_branch_id="branch-one",
+        source_saved_revision_id=source_state.saved_head_revision_id,
+    )
+
+    assert created.status == "active"
+    assert created.read_only is False
+    assert created.saved_head_revision_id == source_state.saved_head_revision_id
+    assert repository.get_run_container(run_id=run.run_id).status == COMPLETED_RUN_STATUS
+    assert repository.get_run_container(run_id=run.run_id).viewer_branch_id == "branch-one"
+    assert repository.get_branch_revision_state(
+        branch_id="branch-one"
+    ) == source_state
+    target_state = repository.get_branch_revision_state(branch_id="branch-two")
+    assert target_state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS
+    assert target_state.working_draft.base_revision_id == source_state.saved_head_revision_id
 
 
 def test_duplicate_custom_name_rejects_the_complete_branch_aggregate(tmp_path) -> None:

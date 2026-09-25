@@ -2,6 +2,7 @@
 
 from pathlib import Path
 from types import SimpleNamespace
+import threading
 
 import pytest
 import json
@@ -21,6 +22,7 @@ from beta_engine.application.authoritative_frozen_main_replacement import (
 )
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeRunSimulationDriver,
+    AuthoritativeFullSimulationAbandonCommand,
     _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
     AuthoritativeMatchDayCommand,
@@ -30,6 +32,10 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeMatchReconstructionCommitCommand,
     MatchReconstructionConstraints,
     MatchReconstructionGameScore,
+)
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
+    ACTIVE_FULL_SIMULATION_GUARD,
+    FullSimulationExecutionGuard,
 )
 from beta_engine.application.initial_world import InitialWorldState
 from beta_engine.application.season_point_awards_service import FrozenPointAwardAuthority
@@ -545,6 +551,7 @@ def test_persisted_supported_main_draw_is_adopted_as_slot_truth(tmp_path):
         prepare_tournament_ranking_sources(binding, corrupt, awards)
 
 
+@pytest.mark.pr_critical
 def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
     from test_season_point_awards_service import make_points_service
 
@@ -632,7 +639,87 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
             "group_id": None,
         }
     )
-    closed = driver.simulate_next_slot(final)
+    parent_command_id = "active-full-parent-for-real-slot"
+    parent_request_fingerprint = "f" * 64
+    with factory.begin() as guarded_session:
+        guarded_session.add(
+            AuthoritativeSimulationCommandModel(
+                run_id="run",
+                branch_id="branch",
+                command_id=parent_command_id,
+                request_fingerprint=parent_request_fingerprint,
+                status="pending",
+                result_json=json.dumps(
+                    {
+                        "schema_version": "authoritative_full_simulation_operation.v1",
+                        "completed_seasons": [],
+                        "final_completed_weeks": [],
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                ),
+            )
+        )
+
+    child_waiting = threading.Event()
+    release_child = threading.Event()
+
+    def pause_before_child_writer():
+        child_waiting.set()
+        assert release_child.wait(timeout=10)
+
+    guarded_driver = AuthoritativeRunSimulationDriver(
+        factory,
+        service.result_service.match_service,
+        service,
+        full_simulation_before_transaction_check=pause_before_child_writer,
+    )
+    failures: list[BaseException] = []
+
+    def run_guarded_final_slot():
+        token = ACTIVE_FULL_SIMULATION_GUARD.set(
+            FullSimulationExecutionGuard(
+                run_id="run",
+                branch_id="branch",
+                command_id=parent_command_id,
+                request_fingerprint=parent_request_fingerprint,
+                before_transaction_check=pause_before_child_writer,
+            )
+        )
+        try:
+            guarded_driver.simulate_next_slot(final)
+        except BaseException as exc:
+            failures.append(exc)
+        finally:
+            ACTIVE_FULL_SIMULATION_GUARD.reset(token)
+
+    worker = threading.Thread(target=run_guarded_final_slot)
+    worker.start()
+    assert child_waiting.wait(timeout=10)
+    driver.abandon_full_simulation(
+        AuthoritativeFullSimulationAbandonCommand(
+            target_command_id=parent_command_id,
+            run_id="run",
+            branch_id="branch",
+            operator_label="Concurrent canceller",
+            audit_reason="Fence the actual final-slot sporting writer",
+            confirm_committed_child_work_persists=True,
+        )
+    )
+    release_child.set()
+    worker.join(timeout=10)
+    assert not worker.is_alive()
+    assert len(failures) == 1
+    assert "execution is fenced" in str(failures[0])
+    with factory() as check:
+        assert len(check.scalars(select(SimulationEventGroupModel)).all()) == 2
+        assert check.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", final.command_id),
+        ) is None
+
+    replacement_final = final.model_copy(update={"command_id": "final-replacement"})
+    closed = driver.simulate_next_slot(replacement_final)
     assert closed["supported_tournament_complete"] is True
     assert closed["week_ready_for_transition"] is False
     assert closed["transition_blockers"] == ["run_branch_scope_missing"]

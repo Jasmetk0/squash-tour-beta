@@ -10,7 +10,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 from pydantic import Field, model_validator
 from sqlalchemy import select, text
@@ -31,6 +31,10 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionCommand,
     FinalSeasonTransitionResult,
     commit_final_season_transition,
+)
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
+    ACTIVE_FULL_SIMULATION_GUARD,
+    FullSimulationExecutionGuard,
 )
 from beta_engine.application.ordinary_season_transition import (
     OrdinarySeasonTransitionCommand,
@@ -92,7 +96,11 @@ from beta_engine.domain.players.sporting import (
 from beta_engine.domain.rankings.command_audit import RankingCommandAudit
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
-from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS
+from beta_engine.domain.run_containers import (
+    ARCHIVED_RUN_STATUS,
+    COMPLETED_RUN_STATUS,
+    is_pre_completion_run_status,
+)
 from beta_engine.domain.run_revisions import FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
 from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
@@ -715,6 +723,7 @@ class AuthoritativeRunSimulationDriver:
     factory: sessionmaker[Session]
     match_service: SeasonMatchService
     awards_service: SeasonPointAwardsService
+    full_simulation_before_transaction_check: Callable[[], None] | None = None
 
     def position(
         self, *, run_id: str, branch_id: str
@@ -4737,7 +4746,7 @@ class AuthoritativeRunSimulationDriver:
         return payload
 
     @staticmethod
-    def _completed_run_closure_evidence(
+    def _branch_final_closure_evidence(
         session: Session,
         *,
         run_id: str,
@@ -4747,10 +4756,8 @@ class AuthoritativeRunSimulationDriver:
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("Full Simulation Run/Branch scope disappeared")
-        if run.status != COMPLETED_RUN_STATUS:
-            return None
         if branch.saved_head_revision_id is None:
-            raise ValueError("completed Run lost its final Saved Revision head")
+            return None
         revision = session.get(
             BranchSavedRevisionModel, branch.saved_head_revision_id
         )
@@ -4758,11 +4765,14 @@ class AuthoritativeRunSimulationDriver:
             revision is None
             or revision.run_id != run_id
             or revision.branch_id != branch_id
-            or revision.kind != FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
         ):
-            raise ValueError(
-                "completed Run head is not the canonical final-season closure revision"
-            )
+            raise ValueError("Branch Saved Revision head identity is corrupt")
+        if revision.kind != FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND:
+            return None
+        if is_pre_completion_run_status(run.status):
+            raise ValueError("final-closed Branch belongs to a Working Run")
+        if run.status not in {COMPLETED_RUN_STATUS, ARCHIVED_RUN_STATUS}:
+            raise ValueError("final-closed Branch has an unknown Run lifecycle status")
         try:
             payload = json.loads(revision.payload_json)
         except json.JSONDecodeError as exc:
@@ -4796,6 +4806,35 @@ class AuthoritativeRunSimulationDriver:
         )
         key = (command.run_id, command.branch_id, command.command_id)
 
+        guard_token = ACTIVE_FULL_SIMULATION_GUARD.set(
+            FullSimulationExecutionGuard(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                command_id=command.command_id,
+                request_fingerprint=request_fp,
+                before_transaction_check=(
+                    self.full_simulation_before_transaction_check
+                ),
+            )
+        )
+        try:
+            return self._simulate_full_simulation_guarded(
+                command=command,
+                request_fp=request_fp,
+                key=key,
+            )
+        finally:
+            ACTIVE_FULL_SIMULATION_GUARD.reset(guard_token)
+
+    def _simulate_full_simulation_guarded(
+        self,
+        *,
+        command: AuthoritativeFullSimulationCommand,
+        request_fp: str,
+        key: tuple[str, str, str],
+    ) -> dict:
+        """Implementation executed beneath the invocation-local transaction fence."""
+
         # A pending Full Simulation must be able to observe the external final
         # closure after that command makes the Run non-writable.
         with self.factory.begin() as session:
@@ -4813,7 +4852,7 @@ class AuthoritativeRunSimulationDriver:
                         "Full Simulation command receipt has an invalid status"
                     )
                 frozen = json.loads(receipt.result_json)
-                completed = self._completed_run_closure_evidence(
+                completed = self._branch_final_closure_evidence(
                     session,
                     run_id=command.run_id,
                     branch_id=command.branch_id,
@@ -4955,7 +4994,7 @@ class AuthoritativeRunSimulationDriver:
                 )
 
         for _ in range(128):
-            run_completed = False
+            branch_completed = False
             with self.factory() as session:
                 parent = session.get(AuthoritativeSimulationCommandModel, key)
                 if parent is None or parent.request_fingerprint != request_fp:
@@ -4963,11 +5002,12 @@ class AuthoritativeRunSimulationDriver:
                 if parent.status == "complete":
                     return json.loads(parent.result_json)
                 frozen = json.loads(parent.result_json)
-                run = session.get(RunContainerModel, command.run_id)
-                run_completed = (
-                    run is not None and run.status == COMPLETED_RUN_STATUS
-                )
-                if not run_completed:
+                branch_completed = self._branch_final_closure_evidence(
+                    session,
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                ) is not None
+                if not branch_completed:
                     position = self._position(
                         session,
                         command.run_id,
@@ -4981,7 +5021,7 @@ class AuthoritativeRunSimulationDriver:
                         )
                     current_saved_revision_id = branch.saved_head_revision_id
 
-            if run_completed:
+            if branch_completed:
                 with self.factory.begin() as session:
                     session.execute(text("BEGIN IMMEDIATE"))
                     parent = session.get(AuthoritativeSimulationCommandModel, key)
@@ -4990,7 +5030,7 @@ class AuthoritativeRunSimulationDriver:
                             "Full Simulation parent receipt disappeared"
                         )
                     frozen = json.loads(parent.result_json)
-                    completed = self._completed_run_closure_evidence(
+                    completed = self._branch_final_closure_evidence(
                         session,
                         run_id=command.run_id,
                         branch_id=command.branch_id,
@@ -6089,7 +6129,15 @@ class AuthoritativeRunSimulationDriver:
         branch = session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("authoritative simulation Run/Branch scope does not exist")
-        if run.read_only or branch.read_only or branch.status != "active":
+        if (
+            run.read_only
+            or not (
+                is_pre_completion_run_status(run.status)
+                or run.status == COMPLETED_RUN_STATUS
+            )
+            or branch.read_only
+            or branch.status != "active"
+        ):
             raise ValueError("authoritative simulation Run/Branch is not writable")
 
     @staticmethod
@@ -7739,10 +7787,20 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "Full Simulation requires a Saved Revision-backed Run/Branch"
             )
-        if run.status == COMPLETED_RUN_STATUS:
-            raise ValueError("Full Simulation Run is already completed")
-        if run.read_only or branch.read_only or branch.status != "active":
+        if (
+            run.read_only
+            or not (
+                is_pre_completion_run_status(run.status)
+                or run.status == COMPLETED_RUN_STATUS
+            )
+            or branch.read_only
+            or branch.status != "active"
+        ):
             raise ValueError("Full Simulation requires a writable active Branch")
+        if self._branch_final_closure_evidence(
+            session, run_id=request.run_id, branch_id=request.branch_id
+        ) is not None:
+            raise ValueError("Full Simulation Branch is already completed")
         if draft.status != "clean":
             raise ValueError("Full Simulation requires a clean Working Draft at review")
         if draft.base_revision_id != branch.saved_head_revision_id:

@@ -7,6 +7,10 @@ import json
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
+    require_pending_full_simulation_guard,
+)
+
 from beta_engine.application.authoritative_week_transition import (
     AuthoritativeWeekTransitionCommand,
     AuthoritativeWeekTransitionResult,
@@ -319,6 +323,7 @@ class AuthoritativeWeekTransitionRunner:
     ):
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
+            require_pending_full_simulation_guard(session)
             result = transition_in_transaction(session, self.awards, command)
             if (
                 (

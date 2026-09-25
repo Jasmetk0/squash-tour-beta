@@ -10,6 +10,9 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from beta_engine.application.final_run_completion import stage_final_run_completion
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
+    require_pending_full_simulation_guard,
+)
 from beta_engine.application.season_closing_ranking_resolution import (
     stage_canonical_season_closing_ranking,
 )
@@ -210,6 +213,7 @@ def commit_final_season_transition(
 
     if not session.in_transaction():
         raise ValueError("Final season transition requires a caller transaction")
+    require_pending_full_simulation_guard(session)
     retry = _retry_result(session, command)
     if retry is not None:
         return retry
@@ -225,8 +229,13 @@ def commit_final_season_transition(
         raise ValueError("Final season transition Run/Branch scope is incomplete")
     if run.read_only or branch.read_only or branch.status != "active":
         raise ValueError("Final season transition requires a writable active Branch")
-    if not is_pre_completion_run_status(run.status):
-        raise ValueError("Final season transition requires a Working Run")
+    if not (
+        is_pre_completion_run_status(run.status)
+        or run.status == COMPLETED_RUN_STATUS
+    ):
+        raise ValueError(
+            "Final season transition requires a Working or Completed Run"
+        )
     if (
         branch.saved_head_revision_id != command.expected_saved_revision_id
         or draft.base_revision_id != command.expected_saved_revision_id

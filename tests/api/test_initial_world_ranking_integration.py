@@ -12,6 +12,7 @@ from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCo
 from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.official_ranking_transition import RankingTransitionContext
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS
 from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 from beta_engine.infrastructure.db.ranking_revision_state import (
     capture_ranking_revision_state,
@@ -30,6 +31,7 @@ from beta_engine.infrastructure.db.models import (
     BranchWorkingDraftModel,
     InitialWorldStateModel,
     RunBranchModel,
+    RunContainerModel,
 )
 from beta_engine.domain.run_revisions import saved_revision_content_hash
 
@@ -291,7 +293,9 @@ def test_initial_world_only_fork_nested_reopen_and_adoption_is_not_target_retry(
 
 
 @pytest.mark.pr_critical
-def test_initial_world_ranking_fork_diverges_saves_restores_and_reopens(tmp_path):
+def test_completed_run_materialized_ranking_fork_mutates_saves_restores_and_reopens(
+    tmp_path,
+):
     db = tmp_path / "world-ranking-fork.db"
     with ApiServer(database_url=f"sqlite:///{db}") as server:
         run_id, source_id, source_revision, _ = _create_saved_world(
@@ -302,6 +306,8 @@ def test_initial_world_ranking_fork_diverges_saves_restores_and_reopens(tmp_path
         source_payload_before = repo.get_branch_saved_revision(
             revision_id=source_revision
         ).payload
+        with repo._session_factory.begin() as session:
+            session.get(RunContainerModel, run_id).status = COMPLETED_RUN_STATUS
         status, target = _request(
             "POST",
             f"{server.base_url}/run-containers/{run_id}/branches",
@@ -328,6 +334,8 @@ def test_initial_world_ranking_fork_diverges_saves_restores_and_reopens(tmp_path
             target_ranking.entries[0].receipts[0].request_payload_json
         )
         assert bootstrap.initial_world_fingerprint == target_world.fingerprint
+        assert repo.get_run_container(run_id=run_id).status == COMPLETED_RUN_STATUS
+        assert repo.get_run_container(run_id=run_id).viewer_branch_id == source_id
 
         RankingWeekCommandRunner(repo._session_factory).execute(
             RankingWeekCommand(
@@ -405,6 +413,8 @@ def test_initial_world_ranking_fork_diverges_saves_restores_and_reopens(tmp_path
 
     with ApiServer(database_url=f"sqlite:///{db}") as reopened:
         repo = reopened.app.state.runtime.repository
+        assert repo.get_run_container(run_id=run_id).status == COMPLETED_RUN_STATUS
+        assert repo.get_run_container(run_id=run_id).viewer_branch_id == source_id
         world = repo.get_initial_world(run_id=run_id, branch_id=target_id)
         assert world.branch_id == target_id
         assert world.fingerprint == target_world_fingerprint

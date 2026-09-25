@@ -1,4 +1,5 @@
 import json
+from collections.abc import Iterator
 
 import pytest
 from sqlalchemy import select, text
@@ -17,6 +18,7 @@ from beta_engine.application.ranking_week_command import RankingWeekCommand
 from beta_engine.application.season_transition_configuration import (
     resolve_season_transition_configuration,
 )
+from beta_engine.application.run_branch_creation_service import RunBranchCreationService
 from beta_engine.domain.calendar.season_weeks import season_week_to_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecycleWeekState
 from beta_engine.domain.players.prospect_sporting_profile import (
@@ -34,7 +36,7 @@ from beta_engine.domain.rankings.official import (
     calculate_official_ranking,
     load_official_ranking_snapshot,
 )
-from beta_engine.domain.run_containers import WORKING_RUN_STATUS
+from beta_engine.domain.run_containers import COMPLETED_RUN_STATUS, WORKING_RUN_STATUS
 from beta_engine.domain.run_revisions import (
     CLEAN_WORKING_DRAFT_STATUS,
     CONTENT_HASH_ALGORITHM,
@@ -65,14 +67,20 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.official_rankings import OfficialRankingCandidateStore
 from beta_engine.infrastructure.db.player_lifecycle_state import (
+    capture_saved_lifecycle,
     get_lifecycle,
     put_lifecycle,
 )
 from beta_engine.infrastructure.db.player_sporting_state import (
+    capture_saved_sporting,
     get_sporting,
     put_completed_context,
     put_sporting,
 )
+from beta_engine.infrastructure.db.saved_revision_rankings import (
+    capture_saved_ranking_component,
+)
+from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     load_saved_revision_season_closure,
 )
@@ -536,6 +544,150 @@ def test_driver_commits_complete_ordinary_season_transition_and_retry(database, 
         assert audit.saved_revision_id == "revision-season-1"
 
     assert driver.advance_season(command) == result
+
+
+@pytest.mark.pr_critical
+def test_completed_run_allows_idempotent_ordinary_transition_on_active_branch(
+    database, monkeypatch
+):
+    with database.begin() as session:
+        completed = _install_boundary(session)
+        _install_week1_prospect(session)
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: _position(completed),
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preflight = driver.season_transition_preflight(run_id="run", branch_id="branch")
+    assert preflight.ready_for_execution is True
+    with database() as session:
+        configuration = resolve_season_transition_configuration(
+            session, run_id="run", branch_id="branch"
+        )
+    command = _command(configuration, preflight.preflight_fingerprint)
+
+    result = driver.advance_season(command)
+    assert result.target_week == RankingWeek(season_index=1, week=1)
+    with database() as session:
+        run = session.get(RunContainerModel, "run")
+        branch = session.get(RunBranchModel, "branch")
+        draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == "branch"
+            )
+        )
+        revision = session.get(BranchSavedRevisionModel, result.saved_revision_id)
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch"))
+        assert run.status == COMPLETED_RUN_STATUS
+        assert branch.saved_head_revision_id == result.saved_revision_id
+        assert draft.base_revision_id == result.saved_revision_id
+        assert draft.status == CLEAN_WORKING_DRAFT_STATUS
+        assert world.current_ordinal == result.target_week.ordinal
+        assert json.loads(revision.payload_json)["run"]["status"] == COMPLETED_RUN_STATUS
+
+    assert driver.advance_season(command) == result
+
+
+@pytest.mark.pr_critical
+def test_completed_run_materialized_historical_branch_advances_ordinary_season(
+    database, monkeypatch
+):
+    with database.begin() as session:
+        completed = _install_boundary(session)
+        _install_week1_prospect(session)
+        revision = session.get(BranchSavedRevisionModel, "revision-before-season")
+        payload = json.loads(revision.payload_json)
+        capture_saved_ranking_component(
+            session, payload, run_id="run", branch_id="branch"
+        )
+        capture_saved_lifecycle(session, payload, run_id="run", branch_id="branch")
+        capture_saved_sporting(session, payload, run_id="run", branch_id="branch")
+        summary = json.loads(revision.change_summary_json)
+        revision.payload_json = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        revision.content_hash = saved_revision_content_hash(
+            revision_id=revision.revision_id,
+            run_id=revision.run_id,
+            branch_id=revision.branch_id,
+            sequence=revision.sequence,
+            parent_revision_id=revision.parent_revision_id,
+            kind=revision.kind,
+            payload_schema_version=revision.payload_schema_version,
+            payload=payload,
+            change_summary=summary,
+        )
+        session.get(RunContainerModel, "run").status = COMPLETED_RUN_STATUS
+
+    identities: Iterator[str] = iter(("branch-b", "draft-b", "revision-b-root"))
+    repository = SimulationPersistenceRepository(
+        engine=database.kw["bind"], session_factory=database
+    )
+    created = RunBranchCreationService(
+        repository=repository, id_factory=lambda _kind: next(identities)
+    ).create_from_saved_revision(
+        run_id="run",
+        source_branch_id="branch",
+        source_saved_revision_id="revision-before-season",
+    )
+    assert created.branch_id == "branch-b"
+    assert created.read_only is False
+    assert repository.get_run_container(run_id="run").viewer_branch_id == "branch"
+
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
+        lambda self, session, run_id, branch_id: _position(completed).model_copy(
+            update={"branch_id": branch_id}
+        ),
+    )
+    driver = AuthoritativeRunSimulationDriver(database, None, None)
+    preflight = driver.season_transition_preflight(run_id="run", branch_id="branch-b")
+    assert preflight.ready_for_execution is True
+    with database() as session:
+        configuration = resolve_season_transition_configuration(
+            session, run_id="run", branch_id="branch-b"
+        )
+        target_draft = session.scalar(
+            select(BranchWorkingDraftModel).where(
+                BranchWorkingDraftModel.branch_id == "branch-b"
+            )
+        )
+    command = OrdinarySeasonTransitionCommand(
+        command_id="advance-materialized-branch-b",
+        run_id="run",
+        branch_id="branch-b",
+        configuration=configuration,
+        expected_preflight_fingerprint=preflight.preflight_fingerprint,
+        expected_saved_revision_id=created.saved_head_revision_id,
+        expected_draft_version=target_draft.draft_version,
+        season_saved_revision_id="revision-b-season-1",
+        audit_event_id="audit-b-season-1",
+    )
+    result = driver.advance_season(command)
+    assert result.target_week == RankingWeek(season_index=1, week=1)
+    assert repository.get_run_container(run_id="run").status == COMPLETED_RUN_STATUS
+    assert repository.get_run_container(run_id="run").viewer_branch_id == "branch"
+    database_url = str(database.kw["bind"].url)
+    database.kw["bind"].dispose()
+    reopened_engine = create_sqlite_engine(DatabaseSettings(url=database_url))
+    reopened_factory = create_session_factory(reopened_engine)
+    reopened_repository = SimulationPersistenceRepository(
+        engine=reopened_engine, session_factory=reopened_factory
+    )
+    assert reopened_repository.get_run_container(run_id="run").status == COMPLETED_RUN_STATUS
+    assert reopened_repository.get_run_container(run_id="run").viewer_branch_id == "branch"
+    assert reopened_repository.get_branch_revision_state(
+        branch_id="branch"
+    ).saved_head_revision_id == "revision-before-season"
+    assert reopened_repository.get_branch_revision_state(
+        branch_id="branch-b"
+    ).saved_head_revision_id == result.saved_revision_id
+    with reopened_factory() as session:
+        world = session.get(AuthoritativeWorldStateModel, ("run", "branch-b"))
+        assert world.current_ordinal == result.target_week.ordinal
+    reopened_engine.dispose()
 
 
 @pytest.mark.pr_critical

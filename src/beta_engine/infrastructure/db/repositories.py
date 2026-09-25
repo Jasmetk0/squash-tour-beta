@@ -148,6 +148,7 @@ from beta_engine.infrastructure.db.initial_world_state import (
 from beta_engine.infrastructure.db.run_package_state import (
     RUN_PACKAGE_COMPONENT_KEY,
     capture_saved_run_package_state,
+    get_run_package_state,
     load_saved_run_package_state,
     put_run_package_state,
     remap_saved_run_package_state,
@@ -1453,7 +1454,13 @@ class SimulationPersistenceRepository:
             bootstrap_sporting(session, stored)
             return lifecycle
 
-    def adopt_initial_world(self, state, lifecycle_policy=None):
+    def adopt_initial_world(
+        self,
+        state,
+        lifecycle_policy=None,
+        *,
+        expected_run_package_state_fingerprint: str | None = None,
+    ):
         with self._session_factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             run = session.get(RunContainerModel, state.run_id)
@@ -1464,6 +1471,20 @@ class SimulationPersistenceRepository:
                 raise ValueError(
                     "Initial-world adoption requires a writable active Run/Branch"
                 )
+            if expected_run_package_state_fingerprint is not None:
+                package_state = get_run_package_state(
+                    session,
+                    run_id=state.run_id,
+                    branch_id=state.branch_id,
+                )
+                if (
+                    package_state is None
+                    or package_state.fingerprint
+                    != expected_run_package_state_fingerprint
+                ):
+                    raise ValueError(
+                        "Run Package state changed before Initial-world adoption"
+                    )
             installed = put_initial_world(session, state)
             bootstrap_lifecycle(session, installed, lifecycle_policy)
             bootstrap_sporting(session, installed)

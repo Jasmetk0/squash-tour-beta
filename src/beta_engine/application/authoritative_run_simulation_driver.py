@@ -6250,9 +6250,11 @@ class AuthoritativeRunSimulationDriver:
             season=season,
         )
         if calendar is None:
-            raise ValueError(
-                "Week Tournament Lock requires the season Calendar authority"
-            )
+            # Entry-field rows, like Draw rows, persist as historical tournament
+            # evidence. Until the current season has Calendar authority they cannot
+            # identify a current overlapping event and therefore require no Week
+            # Tournament Lock yet.
+            return ()
         field_store = TournamentEntryFieldStore(session)
         event_ids = []
         for event in calendar.events:
@@ -6562,11 +6564,16 @@ class AuthoritativeRunSimulationDriver:
                     branch_id=branch_id,
                     season=season,
                 )
-                if calendar is None:
-                    raise ValueError(
-                        "canonical Draw execution requires the season Calendar authority"
-                    )
-                events = {event.event_id: event for event in calendar.events}
+                # Draw authorities are durable historical event state and remain in
+                # the Run after their season completes. Without a Calendar for the
+                # current season there is no authored event scope that can make any
+                # historical Draw executable now; treat them as history, not as a
+                # reason to require a future-season Calendar prematurely.
+                events = (
+                    {event.event_id: event for event in calendar.events}
+                    if calendar is not None
+                    else {}
+                )
                 for event_id in draw_event_ids:
                     event = events.get(event_id)
                     if event is None or event.season_week != week.week:

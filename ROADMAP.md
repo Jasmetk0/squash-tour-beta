@@ -1,5 +1,20 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — release-gating Calendar ownership
+
+1. **Official Run Calendar Package use:** the Master §31.3 whole-season acceptance now
+   applies, saves, reopens and consumes `calendar-2000-2001` as Run-owned state.
+2. This closes the live Calendar ownership gap for the first-season release-gating
+   path while retaining legacy fallback for older Runs.
+3. **Next:** migrate the concrete Week-1 tournament/match fixture behind stable
+   Run-owned source identity and provenance, reusing canonical Draw / tournament
+   authority rather than inventing a duplicate sporting model.
+4. Then re-run the complete Official Run → season completion → Save/reopen → Season
+   Transition → next Season Week 1 gate and identify the next remaining live-global
+   dependency.
+5. Release gate remains Master §31.3 with no fixture-only or live-global ownership.
+
+
 ## Active pre-alpha sequence — authoritative Calendar consumption
 
 1. **Run-owned Calendar consumer:** authoritative simulation now prefers the applied

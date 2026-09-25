@@ -1,0 +1,175 @@
+"""Canonical, sporting-model-neutral Package documents and Run-owned snapshots."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from enum import Enum
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+
+def canonical_hash(value: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(
+            value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        ).encode()
+    ).hexdigest()
+
+
+class PackageType(str, Enum):
+    WORLD = "World"
+    CATEGORY = "Category"
+    SERIES = "Series"
+    CALENDAR = "Calendar"
+    SETUP = "Setup"
+
+
+class SourceReference(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    source_package_id: str
+    source_entity_id: str
+    expected_entity_kind: str
+    minimum_schema_version: int = 1
+
+
+class PackageEntity(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    source_entity_id: str
+    entity_kind: str
+    scope: str
+    payload: dict[str, Any]
+    references: tuple[SourceReference, ...] = ()
+    valid: bool = True
+
+    @property
+    def fingerprint(self) -> str:
+        return canonical_hash(self.model_dump(mode="json"))
+
+
+class CanonicalPackageDocument(BaseModel):
+    """Immutable reviewed input. Setup children are frozen full documents."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    schema_version: int = 1
+    package_type: PackageType
+    package_id: str
+    source_version: int = Field(ge=1)
+    provenance: dict[str, Any] = Field(default_factory=dict)
+    explicit_scope: tuple[str, ...]
+    entities: tuple[PackageEntity, ...] = ()
+    children: tuple["CanonicalPackageDocument", ...] = ()
+    parent_source_fingerprint: str | None = None
+
+    @model_validator(mode="after")
+    def validate_shape(self):
+        if self.package_type == PackageType.SETUP:
+            if self.entities or any(
+                c.package_type == PackageType.SETUP for c in self.children
+            ):
+                raise ValueError(
+                    "Setup contains only non-Setup child Package documents"
+                )
+        elif self.children:
+            raise ValueError("Only Setup Packages may contain child documents")
+        ids = [e.source_entity_id for e in self.entities]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Package source entity identities must be unique")
+        return self
+
+    @property
+    def source_fingerprint(self) -> str:
+        return canonical_hash(self.model_dump(mode="json"))
+
+    def leaf_documents(self) -> tuple["CanonicalPackageDocument", ...]:
+        return self.children if self.package_type == PackageType.SETUP else (self,)
+
+
+class RunPackageEntity(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    run_local_id: int = Field(ge=1)
+    source_package_id: str
+    source_entity_id: str
+    entity_kind: str
+    scope: str
+    payload: dict[str, Any]
+    source_baseline_fingerprint: str
+    references: tuple[SourceReference, ...] = ()
+    provenance: Literal["package", "manual"] = "package"
+
+    @property
+    def content_fingerprint(self) -> str:
+        return canonical_hash(
+            {
+                "payload": self.payload,
+                "references": [r.model_dump(mode="json") for r in self.references],
+            }
+        )
+
+
+class AppliedPackageVersion(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    package_type: PackageType
+    package_id: str
+    source_version: int
+    source_fingerprint: str
+    parent_source_fingerprint: str | None = None
+    applied_scope: tuple[str, ...]
+    provenance: dict[str, Any]
+
+
+class RunPackageState(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    schema_version: Literal[1] = 1
+    run_id: str
+    branch_id: str
+    entities: tuple[RunPackageEntity, ...] = ()
+    package_versions: tuple[AppliedPackageVersion, ...] = ()
+
+    @model_validator(mode="after")
+    def validate_identity(self):
+        local = [e.run_local_id for e in self.entities]
+        source = [(e.source_package_id, e.source_entity_id) for e in self.entities]
+        if len(local) != len(set(local)) or len(source) != len(set(source)):
+            raise ValueError("Run Package identity mapping is duplicated")
+        by_source = {
+            key: entity for key, entity in zip(source, self.entities, strict=True)
+        }
+        for entity in self.entities:
+            for ref in entity.references:
+                target = by_source.get((ref.source_package_id, ref.source_entity_id))
+                if (
+                    target is not None
+                    and target.entity_kind != ref.expected_entity_kind
+                ):
+                    raise ValueError(
+                        "Resolved source reference has an incompatible entity kind"
+                    )
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return canonical_hash(self.model_dump(mode="json"))
+
+
+class PackagePreview(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+    document: CanonicalPackageDocument
+    run_id: str
+    branch_id: str
+    saved_head_revision_id: str
+    draft_version: int
+    current_state_fingerprint: str | None
+    additions: tuple[str, ...]
+    unchanged: tuple[str, ...]
+    updates: tuple[str, ...]
+    not_included: tuple[str, ...]
+    unresolved: tuple[str, ...]
+    automatically_resolvable: tuple[str, ...]
+    invalid: tuple[str, ...]
+    conflicts: tuple[str, ...]
+
+    @property
+    def preview_fingerprint(self) -> str:
+        return canonical_hash(self.model_dump(mode="json"))

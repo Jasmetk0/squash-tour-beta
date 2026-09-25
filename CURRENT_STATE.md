@@ -1,5 +1,19 @@
 # Current implementation and next action
 
+## Active implementation — canonical Run Package snapshot backbone
+
+The current branch adds a common typed Package document for exactly `World / Category /
+Series / Calendar / Setup`, read-only preview, atomic CAS/idempotent application, stable
+Run-local identity allocation, non-destructive partial scope, explicit unresolved source
+references and local-divergence resolution. The resulting independent Run/Branch state is
+captured by normal Save, strictly reloaded/restored and materialized for historical and
+nested Branch forks. This is the Package authority/recovery backbone, not completion of
+Official Run bootstrap: existing sporting consumers and source-library semantic adapters
+remain to be connected and audited after this PR. See `docs/RUN_PACKAGE_SNAPSHOT_V1.md`.
+
+**Next action after merge:** refresh the Package-to-Official-Run gap audit and choose
+between concrete Official content/bootstrap and any semantic adapters proven necessary.
+
 ## Active checkpoint — 25 September 2026, Master-to-code pre-alpha coverage audit
 
 Implementation baseline: `buuk` commit

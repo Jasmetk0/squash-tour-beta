@@ -1,5 +1,13 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — Run Package backbone implemented on this branch
+
+The canonical five-type Package document, Run/Branch-owned snapshot, preview/confirm,
+Saved Revision capture/restore and materialized fork path are now implemented as a
+backend authority backbone. This does not yet supply Official FAX content or connect all
+Package payloads to sporting consumers. After this PR, audit the remaining semantic
+adapter needs, then choose the smallest path to the concrete Official Run bootstrap.
+
 This is a milestone summary, not a second product constitution. [`SQUASH_ENGINE_MASTER_VISION.md`](SQUASH_ENGINE_MASTER_VISION.md) plus newer explicit decisions take precedence over `PROJECT_CONSTITUTION_TECHNICAL_PLAN.md`; `docs/ENGINE_UX_SPEC.md` provides subordinate migration guidance. Planned behavior must not be described as implemented unless verified in the repository.
 
 ## Active pre-alpha sequence — post-#971 coverage audit

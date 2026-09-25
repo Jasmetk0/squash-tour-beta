@@ -33,7 +33,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     MatchReconstructionConstraints,
     MatchReconstructionGameScore,
 )
-from beta_engine.application.full_simulation_execution_guard import (
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
 )

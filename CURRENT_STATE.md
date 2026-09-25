@@ -18,7 +18,9 @@ valid historical state.
 Focused PR-critical coverage includes active interleaving at the writer boundary,
 the existing durable abandoned-parent/replacement path, Completed-Run unfinished
 Branch preview, ordinary transition in a Completed Run, historical Branch creation,
-durable reopen/replacement, second-Branch-style final closure/idempotent retry,
+target-owned materialized ranking/lifecycle/sporting continuation through an ordinary
+Season Transition and reopen, durable abandonment/replacement,
+second-Branch-style final closure/idempotent retry,
 Archived guards and the existing same-Branch Full Simulation completion observation.
 
 **Next action:** refresh/audit the Master-to-code pre-alpha coverage table. Do not

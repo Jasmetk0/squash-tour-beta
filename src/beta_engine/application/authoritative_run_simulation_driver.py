@@ -32,7 +32,7 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionResult,
     commit_final_season_transition,
 )
-from beta_engine.application.full_simulation_execution_guard import (
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
 )
@@ -4771,6 +4771,8 @@ class AuthoritativeRunSimulationDriver:
             return None
         if is_pre_completion_run_status(run.status):
             raise ValueError("final-closed Branch belongs to a Working Run")
+        if run.status not in {COMPLETED_RUN_STATUS, ARCHIVED_RUN_STATUS}:
+            raise ValueError("final-closed Branch has an unknown Run lifecycle status")
         try:
             payload = json.loads(revision.payload_json)
         except json.JSONDecodeError as exc:
@@ -6129,7 +6131,10 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError("authoritative simulation Run/Branch scope does not exist")
         if (
             run.read_only
-            or run.status == ARCHIVED_RUN_STATUS
+            or not (
+                is_pre_completion_run_status(run.status)
+                or run.status == COMPLETED_RUN_STATUS
+            )
             or branch.read_only
             or branch.status != "active"
         ):
@@ -7784,7 +7789,10 @@ class AuthoritativeRunSimulationDriver:
             )
         if (
             run.read_only
-            or run.status == ARCHIVED_RUN_STATUS
+            or not (
+                is_pre_completion_run_status(run.status)
+                or run.status == COMPLETED_RUN_STATUS
+            )
             or branch.read_only
             or branch.status != "active"
         ):

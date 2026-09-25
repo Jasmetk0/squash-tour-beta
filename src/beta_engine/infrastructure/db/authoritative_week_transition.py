@@ -7,7 +7,7 @@ import json
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
-from beta_engine.application.full_simulation_execution_guard import (
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     require_pending_full_simulation_guard,
 )
 

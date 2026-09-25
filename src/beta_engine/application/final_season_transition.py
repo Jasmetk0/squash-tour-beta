@@ -10,7 +10,7 @@ from sqlalchemy import func, select, update
 from sqlalchemy.orm import Session
 
 from beta_engine.application.final_run_completion import stage_final_run_completion
-from beta_engine.application.full_simulation_execution_guard import (
+from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     require_pending_full_simulation_guard,
 )
 from beta_engine.application.season_closing_ranking_resolution import (

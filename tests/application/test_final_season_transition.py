@@ -860,6 +860,7 @@ def test_pending_branch_parent_ignores_other_branch_run_completion(
         (COMPLETED_RUN_STATUS, 1, 0, "active"),
         (COMPLETED_RUN_STATUS, 0, 1, "active"),
         (COMPLETED_RUN_STATUS, 0, 0, "archived"),
+        ("corrupt-unknown-status", 0, 0, "active"),
     ),
 )
 def test_full_simulation_preview_blocks_archived_or_read_only_scope(
@@ -953,6 +954,12 @@ def test_archived_run_preserves_valid_branch_final_closure_evidence(
             session, run_id="run", branch_id="branch"
         )
     assert evidence["final_saved_revision_id"] == "revision-final"
+    with database.begin() as session:
+        session.get(RunContainerModel, "run").status = "corrupt-unknown-status"
+    with database() as session, pytest.raises(ValueError, match="unknown Run lifecycle"):
+        AuthoritativeRunSimulationDriver._branch_final_closure_evidence(
+            session, run_id="run", branch_id="branch"
+        )
 
 
 @pytest.mark.pr_critical

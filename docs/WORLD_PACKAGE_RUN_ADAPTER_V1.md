@@ -89,6 +89,32 @@ Repeated identical requests against the same Run snapshot return the same previe
 fingerprint. Editing the global/source World Package after application does not change
 the preview until a newer Package version is explicitly reviewed and applied.
 
+## Run-owned InitialWorld adoption
+
+Run Admin also exposes a reviewed InitialWorld path sourced directly from the
+Run-owned generated pool:
+
+- `POST /admin/players/runs/{run}/branches/{branch}/initial-world/world-package/preview`
+- `POST /admin/players/runs/{run}/branches/{branch}/initial-world/world-package`
+
+The adoption request embeds the exact generation request plus command/audit and
+first-season ranking policy intent. Preview is read-only. Confirm requires the reviewed
+InitialWorld fingerprint in `X-Initial-World-Preview-Fingerprint` and rebuilds from the
+current Run-owned Package state before persistence.
+
+The resulting immutable `InitialWorldState` records:
+
+- `source_kind = run_world_generated_pool.v1`;
+- the exact generated-pool preview fingerprint;
+- the Run-owned World country content fingerprint;
+- the Run-owned player-generation content fingerprint;
+- the normal bootstrap/adoption request provenance.
+
+This path does not read or persist the legacy global initial-pool file. Identical
+Run-owned Package state + identical explicit request is deterministic, while stale
+reviewed previews fail closed. Normal InitialWorld Save/reopen preserves the same
+generation provenance.
+
 ## Source World Admin API
 
 Run Admin exposes server-side source adaptation at:
@@ -125,10 +151,11 @@ InitialWorld provenance.
 ## Deliberate boundary
 
 V1 consumes World metadata/geography/countries and the player identity portion of the
-production generation pipeline. It does not yet persist a generated Run-owned initial
-pool or commit InitialWorld directly from that preview. Other player-generation
-calibration/policy, Category hierarchy, Series, Calendar, entry policy and tournament
-templates remain outside this adapter.
+production generation pipeline. A generated Run-owned pool remains a reviewed,
+non-file-backed preview, but it can now be confirmed directly into immutable
+InitialWorld state with exact provenance. Other player-generation calibration/policy,
+Category hierarchy, Series, Calendar, entry policy and tournament templates remain
+outside this adapter.
 
 `Official FAX World` remains an offered Official Run default, not a mandatory Package.
 A Run may still exist and valid independent operations may still execute without any

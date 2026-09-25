@@ -141,8 +141,9 @@ class CalendarPackageRunAdapter:
             entities=tuple(entities),
         )
 
+    @staticmethod
     def project_calendar(
-        self, state: RunPackageState, *, package_id: str
+        state: RunPackageState, *, package_id: str
     ) -> RunCalendarProjection:
         versions = [
             version

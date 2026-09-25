@@ -418,6 +418,9 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
 
     matches = server.app.dependency_overrides[get_season_match_service]()
     awards = server.app.dependency_overrides[get_season_point_awards_service]()
+    server.app.state.season_calendar_registry_path = (
+        awards.calendar_service.calendar_registry_path
+    )
     participant_ids = tuple(
         dict.fromkeys(
             player_id
@@ -493,6 +496,56 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert status == 201, saved_package
         revision = saved_package["saved_revision"]["revision_id"]
+
+        source_calendar_root = package_root + "/source-calendar/2000-2001"
+        status, calendar_preview = _request(
+            "POST",
+            source_calendar_root + "/preview",
+        )
+        assert status == 200, calendar_preview
+        assert calendar_preview["document"]["package_type"] == "Calendar"
+        assert (
+            calendar_preview["document"]["package_id"]
+            == "calendar-2000-2001"
+        )
+        status, applied_calendar = _request(
+            "POST",
+            source_calendar_root + "/confirm",
+            {
+                "command_id": "official-full-season-apply-calendar",
+                "expected_head_revision_id": calendar_preview[
+                    "saved_head_revision_id"
+                ],
+                "expected_draft_version": calendar_preview["draft_version"],
+                "expected_state_fingerprint": calendar_preview[
+                    "current_state_fingerprint"
+                ],
+                "expected_preview_fingerprint": calendar_preview[
+                    "preview_fingerprint"
+                ],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 200, applied_calendar
+
+        status, calendar_projection = _request(
+            "GET",
+            package_root + "/calendar/calendar-2000-2001",
+        )
+        assert status == 200, calendar_projection
+        assert calendar_projection["season"] == "2000/2001"
+        assert week_one_package.event_id in {
+            event["event_id"]
+            for event in calendar_projection["calendar"]["events"]
+        }
+
+        status, saved_calendar = _request(
+            "POST",
+            save_url,
+            {"expected_draft_version": applied_calendar["draft_version"]},
+        )
+        assert status == 201, saved_calendar
+        revision = saved_calendar["saved_revision"]["revision_id"]
 
         world_root = (
             f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"

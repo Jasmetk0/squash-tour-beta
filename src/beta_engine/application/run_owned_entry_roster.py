@@ -16,6 +16,13 @@ from beta_engine.application.season_player_bootstrap_service import (
 from beta_engine.domain.players.attribute_catalog import ATTRIBUTE_GROUPS
 from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
 from beta_engine.domain.players.models import HiddenCareerTraits
+from beta_engine.domain.players.prospect_sporting_profile import (
+    validate_persisted_prospect_sporting_profile,
+)
+from beta_engine.domain.calendar.season_weeks import (
+    completed_weeks_at_calendar_position,
+    season_week_to_calendar_position,
+)
 from beta_engine.domain.rankings.official import RankingWeek, load_official_ranking_snapshot
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 from beta_engine.infrastructure.db.models import (
@@ -267,6 +274,30 @@ class RunOwnedEntryRosterService:
                 raise ValueError(
                     "Run-owned Entry roster active player has no identity profile"
                 )
+            if (
+                prospect.birth_year != identity.birth_year
+                or prospect.birth_year_week != identity.birth_year_week
+            ):
+                raise ValueError(
+                    "Run-owned Entry prospect birth identity differs from lifecycle"
+                )
+            try:
+                profile_payload = json.loads(prospect.profile_json)
+                development_payload = json.loads(prospect.development_json)
+                potential_payload = json.loads(prospect.potential_json)
+            except (TypeError, ValueError, json.JSONDecodeError) as exc:
+                raise ValueError(
+                    "Run-owned Entry prospect contains malformed persisted profile JSON"
+                ) from exc
+            canonical_profile = validate_persisted_prospect_sporting_profile(
+                profile=profile_payload,
+                development=development_payload,
+                potential=potential_payload,
+            )
+            if canonical_profile.player_id != identity.player_id:
+                raise ValueError(
+                    "Run-owned Entry prospect profile identity differs from lifecycle"
+                )
             name = prospect.display_name
             country_code = prospect.country_code
             nationality = prospect.country_code
@@ -301,10 +332,12 @@ class RunOwnedEntryRosterService:
             locked = False
             source_profile_fingerprint = _fingerprint(
                 {
-                    "profile_json": prospect.profile_json,
-                    "development_json": prospect.development_json,
-                    "potential_json": prospect.potential_json,
+                    "canonical_sporting_profile_fingerprint": (
+                        canonical_profile.fingerprint
+                    ),
                     "trait_seed": prospect.trait_seed,
+                    "profile_version": prospect.profile_version,
+                    "cohort_policy_version": prospect.cohort_policy_version,
                 }
             )
             source_kind = "run_prospect"
@@ -330,6 +363,17 @@ class RunOwnedEntryRosterService:
             }
         )
 
+        position = season_week_to_calendar_position(
+            2000 + self.week.season_index,
+            self.week.week,
+        )
+        age_weeks = completed_weeks_at_calendar_position(
+            birth_year=identity.birth_year,
+            birth_year_week=identity.birth_year_week,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+        )
+
         return SeasonActivePlayer(
             player_id=identity.player_id,
             name=name,
@@ -338,7 +382,7 @@ class RunOwnedEntryRosterService:
             birth_year=identity.birth_year,
             birth_year_week=identity.birth_year_week,
             age_years_at_season_start=identity.age,
-            age_weeks_at_season_start=identity.age * 61,
+            age_weeks_at_season_start=age_weeks,
             current_ability=current_ability,
             potential_ability=potential_ability,
             potential_tier=_potential_tier(sporting.potential_ovr),

@@ -24,14 +24,20 @@ version has a positive version, schema version, deterministic content fingerprin
 provenance and optional parent fingerprint. Same-version/different-content, a type change,
 and a newer version whose declared parent is not the applied source fingerprint fail closed.
 
-An entity source identity is `(source_package_id, source_entity_id)`. Materialization
-allocates a monotonically increasing Run-local integer from a Run-wide high-water mark.
-The mapping is never based on a name, survives Save/restore, and is copied unchanged
-across shared-history Branch forks. The high-water mark is not rewound by restore.
+An entity source identity is `(source_package_id, source_entity_id)`. V1 technical
+Package/entity IDs use `[A-Za-z0-9][A-Za-z0-9._-]{0,127}`; delimiters used by preview and
+receipt labels (`/`, `@`, `:`, `>`) are therefore not valid identity characters.
+Materialization allocates a monotonically increasing Run-local integer from a Run-wide
+high-water mark. The mapping is never based on a name, survives Save/restore, and is
+copied unchanged across shared-history Branch forks. The high-water mark is not rewound
+by restore and is created only when a new Run-local identity is actually allocated.
 Each current entity also records the exact source Package version and source Package
-fingerprint that established its baseline. Manual edits and `keep_run` preserve that
-baseline; an accepted source update replaces it. Entity-content fingerprints cover kind,
-entity schema version, scope, payload and references.
+fingerprint that established its baseline. That version/fingerprint must match an
+`AppliedPackageVersion` in the same state; duplicate `package_id + source_version`
+records fail closed. Manual edits and `keep_run` preserve the source baseline; an
+accepted source update replaces it. Package/source/baseline fingerprints are strict
+lower-case SHA-256 values. Entity-content fingerprints cover kind, entity schema version,
+scope, payload and references.
 
 ## Preview and application
 

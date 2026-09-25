@@ -7,6 +7,7 @@ from beta_engine.api.deps import (
     get_initial_pool_season_bootstrap_service,
     get_runtime,
     get_run_package_service,
+    get_run_world_initial_pool_preview_service,
     get_run_working_draft_service,
     get_world_package_run_adapter,
 )
@@ -15,6 +16,10 @@ from beta_engine.application.season_player_bootstrap_service import (
     InitialPoolSeasonBootstrapService,
 )
 from beta_engine.application.run_package_service import RunPackageService
+from beta_engine.application.run_world_initial_pool_preview_service import (
+    RunWorldInitialPoolPreviewRequest,
+    RunWorldInitialPoolPreviewService,
+)
 from beta_engine.application.run_working_draft_service import RunWorkingDraftService
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.initial_world import (
@@ -251,6 +256,37 @@ def save_initial_world(
         raise HTTPException(
             status_code=409,
             detail={"code": "initial_world_save_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.post(
+    "/runs/{run_id}/branches/{branch_id}/initial-pool/world-package/preview"
+)
+def preview_run_world_initial_pool(
+    run_id: str,
+    branch_id: str,
+    payload: RunWorldInitialPoolPreviewRequest,
+    service: RunWorldInitialPoolPreviewService = Depends(
+        get_run_world_initial_pool_preview_service
+    ),
+):
+    try:
+        preview = service.preview(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+        return {
+            **preview.model_dump(mode="json"),
+            "preview_fingerprint": preview.preview_fingerprint,
+        }
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "run_world_initial_pool_preview_unavailable",
+                "message": str(exc),
+            },
         ) from exc
 
 

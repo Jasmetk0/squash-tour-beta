@@ -81,4 +81,27 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         status, changed_source_preview = _request(
             "POST", source_root + "/preview"
         )
-        assert status == 409, changed_source_preview
+        assert status == 200, changed_source_preview
+        assert (
+            changed_source_preview["document"]["source_fingerprint"]
+            != preview["document"]["source_fingerprint"]
+        )
+        status, rejected_update = _request(
+            "POST",
+            source_root + "/confirm",
+            {
+                "command_id": "reject-same-version-source-change",
+                "expected_head_revision_id": changed_source_preview[
+                    "saved_head_revision_id"
+                ],
+                "expected_draft_version": changed_source_preview["draft_version"],
+                "expected_state_fingerprint": changed_source_preview[
+                    "current_state_fingerprint"
+                ],
+                "expected_preview_fingerprint": changed_source_preview[
+                    "preview_fingerprint"
+                ],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 409, rejected_update

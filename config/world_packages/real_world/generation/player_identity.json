@@ -1,0 +1,7 @@
+{
+  "given_names": ["Ari", "Leo", "Noah", "Omar", "Yuri", "Rami", "Jude", "Milo", "Sami", "Ivo"],
+  "family_names": ["Khan", "Farag", "Asal", "Coll", "Elias", "Gawad", "Ibrahim", "Willstrop", "Makin", "Rosner"],
+  "play_styles": ["attacking", "counter-punching", "retrieving", "front-court", "tempo-controller"],
+  "archetypes": ["explosive shotmaker", "durable grinder", "all-court tactician", "quick interceptor", "late-blooming worker"],
+  "growth_curves": ["early", "balanced", "late"]
+}

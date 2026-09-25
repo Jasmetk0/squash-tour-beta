@@ -8,7 +8,7 @@ Run-owned World snapshot.
 
 This branch closes the next legacy/global dependency inside that same World domain:
 
-- built-in World Packages now carry `generation/player_identity.json`;
+- `Official FAX World` now carries `generation/player_identity.json`; the adapter supports the same optional entity for other World Packages without expanding their content automatically;
 - the World Package semantic fingerprint includes that generation config;
 - canonical World Package application materializes it as
   `world.player_identity.v1`;

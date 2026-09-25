@@ -10,6 +10,7 @@ from beta_engine.api.deps import (
     get_season_point_awards_service,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.authoritative_week_transition import (
     AuthoritativeWeekTransitionRunner,
 )
@@ -19,6 +20,7 @@ from beta_engine.infrastructure.db.models import (
 )
 from tests.api.test_initial_world_ranking_integration import _post_headers
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
+from tests.support.world_packages import copy_builtin_world_packages
 
 from test_authoritative_empty_week_completion import (
     _remove_week_two_source_fixture,
@@ -411,8 +413,8 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     server, week_one_package = _server_state(tmp_path)
     _remove_week_two_source_fixture(server)
     db_path = tmp_path / "api.sqlite"
-    pool_path = tmp_path / "official-initial-pool.json"
-    server.app.state.initial_player_pool_config_path = pool_path
+    world_packages_root = copy_builtin_world_packages(tmp_path / "world-packages")
+    server.app.state.world_packages_root = world_packages_root
 
     matches = server.app.dependency_overrides[get_season_match_service]()
     awards = server.app.dependency_overrides[get_season_point_awards_service]()
@@ -442,40 +444,68 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
     }
 
     with server:
-        status, countries = _request("GET", server.base_url + "/world/countries")
-        assert status == 200, countries
-        country_code = countries["countries"][0]["code"]
-
-        for index, player_id in enumerate(participant_ids):
-            status, created = _request(
-                "POST",
-                server.base_url + "/admin/players/custom",
-                _custom_player(player_id, index, country_code),
-            )
-            assert status == 200, created
-
         run_id, branch_id, revision = _create_run(
             server,
             display_name="Official Run whole-season acceptance",
         )
+
+        package_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/packages"
+        )
+        source_world_root = (
+            package_root + f"/source-world/{OFFICIAL_FAX_WORLD_ID}"
+        )
+        status, package_preview = _request(
+            "POST", source_world_root + "/preview"
+        )
+        assert status == 200, package_preview
+        status, applied_world = _request(
+            "POST",
+            source_world_root + "/confirm",
+            {
+                "command_id": "official-full-season-apply-world",
+                "expected_head_revision_id": package_preview[
+                    "saved_head_revision_id"
+                ],
+                "expected_draft_version": package_preview["draft_version"],
+                "expected_state_fingerprint": package_preview[
+                    "current_state_fingerprint"
+                ],
+                "expected_preview_fingerprint": package_preview[
+                    "preview_fingerprint"
+                ],
+                "conflict_resolutions": {},
+            },
+        )
+        assert status == 200, applied_world
+
         world_root = (
             f"{server.base_url}/admin/players/runs/{run_id}/branches/{branch_id}"
             "/initial-world"
         )
+        generation = {
+            "world_package_id": OFFICIAL_FAX_WORLD_ID,
+            "season": "2000/2001",
+            "seed": 200001,
+            "target_pool_size": len(participant_ids),
+        }
         adoption = {
             "command_id": "official-full-season-adopt-world",
-            "source_season": "2000/2001",
-            "bootstrap_seed": 200001,
+            "generation": generation,
             "audit_label": "Official Run acceptance admin",
-            "audit_reason": "Adopt production Initial World for Master §31.3",
+            "audit_reason": (
+                "Adopt Run-owned Official FAX World generated players for Master §31.3"
+            ),
             "official_run": True,
         }
         status, world_preview = _request(
             "POST",
-            world_root + "/preview",
+            world_root + "/world-package/preview",
             adoption,
         )
         assert status == 200, world_preview
+        assert world_preview["state"]["source_kind"] == "run_world_generated_pool.v1"
+        assert world_preview["state"]["world_package_id"] == OFFICIAL_FAX_WORLD_ID
         assert world_preview["state"]["policies"] == [
             {
                 "policy_id": "msa-official-2000-01",
@@ -483,8 +513,27 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
                 "tie_break_version": "result_profile_age_previous_token.v1",
             }
         ]
+        generated_ids = tuple(
+            sorted(player["player_id"] for player in world_preview["state"]["players"])
+        )
+        assert len(generated_ids) == len(participant_ids)
+
+        # Tournament/Calendar content is still a source fixture in this acceptance.
+        # Bind that fixture to the real Run-owned generated roster rather than creating
+        # fixture-only players. Package ownership of tournament content is the next
+        # separate migration boundary.
+        player_id_map = dict(zip(sorted(participant_ids), generated_ids, strict=True))
+        match_registry = matches._load_registry()
+        stored_week_one = match_registry.matches_by_event_id[week_one_package.event_id]
+        for match in stored_week_one.main_draw_matches:
+            if match.top_player_id in player_id_map:
+                match.top_player_id = player_id_map[match.top_player_id]
+            if match.bottom_player_id in player_id_map:
+                match.bottom_player_id = player_id_map[match.bottom_player_id]
+        matches._save_registry(match_registry)
+
         status, adopted = _post_headers(
-            world_root,
+            world_root + "/world-package",
             adoption,
             {
                 "X-Initial-World-Preview-Fingerprint": world_preview[
@@ -494,8 +543,11 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert status == 201, adopted
         assert {player["player_id"] for player in adopted["players"]} == set(
-            participant_ids
+            generated_ids
         )
+        assert adopted["run_world_pool_preview_fingerprint"] == world_preview[
+            "state"
+        ]["run_world_pool_preview_fingerprint"]
         revision = _save_initial_world(world_root)
 
         ranking_root, transition_root, sim_root = _roots(

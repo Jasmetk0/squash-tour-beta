@@ -399,11 +399,6 @@ class RunPackageService:
                 for e in (old.entities if old else ())
             }
             allocator = session.get(RunPackageIdentityAllocatorModel, run_id)
-            if allocator is None:
-                allocator = RunPackageIdentityAllocatorModel(
-                    run_id=run_id, next_run_local_id=1
-                )
-                session.add(allocator)
             changed = False
             versions = list(old.package_versions if old else ())
             documents_to_record = (
@@ -498,10 +493,17 @@ class RunPackageService:
                         continue
                     key = (leaf.package_id, entity.source_entity_id)
                     prior = entity_map.get(key)
+                    if prior is None and allocator is None:
+                        allocator = RunPackageIdentityAllocatorModel(
+                            run_id=run_id, next_run_local_id=1
+                        )
+                        session.add(allocator)
                     candidate = RunPackageEntity(
-                        run_local_id=prior.run_local_id
-                        if prior
-                        else allocator.next_run_local_id,
+                        run_local_id=(
+                            prior.run_local_id
+                            if prior is not None
+                            else allocator.next_run_local_id
+                        ),
                         source_package_id=leaf.package_id,
                         source_package_version=leaf.source_version,
                         source_package_fingerprint=leaf.source_fingerprint,

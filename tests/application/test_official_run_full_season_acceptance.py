@@ -10,15 +10,9 @@ from beta_engine.api.deps import (
     get_season_point_awards_service,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.domain.tournaments.application_submission_authority import (
-    TournamentApplicationSubmissionAuthority,
-)
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.authoritative_week_transition import (
     AuthoritativeWeekTransitionRunner,
-)
-from beta_engine.infrastructure.db.tournament_application_submissions import (
-    TournamentApplicationSubmissionStore,
 )
 from beta_engine.infrastructure.db.models import (
     PlayerSportingWeekStateModel,
@@ -593,23 +587,6 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert len(generated_ids) == len(participant_ids)
 
-        # Compatibility Entry/award builders still read the legacy active-player
-        # registry. Keep only that roster aligned to the Run-owned generated identities;
-        # Week-1 tournament topology itself will be rebuilt canonically below.
-        player_id_map = dict(zip(sorted(participant_ids), generated_ids, strict=True))
-        active_registry = matches.active_players_service._load_registry()
-        active_players = active_registry.players_by_season["2000/2001"]
-        rebound_players = []
-        for player in active_players:
-            rebound_id = player_id_map.get(player.player_id)
-            rebound_players.append(
-                player.model_copy(update={"player_id": rebound_id})
-                if rebound_id is not None
-                else player
-            )
-        active_registry.players_by_season["2000/2001"] = rebound_players
-        matches.active_players_service._save_registry(active_registry)
-
         status, adopted = _post_headers(
             world_root + "/world-package",
             adoption,
@@ -683,31 +660,81 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             "week": 1,
         }
 
-        with server.app.state.runtime.repository._session_factory.begin() as session:
-            submissions = TournamentApplicationSubmissionStore(session)
-            for index, player_id in enumerate(generated_ids, start=1):
-                submissions.append(
-                    TournamentApplicationSubmissionAuthority(
-                        application_id=f"official-week-1-app-{index}",
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event_id,
-                        player_id=player_id,
-                        entry_window="main",
-                        submission_week=RankingWeek(season_index=0, week=1),
-                        decision_slot_ordinal=1,
-                        nr_tie_break_token=f"official-week-1-{index:02d}",
-                        validation_authority_id=(
-                            f"official-week-1-validation-{index}"
-                        ),
-                        validation_authority_fingerprint=(
-                            f"{index:064x}"[-64:]
-                        ),
-                        provenance=(
-                            "Master §31.3 acceptance valid application evidence"
-                        ),
-                    )
-                )
+        entry_preview_payload = {
+            "event_ids": [event_id],
+            "decision_slot_ordinal": 1,
+            "seed": 200001,
+        }
+        status, entry_preview = _request(
+            "POST",
+            sim_root + "/entry-decision-slot/preview",
+            entry_preview_payload,
+        )
+        assert status == 200, entry_preview
+        assert entry_preview["event_ids"] == [event_id]
+        assert entry_preview["decision_count"] == len(generated_ids)
+        assert {
+            decision["player_id"]
+            for decision in entry_preview["authority"]["decisions"]
+        } == set(generated_ids)
+
+        status, entry_slot = _request(
+            "POST",
+            sim_root + "/entry-decision-slot/commit",
+            {
+                "command_id": "official-week-1-entry-slot",
+                "expected_week": entry_preview["week"],
+                "expected_revision_id": entry_preview["expected_revision_id"],
+                "decision_slot_ordinal": 1,
+                "event_ids": [event_id],
+                "seed": 200001,
+                "expected_entry_batch_fingerprint": entry_preview[
+                    "entry_batch_fingerprint"
+                ],
+                "expected_slot_fingerprint": entry_preview["slot_fingerprint"],
+            },
+        )
+        assert status == 201, entry_slot
+        assert entry_slot["decision_count"] == len(generated_ids)
+
+        status, entry_position = _request("GET", sim_root + "/position")
+        assert status == 200, entry_position
+        assert entry_position["current_slot_kind"] == "entry"
+        assert entry_position["slot_ordinal"] == 1
+
+        reviews = [
+            {
+                "event_id": decision["event_id"],
+                "player_id": decision["player_id"],
+                "outcome": "valid",
+                "reasons": [],
+            }
+            for decision in sorted(
+                entry_slot["authority"]["decisions"],
+                key=lambda item: (item["event_id"], item["player_id"]),
+            )
+        ]
+        status, validated_entry = _request(
+            "POST",
+            sim_root + "/entry-decision-slot/validation/review",
+            {
+                "command_id": "official-week-1-entry-validation",
+                "expected_week": entry_slot["week"],
+                "expected_revision_id": entry_preview["expected_revision_id"],
+                "expected_position_fingerprint": entry_position[
+                    "position_fingerprint"
+                ],
+                "decision_slot_ordinal": 1,
+                "expected_entry_slot_fingerprint": entry_slot[
+                    "slot_fingerprint"
+                ],
+                "operator_label": "Official Run acceptance admin",
+                "reason": "Review Week-1 Run-owned Entry decisions",
+                "reviews": reviews,
+            },
+        )
+        assert status == 201, validated_entry
+        assert validated_entry["valid_submission_count"] == len(generated_ids)
 
         entry_field_root = tournament_root + "/entry-field"
         status, entry_field = _request(

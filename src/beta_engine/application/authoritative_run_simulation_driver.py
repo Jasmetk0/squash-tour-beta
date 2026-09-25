@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Callable, Literal
 
 from pydantic import Field, model_validator
@@ -72,6 +72,9 @@ from beta_engine.application.season_entry_batch_service import (
 )
 from beta_engine.application.run_entry_decision_slot import (
     freeze_entry_batch_proposal_as_run_slot,
+)
+from beta_engine.application.run_owned_entry_roster import (
+    RunOwnedInitialEntryRosterService,
 )
 from beta_engine.domain.tournaments.application_validation_authority import (
     ResolvedApplicationValidationSlot,
@@ -994,55 +997,28 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
-    def _validate_legacy_entry_roster_against_run(
+    def _run_owned_entry_list_service(
         self,
         session: Session,
         *,
         run_id: str,
         branch_id: str,
         week: RankingWeek,
-    ) -> None:
-        """Fail closed unless compatibility Entry AI sees the owned active sporting roster."""
+    ):
+        """Scope the compatibility Entry engine to authoritative Run-owned roster truth."""
 
-        lifecycle = get_lifecycle(
-            session,
+        base = self.match_service.draw_service.entry_list_service
+        roster = RunOwnedInitialEntryRosterService(
+            session=session,
             run_id=run_id,
             branch_id=branch_id,
             week=week,
         )
-        sporting = get_sporting(
-            session,
-            run_id=run_id,
-            branch_id=branch_id,
-            week=week,
-        )
-        if lifecycle is None or sporting is None:
-            raise ValueError(
-                "Authoritative Entry decisions require lifecycle and sporting roster"
-            )
-
-        sporting_ids = {player.player_id for player in sporting.players}
-        owned_ids = tuple(
-            sorted(
-                player.player_id
-                for player in lifecycle.players
-                if player.status == "active" and player.player_id in sporting_ids
-            )
-        )
+        # Materialize now so missing owned profile/lifecycle/sporting state fails
+        # before the deterministic Entry batch is built.
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-        compatibility = (
-            self.match_service.draw_service.entry_list_service.active_players_service
-            .get_active_players(season=season)
-            .players
-        )
-        compatibility_ids = tuple(
-            sorted(player.player_id for player in compatibility)
-        )
-        if compatibility_ids != owned_ids:
-            raise ValueError(
-                "Compatibility Entry AI roster differs from authoritative "
-                "Run/Branch active sporting roster"
-            )
+        roster.get_active_players(season=season)
+        return replace(base, active_players_service=roster)
 
     def preview_entry_decision_slot(
         self,
@@ -1067,14 +1043,14 @@ class AuthoritativeRunSimulationDriver:
             if branch is None or not branch.saved_head_revision_id:
                 raise ValueError("Entry decision preview requires a saved Branch head")
 
-            self._validate_legacy_entry_roster_against_run(
+            entry_service = self._run_owned_entry_list_service(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
                 week=week,
             )
             batch = SeasonEntryBatchService(
-                self.match_service.draw_service.entry_list_service
+                entry_service
             ).generate_overlapping_entry_lists(
                 event_ids=list(event_ids),
                 request=EntryBatchGenerateRequest(
@@ -1138,14 +1114,14 @@ class AuthoritativeRunSimulationDriver:
             ):
                 raise ValueError("Entry decision Branch head is stale")
 
-            self._validate_legacy_entry_roster_against_run(
+            entry_service = self._run_owned_entry_list_service(
                 session,
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 week=week,
             )
             batch = SeasonEntryBatchService(
-                self.match_service.draw_service.entry_list_service
+                entry_service
             ).generate_overlapping_entry_lists(
                 event_ids=list(command.event_ids),
                 request=EntryBatchGenerateRequest(

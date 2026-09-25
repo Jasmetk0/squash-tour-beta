@@ -298,123 +298,6 @@ def test_canonical_next_week_finishes_week_one_and_publishes_week_two(
         _prepare_initial_ranking(ranking_root)
         revision = _save_ranking(None, ranking_root)
 
-        event_id = week_one_package.event_id
-        tournament_root = (
-            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
-            f"/tournaments/{event_id}"
-        )
-        ranking_authority_root = tournament_root + "/ranking-snapshot-authority"
-        status, tournament_ranking = _request(
-            "POST",
-            ranking_authority_root,
-            {
-                "command_id": "official-week-1-ranking-authority",
-                "ranking_week": {"season_index": 0, "week": 1},
-            },
-        )
-        assert status == 201, tournament_ranking
-        assert tournament_ranking["event_id"] == event_id
-        assert tournament_ranking["ranking_week"] == {
-            "season_index": 0,
-            "week": 1,
-        }
-
-        with server.app.state.runtime.repository._session_factory.begin() as session:
-            submissions = TournamentApplicationSubmissionStore(session)
-            for index, player_id in enumerate(generated_ids, start=1):
-                submissions.append(
-                    TournamentApplicationSubmissionAuthority(
-                        application_id=f"official-week-1-app-{index}",
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event_id,
-                        player_id=player_id,
-                        entry_window="main",
-                        submission_week=RankingWeek(season_index=0, week=1),
-                        decision_slot_ordinal=1,
-                        nr_tie_break_token=f"official-week-1-{index:02d}",
-                        validation_authority_id=(
-                            f"official-week-1-validation-{index}"
-                        ),
-                        validation_authority_fingerprint=(
-                            f"{index:064x}"[-64:]
-                        ),
-                        provenance=(
-                            "Master §31.3 acceptance valid application evidence"
-                        ),
-                    )
-                )
-
-        entry_field_root = tournament_root + "/entry-field"
-        status, entry_field = _request(
-            "POST",
-            entry_field_root + "/from-valid-submissions",
-            {
-                "command_id": "official-week-1-entry-field",
-                "capacity": {
-                    "main_draw_size": 4,
-                    "qualification_draw_size": 0,
-                    "qualifier_spots": 0,
-                    "wild_card_slots": 0,
-                    "bye_slots": 0,
-                },
-            },
-        )
-        assert status == 201, entry_field
-        assert set(entry_field["direct_main_player_ids"]) == set(generated_ids)
-        status, entry_field_state = _request("GET", entry_field_root)
-        assert status == 200, entry_field_state
-        assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
-
-        draw_root = tournament_root + "/draw"
-        status, draw_input = _request(
-            "POST",
-            draw_root + "/commit-input",
-            {
-                "command_id": "official-week-1-draw-input",
-                "run_id": run_id,
-                "branch_id": branch_id,
-                "event_id": event_id,
-                "expected_field_fingerprint": entry_field_state["field_fingerprint"],
-                "draw_seed": 200001,
-            },
-        )
-        assert status == 200, draw_input
-        assert draw_input["draw_input_committed"] is True
-
-        status, generated_draw = _request(
-            "POST",
-            draw_root + "/generate",
-            {
-                "command_id": "official-week-1-generate-draw",
-                "run_id": run_id,
-                "branch_id": branch_id,
-                "event_id": event_id,
-                "expected_draw_input_fingerprint": draw_input[
-                    "draw_input_fingerprint"
-                ],
-            },
-        )
-        assert status == 200, generated_draw
-        assert generated_draw["initial_draw_generated"] is True
-
-        status, draw_authority = _request("GET", draw_root + "/effective-authority")
-        assert status == 200, draw_authority
-        assert draw_authority["event_id"] == event_id
-        assert {
-            slot["player_id"]
-            for slot in draw_authority["main"]["slots"]
-            if slot["entrant_kind"] == "player"
-        } == set(generated_ids)
-
-        # Remove the old Week-1 MatchPackage source completely. From this point the
-        # authoritative driver must derive its compatibility MatchPackage from the
-        # Run-owned canonical Draw + Run-owned Calendar or the acceptance will fail.
-        match_registry = matches._load_registry()
-        match_registry.matches_by_event_id.pop(event_id, None)
-        matches._save_registry(match_registry)
-        assert event_id not in matches._load_registry().matches_by_event_id
-
         status, proposed = _request(
             "GET",
             sim_root + "/week-schedule/proposal",
@@ -749,6 +632,123 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         _prepare_initial_ranking(ranking_root)
         revision = _save_ranking(None, ranking_root)
+
+        event_id = week_one_package.event_id
+        tournament_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{event_id}"
+        )
+        ranking_authority_root = tournament_root + "/ranking-snapshot-authority"
+        status, tournament_ranking = _request(
+            "POST",
+            ranking_authority_root,
+            {
+                "command_id": "official-week-1-ranking-authority",
+                "ranking_week": {"season_index": 0, "week": 1},
+            },
+        )
+        assert status == 201, tournament_ranking
+        assert tournament_ranking["event_id"] == event_id
+        assert tournament_ranking["ranking_week"] == {
+            "season_index": 0,
+            "week": 1,
+        }
+
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            submissions = TournamentApplicationSubmissionStore(session)
+            for index, player_id in enumerate(generated_ids, start=1):
+                submissions.append(
+                    TournamentApplicationSubmissionAuthority(
+                        application_id=f"official-week-1-app-{index}",
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
+                        player_id=player_id,
+                        entry_window="main",
+                        submission_week=RankingWeek(season_index=0, week=1),
+                        decision_slot_ordinal=1,
+                        nr_tie_break_token=f"official-week-1-{index:02d}",
+                        validation_authority_id=(
+                            f"official-week-1-validation-{index}"
+                        ),
+                        validation_authority_fingerprint=(
+                            f"{index:064x}"[-64:]
+                        ),
+                        provenance=(
+                            "Master §31.3 acceptance valid application evidence"
+                        ),
+                    )
+                )
+
+        entry_field_root = tournament_root + "/entry-field"
+        status, entry_field = _request(
+            "POST",
+            entry_field_root + "/from-valid-submissions",
+            {
+                "command_id": "official-week-1-entry-field",
+                "capacity": {
+                    "main_draw_size": 4,
+                    "qualification_draw_size": 0,
+                    "qualifier_spots": 0,
+                    "wild_card_slots": 0,
+                    "bye_slots": 0,
+                },
+            },
+        )
+        assert status == 201, entry_field
+        assert set(entry_field["direct_main_player_ids"]) == set(generated_ids)
+        status, entry_field_state = _request("GET", entry_field_root)
+        assert status == 200, entry_field_state
+        assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
+
+        draw_root = tournament_root + "/draw"
+        status, draw_input = _request(
+            "POST",
+            draw_root + "/commit-input",
+            {
+                "command_id": "official-week-1-draw-input",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "expected_field_fingerprint": entry_field_state["field_fingerprint"],
+                "draw_seed": 200001,
+            },
+        )
+        assert status == 200, draw_input
+        assert draw_input["draw_input_committed"] is True
+
+        status, generated_draw = _request(
+            "POST",
+            draw_root + "/generate",
+            {
+                "command_id": "official-week-1-generate-draw",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "expected_draw_input_fingerprint": draw_input[
+                    "draw_input_fingerprint"
+                ],
+            },
+        )
+        assert status == 200, generated_draw
+        assert generated_draw["initial_draw_generated"] is True
+
+        status, draw_authority = _request("GET", draw_root + "/effective-authority")
+        assert status == 200, draw_authority
+        assert draw_authority["event_id"] == event_id
+        assert {
+            slot["player_id"]
+            for slot in draw_authority["main"]["slots"]
+            if slot["entrant_kind"] == "player"
+        } == set(generated_ids)
+
+        # Remove the old Week-1 MatchPackage source completely. From this point the
+        # authoritative driver must derive its compatibility MatchPackage from the
+        # Run-owned canonical Draw + Run-owned Calendar or the acceptance will fail.
+        match_registry = matches._load_registry()
+        match_registry.matches_by_event_id.pop(event_id, None)
+        matches._save_registry(match_registry)
+        assert event_id not in matches._load_registry().matches_by_event_id
 
         status, proposed = _request(
             "GET",

@@ -195,3 +195,27 @@ def get_run_world_countries(
         raise HTTPException(404, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(409, str(exc)) from exc
+
+
+@router.get("/world/{package_id}/generation")
+def get_run_world_generation(
+    run_id: str,
+    branch_id: str,
+    package_id: str,
+    service: RunPackageService = Depends(get_run_package_service),
+    adapter: WorldPackageRunAdapter = Depends(get_world_package_run_adapter),
+):
+    try:
+        state = service.get(run_id=run_id, branch_id=branch_id)
+        if state is None:
+            raise RunPackageNotFoundError("Run Package state was not found")
+        projection = adapter.project_generation(state, package_id=package_id)
+        return {
+            **projection.model_dump(mode="json"),
+            "fingerprint": projection.fingerprint,
+            "content_fingerprint": projection.content_fingerprint,
+        }
+    except RunPackageNotFoundError as exc:
+        raise HTTPException(404, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc

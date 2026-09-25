@@ -2,6 +2,7 @@
 
 ## Active implementation — Official Week-1 topology moves to canonical Draw authority
 
+- the prepared Week-1 bootstrap ranking is now explicitly published before any tournament field/draw authority is created; this initializes the authoritative world clock at Week 1 instead of deferring first publication until the Week 1 → Week 2 transition;
 After #980, the release-gating Run owns World, InitialWorld and Season-0 Calendar.
 This branch removes the next fixture-owned sporting source from the Master §31.3 path:
 

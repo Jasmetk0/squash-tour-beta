@@ -83,8 +83,10 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         )
         assert status == 200, changed_source_preview
         assert (
-            changed_source_preview["document"]["source_fingerprint"]
-            != preview["document"]["source_fingerprint"]
+            changed_source_preview["document"]["provenance"][
+                "source_calendar_fingerprint"
+            ]
+            != preview["document"]["provenance"]["source_calendar_fingerprint"]
         )
         status, rejected_update = _request(
             "POST",

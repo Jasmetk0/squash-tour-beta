@@ -1,5 +1,23 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — remove fixture ownership from Official Run acceptance
+
+1. **World player bootstrap in whole-season acceptance:** this branch applies Official
+   FAX World through the Run Package boundary, generates the first-season roster from
+   Run-owned World state and adopts it directly into InitialWorld.
+2. The acceptance no longer creates bespoke global initial-pool players merely to match
+   tournament fixture IDs; the remaining fixture bracket is rebound to the generated
+   roster.
+3. **Next:** migrate the concrete Season-0 tournament/Calendar fixture ownership behind
+   stable source identities and canonical Run Package/application semantics. Do not
+   infer unresolved Category/Series/Calendar product relationships just to eliminate a
+   test fixture.
+4. Preserve the already-canonical ranking, Week/Season Transition, Save/reopen and Full
+   Simulation orchestration while replacing only bootstrap/content ownership.
+5. Release gate remains Master §31.3 Official Run → complete season → Save/reopen →
+   Season Transition → next Season Week 1 with no fixture-only or live-global ownership.
+
+
 ## Active pre-alpha sequence — complete World bootstrap ownership
 
 1. **Run-owned World player bootstrap: implemented on this branch.** Player identity

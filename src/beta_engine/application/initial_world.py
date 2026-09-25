@@ -21,13 +21,20 @@ class InitialWorldState(BaseModel):
     season: Literal["2000/2001"] = "2000/2001"
     players: tuple[SeasonActivePlayer, ...]
     policies: tuple[OfficialRankingPolicy, ...] = ()
-    source_kind: Literal["production_initial_pool.v1", "manual_standalone.v1"]
+    source_kind: Literal[
+        "production_initial_pool.v1",
+        "manual_standalone.v1",
+        "run_world_generated_pool.v1",
+    ]
     source_season: str = Field(min_length=1)
     source_fingerprint: str = Field(min_length=1)
     world_package_id: str | None = Field(
         default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
     )
     world_country_content_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    world_generation_content_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     bootstrap_seed: int
@@ -60,6 +67,21 @@ class InitialWorldState(BaseModel):
             raise ValueError(
                 "Initial World World-Package provenance must be complete or absent"
             )
+        if self.source_kind == "run_world_generated_pool.v1":
+            if (
+                self.world_package_id is None
+                or self.world_country_content_fingerprint is None
+                or self.world_generation_content_fingerprint is None
+            ):
+                raise ValueError(
+                    "Run-owned generated Initial World requires complete World "
+                    "Package generation provenance"
+                )
+        elif self.world_generation_content_fingerprint is not None:
+            raise ValueError(
+                "World generation provenance is reserved for Run-owned generated "
+                "Initial World state"
+            )
         return self
 
     @property
@@ -69,6 +91,26 @@ class InitialWorldState(BaseModel):
                 self.model_dump(mode="json"), sort_keys=True, separators=(",", ":")
             ).encode()
         ).hexdigest()
+
+
+def resolve_initial_world_lifecycle_policy(
+    *,
+    official_run: bool,
+    automatic_retirement_age: int | None,
+):
+    from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+
+    if automatic_retirement_age is None or official_run:
+        return PlayerLifecyclePolicy(
+            policy_id="official-fax-lifecycle.v1",
+            automatic_retirement_age=46,
+            provenance="Official Run default; legacy v1 lifecycle migration",
+        )
+    return PlayerLifecyclePolicy(
+        policy_id="custom-lifecycle.v1",
+        automatic_retirement_age=automatic_retirement_age,
+        provenance="Explicit custom Initial World adoption policy",
+    )
 
 
 class InitialWorldAdoptionRequest(BaseModel):

@@ -24,7 +24,7 @@ SourceGeneration = Literal["initial_pool", "annual_intake", "manual", "imported"
 
 
 class SeasonActivePlayer(BaseModel):
-    """Canonical active-player record created by the initial-pool bootstrap boundary."""
+    """Legacy-compatible active-player DTO used by bootstrap and migration adapters."""
 
     model_config = ConfigDict(extra="forbid")
 

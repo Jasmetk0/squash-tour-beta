@@ -24,6 +24,12 @@ class InitialWorldState(BaseModel):
     source_kind: Literal["production_initial_pool.v1", "manual_standalone.v1"]
     source_season: str = Field(min_length=1)
     source_fingerprint: str = Field(min_length=1)
+    world_package_id: str | None = Field(
+        default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    )
+    world_country_content_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     bootstrap_seed: int
     bootstrap_fingerprint: str = Field(min_length=1)
     adopted_by_command_id: str = Field(min_length=1, max_length=128)
@@ -48,6 +54,12 @@ class InitialWorldState(BaseModel):
         policy_ids = [policy.policy_id for policy in self.policies]
         if policy_ids != sorted(set(policy_ids)):
             raise ValueError("Ranking policies must have unique canonical identities")
+        if (self.world_package_id is None) != (
+            self.world_country_content_fingerprint is None
+        ):
+            raise ValueError(
+                "Initial World World-Package provenance must be complete or absent"
+            )
         return self
 
     @property
@@ -69,6 +81,9 @@ class InitialWorldAdoptionRequest(BaseModel):
     official_run: bool = False
     best_n: int | None = Field(default=None, ge=1)
     automatic_retirement_age: int | None = Field(default=None, ge=16, le=120)
+    world_package_id: str | None = Field(
+        default=None, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+    )
 
     @model_validator(mode="after")
     def policy_is_explicit(self) -> "InitialWorldAdoptionRequest":

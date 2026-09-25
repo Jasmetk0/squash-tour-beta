@@ -1,5 +1,21 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — authoritative Calendar consumption
+
+1. **Run-owned Calendar consumer:** authoritative simulation now prefers the applied
+   Calendar Package for Week Tournament Lock, canonical Draw execution, tournament
+   adoption snapshots and empty-week proof.
+2. Legacy Runs remain compatible through the existing SeasonCalendarService fallback;
+   historical legacy evidence fingerprints remain stable.
+3. **Next:** make the Official Run whole-season acceptance explicitly apply/save the
+   Season-0 Calendar Package so its release-gating path proves Run-owned Calendar use.
+4. Then migrate the remaining Week-1 tournament/match source fixture into a stable
+   Run-owned content boundary.
+5. Release gate remains Master §31.3 Official Run → complete season → Save/reopen →
+   Season Transition → next Season Week 1 without fixture-only or live-global
+   ownership.
+
+
 ## Active pre-alpha sequence — Calendar content ownership
 
 1. **Calendar source → Run snapshot:** this branch packages one authored season calendar

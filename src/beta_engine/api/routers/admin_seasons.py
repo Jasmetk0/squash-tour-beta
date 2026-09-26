@@ -6,7 +6,7 @@ import json
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
-from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_category_points_service, get_season_event_lifecycle_service, get_season_range_execution_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
+from beta_engine.api.deps import get_calendar_template_service, get_initial_pool_season_bootstrap_service, get_planning_calendar_apply_template_service, get_planning_season_calendar_service, get_season_builder_apply_audit_service, get_season_calendar_service, get_season_category_points_service, get_season_event_lifecycle_service, get_season_range_preflight_service, get_season_readiness_service, get_season_registry_service, get_season_template_service
 from beta_engine.api.schemas import SeasonBootstrapRequest
 from beta_engine.application.calendar_template_apply_contract_service import (
     CalendarTemplateApplyContractReadinessRequest,
@@ -53,7 +53,6 @@ from beta_engine.application.season_builder_apply_audit_service import (
 )
 from beta_engine.application.season_readiness_service import SeasonReadinessRequest, SeasonReadinessResult, SeasonReadinessService
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightResult, SeasonRangePreflightService
-from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, RunSeasonRangeResult, SeasonRangeExecutionService
 from beta_engine.application.season_registry_service import SeasonRegistryResponse, SeasonRegistryService
 from beta_engine.application.template_conflict_diagnostics import (
     build_template_conflict_diagnostics_overview,
@@ -430,14 +429,6 @@ def inspect_season_readiness(
     service: SeasonReadinessService = Depends(get_season_readiness_service),
 ) -> SeasonReadinessResult:
     return service.inspect_season(payload)
-
-
-@router.post("/range-run", response_model=RunSeasonRangeResult)
-def run_season_range(
-    payload: RunSeasonRangeRequest,
-    service: SeasonRangeExecutionService = Depends(get_season_range_execution_service),
-) -> RunSeasonRangeResult:
-    return service.run_range(payload)
 
 
 @router.post("/range-preflight", response_model=SeasonRangePreflightResult)

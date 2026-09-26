@@ -1,23 +1,22 @@
 # Current implementation and next action
 
-## Active implementation — retire legacy Season Range Run UI
+## Active implementation — remove legacy Season Range Run backend
 
-The first mutating legacy execution path is now removed from the supported Admin UI.
+The legacy multi-week mutating execution path is now removed end-to-end.
 
-- `AdminSeasonsPage` no longer imports or invokes `runSeasonRange`;
-- all Season Range Run form state, mutation wiring, result rendering and the
-  `Run range` action are removed from the page;
-- legacy Season Range **preflight** remains available as read-only historical
-  diagnostics;
-- the backend `POST /admin/seasons/range-run` compatibility endpoint is intentionally
-  retained for now, with its existing `legacy_global_season_tooling.v1` boundary;
-- tests prove the Admin UI exposes no Season Range Run heading or mutation button;
-- Official Run progression remains routed through Product Runs / Run/Branch
+- `POST /admin/seasons/range-run` is deleted from the Admin Seasons router;
+- `SeasonRangeExecutionService` and its dependency wiring are deleted;
+- legacy range-run web client methods and TypeScript result/request contracts are
+  removed;
+- range-run application/API tests are removed with the retired implementation;
+- read-only `Season Range Preflight` remains available for historical diagnostics;
+- one-week legacy execution remains isolated for now and is not canonical-run eligible;
+- Official Run progression continues exclusively through Product Runs / Run/Branch
   Authoritative Simulation.
 
-**Next after this PR:** audit direct backend/test-only callers of legacy range execution
-and decide whether the compatibility endpoint can be deprecated/removed, while keeping
-one-week legacy tooling isolated until its remaining diagnostic value is understood.
+**Next after this PR:** audit the remaining one-week legacy execution and one-event
+mutation surfaces, separating diagnostics worth retaining from mutation paths that can
+be retired next.
 
 
 ## Active implementation — canonical Tournament Preparation State

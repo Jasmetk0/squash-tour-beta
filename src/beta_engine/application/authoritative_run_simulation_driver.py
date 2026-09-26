@@ -287,6 +287,23 @@ class AuthoritativeLiveReturnCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeLiveConfirmCommand(FrozenInput):
+    """Explicitly confirm one completed working match result."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    expected_final_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class AuthoritativeMatchDayCommand(FrozenInput):
     """Resumable CAS-guarded orchestration of the current canonical Match Day."""
 
@@ -3311,7 +3328,7 @@ class AuthoritativeRunSimulationDriver:
                 raise RuntimeError(
                     f"fault after committed live-range child {child_ordinal}"
                 )
-            if last["status"] == "complete":
+            if last["status"] in {"completed_working", "complete"}:
                 if fault_after_terminal_child:
                     raise RuntimeError(
                         "fault after terminal live-range child before parent completion"
@@ -3400,6 +3417,101 @@ class AuthoritativeRunSimulationDriver:
             fault_after_child=fault_after_child,
             fault_after_terminal_child=fault_after_terminal_child,
         )
+
+    def confirm_completed_live_match(
+        self, command: AuthoritativeLiveConfirmCommand
+    ) -> dict:
+        """Promote a reviewed completed working result into authoritative history."""
+
+        request_fp = fingerprint(
+            {"mode": "live_confirm", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "live confirm command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("live confirm command receipt is incomplete")
+                replay = json.loads(receipt.result_json)
+                replay["idempotent_replay"] = True
+                return replay
+
+            before = self._position(session, command.run_id, command.branch_id)
+            self._validate_expected(session, command, before)
+            packages, _ = self._authority_package(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+                adopt=True,
+            )
+            self._ensure_current_slot(session, command, packages)
+            slot, _, _, _, _ = self._group_execution_context(
+                session, command, packages, command.group_id
+            )
+
+            from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+            working = session.get(
+                LiveMatchWorkingModel,
+                (
+                    command.run_id,
+                    command.branch_id,
+                    command.expected_week.ordinal,
+                    slot.slot_id,
+                    command.group_id,
+                ),
+            )
+            if working is None or working.status != "completed_working":
+                raise ValueError("live match is not awaiting confirmation")
+            if (
+                working.final_result_fingerprint
+                != command.expected_final_result_fingerprint
+            ):
+                raise ValueError("completed working result changed before confirmation")
+
+            promoted = AuthoritativeLiveMatchService(
+                session
+            ).confirm_completed_match(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                slot_id=slot.slot_id,
+                group_id=command.group_id,
+            )
+            self._advance_or_close(session, command, packages)
+            after = self._position(session, command.run_id, command.branch_id)
+            payload = {
+                "schema_version": "authoritative_live_confirm_result.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": command.expected_week.model_dump(mode="json"),
+                "slot_id": slot.slot_id,
+                "group_id": command.group_id,
+                "final_result_fingerprint": command.expected_final_result_fingerprint,
+                "position": after.model_dump(mode="json"),
+                **promoted,
+            }
+            payload["idempotent_replay"] = False
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

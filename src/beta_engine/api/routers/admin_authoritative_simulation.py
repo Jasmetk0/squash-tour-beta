@@ -546,6 +546,31 @@ def finalize_final_season(
         ) from exc
 
 
+@router.get("/week-schedule/preflight")
+def preflight_week_schedule(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_schedule_preflight(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "week_schedule_preflight_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("/week-schedule/proposal")
 def propose_week_schedule(
     run_id: str,

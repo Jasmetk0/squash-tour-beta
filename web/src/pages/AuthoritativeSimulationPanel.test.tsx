@@ -27,6 +27,8 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   inspectAuthoritativeLiveMatch: vi.fn(),
   inspectAuthoritativeLiveMatchTimeline: vi.fn(),
+  listAuthoritativeMatchReplays: vi.fn(),
+  getAuthoritativeMatchReplayCursor: vi.fn(),
   confirmAuthoritativeLiveMatch: vi.fn(),
   restoreAuthoritativeLiveReturnPoint: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
@@ -664,6 +666,13 @@ beforeEach(() => {
     group_id: 'g1',
     present: false,
     timeline: null
+  })
+  api.listAuthoritativeMatchReplays.mockResolvedValue({
+    schema_version: 'authoritative_match_replay_list.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    read_only: true,
+    matches: []
   })
   api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_pending_collection.v1',
@@ -1714,6 +1723,116 @@ describe('AuthoritativeSimulationPanel', () => {
         })
       )
     )
+  })
+
+  it('navigates completed authoritative replay with Step Back and Step Forward without simulation mutations', async () => {
+    api.listAuthoritativeMatchReplays.mockResolvedValue({
+      schema_version: 'authoritative_match_replay_list.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      read_only: true,
+      matches: [{
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: 'replay-g1',
+        match_id: 'match-1',
+        result_fingerprint: '1'.repeat(64),
+        winner_player_id: 'P001',
+        loser_player_id: 'P002',
+        total_rallies: 3,
+        match_log_hash: '3'.repeat(64),
+        replay_available: true
+      }]
+    })
+    api.getAuthoritativeMatchReplayCursor.mockImplementation(
+      async (_runId: string, _branchId: string, groupId: string, rallyIndex: number) => ({
+        schema_version: 'authoritative_match_replay_cursor.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: groupId,
+        match_id: 'match-1',
+        result_fingerprint: '1'.repeat(64),
+        match_log_hash: '3'.repeat(64),
+        rally_index: rallyIndex,
+        rally: {
+          schema_version: 'rally_event.v6',
+          match_id: 'match-1',
+          rally_index: rallyIndex,
+          set_number: 1,
+          rally_in_set: rallyIndex,
+          serving_player_id: 'P001',
+          winner_player_id: 'P001',
+          primary_terminal_trigger: 'GOOD_RETURN_UNANSWERED',
+          terminal_subtype: null,
+          official_resolution: 'POINT_AWARDED',
+          analytical_attribution: 'CLEAN_WINNER',
+          score_before: {
+            player_a_id: 'P001', player_b_id: 'P002',
+            sets_a: 0, sets_b: 0, points_a: rallyIndex - 1, points_b: 0
+          },
+          score_mutations: [],
+          score_after: {
+            player_a_id: 'P001', player_b_id: 'P002',
+            sets_a: 0, sets_b: 0, points_a: rallyIndex, points_b: 0
+          },
+          abstract_segments: 1,
+          estimated_shot_count: 4,
+          elapsed_seconds: 5,
+          rally_seed: '1',
+          post_rally_state: {
+            score: {
+              player_a_id: 'P001', player_b_id: 'P002',
+              sets_a: 0, sets_b: 0, points_a: rallyIndex, points_b: 0
+            },
+            next_server_player_id: 'P001',
+            set_complete: false,
+            match_complete: rallyIndex === 3
+          },
+          stamina_outcome_context: null,
+          effort_context: null,
+          control_trace: null,
+          gameplan_context: null,
+          rules_resolution: null,
+          service_box: null,
+          next_service_box: null,
+          side_incidents: [],
+          previous_event_hash: '2'.repeat(64),
+          event_hash_algorithm: 'sha256',
+          event_hash: rallyIndex === 3 ? '3'.repeat(64) : '2'.repeat(64)
+        },
+        navigation: {
+          total_rallies: 3,
+          rally_index: rallyIndex,
+          previous_rally_index: rallyIndex > 1 ? rallyIndex - 1 : null,
+          next_rally_index: rallyIndex < 3 ? rallyIndex + 1 : null,
+          at_start: rallyIndex === 1,
+          at_end: rallyIndex === 3
+        },
+        replay_source: 'stored_authoritative_events',
+        rng_rerun: false,
+        read_only: true,
+        verified: true
+      })
+    )
+    renderPanel()
+
+    expect(await screen.findByText('Read-only Match Replay')).toBeInTheDocument()
+    expect(await screen.findByText('1 / 3')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Step Forward' }))
+    expect(await screen.findByText('2 / 3')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Step Back' }))
+    expect(await screen.findByText('1 / 3')).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Last rally' }))
+    expect(await screen.findByText('3 / 3')).toBeInTheDocument()
+
+    expect(api.simulateAuthoritativeNextRally).not.toHaveBeenCalled()
+    expect(api.simulateAuthoritativeGame).not.toHaveBeenCalled()
+    expect(api.simulateAuthoritativeRestOfMatch).not.toHaveBeenCalled()
   })
 
   it('advances exactly one live rally and keeps the resumable state fingerprint in Admin', async () => {

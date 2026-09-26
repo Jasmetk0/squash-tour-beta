@@ -605,6 +605,22 @@ class LiveMatchAlternativePathModel(Base):
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
+class LiveMatchCompletedAlternativeModel(Base):
+    """Completed temporary match result displaced by restoring a return point."""
+
+    __tablename__ = "live_match_completed_alternatives"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    alternative_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    final_result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    final_result_json: Mapped[str] = mapped_column(Text, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
 class LiveMatchRallyCommandModel(Base):
     """Idempotency receipt for one persisted live Simulate Next Rally command."""
 

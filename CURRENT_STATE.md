@@ -1,24 +1,23 @@
 # Current implementation and next action
 
-## Active implementation — legacy season execution authority boundary
+## Active implementation — retire legacy Season Range Run UI
 
-Canonical Official Run execution is now explicitly separated from the old mutating
-global season commands.
+The first mutating legacy execution path is now removed from the supported Admin UI.
 
-- legacy Week Run and Season Range Run metadata declare
-  `authority_scope=legacy_global_season_tooling.v1`;
-- both declare `canonical_run_execution_eligible=false`;
-- their web client methods validate that boundary before accepting execution results;
-- Admin Seasons labels both commands LEGACY / MUTATING and no longer presents range
-  execution as the recommended pre-alpha workflow;
-- the workspace banner routes Official Run progression to Product Runs / Run/Branch
-  simulation instead;
-- legacy mutation remains available only for historical compatibility while canonical
-  Authoritative Simulation retains Run/Branch ownership.
+- `AdminSeasonsPage` no longer imports or invokes `runSeasonRange`;
+- all Season Range Run form state, mutation wiring, result rendering and the
+  `Run range` action are removed from the page;
+- legacy Season Range **preflight** remains available as read-only historical
+  diagnostics;
+- the backend `POST /admin/seasons/range-run` compatibility endpoint is intentionally
+  retained for now, with its existing `legacy_global_season_tooling.v1` boundary;
+- tests prove the Admin UI exposes no Season Range Run heading or mutation button;
+- Official Run progression remains routed through Product Runs / Run/Branch
+  Authoritative Simulation.
 
-**Next after this PR:** identify which legacy mutating command has no remaining supported
-compatibility consumer, then disable its UI entry point before deleting backend execution
-code in a later cleanup.
+**Next after this PR:** audit direct backend/test-only callers of legacy range execution
+and decide whether the compatibility endpoint can be deprecated/removed, while keeping
+one-week legacy tooling isolated until its remaining diagnostic value is understood.
 
 
 ## Active implementation — canonical Tournament Preparation State

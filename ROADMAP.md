@@ -1,16 +1,16 @@
 # Squash Engine roadmap
 
-## Active pre-alpha sequence — canonical Week Schedule Admin navigation
+## Active pre-alpha sequence — legacy season readiness authority boundary
 
-1. Week Schedule preflight is the authoritative Run/Branch readiness snapshot.
-2. Canonical Draw-backed proposal/adoption fails closed until every event is
-   `draw_ready`.
-3. Admin UI now consumes preflight directly, shows tournament phases/blockers and
-   disables proposal before a failing request.
-4. Legacy schedule inspection remains only for adopted schedule payload display;
-   readiness/navigation no longer depends on its duplicate inference.
-5. Next: audit old season/week readiness endpoints and remove duplicate preparation
-   inference where canonical ownership is complete.
+1. Canonical Week Schedule preflight remains the only Run/Branch readiness source.
+2. Legacy week preflight, season readiness and season range preflight now self-identify
+   as `legacy_global_season_tooling.v1`.
+3. Those responses explicitly declare `canonical_run_readiness_eligible=false`, and
+   the web client validates the boundary.
+4. Admin Seasons keeps the historical diagnostics but labels them LEGACY / READ-ONLY
+   instead of presenting them as canonical readiness.
+5. Next: audit mutating legacy week/range execution callers and isolate or remove the
+   first path no longer needed by supported historical workflows.
 
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

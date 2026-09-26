@@ -102,6 +102,10 @@ class SeasonReadinessMetadata(BaseModel):
     source: Literal["season_week_recovery_aggregation"] = SEASON_READINESS_SOURCE
     generated_fingerprint: str
     read_only: bool = True
+    authority_scope: Literal["legacy_global_season_tooling.v1"] = (
+        "legacy_global_season_tooling.v1"
+    )
+    canonical_run_readiness_eligible: Literal[False] = False
 
 
 class SeasonReadinessResult(BaseModel):
@@ -124,7 +128,11 @@ class SeasonReadinessService:
         calendar_result = self.calendar_service.get_calendar(season=request.season)
         calendar_missing = calendar_result.calendar is None
         calendar_errors = [self._issue_text(issue) for issue in calendar_result.validation_errors]
-        warnings = self._dedupe([SEASON_READINESS_READ_ONLY_WARNING, *[self._issue_text(issue) for issue in calendar_result.validation_warnings]])
+        warnings = self._dedupe([
+            SEASON_READINESS_READ_ONLY_WARNING,
+            "Legacy season readiness is global season tooling only; it is not canonical Run/Branch readiness.",
+            *[self._issue_text(issue) for issue in calendar_result.validation_warnings],
+        ])
         errors = self._dedupe(calendar_errors)
 
         all_rows: list[SeasonWeekReadinessRow] = []

@@ -2950,6 +2950,7 @@ class AuthoritativeRunSimulationDriver:
                 self._advance_or_close(session, command, packages)
             after = self._position(session, command.run_id, command.branch_id)
             payload = {
+                **step,
                 "schema_version": "authoritative_next_rally_result.v1",
                 "run_id": command.run_id,
                 "branch_id": command.branch_id,
@@ -2958,7 +2959,6 @@ class AuthoritativeRunSimulationDriver:
                 "group_id": command.group_id,
                 "match_id": event.match_id,
                 "position": after.model_dump(mode="json"),
-                **step,
             }
             payload["idempotent_replay"] = False
             session.add(

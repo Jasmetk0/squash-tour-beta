@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -104,6 +104,10 @@ class SeasonWeekRunMetadata(BaseModel):
     preflight_fingerprint: str
     final_fingerprint: str
     read_only: bool = False
+    authority_scope: Literal["legacy_global_season_tooling.v1"] = (
+        "legacy_global_season_tooling.v1"
+    )
+    canonical_run_execution_eligible: Literal[False] = False
 
 
 class RunSeasonWeekResult(BaseModel):
@@ -125,7 +129,10 @@ class SeasonWeekSimulationExecutionService:
     ranking_snapshot_service: SeasonRankingSnapshotService
 
     def run_week(self, request: RunSeasonWeekRequest) -> RunSeasonWeekResult:
-        warnings = [NO_ROLLBACK_WARNING]
+        warnings = [
+            NO_ROLLBACK_WARNING,
+            "Legacy season-week execution is global season tooling only; it is not canonical Official Run execution.",
+        ]
         errors: list[str] = []
         preflight_request = SimulateSeasonWeekPreflightRequest(
             seed=request.seed,

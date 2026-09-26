@@ -32,6 +32,7 @@ from beta_engine.infrastructure.db.initial_world_state import get_initial_world
 from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchStore
 from beta_engine.infrastructure.db.models import (
     AuthoritativeLiveMatchModel,
+    LiveMatchWorkingModel,
     SimulationEventGroupModel,
 )
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
@@ -213,6 +214,15 @@ class AuthoritativeLiveMatchService:
             )
             self.session.flush()
 
+        working_row = self.session.get(LiveMatchWorkingModel, key)
+        if working_row is not None and working_row.status == "complete":
+            return {
+                "authoritative_input_fingerprint": protected.fingerprint,
+                "state_fingerprint": None,
+                "match_id": match_id,
+                "complete": True,
+            }
+
         state = PersistedLiveMatchStore(self.session).start_from_engine_input(
             run_id=run_id,
             branch_id=branch_id,
@@ -225,6 +235,7 @@ class AuthoritativeLiveMatchService:
             "authoritative_input_fingerprint": protected.fingerprint,
             "state_fingerprint": state.fingerprint,
             "match_id": match_id,
+            "complete": False,
         }
 
     def simulate_next_rally(

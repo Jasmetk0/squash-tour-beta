@@ -26,6 +26,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
     AuthoritativeNextRallyCommand,
+    AuthoritativeLiveRangeCommand,
     AuthoritativeMatchDayCommand,
     AuthoritativeRoundCommand,
     AuthoritativeTournamentCommand,
@@ -8047,3 +8048,125 @@ def test_authoritative_next_rally_rejects_stale_live_state_without_advancing(tmp
             group_id=group_id,
         )
     assert state["state_fingerprint"] == before
+
+
+@pytest.mark.pr_critical
+def test_simulate_game_then_rest_of_match_reuses_next_rally_and_matches_full_path(tmp_path):
+    live_driver, live_factory, week = _driver_fixture(tmp_path / "live-ranges")
+    opening = live_driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    game = live_driver.simulate_game(
+        AuthoritativeLiveRangeCommand(
+            command_id="game-parent",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert game["schema_version"] == "authoritative_simulate_game_result.v1"
+    assert game["rallies_simulated"] >= 1
+    assert game["status"] == "active"
+    assert game["set_number"] == game["start_set_number"] + 1
+    assert game["authoritative_group_committed"] is False
+    assert len(game["child_command_ids"]) == game["rallies_simulated"]
+
+    # Exact parent retry must not advance another rally.
+    replay = live_driver.simulate_game(
+        AuthoritativeLiveRangeCommand(
+            command_id="game-parent",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert replay["idempotent_replay"] is True
+    assert replay["state_fingerprint"] == game["state_fingerprint"]
+    assert replay["child_command_ids"] == game["child_command_ids"]
+
+    after_game = live_driver.position(run_id="run", branch_id="branch")
+    rest = live_driver.simulate_rest_of_match(
+        AuthoritativeLiveRangeCommand(
+            command_id="rest-parent",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=after_game.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            expected_live_state_fingerprint=game["state_fingerprint"],
+        )
+    )
+    assert rest["schema_version"] == (
+        "authoritative_simulate_rest_of_match_result.v1"
+    )
+    assert rest["status"] == "complete"
+    assert rest["state_fingerprint"] is None
+    assert rest["authoritative_group_committed"] is True
+    assert rest["final_result"] is not None
+
+    with live_factory() as session:
+        live_group = session.scalars(select(SimulationEventGroupModel)).one()
+        live_payload = json.loads(live_group.payload_json)
+
+    full_driver, full_factory, full_week = _driver_fixture(tmp_path / "live-ranges-full")
+    full_opening = full_driver.position(run_id="run", branch_id="branch")
+    full_group_id = full_opening.unresolved_group_ids[0]
+    full_driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="full-parent",
+            run_id="run",
+            branch_id="branch",
+            expected_week=full_week,
+            expected_position_fingerprint=full_opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=full_group_id,
+        )
+    )
+    with full_factory() as session:
+        full_group = session.scalars(select(SimulationEventGroupModel)).one()
+        full_payload = json.loads(full_group.payload_json)
+
+    assert live_group.command_fingerprint == full_group.command_fingerprint
+    assert live_group.match_input_fingerprint == full_group.match_input_fingerprint
+    assert live_group.result_fingerprint == full_group.result_fingerprint
+    assert live_payload == full_payload
+
+
+@pytest.mark.pr_critical
+def test_simulate_game_can_finish_match_without_overshooting(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "game-to-finish")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    current_position = opening
+    current_state = None
+    result = None
+    for game_index in range(1, 6):
+        result = driver.simulate_game(
+            AuthoritativeLiveRangeCommand(
+                command_id=f"game-{game_index}",
+                run_id="run",
+                branch_id="branch",
+                expected_week=week,
+                expected_position_fingerprint=current_position.position_fingerprint,
+                expected_revision_id="revision",
+                group_id=group_id,
+                expected_live_state_fingerprint=current_state,
+            )
+        )
+        if result["status"] == "complete":
+            break
+        current_state = result["state_fingerprint"]
+        current_position = driver.position(run_id="run", branch_id="branch")
+    assert result is not None
+    assert result["status"] == "complete"
+    assert result["authoritative_group_committed"] is True
+    with factory() as session:
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 1

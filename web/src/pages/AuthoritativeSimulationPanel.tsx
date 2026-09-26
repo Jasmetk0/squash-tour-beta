@@ -22,6 +22,8 @@ import {
   previewAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
   inspectAuthoritativeLiveMatch,
+  inspectAuthoritativeLiveMatchTimeline,
+  restoreAuthoritativeLiveReturnPoint,
   simulateAuthoritativeNextRally,
   simulateAuthoritativeGame,
   simulateAuthoritativeRestOfMatch,
@@ -227,6 +229,7 @@ export function AuthoritativeSimulationPanel({
     preview: AuthoritativeWeekScheduleManualPreview
   } | null>(null)
   const [nextRallyCommandId, setNextRallyCommandId] = useState(newCommandId)
+  const [liveReturnCommandId, setLiveReturnCommandId] = useState(newCommandId)
   const [simulateGameCommandId, setSimulateGameCommandId] = useState(newCommandId)
   const [restOfMatchCommandId, setRestOfMatchCommandId] = useState(newCommandId)
   const [liveRallyStateFingerprint, setLiveRallyStateFingerprint] = useState<string | null>(null)
@@ -312,6 +315,14 @@ export function AuthoritativeSimulationPanel({
   const liveMatchQuery = useQuery({
     queryKey: ['authoritative-live-match', runId, branchId, selectedGroupId],
     queryFn: () => inspectAuthoritativeLiveMatch(runId, branchId, selectedGroupId),
+    enabled: enabled && Boolean(selectedGroupId),
+    retry: false
+  })
+
+  const liveTimelineQuery = useQuery({
+    queryKey: ['authoritative-live-match-timeline', runId, branchId, selectedGroupId],
+    queryFn: () =>
+      inspectAuthoritativeLiveMatchTimeline(runId, branchId, selectedGroupId),
     enabled: enabled && Boolean(selectedGroupId),
     retry: false
   })
@@ -932,6 +943,48 @@ export function AuthoritativeSimulationPanel({
       if ((error as { status?: number }).status === 409) {
         await refreshCanonicalSimulation()
       }
+    }
+  })
+
+  const restoreLiveReturnMutation = useMutation({
+    mutationFn: (returnPointId: string) => {
+      const position = positionQuery.data
+      if (
+        !position ||
+        !savedRevisionId ||
+        !selectedGroupId ||
+        !liveRallyStateFingerprint
+      ) {
+        throw new Error('An active persisted live match is required for restore.')
+      }
+      return restoreAuthoritativeLiveReturnPoint(runId, branchId, {
+        command_id: liveReturnCommandId,
+        expected_week: position.current_week,
+        expected_position_fingerprint: position.position_fingerprint,
+        expected_revision_id: savedRevisionId,
+        group_id: selectedGroupId,
+        return_point_id: returnPointId,
+        expected_live_state_fingerprint: liveRallyStateFingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      setLiveRallyStateFingerprint(result.restored_state.state_fingerprint)
+      setLiveRangeResult(null)
+      setLiveRallyResult(null)
+      setLiveReturnCommandId(newCommandId())
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-live-match-timeline', runId, branchId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-live-match', runId, branchId]
+        })
+      ])
     }
   })
 
@@ -1909,6 +1962,7 @@ export function AuthoritativeSimulationPanel({
     nextRallyMutation.isPending ||
     simulateGameMutation.isPending ||
     restOfMatchMutation.isPending ||
+    restoreLiveReturnMutation.isPending ||
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
     nextMatchDayPreviewMutation.isPending ||
@@ -3195,6 +3249,40 @@ export function AuthoritativeSimulationPanel({
               Review authoritative Full Simulation
             </button>
           </div>
+          {liveTimelineQuery.data?.timeline?.return_points.length ? (
+            <>
+              <h5>Live match return timeline</h5>
+              <ol aria-label="Live match return points">
+                {liveTimelineQuery.data.timeline.return_points.map((point) => (
+                  <li key={point.return_point_id}>
+                    {point.kind === 'game' ? 'Before Game' : 'Before Rest of Match'} ·
+                    rally {point.rally_index} · set {point.set_number} ·
+                    {point.games_a}–{point.games_b}
+                    <button
+                      type="button"
+                      onClick={() => restoreLiveReturnMutation.mutate(point.return_point_id)}
+                      disabled={!liveRallyStateFingerprint || actionPending}
+                    >
+                      Restore this return point
+                    </button>
+                  </li>
+                ))}
+              </ol>
+              {liveTimelineQuery.data.timeline.alternatives.length ? (
+                <>
+                  <h6>Temporary alternatives</h6>
+                  <ol aria-label="Live match alternative paths">
+                    {liveTimelineQuery.data.timeline.alternatives.map((alternative) => (
+                      <li key={alternative.alternative_id}>
+                        rally {alternative.rally_index} · set {alternative.set_number} ·
+                        {alternative.games_a}–{alternative.games_b}
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : null}
+            </>
+          ) : null}
           {liveRangeResult ? (
             <>
               <h5>Live range simulation</h5>

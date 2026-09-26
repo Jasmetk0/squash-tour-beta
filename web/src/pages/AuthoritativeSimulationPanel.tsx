@@ -22,6 +22,8 @@ import {
   previewAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
   simulateAuthoritativeNextRally,
+  simulateAuthoritativeGame,
+  simulateAuthoritativeRestOfMatch,
   simulateAuthoritativeNextMatch,
   simulateAuthoritativeNextSlot,
   previewAuthoritativeNextMatchDay,
@@ -53,6 +55,7 @@ import {
 import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeNextRallyResult,
+  AuthoritativeLiveRangeResult,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
@@ -223,8 +226,11 @@ export function AuthoritativeSimulationPanel({
     preview: AuthoritativeWeekScheduleManualPreview
   } | null>(null)
   const [nextRallyCommandId, setNextRallyCommandId] = useState(newCommandId)
+  const [simulateGameCommandId, setSimulateGameCommandId] = useState(newCommandId)
+  const [restOfMatchCommandId, setRestOfMatchCommandId] = useState(newCommandId)
   const [liveRallyStateFingerprint, setLiveRallyStateFingerprint] = useState<string | null>(null)
   const [liveRallyResult, setLiveRallyResult] = useState<AuthoritativeNextRallyResult | null>(null)
+  const [liveRangeResult, setLiveRangeResult] = useState<AuthoritativeLiveRangeResult | null>(null)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
   const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
@@ -554,6 +560,7 @@ export function AuthoritativeSimulationPanel({
       setSelectedGroupId(eligible[0] ?? '')
       setLiveRallyStateFingerprint(null)
       setLiveRallyResult(null)
+      setLiveRangeResult(null)
     }
   }, [positionQuery.data, selectedGroupId])
 
@@ -810,6 +817,74 @@ export function AuthoritativeSimulationPanel({
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
         setLiveRallyResult(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  function liveRangePayload(commandId: string) {
+    const position = positionQuery.data
+    if (!position || !savedRevisionId || !selectedGroupId) {
+      throw new Error('Select one currently eligible match group.')
+    }
+    return {
+      command_id: commandId,
+      expected_week: position.current_week,
+      expected_position_fingerprint: position.position_fingerprint,
+      expected_revision_id: savedRevisionId,
+      group_id: selectedGroupId,
+      expected_live_state_fingerprint: liveRallyStateFingerprint
+    }
+  }
+
+  const simulateGameMutation = useMutation({
+    mutationFn: () =>
+      simulateAuthoritativeGame(
+        runId,
+        branchId,
+        liveRangePayload(simulateGameCommandId)
+      ),
+    onSuccess: async (result) => {
+      setLiveRangeResult(result)
+      setLiveRallyResult(null)
+      setLiveRallyStateFingerprint(result.state_fingerprint)
+      setSimulateGameCommandId(newCommandId())
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
+
+  const restOfMatchMutation = useMutation({
+    mutationFn: () =>
+      simulateAuthoritativeRestOfMatch(
+        runId,
+        branchId,
+        liveRangePayload(restOfMatchCommandId)
+      ),
+    onSuccess: async (result) => {
+      setLiveRangeResult(result)
+      setLiveRallyResult(null)
+      setLiveRallyStateFingerprint(result.state_fingerprint)
+      setRestOfMatchCommandId(newCommandId())
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      if (result.status === 'complete') {
+        setLiveRallyStateFingerprint(null)
+      }
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
         await refreshCanonicalSimulation()
       }
     }
@@ -1787,6 +1862,8 @@ export function AuthoritativeSimulationPanel({
   )
   const actionPending =
     nextRallyMutation.isPending ||
+    simulateGameMutation.isPending ||
+    restOfMatchMutation.isPending ||
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
     nextMatchDayPreviewMutation.isPending ||
@@ -2970,6 +3047,20 @@ export function AuthoritativeSimulationPanel({
             </button>
             <button
               type="button"
+              onClick={() => simulateGameMutation.mutate()}
+              disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
+            >
+              Simulate authoritative Game
+            </button>
+            <button
+              type="button"
+              onClick={() => restOfMatchMutation.mutate()}
+              disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
+            >
+              Simulate authoritative Rest of Match
+            </button>
+            <button
+              type="button"
               onClick={() => nextMatchMutation.mutate()}
               disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
             >
@@ -3059,6 +3150,36 @@ export function AuthoritativeSimulationPanel({
               Review authoritative Full Simulation
             </button>
           </div>
+          {liveRangeResult ? (
+            <>
+              <h5>Live range simulation</h5>
+              <MetadataList
+                items={[
+                  {
+                    label: 'Mode',
+                    value:
+                      liveRangeResult.schema_version === 'authoritative_simulate_game_result.v1'
+                        ? 'Game'
+                        : 'Rest of Match'
+                  },
+                  { label: 'Match', value: liveRangeResult.match_id },
+                  { label: 'Rallies simulated', value: liveRangeResult.rallies_simulated },
+                  { label: 'Status', value: liveRangeResult.status },
+                  { label: 'Set', value: liveRangeResult.set_number ?? 'complete' },
+                  {
+                    label: 'Current game',
+                    value:
+                      liveRangeResult.games_a == null || liveRangeResult.games_b == null
+                        ? 'complete'
+                        : `${liveRangeResult.games_a}–${liveRangeResult.games_b}`
+                  }
+                ]}
+              />
+              <p className="status">
+                This range was composed only from persisted Next Rally child commands.
+              </p>
+            </>
+          ) : null}
           {liveRallyResult ? (
             <>
               <h5>Live authoritative match</h5>

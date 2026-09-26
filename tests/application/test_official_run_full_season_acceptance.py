@@ -11,6 +11,9 @@ from beta_engine.api.deps import (
     get_season_point_awards_service,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.application.season_draw_service import SeasonDrawsRegistry
+from beta_engine.application.season_event_results_service import SeasonEventResultsRegistry
+from beta_engine.application.season_point_awards_service import SeasonPointAwardsRegistry
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.authoritative_week_transition import (
     AuthoritativeWeekTransitionRunner,
@@ -39,6 +42,19 @@ AUDIT = {
     "actor_label": "Official Run acceptance admin",
     "reason": "Exercise the canonical whole-season pre-alpha flow",
 }
+
+
+class _ForbiddenLegacyBackend:
+    """Explode on any legacy result/template access after canonical preparation."""
+
+    def __init__(self, label: str):
+        self.label = label
+
+    def __getattr__(self, name: str):
+        raise AssertionError(
+            f"authoritative Package-backed flow accessed forbidden legacy "
+            f"{self.label} backend attribute '{name}'"
+        )
 
 
 def _custom_player(player_id: str, index: int, country_code: str) -> dict:
@@ -798,6 +814,17 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         legacy_calendars = awards.calendar_service._load_registry()
         legacy_calendars.calendars_by_season.clear()
         awards.calendar_service._save_registry(legacy_calendars)
+
+        # Destroy every remaining file-backed tournament result/draw/award source and
+        # replace service references with exploding sentinels. From this point the
+        # canonical Package/Draw Run must close, rank and transition using DB-owned
+        # authorities only.
+        matches.draw_service._save_registry(SeasonDrawsRegistry())
+        awards.result_service._save_registry(SeasonEventResultsRegistry())
+        awards._save_registry(SeasonPointAwardsRegistry())
+        awards.result_service = _ForbiddenLegacyBackend("result")
+        awards.template_service = _ForbiddenLegacyBackend("template")
+        awards.points_config_path = tmp_path / "forbidden-legacy-points.json"
 
         # Remove the old Week-1 MatchPackage source completely. From this point the
         # authoritative driver must derive its compatibility MatchPackage from the

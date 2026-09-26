@@ -3088,21 +3088,49 @@ class AuthoritativeRunSimulationDriver:
                 mode=mode,
                 child_ordinal=child_ordinal,
             )
-            position = self.position(
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-            )
-            child = AuthoritativeNextRallyCommand(
-                command_id=child_id,
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-                expected_week=command.expected_week,
-                expected_position_fingerprint=position.position_fingerprint,
-                expected_revision_id=command.expected_revision_id,
-                group_id=command.group_id,
-                expected_live_state_fingerprint=expected_live_state,
-            )
-            last = self.simulate_next_rally(child)
+
+            # Resume consumes already-committed child receipts as immutable facts.
+            # Do not reconstruct/re-submit their original CAS request: after later
+            # children commit, the current live fingerprint necessarily differs.
+            with self.factory() as session:
+                existing_child = session.get(
+                    AuthoritativeSimulationCommandModel,
+                    (command.run_id, command.branch_id, child_id),
+                )
+                if existing_child is not None:
+                    if existing_child.status != "complete":
+                        raise ValueError(
+                            "live-range child receipt exists but is not complete"
+                        )
+                    last = json.loads(existing_child.result_json)
+                    if (
+                        last.get("schema_version")
+                        != "authoritative_next_rally_result.v1"
+                        or last.get("run_id") != command.run_id
+                        or last.get("branch_id") != command.branch_id
+                        or last.get("group_id") != command.group_id
+                    ):
+                        raise ValueError(
+                            "live-range child receipt identity does not match parent"
+                        )
+                    last["idempotent_replay"] = True
+                else:
+                    position = self.position(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                    )
+                    child = AuthoritativeNextRallyCommand(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=command.expected_week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=command.expected_revision_id,
+                        group_id=command.group_id,
+                        expected_live_state_fingerprint=expected_live_state,
+                    )
+                    last = self.simulate_next_rally(child)
+
             child_ids.append(child_id)
             expected_live_state = last["state_fingerprint"]
 

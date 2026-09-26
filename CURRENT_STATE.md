@@ -1,24 +1,24 @@
 # Current implementation and next action
 
-## Active implementation — legacy season readiness authority boundary
+## Active implementation — legacy season execution authority boundary
 
-Canonical Run/Branch readiness is now explicitly separated from the old global season
-simulation tooling.
+Canonical Official Run execution is now explicitly separated from the old mutating
+global season commands.
 
-- legacy week preflight, season readiness and season range preflight metadata declare
+- legacy Week Run and Season Range Run metadata declare
   `authority_scope=legacy_global_season_tooling.v1`;
-- all three declare `canonical_run_readiness_eligible=false`;
-- the web client validates that boundary before accepting their responses;
-- Admin Seasons labels the three surfaces as LEGACY / READ-ONLY and states that they
-  must not drive canonical Run/Branch readiness or Week Schedule navigation;
-- canonical Authoritative Simulation continues to use Week Schedule preflight from the
-  Run/Branch-owned preparation chain;
-- historical Admin Seasons diagnostics remain available instead of being deleted while
-  they still serve legacy file-backed workflows.
+- both declare `canonical_run_execution_eligible=false`;
+- their web client methods validate that boundary before accepting execution results;
+- Admin Seasons labels both commands LEGACY / MUTATING and no longer presents range
+  execution as the recommended pre-alpha workflow;
+- the workspace banner routes Official Run progression to Product Runs / Run/Branch
+  simulation instead;
+- legacy mutation remains available only for historical compatibility while canonical
+  Authoritative Simulation retains Run/Branch ownership.
 
-**Next after this PR:** trace mutating legacy week/range execution callers and isolate
-them from Official Run workflows, then remove the first obsolete global execution path
-once no supported UI or acceptance gate depends on it.
+**Next after this PR:** identify which legacy mutating command has no remaining supported
+compatibility consumer, then disable its UI entry point before deleting backend execution
+code in a later cleanup.
 
 
 ## Active implementation — canonical Tournament Preparation State

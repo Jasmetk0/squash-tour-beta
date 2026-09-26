@@ -19,6 +19,7 @@ const api = vi.hoisted(() => ({
   advanceAuthoritativeOrdinarySeason: vi.fn(),
   finalizeAuthoritativeFinalSeason: vi.fn(),
   inspectAuthoritativeWeekSchedule: vi.fn(),
+  inspectAuthoritativeWeekSchedulePreflight: vi.fn(),
   previewAuthoritativeSimulationSave: vi.fn(),
   proposeAuthoritativeWeekSchedule: vi.fn(),
   previewAuthoritativeWeekSchedule: vi.fn(),
@@ -88,6 +89,59 @@ const scheduleInspection = {
   schedule: null,
   schedule_fingerprint: null,
   expected_position_fingerprint: 'b'.repeat(64)
+}
+
+const schedulePreflight = {
+  schema_version: 'authoritative_week_schedule_preflight.v1' as const,
+  run_id: 'run-a',
+  branch_id: 'branch-a',
+  week,
+  event_ids: ['event-a', 'event-b'],
+  group_ids: ['g1', 'g2', 'g3'],
+  schedule_required: true,
+  schedule_already_adopted: false,
+  canonical_preparation: {
+    schema_version: 'canonical_week_schedule_preparation_state.v1' as const,
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    event_ids: ['event-a', 'event-b'],
+    tournaments: [
+      {
+        schema_version: 'canonical_tournament_preparation_state.v1' as const,
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        event_id: 'event-a',
+        phase: 'draw_ready' as const,
+        next_required_action: 'none' as const,
+        blockers: [],
+        ready_for_match_schedule: true,
+        effective_draw_fingerprint: '1'.repeat(64),
+        authority_source: 'run_owned_db_authorities.v1' as const
+      },
+      {
+        schema_version: 'canonical_tournament_preparation_state.v1' as const,
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        event_id: 'event-b',
+        phase: 'draw_ready' as const,
+        next_required_action: 'none' as const,
+        blockers: [],
+        ready_for_match_schedule: true,
+        effective_draw_fingerprint: '2'.repeat(64),
+        authority_source: 'run_owned_db_authorities.v1' as const
+      }
+    ],
+    ready_for_week_schedule: true,
+    blockers: [],
+    preparation_fingerprint: '3'.repeat(64),
+    authority_source: 'run_owned_db_authorities.v1' as const
+  },
+  canonical_preparation_ready: true,
+  blockers: [],
+  can_propose_schedule: true,
+  expected_position_fingerprint: 'b'.repeat(64),
+  preflight_fingerprint: '4'.repeat(64),
+  read_only: true as const
 }
 
 const proposal = {
@@ -830,6 +884,7 @@ beforeEach(() => {
     preflight_fingerprint: '5'.repeat(64)
   })
   api.inspectAuthoritativeWeekSchedule.mockResolvedValue(scheduleInspection)
+  api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue(schedulePreflight)
   api.previewAuthoritativeSimulationSave.mockResolvedValue({
     run_id: 'run-a',
     branch_id: 'branch-a',
@@ -1185,6 +1240,13 @@ describe('AuthoritativeSimulationPanel', () => {
       required: false,
       schedule: null
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_required: false,
+      schedule_already_adopted: false,
+      blockers: [],
+      can_propose_schedule: true
+    })
 
     renderPanel()
 
@@ -1205,6 +1267,70 @@ describe('AuthoritativeSimulationPanel', () => {
     )
   })
 
+
+  it('uses canonical Week Schedule preflight as the Admin readiness source', async () => {
+    renderPanel()
+
+    expect(await screen.findByText('Week Simulation Schedule')).toBeInTheDocument()
+    await waitFor(() =>
+      expect(api.inspectAuthoritativeWeekSchedulePreflight).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a'
+      )
+    )
+    expect(
+      screen.getByRole('list', { name: 'Canonical Week Schedule preparation' })
+    ).toHaveTextContent('event-a: draw_ready · next none')
+    expect(
+      screen.getByText(
+        'All canonical Draw-backed tournaments are ready for Match Day scheduling.'
+      )
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Build Match Day schedule proposal' })
+    ).toBeEnabled()
+  })
+
+  it('blocks Match Day proposal from canonical preparation blockers before a 409', async () => {
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      canonical_preparation: {
+        ...schedulePreflight.canonical_preparation,
+        tournaments: [
+          {
+            ...schedulePreflight.canonical_preparation.tournaments[0],
+            phase: 'draw_input_ready',
+            next_required_action: 'review_pre_draw_or_commit_draw_input',
+            ready_for_match_schedule: false,
+            effective_draw_fingerprint: null
+          },
+          schedulePreflight.canonical_preparation.tournaments[1]
+        ],
+        ready_for_week_schedule: false,
+        blockers: ['event-a:draw_input_ready'],
+        preparation_fingerprint: '5'.repeat(64)
+      },
+      canonical_preparation_ready: false,
+      blockers: ['event-a:draw_input_ready'],
+      can_propose_schedule: false,
+      preflight_fingerprint: '6'.repeat(64)
+    })
+
+    renderPanel()
+
+    expect(
+      await screen.findByText('Schedule blockers: event-a:draw_input_ready')
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('list', { name: 'Canonical Week Schedule preparation' })
+    ).toHaveTextContent(
+      'event-a: draw_input_ready · next review_pre_draw_or_commit_draw_input'
+    )
+    expect(
+      screen.getByRole('button', { name: 'Build Match Day schedule proposal' })
+    ).toBeDisabled()
+    expect(api.proposeAuthoritativeWeekSchedule).not.toHaveBeenCalled()
+  })
 
   it('reviews and adopts the exact dependency-safe topological schedule proposal', async () => {
     renderPanel()
@@ -1299,6 +1425,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     renderPanel()
 
     const selector = await screen.findByLabelText('Eligible authoritative match group')
@@ -1328,6 +1460,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     renderPanel()
 
@@ -1396,6 +1534,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.simulateAuthoritativeNextMatch
       .mockRejectedValueOnce(new Error('network response lost'))
       .mockResolvedValueOnce({
@@ -1425,6 +1569,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     renderPanel()
 
     await screen.findByText('Execute current canonical position')
@@ -1448,6 +1598,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.simulateAuthoritativeNextMatchDay
       .mockRejectedValueOnce(new Error('network response lost'))
@@ -1510,6 +1666,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.simulateAuthoritativeNextRound
       .mockRejectedValueOnce(new Error('network response lost'))
@@ -1580,6 +1742,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.simulateAuthoritativeNextTournament
       .mockRejectedValueOnce(new Error('network response lost'))
@@ -1654,6 +1822,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.simulateAuthoritativeNextWeek
       .mockResolvedValueOnce(weekProgress)
       .mockResolvedValueOnce(weekResult)
@@ -1727,6 +1901,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.simulateAuthoritativeNextSeason
       .mockResolvedValueOnce(seasonSaveProgress)
@@ -1821,6 +2001,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.simulateAuthoritativeFullSimulation
       .mockResolvedValueOnce(fullSimulationSaveProgress)
@@ -1928,6 +2114,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_history.v1',
       run_id: 'run-a',
@@ -2018,6 +2210,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeFullSimulationHistory.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_history.v1',
@@ -2159,6 +2357,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
       schema_version: 'authoritative_full_simulation_pending_collection.v1',
       run_id: 'run-a',
@@ -2250,6 +2454,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_slot_kind: 'entry',
@@ -2338,6 +2548,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.previewAuthoritativeSimulationSave.mockResolvedValue({
       run_id: 'run-a',
       branch_id: 'branch-a',
@@ -2367,6 +2583,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
@@ -2450,6 +2672,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_slot_kind: null,
@@ -2489,6 +2717,12 @@ describe('AuthoritativeSimulationPanel', () => {
         week: week61
       },
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
@@ -2533,6 +2767,12 @@ describe('AuthoritativeSimulationPanel', () => {
       week: week61,
       schedule: { ...proposal.schedule, week: week61 },
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
@@ -2606,6 +2846,12 @@ describe('AuthoritativeSimulationPanel', () => {
       week: finalWeek,
       schedule: { ...proposal.schedule, week: finalWeek },
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
@@ -2684,6 +2930,12 @@ describe('AuthoritativeSimulationPanel', () => {
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_slot_kind: null,
@@ -2743,6 +2995,12 @@ describe('AuthoritativeSimulationPanel', () => {
       ...scheduleInspection,
       schedule: proposal.schedule,
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     renderPanel()
 

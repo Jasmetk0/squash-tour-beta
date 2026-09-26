@@ -129,6 +129,7 @@ import type {
   FinalSeasonTransitionPayload,
   FinalSeasonTransitionResult,
   AuthoritativeWeekScheduleInspection,
+  AuthoritativeWeekSchedulePreflight,
   AuthoritativeWeekScheduleProposal,
   AuthoritativeWeekScheduleManualPreview,
   PreviewAuthoritativeWeekSchedulePayload,
@@ -1407,6 +1408,35 @@ export async function inspectAuthoritativeWeekSchedule(
     authoritativeSimulationRoot(runId, branchId) + '/week-schedule'
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function inspectAuthoritativeWeekSchedulePreflight(
+  runId: string,
+  branchId: string
+): Promise<AuthoritativeWeekSchedulePreflight> {
+  const data = await request<AuthoritativeWeekSchedulePreflight>(
+    authoritativeSimulationRoot(runId, branchId) + '/week-schedule/preflight'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_week_schedule_preflight.v1' ||
+    data.read_only !== true ||
+    !/^[0-9a-f]{64}$/.test(data.preflight_fingerprint) ||
+    !/^[0-9a-f]{64}$/.test(data.expected_position_fingerprint)
+  ) {
+    throw new Error('Authoritative Week Schedule preflight response is invalid.')
+  }
+  if (
+    data.canonical_preparation !== null &&
+    (!/^[0-9a-f]{64}$/.test(
+      data.canonical_preparation.preparation_fingerprint
+    ) ||
+      data.canonical_preparation.run_id !== runId ||
+      data.canonical_preparation.branch_id !== branchId)
+  ) {
+    throw new Error('Canonical Week Schedule preparation response is invalid.')
+  }
   return data
 }
 

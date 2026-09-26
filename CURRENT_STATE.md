@@ -1,26 +1,25 @@
 # Current implementation and next action
 
-## Active implementation — canonical Week Schedule preflight
+## Active implementation — canonical Week Schedule Admin navigation
 
-Week Schedule now has one read-only Admin preflight surface over canonical tournament
-preparation.
+The Admin simulation panel now treats Week Schedule preflight as the authoritative
+navigation/readiness source.
 
-- `GET .../authoritative-simulation/week-schedule/preflight` exposes current Week,
-  event/group scope, whether a schedule already exists, canonical preparation rollup,
-  deterministic blockers, CAS position fingerprint and a stable preflight fingerprint;
-- canonical Draw-backed events must all be `draw_ready` before
-  `can_propose_schedule=true`;
-- topological proposal returns the same canonical preparation snapshot used by
-  preflight, so Admin UI does not need to reconstruct readiness from separate
-  tournament endpoints;
-- legacy-only historical topology remains compatible and reports
-  `canonical_preparation=null` rather than inventing canonical authority;
-- the Master §31.3 Official Run gate proves the preflight remains canonical after live
-  legacy Calendar/Draw/Result/Award/template sources are destroyed.
+- the web client has typed `authoritative_week_schedule_preflight.v1` and canonical
+  tournament-preparation rollup contracts;
+- Position/save navigation is unlocked from preflight
+  `schedule_required/schedule_already_adopted`, not from duplicate client inference;
+- Match Day proposal is disabled before request when canonical blockers exist;
+- Admin sees each canonical tournament phase and `next_required_action`, plus exact
+  preflight blockers;
+- legacy schedule inspection remains only for reading the adopted schedule payload,
+  while preflight owns readiness/navigation;
+- frontend tests cover both `draw_ready` proposal enablement and a
+  `draw_input_ready` blocker.
 
-**Next after this PR:** use this preflight as the Admin UI navigation source and audit
-remaining old season/event readiness services for duplicate tournament-preparation
-inference that can now be retired safely.
+**Next after this PR:** audit old season/week readiness endpoints and UI callers, then
+retire duplicate preparation inference where canonical Run/Branch ownership is already
+complete.
 
 
 ## Active implementation — canonical Tournament Preparation State

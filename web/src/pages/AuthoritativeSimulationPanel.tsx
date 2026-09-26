@@ -16,6 +16,7 @@ import {
   advanceAuthoritativeOrdinarySeason,
   finalizeAuthoritativeFinalSeason,
   inspectAuthoritativeWeekSchedule,
+  inspectAuthoritativeWeekSchedulePreflight,
   previewAuthoritativeSimulationSave,
   proposeAuthoritativeWeekSchedule,
   previewAuthoritativeWeekSchedule,
@@ -303,6 +304,12 @@ export function AuthoritativeSimulationPanel({
     retry: false
   })
 
+  const schedulePreflightQuery = useQuery({
+    queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId],
+    queryFn: () => inspectAuthoritativeWeekSchedulePreflight(runId, branchId),
+    enabled,
+    retry: false
+  })
   const scheduleQuery = useQuery({
     queryKey: ['authoritative-simulation-week-schedule', runId, branchId],
     queryFn: () => inspectAuthoritativeWeekSchedule(runId, branchId),
@@ -310,7 +317,9 @@ export function AuthoritativeSimulationPanel({
     retry: false
   })
   const scheduleAllowsPosition = Boolean(
-    scheduleQuery.data && (!scheduleQuery.data.required || scheduleQuery.data.schedule)
+    schedulePreflightQuery.data &&
+      (!schedulePreflightQuery.data.schedule_required ||
+        schedulePreflightQuery.data.schedule_already_adopted)
   )
   const positionQuery = useQuery({
     queryKey: ['authoritative-simulation-position', runId, branchId],
@@ -599,6 +608,7 @@ export function AuthoritativeSimulationPanel({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-entry-decision-slot', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-week-tournament-lock', runId, branchId] }),
@@ -2014,14 +2024,57 @@ export function AuthoritativeSimulationPanel({
       {scheduleQuery.data ? (
         <>
           <h4>Week Simulation Schedule</h4>
+          {schedulePreflightQuery.isLoading ? (
+            <p className="status">Loading canonical Week Schedule preflight…</p>
+          ) : null}
+          {schedulePreflightQuery.error ? (
+            <p className="error">
+              Week Schedule preflight unavailable: {formatApiError(schedulePreflightQuery.error)}
+            </p>
+          ) : null}
           <MetadataList
             items={[
-              { label: 'Schedule required', value: scheduleQuery.data.required ? 'Yes' : 'No' },
-              { label: 'Events', value: scheduleQuery.data.event_ids.length },
-              { label: 'Groups', value: scheduleQuery.data.group_ids.length },
-              { label: 'Status', value: schedule ? 'Adopted / immutable' : 'Not adopted' }
+              {
+                label: 'Schedule required',
+                value: schedulePreflightQuery.data
+                  ? (schedulePreflightQuery.data.schedule_required ? 'Yes' : 'No')
+                  : (scheduleQuery.data.required ? 'Yes' : 'No')
+              },
+              {
+                label: 'Events',
+                value: schedulePreflightQuery.data?.event_ids.length ?? scheduleQuery.data.event_ids.length
+              },
+              {
+                label: 'Groups',
+                value: schedulePreflightQuery.data?.group_ids.length ?? scheduleQuery.data.group_ids.length
+              },
+              { label: 'Status', value: schedule ? 'Adopted / immutable' : 'Not adopted' },
+              {
+                label: 'Canonical preparation',
+                value: schedulePreflightQuery.data
+                  ? (schedulePreflightQuery.data.canonical_preparation_ready ? 'Ready' : 'Blocked')
+                  : 'Loading'
+              }
             ]}
           />
+          {schedulePreflightQuery.data?.canonical_preparation ? (
+            <>
+              <ul aria-label="Canonical Week Schedule preparation">
+                {schedulePreflightQuery.data.canonical_preparation.tournaments.map((tournament) => (
+                  <li key={tournament.event_id}>
+                    {tournament.event_id}: {tournament.phase} · next {tournament.next_required_action}
+                  </li>
+                ))}
+              </ul>
+              {schedulePreflightQuery.data.blockers.length ? (
+                <p className="error">
+                  Schedule blockers: {schedulePreflightQuery.data.blockers.join(', ')}
+                </p>
+              ) : (
+                <p className="status">All canonical Draw-backed tournaments are ready for Match Day scheduling.</p>
+              )}
+            </>
+          ) : null}
           {schedule ? (
             <ol aria-label="Adopted authoritative week schedule">
               {schedule.slots.map((slot) => (
@@ -2032,15 +2085,24 @@ export function AuthoritativeSimulationPanel({
                 </li>
               ))}
             </ol>
-          ) : scheduleQuery.data.required ? (
+          ) : (schedulePreflightQuery.data?.schedule_required ?? scheduleQuery.data.required) ? (
             <>
               <p className="status">
                 Canonical Position and match execution stay locked until this immutable Match Day / global-slot schedule is adopted.
               </p>
+              {!schedulePreflightQuery.data?.can_propose_schedule ? (
+                <p className="status">
+                  Complete the canonical preparation blockers above before building a Match Day schedule proposal.
+                </p>
+              ) : null}
               <button
                 type="button"
                 onClick={() => proposalMutation.mutate()}
-                disabled={proposalMutation.isPending || adoptMutation.isPending}
+                disabled={
+                  proposalMutation.isPending ||
+                  adoptMutation.isPending ||
+                  !schedulePreflightQuery.data?.can_propose_schedule
+                }
               >
                 Build Match Day schedule proposal
               </button>

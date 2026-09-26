@@ -1114,6 +1114,61 @@ export type AuthoritativeWeekSchedule = {
   slots: AuthoritativeWeekScheduleSlot[]
 }
 
+export type CanonicalTournamentPreparationState = {
+  schema_version: 'canonical_tournament_preparation_state.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  phase:
+    | 'ranking_snapshot_required'
+    | 'entry_field_required'
+    | 'wild_card_review_required'
+    | 'draw_input_ready'
+    | 'draw_generation_ready'
+    | 'draw_ready'
+  next_required_action:
+    | 'adopt_ranking_snapshot'
+    | 'build_entry_field'
+    | 'review_wild_cards'
+    | 'review_pre_draw_or_commit_draw_input'
+    | 'generate_draw'
+    | 'none'
+  blockers: string[]
+  ready_for_match_schedule: boolean
+  effective_draw_fingerprint: string | null
+  authority_source: 'run_owned_db_authorities.v1'
+}
+
+export type CanonicalWeekSchedulePreparationState = {
+  schema_version: 'canonical_week_schedule_preparation_state.v1'
+  run_id: string
+  branch_id: string
+  event_ids: string[]
+  tournaments: CanonicalTournamentPreparationState[]
+  ready_for_week_schedule: boolean
+  blockers: string[]
+  preparation_fingerprint: string
+  authority_source: 'run_owned_db_authorities.v1'
+}
+
+export type AuthoritativeWeekSchedulePreflight = {
+  schema_version: 'authoritative_week_schedule_preflight.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  event_ids: string[]
+  group_ids: string[]
+  schedule_required: boolean
+  schedule_already_adopted: boolean
+  canonical_preparation: CanonicalWeekSchedulePreparationState | null
+  canonical_preparation_ready: boolean
+  blockers: string[]
+  can_propose_schedule: boolean
+  expected_position_fingerprint: string
+  preflight_fingerprint: string
+  read_only: true
+}
+
 export type AuthoritativeWeekScheduleInspection = {
   run_id: string
   branch_id: string
@@ -1124,6 +1179,7 @@ export type AuthoritativeWeekScheduleInspection = {
   schedule: AuthoritativeWeekSchedule | null
   schedule_fingerprint: string | null
   expected_position_fingerprint: string
+  canonical_preparation?: CanonicalWeekSchedulePreparationState | null
   adoption?: 'adopted_topological_proposal' | 'exact_retry'
 }
 
@@ -1133,6 +1189,7 @@ export type AuthoritativeWeekScheduleProposal = {
   position_fingerprint: string
   provenance: string
   persisted: false
+  canonical_preparation?: CanonicalWeekSchedulePreparationState | null
 }
 
 export type AuthoritativeWeekScheduleManualPreview = {

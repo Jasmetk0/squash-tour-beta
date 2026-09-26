@@ -3037,11 +3037,22 @@ class AuthoritativeRunSimulationDriver:
                     )
                     start_set_number = initial_state.set_number
                     start_state_fingerprint = current.state_fingerprint
+                    PersistedLiveMatchStore(session).ensure_return_point(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week_ordinal=command.expected_week.ordinal,
+                        slot_id=current.slot_id,
+                        group_id=command.group_id,
+                        source_command_id=command.command_id,
+                        kind=mode,
+                    )
+                    return_point_slot_id = current.slot_id
                 elif current is not None and current.status == "complete":
                     raise ValueError("live match is already complete")
                 else:
                     start_set_number = 1
                     start_state_fingerprint = None
+                    return_point_slot_id = None
 
                 if (
                     command.expected_live_state_fingerprint is not None
@@ -3064,6 +3075,8 @@ class AuthoritativeRunSimulationDriver:
                         command.expected_live_state_fingerprint
                         or start_state_fingerprint
                     ),
+                    "return_point_id": f"return:{command.command_id}",
+                    "return_point_slot_id": return_point_slot_id,
                 }
                 session.add(
                     AuthoritativeSimulationCommandModel(
@@ -3134,6 +3147,21 @@ class AuthoritativeRunSimulationDriver:
             child_ids.append(child_id)
             expected_live_state = last["state_fingerprint"]
 
+            if (
+                child_ordinal == 1
+                and frozen.get("return_point_slot_id") is None
+            ):
+                with self.factory.begin() as session:
+                    PersistedLiveMatchStore(session).ensure_initial_return_point(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week_ordinal=command.expected_week.ordinal,
+                        slot_id=last["slot_id"],
+                        group_id=command.group_id,
+                        source_command_id=command.command_id,
+                        kind=mode,
+                    )
+
             if fault_after_child == child_ordinal:
                 raise RuntimeError(
                     f"fault after committed live-range child {child_ordinal}"
@@ -3164,6 +3192,7 @@ class AuthoritativeRunSimulationDriver:
             "group_id": command.group_id,
             "match_id": last["match_id"],
             "start_set_number": start_set_number,
+            "return_point_id": frozen["return_point_id"],
             "rallies_simulated": len(child_ids),
             "child_command_ids": child_ids,
             "status": last["status"],

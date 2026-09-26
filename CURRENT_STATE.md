@@ -1,36 +1,40 @@
 # Current implementation and next action
 
-## Active implementation — live Rally / Game / Rest of Match simulation
+## Active implementation — restart-safe live Rally / Game / Rest of Match
 
-The canonical live match path now supports three forward granularities without creating
-parallel sporting logic.
+The canonical live-match path now has explicit restart/reopen acceptance at both child
+and parent orchestration boundaries.
 
-- **Next Rally** advances exactly one persisted rally.
-- **Simulate Game** repeatedly executes deterministic Next-Rally child commands until
-  the currently active squash game ends (the persisted set/game ordinal advances), or
-  until the match itself ends.
-- **Simulate Rest of Match** repeatedly executes the same Next-Rally primitive until
-  the final MatchResult commits.
-- Game/Rest parent operations have their own idempotent receipts; every child command
-  ID is derived deterministically from parent ID + mode + child ordinal.
-- Interrupted parent operations can replay already committed children and continue from
-  the same persisted live state without creating an extra rally.
-- stale opening live-state fingerprints fail closed.
-- only the final rally can create the authoritative SimulationEventGroup, sporting
-  effects, terminal checkpoint and tournament-close authority.
-- the final group payload remains equivalent to the ordinary one-shot Next Match path.
+- **Next Rally** remains the only sporting transition primitive.
+- **Simulate Game** and **Simulate Rest of Match** remain deterministic parent
+  orchestrators over persisted Next-Rally child commands.
+- parent range operations expose deterministic fault-injection seams for acceptance
+  testing only; production behavior is unchanged.
+- a crash after an arbitrary committed child leaves the parent receipt pending; a newly
+  constructed driver replays already-completed deterministic child command IDs and
+  continues from the exact persisted state without duplicating a rally.
+- a crash after the terminal child but before parent receipt completion reopens safely:
+  the authoritative group/result/effects/checkpoint remain singletons and the parent
+  finalizes by replaying child receipts rather than re-running sporting logic.
+- exact parent retries return the completed parent receipt without advancing state.
+- a new read-only `live-match` inspection surface exposes persisted match cursor/state
+  without mutation.
+- the Admin panel hydrates the persisted state fingerprint, set, game score and rally
+  cursor from server truth after page reload; live simulation no longer depends on
+  transient React memory.
 
-Admin HTTP now exposes:
-- `simulate-next-rally`
-- `simulate-game`
-- `simulate-rest-of-match`
+PR-critical acceptance now covers:
+1. mid-Game failure after the seventh committed child, driver reconstruction, resume,
+   and exact parent retry;
+2. terminal Rest-of-Match failure after final child but before parent completion,
+   reconstruction, resume and singleton authoritative result;
+3. read-only live-state inspection after driver reopen;
+4. frontend reload hydration using the persisted state fingerprint for the next live
+   command.
 
-The canonical Admin Simulation panel exposes all three controls and reports how many
-rallies a Game/Rest operation actually consumed.
-
-**Next after this PR:** harden interruption/reopen acceptance for parent range commands
-and then move to the next pre-alpha live-match UX/state requirement rather than adding
-another simulation implementation.
+**Next after this PR:** continue the pre-alpha live-match UX/state slice from server-owned
+truth (completed-match Replay remains read-only and separate), while avoiding any second
+sporting simulation implementation.
 
 ## Active implementation — canonical Tournament Preparation State
 

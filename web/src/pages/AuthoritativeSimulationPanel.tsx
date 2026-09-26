@@ -23,6 +23,8 @@ import {
   saveAuthoritativeSimulation,
   inspectAuthoritativeLiveMatch,
   inspectAuthoritativeLiveMatchTimeline,
+  listAuthoritativeMatchReplays,
+  getAuthoritativeMatchReplayCursor,
   confirmAuthoritativeLiveMatch,
   restoreAuthoritativeLiveReturnPoint,
   simulateAuthoritativeNextRally,
@@ -60,6 +62,7 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeNextRallyResult,
   AuthoritativeLiveRangeResult,
+  AuthoritativeMatchReplayCursor,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
@@ -237,6 +240,8 @@ export function AuthoritativeSimulationPanel({
   const [liveRallyStateFingerprint, setLiveRallyStateFingerprint] = useState<string | null>(null)
   const [liveRallyResult, setLiveRallyResult] = useState<AuthoritativeNextRallyResult | null>(null)
   const [liveRangeResult, setLiveRangeResult] = useState<AuthoritativeLiveRangeResult | null>(null)
+  const [selectedReplayGroupId, setSelectedReplayGroupId] = useState('')
+  const [replayRallyIndex, setReplayRallyIndex] = useState(1)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
   const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
@@ -313,6 +318,32 @@ export function AuthoritativeSimulationPanel({
     payload: WeekTournamentLockPreviewPayload
     preview: WeekTournamentLockPreview
   } | null>(null)
+
+  const replayListQuery = useQuery({
+    queryKey: ['authoritative-match-replays', runId, branchId],
+    queryFn: () => listAuthoritativeMatchReplays(runId, branchId, 20),
+    enabled,
+    retry: false
+  })
+
+  const replayCursorQuery = useQuery<AuthoritativeMatchReplayCursor>({
+    queryKey: [
+      'authoritative-match-replay-cursor',
+      runId,
+      branchId,
+      selectedReplayGroupId,
+      replayRallyIndex
+    ],
+    queryFn: () =>
+      getAuthoritativeMatchReplayCursor(
+        runId,
+        branchId,
+        selectedReplayGroupId,
+        replayRallyIndex
+      ),
+    enabled: Boolean(enabled && selectedReplayGroupId),
+    retry: false
+  })
 
   const liveMatchQuery = useQuery({
     queryKey: ['authoritative-live-match', runId, branchId, selectedGroupId],
@@ -557,6 +588,16 @@ export function AuthoritativeSimulationPanel({
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
+    const firstReplayable = replayListQuery.data?.matches.find(
+      (match) => match.replay_available
+    )
+    if (!selectedReplayGroupId && firstReplayable) {
+      setSelectedReplayGroupId(firstReplayable.group_id)
+      setReplayRallyIndex(1)
+    }
+  }, [replayListQuery.data?.matches, selectedReplayGroupId])
+
+  useEffect(() => {
     const persisted = liveMatchQuery.data?.live
     if (!persisted || persisted.status !== 'active') {
       return
@@ -730,7 +771,12 @@ export function AuthoritativeSimulationPanel({
       setManualScheduleReview(null)
       setManualScheduleRequestId(newCommandId())
       setConfirmed(false)
-      await refreshCanonicalSimulation()
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-match-replays', runId, branchId]
+        })
+      ])
     },
     onError: async (error) => {
       if ((error as { status?: number }).status === 409) {
@@ -994,6 +1040,9 @@ export function AuthoritativeSimulationPanel({
         refreshCanonicalSimulation(),
         queryClient.invalidateQueries({
           queryKey: ['authoritative-live-match-timeline', runId, branchId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-match-replays', runId, branchId]
         }),
         queryClient.invalidateQueries({
           queryKey: ['authoritative-live-match', runId, branchId]
@@ -3311,6 +3360,127 @@ export function AuthoritativeSimulationPanel({
               Review authoritative Full Simulation
             </button>
           </div>
+          <section aria-label="Authoritative match replay">
+            <h5>Read-only Match Replay</h5>
+            {replayListQuery.data?.matches.some((match) => match.replay_available) ? (
+              <>
+                <label>
+                  Completed authoritative match
+                  <select
+                    aria-label="Completed authoritative replay match"
+                    value={selectedReplayGroupId}
+                    onChange={(event) => {
+                      setSelectedReplayGroupId(event.target.value)
+                      setReplayRallyIndex(1)
+                    }}
+                  >
+                    {replayListQuery.data.matches
+                      .filter((match) => match.replay_available)
+                      .map((match) => (
+                        <option key={match.group_id} value={match.group_id}>
+                          {match.group_id} · {match.winner_player_id} def. {match.loser_player_id}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                {replayCursorQuery.data ? (
+                  <>
+                    <MetadataList
+                      items={[
+                        {
+                          label: 'Rally',
+                          value: `${replayCursorQuery.data.navigation.rally_index} / ${replayCursorQuery.data.navigation.total_rallies}`
+                        },
+                        {
+                          label: 'Game',
+                          value: replayCursorQuery.data.rally.set_number
+                        },
+                        {
+                          label: 'Score',
+                          value:
+                            `${replayCursorQuery.data.rally.score_after.sets_a}-${replayCursorQuery.data.rally.score_after.sets_b} sets; ` +
+                            `${replayCursorQuery.data.rally.score_after.points_a}-${replayCursorQuery.data.rally.score_after.points_b}`
+                        },
+                        {
+                          label: 'Server',
+                          value: replayCursorQuery.data.rally.serving_player_id
+                        },
+                        {
+                          label: 'Winner',
+                          value: replayCursorQuery.data.rally.winner_player_id ?? 'LET / replay'
+                        },
+                        {
+                          label: 'Terminal cause',
+                          value: replayCursorQuery.data.rally.primary_terminal_trigger
+                        },
+                        {
+                          label: 'Shots',
+                          value: replayCursorQuery.data.rally.estimated_shot_count
+                        },
+                        {
+                          label: 'Rally seconds',
+                          value: replayCursorQuery.data.rally.elapsed_seconds
+                        }
+                      ]}
+                    />
+                    <div className="button-row" aria-label="Authoritative match replay navigation">
+                      <button
+                        type="button"
+                        onClick={() => setReplayRallyIndex(1)}
+                        disabled={replayCursorQuery.data.navigation.at_start}
+                      >
+                        First rally
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const previous = replayCursorQuery.data?.navigation.previous_rally_index
+                          if (previous) setReplayRallyIndex(previous)
+                        }}
+                        disabled={replayCursorQuery.data.navigation.previous_rally_index === null}
+                      >
+                        Step Back
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const next = replayCursorQuery.data?.navigation.next_rally_index
+                          if (next) setReplayRallyIndex(next)
+                        }}
+                        disabled={replayCursorQuery.data.navigation.next_rally_index === null}
+                      >
+                        Step Forward
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setReplayRallyIndex(
+                            replayCursorQuery.data?.navigation.total_rallies ?? 1
+                          )
+                        }
+                        disabled={replayCursorQuery.data.navigation.at_end}
+                      >
+                        Last rally
+                      </button>
+                    </div>
+                    <MetadataList
+                      items={[
+                        { label: 'Replay source', value: replayCursorQuery.data.replay_source },
+                        { label: 'Read only', value: replayCursorQuery.data.read_only ? 'yes' : 'no' },
+                        { label: 'RNG rerun', value: replayCursorQuery.data.rng_rerun ? 'yes' : 'no' },
+                        { label: 'Verified', value: replayCursorQuery.data.verified ? 'yes' : 'no' },
+                        { label: 'Match log hash', value: replayCursorQuery.data.match_log_hash }
+                      ]}
+                    />
+                  </>
+                ) : (
+                  <p className="status">Loading stored authoritative rally…</p>
+                )}
+              </>
+            ) : (
+              <p className="status">No completed authoritative match with a stored rally log yet.</p>
+            )}
+          </section>
           {liveWorkingCompleted ? (
             <section aria-label="Completed working match result">
               <h5>Working result ready for confirmation</h5>

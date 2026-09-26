@@ -141,6 +141,8 @@ import type {
   AuthoritativeNextRallyResult,
   AuthoritativeLiveMatchInspection,
   AuthoritativeLiveMatchTimeline,
+  AuthoritativeLiveConfirmPayload,
+  AuthoritativeLiveConfirmResult,
   AuthoritativeLiveReturnPayload,
   AuthoritativeLiveReturnResult,
   AuthoritativeLiveRangePayload,
@@ -1608,6 +1610,23 @@ export async function inspectAuthoritativeLiveMatch(
     data.group_id !== groupId
   ) {
     throw new Error('Authoritative live match inspection response is invalid.')
+  }
+  return data
+}
+
+export async function confirmAuthoritativeLiveMatch(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeLiveConfirmPayload
+): Promise<AuthoritativeLiveConfirmResult> {
+  const data = await request<AuthoritativeLiveConfirmResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/live-match/confirm',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (data.schema_version !== 'authoritative_live_confirm_result.v1') {
+    throw new Error('Authoritative live confirmation response is invalid.')
   }
   return data
 }

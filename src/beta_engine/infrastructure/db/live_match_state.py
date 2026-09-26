@@ -17,6 +17,7 @@ from beta_engine.domain.matches.models import MatchResult
 from beta_engine.domain.simulation_slots import fingerprint
 from beta_engine.infrastructure.db.models import (
     LiveMatchAlternativePathModel,
+    LiveMatchCompletedAlternativeModel,
     LiveMatchRallyCommandModel,
     LiveMatchReturnPointModel,
     LiveMatchWorkingModel,
@@ -302,6 +303,15 @@ class PersistedLiveMatchStore:
                 LiveMatchAlternativePathModel.group_id == group_id,
             )
         ).all()
+        completed_alternatives = self.session.scalars(
+            select(LiveMatchCompletedAlternativeModel).where(
+                LiveMatchCompletedAlternativeModel.run_id == run_id,
+                LiveMatchCompletedAlternativeModel.branch_id == branch_id,
+                LiveMatchCompletedAlternativeModel.week_ordinal == week_ordinal,
+                LiveMatchCompletedAlternativeModel.slot_id == slot_id,
+                LiveMatchCompletedAlternativeModel.group_id == group_id,
+            )
+        ).all()
         return {
             "schema_version": "live_match_return_timeline.v1",
             "run_id": run_id,
@@ -316,6 +326,17 @@ class PersistedLiveMatchStore:
             "alternatives": [
                 self._alternative_response(item)
                 for item in sorted(alternatives, key=lambda item: item.archived_rally_index)
+            ],
+            "completed_alternatives": [
+                {
+                    "alternative_id": item.alternative_id,
+                    "return_point_id": item.return_point_id,
+                    "final_result_fingerprint": item.final_result_fingerprint,
+                    "final_result": MatchResult.model_validate_json(
+                        item.final_result_json
+                    ).model_dump(mode="json"),
+                }
+                for item in completed_alternatives
             ],
         }
 
@@ -341,52 +362,94 @@ class PersistedLiveMatchStore:
             group_id=group_id,
         )
         row = self.session.get(LiveMatchWorkingModel, key)
-        if row is None or row.status != "active" or row.working_state_json is None:
+        if row is None or row.status not in {"active", "completed_working"}:
             raise ValueError(
-                "only an uncommitted active live match can restore a return point"
+                "only an uncommitted live match can restore a return point"
             )
-        if row.state_fingerprint != expected_state_fingerprint:
-            raise ValueError("live match state changed before return-point restore")
+        if row.status == "active":
+            if row.working_state_json is None:
+                raise ValueError("active live match has no working state")
+            if row.state_fingerprint != expected_state_fingerprint:
+                raise ValueError("live match state changed before return-point restore")
+        else:
+            if row.final_result_json is None or row.final_result_fingerprint is None:
+                raise ValueError("completed working match has no final result")
+            if row.final_result_fingerprint != expected_state_fingerprint:
+                raise ValueError("completed working result changed before restore")
 
         point = self.session.get(LiveMatchReturnPointModel, (*key, return_point_id))
         if point is None or point.status != "available":
             raise ValueError("live match return point is unavailable")
 
-        current = MatchRallyWorkingState.model_validate_json(row.working_state_json)
         alternative_id = f"alternative:{restore_command_id}"
         alternative_key = (*key, alternative_id)
-        existing_alt = self.session.get(LiveMatchAlternativePathModel, alternative_key)
-        if existing_alt is None:
-            self.session.add(
-                LiveMatchAlternativePathModel(
-                    run_id=run_id,
-                    branch_id=branch_id,
-                    week_ordinal=week_ordinal,
-                    slot_id=slot_id,
-                    group_id=group_id,
-                    alternative_id=alternative_id,
-                    return_point_id=return_point_id,
-                    state_fingerprint=current.fingerprint,
-                    working_state_json=row.working_state_json,
-                    archived_rally_index=current.rally_index,
-                    archived_set_number=current.set_number,
-                    archived_games_a=current.games_a,
-                    archived_games_b=current.games_b,
-                    metadata_json="{}",
-                )
+        if row.status == "active":
+            current = MatchRallyWorkingState.model_validate_json(row.working_state_json)
+            existing_alt = self.session.get(
+                LiveMatchAlternativePathModel, alternative_key
             )
-        elif (
-            existing_alt.return_point_id != return_point_id
-            or existing_alt.state_fingerprint != current.fingerprint
-            or existing_alt.working_state_json != row.working_state_json
-        ):
-            raise ValueError("restore command identity conflicts with archived path")
+            if existing_alt is None:
+                self.session.add(
+                    LiveMatchAlternativePathModel(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week_ordinal=week_ordinal,
+                        slot_id=slot_id,
+                        group_id=group_id,
+                        alternative_id=alternative_id,
+                        return_point_id=return_point_id,
+                        state_fingerprint=current.fingerprint,
+                        working_state_json=row.working_state_json,
+                        archived_rally_index=current.rally_index,
+                        archived_set_number=current.set_number,
+                        archived_games_a=current.games_a,
+                        archived_games_b=current.games_b,
+                        metadata_json="{}",
+                    )
+                )
+            elif (
+                existing_alt.return_point_id != return_point_id
+                or existing_alt.state_fingerprint != current.fingerprint
+                or existing_alt.working_state_json != row.working_state_json
+            ):
+                raise ValueError("restore command identity conflicts with archived path")
+        else:
+            existing_completed = self.session.get(
+                LiveMatchCompletedAlternativeModel, alternative_key
+            )
+            if existing_completed is None:
+                self.session.add(
+                    LiveMatchCompletedAlternativeModel(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        week_ordinal=week_ordinal,
+                        slot_id=slot_id,
+                        group_id=group_id,
+                        alternative_id=alternative_id,
+                        return_point_id=return_point_id,
+                        final_result_fingerprint=row.final_result_fingerprint,
+                        final_result_json=row.final_result_json,
+                        metadata_json="{}",
+                    )
+                )
+            elif (
+                existing_completed.return_point_id != return_point_id
+                or existing_completed.final_result_fingerprint
+                != row.final_result_fingerprint
+                or existing_completed.final_result_json != row.final_result_json
+            ):
+                raise ValueError(
+                    "restore command identity conflicts with completed alternative"
+                )
 
         restored = MatchRallyWorkingState.model_validate_json(point.working_state_json)
         if restored.fingerprint != point.state_fingerprint:
             raise ValueError("return point state fingerprint is corrupt")
+        row.status = "active"
         row.working_state_json = point.working_state_json
         row.state_fingerprint = point.state_fingerprint
+        row.final_result_json = None
+        row.final_result_fingerprint = None
         self.session.flush()
         return {
             "schema_version": "live_match_return_restore.v1",
@@ -469,7 +532,7 @@ class PersistedLiveMatchStore:
             response["idempotent_replay"] = True
             return response
 
-        if row.status == "complete":
+        if row.status in {"completed_working", "complete"}:
             raise ValueError("live match is already complete")
         if row.state_fingerprint != expected_state_fingerprint:
             raise ValueError("live match state changed; retry against the current state")
@@ -490,7 +553,7 @@ class PersistedLiveMatchStore:
         if outcome.final_result is not None:
             final_result = outcome.final_result
             final_result_json = final_result.model_dump_json()
-            row.status = "complete"
+            row.status = "completed_working"
             row.working_state_json = None
             row.state_fingerprint = None
             row.final_result_json = final_result_json

@@ -27,6 +27,7 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   inspectAuthoritativeLiveMatch: vi.fn(),
   inspectAuthoritativeLiveMatchTimeline: vi.fn(),
+  confirmAuthoritativeLiveMatch: vi.fn(),
   restoreAuthoritativeLiveReturnPoint: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
   simulateAuthoritativeGame: vi.fn(),
@@ -1635,6 +1636,81 @@ describe('AuthoritativeSimulationPanel', () => {
           group_id: 'g1',
           return_point_id: 'return:game-parent',
           expected_live_state_fingerprint: '9'.repeat(64)
+        })
+      )
+    )
+  })
+
+  it('requires explicit confirmation before a completed working match becomes authoritative', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.inspectAuthoritativeLiveMatch.mockResolvedValue({
+      schema_version: 'authoritative_live_match_inspection.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      present: true,
+      live: {
+        schema_version: 'persisted_live_match_state.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: 'g1',
+        match_id: 'g1',
+        status: 'completed_working',
+        working_input_fingerprint: '1'.repeat(64),
+        state_fingerprint: null,
+        rally_index: null,
+        set_number: null,
+        games_a: null,
+        games_b: null,
+        final_result_fingerprint: '9'.repeat(64),
+        final_result: { winner_player_id: 'P001' },
+        idempotent_replay: false
+      }
+    })
+    api.confirmAuthoritativeLiveMatch.mockResolvedValue({
+      schema_version: 'authoritative_live_confirm_result.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      slot_id: 'slot-1',
+      group_id: 'g1',
+      final_result_fingerprint: '9'.repeat(64),
+      authoritative_group_committed: true,
+      authoritative_result_fingerprint: '8'.repeat(64),
+      terminal_checkpoint_fingerprint: '7'.repeat(64),
+      position,
+      idempotent_replay: false
+    })
+    renderPanel()
+
+    expect(
+      await screen.findByText('Working result ready for confirmation')
+    ).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Confirm authoritative match result' })
+    )
+
+    await waitFor(() =>
+      expect(api.confirmAuthoritativeLiveMatch).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          group_id: 'g1',
+          expected_final_result_fingerprint: '9'.repeat(64)
         })
       )
     )

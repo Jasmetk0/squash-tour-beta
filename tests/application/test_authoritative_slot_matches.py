@@ -28,6 +28,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeNextRallyCommand,
     AuthoritativeLiveRangeCommand,
     AuthoritativeLiveReturnCommand,
+    AuthoritativeLiveConfirmCommand,
     AuthoritativeMatchDayCommand,
     AuthoritativeRoundCommand,
     AuthoritativeTournamentCommand,
@@ -7945,7 +7946,7 @@ def test_authoritative_next_rally_matches_normal_full_match_and_commits_only_at_
     current = first
     final_command = None
     for index in range(2, 1000):
-        if current["status"] == "complete":
+        if current["status"] == "completed_working":
             break
         position = live_driver.position(run_id="run", branch_id="branch")
         final_command = AuthoritativeNextRallyCommand(
@@ -7962,18 +7963,32 @@ def test_authoritative_next_rally_matches_normal_full_match_and_commits_only_at_
     else:  # pragma: no cover
         raise AssertionError("live rally simulation did not finish")
 
-    assert current["status"] == "complete"
-    assert current["authoritative_group_committed"] is True
+    assert current["status"] == "completed_working"
+    assert current["authoritative_group_committed"] is False
     assert current["final_result"] is not None
     assert current["state_fingerprint"] is None
     assert final_command is not None
 
-    # Lost-response retry must not create another rally or another group.
+    # Lost-response retry must not create another rally or commit history.
     replay = live_driver.simulate_next_rally(final_command)
     assert replay["idempotent_replay"] is True
-    assert replay["authoritative_result_fingerprint"] == current[
-        "authoritative_result_fingerprint"
-    ]
+    with live_factory() as session:
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+
+    confirm_position = live_driver.position(run_id="run", branch_id="branch")
+    confirmed = live_driver.confirm_completed_live_match(
+        AuthoritativeLiveConfirmCommand(
+            command_id="confirm-live-result",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=confirm_position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            expected_final_result_fingerprint=current["final_result_fingerprint"],
+        )
+    )
+    assert confirmed["authoritative_group_committed"] is True
 
     with live_factory() as session:
         live_groups = session.scalars(select(SimulationEventGroupModel)).all()
@@ -8108,11 +8123,27 @@ def test_simulate_game_then_rest_of_match_reuses_next_rally_and_matches_full_pat
     assert rest["schema_version"] == (
         "authoritative_simulate_rest_of_match_result.v1"
     )
-    assert rest["status"] == "complete"
+    assert rest["status"] == "completed_working"
     assert rest["state_fingerprint"] is None
-    assert rest["authoritative_group_committed"] is True
+    assert rest["authoritative_group_committed"] is False
+    assert rest["working_result_ready"] is True
     assert rest["final_result"] is not None
+    with live_factory() as session:
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
 
+    confirm_position = live_driver.position(run_id="run", branch_id="branch")
+    live_driver.confirm_completed_live_match(
+        AuthoritativeLiveConfirmCommand(
+            command_id="confirm-rest-result",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=confirm_position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            expected_final_result_fingerprint=rest["final_result_fingerprint"],
+        )
+    )
     with live_factory() as session:
         live_group = session.scalars(select(SimulationEventGroupModel)).one()
         live_payload = json.loads(live_group.payload_json)
@@ -8163,15 +8194,15 @@ def test_simulate_game_can_finish_match_without_overshooting(tmp_path):
                 expected_live_state_fingerprint=current_state,
             )
         )
-        if result["status"] == "complete":
+        if result["status"] == "completed_working":
             break
         current_state = result["state_fingerprint"]
         current_position = driver.position(run_id="run", branch_id="branch")
     assert result is not None
-    assert result["status"] == "complete"
-    assert result["authoritative_group_committed"] is True
+    assert result["status"] == "completed_working"
+    assert result["authoritative_group_committed"] is False
     with factory() as session:
-        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 1
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
 
 
 @pytest.mark.pr_critical
@@ -8271,8 +8302,12 @@ def test_rest_of_match_reopens_after_terminal_child_before_parent_receipt(tmp_pa
         assert parent is not None
         assert parent.status == "pending"
         groups = session.scalars(select(SimulationEventGroupModel)).all()
-        assert len(groups) == 1
-        committed_result_fp = groups[0].result_fingerprint
+        assert groups == []
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+        completed = session.scalar(select(LiveMatchWorkingModel))
+        assert completed is not None
+        assert completed.status == "completed_working"
+        committed_result_fp = completed.final_result_fingerprint
         child_count_before = len(
             session.scalars(
                 select(AuthoritativeSimulationCommandModel).where(
@@ -8290,15 +8325,14 @@ def test_rest_of_match_reopens_after_terminal_child_before_parent_receipt(tmp_pa
         factory, driver.match_service, driver.awards_service
     )
     resumed = reopened.simulate_rest_of_match(command)
-    assert resumed["status"] == "complete"
-    assert resumed["authoritative_group_committed"] is True
-    assert resumed["authoritative_result_fingerprint"] == committed_result_fp
+    assert resumed["status"] == "completed_working"
+    assert resumed["authoritative_group_committed"] is False
+    assert resumed["final_result_fingerprint"] == committed_result_fp
     assert resumed["rallies_simulated"] == child_count_before
 
     with factory() as session:
         groups = session.scalars(select(SimulationEventGroupModel)).all()
-        assert len(groups) == 1
-        assert groups[0].result_fingerprint == committed_result_fp
+        assert groups == []
         child_count_after = len(
             session.scalars(
                 select(AuthoritativeSimulationCommandModel).where(
@@ -8511,3 +8545,106 @@ def test_return_point_restore_does_not_reexecute_sporting_rng(tmp_path):
             session.scalars(select(LiveMatchRallyCommandModel)).all()
         )
     assert after_restore_receipts == before_restore_receipts
+
+
+@pytest.mark.pr_critical
+def test_completed_working_result_can_restore_and_become_completed_alternative(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "completed-working-restore")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    rest = driver.simulate_rest_of_match(
+        AuthoritativeLiveRangeCommand(
+            command_id="rest-working-candidate",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert rest["status"] == "completed_working"
+    assert rest["authoritative_group_committed"] is False
+    assert rest["final_result_fingerprint"] is not None
+    with factory() as session:
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+
+    timeline = driver.inspect_live_match_timeline(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    point = timeline["timeline"]["return_points"][0]
+
+    position = driver.position(run_id="run", branch_id="branch")
+    restored = driver.restore_live_return_point(
+        AuthoritativeLiveReturnCommand(
+            command_id="restore-completed-candidate",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            return_point_id=point["return_point_id"],
+            expected_live_state_fingerprint=rest["final_result_fingerprint"],
+        )
+    )
+    assert restored["restored_state"]["status"] == "active"
+    assert restored["restored_state"]["state_fingerprint"] == point["state_fingerprint"]
+
+    timeline_after = driver.inspect_live_match_timeline(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    completed = timeline_after["timeline"]["completed_alternatives"]
+    assert len(completed) == 1
+    assert completed[0]["alternative_id"] == "alternative:restore-completed-candidate"
+    assert (
+        completed[0]["final_result_fingerprint"]
+        == rest["final_result_fingerprint"]
+    )
+    with factory() as session:
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+
+
+@pytest.mark.pr_critical
+def test_confirm_completed_working_result_is_atomic_idempotent_and_matches_full_path(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "confirm-working")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    rest = driver.simulate_rest_of_match(
+        AuthoritativeLiveRangeCommand(
+            command_id="working-rest",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    position = driver.position(run_id="run", branch_id="branch")
+    command = AuthoritativeLiveConfirmCommand(
+        command_id="confirm-working",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=position.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+        expected_final_result_fingerprint=rest["final_result_fingerprint"],
+    )
+    confirmed = driver.confirm_completed_live_match(command)
+    assert confirmed["authoritative_group_committed"] is True
+    assert confirmed["idempotent_replay"] is False
+    replay = driver.confirm_completed_live_match(command)
+    assert replay["idempotent_replay"] is True
+    assert replay["authoritative_result_fingerprint"] == confirmed[
+        "authoritative_result_fingerprint"
+    ]
+    with factory() as session:
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 1

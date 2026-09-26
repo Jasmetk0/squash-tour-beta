@@ -215,7 +215,7 @@ class AuthoritativeLiveMatchService:
             self.session.flush()
 
         working_row = self.session.get(LiveMatchWorkingModel, key)
-        if working_row is not None and working_row.status == "complete":
+        if working_row is not None and working_row.status in {"completed_working", "complete"}:
             return {
                 "authoritative_input_fingerprint": protected.fingerprint,
                 "state_fingerprint": None,
@@ -269,8 +269,47 @@ class AuthoritativeLiveMatchService:
             command_id=command_id,
             expected_state_fingerprint=expected_state_fingerprint,
         )
-        if step["status"] != "complete":
-            return {**step, "authoritative_group_committed": False}
+        if step["status"] != "completed_working":
+            return {
+                **step,
+                "authoritative_group_committed": False,
+                "working_result_ready": False,
+            }
+
+        return {
+            **step,
+            "authoritative_group_committed": False,
+            "working_result_ready": True,
+            "authoritative_result_fingerprint": None,
+            "terminal_checkpoint_fingerprint": None,
+        }
+
+    def confirm_completed_match(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week,
+        slot_id: str,
+        group_id: str,
+    ) -> dict:
+        """Promote one completed working result into the authoritative slot ledger."""
+
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week.ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        authority = self.session.get(AuthoritativeLiveMatchModel, key)
+        working = self.session.get(LiveMatchWorkingModel, key)
+        if authority is None or working is None:
+            raise ValueError("completed live match authority is missing")
+        if working.status not in {"completed_working", "complete"}:
+            raise ValueError("live match has no completed working result")
+        if working.final_result_json is None:
+            raise ValueError("completed working match has no final result")
 
         existing_group = self.session.get(
             SimulationEventGroupModel,
@@ -279,10 +318,12 @@ class AuthoritativeLiveMatchService:
         if existing_group is not None:
             if existing_group.command_fingerprint != authority.execution_command_fingerprint:
                 raise ValueError("completed live group conflicts with stored execution authority")
+            working.status = "complete"
             return {
-                **step,
                 "authoritative_group_committed": True,
                 "authoritative_result_fingerprint": existing_group.result_fingerprint,
+                "terminal_checkpoint_fingerprint": None,
+                "idempotent_replay": True,
             }
 
         protected = AuthoritativeMatchInput.model_validate_json(
@@ -293,7 +334,7 @@ class AuthoritativeLiveMatchService:
         effects_policy = MatchSportingEffectsPolicy.model_validate_json(
             authority.effects_policy_json
         )
-        result = MatchResult.model_validate(step["final_result"])
+        result = MatchResult.model_validate_json(working.final_result_json)
         result_fp = fingerprint(
             {"input": protected.fingerprint, "result": result.model_dump(mode="json")}
         )
@@ -321,6 +362,7 @@ class AuthoritativeLiveMatchService:
                 payload_json=json.dumps(payload, sort_keys=True, separators=(",", ":")),
             )
         )
+        working.status = "complete"
         self.session.flush()
         terminal = AuthoritativeSlotMatchExecutor(self.session)._rebuild_terminal(
             AuthoritativeSlotMatchExecutor(self.session)._get_slot(
@@ -328,10 +370,10 @@ class AuthoritativeLiveMatchService:
             )
         )
         return {
-            **step,
             "authoritative_group_committed": True,
             "authoritative_result_fingerprint": result_fp,
             "terminal_checkpoint_fingerprint": terminal.fingerprint,
+            "idempotent_replay": False,
         }
 
     def inspect(

@@ -1250,7 +1250,7 @@ export type AuthoritativeNextRallyResult = {
   slot_id: string
   group_id: string
   match_id: string
-  status: 'active' | 'complete'
+  status: 'active' | 'completed_working' | 'complete'
   working_input_fingerprint: string
   state_fingerprint: string | null
   rally_index: number | null
@@ -1282,7 +1282,7 @@ export type AuthoritativeLiveMatchInspection = {
     slot_id: string
     group_id: string
     match_id: string
-    status: 'active' | 'complete'
+    status: 'active' | 'completed_working' | 'complete'
     working_input_fingerprint: string
     state_fingerprint: string | null
     rally_index: number | null
@@ -1333,6 +1333,12 @@ export type AuthoritativeLiveMatchTimeline = {
     group_id: string
     return_points: AuthoritativeLiveMatchReturnPoint[]
     alternatives: AuthoritativeLiveMatchAlternative[]
+    completed_alternatives: Array<{
+      alternative_id: string
+      return_point_id: string
+      final_result_fingerprint: string
+      final_result: Record<string, unknown>
+    }>
   }
 }
 
@@ -1367,6 +1373,30 @@ export type AuthoritativeLiveReturnResult = {
   idempotent_replay: boolean
 }
 
+export type AuthoritativeLiveConfirmPayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  group_id: string
+  expected_final_result_fingerprint: string
+}
+
+export type AuthoritativeLiveConfirmResult = {
+  schema_version: 'authoritative_live_confirm_result.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  slot_id: string
+  group_id: string
+  final_result_fingerprint: string
+  authoritative_group_committed: boolean
+  authoritative_result_fingerprint: string
+  terminal_checkpoint_fingerprint: string | null
+  position: AuthoritativeSimulationPosition
+  idempotent_replay: boolean
+}
+
 export type AuthoritativeLiveRangePayload = {
   command_id: string
   expected_week: AuthoritativeRankingWeek
@@ -1389,13 +1419,15 @@ export type AuthoritativeLiveRangeResult = {
   return_point_id: string
   rallies_simulated: number
   child_command_ids: string[]
-  status: 'active' | 'complete'
+  status: 'active' | 'completed_working' | 'complete'
   state_fingerprint: string | null
   set_number: number | null
   games_a: number | null
   games_b: number | null
   authoritative_group_committed: boolean
   authoritative_result_fingerprint?: string | null
+  final_result_fingerprint: string | null
+  working_result_ready: boolean
   final_result: Record<string, unknown> | null
   position: AuthoritativeSimulationPosition
   idempotent_replay: boolean

@@ -23,6 +23,7 @@ import {
   saveAuthoritativeSimulation,
   inspectAuthoritativeLiveMatch,
   inspectAuthoritativeLiveMatchTimeline,
+  confirmAuthoritativeLiveMatch,
   restoreAuthoritativeLiveReturnPoint,
   simulateAuthoritativeNextRally,
   simulateAuthoritativeGame,
@@ -229,6 +230,7 @@ export function AuthoritativeSimulationPanel({
     preview: AuthoritativeWeekScheduleManualPreview
   } | null>(null)
   const [nextRallyCommandId, setNextRallyCommandId] = useState(newCommandId)
+  const [liveConfirmCommandId, setLiveConfirmCommandId] = useState(newCommandId)
   const [liveReturnCommandId, setLiveReturnCommandId] = useState(newCommandId)
   const [simulateGameCommandId, setSimulateGameCommandId] = useState(newCommandId)
   const [restOfMatchCommandId, setRestOfMatchCommandId] = useState(newCommandId)
@@ -842,6 +844,18 @@ export function AuthoritativeSimulationPanel({
     }
   }
 
+  const liveWorkingGuardFingerprint =
+    liveRallyStateFingerprint ??
+    liveRallyResult?.final_result_fingerprint ??
+    liveRangeResult?.final_result_fingerprint ??
+    liveMatchQuery.data?.live?.final_result_fingerprint ??
+    null
+
+  const liveWorkingCompleted =
+    liveRallyResult?.status === 'completed_working' ||
+    liveRangeResult?.status === 'completed_working' ||
+    liveMatchQuery.data?.live?.status === 'completed_working'
+
   const nextRallyMutation = useMutation({
     mutationFn: () => {
       const position = positionQuery.data
@@ -854,7 +868,7 @@ export function AuthoritativeSimulationPanel({
         expected_position_fingerprint: position.position_fingerprint,
         expected_revision_id: savedRevisionId,
         group_id: selectedGroupId,
-        expected_live_state_fingerprint: liveRallyStateFingerprint
+        expected_live_state_fingerprint: liveWorkingGuardFingerprint
       })
     },
     onSuccess: async (result) => {
@@ -865,7 +879,7 @@ export function AuthoritativeSimulationPanel({
         ['authoritative-simulation-position', runId, branchId],
         result.position
       )
-      if (result.status === 'complete') {
+      if (result.status === 'completed_working' || result.status === 'complete') {
         setLiveRallyStateFingerprint(null)
       }
       await refreshCanonicalSimulation()
@@ -934,7 +948,7 @@ export function AuthoritativeSimulationPanel({
         ['authoritative-simulation-position', runId, branchId],
         result.position
       )
-      if (result.status === 'complete') {
+      if (result.status === 'completed_working' || result.status === 'complete') {
         setLiveRallyStateFingerprint(null)
       }
       await refreshCanonicalSimulation()
@@ -953,9 +967,9 @@ export function AuthoritativeSimulationPanel({
         !position ||
         !savedRevisionId ||
         !selectedGroupId ||
-        !liveRallyStateFingerprint
+        !liveWorkingGuardFingerprint
       ) {
-        throw new Error('An active persisted live match is required for restore.')
+        throw new Error('An uncommitted persisted live match is required for restore.')
       }
       return restoreAuthoritativeLiveReturnPoint(runId, branchId, {
         command_id: liveReturnCommandId,
@@ -964,7 +978,7 @@ export function AuthoritativeSimulationPanel({
         expected_revision_id: savedRevisionId,
         group_id: selectedGroupId,
         return_point_id: returnPointId,
-        expected_live_state_fingerprint: liveRallyStateFingerprint
+        expected_live_state_fingerprint: liveWorkingGuardFingerprint
       })
     },
     onSuccess: async (result) => {
@@ -983,6 +997,53 @@ export function AuthoritativeSimulationPanel({
         }),
         queryClient.invalidateQueries({
           queryKey: ['authoritative-live-match', runId, branchId]
+        })
+      ])
+    }
+  })
+
+  const confirmLiveMatchMutation = useMutation({
+    mutationFn: () => {
+      const position = positionQuery.data
+      const resultFingerprint =
+        liveRallyResult?.final_result_fingerprint ??
+        liveRangeResult?.final_result_fingerprint ??
+        liveMatchQuery.data?.live?.final_result_fingerprint
+      if (
+        !position ||
+        !savedRevisionId ||
+        !selectedGroupId ||
+        !resultFingerprint ||
+        !liveWorkingCompleted
+      ) {
+        throw new Error('A completed working match result is required for confirmation.')
+      }
+      return confirmAuthoritativeLiveMatch(runId, branchId, {
+        command_id: liveConfirmCommandId,
+        expected_week: position.current_week,
+        expected_position_fingerprint: position.position_fingerprint,
+        expected_revision_id: savedRevisionId,
+        group_id: selectedGroupId,
+        expected_final_result_fingerprint: resultFingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      setLiveConfirmCommandId(newCommandId())
+      setLiveRallyStateFingerprint(null)
+      setLiveRallyResult(null)
+      setLiveRangeResult(null)
+      setConfirmed(false)
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      await Promise.all([
+        refreshCanonicalSimulation(),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-live-match', runId, branchId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['authoritative-live-match-timeline', runId, branchId]
         })
       ])
     }
@@ -1963,6 +2024,7 @@ export function AuthoritativeSimulationPanel({
     simulateGameMutation.isPending ||
     restOfMatchMutation.isPending ||
     restoreLiveReturnMutation.isPending ||
+    confirmLiveMatchMutation.isPending ||
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
     nextMatchDayPreviewMutation.isPending ||
@@ -3249,6 +3311,24 @@ export function AuthoritativeSimulationPanel({
               Review authoritative Full Simulation
             </button>
           </div>
+          {liveWorkingCompleted ? (
+            <section aria-label="Completed working match result">
+              <h5>Working result ready for confirmation</h5>
+              <p className="status">
+                The match is fully simulated, but no authoritative group, sporting effects
+                or slot progression has been committed yet.
+              </p>
+              <div className="quick-actions">
+                <button
+                  type="button"
+                  onClick={() => confirmLiveMatchMutation.mutate()}
+                  disabled={!confirmed || actionPending}
+                >
+                  Confirm authoritative match result
+                </button>
+              </div>
+            </section>
+          ) : null}
           {liveTimelineQuery.data?.timeline?.return_points.length ? (
             <>
               <h5>Live match return timeline</h5>
@@ -3261,7 +3341,7 @@ export function AuthoritativeSimulationPanel({
                     <button
                       type="button"
                       onClick={() => restoreLiveReturnMutation.mutate(point.return_point_id)}
-                      disabled={!liveRallyStateFingerprint || actionPending}
+                      disabled={!liveWorkingGuardFingerprint || actionPending}
                     >
                       Restore this return point
                     </button>
@@ -3339,9 +3419,13 @@ export function AuthoritativeSimulationPanel({
                 <p className="status">
                   Only the displayed rally has been simulated. The future continuation does not exist yet.
                 </p>
+              ) : liveRallyResult.status === 'completed_working' ? (
+                <p className="status">
+                  Match complete as a working alternative. Confirm it or restore a return point.
+                </p>
               ) : (
                 <p className="status">
-                  Match complete. Final result, sporting effects and terminal checkpoint are now authoritative.
+                  Match result is authoritative.
                 </p>
               )}
             </>

@@ -29,12 +29,16 @@ existing one-shot `Simulate Next Match` path and requires identical execution-co
 fingerprint, protected input fingerprint, result fingerprint and complete group payload.
 A separate stale-state test proves rejected commands do not advance persisted state.
 
-HTTP Admin boundary:
-`POST /admin/runs/{run}/branches/{branch}/authoritative-simulation/simulate-next-rally`.
+HTTP/Admin UI is now wired end to end:
+- `POST /admin/runs/{run}/branches/{branch}/authoritative-simulation/simulate-next-rally`;
+- the canonical Authoritative Simulation panel exposes **Simulate authoritative Next Rally**;
+- the panel carries the returned live state fingerprint into the next command and shows
+  current set/game/rally cursor plus whether the authoritative group has committed;
+- UI copy explicitly states that future rallies do not yet exist while the match is live.
 
-**Next after this PR:** surface live state and the Next Rally control in the canonical
-Admin Simulation UI, then implement `Simulate Game` and `Simulate Rest of Match`
-strictly as repeated execution of this same command primitive.
+**Next after this PR:** implement `Simulate Game` and `Simulate Rest of Match`
+strictly as repeated execution of this same persisted command primitive; do not create
+a second sporting simulation path.
 
 ## Active implementation — canonical Tournament Preparation State
 

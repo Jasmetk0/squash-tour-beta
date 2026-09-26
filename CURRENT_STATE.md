@@ -1,24 +1,26 @@
 # Current implementation and next action
 
-## Active implementation — retire legacy one-week execution UI
+## Active implementation — remove legacy one-week execution backend
 
-The remaining season-level mutating legacy command is now removed from the supported
-Admin UI while its diagnostic companions stay available.
+The season-level legacy week orchestrator is now retired end-to-end without weakening
+read-only diagnostics.
 
-- `AdminSeasonsPage` no longer imports or invokes `runSeasonWeek`;
-- `Legacy Run One Season Week`, its unsafe-run toggle, mutation state and execution
-  report panels are removed from the page;
-- read-only legacy Week Preflight and Week Run Recovery / Diagnostics remain available;
-- backend `POST /admin/weeks/run` remains temporarily isolated because recovery,
-  readiness and compatibility tests still use it to construct historical artifact
-  states;
+- `POST /admin/weeks/run` is removed from the API;
+- `SeasonWeekSimulationExecutionService`, its dependency wiring, web client contract
+  and dedicated execution tests are deleted;
+- recovery/readiness/range-preflight tests no longer use the retired orchestrator as a
+  state factory;
+- historical test states are now produced through the lower-level event simulation
+  service that already owns those individual legacy artifacts;
+- read-only Week Preflight, Week Recovery, Season Readiness and Range Preflight remain;
+- PR-critical API coverage asserts the retired week-run route returns `404`;
 - Official Run progression remains exclusively in Product Runs / Run/Branch
   Authoritative Simulation;
-- this is a TECH cleanup consistent with Master §31.3, not a new PRODUCT decision.
+- this remains TECH cleanup aligned with Master §31.3, not a new PRODUCT decision.
 
-**Next after this PR:** audit direct production callers of legacy one-event mutation and
-the remaining `/admin/weeks/run` backend; retire only the next path whose compatibility
-role can be replaced without weakening read-only diagnostics.
+**Next after this PR:** audit the remaining legacy one-event mutating UI/API and manual
+artifact tools. Keep diagnostics that still help migration, but retire mutation entry
+points once canonical Run/Branch equivalents cover the same supported workflow.
 
 
 ## Active implementation — canonical Tournament Preparation State

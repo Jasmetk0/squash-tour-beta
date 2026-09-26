@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from beta_engine.api.deps import get_season_week_recovery_service, get_season_week_simulation_execution_service, get_season_week_simulation_preflight_service
-from beta_engine.application.season_week_simulation_execution_service import RunSeasonWeekRequest, RunSeasonWeekResult, SeasonWeekSimulationExecutionService
+from beta_engine.api.deps import get_season_week_recovery_service, get_season_week_simulation_preflight_service
 from beta_engine.application.season_week_recovery_service import SeasonWeekRecoveryRequest, SeasonWeekRecoveryResult, SeasonWeekRecoveryService
 from beta_engine.application.season_week_simulation_preflight_service import (
     SimulateSeasonWeekPreflightApiRequest,
@@ -31,10 +30,3 @@ def recover_season_week(
 ) -> SeasonWeekRecoveryResult:
     return service.recover_week(payload)
 
-
-@router.post("/run", response_model=RunSeasonWeekResult)
-def run_season_week(
-    payload: RunSeasonWeekRequest,
-    service: SeasonWeekSimulationExecutionService = Depends(get_season_week_simulation_execution_service),
-) -> RunSeasonWeekResult:
-    return service.run_week(payload)

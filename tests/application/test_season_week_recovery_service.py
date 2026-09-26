@@ -5,17 +5,16 @@ from pathlib import Path
 from beta_engine.application.season_calendar_service import SeasonCalendarService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, EntryListValidationIssue
 from beta_engine.application.season_week_recovery_service import SeasonWeekRecoveryRequest, SeasonWeekRecoveryService
-from beta_engine.application.season_week_simulation_execution_service import RunSeasonWeekRequest
-from test_season_week_simulation_execution_service import make_execution_service
+from legacy_week_state_test_support import make_legacy_week_state_context
 
 
 def make_recovery_service(tmp_path: Path) -> tuple[SeasonWeekRecoveryService, str, int]:
-    execution, event_id, week = make_execution_service(tmp_path)
+    execution, event_id, week = make_legacy_week_state_context(tmp_path)
     return SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service), event_id, week
 
 
 def test_no_calendar_returns_build_calendar_action(tmp_path: Path) -> None:
-    execution, _, _ = make_execution_service(tmp_path)
+    execution, _, _ = make_legacy_week_state_context(tmp_path)
     missing_calendar = SeasonCalendarService(template_service=execution.lifecycle_service.calendar_service.template_service, calendar_registry_path=tmp_path / "missing-calendars.json")
     service = SeasonWeekRecoveryService(
         preflight_service=type(execution.preflight_service)(missing_calendar, execution.lifecycle_service, execution.event_simulation_service, execution.ranking_snapshot_service),
@@ -45,8 +44,8 @@ def test_planned_event_recommends_generate_entries(tmp_path: Path) -> None:
 
 
 def test_run_without_apply_points_ready_for_point_application(tmp_path: Path) -> None:
-    execution, event_id, week = make_execution_service(tmp_path)
-    execution.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=5))
+    execution, event_id, week = make_legacy_week_state_context(tmp_path)
+    execution.simulate_event(seed=5)
     service = SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service)
     result = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))
     event = result.events[0]
@@ -60,8 +59,8 @@ def test_run_without_apply_points_ready_for_point_application(tmp_path: Path) ->
 
 
 def test_apply_points_without_snapshot_ready_for_snapshot_publication(tmp_path: Path) -> None:
-    execution, _, week = make_execution_service(tmp_path)
-    execution.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=6, apply_points=True))
+    execution, _, week = make_legacy_week_state_context(tmp_path)
+    execution.simulate_event(seed=6, apply_points=True)
     service = SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service)
     result = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))
     assert result.events[0].points_applied is True
@@ -73,8 +72,8 @@ def test_apply_points_without_snapshot_ready_for_snapshot_publication(tmp_path: 
 
 
 def test_completed_week_with_snapshot_reviews_completed_week(tmp_path: Path) -> None:
-    execution, _, week = make_execution_service(tmp_path)
-    execution.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=7, apply_points=True, publish_snapshot=True))
+    execution, _, week = make_legacy_week_state_context(tmp_path)
+    execution.simulate_event(seed=7, apply_points=True, publish_snapshot=True)
     service = SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service)
     result = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))
     assert result.summary.week_complete is True
@@ -100,8 +99,8 @@ def test_blocked_event_requires_manual_attention(tmp_path: Path) -> None:
 
 
 def test_duplicate_points_risk_after_points_applied(tmp_path: Path) -> None:
-    execution, _, week = make_execution_service(tmp_path)
-    execution.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=8, apply_points=True))
+    execution, _, week = make_legacy_week_state_context(tmp_path)
+    execution.simulate_event(seed=8, apply_points=True)
     service = SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service)
     result = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))
     assert result.events[0].duplicate_points_risk is True
@@ -109,8 +108,8 @@ def test_duplicate_points_risk_after_points_applied(tmp_path: Path) -> None:
 
 
 def test_determinism_same_persisted_state_same_fingerprint(tmp_path: Path) -> None:
-    execution, _, week = make_execution_service(tmp_path)
-    execution.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, seed=9))
+    execution, _, week = make_legacy_week_state_context(tmp_path)
+    execution.simulate_event(seed=9)
     service = SeasonWeekRecoveryService(execution.preflight_service, execution.lifecycle_service, execution.ranking_snapshot_service)
     first = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))
     second = service.recover_week(SeasonWeekRecoveryRequest(season="2000/2001", season_week=week))

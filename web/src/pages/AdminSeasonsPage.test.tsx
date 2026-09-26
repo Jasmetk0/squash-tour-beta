@@ -881,7 +881,6 @@ describe('AdminSeasonsPage', () => {
   it('renders Season Range Preflight, calls API, displays summary, flags, warning, and week actions', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     api.preflightSeasonRange.mockResolvedValue(seasonRangePreflightResult)
-    api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Legacy Season Range Preflight' })).toBeInTheDocument()
@@ -906,29 +905,14 @@ describe('AdminSeasonsPage', () => {
   })
 
 
-  it('renders Run Season Range, calls API, warns, and displays summary and week table', async () => {
+  it('does not expose legacy Season Range Run mutation in Admin Seasons', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Legacy Run Season Range' })).toBeInTheDocument()
-    expect(screen.getByText('This global season command mutates legacy season artifacts. It is not canonical Official Run execution and no rollback is implemented.')).toBeInTheDocument()
-    await userEvent.clear(screen.getByLabelText('Run start week'))
-    await userEvent.type(screen.getByLabelText('Run start week'), '1')
-    await userEvent.clear(screen.getByLabelText('Run end week'))
-    await userEvent.type(screen.getByLabelText('Run end week'), '2')
-    await userEvent.clear(screen.getByLabelText('Run event ID filter'))
-    await userEvent.type(screen.getByLabelText('Run event ID filter'), 'EVT-2000-W01-wt_a')
-    await userEvent.click(screen.getByRole('button', { name: 'Run range' }))
-
-    expect(api.runSeasonRange).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', start_week: 1, end_week: 2, seed: 12345, apply_points: true, publish_snapshot: true, allow_unsafe_run: false, event_id_filter: ['EVT-2000-W01-wt_a'] }))
-    expect(await screen.findByText('Season range run summary')).toBeInTheDocument()
-    expect(screen.getByText('Executed weeks')).toBeInTheDocument()
-    expect(screen.getByText('Skipped complete')).toBeInTheDocument()
-    expect(screen.getByText('Next safe action')).toBeInTheDocument()
-    const table = await screen.findByRole('table', { name: 'Season range run weeks table' })
-    expect(within(table).getByText('run_week')).toBeInTheDocument()
-    expect(within(table).getByText('completed_week')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Season Range Preflight' })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Legacy Run Season Range' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Run range' })).not.toBeInTheDocument()
+    expect(api.runSeasonRange).not.toHaveBeenCalled()
   })
 
   it('renders week preflight panel and previews through API', async () => {

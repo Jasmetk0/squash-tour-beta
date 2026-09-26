@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Active implementation — canonical Tournament Preparation State
+
+Tournament preparation now has one Run/Branch-owned navigation/readiness surface.
+
+- new `CanonicalTournamentPreparationService` composes only DB-backed canonical
+  authorities: Tournament Ranking Snapshot, Entry Field history, WC/RWC authority,
+  Draw Input, Draw authority and Draw revision history;
+- it never reads legacy EntryList, DrawPackage, wildcard-assignment or pre-draw JSON
+  registries;
+- the state exposes one phase, one `next_required_action`, blocker codes, all relevant
+  fingerprints/counts and explicit capability flags;
+- WC-required events fail closed at `wild_card_review_required` until reviewed WC
+  authority exists;
+- pre-draw repairs remain open only before Draw Input commitment;
+- Draw Input and Draw generation readiness are represented explicitly;
+- `draw_ready` is the single preparation state that is ready for Match Schedule;
+- Admin API:
+  `GET /admin/runs/{run}/branches/{branch}/tournaments/{event}/preparation`.
+
+PR-critical coverage proves the state transitions through both canonical pre-draw
+withdrawal repair and WC/RWC review. The Master §31.3 release gate also proves the
+reported `draw_ready` state remains byte-for-byte identical after legacy Calendar,
+Draw, Result, Award and template/points backends are destroyed.
+
+**Next after this PR:** use this preparation state as the authoritative source for
+schedule/preflight readiness and then retire duplicate legacy preparation-status
+inspection from old season/event services.
+
+
 ## Active implementation — canonical result/ranking source fence
 
 After #984, Package-backed Runs no longer fall back to legacy Calendar/Match sources.

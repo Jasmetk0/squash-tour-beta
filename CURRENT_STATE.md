@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Active implementation — Package authority fence for authoritative simulation
+
+Package-backed Runs now use a strict ownership boundary instead of a preference order.
+
+- once a Run/Branch owns any canonical Package state, authoritative Calendar resolution
+  may use only the matching Run-owned Calendar Package;
+- a missing current-season Calendar Package becomes explicit
+  `run_package_missing` preparation state rather than falling through to the mutable
+  global Calendar registry;
+- Package-backed tournament discovery no longer scans the legacy MatchPackage registry;
+  executable tournament topology must come from canonical Draw + Run-owned Calendar;
+- Package-backed tournament adoption requires canonical Draw authority rather than
+  silently freezing a legacy MatchPackage;
+- ranked point-award input for canonical tournaments is frozen directly from the
+  already Run-owned Calendar Event snapshot; it no longer consults live template or
+  points registries;
+- the canonical point snapshot fails closed if the Run-owned Calendar Event lacks any
+  required authored ranking stage;
+- historical Runs with no Package state retain the reviewed legacy compatibility path.
+
+The Master §31.3 Official Run acceptance now deletes the live legacy Calendar registry
+after canonical Calendar/Draw preparation and must still complete Season 0, Save/reopen,
+Season Transition and reach Season 1 Week 1.
+
+**Next after this PR:** audit the remaining non-Package authoritative result/template
+compatibility paths and reduce legacy-only support to explicitly historical Runs.
+
+
 ## Active implementation — all-season Run-owned player compatibility bridge
 
 The #982 first-season Entry adapter is expanded into an all-season Run-owned roster

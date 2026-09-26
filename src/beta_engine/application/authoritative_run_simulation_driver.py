@@ -2805,6 +2805,58 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def inspect_live_match(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+    ) -> dict:
+        """Read the persisted current live state without advancing simulation."""
+
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            rows = session.scalars(
+                select(LiveMatchWorkingModel).where(
+                    LiveMatchWorkingModel.run_id == run_id,
+                    LiveMatchWorkingModel.branch_id == branch_id,
+                    LiveMatchWorkingModel.week_ordinal == week.ordinal,
+                    LiveMatchWorkingModel.group_id == group_id,
+                )
+            ).all()
+            if not rows:
+                return {
+                    "schema_version": "authoritative_live_match_inspection.v1",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "week": week.model_dump(mode="json"),
+                    "group_id": group_id,
+                    "present": False,
+                    "live": None,
+                }
+            if len(rows) != 1:
+                raise ValueError("live match group identity is ambiguous")
+            row = rows[0]
+            live = PersistedLiveMatchStore(session).inspect(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                slot_id=row.slot_id,
+                group_id=group_id,
+            )
+            return {
+                "schema_version": "authoritative_live_match_inspection.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "group_id": group_id,
+                "present": True,
+                "live": live,
+            }
+
     def simulate_next_rally(self, command: AuthoritativeNextRallyCommand) -> dict:
         """Advance one real rally inside the current authoritative Simulation Slot."""
 

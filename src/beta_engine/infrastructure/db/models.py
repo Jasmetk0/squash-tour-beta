@@ -563,6 +563,48 @@ class LiveMatchWorkingModel(Base):
     final_result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
+class LiveMatchReturnPointModel(Base):
+    """Temporary resumable working-state return point for one live match."""
+
+    __tablename__ = "live_match_return_points"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    source_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    kind: Mapped[str] = mapped_column(String(32), nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_state_json: Mapped[str] = mapped_column(Text, nullable=False)
+    created_from_rally_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_set_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_games_a: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_from_games_b: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False, default="available")
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
+class LiveMatchAlternativePathModel(Base):
+    """Archived temporary working path captured before restoring a return point."""
+
+    __tablename__ = "live_match_alternative_paths"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    alternative_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    return_point_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_state_json: Mapped[str] = mapped_column(Text, nullable=False)
+    archived_rally_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_set_number: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_games_a: Mapped[int] = mapped_column(Integer, nullable=False)
+    archived_games_b: Mapped[int] = mapped_column(Integer, nullable=False)
+    metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
+
+
 class LiveMatchRallyCommandModel(Base):
     """Idempotency receipt for one persisted live Simulate Next Rally command."""
 

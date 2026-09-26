@@ -1295,6 +1295,78 @@ export type AuthoritativeLiveMatchInspection = {
   }
 }
 
+export type AuthoritativeLiveMatchReturnPoint = {
+  return_point_id: string
+  source_command_id: string
+  kind: 'game' | 'rest_of_match'
+  status: 'available'
+  state_fingerprint: string
+  rally_index: number
+  set_number: number
+  games_a: number
+  games_b: number
+}
+
+export type AuthoritativeLiveMatchAlternative = {
+  alternative_id: string
+  return_point_id: string
+  state_fingerprint: string
+  rally_index: number
+  set_number: number
+  games_a: number
+  games_b: number
+}
+
+export type AuthoritativeLiveMatchTimeline = {
+  schema_version: 'authoritative_live_match_timeline.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  group_id: string
+  present: boolean
+  timeline: null | {
+    schema_version: 'live_match_return_timeline.v1'
+    run_id: string
+    branch_id: string
+    week_ordinal: number
+    slot_id: string
+    group_id: string
+    return_points: AuthoritativeLiveMatchReturnPoint[]
+    alternatives: AuthoritativeLiveMatchAlternative[]
+  }
+}
+
+export type AuthoritativeLiveReturnPayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  group_id: string
+  return_point_id: string
+  expected_live_state_fingerprint: string
+}
+
+export type AuthoritativeLiveReturnResult = {
+  schema_version: 'authoritative_live_return_restore.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  group_id: string
+  return_point_id: string
+  archived_alternative_id: string
+  restored_state: {
+    schema_version: 'persisted_live_match_state.v1'
+    state_fingerprint: string | null
+    rally_index: number | null
+    set_number: number | null
+    games_a: number | null
+    games_b: number | null
+    [key: string]: unknown
+  }
+  position: AuthoritativeSimulationPosition
+  idempotent_replay: boolean
+}
+
 export type AuthoritativeLiveRangePayload = {
   command_id: string
   expected_week: AuthoritativeRankingWeek
@@ -1314,6 +1386,7 @@ export type AuthoritativeLiveRangeResult = {
   group_id: string
   match_id: string
   start_set_number: number
+  return_point_id: string
   rallies_simulated: number
   child_command_ids: string[]
   status: 'active' | 'complete'

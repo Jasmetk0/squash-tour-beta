@@ -26,6 +26,8 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekSchedule: vi.fn(),
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   inspectAuthoritativeLiveMatch: vi.fn(),
+  inspectAuthoritativeLiveMatchTimeline: vi.fn(),
+  restoreAuthoritativeLiveReturnPoint: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
   simulateAuthoritativeGame: vi.fn(),
   simulateAuthoritativeRestOfMatch: vi.fn(),
@@ -652,6 +654,15 @@ beforeEach(() => {
     group_id: 'g1',
     present: false,
     live: null
+  })
+  api.inspectAuthoritativeLiveMatchTimeline.mockResolvedValue({
+    schema_version: 'authoritative_live_match_timeline.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    group_id: 'g1',
+    present: false,
+    timeline: null
   })
   api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_pending_collection.v1',
@@ -1507,6 +1518,122 @@ describe('AuthoritativeSimulationPanel', () => {
         'branch-a',
         expect.objectContaining({
           group_id: 'g1',
+          expected_live_state_fingerprint: '9'.repeat(64)
+        })
+      )
+    )
+  })
+
+  it('shows automatic return points and restores one without hiding archived alternatives', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.inspectAuthoritativeLiveMatch.mockResolvedValue({
+      schema_version: 'authoritative_live_match_inspection.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      present: true,
+      live: {
+        schema_version: 'persisted_live_match_state.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: 'g1',
+        match_id: 'g1',
+        status: 'active',
+        working_input_fingerprint: '1'.repeat(64),
+        state_fingerprint: '9'.repeat(64),
+        rally_index: 20,
+        set_number: 2,
+        games_a: 3,
+        games_b: 2,
+        final_result_fingerprint: null,
+        final_result: null,
+        idempotent_replay: false
+      }
+    })
+    api.inspectAuthoritativeLiveMatchTimeline.mockResolvedValue({
+      schema_version: 'authoritative_live_match_timeline.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      present: true,
+      timeline: {
+        schema_version: 'live_match_return_timeline.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: 'g1',
+        return_points: [{
+          return_point_id: 'return:game-parent',
+          source_command_id: 'game-parent',
+          kind: 'game',
+          status: 'available',
+          state_fingerprint: '8'.repeat(64),
+          rally_index: 12,
+          set_number: 1,
+          games_a: 7,
+          games_b: 4
+        }],
+        alternatives: [{
+          alternative_id: 'alternative:old-restore',
+          return_point_id: 'return:game-parent',
+          state_fingerprint: '7'.repeat(64),
+          rally_index: 19,
+          set_number: 2,
+          games_a: 3,
+          games_b: 1
+        }]
+      }
+    })
+    api.restoreAuthoritativeLiveReturnPoint.mockResolvedValue({
+      schema_version: 'authoritative_live_return_restore.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      return_point_id: 'return:game-parent',
+      archived_alternative_id: 'alternative:new-restore',
+      restored_state: {
+        schema_version: 'persisted_live_match_state.v1',
+        state_fingerprint: '8'.repeat(64),
+        rally_index: 12,
+        set_number: 1,
+        games_a: 7,
+        games_b: 4
+      },
+      position,
+      idempotent_replay: false
+    })
+    renderPanel()
+
+    expect(await screen.findByText('Live match return timeline')).toBeInTheDocument()
+    expect(screen.getByLabelText('Live match alternative paths')).toBeInTheDocument()
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Restore this return point' })
+    )
+
+    await waitFor(() =>
+      expect(api.restoreAuthoritativeLiveReturnPoint).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          group_id: 'g1',
+          return_point_id: 'return:game-parent',
           expected_live_state_fingerprint: '9'.repeat(64)
         })
       )

@@ -1,40 +1,34 @@
 # Current implementation and next action
 
-## Active implementation — restart-safe live Rally / Game / Rest of Match
+## Active implementation — live-match return timeline
 
-The canonical live-match path now has explicit restart/reopen acceptance at both child
-and parent orchestration boundaries.
+The live-match working layer now begins the Master §17.1 temporary return-point model.
 
-- **Next Rally** remains the only sporting transition primitive.
-- **Simulate Game** and **Simulate Rest of Match** remain deterministic parent
-  orchestrators over persisted Next-Rally child commands.
-- parent range operations expose deterministic fault-injection seams for acceptance
-  testing only; production behavior is unchanged.
-- a crash after an arbitrary committed child leaves the parent receipt pending; a newly
-  constructed driver replays already-completed deterministic child command IDs and
-  continues from the exact persisted state without duplicating a rally.
-- a crash after the terminal child but before parent receipt completion reopens safely:
-  the authoritative group/result/effects/checkpoint remain singletons and the parent
-  finalizes by replaying child receipts rather than re-running sporting logic.
-- exact parent retries return the completed parent receipt without advancing state.
-- a new read-only `live-match` inspection surface exposes persisted match cursor/state
-  without mutation.
-- the Admin panel hydrates the persisted state fingerprint, set, game score and rally
-  cursor from server truth after page reload; live simulation no longer depends on
-  transient React memory.
+- every `Simulate Game` and `Simulate Rest of Match` parent owns a deterministic
+  automatic return-point identity;
+- if the match is already active, the exact current `MatchRallyWorkingState` is frozen
+  before the first child rally of that parent;
+- if the range starts a brand-new match, the same logical pre-range point is rebuilt
+  from immutable `MatchWorkingInput` as the deterministic pre-first-rally state;
+- return points persist independently of transient Admin UI state and survive reload;
+- restoring a point never reruns sporting RNG: the current working state is first
+  archived as a temporary alternative, then the stored snapshot becomes active;
+- archived alternatives retain their full working-state rally log and state snapshot,
+  so the displaced path remains available for later comparison;
+- restore is CAS-guarded and idempotent;
+- read-only Admin timeline inspection exposes return points and archived alternatives;
+- Admin UI lists the timeline and can restore an available point.
 
-PR-critical acceptance now covers:
-1. mid-Game failure after the seventh committed child, driver reconstruction, resume,
-   and exact parent retry;
-2. terminal Rest-of-Match failure after final child but before parent completion,
-   reconstruction, resume and singleton authoritative result;
-3. read-only live-state inspection after driver reopen;
-4. frontend reload hydration using the persisted state fingerprint for the next live
-   command.
+Current safety boundary: restore is allowed only while the match is still an uncommitted
+active working match. If a `Rest of Match` path has already committed its terminal
+rally into the authoritative SimulationEventGroup/effects/checkpoint chain, this layer
+does not rewrite that history. Supporting Master §17.1 return-after-completed-working-
+alternative therefore requires a separate working-completion/confirmation staging
+boundary before final authoritative promotion.
 
-**Next after this PR:** continue the pre-alpha live-match UX/state slice from server-owned
-truth (completed-match Replay remains read-only and separate), while avoiding any second
-sporting simulation implementation.
+**Next after this PR:** introduce that completion staging so a fully simulated temporary
+match path can remain reversible until explicitly accepted, while keeping Viewer and
+completed authoritative history immutable.
 
 ## Active implementation — canonical Tournament Preparation State
 

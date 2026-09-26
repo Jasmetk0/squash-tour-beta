@@ -16,7 +16,9 @@ from beta_engine.domain.matches import (
 from beta_engine.domain.matches.models import MatchResult
 from beta_engine.domain.simulation_slots import fingerprint
 from beta_engine.infrastructure.db.models import (
+    LiveMatchAlternativePathModel,
     LiveMatchRallyCommandModel,
+    LiveMatchReturnPointModel,
     LiveMatchWorkingModel,
 )
 
@@ -130,6 +132,294 @@ class PersistedLiveMatchStore:
         if row is None:
             raise ValueError("live match has not been started")
         return self._response(row, idempotent_replay=False)
+
+    @staticmethod
+    def _return_point_id(source_command_id: str) -> str:
+        return f"return:{source_command_id}"
+
+    def ensure_return_point(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week_ordinal: int,
+        slot_id: str,
+        group_id: str,
+        source_command_id: str,
+        kind: str,
+    ) -> dict:
+        """Freeze the current active working state before a multi-rally operation."""
+
+        if kind not in {"game", "rest_of_match"}:
+            raise ValueError("return point kind must be game or rest_of_match")
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        row = self.session.get(LiveMatchWorkingModel, key)
+        if row is None or row.status != "active" or row.working_state_json is None:
+            raise ValueError("return points require an active live match")
+        state = MatchRallyWorkingState.model_validate_json(row.working_state_json)
+        if state.fingerprint != row.state_fingerprint:
+            raise ValueError("live match state fingerprint is corrupt")
+
+        return_point_id = self._return_point_id(source_command_id)
+        point_key = (*key, return_point_id)
+        existing = self.session.get(LiveMatchReturnPointModel, point_key)
+        if existing is not None:
+            if (
+                existing.source_command_id != source_command_id
+                or existing.kind != kind
+                or existing.state_fingerprint != state.fingerprint
+                or existing.working_state_json != row.working_state_json
+            ):
+                raise ValueError("return point identity conflicts with existing snapshot")
+            return self._return_point_response(existing)
+
+        point = LiveMatchReturnPointModel(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+            return_point_id=return_point_id,
+            source_command_id=source_command_id,
+            kind=kind,
+            state_fingerprint=state.fingerprint,
+            working_state_json=row.working_state_json,
+            created_from_rally_index=state.rally_index,
+            created_from_set_number=state.set_number,
+            created_from_games_a=state.games_a,
+            created_from_games_b=state.games_b,
+            status="available",
+            metadata_json="{}",
+        )
+        self.session.add(point)
+        self.session.flush()
+        return self._return_point_response(point)
+
+    def ensure_initial_return_point(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week_ordinal: int,
+        slot_id: str,
+        group_id: str,
+        source_command_id: str,
+        kind: str,
+    ) -> dict:
+        """Freeze the deterministic pre-first-rally state after live-match bootstrap."""
+
+        if kind not in {"game", "rest_of_match"}:
+            raise ValueError("return point kind must be game or rest_of_match")
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        row = self.session.get(LiveMatchWorkingModel, key)
+        if row is None:
+            raise ValueError("initial return point requires a bootstrapped live match")
+        working_input = MatchWorkingInput.model_validate_json(row.working_input_json)
+        engine = MatchEngine(rng=DeterministicRng(working_input.simulation_seed))
+        rebuilt_input, initial = engine.start_working_match(
+            working_input.context,
+            log_anchor_hash=working_input.input_hash,
+            effective_match_timing=working_input.timing,
+            effective_match_stamina=working_input.stamina,
+            rally_calibration_profile=working_input.rally_calibration,
+            effective_match_gameplans=working_input.gameplans,
+            effective_rally_rules=working_input.rules,
+        )
+        if rebuilt_input.fingerprint != working_input.fingerprint:
+            raise ValueError("working input cannot reproduce initial live-match state")
+
+        return_point_id = self._return_point_id(source_command_id)
+        point_key = (*key, return_point_id)
+        existing = self.session.get(LiveMatchReturnPointModel, point_key)
+        if existing is not None:
+            if (
+                existing.source_command_id != source_command_id
+                or existing.kind != kind
+                or existing.state_fingerprint != initial.fingerprint
+                or existing.working_state_json != initial.model_dump_json()
+            ):
+                raise ValueError("initial return point conflicts with existing snapshot")
+            return self._return_point_response(existing)
+
+        point = LiveMatchReturnPointModel(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+            return_point_id=return_point_id,
+            source_command_id=source_command_id,
+            kind=kind,
+            state_fingerprint=initial.fingerprint,
+            working_state_json=initial.model_dump_json(),
+            created_from_rally_index=initial.rally_index,
+            created_from_set_number=initial.set_number,
+            created_from_games_a=initial.games_a,
+            created_from_games_b=initial.games_b,
+            status="available",
+            metadata_json='{"origin":"pre_first_rally"}',
+        )
+        self.session.add(point)
+        self.session.flush()
+        return self._return_point_response(point)
+
+    def list_return_points(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week_ordinal: int,
+        slot_id: str,
+        group_id: str,
+    ) -> dict:
+        points = self.session.scalars(
+            select(LiveMatchReturnPointModel).where(
+                LiveMatchReturnPointModel.run_id == run_id,
+                LiveMatchReturnPointModel.branch_id == branch_id,
+                LiveMatchReturnPointModel.week_ordinal == week_ordinal,
+                LiveMatchReturnPointModel.slot_id == slot_id,
+                LiveMatchReturnPointModel.group_id == group_id,
+            )
+        ).all()
+        alternatives = self.session.scalars(
+            select(LiveMatchAlternativePathModel).where(
+                LiveMatchAlternativePathModel.run_id == run_id,
+                LiveMatchAlternativePathModel.branch_id == branch_id,
+                LiveMatchAlternativePathModel.week_ordinal == week_ordinal,
+                LiveMatchAlternativePathModel.slot_id == slot_id,
+                LiveMatchAlternativePathModel.group_id == group_id,
+            )
+        ).all()
+        return {
+            "schema_version": "live_match_return_timeline.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week_ordinal": week_ordinal,
+            "slot_id": slot_id,
+            "group_id": group_id,
+            "return_points": [
+                self._return_point_response(point)
+                for point in sorted(points, key=lambda item: item.created_from_rally_index)
+            ],
+            "alternatives": [
+                self._alternative_response(item)
+                for item in sorted(alternatives, key=lambda item: item.archived_rally_index)
+            ],
+        }
+
+    def restore_return_point(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week_ordinal: int,
+        slot_id: str,
+        group_id: str,
+        return_point_id: str,
+        restore_command_id: str,
+        expected_state_fingerprint: str,
+    ) -> dict:
+        """Restore an active working snapshot while archiving the displaced path."""
+
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        row = self.session.get(LiveMatchWorkingModel, key)
+        if row is None or row.status != "active" or row.working_state_json is None:
+            raise ValueError(
+                "only an uncommitted active live match can restore a return point"
+            )
+        if row.state_fingerprint != expected_state_fingerprint:
+            raise ValueError("live match state changed before return-point restore")
+
+        point = self.session.get(LiveMatchReturnPointModel, (*key, return_point_id))
+        if point is None or point.status != "available":
+            raise ValueError("live match return point is unavailable")
+
+        current = MatchRallyWorkingState.model_validate_json(row.working_state_json)
+        alternative_id = f"alternative:{restore_command_id}"
+        alternative_key = (*key, alternative_id)
+        existing_alt = self.session.get(LiveMatchAlternativePathModel, alternative_key)
+        if existing_alt is None:
+            self.session.add(
+                LiveMatchAlternativePathModel(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week_ordinal=week_ordinal,
+                    slot_id=slot_id,
+                    group_id=group_id,
+                    alternative_id=alternative_id,
+                    return_point_id=return_point_id,
+                    state_fingerprint=current.fingerprint,
+                    working_state_json=row.working_state_json,
+                    archived_rally_index=current.rally_index,
+                    archived_set_number=current.set_number,
+                    archived_games_a=current.games_a,
+                    archived_games_b=current.games_b,
+                    metadata_json="{}",
+                )
+            )
+        elif (
+            existing_alt.return_point_id != return_point_id
+            or existing_alt.state_fingerprint != current.fingerprint
+            or existing_alt.working_state_json != row.working_state_json
+        ):
+            raise ValueError("restore command identity conflicts with archived path")
+
+        restored = MatchRallyWorkingState.model_validate_json(point.working_state_json)
+        if restored.fingerprint != point.state_fingerprint:
+            raise ValueError("return point state fingerprint is corrupt")
+        row.working_state_json = point.working_state_json
+        row.state_fingerprint = point.state_fingerprint
+        self.session.flush()
+        return {
+            "schema_version": "live_match_return_restore.v1",
+            "return_point": self._return_point_response(point),
+            "archived_alternative_id": alternative_id,
+            "restored_state": self._response(row, idempotent_replay=False),
+        }
+
+    @staticmethod
+    def _return_point_response(point: LiveMatchReturnPointModel) -> dict:
+        return {
+            "return_point_id": point.return_point_id,
+            "source_command_id": point.source_command_id,
+            "kind": point.kind,
+            "status": point.status,
+            "state_fingerprint": point.state_fingerprint,
+            "rally_index": point.created_from_rally_index,
+            "set_number": point.created_from_set_number,
+            "games_a": point.created_from_games_a,
+            "games_b": point.created_from_games_b,
+        }
+
+    @staticmethod
+    def _alternative_response(item: LiveMatchAlternativePathModel) -> dict:
+        return {
+            "alternative_id": item.alternative_id,
+            "return_point_id": item.return_point_id,
+            "state_fingerprint": item.state_fingerprint,
+            "rally_index": item.archived_rally_index,
+            "set_number": item.archived_set_number,
+            "games_a": item.archived_games_a,
+            "games_b": item.archived_games_b,
+        }
 
     def simulate_next_rally(
         self,

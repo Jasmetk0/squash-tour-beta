@@ -269,6 +269,24 @@ class AuthoritativeLiveRangeCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeLiveReturnCommand(FrozenInput):
+    """Restore one temporary live-match return point under exact CAS guards."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    return_point_id: str = Field(min_length=1, max_length=128)
+    expected_live_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class AuthoritativeMatchDayCommand(FrozenInput):
     """Resumable CAS-guarded orchestration of the current canonical Match Day."""
 
@@ -2858,6 +2876,133 @@ class AuthoritativeRunSimulationDriver:
                 "live": live,
             }
 
+    def inspect_live_match_timeline(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+    ) -> dict:
+        """Read temporary return points and archived alternatives for one live match."""
+
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            row = session.scalar(
+                select(LiveMatchWorkingModel).where(
+                    LiveMatchWorkingModel.run_id == run_id,
+                    LiveMatchWorkingModel.branch_id == branch_id,
+                    LiveMatchWorkingModel.week_ordinal == week.ordinal,
+                    LiveMatchWorkingModel.group_id == group_id,
+                )
+            )
+            if row is None:
+                return {
+                    "schema_version": "authoritative_live_match_timeline.v1",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "week": week.model_dump(mode="json"),
+                    "group_id": group_id,
+                    "present": False,
+                    "timeline": None,
+                }
+            timeline = PersistedLiveMatchStore(session).list_return_points(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                slot_id=row.slot_id,
+                group_id=group_id,
+            )
+            return {
+                "schema_version": "authoritative_live_match_timeline.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "group_id": group_id,
+                "present": True,
+                "timeline": timeline,
+            }
+
+    def restore_live_return_point(
+        self, command: AuthoritativeLiveReturnCommand
+    ) -> dict:
+        """Restore one temporary working snapshot without re-running sporting RNG."""
+
+        request_fp = fingerprint(
+            {"mode": "live_return_restore", "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "live return command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("live return command receipt is incomplete")
+                replay = json.loads(receipt.result_json)
+                replay["idempotent_replay"] = True
+                return replay
+
+            before = self._position(session, command.run_id, command.branch_id)
+            self._validate_expected(session, command, before)
+
+            from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+            row = session.scalar(
+                select(LiveMatchWorkingModel).where(
+                    LiveMatchWorkingModel.run_id == command.run_id,
+                    LiveMatchWorkingModel.branch_id == command.branch_id,
+                    LiveMatchWorkingModel.week_ordinal
+                    == command.expected_week.ordinal,
+                    LiveMatchWorkingModel.group_id == command.group_id,
+                )
+            )
+            if row is None:
+                raise ValueError("live match has no working timeline to restore")
+
+            restored = PersistedLiveMatchStore(session).restore_return_point(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week_ordinal=command.expected_week.ordinal,
+                slot_id=row.slot_id,
+                group_id=command.group_id,
+                return_point_id=command.return_point_id,
+                restore_command_id=command.command_id,
+                expected_state_fingerprint=command.expected_live_state_fingerprint,
+            )
+            after = self._position(session, command.run_id, command.branch_id)
+            payload = {
+                "schema_version": "authoritative_live_return_restore.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": command.expected_week.model_dump(mode="json"),
+                "group_id": command.group_id,
+                "return_point_id": command.return_point_id,
+                "archived_alternative_id": restored["archived_alternative_id"],
+                "restored_state": restored["restored_state"],
+                "position": after.model_dump(mode="json"),
+                "idempotent_replay": False,
+            }
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
+
     def simulate_next_rally(self, command: AuthoritativeNextRallyCommand) -> dict:
         """Advance one real rally inside the current authoritative Simulation Slot."""
 
@@ -3037,11 +3182,22 @@ class AuthoritativeRunSimulationDriver:
                     )
                     start_set_number = initial_state.set_number
                     start_state_fingerprint = current.state_fingerprint
+                    PersistedLiveMatchStore(session).ensure_return_point(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week_ordinal=command.expected_week.ordinal,
+                        slot_id=current.slot_id,
+                        group_id=command.group_id,
+                        source_command_id=command.command_id,
+                        kind=mode,
+                    )
+                    return_point_slot_id = current.slot_id
                 elif current is not None and current.status == "complete":
                     raise ValueError("live match is already complete")
                 else:
                     start_set_number = 1
                     start_state_fingerprint = None
+                    return_point_slot_id = None
 
                 if (
                     command.expected_live_state_fingerprint is not None
@@ -3064,6 +3220,8 @@ class AuthoritativeRunSimulationDriver:
                         command.expected_live_state_fingerprint
                         or start_state_fingerprint
                     ),
+                    "return_point_id": f"return:{command.command_id}",
+                    "return_point_slot_id": return_point_slot_id,
                 }
                 session.add(
                     AuthoritativeSimulationCommandModel(
@@ -3134,6 +3292,21 @@ class AuthoritativeRunSimulationDriver:
             child_ids.append(child_id)
             expected_live_state = last["state_fingerprint"]
 
+            if (
+                child_ordinal == 1
+                and frozen.get("return_point_slot_id") is None
+            ):
+                with self.factory.begin() as session:
+                    PersistedLiveMatchStore(session).ensure_initial_return_point(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week_ordinal=command.expected_week.ordinal,
+                        slot_id=last["slot_id"],
+                        group_id=command.group_id,
+                        source_command_id=command.command_id,
+                        kind=mode,
+                    )
+
             if fault_after_child == child_ordinal:
                 raise RuntimeError(
                     f"fault after committed live-range child {child_ordinal}"
@@ -3164,6 +3337,7 @@ class AuthoritativeRunSimulationDriver:
             "group_id": command.group_id,
             "match_id": last["match_id"],
             "start_set_number": start_set_number,
+            "return_point_id": frozen["return_point_id"],
             "rallies_simulated": len(child_ids),
             "child_command_ids": child_ids,
             "status": last["status"],

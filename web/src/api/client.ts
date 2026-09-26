@@ -140,6 +140,9 @@ import type {
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
   AuthoritativeLiveMatchInspection,
+  AuthoritativeLiveMatchTimeline,
+  AuthoritativeLiveReturnPayload,
+  AuthoritativeLiveReturnResult,
   AuthoritativeLiveRangePayload,
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchDayPreview,
@@ -1606,6 +1609,34 @@ export async function inspectAuthoritativeLiveMatch(
   ) {
     throw new Error('Authoritative live match inspection response is invalid.')
   }
+  return data
+}
+
+export async function inspectAuthoritativeLiveMatchTimeline(
+  runId: string,
+  branchId: string,
+  groupId: string
+): Promise<AuthoritativeLiveMatchTimeline> {
+  const data = await request<AuthoritativeLiveMatchTimeline>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/live-match/timeline?group_id=' +
+      encodeURIComponent(groupId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
+export async function restoreAuthoritativeLiveReturnPoint(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeLiveReturnPayload
+): Promise<AuthoritativeLiveReturnResult> {
+  const data = await request<AuthoritativeLiveReturnResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/live-match/restore',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   return data
 }
 

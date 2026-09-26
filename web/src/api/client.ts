@@ -267,8 +267,6 @@ import type {
   SeasonReadinessResult,
   SeasonRangePreflightRequest,
   SeasonRangePreflightResult,
-  RunSeasonRangeRequest,
-  RunSeasonRangeResult,
   CalendarTemplateCompareDryRunRequest,
   CalendarTemplateCompareDryRunResponse,
   CalendarTemplateDetailResponse,

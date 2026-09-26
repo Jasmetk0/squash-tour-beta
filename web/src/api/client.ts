@@ -616,14 +616,6 @@ export async function preflightSeasonRange(payload: SeasonRangePreflightRequest)
   return data
 }
 
-export async function runSeasonRange(payload: RunSeasonRangeRequest): Promise<RunSeasonRangeResult> {
-  const data = await request<RunSeasonRangeResult>(
-    `/admin/seasons/range-run`,
-    { method: 'POST', body: JSON.stringify(payload) }
-  )
-  verifyLegacySeasonExecutionBoundary(data.metadata)
-  return data
-}
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/build`, { method: 'POST', body: JSON.stringify(payload) })

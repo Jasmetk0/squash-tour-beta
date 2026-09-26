@@ -644,6 +644,15 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.inspectAuthoritativeLiveMatch.mockResolvedValue({
+    schema_version: 'authoritative_live_match_inspection.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week,
+    group_id: 'g1',
+    present: false,
+    live: null
+  })
   api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_pending_collection.v1',
     run_id: 'run-a',

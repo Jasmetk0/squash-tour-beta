@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_calendar_service import SeasonCalendarService
 from beta_engine.application.season_week_simulation_preflight_service import SeasonWeekSimulationPreflightService, SimulateSeasonWeekPreflightRequest
 from beta_engine.application.season_ranking_snapshot_service import WeeklyRankingSnapshotGenerateRequest
@@ -108,6 +110,7 @@ def test_event_id_filter_and_unknown_warning(tmp_path: Path) -> None:
     assert any("Unknown event_id_filter" in warning for warning in result.validation_warnings)
 
 
+@pytest.mark.pr_critical
 def test_determinism_and_registry_not_mutated(tmp_path: Path) -> None:
     service, event_id = make_preflight_service(tmp_path)
     before = json.loads((tmp_path / "calendars.json").read_text())

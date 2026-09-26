@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_calendar_service import SeasonCalendarRegistry, SeasonCalendarService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, EntryListValidationIssue
 from beta_engine.application.season_readiness_service import SeasonReadinessRequest, SeasonReadinessService
@@ -116,6 +118,7 @@ def test_determinism_same_persisted_state_same_fingerprint(tmp_path: Path) -> No
     assert first.metadata.generated_fingerprint == second.metadata.generated_fingerprint
 
 
+@pytest.mark.pr_critical
 def test_read_only_does_not_change_registries(tmp_path: Path) -> None:
     execution, _, _ = make_execution_service(tmp_path)
     service = _service_from_execution(execution)

@@ -2,9 +2,24 @@ from __future__ import annotations
 
 import json
 
+import pytest
+from urllib.error import HTTPError
+
 import test_admin_lifecycle_api as lifecycle_api
 from test_admin_lifecycle_api import Server, call
 from legacy_season_api_test_support import write_complete_templates
+
+
+@pytest.mark.pr_critical
+def test_post_week_run_endpoint_is_retired(tmp_path):
+    with Server(tmp_path) as server:
+        with pytest.raises(HTTPError) as exc_info:
+            call(
+                'POST',
+                f'{server.base_url}/admin/weeks/run',
+                {'season': '2000/2001', 'season_week': 2, 'seed': 5},
+            )
+    assert exc_info.value.code == 404
 
 
 def test_post_week_recovery_no_calendar(tmp_path):

@@ -1,34 +1,33 @@
 # Current implementation and next action
 
-## Active implementation — live-match return timeline
+## Active implementation — reversible live-match completion staging
 
-The live-match working layer now begins the Master §17.1 temporary return-point model.
+Live forward simulation now has an explicit working-completion boundary before any
+authoritative promotion.
 
-- every `Simulate Game` and `Simulate Rest of Match` parent owns a deterministic
-  automatic return-point identity;
-- if the match is already active, the exact current `MatchRallyWorkingState` is frozen
-  before the first child rally of that parent;
-- if the range starts a brand-new match, the same logical pre-range point is rebuilt
-  from immutable `MatchWorkingInput` as the deterministic pre-first-rally state;
-- return points persist independently of transient Admin UI state and survive reload;
-- restoring a point never reruns sporting RNG: the current working state is first
-  archived as a temporary alternative, then the stored snapshot becomes active;
-- archived alternatives retain their full working-state rally log and state snapshot,
-  so the displaced path remains available for later comparison;
-- restore is CAS-guarded and idempotent;
-- read-only Admin timeline inspection exposes return points and archived alternatives;
-- Admin UI lists the timeline and can restore an available point.
+- the final live rally stores a `completed_working` Match Result instead of immediately
+  creating `SimulationEventGroupModel`;
+- while `completed_working`, canonical Simulation Position does not advance, sporting
+  effects do not apply, slot terminal state does not change and tournament progression
+  does not close;
+- the only valid decisions from that state are **Confirm** or **Restore Return Point**;
+- **Confirm completed match** CAS-checks the exact reviewed final-result fingerprint and
+  atomically performs the existing authoritative group/effects/checkpoint promotion plus
+  normal tournament close/progression;
+- exact confirm retries are idempotent;
+- restoring from `completed_working` archives the displaced final Match Result as a
+  completed temporary alternative, clears it from the active working match and restores
+  the selected pre-range working snapshot without rerunning RNG;
+- active-state alternatives and completed-result alternatives coexist in the temporary
+  live-match timeline;
+- one-shot authoritative `Simulate Next Match` remains unchanged.
 
-Current safety boundary: restore is allowed only while the match is still an uncommitted
-active working match. If a `Rest of Match` path has already committed its terminal
-rally into the authoritative SimulationEventGroup/effects/checkpoint chain, this layer
-does not rewrite that history. Supporting Master §17.1 return-after-completed-working-
-alternative therefore requires a separate working-completion/confirmation staging
-boundary before final authoritative promotion.
+This completes the missing safety boundary required for Master §17.1: a fully simulated
+temporary match outcome can now be reviewed, abandoned in favor of a return point, or
+explicitly accepted before it becomes authoritative history.
 
-**Next after this PR:** introduce that completion staging so a fully simulated temporary
-match path can remain reversible until explicitly accepted, while keeping Viewer and
-completed authoritative history immutable.
+**Next after this PR:** add read-only completed Match Replay / Step Back / Step Forward
+from stored snapshots/events, keeping replay strictly observational and RNG-free.
 
 ## Active implementation — canonical Tournament Preparation State
 

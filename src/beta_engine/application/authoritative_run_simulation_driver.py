@@ -17,6 +17,9 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
+from beta_engine.application.canonical_tournament_preparation import (
+    CanonicalTournamentPreparationService,
+)
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
@@ -8320,6 +8323,45 @@ class AuthoritativeRunSimulationDriver:
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
             }
 
+    @staticmethod
+    def _require_canonical_schedule_preparation(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        packages,
+    ):
+        """Fail closed when canonical Draw-backed events are not preparation-ready."""
+
+        draw_store = TournamentDrawAuthorityStore(session)
+        canonical_event_ids = tuple(
+            sorted(
+                package.event_id
+                for package in packages
+                if draw_store.get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=package.event_id,
+                )
+                is not None
+            )
+        )
+        if not canonical_event_ids:
+            return None
+
+        preparation = CanonicalTournamentPreparationService.inspect_many_in_session(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_ids=canonical_event_ids,
+        )
+        if not preparation.ready_for_week_schedule:
+            raise ValueError(
+                "Week Schedule requires canonical tournament preparation draw_ready: "
+                + ", ".join(preparation.blockers)
+            )
+        return preparation
+
     def _build_topological_schedule_proposal(
         self,
         session,
@@ -8351,6 +8393,12 @@ class AuthoritativeRunSimulationDriver:
             session=session,
             run_id=run_id,
             branch_id=branch_id,
+        )
+        self._require_canonical_schedule_preparation(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            packages=packages,
         )
         plans = self._topology_for_session(
             session, run_id, branch_id, packages, week=week

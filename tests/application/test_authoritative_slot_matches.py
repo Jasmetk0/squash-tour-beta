@@ -7934,6 +7934,7 @@ def test_authoritative_next_rally_matches_normal_full_match_and_commits_only_at_
             group_id=group_id,
         )
     )
+    assert first["schema_version"] == "authoritative_next_rally_result.v1"
     assert first["authoritative_group_committed"] is False
     assert first["status"] == "active"
     assert first["rally"] is not None

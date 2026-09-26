@@ -2,9 +2,22 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 import test_admin_lifecycle_api as lifecycle_api
 from test_admin_lifecycle_api import Server, call
 from test_admin_weeks_run_api import write_complete_templates
+
+
+@pytest.mark.pr_critical
+def test_post_range_run_endpoint_is_retired(tmp_path):
+    with Server(tmp_path) as server:
+        status, _ = call(
+            'POST',
+            f'{server.base_url}/admin/seasons/range-run',
+            {'season': '2000/2001', 'start_week': 1, 'end_week': 1},
+        )
+    assert status == 404
 
 
 def test_post_range_preflight_invalid_range(tmp_path):

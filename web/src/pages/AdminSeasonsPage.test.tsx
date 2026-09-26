@@ -529,7 +529,7 @@ const seasonRangePreflightResult = {
   ],
   summary: { season: '2000/2001', start_week: 1, end_week: 2, total_weeks_in_range: 2, empty_weeks: 0, completed_weeks: 1, runnable_weeks: 1, point_application_weeks: 0, snapshot_publication_weeks: 0, blocked_weeks: 0, recoverable_weeks: 0, skipped_weeks: 1, first_unsafe_week: null, first_blocked_week: null, first_runnable_week: 1, range_safe_to_run: true, would_apply_points: true, would_publish_snapshots: true, next_safe_action: 'run_range', recommended_run_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, mutation_warning: 'Range preflight is global legacy season tooling. It must not decide canonical Run/Branch readiness or Week Schedule navigation.' },
   metadata: { season: '2000/2001', source: 'season_readiness_range_preflight', season_readiness_fingerprint: 'season-readiness-fp', generated_fingerprint: 'range-preflight-fp', read_only: true },
-  validation_warnings: ['Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.'],
+  validation_warnings: ['Range preflight is global legacy season tooling. It must not decide canonical Run/Branch readiness or Week Schedule navigation.'],
   validation_errors: []
 }
 
@@ -856,7 +856,7 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Legacy Season Simulation Readiness' })).toBeInTheDocument()
-    expect(screen.getByText('Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.')).toBeInTheDocument()
+    expect(screen.getByText('Season readiness is global legacy season tooling. It aggregates week recovery reports and is never canonical Run/Branch readiness.')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Readiness event ID filter'))
     await userEvent.type(screen.getByLabelText('Readiness event ID filter'), 'EVT-2000-W01-wt_a')
     await userEvent.click(screen.getByLabelText('Include empty weeks'))
@@ -884,7 +884,7 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Legacy Season Range Preflight' })).toBeInTheDocument()
-    expect(screen.getByText('Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.')).toBeInTheDocument()
+    expect(screen.getByText('Range preflight is global legacy season tooling. It must not decide canonical Run/Branch readiness or Week Schedule navigation.')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Start week'))
     await userEvent.type(screen.getByLabelText('Start week'), '1')
     await userEvent.clear(screen.getByLabelText('End week'))

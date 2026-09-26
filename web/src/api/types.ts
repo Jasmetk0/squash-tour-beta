@@ -1267,6 +1267,39 @@ export type AuthoritativeNextRallyResult = {
   position: AuthoritativeSimulationPosition
 }
 
+export type AuthoritativeLiveRangePayload = {
+  command_id: string
+  expected_week: AuthoritativeRankingWeek
+  expected_position_fingerprint: string
+  expected_revision_id: string
+  group_id: string
+  expected_live_state_fingerprint?: string | null
+}
+
+export type AuthoritativeLiveRangeResult = {
+  schema_version:
+    | 'authoritative_simulate_game_result.v1'
+    | 'authoritative_simulate_rest_of_match_result.v1'
+  run_id: string
+  branch_id: string
+  week: AuthoritativeRankingWeek
+  group_id: string
+  match_id: string
+  start_set_number: number
+  rallies_simulated: number
+  child_command_ids: string[]
+  status: 'active' | 'complete'
+  state_fingerprint: string | null
+  set_number: number | null
+  games_a: number | null
+  games_b: number | null
+  authoritative_group_committed: boolean
+  authoritative_result_fingerprint?: string | null
+  final_result: Record<string, unknown> | null
+  position: AuthoritativeSimulationPosition
+  idempotent_replay: boolean
+}
+
 export type AuthoritativeMatchDayPreview = {
   schema_version: 'authoritative_match_day_preview.v1'
   run_id: string

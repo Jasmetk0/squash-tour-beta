@@ -26,6 +26,8 @@ const api = vi.hoisted(() => ({
   adoptAuthoritativeWeekSchedule: vi.fn(),
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
+  simulateAuthoritativeGame: vi.fn(),
+  simulateAuthoritativeRestOfMatch: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
   previewAuthoritativeNextMatchDay: vi.fn(),
@@ -1478,6 +1480,100 @@ describe('AuthoritativeSimulationPanel', () => {
     )
     expect(await screen.findByText('Live authoritative match')).toBeInTheDocument()
     expect(screen.getByText('Only the displayed rally has been simulated. The future continuation does not exist yet.')).toBeInTheDocument()
+  })
+
+  it('composes Game and Rest of Match controls over live rally state', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.simulateAuthoritativeGame.mockResolvedValue({
+      schema_version: 'authoritative_simulate_game_result.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      match_id: 'g1',
+      start_set_number: 1,
+      rallies_simulated: 18,
+      child_command_ids: ['c1'],
+      status: 'active',
+      state_fingerprint: '5'.repeat(64),
+      set_number: 2,
+      games_a: 0,
+      games_b: 0,
+      authoritative_group_committed: false,
+      authoritative_result_fingerprint: null,
+      final_result: null,
+      position,
+      idempotent_replay: false
+    })
+    api.simulateAuthoritativeRestOfMatch.mockResolvedValue({
+      schema_version: 'authoritative_simulate_rest_of_match_result.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      group_id: 'g1',
+      match_id: 'g1',
+      start_set_number: 2,
+      rallies_simulated: 44,
+      child_command_ids: ['c2'],
+      status: 'complete',
+      state_fingerprint: null,
+      set_number: null,
+      games_a: null,
+      games_b: null,
+      authoritative_group_committed: true,
+      authoritative_result_fingerprint: '6'.repeat(64),
+      final_result: { winner_player_id: 'P001' },
+      position: {
+        ...position,
+        eligible_match_ids: ['g2'],
+        unresolved_group_ids: ['g2', 'g3'],
+        position_fingerprint: '7'.repeat(64)
+      },
+      idempotent_replay: false
+    })
+    renderPanel()
+
+    await screen.findByLabelText('Eligible authoritative match group')
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Simulate authoritative Game' })
+    )
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeGame).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          group_id: 'g1',
+          expected_live_state_fingerprint: null
+        })
+      )
+    )
+    expect(await screen.findByText('Live range simulation')).toBeInTheDocument()
+    expect(screen.getByText('18')).toBeInTheDocument()
+
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Simulate authoritative Rest of Match' })
+    )
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeRestOfMatch).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          group_id: 'g1',
+          expected_live_state_fingerprint: '5'.repeat(64)
+        })
+      )
+    )
   })
 
   it('simulates one explicitly reviewed eligible match against exact canonical position and Saved Revision head', async () => {

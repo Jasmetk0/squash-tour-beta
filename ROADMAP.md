@@ -1,15 +1,14 @@
 # Squash Engine roadmap
 
-## Active pre-alpha sequence — retire legacy Season Range Run UI
+## Active pre-alpha sequence — remove legacy Season Range Run backend
 
 1. Canonical Week Schedule preflight remains the only Run/Branch readiness source.
-2. Legacy Season Range Run is no longer exposed by Admin Seasons.
-3. The UI no longer imports/calls `runSeasonRange`, stores its mutation form state or
-   renders range execution results.
-4. Read-only legacy Season Range preflight remains for historical diagnostics; the
-   backend range-run compatibility endpoint remains temporarily isolated.
-5. Next: audit direct backend/test-only range-run consumers and remove the compatibility
-   endpoint once no supported workflow depends on it.
+2. Legacy Season Range Run UI is already retired.
+3. Remove `POST /admin/seasons/range-run`, `SeasonRangeExecutionService`, dependency
+   wiring, web client methods/contracts and dedicated tests.
+4. Keep read-only legacy Season Range preflight as historical diagnostics.
+5. Next: audit the remaining one-week legacy execution and one-event mutation surfaces,
+   then retire the next mutation path that has no supported canonical role.
 
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

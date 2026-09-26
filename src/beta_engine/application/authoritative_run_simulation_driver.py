@@ -3209,6 +3209,10 @@ class AuthoritativeRunSimulationDriver:
                         kind=mode,
                     )
                     return_point_slot_id = current.slot_id
+                elif current is not None and current.status == "completed_working":
+                    raise ValueError(
+                        "completed working match must be confirmed or restored before further simulation"
+                    )
                 elif current is not None and current.status == "complete":
                     raise ValueError("live match is already complete")
                 else:

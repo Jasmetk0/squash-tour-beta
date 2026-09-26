@@ -514,7 +514,7 @@ const seasonReadinessResult = {
   ],
   summary: { season: '2000/2001', total_weeks: 61, weeks_with_events: 1, empty_weeks: 60, complete_weeks: 0, partial_weeks: 0, blocked_weeks: 0, ready_for_point_application_weeks: 1, ready_for_snapshot_publication_weeks: 0, weeks_missing_snapshot_after_points: 0, total_events: 1, total_blocked_events: 0, total_manual_attention_count: 0, first_incomplete_week: 1, first_blocked_week: null, next_week_to_run: 1, season_ready_to_continue: true, season_complete: false, next_safe_action: 'apply_points' },
   metadata: { season: '2000/2001', source: 'season_week_recovery_aggregation', generated_fingerprint: 'season-readiness-fp', read_only: true },
-  validation_warnings: ['Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.'],
+  validation_warnings: ['Season readiness is global legacy season tooling. It aggregates week recovery reports and is never canonical Run/Branch readiness.'],
   validation_errors: []
 }
 
@@ -527,7 +527,7 @@ const seasonRangePreflightResult = {
     { season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, status: 'planned', event_count: 1, has_events: true, week_complete: false, week_blocked: false, week_partial: false, ready_for_point_application: false, ready_for_snapshot_publication: false, snapshot_exists: false, next_safe_action: 'run_week', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, range_action: 'run_week', would_mutate_if_executed: true, would_apply_points_if_executed: true, would_publish_snapshot_if_executed: true, warnings: [], errors: [] },
     { season: '2000/2001', season_week: 2, calendar_year: 2000, year_week: 38, status: 'complete', event_count: 1, has_events: true, week_complete: true, week_blocked: false, week_partial: false, ready_for_point_application: false, ready_for_snapshot_publication: false, snapshot_exists: true, next_safe_action: 'review_completed_season', recommended_week_rerun_flags: { overwrite_existing: false, apply_points: false, publish_snapshot: false, allow_blocked: false, allow_incomplete_results: false }, range_action: 'skip_complete', would_mutate_if_executed: false, would_apply_points_if_executed: false, would_publish_snapshot_if_executed: false, warnings: ['range warning'], errors: [] }
   ],
-  summary: { season: '2000/2001', start_week: 1, end_week: 2, total_weeks_in_range: 2, empty_weeks: 0, completed_weeks: 1, runnable_weeks: 1, point_application_weeks: 0, snapshot_publication_weeks: 0, blocked_weeks: 0, recoverable_weeks: 0, skipped_weeks: 1, first_unsafe_week: null, first_blocked_week: null, first_runnable_week: 1, range_safe_to_run: true, would_apply_points: true, would_publish_snapshots: true, next_safe_action: 'run_range', recommended_run_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, mutation_warning: 'Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.' },
+  summary: { season: '2000/2001', start_week: 1, end_week: 2, total_weeks_in_range: 2, empty_weeks: 0, completed_weeks: 1, runnable_weeks: 1, point_application_weeks: 0, snapshot_publication_weeks: 0, blocked_weeks: 0, recoverable_weeks: 0, skipped_weeks: 1, first_unsafe_week: null, first_blocked_week: null, first_runnable_week: 1, range_safe_to_run: true, would_apply_points: true, would_publish_snapshots: true, next_safe_action: 'run_range', recommended_run_flags: { overwrite_existing: false, apply_points: true, publish_snapshot: true, allow_blocked: false, allow_incomplete_results: false }, mutation_warning: 'Range preflight is global legacy season tooling. It must not decide canonical Run/Branch readiness or Week Schedule navigation.' },
   metadata: { season: '2000/2001', source: 'season_readiness_range_preflight', season_readiness_fingerprint: 'season-readiness-fp', generated_fingerprint: 'range-preflight-fp', read_only: true },
   validation_warnings: ['Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.'],
   validation_errors: []
@@ -855,7 +855,7 @@ describe('AdminSeasonsPage', () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Season Simulation Readiness' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Season Simulation Readiness' })).toBeInTheDocument()
     expect(screen.getByText('Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Readiness event ID filter'))
     await userEvent.type(screen.getByLabelText('Readiness event ID filter'), 'EVT-2000-W01-wt_a')
@@ -883,7 +883,7 @@ describe('AdminSeasonsPage', () => {
     api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Season Range Preflight' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Season Range Preflight' })).toBeInTheDocument()
     expect(screen.getByText('Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Start week'))
     await userEvent.type(screen.getByLabelText('Start week'), '1')
@@ -935,8 +935,8 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Event-Level Tools/i)
 
-    expect(await screen.findByRole('heading', { name: 'Simulate One Season Week — Preflight' })).toBeInTheDocument()
-    expect(screen.getByText('This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Simulate One Season Week — Preflight' })).toBeInTheDocument()
+    expect(screen.getByText('This global season preflight calls legacy one-event dry-run planning. It is diagnostic tooling only and must not be used as canonical Run/Branch readiness.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Preview week simulation' }))
     expect(api.preflightSeasonWeek).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', season_week: 1, seed: 12345, apply_points: false, publish_snapshot: false, event_id_filter: [] }))
     expect(await screen.findByText('Week preflight summary')).toBeInTheDocument()

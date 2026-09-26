@@ -2085,7 +2085,7 @@ export function AuthoritativeSimulationPanel({
                 </li>
               ))}
             </ol>
-          ) : schedulePreflightQuery.data?.schedule_required ?? scheduleQuery.data.required ? (
+          ) : (schedulePreflightQuery.data?.schedule_required ?? scheduleQuery.data.required) ? (
             <>
               <p className="status">
                 Canonical Position and match execution stay locked until this immutable Match Day / global-slot schedule is adopted.

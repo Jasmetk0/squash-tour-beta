@@ -1240,6 +1240,13 @@ describe('AuthoritativeSimulationPanel', () => {
       required: false,
       schedule: null
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_required: false,
+      schedule_already_adopted: false,
+      blockers: [],
+      can_propose_schedule: true
+    })
 
     renderPanel()
 
@@ -2711,6 +2718,12 @@ describe('AuthoritativeSimulationPanel', () => {
       },
       schedule_fingerprint: proposal.schedule_fingerprint
     })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
       current_week: week61,
@@ -2754,6 +2767,12 @@ describe('AuthoritativeSimulationPanel', () => {
       week: week61,
       schedule: { ...proposal.schedule, week: week61 },
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,
@@ -2827,6 +2846,12 @@ describe('AuthoritativeSimulationPanel', () => {
       week: finalWeek,
       schedule: { ...proposal.schedule, week: finalWeek },
       schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
     })
     api.getAuthoritativeSimulationPosition.mockResolvedValue({
       ...position,

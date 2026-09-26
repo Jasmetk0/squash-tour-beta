@@ -20,6 +20,7 @@ from beta_engine.application.calendar_package_run_adapter import CalendarPackage
 from beta_engine.application.canonical_tournament_preparation import (
     CanonicalTournamentPreparationService,
 )
+from beta_engine.application.authoritative_live_match import AuthoritativeLiveMatchService
 from beta_engine.application.authoritative_slot_matches import (
     AuthoritativeTournamentResult,
     AuthoritativeSlotMatchExecutor,
@@ -223,6 +224,25 @@ class AuthoritativeSimulationCommand(FrozenInput):
     expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_revision_id: str = Field(min_length=1)
     group_id: str | None = None
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
+class AuthoritativeNextRallyCommand(FrozenInput):
+    """CAS-guarded true live advance of exactly one authoritative rally."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    expected_live_state_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
 
     @property
     def fingerprint(self) -> str:
@@ -2765,6 +2785,82 @@ class AuthoritativeRunSimulationDriver:
             )
             session.flush()
             return payload
+
+    def simulate_next_rally(self, command: AuthoritativeNextRallyCommand) -> dict:
+        """Advance one real rally inside the current authoritative Simulation Slot."""
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            before = self._position(session, command.run_id, command.branch_id)
+            self._validate_expected(session, command, before)
+
+            packages, authority_fp = self._authority_package(
+                session,
+                command.run_id,
+                command.branch_id,
+                command.expected_week,
+                adopt=True,
+            )
+            self._ensure_current_slot(session, command, packages)
+            position = self._position(session, command.run_id, command.branch_id)
+            eligible = self._eligible_groups(session, position, packages)
+            if command.group_id not in eligible:
+                raise ValueError(
+                    "live rally target is completed, blocked, or outside the current slot"
+                )
+
+            slot, plan, event, package, players = self._group_execution_context(
+                session, command, packages, command.group_id
+            )
+            seed = int(
+                hashlib.sha256(
+                    f"{command.run_id}|{command.branch_id}|{command.expected_week.ordinal}|{authority_fp}|{command.group_id}".encode()
+                ).hexdigest()[:15],
+                16,
+            )
+            service = AuthoritativeLiveMatchService(session)
+            started = service.ensure_started(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                slot_id=slot.slot_id,
+                group_id=command.group_id,
+                event_id=package.event_id,
+                match_id=event.match_id,
+                player_a_id=players[0],
+                player_b_id=players[1],
+                seed=seed,
+                expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+            )
+            current_state_fp = started["state_fingerprint"]
+            if (
+                command.expected_live_state_fingerprint is not None
+                and command.expected_live_state_fingerprint != current_state_fp
+            ):
+                raise ValueError("expected live rally state is stale")
+
+            step = service.simulate_next_rally(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                slot_id=slot.slot_id,
+                group_id=command.group_id,
+                command_id=command.command_id,
+                expected_state_fingerprint=current_state_fp,
+            )
+            after = self._position(session, command.run_id, command.branch_id)
+            return {
+                "schema_version": "authoritative_next_rally_result.v1",
+                "run_id": command.run_id,
+                "branch_id": command.branch_id,
+                "week": command.expected_week.model_dump(mode="json"),
+                "slot_id": slot.slot_id,
+                "group_id": command.group_id,
+                "match_id": event.match_id,
+                "position": after.model_dump(mode="json"),
+                **step,
+            }
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

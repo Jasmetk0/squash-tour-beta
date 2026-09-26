@@ -874,6 +874,22 @@ def test_topological_schedule_proposal_over_http_adopts_atomically(tmp_path):
             "authoritative-simulation"
         )
 
+        status, schedule_preflight = _request(
+            "GET",
+            root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_preflight
+        assert (
+            schedule_preflight["schema_version"]
+            == "authoritative_week_schedule_preflight.v1"
+        )
+        assert schedule_preflight["canonical_preparation"] is None
+        assert schedule_preflight["canonical_preparation_ready"] is True
+        assert schedule_preflight["can_propose_schedule"] is True
+        assert schedule_preflight["blockers"] == []
+        assert schedule_preflight["read_only"] is True
+        assert len(schedule_preflight["preflight_fingerprint"]) == 64
+
         status, proposed = _request(
             "GET",
             root + "/week-schedule/proposal",

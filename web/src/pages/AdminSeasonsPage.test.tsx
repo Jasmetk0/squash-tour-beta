@@ -43,7 +43,6 @@ const api = vi.hoisted(() => ({
   recoverSeasonWeek: vi.fn(),
   getSeasonReadiness: vi.fn(),
   preflightSeasonRange: vi.fn(),
-  runSeasonRange: vi.fn(),
   ApiError: class ApiError extends Error { status = 400 }
 }))
 
@@ -533,18 +532,6 @@ const seasonRangePreflightResult = {
   validation_errors: []
 }
 
-
-const seasonRangeRunResult = {
-  preflight: seasonRangePreflightResult,
-  weeks: [
-    { season_week: 1, calendar_year: 2000, year_week: 37, status_before: 'planned', range_action: 'run_week', run_order: 1, skipped: false, skip_reason: null, week_run_result: weekRunResult, succeeded: true, blocked: false, failed: false, warnings: [], errors: [] },
-    { season_week: 2, calendar_year: 2000, year_week: 38, status_before: 'complete', range_action: 'skip_complete', run_order: null, skipped: true, skip_reason: 'completed_week', week_run_result: null, succeeded: true, blocked: false, failed: false, warnings: ['range warning'], errors: [] }
-  ],
-  summary: { season: '2000/2001', start_week: 1, end_week: 2, attempted_week_count: 2, skipped_empty_week_count: 0, skipped_complete_week_count: 1, executed_week_count: 1, succeeded_week_count: 1, blocked_week_count: 0, failed_week_count: 0, point_application_week_count: 1, snapshot_publication_week_count: 1, run_started: true, run_completed: true, stopped_early: false, first_failed_week: null, first_blocked_week: null, stop_reason: null, next_safe_action: 'review_completed_range', no_rollback_warning: 'Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.', range_safe_to_run_preflight: true },
-  metadata: { season: '2000/2001', source: 'range_preflight_plus_week_execution_reports', range_preflight_fingerprint: 'range-preflight-fp', final_fingerprint: 'range-run-fp', read_only: false, authority_scope: 'legacy_global_season_tooling.v1', canonical_run_execution_eligible: false },
-  validation_warnings: ['Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.'],
-  validation_errors: []
-}
 
 const unsafeWeekRunResult = {
   ...weekRunResult,

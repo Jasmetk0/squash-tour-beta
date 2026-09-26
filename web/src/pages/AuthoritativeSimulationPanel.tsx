@@ -978,7 +978,7 @@ export function AuthoritativeSimulationPanel({
         expected_revision_id: savedRevisionId,
         group_id: selectedGroupId,
         return_point_id: returnPointId,
-        expected_live_state_fingerprint: liveRallyStateFingerprint
+        expected_live_state_fingerprint: liveWorkingGuardFingerprint
       })
     },
     onSuccess: async (result) => {

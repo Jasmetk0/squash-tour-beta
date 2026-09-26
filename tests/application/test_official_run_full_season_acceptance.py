@@ -792,6 +792,13 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             if slot["entrant_kind"] == "player"
         } == set(generated_ids)
 
+        # Destroy the live legacy Calendar source after the Run-owned Calendar and
+        # Draw exist. Tournament adoption, point-authority freezing, empty-week proof
+        # and whole-season simulation must now replay only from Run-owned evidence.
+        legacy_calendars = awards.calendar_service._load_registry()
+        legacy_calendars.calendars_by_season.clear()
+        awards.calendar_service._save_registry(legacy_calendars)
+
         # Remove the old Week-1 MatchPackage source completely. From this point the
         # authoritative driver must derive its compatibility MatchPackage from the
         # Run-owned canonical Draw + Run-owned Calendar or the acceptance will fail.

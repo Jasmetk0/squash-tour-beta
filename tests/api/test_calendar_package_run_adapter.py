@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.authoritative_run_simulation_driver import AuthoritativeRunSimulationDriver
+from beta_engine.domain.rankings.official import RankingWeek
 
 from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 
@@ -117,6 +118,42 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
             not event.event_name.endswith("SOURCE-EDIT")
             for event in authoritative_after_source_edit.events
         )
+
+        # Once any Package state is applied, authoritative simulation must never
+        # borrow a missing season Calendar from the mutable legacy registry.
+        registry = source_calendar_service._load_registry()
+        legacy_next = source.model_copy(deep=True)
+        legacy_next.season = "2001/2002"
+        legacy_next.events = [
+            event.model_copy(update={"season": "2001/2002"})
+            for event in legacy_next.events
+        ]
+        registry.calendars_by_season["2001/2002"] = legacy_next
+        source_calendar_service._save_registry(registry)
+        with server.app.state.runtime.repository._session_factory() as session:
+            missing_calendar, mode, authority_fingerprint = driver._calendar_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                season="2001/2002",
+            )
+        assert missing_calendar is None
+        assert mode == "run_package_missing"
+        assert authority_fingerprint is None
+
+        # The same ownership fence applies to executable tournament discovery:
+        # the source MatchPackage registry may contain this event, but without a
+        # canonical Run-owned Draw it is not authoritative for a Package-backed Run.
+        source_week = source.events[0].season_week
+        with server.app.state.runtime.repository._session_factory() as session:
+            discovered = driver._packages(
+                RankingWeek(season_index=0, week=source_week),
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+        assert discovered == ()
 
         status, changed_source_preview = _request(
             "POST", source_root + "/preview"

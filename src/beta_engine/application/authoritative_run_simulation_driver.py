@@ -783,6 +783,70 @@ class AuthoritativeRunSimulationDriver:
     awards_service: SeasonPointAwardsService
     full_simulation_before_transaction_check: Callable[[], None] | None = None
 
+    @staticmethod
+    def _run_uses_package_authority(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+    ) -> bool:
+        state = get_run_package_state(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        return state is not None and bool(state.package_versions)
+
+    @staticmethod
+    def _run_owned_point_award_authority(event: CalendarEvent) -> FrozenPointAwardAuthority:
+        """Freeze ranked point inputs from one already Run-owned Calendar Event.
+
+        Canonical Package-backed simulation must never consult live template/points
+        registries after the Calendar Event snapshot exists.
+        """
+
+        if event.ranking_status.value == "unranked":
+            return FrozenPointAwardAuthority(
+                ranking_status="unranked",
+                point_distribution={},
+                point_distribution_source="calendar_event.unranked",
+            )
+
+        distribution = {
+            str(key): int(value)
+            for key, value in event.ranking_points_table.items()
+            if isinstance(value, int) and not isinstance(value, bool) and value >= 0
+        }
+        if not distribution and event.point_distribution is not None:
+            distribution = {
+                str(key): int(value)
+                for key, value in event.point_distribution.model_dump(mode="json").items()
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            }
+        if not distribution and isinstance(
+            event.template_snapshot.get("point_distribution"), dict
+        ):
+            distribution = {
+                str(key): int(value)
+                for key, value in event.template_snapshot["point_distribution"].items()
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0
+            }
+        missing = [
+            stage
+            for stage in event.required_ranking_point_stages
+            if stage not in distribution
+        ]
+        if missing:
+            raise ValueError(
+                "Run-owned Calendar Event lacks authored ranking point stage(s): "
+                + ", ".join(sorted(missing))
+            )
+        return FrozenPointAwardAuthority(
+            ranking_status="ranked",
+            point_distribution=distribution,
+            point_distribution_source="run_owned_calendar_event.ranking_points.v1",
+        )
+
     def _calendar_authority(
         self,
         session: Session,
@@ -813,6 +877,10 @@ class AuthoritativeRunSimulationDriver:
                 "run_package",
                 projection.content_fingerprint,
             )
+        if state is not None and state.package_versions:
+            # Once this Run owns Package state, missing season Calendar authority is
+            # a real preparation gap. Never mask it with mutable global Calendar data.
+            return None, "run_package_missing", None
 
         resolved = self.awards_service.calendar_service.get_calendar(season=season)
         if resolved.calendar is None:
@@ -6761,6 +6829,16 @@ class AuthoritativeRunSimulationDriver:
         branch_id=None,
     ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        package_backed = (
+            session is not None
+            and run_id is not None
+            and branch_id is not None
+            and self._run_uses_package_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+        )
 
         if session is not None and run_id is not None and branch_id is not None:
             adopted = session.get(
@@ -6834,16 +6912,20 @@ class AuthoritativeRunSimulationDriver:
                     )
                     canonical_event_ids.add(event_id)
 
-        legacy_packages = tuple(
-            sorted(
-                (
-                    p
-                    for p in self.match_service._load_registry().matches_by_event_id.values()
-                    if p.season == season
-                    and p.season_week == week.week
-                    and p.event_id not in canonical_event_ids
-                ),
-                key=lambda package: package.event_id,
+        legacy_packages = (
+            ()
+            if package_backed
+            else tuple(
+                sorted(
+                    (
+                        p
+                        for p in self.match_service._load_registry().matches_by_event_id.values()
+                        if p.season == season
+                        and p.season_week == week.week
+                        and p.event_id not in canonical_event_ids
+                    ),
+                    key=lambda package: package.event_id,
+                )
             )
         )
         bound_legacy = []
@@ -7348,13 +7430,23 @@ class AuthoritativeRunSimulationDriver:
         draw_store = TournamentDrawAuthorityStore(session)
         items = []
         for package in packages:
-            point_authority = self.awards_service.freeze_point_award_authority(package)
             draw = draw_store.get(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=package.event_id,
             )
             if draw is None:
+                if self._run_uses_package_authority(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                ):
+                    raise ValueError(
+                        "Package-backed authoritative tournament requires canonical Draw authority"
+                    )
+                point_authority = self.awards_service.freeze_point_award_authority(
+                    package
+                )
                 items.append(
                     _AdoptedTournamentEvidence(
                         event_id=package.event_id,
@@ -7371,6 +7463,7 @@ class AuthoritativeRunSimulationDriver:
                 package=package,
                 week=week,
             )
+            point_authority = self._run_owned_point_award_authority(event)
             rebuilt = self._bind_owned_draw_evidence(
                 package=build_run_owned_match_package(
                     draw=draw,
@@ -9375,7 +9468,23 @@ class AuthoritativeRunSimulationDriver:
                     tuple(
                         (
                             p,
-                            self.awards_service.freeze_point_award_authority(p),
+                            (
+                                self._run_owned_point_award_authority(
+                                    self._freeze_calendar_event_snapshot(
+                                        session,
+                                        run_id=run_id,
+                                        branch_id=branch_id,
+                                        package=p,
+                                        week=week,
+                                    )
+                                )
+                                if self._run_uses_package_authority(
+                                    session,
+                                    run_id=run_id,
+                                    branch_id=branch_id,
+                                )
+                                else self.awards_service.freeze_point_award_authority(p)
+                            ),
                             (
                                 draw.fingerprint
                                 if (

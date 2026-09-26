@@ -1,17 +1,18 @@
 # Squash Engine roadmap
 
-## Active pre-alpha sequence — remove legacy one-week execution backend
+## Active pre-alpha sequence — read-only Match Replay step navigation
 
-1. Master §31.3 Official Run remains the canonical end-to-end pre-alpha path.
-2. Remove `POST /admin/weeks/run`, `SeasonWeekSimulationExecutionService`, its DI,
-   web client/types and dedicated execution tests.
-3. Rebuild recovery/readiness/range-preflight test states through event-level simulation
-   instead of retaining a dead week orchestrator just for tests.
-4. Preserve read-only Week Preflight, Week Recovery, Season Readiness and Range
-   Preflight.
-5. Assert the retired route returns `404`.
-6. Next: audit legacy one-event mutation and manual artifact entry points; retire only
-   mutation paths whose canonical Run/Branch replacement is already established.
+1. Keep the authoritative completed-match rally log as the only Replay sporting truth.
+2. Expose a read-only rally cursor with first/previous/next/last navigation.
+3. Reuse existing replay integrity verification; never rerun RNG while navigating.
+4. Surface Master-decided `Step Back / Step Forward` in Admin Event Matches with
+   rally score, server, winner/call, terminal cause, duration, shots and completion
+   state.
+5. Cover both cursor boundaries and an explicit no-`MatchEngine.simulate` guarantee.
+6. Next: add a persisted working-match authority for true
+   `Simulate Next Rally`, then compose `Simulate Game` and
+   `Simulate Rest of Match` from the same resumable transition model. Do not fake
+   live stepping by precomputing a whole match and revealing prefixes.
 
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

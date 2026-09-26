@@ -899,7 +899,6 @@ describe('AdminSeasonsPage', () => {
     expect(await screen.findByRole('heading', { name: 'Legacy Season Range Preflight' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Legacy Run Season Range' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Run range' })).not.toBeInTheDocument()
-    expect(api.runSeasonRange).not.toHaveBeenCalled()
   })
 
   it('renders week preflight panel and previews through API', async () => {

@@ -25,6 +25,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeFullSimulationAbandonCommand,
     _AdoptedTournamentEvidence,
     AuthoritativeSimulationCommand,
+    AuthoritativeNextRallyCommand,
     AuthoritativeMatchDayCommand,
     AuthoritativeRoundCommand,
     AuthoritativeTournamentCommand,
@@ -7913,3 +7914,136 @@ def test_coupled_fork_remaps_basic_draw_revision_chain(tmp_path):
     )
     assert target_revision["branch_id"] == "target"
     assert target_revision["successor_draw"]["branch_id"] == "target"
+
+
+@pytest.mark.pr_critical
+def test_authoritative_next_rally_matches_normal_full_match_and_commits_only_at_end(tmp_path):
+    live_driver, live_factory, week = _driver_fixture(tmp_path / "live-rally")
+    opening = live_driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    first = live_driver.simulate_next_rally(
+        AuthoritativeNextRallyCommand(
+            command_id="rally-1",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert first["authoritative_group_committed"] is False
+    assert first["status"] == "active"
+    assert first["rally"] is not None
+    with live_factory() as session:
+        assert session.scalars(select(SimulationEventGroupModel)).all() == []
+
+    current = first
+    final_command = None
+    for index in range(2, 1000):
+        if current["status"] == "complete":
+            break
+        position = live_driver.position(run_id="run", branch_id="branch")
+        final_command = AuthoritativeNextRallyCommand(
+            command_id=f"rally-{index}",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            expected_live_state_fingerprint=current["state_fingerprint"],
+        )
+        current = live_driver.simulate_next_rally(final_command)
+    else:  # pragma: no cover
+        raise AssertionError("live rally simulation did not finish")
+
+    assert current["status"] == "complete"
+    assert current["authoritative_group_committed"] is True
+    assert current["final_result"] is not None
+    assert current["state_fingerprint"] is None
+    assert final_command is not None
+
+    # Lost-response retry must not create another rally or another group.
+    replay = live_driver.simulate_next_rally(final_command)
+    assert replay["idempotent_replay"] is True
+    assert replay["authoritative_result_fingerprint"] == current[
+        "authoritative_result_fingerprint"
+    ]
+
+    with live_factory() as session:
+        live_groups = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(live_groups) == 1
+        live_group = live_groups[0]
+        live_payload = json.loads(live_group.payload_json)
+
+    full_driver, full_factory, full_week = _driver_fixture(tmp_path / "full-match")
+    full_opening = full_driver.position(run_id="run", branch_id="branch")
+    full_group_id = full_opening.unresolved_group_ids[0]
+    full_driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="full-match",
+            run_id="run",
+            branch_id="branch",
+            expected_week=full_week,
+            expected_position_fingerprint=full_opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=full_group_id,
+        )
+    )
+    with full_factory() as session:
+        full_groups = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(full_groups) == 1
+        full_group = full_groups[0]
+        full_payload = json.loads(full_group.payload_json)
+
+    assert live_group.command_fingerprint == full_group.command_fingerprint
+    assert live_group.match_input_fingerprint == full_group.match_input_fingerprint
+    assert live_group.result_fingerprint == full_group.result_fingerprint
+    assert live_payload == full_payload
+
+
+@pytest.mark.pr_critical
+def test_authoritative_next_rally_rejects_stale_live_state_without_advancing(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "live-rally-stale")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    first = driver.simulate_next_rally(
+        AuthoritativeNextRallyCommand(
+            command_id="rally-first",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    before = first["state_fingerprint"]
+
+    position = driver.position(run_id="run", branch_id="branch")
+    with pytest.raises(ValueError, match="expected live rally state is stale"):
+        driver.simulate_next_rally(
+            AuthoritativeNextRallyCommand(
+                command_id="rally-stale",
+                run_id="run",
+                branch_id="branch",
+                expected_week=week,
+                expected_position_fingerprint=position.position_fingerprint,
+                expected_revision_id="revision",
+                group_id=group_id,
+                expected_live_state_fingerprint="0" * 64,
+            )
+        )
+
+    with factory() as session:
+        from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchStore
+        state = PersistedLiveMatchStore(session).inspect(
+            run_id="run",
+            branch_id="branch",
+            week_ordinal=week.ordinal,
+            slot_id=first["slot_id"],
+            group_id=group_id,
+        )
+    assert state["state_fingerprint"] == before

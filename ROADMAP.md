@@ -1,16 +1,17 @@
 # Squash Engine roadmap
 
-## Active pre-alpha sequence — legacy season readiness authority boundary
+## Active pre-alpha sequence — legacy season execution authority boundary
 
 1. Canonical Week Schedule preflight remains the only Run/Branch readiness source.
-2. Legacy week preflight, season readiness and season range preflight now self-identify
-   as `legacy_global_season_tooling.v1`.
-3. Those responses explicitly declare `canonical_run_readiness_eligible=false`, and
-   the web client validates the boundary.
-4. Admin Seasons keeps the historical diagnostics but labels them LEGACY / READ-ONLY
-   instead of presenting them as canonical readiness.
-5. Next: audit mutating legacy week/range execution callers and isolate or remove the
-   first path no longer needed by supported historical workflows.
+2. Legacy Week Run and Season Range Run now self-identify as
+   `legacy_global_season_tooling.v1`.
+3. Their execution responses explicitly declare
+   `canonical_run_execution_eligible=false`, and the web client validates it.
+4. Admin Seasons labels both commands LEGACY / MUTATING and routes Official Run users
+   to Product Runs / Run/Branch simulation instead of recommending legacy range runs.
+5. Next: find the first legacy mutation command with no supported compatibility caller,
+   disable its UI entry point, then remove its backend path after migration evidence is
+   complete.
 
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

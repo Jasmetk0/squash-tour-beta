@@ -86,6 +86,11 @@ from beta_engine.domain.matches.timing import (
     RestartDecisionFactor,
     RestartIntent,
 )
+from beta_engine.domain.matches.working_state import (
+    MatchRallyStepOutcome,
+    MatchRallyWorkingState,
+    MatchWorkingInput,
+)
 
 
 @dataclass(slots=True)
@@ -143,6 +148,574 @@ class MatchEngine:
         RallyEffortLevel.INCREASED: 1.16,
         RallyEffortLevel.MAXIMUM: 1.32,
     }
+
+    def start_working_match(
+        self,
+        context: MatchContext,
+        *,
+        log_anchor_hash: str | None = None,
+        effective_match_timing: EffectiveMatchTimingSnapshot | None = None,
+        effective_match_stamina: EffectiveMatchStaminaSnapshot | None = None,
+        rally_calibration_profile: RallyCalibrationProfile | None = None,
+        effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
+        effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+    ) -> tuple[MatchWorkingInput, MatchRallyWorkingState]:
+        """Freeze effective inputs and create a serializable pre-first-rally state."""
+
+        player_a = context.player_a.player
+        player_b = context.player_b.player
+        timing = effective_match_timing or EffectiveMatchTimingSnapshot.create(
+            player_a_id=player_a.player_id,
+            player_b_id=player_b.player_id,
+        )
+        stamina = effective_match_stamina or EffectiveMatchStaminaSnapshot.create(
+            context=context
+        )
+        rally_calibration = rally_calibration_profile or RallyCalibrationProfile()
+        rules = effective_rally_rules or EffectiveRallyRulesSnapshot()
+        gameplans = effective_match_gameplans or EffectiveMatchGameplanSnapshot.create(
+            context=context,
+            simulation_seed=self.rng.seed.value,
+        )
+        working_input = MatchWorkingInput(
+            context=context,
+            simulation_seed=self.rng.seed.value,
+            input_hash=log_anchor_hash or self._default_log_anchor(context),
+            timing=timing,
+            stamina=stamina,
+            rally_calibration=rally_calibration,
+            gameplans=gameplans,
+            rules=rules,
+        )
+        match_rng = self.rng.branch(
+            SeedScope.MATCH,
+            context.match_id,
+            player_a.player_id,
+            player_b.player_id,
+        )
+        server_player_id = match_rng.branch(
+            SeedScope.MATCH, "initial-server"
+        ).choice([player_a.player_id, player_b.player_id])
+        stamina_states = MatchStaminaLog.create_initial_states(
+            effective=stamina,
+            player_ids=(player_a.player_id, player_b.player_id),
+        )
+        gameplan_states = tuple(
+            PlayerGameplanState(
+                player_id=plan.player_id,
+                active_plan=plan,
+                rallies_since_reassessment=0,
+                points_won_since_reassessment=0,
+                points_lost_since_reassessment=0,
+            )
+            for plan in gameplans.initial_gameplans
+        )
+        state = MatchRallyWorkingState(
+            input_fingerprint=working_input.fingerprint,
+            set_number=1,
+            games_a=0,
+            games_b=0,
+            sets=(),
+            sets_won={player_a.player_id: 0, player_b.player_id: 0},
+            momentum_owner=None,
+            rally_events=(),
+            rally_index=1,
+            rally_in_set=1,
+            consecutive_replays=0,
+            server_player_id=server_player_id,
+            service_box=match_rng.branch(
+                SeedScope.MATCH, "service-box", 1
+            ).choice(["LEFT", "RIGHT"]),
+            previous_event_hash=working_input.input_hash,
+            stamina_states=stamina_states,
+            gameplan_states=gameplan_states,
+            was_close_endgame=False,
+        )
+        return working_input, state
+
+    def simulate_next_rally(
+        self,
+        working_input: MatchWorkingInput,
+        state: MatchRallyWorkingState,
+    ) -> MatchRallyStepOutcome:
+        """Advance one authoritative rally from a persisted working-match state.
+
+        The method never precomputes later rallies. It reconstructs only the current
+        set's sequential terminal-roll cursor and uses the same deterministic branches
+        and sporting helpers as full-match simulation.
+        """
+
+        if self.rng.seed.value != working_input.simulation_seed:
+            raise ValueError("working-match engine seed does not match frozen input")
+        if state.input_fingerprint != working_input.fingerprint:
+            raise ValueError("working-match state does not belong to the frozen input")
+
+        context = working_input.context
+        player_a = context.player_a.player
+        player_b = context.player_b.player
+        player_a_id = player_a.player_id
+        player_b_id = player_b.player_id
+        if tuple(state.sets_won) != (player_a_id, player_b_id):
+            raise ValueError("working-match participant order changed")
+
+        match_rng = self.rng.branch(
+            SeedScope.MATCH,
+            context.match_id,
+            player_a_id,
+            player_b_id,
+        )
+        if state.rally_in_set == 1 and state.games_a == 0 and state.games_b == 0:
+            if (
+                context.retirement_rule.enabled
+                and context.retirement_rule.trigger
+                == RetirementTrigger.PROBABILISTIC_SET_START
+            ):
+                threshold = context.retirement_rule.set_number
+                for earlier_set in range(1, state.set_number):
+                    if threshold is None or earlier_set >= threshold:
+                        match_rng.random()
+            retired_player_id = self._retirement_if_triggered(
+                context, state.set_number, match_rng
+            )
+            if retired_player_id is not None:
+                winner_id = (
+                    player_b_id
+                    if retired_player_id == player_a_id
+                    else player_a_id
+                )
+                final = self._build_result(
+                    context=context,
+                    winner_player_id=winner_id,
+                    loser_player_id=retired_player_id,
+                    sets=list(state.sets),
+                    sets_won=dict(state.sets_won),
+                    termination_reason=MatchTerminationReason.RETIREMENT,
+                    retired_player_id=retired_player_id,
+                    retired_at_set_start=state.set_number,
+                    rally_events=list(state.rally_events),
+                    input_hash=working_input.input_hash,
+                    match_rng=match_rng,
+                    timing=working_input.timing,
+                    stamina=working_input.stamina,
+                    expected_final_stamina_states=state.stamina_states,
+                    gameplan_applied=working_input.stamina.within_rally_effort_applied,
+                )
+                return MatchRallyStepOutcome(final_result=final)
+
+        strength_a = self._base_strength(context.player_a)
+        strength_b = self._base_strength(context.player_b)
+        matchup_a, matchup_b = self._style_and_archetype_adjustment(
+            player_a.play_style,
+            player_b.play_style,
+            player_a.archetype,
+            player_b.archetype,
+            include_style=not working_input.stamina.within_rally_effort_applied,
+        )
+        strength_a += matchup_a
+        strength_b += matchup_b
+
+        set_rng = match_rng.branch(SeedScope.MATCH, "set", state.set_number)
+        momentum_adjustment = 0.035
+        adjusted_a = strength_a + (
+            momentum_adjustment if state.momentum_owner == player_a_id else 0.0
+        )
+        adjusted_b = strength_b + (
+            momentum_adjustment if state.momentum_owner == player_b_id else 0.0
+        )
+        upset_roll = set_rng.uniform(-context.upset_variance, context.upset_variance)
+        adjusted_a += upset_roll
+        adjusted_b -= upset_roll
+        # _simulate_set consumes one terminal roll per rally after its one upset roll.
+        # Re-seeking this short deterministic stream avoids storing interpreter RNG
+        # internals while reproducing the exact next draw.
+        for _ in range(state.rally_in_set - 1):
+            set_rng.random()
+
+        gameplan_applied = working_input.stamina.within_rally_effort_applied
+        gameplan_states = state.gameplan_states
+        gameplan_context = None
+        if gameplan_applied:
+            gameplan_context, gameplan_states = self._prepare_rally_gameplans(
+                context=context,
+                effective=working_input.gameplans,
+                states=gameplan_states,
+                stamina_states=state.stamina_states,
+                rally_index=state.rally_index,
+                rng=match_rng.branch(
+                    SeedScope.MATCH, "gameplan-decision", state.rally_index
+                ),
+            )
+        gameplan_decisions = (
+            {
+                decision.player_id: decision
+                for decision in gameplan_context.player_decisions
+            }
+            if gameplan_context is not None
+            else {}
+        )
+        effort_rng = set_rng.branch(
+            SeedScope.MATCH, "rally-effort", state.rally_in_set
+        )
+        efforts = (
+            (
+                self._select_rally_effort(
+                    participant=context.player_a,
+                    state=state.stamina_states[0],
+                    own_points=state.games_a,
+                    opponent_points=state.games_b,
+                    games_to=context.games_to,
+                    rng=effort_rng.branch(SeedScope.MATCH, player_a_id),
+                    gameplan=gameplan_decisions.get(player_a_id),
+                ),
+                self._select_rally_effort(
+                    participant=context.player_b,
+                    state=state.stamina_states[1],
+                    own_points=state.games_b,
+                    opponent_points=state.games_a,
+                    games_to=context.games_to,
+                    rng=effort_rng.branch(SeedScope.MATCH, player_b_id),
+                    gameplan=gameplan_decisions.get(player_b_id),
+                ),
+            )
+            if working_input.stamina.pre_rally_effort_applied
+            else None
+        )
+        game_prob_a, stamina_outcome = self._game_probability(
+            adjusted_a=adjusted_a,
+            adjusted_b=adjusted_b,
+            context=context,
+            games_a=state.games_a,
+            games_b=state.games_b,
+            stamina=working_input.stamina,
+            stamina_states=state.stamina_states,
+            efforts=efforts,
+        )
+        was_close_endgame = state.was_close_endgame or (
+            state.games_a >= context.games_to - 2
+            and state.games_b >= context.games_to - 2
+        )
+        score_before = RallyScoreSnapshot(
+            player_a_id=player_a_id,
+            player_b_id=player_b_id,
+            sets_a=state.sets_won[player_a_id],
+            sets_b=state.sets_won[player_b_id],
+            points_a=state.games_a,
+            points_b=state.games_b,
+        )
+        detail_rng = set_rng.branch(
+            SeedScope.MATCH, "rally-detail", state.rally_in_set
+        )
+        terminal_roll = set_rng.random()
+        control_trace = None
+        if working_input.stamina.within_rally_effort_applied and efforts is not None:
+            (
+                rally_winner,
+                trigger,
+                attribution,
+                control_trace,
+                completed_efforts,
+            ) = self._simulate_hidden_control_rally(
+                context=context,
+                server_player_id=state.server_player_id,
+                base_probability_player_a=game_prob_a,
+                efforts=efforts,
+                stamina_states=state.stamina_states,
+                calibration=working_input.rally_calibration,
+                terminal_roll=terminal_roll,
+                rng=detail_rng.branch(SeedScope.MATCH, "hidden-control"),
+                gameplan_context=gameplan_context,
+            )
+        else:
+            rally_winner = (
+                player_a_id if terminal_roll < game_prob_a else player_b_id
+            )
+            trigger, attribution, segments, shots, elapsed = self._rally_detail(
+                rng=detail_rng,
+                server_player_id=state.server_player_id,
+                winner_player_id=rally_winner,
+            )
+            completed_efforts = (
+                tuple(
+                    self._complete_rally_effort(
+                        effort=effort,
+                        base_workload=MatchStaminaLog.workload_from_detail(
+                            elapsed_seconds=elapsed,
+                            estimated_shot_count=shots,
+                            abstract_segments=segments,
+                        ),
+                        won_rally=effort.player_id == rally_winner,
+                        attribution=attribution,
+                    )
+                    for effort in efforts
+                )
+                if efforts is not None
+                else None
+            )
+
+        resolution = None
+        if gameplan_applied:
+            resolution = self._resolve_rally_situation(
+                context=context,
+                rules=working_input.rules,
+                trigger=trigger,
+                provisional_winner=rally_winner,
+                server_player_id=state.server_player_id,
+                trace=control_trace,
+                consecutive_replays=state.consecutive_replays,
+                rng=detail_rng.branch(SeedScope.MATCH, "rule-situation-v1"),
+            )
+            rally_winner = resolution.point_winner_player_id
+            if resolution.context.kind != "STANDARD":
+                trigger = {
+                    "INTERFERENCE": RallyTerminalTrigger.INTERFERENCE_STOP,
+                    "BALL_HIT_PLAYER": RallyTerminalTrigger.BALL_HIT_PLAYER,
+                    "EXTERNAL_INTERRUPTION": RallyTerminalTrigger.BALL_COURT_OR_EXTERNAL_STOP,
+                }[resolution.context.kind]
+                attribution = (
+                    RallyAnalyticalAttribution.NEUTRAL_REPLAY
+                    if resolution.replay_required
+                    else RallyAnalyticalAttribution.OFFICIAL_AWARD
+                )
+
+        consecutive_replays = (
+            state.consecutive_replays + 1 if rally_winner is None else 0
+        )
+        games_a = state.games_a + int(rally_winner == player_a_id)
+        games_b = state.games_b + int(rally_winner == player_b_id)
+        if control_trace is not None:
+            segments = control_trace.control_segment_count
+            shots = control_trace.estimated_shot_count
+            elapsed = control_trace.active_rally_duration
+
+        set_complete = self._set_finished(
+            games_a, games_b, context.games_to, context.win_by
+        )
+        target_sets = context.best_of // 2 + 1
+        projected_sets_a = state.sets_won[player_a_id] + (
+            1 if set_complete and games_a > games_b else 0
+        )
+        projected_sets_b = state.sets_won[player_b_id] + (
+            1 if set_complete and games_b > games_a else 0
+        )
+        score_after = RallyScoreSnapshot(
+            player_a_id=player_a_id,
+            player_b_id=player_b_id,
+            sets_a=projected_sets_a,
+            sets_b=projected_sets_b,
+            points_a=games_a,
+            points_b=games_b,
+        )
+        effort_context = None
+        player_workloads = None
+        if completed_efforts is not None:
+            base_workload = MatchStaminaLog.workload_from_detail(
+                elapsed_seconds=elapsed,
+                estimated_shot_count=shots,
+                abstract_segments=segments,
+            )
+            effort_context = RallyEffortContext(
+                base_workload_units=base_workload,
+                probability_before_effort_player_a=(
+                    stamina_outcome.adjusted_probability_player_a
+                ),
+                probability_after_effort_player_a=game_prob_a,
+                player_efforts=completed_efforts,
+            )
+            player_workloads = {
+                effort.player_id: effort.workload_units
+                for effort in completed_efforts
+            }
+
+        next_server = rally_winner or state.server_player_id
+        next_service_box = (
+            state.service_box
+            if rally_winner is None
+            else match_rng.branch(
+                SeedScope.MATCH, "service-box", state.rally_index + 1
+            ).choice(["LEFT", "RIGHT"])
+            if set_complete or next_server != state.server_player_id
+            else "RIGHT"
+            if state.service_box == "LEFT"
+            else "LEFT"
+        )
+        event = RallyEvent.create(
+            schema_version=(
+                "rally_event.v6"
+                if gameplan_context is not None and control_trace is not None
+                else "rally_event.v4"
+                if control_trace is not None
+                else "rally_event.v3"
+                if effort_context is not None
+                else "rally_event.v2"
+            ),
+            match_id=context.match_id,
+            rally_index=state.rally_index,
+            set_number=state.set_number,
+            rally_in_set=state.rally_in_set,
+            serving_player_id=state.server_player_id,
+            winner_player_id=rally_winner,
+            primary_terminal_trigger=trigger,
+            analytical_attribution=attribution,
+            score_before=score_before,
+            score_mutations=(
+                RallyScoreMutation(
+                    player_id=rally_winner,
+                    reason="OFFICIAL_ADJUSTMENT"
+                    if resolution is not None
+                    and resolution.context.kind != "STANDARD"
+                    else "RALLY_RESULT",
+                ),
+            )
+            if rally_winner is not None
+            else (),
+            score_after=score_after,
+            abstract_segments=segments,
+            estimated_shot_count=shots,
+            elapsed_seconds=elapsed,
+            rally_seed=str(detail_rng.seed.value),
+            post_rally_state=PostRallyStateSnapshot(
+                score=score_after,
+                next_server_player_id=next_server,
+                set_complete=set_complete,
+                match_complete=set_complete
+                and max(projected_sets_a, projected_sets_b) >= target_sets,
+                unsupported_dynamic_state=("mental_stamina",),
+            ),
+            stamina_outcome_context=stamina_outcome,
+            effort_context=effort_context,
+            control_trace=control_trace,
+            gameplan_context=gameplan_context,
+            rules_resolution=resolution,
+            official_resolution=(
+                resolution.final_call
+                if resolution is not None
+                else OfficialRallyCall.POINT_AWARDED
+            ),
+            service_box=state.service_box if resolution is not None else None,
+            next_service_box=next_service_box if resolution is not None else None,
+            previous_event_hash=state.previous_event_hash,
+        )
+        if gameplan_applied:
+            gameplan_states = self._record_gameplan_outcome(
+                states=gameplan_states,
+                winner_player_id=rally_winner,
+            )
+        _, stamina_states = MatchStaminaLog.advance_states(
+            effective=working_input.stamina,
+            states=state.stamina_states,
+            cause=StaminaTransitionCause.RALLY_WORKLOAD,
+            elapsed_seconds=event.elapsed_seconds,
+            workload_units=MatchStaminaLog.rally_workload(event),
+            player_workload_units=player_workloads,
+        )
+        if not set_complete:
+            interval = self._between_rally_interval(
+                context=context,
+                timing=working_input.timing,
+                previous_rally=event,
+                interval_rng=match_rng.branch(
+                    SeedScope.MATCH, "timeline-v1"
+                ).branch(
+                    SeedScope.MATCH, "between-rally", event.rally_index
+                ),
+                timeline_index=event.rally_index * 2,
+                previous_event_hash="0" * 64,
+            )
+            _, stamina_states = MatchStaminaLog.advance_states(
+                effective=working_input.stamina,
+                states=stamina_states,
+                cause=(
+                    StaminaTransitionCause.OBJECTIVE_DELAY_RECOVERY
+                    if interval.event_type == "OBJECTIVE_DELAY"
+                    else StaminaTransitionCause.BETWEEN_RALLY_RECOVERY
+                ),
+                elapsed_seconds=interval.elapsed_seconds,
+                workload_units=0.0,
+            )
+
+        rally_events = (*state.rally_events, event)
+        next_rally_index = state.rally_index + 1
+        if not set_complete:
+            next_state = MatchRallyWorkingState(
+                input_fingerprint=state.input_fingerprint,
+                set_number=state.set_number,
+                games_a=games_a,
+                games_b=games_b,
+                sets=state.sets,
+                sets_won=dict(state.sets_won),
+                momentum_owner=state.momentum_owner,
+                rally_events=rally_events,
+                rally_index=next_rally_index,
+                rally_in_set=state.rally_in_set + 1,
+                consecutive_replays=consecutive_replays,
+                server_player_id=next_server,
+                service_box=next_service_box,
+                previous_event_hash=event.event_hash,
+                stamina_states=stamina_states,
+                gameplan_states=gameplan_states,
+                was_close_endgame=was_close_endgame,
+            )
+            return MatchRallyStepOutcome(state=next_state, rally=event)
+
+        set_winner = player_a_id if games_a > games_b else player_b_id
+        set_loser = player_b_id if set_winner == player_a_id else player_a_id
+        set_result = SetResult(
+            set_number=state.set_number,
+            winner_player_id=set_winner,
+            loser_player_id=set_loser,
+            winner_games=games_a if set_winner == player_a_id else games_b,
+            loser_games=games_b if set_winner == player_a_id else games_a,
+            was_close_endgame=was_close_endgame,
+            ended_by_retirement=False,
+        )
+        sets = (*state.sets, set_result)
+        sets_won = dict(state.sets_won)
+        sets_won[set_winner] += 1
+        if sets_won[set_winner] >= target_sets:
+            final = self._build_result(
+                context=context,
+                winner_player_id=set_winner,
+                loser_player_id=set_loser,
+                sets=list(sets),
+                sets_won=sets_won,
+                termination_reason=MatchTerminationReason.COMPLETED,
+                rally_events=list(rally_events),
+                input_hash=working_input.input_hash,
+                match_rng=match_rng,
+                timing=working_input.timing,
+                stamina=working_input.stamina,
+                expected_final_stamina_states=stamina_states,
+                gameplan_applied=gameplan_applied,
+            )
+            return MatchRallyStepOutcome(rally=event, final_result=final)
+
+        _, stamina_states = MatchStaminaLog.advance_states(
+            effective=working_input.stamina,
+            states=stamina_states,
+            cause=StaminaTransitionCause.GAME_BREAK_RECOVERY,
+            elapsed_seconds=working_input.timing.nominal_game_break_seconds,
+            workload_units=0.0,
+        )
+        next_state = MatchRallyWorkingState(
+            input_fingerprint=state.input_fingerprint,
+            set_number=state.set_number + 1,
+            games_a=0,
+            games_b=0,
+            sets=sets,
+            sets_won=sets_won,
+            momentum_owner=set_winner,
+            rally_events=rally_events,
+            rally_index=next_rally_index,
+            rally_in_set=1,
+            consecutive_replays=0,
+            server_player_id=next_server,
+            service_box=next_service_box,
+            previous_event_hash=event.event_hash,
+            stamina_states=stamina_states,
+            gameplan_states=gameplan_states,
+            was_close_endgame=False,
+        )
+        return MatchRallyStepOutcome(state=next_state, rally=event)
 
     def simulate(
         self,

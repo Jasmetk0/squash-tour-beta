@@ -6829,6 +6829,16 @@ class AuthoritativeRunSimulationDriver:
         branch_id=None,
     ):
         season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        package_backed = (
+            session is not None
+            and run_id is not None
+            and branch_id is not None
+            and self._run_uses_package_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+        )
 
         if session is not None and run_id is not None and branch_id is not None:
             adopted = session.get(
@@ -6902,16 +6912,20 @@ class AuthoritativeRunSimulationDriver:
                     )
                     canonical_event_ids.add(event_id)
 
-        legacy_packages = tuple(
-            sorted(
-                (
-                    p
-                    for p in self.match_service._load_registry().matches_by_event_id.values()
-                    if p.season == season
-                    and p.season_week == week.week
-                    and p.event_id not in canonical_event_ids
-                ),
-                key=lambda package: package.event_id,
+        legacy_packages = (
+            ()
+            if package_backed
+            else tuple(
+                sorted(
+                    (
+                        p
+                        for p in self.match_service._load_registry().matches_by_event_id.values()
+                        if p.season == season
+                        and p.season_week == week.week
+                        and p.event_id not in canonical_event_ids
+                    ),
+                    key=lambda package: package.event_id,
+                )
             )
         )
         bound_legacy = []

@@ -2937,6 +2937,8 @@ class AuthoritativeRunSimulationDriver:
         command: AuthoritativeLiveRangeCommand,
         *,
         mode: Literal["game", "rest_of_match"],
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
     ) -> dict:
         request_fp = fingerprint(
             {"mode": mode, "command": command.model_dump(mode="json")}
@@ -3051,7 +3053,15 @@ class AuthoritativeRunSimulationDriver:
             child_ids.append(child_id)
             expected_live_state = last["state_fingerprint"]
 
+            if fault_after_child == child_ordinal:
+                raise RuntimeError(
+                    f"fault after committed live-range child {child_ordinal}"
+                )
             if last["status"] == "complete":
+                if fault_after_terminal_child:
+                    raise RuntimeError(
+                        "fault after terminal live-range child before parent completion"
+                    )
                 break
             if mode == "game" and last["set_number"] != start_set_number:
                 break
@@ -3106,15 +3116,35 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
         return payload
 
-    def simulate_game(self, command: AuthoritativeLiveRangeCommand) -> dict:
+    def simulate_game(
+        self,
+        command: AuthoritativeLiveRangeCommand,
+        *,
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
+    ) -> dict:
         """Simulate only the remainder of the currently active squash game."""
-        return self._simulate_live_range(command, mode="game")
+        return self._simulate_live_range(
+            command,
+            mode="game",
+            fault_after_child=fault_after_child,
+            fault_after_terminal_child=fault_after_terminal_child,
+        )
 
     def simulate_rest_of_match(
-        self, command: AuthoritativeLiveRangeCommand
+        self,
+        command: AuthoritativeLiveRangeCommand,
+        *,
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
     ) -> dict:
         """Simulate the remainder of the match strictly as Next Rally children."""
-        return self._simulate_live_range(command, mode="rest_of_match")
+        return self._simulate_live_range(
+            command,
+            mode="rest_of_match",
+            fault_after_child=fault_after_child,
+            fault_after_terminal_child=fault_after_terminal_child,
+        )
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_calendar_service import SeasonCalendarRegistry
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, EntryListValidationIssue
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, SeasonRangeExecutionService

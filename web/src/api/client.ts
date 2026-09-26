@@ -139,6 +139,8 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
+  AuthoritativeMatchReplayCursor,
+  AuthoritativeMatchReplayList,
   AuthoritativeLiveMatchInspection,
   AuthoritativeLiveMatchTimeline,
   AuthoritativeLiveConfirmPayload,
@@ -1590,6 +1592,47 @@ export async function simulateAuthoritativeNextRally(
   verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   if (data.schema_version !== 'authoritative_next_rally_result.v1') {
     throw new Error('Authoritative Next Rally response is invalid.')
+  }
+  return data
+}
+
+export async function listAuthoritativeMatchReplays(
+  runId: string,
+  branchId: string,
+  limit = 20
+): Promise<AuthoritativeMatchReplayList> {
+  const data = await request<AuthoritativeMatchReplayList>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replays?limit=' +
+      encodeURIComponent(String(limit))
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (data.schema_version !== 'authoritative_match_replay_list.v1') {
+    throw new Error('Authoritative replay list response is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeMatchReplayCursor(
+  runId: string,
+  branchId: string,
+  groupId: string,
+  rallyIndex: number
+): Promise<AuthoritativeMatchReplayCursor> {
+  const data = await request<AuthoritativeMatchReplayCursor>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replay/cursor?group_id=' +
+      encodeURIComponent(groupId) +
+      '&rally_index=' +
+      encodeURIComponent(String(rallyIndex))
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_replay_cursor.v1' ||
+    data.group_id !== groupId ||
+    data.rally_index !== rallyIndex
+  ) {
+    throw new Error('Authoritative replay cursor response is invalid.')
   }
   return data
 }

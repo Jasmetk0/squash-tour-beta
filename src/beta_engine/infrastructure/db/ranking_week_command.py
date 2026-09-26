@@ -31,6 +31,7 @@ from beta_engine.infrastructure.db.ranking_result_history import (
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
+from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.infrastructure.db.models import RunBranchModel, RunContainerModel
 from beta_engine.infrastructure.db.models import BranchWorkingDraftModel
@@ -266,6 +267,17 @@ def stage_ranking_week_command(
                     edition_id=binding.edition_id,
                 )
                 if frozen is None:
+                    package_state = get_run_package_state(
+                        session,
+                        run_id=context.run_id,
+                        branch_id=context.branch_id,
+                    )
+                    if package_state is not None and package_state.package_versions:
+                        raise ValueError(
+                            "Package-backed ranking transition requires an owned "
+                            "canonical tournament source; legacy result/award adoption "
+                            "is forbidden"
+                        )
                     if awards is None:
                         raise ValueError(
                             "Legacy tournament adoption requires an award service"

@@ -1,5 +1,33 @@
 # Current implementation and next action
 
+## Active implementation — canonical result/ranking source fence
+
+After #984, Package-backed Runs no longer fall back to legacy Calendar/Match sources.
+This branch closes the remaining result/template adoption route:
+
+- Package-backed tournament close must have canonical Draw binding and can never enter
+  the legacy result/award builder branch;
+- if an already-owned tournament source exists in a Package-backed Run, it must carry
+  canonical Run-owned result + point-award authority;
+- ranking staging may no longer adopt a missing tournament source from live
+  `result_service` / point-award files when the Run has Package state;
+- Package-backed ranking therefore requires a previously frozen
+  `OwnedTournamentRankingSource` backed by canonical tournament authorities;
+- the Master §31.3 acceptance poisons live legacy result/template service references,
+  clears Draw/Result/Point-Award registries and points config after canonical Draw
+  preparation, then still completes the whole Season-0 release gate.
+
+This makes the canonical chain explicit:
+**Run-owned Calendar + Draw → canonical Tournament Result → canonical Point Awards →
+Owned Tournament Ranking Source → Official Ranking Transition**.
+
+Historical Runs with no Package state retain the old compatibility adoption path.
+
+**Next after this PR:** audit remaining authoritative dependencies on legacy Entry/
+wild-card/pre-draw registries and collapse those into canonical Run-owned authorities
+where product semantics are already explicit.
+
+
 ## Active implementation — Package authority fence for authoritative simulation
 
 Package-backed Runs now use a strict ownership boundary instead of a preference order.

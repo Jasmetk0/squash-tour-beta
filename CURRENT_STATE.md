@@ -1,33 +1,34 @@
 # Current implementation and next action
 
-## Active implementation — reversible live-match completion staging
+## Active implementation — authoritative read-only Match Replay
 
-Live forward simulation now has an explicit working-completion boundary before any
-authoritative promotion.
+Canonical completed matches now expose Replay directly from the immutable
+`SimulationEventGroupModel` payload.
 
-- the final live rally stores a `completed_working` Match Result instead of immediately
-  creating `SimulationEventGroupModel`;
-- while `completed_working`, canonical Simulation Position does not advance, sporting
-  effects do not apply, slot terminal state does not change and tournament progression
-  does not close;
-- the only valid decisions from that state are **Confirm** or **Restore Return Point**;
-- **Confirm completed match** CAS-checks the exact reviewed final-result fingerprint and
-  atomically performs the existing authoritative group/effects/checkpoint promotion plus
-  normal tournament close/progression;
-- exact confirm retries are idempotent;
-- restoring from `completed_working` archives the displaced final Match Result as a
-  completed temporary alternative, clears it from the active working match and restores
-  the selected pre-range working snapshot without rerunning RNG;
-- active-state alternatives and completed-result alternatives coexist in the temporary
-  live-match timeline;
-- one-shot authoritative `Simulate Next Match` remains unchanged.
+- Replay parses the stored authoritative `MatchResult` and validates its rally log/hash
+  chain through the normal domain model; it never rebuilds the match from current
+  simulation code.
+- Branch history exposes a read-only list of recent completed matches with replay
+  availability, result fingerprint, rally count and `match_log_hash`.
+- one cursor endpoint projects exactly one stored `Rally Event` and navigation metadata.
+- `First rally`, `Step Back`, `Step Forward` and `Last rally` change only the
+  replay cursor; there is no simulation command, RNG call, working-state mutation,
+  sporting effect or ledger mutation.
+- Admin Replay survives page reload because selection comes from persisted completed
+  Branch history rather than transient live-match state.
+- replay responses explicitly report `replay_source=stored_authoritative_events`,
+  `rng_rerun=false`, `read_only=true` and `verified=true`.
+- PR-critical acceptance proves navigation leaves authoritative groups and command
+  receipts unchanged and that the final replay rally hash equals the stored
+  `match_log_hash`.
 
-This completes the missing safety boundary required for Master §17.1: a fully simulated
-temporary match outcome can now be reviewed, abandoned in favor of a return point, or
-explicitly accepted before it becomes authoritative history.
+This implements the decided Master/PAQ replay invariant on the canonical Run/Branch
+simulation path while reusing the existing replay UX language from the legacy Admin
+surface.
 
-**Next after this PR:** add read-only completed Match Replay / Step Back / Step Forward
-from stored snapshots/events, keeping replay strictly observational and RNG-free.
+**Next after this PR:** extend Replay from rally cursor navigation into richer stored
+timeline/time-event inspection and then continue the next pre-alpha match-viewer slice,
+still without introducing any replay-time simulation.
 
 ## Active implementation — canonical Tournament Preparation State
 

@@ -195,6 +195,15 @@ def test_preparation_state_tracks_pre_draw_repair_to_draw_ready(factory):
     assert before.ready_for_match_schedule is False
     assert before.authority_source == "run_owned_db_authorities.v1"
 
+    blocked_rollup = preparation.inspect_many(
+        run_id="run",
+        branch_id="branch",
+        event_ids=("event",),
+    )
+    assert blocked_rollup.ready_for_week_schedule is False
+    assert blocked_rollup.blockers == ("event:draw_input_ready",)
+    blocked_fingerprint = blocked_rollup.preparation_fingerprint
+
     repaired = CanonicalPreDrawWithdrawalService(factory).execute(
         CanonicalPreDrawWithdrawalCommand(
             command_id="prep-withdraw-d",
@@ -247,6 +256,16 @@ def test_preparation_state_tracks_pre_draw_repair_to_draw_ready(factory):
     assert ready.effective_draw_fingerprint == draw.fingerprint
     assert ready.ready_for_match_schedule is True
     assert ready.blockers == ()
+
+    ready_rollup = preparation.inspect_many(
+        run_id="run",
+        branch_id="branch",
+        event_ids=("event",),
+    )
+    assert ready_rollup.ready_for_week_schedule is True
+    assert ready_rollup.blockers == ()
+    assert ready_rollup.preparation_fingerprint != blocked_fingerprint
+    assert ready_rollup.tournaments == (ready,)
 
 
 def test_main_withdrawal_promotes_q_and_backfills_from_frozen_inputs(factory):

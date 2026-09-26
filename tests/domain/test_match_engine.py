@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from statistics import mean
 
+import pytest
+
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
     MatchContext,
     MatchEngine,
     MatchParticipantContext,
+    MatchRallyWorkingState,
     MatchTerminationReason,
+    MatchWorkingInput,
     RetirementRule,
 )
 from beta_engine.domain.players import HiddenCareerTraits, Player
@@ -66,6 +70,83 @@ def test_match_engine_replay_same_seed_same_inputs_same_result() -> None:
     result_b = MatchEngine(rng=DeterministicRng(777)).simulate(context)
 
     assert result_a.model_dump() == result_b.model_dump()
+
+
+@pytest.mark.pr_critical
+def test_resumable_next_rally_is_byte_equivalent_to_full_match() -> None:
+    a = _player(player_id="STEP-A", base=86, style="attacking", archetype="explosive shotmaker")
+    b = _player(player_id="STEP-B", base=83, style="retrieving", archetype="durable grinder")
+    context = _context("resumable-equivalence", a, b)
+    seed = 918273
+
+    expected = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+
+    engine = MatchEngine(rng=DeterministicRng(seed))
+    working_input, state = engine.start_working_match(context)
+    emitted = []
+    final = None
+    guard = 0
+    while final is None:
+        # Force every boundary through JSON so this test proves the state can be
+        # persisted/reopened instead of relying on in-memory Python identity.
+        working_input = MatchWorkingInput.model_validate_json(
+            working_input.model_dump_json()
+        )
+        state = MatchRallyWorkingState.model_validate_json(state.model_dump_json())
+        outcome = MatchEngine(rng=DeterministicRng(seed)).simulate_next_rally(
+            working_input, state
+        )
+        if outcome.rally is not None:
+            emitted.append(outcome.rally)
+        final = outcome.final_result
+        if outcome.state is not None:
+            state = outcome.state
+        guard += 1
+        assert guard < 1000
+
+    assert final is not None
+    assert [event.model_dump() for event in emitted] == [
+        event.model_dump() for event in expected.rally_log.events
+    ]
+    assert final.model_dump() == expected.model_dump()
+
+
+@pytest.mark.pr_critical
+def test_resumable_next_rally_preserves_probabilistic_set_start_retirement() -> None:
+    a = _player(player_id="RET-STEP-A", base=84)
+    b = _player(player_id="RET-STEP-B", base=83)
+    context = MatchContext(
+        match_id="resumable-probabilistic-retirement",
+        player_a=MatchParticipantContext(player=a),
+        player_b=MatchParticipantContext(player=b),
+        retirement_rule=RetirementRule(
+            enabled=True,
+            retired_player_id=a.player_id,
+            trigger="PROBABILISTIC_SET_START",
+            probability=0.35,
+        ),
+    )
+    seed = 314159
+
+    expected = MatchEngine(rng=DeterministicRng(seed)).simulate(context)
+    engine = MatchEngine(rng=DeterministicRng(seed))
+    working_input, state = engine.start_working_match(context)
+    final = None
+    guard = 0
+    while final is None:
+        outcome = MatchEngine(rng=DeterministicRng(seed)).simulate_next_rally(
+            working_input, state
+        )
+        final = outcome.final_result
+        if outcome.state is not None:
+            state = MatchRallyWorkingState.model_validate_json(
+                outcome.state.model_dump_json()
+            )
+        guard += 1
+        assert guard < 1000
+
+    assert final is not None
+    assert final.model_dump() == expected.model_dump()
 
 
 def test_identity_config_vocabularies_are_all_reachable_by_matchup_tables() -> None:

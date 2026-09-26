@@ -1,5 +1,22 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — strict Package ownership
+
+1. Treat canonical Package state as an ownership mode, not merely a preferred source.
+2. For Package-backed Runs, resolve season Calendar only from the matching Run-owned
+   Calendar Package; missing package content is a preparation blocker.
+3. Stop scanning the global MatchPackage registry for Package-backed tournament
+   discovery; require canonical Draw + Calendar topology.
+4. Freeze canonical tournament point distribution from the Run-owned Calendar Event
+   snapshot and reject missing authored stages.
+5. Preserve the old Calendar/Match compatibility route only for historical Runs that
+   have no Package state at all.
+6. Prove the main Official Run season still completes after deleting the live legacy
+   Calendar registry.
+7. Next audit: legacy result/template compatibility builders and remaining global
+   config reads reachable from authoritative simulation.
+
+
 ## Active pre-alpha sequence — remove authoritative player-file ownership
 
 1. Generalize the Run-owned Entry roster from Season 0 to every RankingWeek.

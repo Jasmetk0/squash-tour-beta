@@ -819,7 +819,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert (
             preparation_ready["effective_draw_fingerprint"]
-            == draw_authority["fingerprint"]
+            == generated_draw["draw_authority_fingerprint"]
         )
 
         # Destroy the live legacy Calendar source after the Run-owned Calendar and

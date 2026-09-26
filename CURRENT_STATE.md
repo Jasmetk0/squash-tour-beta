@@ -1,22 +1,24 @@
 # Current implementation and next action
 
-## Active implementation — remove legacy Season Range Run backend
+## Active implementation — retire legacy one-week execution UI
 
-The legacy multi-week mutating execution path is now removed end-to-end.
+The remaining season-level mutating legacy command is now removed from the supported
+Admin UI while its diagnostic companions stay available.
 
-- `POST /admin/seasons/range-run` is deleted from the Admin Seasons router;
-- `SeasonRangeExecutionService` and its dependency wiring are deleted;
-- legacy range-run web client methods and TypeScript result/request contracts are
-  removed;
-- range-run application/API tests are removed with the retired implementation;
-- read-only `Season Range Preflight` remains available for historical diagnostics;
-- one-week legacy execution remains isolated for now and is not canonical-run eligible;
-- Official Run progression continues exclusively through Product Runs / Run/Branch
-  Authoritative Simulation.
+- `AdminSeasonsPage` no longer imports or invokes `runSeasonWeek`;
+- `Legacy Run One Season Week`, its unsafe-run toggle, mutation state and execution
+  report panels are removed from the page;
+- read-only legacy Week Preflight and Week Run Recovery / Diagnostics remain available;
+- backend `POST /admin/weeks/run` remains temporarily isolated because recovery,
+  readiness and compatibility tests still use it to construct historical artifact
+  states;
+- Official Run progression remains exclusively in Product Runs / Run/Branch
+  Authoritative Simulation;
+- this is a TECH cleanup consistent with Master §31.3, not a new PRODUCT decision.
 
-**Next after this PR:** audit the remaining one-week legacy execution and one-event
-mutation surfaces, separating diagnostics worth retaining from mutation paths that can
-be retired next.
+**Next after this PR:** audit direct production callers of legacy one-event mutation and
+the remaining `/admin/weeks/run` backend; retire only the next path whose compatibility
+role can be replaced without weakening read-only diagnostics.
 
 
 ## Active implementation — canonical Tournament Preparation State

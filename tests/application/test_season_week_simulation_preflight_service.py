@@ -115,5 +115,7 @@ def test_determinism_and_registry_not_mutated(tmp_path: Path) -> None:
     second = service.preflight_week(season="2000/2001", season_week=service.lifecycle_service.get_event_lifecycle(event_id=event_id).event.season_week, request=SimulateSeasonWeekPreflightRequest(seed=42))
     after = json.loads((tmp_path / "calendars.json").read_text())
     assert first.metadata.generated_fingerprint == second.metadata.generated_fingerprint
+    assert first.metadata.authority_scope == "legacy_global_season_tooling.v1"
+    assert first.metadata.canonical_run_readiness_eligible is False
     assert before == after
     assert service.event_simulation_service.entry_list_service.get_entry_list(event_id=event_id).entry_list_exists is False

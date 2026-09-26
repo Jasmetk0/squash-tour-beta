@@ -137,6 +137,8 @@ import type {
   AdoptAuthoritativeWeekScheduleProposalPayload,
   AuthoritativeWeekScheduleAdoptionResult,
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeNextRallyPayload,
+  AuthoritativeNextRallyResult,
   AuthoritativeMatchDayPreview,
   AuthoritativeMatchDayCommandPayload,
   AuthoritativeMatchDayResult,
@@ -1564,6 +1566,23 @@ export async function commitAuthoritativeMatchReconstruction(
   )
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  return data
+}
+
+export async function simulateAuthoritativeNextRally(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeNextRallyPayload
+): Promise<AuthoritativeNextRallyResult> {
+  const data = await request<AuthoritativeNextRallyResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-next-rally',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (data.schema_version !== 'authoritative_next_rally_result.v1') {
+    throw new Error('Authoritative Next Rally response is invalid.')
+  }
   return data
 }
 

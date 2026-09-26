@@ -1,38 +1,44 @@
 # Current implementation and next action
 
-## Active implementation — persisted resumable live-match authority
+## Active implementation — authoritative true Simulate Next Rally
 
-The true Next-Rally kernel now has a durable SQLite boundary under canonical
-Run/Branch/Week/Slot/Group ownership.
+The persisted rally state is now integrated into the canonical Simulation Slot ledger.
 
-- `LiveMatchWorkingModel` stores the immutable `MatchWorkingInput` plus exactly the
-  current `MatchRallyWorkingState`; no future rallies are persisted or precomputed;
-- `PersistedLiveMatchStore.start_from_engine_input(...)` freezes/reopens the same
-  effective MatchInputSnapshot used by authoritative Simulation Slot execution;
-- every persisted state carries and revalidates both working-input and working-state
-  fingerprints before simulation may continue;
-- `simulate_next_rally(...)` advances at most one real rally through the PR #997
-  `MatchEngine.simulate_next_rally` primitive;
-- each mutation requires an expected state fingerprint, so stale clients fail closed;
-- `LiveMatchRallyCommandModel` records command-id + request fingerprint + response,
-  making exact network retry idempotent while conflicting command-id reuse is rejected;
-- completion replaces resumable state with the final immutable MatchResult and its
-  fingerprint.
+- `AuthoritativeNextRallyCommand` targets one eligible current-slot group under the
+  same Run/Branch/Week/Branch-head/position CAS boundary as other simulation commands;
+- the first Next-Rally call freezes the exact same authoritative player projections,
+  MatchInputSnapshot, deterministic seed, projection policy and effects policy as the
+  normal full-match execution path;
+- `AuthoritativeLiveMatchService` stores that protected `AuthoritativeMatchInput`
+  separately from the dynamic resumable match state, so later profile/config changes
+  cannot rewrite an in-progress match;
+- every call executes exactly one PR #997 rally transition through the PR #998 durable
+  state store; no hidden future match is simulated;
+- stale live-state fingerprints fail closed;
+- outer authoritative command receipts make a lost-response retry idempotent even when
+  the retried command was the final rally and the ordinary Simulation Position has
+  already advanced;
+- before the final rally there is no `SimulationEventGroupModel`, no sporting effect
+  and no terminal checkpoint mutation;
+- on the final rally, the exact existing authoritative group payload shape is created,
+  effects are calculated from the frozen input/result, and the slot terminal checkpoint
+  is rebuilt in the same transaction.
 
-PR-critical coverage closes and reopens the database between every rally, then proves
-the persisted path produces the same full MatchResult and exact RallyEvent sequence as
-normal full-match simulation. Separate coverage proves exact-command retry, stale-state
-rejection and frozen-input identity conflict behavior.
+PR-critical acceptance compares a live rally-by-rally authoritative match with the
+existing one-shot `Simulate Next Match` path and requires identical execution-command
+fingerprint, protected input fingerprint, result fingerprint and complete group payload.
+A separate stale-state test proves rejected commands do not advance persisted state.
 
-This PR deliberately stops at the persistence authority seam: the existing completed
-`SimulationEventGroupModel` remains unchanged, so partial matches cannot accidentally
-look complete to downstream tournament/effects/ranking code.
+HTTP/Admin UI is now wired end to end:
+- `POST /admin/runs/{run}/branches/{branch}/authoritative-simulation/simulate-next-rally`;
+- the canonical Authoritative Simulation panel exposes **Simulate authoritative Next Rally**;
+- the panel carries the returned live state fingerprint into the next command and shows
+  current set/game/rally cursor plus whether the authoritative group has committed;
+- UI copy explicitly states that future rallies do not yet exist while the match is live.
 
-**Next after this PR:** bind this store to `AuthoritativeSlotMatchExecutor` pre-match
-projection and expose the real Admin `Simulate Next Rally` command. When the final
-rally completes, atomically promote the final result through the existing group/effects/
-terminal-checkpoint commit path. Only then build `Simulate Game` and
-`Simulate Rest of Match` as loops over the same persisted primitive.
+**Next after this PR:** implement `Simulate Game` and `Simulate Rest of Match`
+strictly as repeated execution of this same persisted command primitive; do not create
+a second sporting simulation path.
 
 ## Active implementation — canonical Tournament Preparation State
 

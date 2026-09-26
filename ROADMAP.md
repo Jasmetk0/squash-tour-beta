@@ -3,19 +3,18 @@
 ## Active pre-alpha sequence — resumable live match simulation
 
 1. ✅ Freeze one immutable `MatchWorkingInput` before Rally 1.
-2. ✅ Implement deterministic `simulate_next_rally` with no hidden future simulation.
-3. ✅ Prove JSON reopen equivalence to the existing full-match path.
-4. ✅ Persist immutable input + current working state under
-   Run/Branch/Week/Slot/Group ownership.
-5. ✅ Add expected-state CAS plus idempotent per-rally command receipts and prove
-   database-close/reopen equivalence.
-6. Next: bind start/step to `AuthoritativeSlotMatchExecutor` and expose Admin
-   `Simulate Next Rally`; final rally must atomically enter the existing
-   result/effects/terminal-checkpoint commit path.
-7. Then implement `Simulate Game` and `Simulate Rest of Match` only as repeated
-   execution of the same persisted next-rally primitive.
-8. Keep completed-match `Step Back / Step Forward` Replay read-only and separate from
-   live forward simulation.
+2. ✅ Implement deterministic true `simulate_next_rally` with no hidden continuation.
+3. ✅ Persist current state and prove database reopen equivalence.
+4. ✅ Add expected-state CAS and idempotent per-rally persistence receipts.
+5. ✅ Bind the live state to canonical Run/Branch/Week/Slot/Group authoritative input.
+6. ✅ Expose authoritative Admin HTTP `Simulate Next Rally`.
+7. ✅ On the final rally atomically create the existing authoritative group/effects/
+   terminal-checkpoint payload, byte-equivalent to normal one-shot match execution.
+8. ✅ Add the live-match read/control surface to the canonical Admin Simulation UI.
+9. Next: implement `Simulate Game` and `Simulate Rest of Match` only as loops over
+   the same persisted next-rally primitive.
+10. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
+    from live forward simulation.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

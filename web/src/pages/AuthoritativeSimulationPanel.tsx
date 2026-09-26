@@ -21,6 +21,7 @@ import {
   proposeAuthoritativeWeekSchedule,
   previewAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
+  simulateAuthoritativeNextRally,
   simulateAuthoritativeNextMatch,
   simulateAuthoritativeNextSlot,
   previewAuthoritativeNextMatchDay,
@@ -51,6 +52,7 @@ import {
 } from '../api/client'
 import type {
   AuthoritativeSimulationCommandPayload,
+  AuthoritativeNextRallyResult,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
@@ -220,6 +222,9 @@ export function AuthoritativeSimulationPanel({
     schedule: AuthoritativeWeekSchedule
     preview: AuthoritativeWeekScheduleManualPreview
   } | null>(null)
+  const [nextRallyCommandId, setNextRallyCommandId] = useState(newCommandId)
+  const [liveRallyStateFingerprint, setLiveRallyStateFingerprint] = useState<string | null>(null)
+  const [liveRallyResult, setLiveRallyResult] = useState<AuthoritativeNextRallyResult | null>(null)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
   const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
@@ -545,7 +550,11 @@ export function AuthoritativeSimulationPanel({
 
   useEffect(() => {
     const eligible = positionQuery.data?.eligible_match_ids ?? []
-    if (!eligible.includes(selectedGroupId)) setSelectedGroupId(eligible[0] ?? '')
+    if (!eligible.includes(selectedGroupId)) {
+      setSelectedGroupId(eligible[0] ?? '')
+      setLiveRallyStateFingerprint(null)
+      setLiveRallyResult(null)
+    }
   }, [positionQuery.data, selectedGroupId])
 
   useEffect(() => {
@@ -769,6 +778,42 @@ export function AuthoritativeSimulationPanel({
       selections
     }
   }
+
+  const nextRallyMutation = useMutation({
+    mutationFn: () => {
+      const position = positionQuery.data
+      if (!position || !savedRevisionId || !selectedGroupId) {
+        throw new Error('Select one currently eligible match group.')
+      }
+      return simulateAuthoritativeNextRally(runId, branchId, {
+        command_id: nextRallyCommandId,
+        expected_week: position.current_week,
+        expected_position_fingerprint: position.position_fingerprint,
+        expected_revision_id: savedRevisionId,
+        group_id: selectedGroupId,
+        expected_live_state_fingerprint: liveRallyStateFingerprint
+      })
+    },
+    onSuccess: async (result) => {
+      setLiveRallyResult(result)
+      setLiveRallyStateFingerprint(result.state_fingerprint)
+      setNextRallyCommandId(newCommandId())
+      queryClient.setQueryData(
+        ['authoritative-simulation-position', runId, branchId],
+        result.position
+      )
+      if (result.status === 'complete') {
+        setLiveRallyStateFingerprint(null)
+      }
+      await refreshCanonicalSimulation()
+    },
+    onError: async (error) => {
+      if ((error as { status?: number }).status === 409) {
+        setLiveRallyResult(null)
+        await refreshCanonicalSimulation()
+      }
+    }
+  })
 
   const nextMatchMutation = useMutation({
     mutationFn: () => {
@@ -1741,6 +1786,7 @@ export function AuthoritativeSimulationPanel({
     rankingAuthorityMissing
   )
   const actionPending =
+    nextRallyMutation.isPending ||
     nextMatchMutation.isPending ||
     nextSlotMutation.isPending ||
     nextMatchDayPreviewMutation.isPending ||
@@ -2917,6 +2963,13 @@ export function AuthoritativeSimulationPanel({
           <div className="quick-actions">
             <button
               type="button"
+              onClick={() => nextRallyMutation.mutate()}
+              disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
+            >
+              Simulate authoritative Next Rally
+            </button>
+            <button
+              type="button"
               onClick={() => nextMatchMutation.mutate()}
               disabled={currentEntrySlot || !confirmed || !selectedGroupId || actionPending}
             >
@@ -3006,6 +3059,39 @@ export function AuthoritativeSimulationPanel({
               Review authoritative Full Simulation
             </button>
           </div>
+          {liveRallyResult ? (
+            <>
+              <h5>Live authoritative match</h5>
+              <MetadataList
+                items={[
+                  { label: 'Match', value: liveRallyResult.match_id },
+                  { label: 'Status', value: liveRallyResult.status },
+                  { label: 'Set', value: liveRallyResult.set_number ?? 'complete' },
+                  {
+                    label: 'Current game',
+                    value:
+                      liveRallyResult.games_a == null || liveRallyResult.games_b == null
+                        ? 'complete'
+                        : `${liveRallyResult.games_a}–${liveRallyResult.games_b}`
+                  },
+                  { label: 'Next rally index', value: liveRallyResult.rally_index ?? '—' },
+                  {
+                    label: 'Authoritative group committed',
+                    value: liveRallyResult.authoritative_group_committed ? 'yes' : 'no'
+                  }
+                ]}
+              />
+              {liveRallyResult.status === 'active' ? (
+                <p className="status">
+                  Only the displayed rally has been simulated. The future continuation does not exist yet.
+                </p>
+              ) : (
+                <p className="status">
+                  Match complete. Final result, sporting effects and terminal checkpoint are now authoritative.
+                </p>
+              )}
+            </>
+          ) : null}
           {nextMatchDayReview ? (
             <>
               <h5>Reviewed canonical Match Day {nextMatchDayReview.match_day_ordinal}</h5>

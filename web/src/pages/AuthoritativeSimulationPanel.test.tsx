@@ -25,6 +25,7 @@ const api = vi.hoisted(() => ({
   previewAuthoritativeWeekSchedule: vi.fn(),
   adoptAuthoritativeWeekSchedule: vi.fn(),
   adoptAuthoritativeWeekScheduleProposal: vi.fn(),
+  simulateAuthoritativeNextRally: vi.fn(),
   simulateAuthoritativeNextMatch: vi.fn(),
   simulateAuthoritativeNextSlot: vi.fn(),
   previewAuthoritativeNextMatchDay: vi.fn(),
@@ -1417,6 +1418,66 @@ describe('AuthoritativeSimulationPanel', () => {
         })
       )
     )
+  })
+
+  it('advances exactly one live rally and keeps the resumable state fingerprint in Admin', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.simulateAuthoritativeNextRally.mockResolvedValue({
+      schema_version: 'authoritative_next_rally_result.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      week,
+      slot_id: 'slot-1',
+      group_id: 'g1',
+      match_id: 'g1',
+      status: 'active',
+      working_input_fingerprint: '1'.repeat(64),
+      state_fingerprint: '2'.repeat(64),
+      rally_index: 2,
+      set_number: 1,
+      games_a: 1,
+      games_b: 0,
+      final_result_fingerprint: null,
+      final_result: null,
+      idempotent_replay: false,
+      rally: { rally_index: 1 },
+      authoritative_group_committed: false,
+      position
+    })
+    renderPanel()
+
+    await screen.findByLabelText('Eligible authoritative match group')
+    await userEvent.click(screen.getByLabelText('Confirm authoritative simulation'))
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Simulate authoritative Next Rally' })
+    )
+
+    await waitFor(() =>
+      expect(api.simulateAuthoritativeNextRally).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        expect.objectContaining({
+          command_id: expect.any(String),
+          expected_week: week,
+          expected_position_fingerprint: 'a'.repeat(64),
+          expected_revision_id: 'revision-7',
+          group_id: 'g1',
+          expected_live_state_fingerprint: null
+        })
+      )
+    )
+    expect(await screen.findByText('Live authoritative match')).toBeInTheDocument()
+    expect(screen.getByText('Only the displayed rally has been simulated. The future continuation does not exist yet.')).toBeInTheDocument()
   })
 
   it('simulates one explicitly reviewed eligible match against exact canonical position and Saved Revision head', async () => {

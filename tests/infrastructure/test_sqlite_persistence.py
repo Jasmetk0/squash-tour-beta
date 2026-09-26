@@ -76,6 +76,7 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
     assert set(repository.list_table_names()) == set(Base.metadata.tables)
     assert {
         "adopted_tournament_authorities",
+        "authoritative_live_matches",
         "authoritative_simulation_commands",
         "authoritative_week_transition_receipts",
         "authoritative_world_states",

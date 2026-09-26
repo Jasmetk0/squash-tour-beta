@@ -528,6 +528,22 @@ class SimulationEventGroupModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class AuthoritativeLiveMatchModel(Base):
+    """Frozen Simulation Slot authority for one resumable competitive match."""
+
+    __tablename__ = "authoritative_live_matches"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authoritative_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authoritative_input_json: Mapped[str] = mapped_column(Text, nullable=False)
+    execution_command_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    effects_policy_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class LiveMatchWorkingModel(Base):
     """Durable current state for one in-progress authoritative competitive match."""
 

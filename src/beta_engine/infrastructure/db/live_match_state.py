@@ -532,7 +532,7 @@ class PersistedLiveMatchStore:
             response["idempotent_replay"] = True
             return response
 
-        if row.status == "complete":
+        if row.status in {"completed_working", "complete"}:
             raise ValueError("live match is already complete")
         if row.state_fingerprint != expected_state_fingerprint:
             raise ValueError("live match state changed; retry against the current state")
@@ -553,7 +553,7 @@ class PersistedLiveMatchStore:
         if outcome.final_result is not None:
             final_result = outcome.final_result
             final_result_json = final_result.model_dump_json()
-            row.status = "complete"
+            row.status = "completed_working"
             row.working_state_json = None
             row.state_fingerprint = None
             row.final_result_json = final_result_json

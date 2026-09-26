@@ -642,8 +642,8 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
 
-      <SectionCard title="Season Simulation Readiness">
-        <p className="status"><StatusBadge label="READ-ONLY" /> Season readiness is read-only. It aggregates week recovery reports and does not run events, apply points, or publish snapshots.</p>
+      <SectionCard title="Legacy Season Simulation Readiness">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Season readiness is global legacy season tooling. It aggregates week recovery reports and is never canonical Run/Branch readiness.</p>
         <div className="grid">
           <label>Readiness season<input value={readinessSeason} onChange={(event) => setReadinessSeason(event.target.value)} placeholder="2000/2001" /></label>
           <label>Readiness event ID filter<input value={readinessEventFilter} onChange={(event) => setReadinessEventFilter(event.target.value)} placeholder="event_id,event_id" /></label>
@@ -658,8 +658,8 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
 
-      <SectionCard title="Season Range Preflight">
-        <p className="status"><StatusBadge label="READ-ONLY" /> Range preflight is read-only. It plans a future range run but does not run weeks, apply points, or publish snapshots.</p>
+      <SectionCard title="Legacy Season Range Preflight">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Range preflight is global legacy season tooling. It must not decide canonical Run/Branch readiness or Week Schedule navigation.</p>
         <div className="form-grid">
           <label>Range season<input value={rangePreflightSeason} onChange={(event) => setRangePreflightSeason(event.target.value)} placeholder="2000/2001" /></label>
           <label>Start week<input type="number" min={1} max={61} value={rangePreflightStartWeek} onChange={(event) => setRangePreflightStartWeek(Number(event.target.value))} /></label>
@@ -766,8 +766,8 @@ export function AdminSeasonsPage(): JSX.Element {
 
 
 
-      <SectionCard title="Simulate One Season Week — Preflight">
-        <p className="status">This is preflight only. It calls one-event dry-run planning for each event and does not mutate entries, draws, matches, points, or snapshots.</p>
+      <SectionCard title="Legacy Simulate One Season Week — Preflight">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> This global season preflight calls legacy one-event dry-run planning. It is diagnostic tooling only and must not be used as canonical Run/Branch readiness.</p>
         <div className="grid">
           <label>Season<input value={weekPreflightSeason} onChange={(event) => setWeekPreflightSeason(event.target.value)} /></label>
           <label>Season week<input type="number" min={1} max={61} value={weekPreflightWeek} onChange={(event) => setWeekPreflightWeek(Number(event.target.value))} /></label>

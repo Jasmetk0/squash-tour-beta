@@ -4506,6 +4506,8 @@ export type SeasonWeekPreflightMetadata = {
   calendar_fingerprint: string | null
   generated_fingerprint: string
   read_only: boolean
+  authority_scope: 'legacy_global_season_tooling.v1'
+  canonical_run_readiness_eligible: false
 }
 
 export type SimulateSeasonWeekPreflightResult = {
@@ -6115,6 +6117,8 @@ export type SeasonReadinessMetadata = {
   source: 'season_week_recovery_aggregation'
   generated_fingerprint: string
   read_only: boolean
+  authority_scope: 'legacy_global_season_tooling.v1'
+  canonical_run_readiness_eligible: false
 }
 
 export type SeasonReadinessResult = {
@@ -6196,6 +6200,8 @@ export type SeasonRangePreflightMetadata = {
   season_readiness_fingerprint: string | null
   generated_fingerprint: string
   read_only: boolean
+  authority_scope: 'legacy_global_season_tooling.v1'
+  canonical_run_readiness_eligible: false
 }
 
 export type SeasonRangePreflightResult = {

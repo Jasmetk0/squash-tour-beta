@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_calendar_service import SeasonCalendarRegistry, SeasonCalendarService
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, EntryListValidationIssue
 from beta_engine.application.season_range_preflight_service import SeasonRangePreflightRequest, SeasonRangePreflightService
@@ -130,6 +132,7 @@ def test_determinism_same_persisted_state_same_generated_fingerprint(tmp_path: P
     assert first.metadata.generated_fingerprint == second.metadata.generated_fingerprint
 
 
+@pytest.mark.pr_critical
 def test_read_only_does_not_change_registries(tmp_path: Path) -> None:
     execution, _, _ = make_execution_service(tmp_path)
     service = _service_from_execution(execution)
@@ -138,4 +141,6 @@ def test_read_only_does_not_change_registries(tmp_path: Path) -> None:
     result = service.preflight_range(SeasonRangePreflightRequest(season="2000/2001", start_week=1, end_week=10))
     after = {path.name: path.read_text(encoding="utf-8") if path.exists() else None for path in paths}
     assert result.metadata.read_only is True
+    assert result.metadata.authority_scope == "legacy_global_season_tooling.v1"
+    assert result.metadata.canonical_run_readiness_eligible is False
     assert before == after

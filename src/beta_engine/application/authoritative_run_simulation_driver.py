@@ -8293,6 +8293,12 @@ class AuthoritativeRunSimulationDriver:
             requirement_position = self._position(
                 session, run_id, branch_id, allow_missing_schedule=True
             )
+            preparation = self._canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                packages=packages,
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -8321,17 +8327,78 @@ class AuthoritativeRunSimulationDriver:
                 "schedule": schedule.canonical_payload() if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
+                "canonical_preparation": (
+                    preparation.model_dump(mode="json")
+                    if preparation is not None
+                    else None
+                ),
             }
 
+    def inspect_schedule_preflight(self, *, run_id: str, branch_id: str) -> dict:
+        """Read-only Admin readiness surface for Week Schedule proposal."""
+
+        inspection = self.inspect_schedule(run_id=run_id, branch_id=branch_id)
+        preparation = inspection["canonical_preparation"]
+        schedule_exists = inspection["schedule"] is not None
+        preparation_ready = (
+            preparation is None or preparation["ready_for_week_schedule"]
+        )
+        blockers = (
+            list(preparation["blockers"])
+            if preparation is not None
+            else []
+        )
+        if schedule_exists:
+            blockers.append("week_schedule_already_adopted")
+        if not inspection["event_ids"]:
+            blockers.append("week_has_no_tournament_events")
+
+        return {
+            "schema_version": "authoritative_week_schedule_preflight.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week": inspection["week"],
+            "event_ids": inspection["event_ids"],
+            "group_ids": inspection["group_ids"],
+            "schedule_required": inspection["required"],
+            "schedule_already_adopted": schedule_exists,
+            "canonical_preparation": preparation,
+            "canonical_preparation_ready": preparation_ready,
+            "blockers": blockers,
+            "can_propose_schedule": not blockers,
+            "expected_position_fingerprint": inspection[
+                "expected_position_fingerprint"
+            ],
+            "preflight_fingerprint": fingerprint(
+                {
+                    "schema_version": "authoritative_week_schedule_preflight.v1",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "week": inspection["week"],
+                    "event_ids": inspection["event_ids"],
+                    "group_ids": inspection["group_ids"],
+                    "schedule_required": inspection["required"],
+                    "schedule_already_adopted": schedule_exists,
+                    "canonical_preparation": preparation,
+                    "canonical_preparation_ready": preparation_ready,
+                    "blockers": blockers,
+                    "expected_position_fingerprint": inspection[
+                        "expected_position_fingerprint"
+                    ],
+                }
+            ),
+            "read_only": True,
+        }
+
     @staticmethod
-    def _require_canonical_schedule_preparation(
+    def _canonical_schedule_preparation(
         session: Session,
         *,
         run_id: str,
         branch_id: str,
         packages,
     ):
-        """Fail closed when canonical Draw-backed events are not preparation-ready."""
+        """Return canonical Draw-backed Week Schedule readiness without mutating."""
 
         draw_store = TournamentDrawAuthorityStore(session)
         canonical_event_ids = tuple(
@@ -8349,13 +8416,31 @@ class AuthoritativeRunSimulationDriver:
         if not canonical_event_ids:
             return None
 
-        preparation = CanonicalTournamentPreparationService.inspect_many_in_session(
+        return CanonicalTournamentPreparationService.inspect_many_in_session(
             session,
             run_id=run_id,
             branch_id=branch_id,
             event_ids=canonical_event_ids,
         )
-        if not preparation.ready_for_week_schedule:
+
+    @classmethod
+    def _require_canonical_schedule_preparation(
+        cls,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        packages,
+    ):
+        """Fail closed when canonical Draw-backed events are not preparation-ready."""
+
+        preparation = cls._canonical_schedule_preparation(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            packages=packages,
+        )
+        if preparation is not None and not preparation.ready_for_week_schedule:
             raise ValueError(
                 "Week Schedule requires canonical tournament preparation draw_ready: "
                 + ", ".join(preparation.blockers)
@@ -8633,10 +8718,27 @@ class AuthoritativeRunSimulationDriver:
                     branch_id=branch_id,
                 )
             )
-            return self._topological_schedule_proposal_payload(
+            payload = self._topological_schedule_proposal_payload(
                 schedule,
                 position_fingerprint=position_fingerprint,
             )
+            preparation = self._canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                packages=self._packages(
+                    schedule.week,
+                    session=session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                ),
+            )
+            payload["canonical_preparation"] = (
+                preparation.model_dump(mode="json")
+                if preparation is not None
+                else None
+            )
+            return payload
 
     def adopt_topological_schedule_proposal(
         self,

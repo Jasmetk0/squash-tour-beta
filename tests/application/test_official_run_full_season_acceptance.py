@@ -854,11 +854,42 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         matches._save_registry(match_registry)
         assert event_id not in matches._load_registry().matches_by_event_id
 
+        status, schedule_preflight = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_preflight
+        assert schedule_preflight["canonical_preparation_ready"] is True
+        assert schedule_preflight["can_propose_schedule"] is True
+        assert schedule_preflight["blockers"] == []
+        assert (
+            schedule_preflight["canonical_preparation"]["event_ids"]
+            == [event_id]
+        )
+        assert (
+            schedule_preflight["canonical_preparation"]["tournaments"][0]["phase"]
+            == "draw_ready"
+        )
+        assert (
+            schedule_preflight["canonical_preparation"]["tournaments"][0][
+                "effective_draw_fingerprint"
+            ]
+            == generated_draw["draw_authority_fingerprint"]
+        )
+        assert (
+            schedule_preflight["canonical_preparation"]["authority_source"]
+            == "run_owned_db_authorities.v1"
+        )
+        assert len(schedule_preflight["preflight_fingerprint"]) == 64
+
         status, proposed = _request(
             "GET",
             sim_root + "/week-schedule/proposal",
         )
         assert status == 200, proposed
+        assert proposed["canonical_preparation"] == schedule_preflight[
+            "canonical_preparation"
+        ]
         status, adopted_schedule = _request(
             "POST",
             sim_root + "/week-schedule/adopt-proposal",

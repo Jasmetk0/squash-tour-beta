@@ -249,6 +249,25 @@ class AuthoritativeNextRallyCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeLiveRangeCommand(FrozenInput):
+    """CAS-guarded live orchestration built only from persisted Next Rally children."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    expected_live_state_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class AuthoritativeMatchDayCommand(FrozenInput):
     """Resumable CAS-guarded orchestration of the current canonical Match Day."""
 
@@ -2903,6 +2922,199 @@ class AuthoritativeRunSimulationDriver:
             )
             session.flush()
             return payload
+
+    @staticmethod
+    def _live_range_child_command_id(
+        parent_command_id: str, *, mode: str, child_ordinal: int
+    ) -> str:
+        digest = hashlib.sha256(
+            f"{parent_command_id}|{mode}|rally|{child_ordinal}".encode()
+        ).hexdigest()[:24]
+        return f"{mode}-rally:{digest}"
+
+    def _simulate_live_range(
+        self,
+        command: AuthoritativeLiveRangeCommand,
+        *,
+        mode: Literal["game", "rest_of_match"],
+    ) -> dict:
+        request_fp = fingerprint(
+            {"mode": mode, "command": command.model_dump(mode="json")}
+        )
+        key = (command.run_id, command.branch_id, command.command_id)
+
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        f"{mode} command ID already has a different request"
+                    )
+                if receipt.status == "complete":
+                    replay = json.loads(receipt.result_json)
+                    replay["idempotent_replay"] = True
+                    return replay
+                if receipt.status != "pending":
+                    raise ValueError(f"{mode} command receipt has an invalid status")
+                frozen = json.loads(receipt.result_json)
+            else:
+                before = self._position(session, command.run_id, command.branch_id)
+                self._validate_expected(session, command, before)
+                from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+                from beta_engine.domain.matches import MatchRallyWorkingState
+
+                current = session.scalar(
+                    select(LiveMatchWorkingModel).where(
+                        LiveMatchWorkingModel.run_id == command.run_id,
+                        LiveMatchWorkingModel.branch_id == command.branch_id,
+                        LiveMatchWorkingModel.week_ordinal
+                        == command.expected_week.ordinal,
+                        LiveMatchWorkingModel.group_id == command.group_id,
+                    )
+                )
+                if current is not None and current.status == "active":
+                    if current.working_state_json is None:
+                        raise ValueError("active live match has no working state")
+                    initial_state = MatchRallyWorkingState.model_validate_json(
+                        current.working_state_json
+                    )
+                    start_set_number = initial_state.set_number
+                    start_state_fingerprint = current.state_fingerprint
+                elif current is not None and current.status == "complete":
+                    raise ValueError("live match is already complete")
+                else:
+                    start_set_number = 1
+                    start_state_fingerprint = None
+
+                if (
+                    command.expected_live_state_fingerprint is not None
+                    and start_state_fingerprint is not None
+                    and command.expected_live_state_fingerprint
+                    != start_state_fingerprint
+                ):
+                    raise ValueError("expected live range state is stale")
+
+                frozen = {
+                    "schema_version": "authoritative_live_range_operation.v1",
+                    "mode": mode,
+                    "run_id": command.run_id,
+                    "branch_id": command.branch_id,
+                    "week": command.expected_week.model_dump(mode="json"),
+                    "group_id": command.group_id,
+                    "start_set_number": start_set_number,
+                    "opening_position_fingerprint": before.position_fingerprint,
+                    "opening_live_state_fingerprint": (
+                        command.expected_live_state_fingerprint
+                        or start_state_fingerprint
+                    ),
+                }
+                session.add(
+                    AuthoritativeSimulationCommandModel(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        command_id=command.command_id,
+                        request_fingerprint=request_fp,
+                        status="pending",
+                        result_json=json.dumps(
+                            frozen, sort_keys=True, separators=(",", ":")
+                        ),
+                    )
+                )
+
+        start_set_number = int(frozen["start_set_number"])
+        expected_live_state = frozen.get("opening_live_state_fingerprint")
+        last = None
+        child_ids = []
+        for child_ordinal in range(1, 10001):
+            child_id = self._live_range_child_command_id(
+                command.command_id,
+                mode=mode,
+                child_ordinal=child_ordinal,
+            )
+            position = self.position(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
+            child = AuthoritativeNextRallyCommand(
+                command_id=child_id,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                expected_week=command.expected_week,
+                expected_position_fingerprint=position.position_fingerprint,
+                expected_revision_id=command.expected_revision_id,
+                group_id=command.group_id,
+                expected_live_state_fingerprint=expected_live_state,
+            )
+            last = self.simulate_next_rally(child)
+            child_ids.append(child_id)
+            expected_live_state = last["state_fingerprint"]
+
+            if last["status"] == "complete":
+                break
+            if mode == "game" and last["set_number"] != start_set_number:
+                break
+        else:
+            raise ValueError("live range exceeded the rally safety bound")
+
+        if last is None:
+            raise ValueError("live range produced no rally result")
+
+        payload = {
+            "schema_version": (
+                "authoritative_simulate_game_result.v1"
+                if mode == "game"
+                else "authoritative_simulate_rest_of_match_result.v1"
+            ),
+            "run_id": command.run_id,
+            "branch_id": command.branch_id,
+            "week": command.expected_week.model_dump(mode="json"),
+            "group_id": command.group_id,
+            "match_id": last["match_id"],
+            "start_set_number": start_set_number,
+            "rallies_simulated": len(child_ids),
+            "child_command_ids": child_ids,
+            "status": last["status"],
+            "state_fingerprint": last["state_fingerprint"],
+            "set_number": last["set_number"],
+            "games_a": last["games_a"],
+            "games_b": last["games_b"],
+            "authoritative_group_committed": last[
+                "authoritative_group_committed"
+            ],
+            "authoritative_result_fingerprint": last.get(
+                "authoritative_result_fingerprint"
+            ),
+            "final_result": last["final_result"],
+            "position": last["position"],
+            "idempotent_replay": False,
+        }
+        with self.factory.begin() as session:
+            session.execute(text("BEGIN IMMEDIATE"))
+            receipt = session.get(AuthoritativeSimulationCommandModel, key)
+            if (
+                receipt is None
+                or receipt.request_fingerprint != request_fp
+                or receipt.status != "pending"
+            ):
+                raise ValueError(f"{mode} parent receipt changed during orchestration")
+            receipt.status = "complete"
+            receipt.result_json = json.dumps(
+                payload, sort_keys=True, separators=(",", ":")
+            )
+            session.flush()
+        return payload
+
+    def simulate_game(self, command: AuthoritativeLiveRangeCommand) -> dict:
+        """Simulate only the remainder of the currently active squash game."""
+        return self._simulate_live_range(command, mode="game")
+
+    def simulate_rest_of_match(
+        self, command: AuthoritativeLiveRangeCommand
+    ) -> dict:
+        """Simulate the remainder of the match strictly as Next Rally children."""
+        return self._simulate_live_range(command, mode="rest_of_match")
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

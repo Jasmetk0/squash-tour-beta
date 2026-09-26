@@ -139,6 +139,8 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
+  AuthoritativeLiveRangePayload,
+  AuthoritativeLiveRangeResult,
   AuthoritativeMatchDayPreview,
   AuthoritativeMatchDayCommandPayload,
   AuthoritativeMatchDayResult,
@@ -1582,6 +1584,40 @@ export async function simulateAuthoritativeNextRally(
   verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   if (data.schema_version !== 'authoritative_next_rally_result.v1') {
     throw new Error('Authoritative Next Rally response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeGame(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeLiveRangePayload
+): Promise<AuthoritativeLiveRangeResult> {
+  const data = await request<AuthoritativeLiveRangeResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-game',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (data.schema_version !== 'authoritative_simulate_game_result.v1') {
+    throw new Error('Authoritative Simulate Game response is invalid.')
+  }
+  return data
+}
+
+export async function simulateAuthoritativeRestOfMatch(
+  runId: string,
+  branchId: string,
+  payload: AuthoritativeLiveRangePayload
+): Promise<AuthoritativeLiveRangeResult> {
+  const data = await request<AuthoritativeLiveRangeResult>(
+    authoritativeSimulationRoot(runId, branchId) + '/simulate-rest-of-match',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  verifyAuthoritativeSimulationScope(runId, branchId, data.position)
+  if (data.schema_version !== 'authoritative_simulate_rest_of_match_result.v1') {
+    throw new Error('Authoritative Rest of Match response is invalid.')
   }
   return data
 }

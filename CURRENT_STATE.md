@@ -1,44 +1,36 @@
 # Current implementation and next action
 
-## Active implementation — authoritative true Simulate Next Rally
+## Active implementation — live Rally / Game / Rest of Match simulation
 
-The persisted rally state is now integrated into the canonical Simulation Slot ledger.
+The canonical live match path now supports three forward granularities without creating
+parallel sporting logic.
 
-- `AuthoritativeNextRallyCommand` targets one eligible current-slot group under the
-  same Run/Branch/Week/Branch-head/position CAS boundary as other simulation commands;
-- the first Next-Rally call freezes the exact same authoritative player projections,
-  MatchInputSnapshot, deterministic seed, projection policy and effects policy as the
-  normal full-match execution path;
-- `AuthoritativeLiveMatchService` stores that protected `AuthoritativeMatchInput`
-  separately from the dynamic resumable match state, so later profile/config changes
-  cannot rewrite an in-progress match;
-- every call executes exactly one PR #997 rally transition through the PR #998 durable
-  state store; no hidden future match is simulated;
-- stale live-state fingerprints fail closed;
-- outer authoritative command receipts make a lost-response retry idempotent even when
-  the retried command was the final rally and the ordinary Simulation Position has
-  already advanced;
-- before the final rally there is no `SimulationEventGroupModel`, no sporting effect
-  and no terminal checkpoint mutation;
-- on the final rally, the exact existing authoritative group payload shape is created,
-  effects are calculated from the frozen input/result, and the slot terminal checkpoint
-  is rebuilt in the same transaction.
+- **Next Rally** advances exactly one persisted rally.
+- **Simulate Game** repeatedly executes deterministic Next-Rally child commands until
+  the currently active squash game ends (the persisted set/game ordinal advances), or
+  until the match itself ends.
+- **Simulate Rest of Match** repeatedly executes the same Next-Rally primitive until
+  the final MatchResult commits.
+- Game/Rest parent operations have their own idempotent receipts; every child command
+  ID is derived deterministically from parent ID + mode + child ordinal.
+- Interrupted parent operations can replay already committed children and continue from
+  the same persisted live state without creating an extra rally.
+- stale opening live-state fingerprints fail closed.
+- only the final rally can create the authoritative SimulationEventGroup, sporting
+  effects, terminal checkpoint and tournament-close authority.
+- the final group payload remains equivalent to the ordinary one-shot Next Match path.
 
-PR-critical acceptance compares a live rally-by-rally authoritative match with the
-existing one-shot `Simulate Next Match` path and requires identical execution-command
-fingerprint, protected input fingerprint, result fingerprint and complete group payload.
-A separate stale-state test proves rejected commands do not advance persisted state.
+Admin HTTP now exposes:
+- `simulate-next-rally`
+- `simulate-game`
+- `simulate-rest-of-match`
 
-HTTP/Admin UI is now wired end to end:
-- `POST /admin/runs/{run}/branches/{branch}/authoritative-simulation/simulate-next-rally`;
-- the canonical Authoritative Simulation panel exposes **Simulate authoritative Next Rally**;
-- the panel carries the returned live state fingerprint into the next command and shows
-  current set/game/rally cursor plus whether the authoritative group has committed;
-- UI copy explicitly states that future rallies do not yet exist while the match is live.
+The canonical Admin Simulation panel exposes all three controls and reports how many
+rallies a Game/Rest operation actually consumed.
 
-**Next after this PR:** implement `Simulate Game` and `Simulate Rest of Match`
-strictly as repeated execution of this same persisted command primitive; do not create
-a second sporting simulation path.
+**Next after this PR:** harden interruption/reopen acceptance for parent range commands
+and then move to the next pre-alpha live-match UX/state requirement rather than adding
+another simulation implementation.
 
 ## Active implementation — canonical Tournament Preparation State
 

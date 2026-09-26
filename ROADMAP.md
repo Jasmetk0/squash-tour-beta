@@ -7,13 +7,14 @@
 3. ✅ Persist current state and prove database reopen equivalence.
 4. ✅ Add expected-state CAS and idempotent per-rally persistence receipts.
 5. ✅ Bind the live state to canonical Run/Branch/Week/Slot/Group authoritative input.
-6. ✅ Expose authoritative Admin HTTP `Simulate Next Rally`.
-7. ✅ On the final rally atomically create the existing authoritative group/effects/
-   terminal-checkpoint payload, byte-equivalent to normal one-shot match execution.
-8. ✅ Add the live-match read/control surface to the canonical Admin Simulation UI.
-9. Next: implement `Simulate Game` and `Simulate Rest of Match` only as loops over
-   the same persisted next-rally primitive.
-10. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
+6. ✅ Expose authoritative Admin HTTP/UI `Simulate Next Rally`.
+7. ✅ On the final rally atomically create the normal authoritative group/effects/
+   terminal-checkpoint payload, equivalent to one-shot Next Match.
+8. ✅ Implement `Simulate Game` as deterministic persisted Next-Rally children.
+9. ✅ Implement `Simulate Rest of Match` as deterministic persisted Next-Rally children.
+10. Next: strengthen interrupted parent-range reopen acceptance and continue the
+    pre-alpha live-match UX/state slice.
+11. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
     from live forward simulation.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

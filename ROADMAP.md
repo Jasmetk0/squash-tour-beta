@@ -7,14 +7,16 @@
 3. ✅ Expose Next Rally / Game / Rest of Match from one sporting primitive.
 4. ✅ Prove restart-safe parent range orchestration.
 5. ✅ Hydrate live state from server truth after reload.
-6. ✅ Create automatic Game/Rest return points and preserve displaced active paths.
-7. ✅ Stage terminal live results as `completed_working` instead of immediate history.
-8. ✅ Allow completed working results to be restored and preserved as temporary
-   completed alternatives.
-9. ✅ Add explicit CAS-guarded Confirm Match Result as the sole live promotion into
-   authoritative group/effects/checkpoint/tournament progression.
-10. Next: implement read-only completed Match Replay / Step Back / Step Forward over
-    stored snapshots/events; replay must never rerun RNG or mutate history.
+6. ✅ Add automatic Game/Rest return points and alternative working paths.
+7. ✅ Stage terminal results as `completed_working` with explicit Confirm or Restore.
+8. ✅ Preserve displaced completed results as temporary alternatives.
+9. ✅ Promote into authoritative history only through CAS-guarded confirmation.
+10. ✅ Add canonical read-only completed Match Replay directly over stored authoritative
+    Rally Events and Post-Rally snapshots.
+11. ✅ Add First / Step Back / Step Forward / Last cursor navigation with zero RNG and
+    zero authoritative mutation.
+12. Next: expose richer stored timeline/time-event replay detail and continue the
+    pre-alpha match-viewer UX over immutable history.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

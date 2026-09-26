@@ -3359,6 +3359,8 @@ class AuthoritativeRunSimulationDriver:
             "child_command_ids": child_ids,
             "status": last["status"],
             "state_fingerprint": last["state_fingerprint"],
+            "final_result_fingerprint": last.get("final_result_fingerprint"),
+            "working_result_ready": last["status"] == "completed_working",
             "set_number": last["set_number"],
             "games_a": last["games_a"],
             "games_b": last["games_b"],

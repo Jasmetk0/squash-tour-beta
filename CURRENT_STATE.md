@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Active implementation — canonical Week Schedule readiness
+
+Canonical Draw-backed tournaments now pass through one Run/Branch-owned preparation
+gate before Match Day / Week Schedule proposal is allowed.
+
+- the gate composes all canonical Draw-backed event IDs through
+  `CanonicalTournamentPreparationService`;
+- every such event must report `ready_for_match_schedule=true` / `draw_ready`;
+- blockers are deterministic `event_id:phase` values;
+- legacy-only historical topology remains compatible while migration is incomplete;
+- no legacy EntryList, DrawPackage, WC JSON or pre-draw registry participates in this
+  canonical readiness decision.
+
+**Next after this PR:** expose the same readiness rollup directly in the Admin
+Week Schedule/preflight response and then remove remaining duplicate legacy readiness
+inspection where the canonical ownership mode is already complete.
+
+
 ## Active implementation — canonical Tournament Preparation State
 
 Tournament preparation now has one Run/Branch-owned navigation/readiness surface.

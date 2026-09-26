@@ -35,6 +35,7 @@ def _accepted_ids(entry_list) -> set[str]:
     }
 
 
+@pytest.mark.pr_critical
 def test_preflight_unsafe_no_mutation(tmp_path: Path) -> None:
     service, event_id, week = make_execution_service(tmp_path)
     result = service.run_week(RunSeasonWeekRequest(season="2000/2001", season_week=week, publish_snapshot=True, apply_points=False))
@@ -42,6 +43,8 @@ def test_preflight_unsafe_no_mutation(tmp_path: Path) -> None:
     assert result.summary.stop_reason == "preflight_not_safe"
     assert service.event_simulation_service.entry_list_service.get_entry_list(event_id=event_id).entry_list_exists is False
     assert result.metadata.read_only is False
+    assert result.metadata.authority_scope == "legacy_global_season_tooling.v1"
+    assert result.metadata.canonical_run_execution_eligible is False
 
 
 def test_one_event_run_without_apply_points_generates_artifacts_only(tmp_path: Path) -> None:

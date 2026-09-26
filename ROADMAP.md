@@ -1,5 +1,20 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — canonical result/ranking source ownership
+
+1. Package-backed tournament close may only emit canonical Run-owned result/award
+   authorities.
+2. Package-backed ranking transition may only consume frozen owned tournament sources;
+   live result/award files are never an adoption fallback.
+3. Explicitly reject historical/legacy tournament-source payloads inside Package-backed
+   Runs.
+4. Poison legacy Result/Template backends and clear Draw/Result/Award registries in the
+   main Master §31.3 acceptance after canonical preparation.
+5. Preserve legacy result adoption only for historical Runs with no Package state.
+6. Next audit: remaining authoritative Entry/WC/pre-draw file-backed registries and
+   migrate the largest coherent chain whose semantics are already decided in Master.
+
+
 ## Active pre-alpha sequence — strict Package ownership
 
 1. Treat canonical Package state as an ownership mode, not merely a preferred source.

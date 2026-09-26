@@ -450,7 +450,7 @@ const weekRunResult = {
   summary: {
     season: '2000/2001', season_week: 1, calendar_year: 2000, year_week: 37, event_count: 1, attempted_event_count: 1, succeeded_event_count: 1, blocked_event_count: 0, failed_event_count: 0, points_applied_event_count: 0, snapshot_published: false, snapshot_skipped: false, snapshot_already_existed: false, can_run_preflight: true, run_started: true, run_completed: true, stopped_early: false, first_failed_event_id: null, stop_reason: null, next_safe_action: 'rerun_week_with_apply_points_when_ready'
   },
-  metadata: { season: '2000/2001', season_week: 1, source: 'week_preflight_plus_one_event_execution_reports', preflight_fingerprint: 'week-fp', final_fingerprint: 'run-fp', read_only: false },
+  metadata: { season: '2000/2001', season_week: 1, source: 'week_preflight_plus_one_event_execution_reports', preflight_fingerprint: 'week-fp', final_fingerprint: 'run-fp', read_only: false, authority_scope: 'legacy_global_season_tooling.v1', canonical_run_execution_eligible: false },
   validation_warnings: ['Week execution is mutating and no rollback is implemented; partial week runs must be inspected and rerun manually after resolving blockers.'],
   validation_errors: []
 }
@@ -541,7 +541,7 @@ const seasonRangeRunResult = {
     { season_week: 2, calendar_year: 2000, year_week: 38, status_before: 'complete', range_action: 'skip_complete', run_order: null, skipped: true, skip_reason: 'completed_week', week_run_result: null, succeeded: true, blocked: false, failed: false, warnings: ['range warning'], errors: [] }
   ],
   summary: { season: '2000/2001', start_week: 1, end_week: 2, attempted_week_count: 2, skipped_empty_week_count: 0, skipped_complete_week_count: 1, executed_week_count: 1, succeeded_week_count: 1, blocked_week_count: 0, failed_week_count: 0, point_application_week_count: 1, snapshot_publication_week_count: 1, run_started: true, run_completed: true, stopped_early: false, first_failed_week: null, first_blocked_week: null, stop_reason: null, next_safe_action: 'review_completed_range', no_rollback_warning: 'Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.', range_safe_to_run_preflight: true },
-  metadata: { season: '2000/2001', source: 'range_preflight_plus_week_execution_reports', range_preflight_fingerprint: 'range-preflight-fp', final_fingerprint: 'range-run-fp', read_only: false },
+  metadata: { season: '2000/2001', source: 'range_preflight_plus_week_execution_reports', range_preflight_fingerprint: 'range-preflight-fp', final_fingerprint: 'range-run-fp', read_only: false, authority_scope: 'legacy_global_season_tooling.v1', canonical_run_execution_eligible: false },
   validation_warnings: ['Range execution is mutating and no rollback is implemented; earlier successful weeks remain persisted if a later week blocks or fails.'],
   validation_errors: []
 }
@@ -657,10 +657,11 @@ describe('AdminSeasonsPage', () => {
   it('renders workflow banner and open primary workflow sections', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByLabelText('Recommended Phase 1 workflow')).toBeInTheDocument()
-    expect(screen.getByText('Range 1–61 is effectively a full season run, but safer and more inspectable.')).toBeInTheDocument()
-    expect(screen.getByText('Mutating commands are explicitly marked.')).toBeInTheDocument()
-    expect(screen.getByText('No rollback is implemented.')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Legacy Season workspace guidance')).toBeInTheDocument()
+    expect(screen.getByText('Legacy Season workspace guidance')).toBeInTheDocument()
+    expect(screen.getByText('Legacy readiness/preflight does not decide Official Run readiness.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Product Runs' })).toHaveAttribute('href', '/admin/runs')
+    expect(screen.getByText('Legacy mutating commands are explicitly marked and are not canonical-run eligible.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Season Control Overview/i })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: /Primary Workflow/i })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()

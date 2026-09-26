@@ -10,8 +10,8 @@
 6. ✅ Expose authoritative Admin HTTP `Simulate Next Rally`.
 7. ✅ On the final rally atomically create the existing authoritative group/effects/
    terminal-checkpoint payload, byte-equivalent to normal one-shot match execution.
-8. Next: add the live-match read/control surface to Admin UI.
-9. Then implement `Simulate Game` and `Simulate Rest of Match` only as loops over
+8. ✅ Add the live-match read/control surface to the canonical Admin Simulation UI.
+9. Next: implement `Simulate Game` and `Simulate Rest of Match` only as loops over
    the same persisted next-rally primitive.
 10. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
     from live forward simulation.

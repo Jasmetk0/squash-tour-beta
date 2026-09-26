@@ -2871,6 +2871,11 @@ class AuthoritativeRunSimulationDriver:
                 command_id=command.command_id,
                 expected_state_fingerprint=current_state_fp,
             )
+            if step["authoritative_group_committed"]:
+                # Preserve the exact normal Simulate Next Match boundary: a final
+                # rally may also close a tournament source, but never before the
+                # authoritative group/effects/checkpoint commit exists.
+                self._advance_or_close(session, command, packages)
             after = self._position(session, command.run_id, command.branch_id)
             payload = {
                 "schema_version": "authoritative_next_rally_result.v1",

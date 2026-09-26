@@ -1,25 +1,24 @@
 # Current implementation and next action
 
-## Active implementation — canonical Week Schedule Admin navigation
+## Active implementation — legacy season readiness authority boundary
 
-The Admin simulation panel now treats Week Schedule preflight as the authoritative
-navigation/readiness source.
+Canonical Run/Branch readiness is now explicitly separated from the old global season
+simulation tooling.
 
-- the web client has typed `authoritative_week_schedule_preflight.v1` and canonical
-  tournament-preparation rollup contracts;
-- Position/save navigation is unlocked from preflight
-  `schedule_required/schedule_already_adopted`, not from duplicate client inference;
-- Match Day proposal is disabled before request when canonical blockers exist;
-- Admin sees each canonical tournament phase and `next_required_action`, plus exact
-  preflight blockers;
-- legacy schedule inspection remains only for reading the adopted schedule payload,
-  while preflight owns readiness/navigation;
-- frontend tests cover both `draw_ready` proposal enablement and a
-  `draw_input_ready` blocker.
+- legacy week preflight, season readiness and season range preflight metadata declare
+  `authority_scope=legacy_global_season_tooling.v1`;
+- all three declare `canonical_run_readiness_eligible=false`;
+- the web client validates that boundary before accepting their responses;
+- Admin Seasons labels the three surfaces as LEGACY / READ-ONLY and states that they
+  must not drive canonical Run/Branch readiness or Week Schedule navigation;
+- canonical Authoritative Simulation continues to use Week Schedule preflight from the
+  Run/Branch-owned preparation chain;
+- historical Admin Seasons diagnostics remain available instead of being deleted while
+  they still serve legacy file-backed workflows.
 
-**Next after this PR:** audit old season/week readiness endpoints and UI callers, then
-retire duplicate preparation inference where canonical Run/Branch ownership is already
-complete.
+**Next after this PR:** trace mutating legacy week/range execution callers and isolate
+them from Official Run workflows, then remove the first obsolete global execution path
+once no supported UI or acceptance gate depends on it.
 
 
 ## Active implementation — canonical Tournament Preparation State

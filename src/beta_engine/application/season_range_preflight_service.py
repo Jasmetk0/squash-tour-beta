@@ -104,6 +104,10 @@ class SeasonRangePreflightMetadata(BaseModel):
     season_readiness_fingerprint: str | None = None
     generated_fingerprint: str
     read_only: bool = True
+    authority_scope: Literal["legacy_global_season_tooling.v1"] = (
+        "legacy_global_season_tooling.v1"
+    )
+    canonical_run_readiness_eligible: Literal[False] = False
 
 
 class SeasonRangePreflightResult(BaseModel):
@@ -124,7 +128,10 @@ class SeasonRangePreflightService:
     readiness_service: SeasonReadinessService
 
     def preflight_range(self, request: SeasonRangePreflightRequest) -> SeasonRangePreflightResult:
-        validation_warnings = [SEASON_RANGE_PREFLIGHT_READ_ONLY_WARNING]
+        validation_warnings = [
+            SEASON_RANGE_PREFLIGHT_READ_ONLY_WARNING,
+            "Legacy season range preflight is global season tooling only; it is not canonical Run/Branch readiness.",
+        ]
         validation_errors: list[str] = []
         if request.start_week > request.end_week:
             validation_errors.append("start_week must be less than or equal to end_week.")

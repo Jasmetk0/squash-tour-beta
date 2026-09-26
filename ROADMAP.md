@@ -12,9 +12,12 @@
    terminal-checkpoint payload, equivalent to one-shot Next Match.
 8. ✅ Implement `Simulate Game` as deterministic persisted Next-Rally children.
 9. ✅ Implement `Simulate Rest of Match` as deterministic persisted Next-Rally children.
-10. Next: strengthen interrupted parent-range reopen acceptance and continue the
-    pre-alpha live-match UX/state slice.
-11. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
+10. ✅ Prove interrupted parent-range reopen after both mid-child and terminal-child
+    failures without duplicate rallies or duplicate authoritative groups.
+11. ✅ Hydrate current live-match state from a read-only server inspection surface so
+    Admin reload/reopen does not depend on transient client memory.
+12. Next: continue the pre-alpha live-match UX/state slice from persisted server truth.
+13. Keep completed-match `Step Back / Step Forward` Replay read-only and separate
     from live forward simulation.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

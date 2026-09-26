@@ -1419,7 +1419,7 @@ export type AuthoritativeLiveRangeResult = {
   return_point_id: string
   rallies_simulated: number
   child_command_ids: string[]
-  status: 'active' | 'complete'
+  status: 'active' | 'completed_working' | 'complete'
   state_fingerprint: string | null
   set_number: number | null
   games_a: number | null

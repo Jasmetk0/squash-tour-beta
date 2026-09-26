@@ -1,5 +1,16 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — canonical Week Schedule readiness
+
+1. Roll canonical tournament preparation into one Week Schedule readiness snapshot.
+2. Gate canonical Draw-backed schedule proposal/adoption on every event reaching
+   `draw_ready`.
+3. Keep historical legacy-only topology compatible during migration; never use legacy
+   preparation registries to decide readiness for canonical Draw-backed events.
+4. Next: expose the rollup in Admin Week Schedule/preflight UI/API and retire duplicate
+   legacy readiness inference where canonical ownership is complete.
+
+
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 
 1. Compose Ranking Snapshot → Entry Field → WC/RWC → pre-draw repair → Draw Input →

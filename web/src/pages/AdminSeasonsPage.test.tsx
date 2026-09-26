@@ -910,8 +910,8 @@ describe('AdminSeasonsPage', () => {
     api.runSeasonRange.mockResolvedValue(seasonRangeRunResult)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Run Season Range' })).toBeInTheDocument()
-    expect(screen.getByText('This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Run Season Range' })).toBeInTheDocument()
+    expect(screen.getByText('This global season command mutates legacy season artifacts. It is not canonical Official Run execution and no rollback is implemented.')).toBeInTheDocument()
     await userEvent.clear(screen.getByLabelText('Run start week'))
     await userEvent.type(screen.getByLabelText('Run start week'), '1')
     await userEvent.clear(screen.getByLabelText('Run end week'))
@@ -975,8 +975,8 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Event-Level Tools/i)
 
-    expect(await screen.findByRole('heading', { name: 'Run One Season Week' })).toBeInTheDocument()
-    expect(screen.getByText('This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.')).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy Run One Season Week' })).toBeInTheDocument()
+    expect(screen.getByText('This global season command mutates legacy entries, draws, matches, results, points and snapshots. It is not canonical Official Run execution and no rollback is implemented.')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Run week simulation' }))
     expect(api.runSeasonWeek).toHaveBeenCalledWith(expect.objectContaining({ season: '2000/2001', season_week: 1, seed: 12345, apply_points: false, publish_snapshot: false, allow_unsafe_run: false }))
     expect(await screen.findByText('Week run summary')).toBeInTheDocument()

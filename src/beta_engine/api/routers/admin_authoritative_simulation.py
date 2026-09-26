@@ -948,12 +948,12 @@ def restore_live_match_return_point(
 def list_match_replays(
     run_id: str,
     branch_id: str,
-    limit: int = 20,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
     awards: Annotated[
         SeasonPointAwardsService, Depends(get_season_point_awards_service)
     ],
+    limit: int = 20,
 ):
     try:
         return _driver(runtime, matches, awards).list_authoritative_match_replays(
@@ -997,12 +997,12 @@ def get_match_replay_cursor(
     run_id: str,
     branch_id: str,
     group_id: str,
-    rally_index: int = 1,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
     matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
     awards: Annotated[
         SeasonPointAwardsService, Depends(get_season_point_awards_service)
     ],
+    rally_index: int = 1,
 ):
     try:
         return _driver(runtime, matches, awards).get_authoritative_match_replay_cursor(

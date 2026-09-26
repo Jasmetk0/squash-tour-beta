@@ -2,25 +2,19 @@
 
 ## Active pre-alpha sequence — resumable live match simulation
 
-1. ✅ Freeze one immutable `MatchWorkingInput` before Rally 1.
-2. ✅ Implement deterministic true `simulate_next_rally` with no hidden continuation.
-3. ✅ Persist current state and prove database reopen equivalence.
-4. ✅ Add expected-state CAS and idempotent per-rally persistence receipts.
-5. ✅ Bind the live state to canonical Run/Branch/Week/Slot/Group authoritative input.
-6. ✅ Expose authoritative Admin HTTP/UI `Simulate Next Rally`.
-7. ✅ On the final rally atomically create the normal authoritative group/effects/
-   terminal-checkpoint payload, equivalent to one-shot Next Match.
-8. ✅ Implement `Simulate Game` and `Simulate Rest of Match` as deterministic
-   persisted Next-Rally children.
-9. ✅ Prove interrupted parent-range reopen without duplicate rallies or results.
-10. ✅ Hydrate current live-match state from persisted server truth after reload.
-11. ✅ Create automatic temporary return points before Game/Rest and preserve displaced
-    active working paths as read-only alternatives when restoring.
-12. Next: add working-completion / explicit-confirm staging so a Rest-of-Match result
-    can remain reversible before authoritative promotion, satisfying the remaining
-    Master §17.1 return-after-completion behavior.
-13. Then add read-only completed Match Replay / Step Back / Step Forward over stored
-    snapshots; never rerun RNG for replay.
+1. ✅ Freeze immutable `MatchWorkingInput` and true one-rally transition.
+2. ✅ Persist Run/Branch/Week/Slot/Group live state with CAS/idempotent receipts.
+3. ✅ Expose Next Rally / Game / Rest of Match from one sporting primitive.
+4. ✅ Prove restart-safe parent range orchestration.
+5. ✅ Hydrate live state from server truth after reload.
+6. ✅ Create automatic Game/Rest return points and preserve displaced active paths.
+7. ✅ Stage terminal live results as `completed_working` instead of immediate history.
+8. ✅ Allow completed working results to be restored and preserved as temporary
+   completed alternatives.
+9. ✅ Add explicit CAS-guarded Confirm Match Result as the sole live promotion into
+   authoritative group/effects/checkpoint/tournament progression.
+10. Next: implement read-only completed Match Replay / Step Back / Step Forward over
+    stored snapshots/events; replay must never rerun RNG or mutate history.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

@@ -102,6 +102,7 @@ from beta_engine.application.season_point_awards_service import (
     FrozenPointAwardAuthority,
     SeasonPointAwardsService,
 )
+from beta_engine.domain.matches.models import MatchResult
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
@@ -2840,6 +2841,108 @@ class AuthoritativeRunSimulationDriver:
             )
             session.flush()
             return payload
+
+    def get_authoritative_match_replay(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+    ) -> dict:
+        """Return one completed authoritative match log without mutating state."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            rows = session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.run_id == run_id,
+                    SimulationEventGroupModel.branch_id == branch_id,
+                    SimulationEventGroupModel.group_id == group_id,
+                )
+            ).all()
+            if not rows:
+                raise ValueError("completed authoritative match group does not exist")
+            if len(rows) != 1:
+                raise ValueError("completed authoritative match group identity is ambiguous")
+            row = rows[0]
+            payload = json.loads(row.payload_json)
+            result = MatchResult.model_validate(payload["result"])
+            if result.match_id != row.match_id:
+                raise ValueError("stored replay match identity does not match group")
+            if payload.get("result_fingerprint") != row.result_fingerprint:
+                raise ValueError("stored replay result fingerprint does not match group")
+            if result.rally_log is None:
+                raise ValueError("completed authoritative match has no rally log")
+            if result.rally_log.match_id != result.match_id:
+                raise ValueError("stored replay rally log identity is corrupt")
+            return {
+                "schema_version": "authoritative_match_replay.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week_ordinal": row.week_ordinal,
+                "slot_id": row.slot_id,
+                "group_id": row.group_id,
+                "match_id": row.match_id,
+                "result_fingerprint": row.result_fingerprint,
+                "match_log_hash": result.rally_log.match_log_hash,
+                "total_rallies": result.rally_log.total_rallies,
+                "final_result": result.model_dump(mode="json"),
+                "replay_source": "stored_authoritative_events",
+                "rng_rerun": False,
+                "read_only": True,
+                "verified": True,
+            }
+
+    def get_authoritative_match_replay_cursor(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+        rally_index: int,
+    ) -> dict:
+        """Project one stored authoritative rally plus read-only replay navigation."""
+
+        replay = self.get_authoritative_match_replay(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+        result = MatchResult.model_validate(replay["final_result"])
+        assert result.rally_log is not None
+        events = result.rally_log.events
+        if not events:
+            raise ValueError("completed authoritative match has no stored rally events")
+        if rally_index < 1 or rally_index > len(events):
+            raise ValueError(
+                f"rally_index must be between 1 and {len(events)} for group '{group_id}'"
+            )
+        rally = events[rally_index - 1]
+        return {
+            "schema_version": "authoritative_match_replay_cursor.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week_ordinal": replay["week_ordinal"],
+            "slot_id": replay["slot_id"],
+            "group_id": group_id,
+            "match_id": replay["match_id"],
+            "result_fingerprint": replay["result_fingerprint"],
+            "match_log_hash": replay["match_log_hash"],
+            "rally_index": rally_index,
+            "rally": rally.model_dump(mode="json"),
+            "navigation": {
+                "total_rallies": len(events),
+                "rally_index": rally_index,
+                "previous_rally_index": rally_index - 1 if rally_index > 1 else None,
+                "next_rally_index": rally_index + 1 if rally_index < len(events) else None,
+                "at_start": rally_index == 1,
+                "at_end": rally_index == len(events),
+            },
+            "replay_source": "stored_authoritative_events",
+            "rng_rerun": False,
+            "read_only": True,
+            "verified": True,
+        }
 
     def inspect_live_match(
         self,

@@ -571,8 +571,27 @@ export async function preflightSeasonWeek(payload: SimulateSeasonWeekPreflightRe
   return data
 }
 
-export function runSeasonWeek(payload: RunSeasonWeekRequest): Promise<RunSeasonWeekResult> {
-  return request(`/admin/weeks/run`, { method: 'POST', body: JSON.stringify(payload) })
+function verifyLegacySeasonExecutionBoundary(metadata: {
+  authority_scope: string
+  canonical_run_execution_eligible: boolean
+}): void {
+  if (
+    metadata.authority_scope !== 'legacy_global_season_tooling.v1' ||
+    metadata.canonical_run_execution_eligible !== false
+  ) {
+    throw new Error(
+      'Legacy season execution endpoint returned an invalid authority boundary.'
+    )
+  }
+}
+
+export async function runSeasonWeek(payload: RunSeasonWeekRequest): Promise<RunSeasonWeekResult> {
+  const data = await request<RunSeasonWeekResult>(
+    `/admin/weeks/run`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyLegacySeasonExecutionBoundary(data.metadata)
+  return data
 }
 
 export function recoverSeasonWeek(payload: SeasonWeekRecoveryRequest): Promise<SeasonWeekRecoveryResult> {
@@ -597,8 +616,13 @@ export async function preflightSeasonRange(payload: SeasonRangePreflightRequest)
   return data
 }
 
-export function runSeasonRange(payload: RunSeasonRangeRequest): Promise<RunSeasonRangeResult> {
-  return request(`/admin/seasons/range-run`, { method: 'POST', body: JSON.stringify(payload) })
+export async function runSeasonRange(payload: RunSeasonRangeRequest): Promise<RunSeasonRangeResult> {
+  const data = await request<RunSeasonRangeResult>(
+    `/admin/seasons/range-run`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyLegacySeasonExecutionBoundary(data.metadata)
+  return data
 }
 
 export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {

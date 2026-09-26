@@ -808,6 +808,20 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             if slot["entrant_kind"] == "player"
         } == set(generated_ids)
 
+        preparation_root = tournament_root + "/preparation"
+        status, preparation_ready = _request("GET", preparation_root)
+        assert status == 200, preparation_ready
+        assert preparation_ready["phase"] == "draw_ready"
+        assert preparation_ready["next_required_action"] == "none"
+        assert preparation_ready["ready_for_match_schedule"] is True
+        assert preparation_ready["authority_source"] == (
+            "run_owned_db_authorities.v1"
+        )
+        assert (
+            preparation_ready["effective_draw_fingerprint"]
+            == draw_authority["fingerprint"]
+        )
+
         # Destroy the live legacy Calendar source after the Run-owned Calendar and
         # Draw exist. Tournament adoption, point-authority freezing, empty-week proof
         # and whole-season simulation must now replay only from Run-owned evidence.
@@ -825,6 +839,12 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         awards.result_service = _ForbiddenLegacyBackend("result")
         awards.template_service = _ForbiddenLegacyBackend("template")
         awards.points_config_path = tmp_path / "forbidden-legacy-points.json"
+
+        status, preparation_after_legacy_removal = _request(
+            "GET", preparation_root
+        )
+        assert status == 200, preparation_after_legacy_removal
+        assert preparation_after_legacy_removal == preparation_ready
 
         # Remove the old Week-1 MatchPackage source completely. From this point the
         # authoritative driver must derive its compatibility MatchPackage from the

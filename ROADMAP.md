@@ -2,20 +2,20 @@
 
 ## Active pre-alpha sequence — resumable live match simulation
 
-1. Freeze one immutable `MatchWorkingInput` before Rally 1.
-2. Persist all dynamic truth needed to resume exactly at the next rally in
-   `MatchRallyWorkingState`.
-3. Implement one deterministic `simulate_next_rally` transition that computes no
-   future rally.
-4. Prove rally-by-rally JSON serialize/reopen is byte-equivalent to existing full-match
-   simulation, including probabilistic set-start retirement.
-5. Next: store frozen input + working state in canonical Run/Branch persistence with
-   idempotent commands and expose Admin `Simulate Next Rally`.
-6. Then implement `Simulate Game` and `Simulate Rest of Match` only as repeated
+1. ✅ Freeze one immutable `MatchWorkingInput` before Rally 1.
+2. ✅ Implement deterministic `simulate_next_rally` with no hidden future simulation.
+3. ✅ Prove JSON reopen equivalence to the existing full-match path.
+4. ✅ Persist immutable input + current working state under
+   Run/Branch/Week/Slot/Group ownership.
+5. ✅ Add expected-state CAS plus idempotent per-rally command receipts and prove
+   database-close/reopen equivalence.
+6. Next: bind start/step to `AuthoritativeSlotMatchExecutor` and expose Admin
+   `Simulate Next Rally`; final rally must atomically enter the existing
+   result/effects/terminal-checkpoint commit path.
+7. Then implement `Simulate Game` and `Simulate Rest of Match` only as repeated
    execution of the same persisted next-rally primitive.
-7. Keep completed-match `Step Back / Step Forward` Replay read-only and separate from
+8. Keep completed-match `Step Back / Step Forward` Replay read-only and separate from
    live forward simulation.
-
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

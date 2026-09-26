@@ -528,6 +528,39 @@ class SimulationEventGroupModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class LiveMatchWorkingModel(Base):
+    """Durable current state for one in-progress authoritative competitive match."""
+
+    __tablename__ = "live_match_working_states"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    match_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    working_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    working_input_json: Mapped[str] = mapped_column(Text, nullable=False)
+    state_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    working_state_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    final_result_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    final_result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+
+class LiveMatchRallyCommandModel(Base):
+    """Idempotency receipt for one persisted live Simulate Next Rally command."""
+
+    __tablename__ = "live_match_rally_commands"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    week_ordinal: Mapped[int] = mapped_column(Integer, primary_key=True)
+    slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    response_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class AuthoritativeSimulationCommandModel(Base):
     """Idempotency/audit receipt for a Run/Branch simulation-driver mutation."""
 

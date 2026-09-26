@@ -27,6 +27,7 @@ from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeSimulationCommand,
     AuthoritativeNextRallyCommand,
     AuthoritativeLiveRangeCommand,
+    AuthoritativeLiveReturnCommand,
     AuthoritativeMatchDayCommand,
     AuthoritativeRoundCommand,
     AuthoritativeTournamentCommand,
@@ -8359,3 +8360,154 @@ def test_live_match_inspection_is_read_only_and_survives_driver_reopen(tmp_path)
     with factory() as session:
         assert len(session.scalars(select(AuthoritativeSimulationCommandModel)).all()) == before_commands
         assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups
+
+
+@pytest.mark.pr_critical
+def test_simulate_game_creates_return_point_and_restore_archives_displaced_path(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "live-return")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    game = driver.simulate_game(
+        AuthoritativeLiveRangeCommand(
+            command_id="game-with-return",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert game["status"] == "active"
+    assert game["return_point_id"] == "return:game-with-return"
+    after_game_state = game["state_fingerprint"]
+    assert after_game_state is not None
+
+    timeline = driver.inspect_live_match_timeline(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    assert timeline["present"] is True
+    points = timeline["timeline"]["return_points"]
+    assert len(points) == 1
+    point = points[0]
+    assert point["return_point_id"] == "return:game-with-return"
+    assert point["kind"] == "game"
+    assert point["rally_index"] == 1
+    assert point["set_number"] == 1
+    assert point["games_a"] == 0
+    assert point["games_b"] == 0
+    assert timeline["timeline"]["alternatives"] == []
+
+    position = driver.position(run_id="run", branch_id="branch")
+    restored = driver.restore_live_return_point(
+        AuthoritativeLiveReturnCommand(
+            command_id="restore-game-origin",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            return_point_id=point["return_point_id"],
+            expected_live_state_fingerprint=after_game_state,
+        )
+    )
+    assert restored["schema_version"] == "authoritative_live_return_restore.v1"
+    assert restored["restored_state"]["state_fingerprint"] == point["state_fingerprint"]
+    assert restored["restored_state"]["rally_index"] == 1
+    assert restored["restored_state"]["games_a"] == 0
+    assert restored["restored_state"]["games_b"] == 0
+    assert restored["archived_alternative_id"] == "alternative:restore-game-origin"
+
+    timeline_after = driver.inspect_live_match_timeline(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    alternatives = timeline_after["timeline"]["alternatives"]
+    assert len(alternatives) == 1
+    assert alternatives[0]["alternative_id"] == "alternative:restore-game-origin"
+    assert alternatives[0]["state_fingerprint"] == after_game_state
+    assert alternatives[0]["rally_index"] > 1
+
+    replay = driver.restore_live_return_point(
+        AuthoritativeLiveReturnCommand(
+            command_id="restore-game-origin",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            return_point_id=point["return_point_id"],
+            expected_live_state_fingerprint=after_game_state,
+        )
+    )
+    assert replay["idempotent_replay"] is True
+    assert replay["archived_alternative_id"] == restored["archived_alternative_id"]
+
+
+@pytest.mark.pr_critical
+def test_return_point_restore_does_not_reexecute_sporting_rng(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "live-return-no-rng")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    first = driver.simulate_next_rally(
+        AuthoritativeNextRallyCommand(
+            command_id="seed-live",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    position = driver.position(run_id="run", branch_id="branch")
+    game = driver.simulate_game(
+        AuthoritativeLiveRangeCommand(
+            command_id="game-from-rally-two",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            expected_live_state_fingerprint=first["state_fingerprint"],
+        )
+    )
+    assert game["status"] == "active"
+
+    before_restore_receipts = None
+    with factory() as session:
+        from beta_engine.infrastructure.db.models import LiveMatchRallyCommandModel
+        before_restore_receipts = len(
+            session.scalars(select(LiveMatchRallyCommandModel)).all()
+        )
+
+    current_position = driver.position(run_id="run", branch_id="branch")
+    restored = driver.restore_live_return_point(
+        AuthoritativeLiveReturnCommand(
+            command_id="restore-without-rng",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=current_position.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+            return_point_id=game["return_point_id"],
+            expected_live_state_fingerprint=game["state_fingerprint"],
+        )
+    )
+    assert restored["restored_state"]["state_fingerprint"] == first["state_fingerprint"]
+
+    with factory() as session:
+        from beta_engine.infrastructure.db.models import LiveMatchRallyCommandModel
+        after_restore_receipts = len(
+            session.scalars(select(LiveMatchRallyCommandModel)).all()
+        )
+    assert after_restore_receipts == before_restore_receipts

@@ -9833,9 +9833,25 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=command.branch_id,
                 edition_id=package.event_id,
             )
+            package_backed = self._run_uses_package_authority(
+                session,
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+            )
             if existing:
+                if package_backed and (
+                    existing.canonical_result is None
+                    or existing.canonical_awards is None
+                ):
+                    raise ValueError(
+                        "Package-backed tournament source must be canonical Run-owned authority"
+                    )
                 self._validate_existing_owned_source(existing, command, package, auth)
                 continue
+            if package_backed and draw_fp is None:
+                raise ValueError(
+                    "Package-backed tournament close cannot use legacy result/award builders"
+                )
             canonical_result = None
             canonical_awards = None
             canonical_prize_awards = None

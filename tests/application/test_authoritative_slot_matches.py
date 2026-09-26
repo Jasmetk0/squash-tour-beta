@@ -8313,3 +8313,48 @@ def test_rest_of_match_reopens_after_terminal_child_before_parent_receipt(tmp_pa
     retry = reopened.simulate_rest_of_match(command)
     assert retry["idempotent_replay"] is True
     assert retry["rallies_simulated"] == child_count_before
+
+
+@pytest.mark.pr_critical
+def test_live_match_inspection_is_read_only_and_survives_driver_reopen(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "live-inspection")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    first = driver.simulate_next_rally(
+        AuthoritativeNextRallyCommand(
+            command_id="inspect-rally",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert first["status"] == "active"
+
+    with factory() as session:
+        before_commands = len(
+            session.scalars(select(AuthoritativeSimulationCommandModel)).all()
+        )
+        before_groups = len(session.scalars(select(SimulationEventGroupModel)).all())
+
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    inspected = reopened.inspect_live_match(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    assert inspected["present"] is True
+    assert inspected["live"]["state_fingerprint"] == first["state_fingerprint"]
+    assert inspected["live"]["rally_index"] == first["rally_index"]
+    assert inspected["live"]["set_number"] == first["set_number"]
+    assert inspected["live"]["games_a"] == first["games_a"]
+    assert inspected["live"]["games_b"] == first["games_b"]
+
+    with factory() as session:
+        assert len(session.scalars(select(AuthoritativeSimulationCommandModel)).all()) == before_commands
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups

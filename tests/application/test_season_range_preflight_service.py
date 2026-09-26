@@ -138,4 +138,6 @@ def test_read_only_does_not_change_registries(tmp_path: Path) -> None:
     result = service.preflight_range(SeasonRangePreflightRequest(season="2000/2001", start_week=1, end_week=10))
     after = {path.name: path.read_text(encoding="utf-8") if path.exists() else None for path in paths}
     assert result.metadata.read_only is True
+    assert result.metadata.authority_scope == "legacy_global_season_tooling.v1"
+    assert result.metadata.canonical_run_readiness_eligible is False
     assert before == after

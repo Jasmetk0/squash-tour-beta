@@ -1,33 +1,40 @@
 # Current implementation and next action
 
-## Active implementation — read-only Match Replay step navigation
+## Active implementation — resumable true Next-Rally kernel
 
-The first Master-decided stepwise match navigation surface is now exposed without
-changing or rerunning sporting truth.
+The Match Engine now has a serializable working-match boundary for true live stepping.
 
-- completed stored matches expose a rally cursor over their authoritative
-  `MatchRallyLog`;
-- the cursor returns the exact stored `RallyEvent` and its
-  `PostRallyStateSnapshot`, with first/previous/next/last navigation;
-- replay navigation is explicitly `read_only=true` and `rng_rerun=false`;
-- the cursor reuses the existing replay verification path, so input snapshot, rally
-  hash chain, timeline, stamina log and result fingerprints are validated before any
-  rally is shown;
-- Admin Seasons / Event Matches now exposes **First rally**, **Step Back**,
-  **Step Forward** and **Last rally** for completed matches;
-- the panel shows score, game, server, winner/LET, terminal cause, estimated shots,
-  rally duration and completion state from stored authoritative data;
-- PR-critical coverage proves cursor navigation cannot invoke `MatchEngine.simulate`.
+- `MatchWorkingInput` freezes the exact effective sporting inputs used before Rally 1:
+  MatchContext, seed, log anchor, timing, stamina, rally calibration, gameplans and
+  rally rules;
+- `MatchRallyWorkingState` stores only dynamic resumable truth: current set/points,
+  completed sets, momentum owner, rally cursor, replay count, server/service box,
+  authoritative rally hash chain, stamina state and gameplan state;
+- `MatchEngine.start_working_match(...)` creates the frozen input + pre-Rally-1 state;
+- `MatchEngine.simulate_next_rally(...)` advances **at most one actual rally** and
+  returns either the next resumable state or the final authoritative MatchResult;
+- the implementation does not calculate or hide future rallies;
+- the one sequential per-set terminal RNG stream is reconstructed at the exact
+  `rally_in_set` cursor, while all existing identity-derived RNG branches remain
+  unchanged;
+- explicit and probabilistic set-start retirement remain deterministic;
+- state/input fingerprints fail closed if a state is paired with the wrong frozen
+  match input or seed.
 
-This implements the Master-decided **read-only Step Back / Step Forward Replay**
-capability. It deliberately does **not** claim to implement live
-`Simulate Next Rally`, `Simulate Game` or `Simulate Rest of Match`: those require
-a persisted working-match state that can resume score, stamina, gameplan and
-deterministic RNG state without precomputing a hidden continuation.
+PR-critical equivalence coverage runs a normal full match and the same match one rally
+at a time. Between every rally the working input/state are serialized to JSON and
+loaded again. The final `MatchResult` and every stored `RallyEvent` must be identical
+to the normal full-match simulation.
 
-**Next after this PR:** design that resumable working-match authority and implement true
-live `Simulate Next Rally` first, then build Game / Rest-of-Match commands on the same
-state transition primitive.
+This is the **sporting kernel**, not yet the persisted Run/Branch product workflow.
+It deliberately does not claim that Admin can resume an in-progress match after
+process restart yet.
+
+**Next after this PR:** persist `MatchWorkingInput + MatchRallyWorkingState` under
+canonical Run/Branch ownership with command idempotency, then expose true
+`Simulate Next Rally`. After that, `Simulate Game` and `Simulate Rest of Match`
+must compose repeated calls to this same primitive rather than introduce another
+simulation path.
 
 
 ## Active implementation — canonical Tournament Preparation State

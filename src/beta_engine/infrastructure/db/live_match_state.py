@@ -201,6 +201,80 @@ class PersistedLiveMatchStore:
         self.session.flush()
         return self._return_point_response(point)
 
+    def ensure_initial_return_point(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        week_ordinal: int,
+        slot_id: str,
+        group_id: str,
+        source_command_id: str,
+        kind: str,
+    ) -> dict:
+        """Freeze the deterministic pre-first-rally state after live-match bootstrap."""
+
+        if kind not in {"game", "rest_of_match"}:
+            raise ValueError("return point kind must be game or rest_of_match")
+        key = self._key(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+        )
+        row = self.session.get(LiveMatchWorkingModel, key)
+        if row is None:
+            raise ValueError("initial return point requires a bootstrapped live match")
+        working_input = MatchWorkingInput.model_validate_json(row.working_input_json)
+        engine = MatchEngine(rng=DeterministicRng(working_input.simulation_seed))
+        rebuilt_input, initial = engine.start_working_match(
+            working_input.context,
+            log_anchor_hash=working_input.input_hash,
+            effective_match_timing=working_input.timing,
+            effective_match_stamina=working_input.stamina,
+            rally_calibration_profile=working_input.rally_calibration,
+            effective_match_gameplans=working_input.gameplans,
+            effective_rally_rules=working_input.rules,
+        )
+        if rebuilt_input.fingerprint != working_input.fingerprint:
+            raise ValueError("working input cannot reproduce initial live-match state")
+
+        return_point_id = self._return_point_id(source_command_id)
+        point_key = (*key, return_point_id)
+        existing = self.session.get(LiveMatchReturnPointModel, point_key)
+        if existing is not None:
+            if (
+                existing.source_command_id != source_command_id
+                or existing.kind != kind
+                or existing.state_fingerprint != initial.fingerprint
+                or existing.working_state_json != initial.model_dump_json()
+            ):
+                raise ValueError("initial return point conflicts with existing snapshot")
+            return self._return_point_response(existing)
+
+        point = LiveMatchReturnPointModel(
+            run_id=run_id,
+            branch_id=branch_id,
+            week_ordinal=week_ordinal,
+            slot_id=slot_id,
+            group_id=group_id,
+            return_point_id=return_point_id,
+            source_command_id=source_command_id,
+            kind=kind,
+            state_fingerprint=initial.fingerprint,
+            working_state_json=initial.model_dump_json(),
+            created_from_rally_index=initial.rally_index,
+            created_from_set_number=initial.set_number,
+            created_from_games_a=initial.games_a,
+            created_from_games_b=initial.games_b,
+            status="available",
+            metadata_json='{"origin":"pre_first_rally"}',
+        )
+        self.session.add(point)
+        self.session.flush()
+        return self._return_point_response(point)
+
     def list_return_points(
         self,
         *,

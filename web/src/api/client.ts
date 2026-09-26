@@ -259,8 +259,6 @@ import type {
   SimulateOneEventResult,
   SimulateSeasonWeekPreflightRequest,
   SimulateSeasonWeekPreflightResult,
-  RunSeasonWeekRequest,
-  RunSeasonWeekResult,
   SeasonWeekRecoveryRequest,
   SeasonWeekRecoveryResult,
   SeasonReadinessRequest,
@@ -566,29 +564,6 @@ export async function preflightSeasonWeek(payload: SimulateSeasonWeekPreflightRe
     { method: 'POST', body: JSON.stringify(payload) }
   )
   verifyLegacySeasonReadinessBoundary(data.metadata)
-  return data
-}
-
-function verifyLegacySeasonExecutionBoundary(metadata: {
-  authority_scope: string
-  canonical_run_execution_eligible: boolean
-}): void {
-  if (
-    metadata.authority_scope !== 'legacy_global_season_tooling.v1' ||
-    metadata.canonical_run_execution_eligible !== false
-  ) {
-    throw new Error(
-      'Legacy season execution endpoint returned an invalid authority boundary.'
-    )
-  }
-}
-
-export async function runSeasonWeek(payload: RunSeasonWeekRequest): Promise<RunSeasonWeekResult> {
-  const data = await request<RunSeasonWeekResult>(
-    `/admin/weeks/run`,
-    { method: 'POST', body: JSON.stringify(payload) }
-  )
-  verifyLegacySeasonExecutionBoundary(data.metadata)
   return data
 }
 

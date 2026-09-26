@@ -21,7 +21,7 @@ def test_post_week_recovery_after_one_week_run(tmp_path, monkeypatch):
     monkeypatch.setitem(lifecycle_api.Server.__init__.__globals__, 'write_templates', write_complete_templates)
     with Server(tmp_path) as server:
         event_id = server.persist_calendar()
-        call('POST', f'{server.base_url}/admin/weeks/run', {'season': '2000/2001', 'season_week': 2, 'seed': 5})
+        call('POST', f'{server.base_url}/admin/events/{event_id}/simulate', {'dry_run': False, 'seed': 5})
         status, body = call('POST', f'{server.base_url}/admin/weeks/recovery', {'season': '2000/2001', 'season_week': 2})
     assert status == 200
     assert body['events'][0]['event_id'] == event_id
@@ -33,8 +33,8 @@ def test_post_week_recovery_after_one_week_run(tmp_path, monkeypatch):
 def test_post_week_recovery_completed_with_snapshot(tmp_path, monkeypatch):
     monkeypatch.setitem(lifecycle_api.Server.__init__.__globals__, 'write_templates', write_complete_templates)
     with Server(tmp_path) as server:
-        server.persist_calendar()
-        call('POST', f'{server.base_url}/admin/weeks/run', {'season': '2000/2001', 'season_week': 2, 'seed': 6, 'apply_points': True, 'publish_snapshot': True, 'allow_blocked': True, 'allow_incomplete_results': True})
+        event_id = server.persist_calendar()
+        call('POST', f'{server.base_url}/admin/events/{event_id}/simulate', {'dry_run': False, 'seed': 6, 'apply_points': True, 'publish_snapshot': True, 'allow_blocked': True, 'allow_incomplete_results': True})
         status, body = call('POST', f'{server.base_url}/admin/weeks/recovery', {'season': '2000/2001', 'season_week': 2})
     assert status == 200
     assert body['summary']['week_complete'] is True

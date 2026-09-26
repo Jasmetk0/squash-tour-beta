@@ -2834,7 +2834,13 @@ class AuthoritativeRunSimulationDriver:
                 expected_slot_start_fingerprint=plan.slot_start_fingerprint,
             )
             current_state_fp = started["state_fingerprint"]
-            if (
+            if current_state_fp is None:
+                if command.expected_live_state_fingerprint is None:
+                    raise ValueError(
+                        "completed live rally retry requires the prior expected state fingerprint"
+                    )
+                current_state_fp = command.expected_live_state_fingerprint
+            elif (
                 command.expected_live_state_fingerprint is not None
                 and command.expected_live_state_fingerprint != current_state_fp
             ):

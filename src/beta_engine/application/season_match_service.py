@@ -135,6 +135,27 @@ class MatchReplayResponse(BaseModel):
     verified: Literal[True] = True
 
 
+class MatchReplayCursorNavigation(BaseModel):
+    total_rallies: int = Field(ge=1)
+    rally_index: int = Field(ge=1)
+    previous_rally_index: int | None = Field(default=None, ge=1)
+    next_rally_index: int | None = Field(default=None, ge=1)
+    at_start: bool
+    at_end: bool
+
+
+class MatchReplayCursorResponse(BaseModel):
+    event_id: str
+    match_id: str
+    rally_index: int = Field(ge=1)
+    rally: dict[str, Any]
+    navigation: MatchReplayCursorNavigation
+    replay_source: Literal["stored_authoritative_events"] = "stored_authoritative_events"
+    rng_rerun: Literal[False] = False
+    read_only: Literal[True] = True
+    verified: Literal[True] = True
+
+
 class TournamentProgressionStatus(BaseModel):
     event_id: str
     season: str
@@ -413,6 +434,33 @@ class SeasonMatchService:
             timeline_log=timeline_log,
             stamina_log=stamina_log,
             final_result=match.simulated_result,
+        )
+
+    def get_match_replay_cursor(
+        self, *, event_id: str, match_id: str, rally_index: int
+    ) -> MatchReplayCursorResponse:
+        replay = self.get_match_replay(event_id=event_id, match_id=match_id)
+        events = replay.rally_log.events
+        if not events:
+            raise ValueError(f"Match '{match_id}' has no stored rally events to replay.")
+        if rally_index < 1 or rally_index > len(events):
+            raise ValueError(
+                f"rally_index must be between 1 and {len(events)} for match '{match_id}'."
+            )
+        rally = events[rally_index - 1]
+        return MatchReplayCursorResponse(
+            event_id=event_id,
+            match_id=match_id,
+            rally_index=rally_index,
+            rally=rally.model_dump(mode="json"),
+            navigation=MatchReplayCursorNavigation(
+                total_rallies=len(events),
+                rally_index=rally_index,
+                previous_rally_index=rally_index - 1 if rally_index > 1 else None,
+                next_rally_index=rally_index + 1 if rally_index < len(events) else None,
+                at_start=rally_index == 1,
+                at_end=rally_index == len(events),
+            ),
         )
 
     def get_late_replacements(

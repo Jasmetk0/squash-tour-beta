@@ -2789,9 +2789,25 @@ class AuthoritativeRunSimulationDriver:
     def simulate_next_rally(self, command: AuthoritativeNextRallyCommand) -> dict:
         """Advance one real rally inside the current authoritative Simulation Slot."""
 
+        request_fp = fingerprint(
+            {"mode": "rally", "command": command.model_dump(mode="json")}
+        )
         with self.factory.begin() as session:
             session.execute(text("BEGIN IMMEDIATE"))
             self._require_writable_scope(session, command.run_id, command.branch_id)
+            receipt_key = (command.run_id, command.branch_id, command.command_id)
+            receipt = session.get(AuthoritativeSimulationCommandModel, receipt_key)
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fp:
+                    raise ValueError(
+                        "next-rally command ID already has a different request"
+                    )
+                if receipt.status != "complete":
+                    raise ValueError("next-rally command receipt is incomplete")
+                replay = json.loads(receipt.result_json)
+                replay["idempotent_replay"] = True
+                return replay
+
             before = self._position(session, command.run_id, command.branch_id)
             self._validate_expected(session, command, before)
 
@@ -2856,7 +2872,7 @@ class AuthoritativeRunSimulationDriver:
                 expected_state_fingerprint=current_state_fp,
             )
             after = self._position(session, command.run_id, command.branch_id)
-            return {
+            payload = {
                 "schema_version": "authoritative_next_rally_result.v1",
                 "run_id": command.run_id,
                 "branch_id": command.branch_id,
@@ -2867,6 +2883,21 @@ class AuthoritativeRunSimulationDriver:
                 "position": after.model_dump(mode="json"),
                 **step,
             }
+            payload["idempotent_replay"] = False
+            session.add(
+                AuthoritativeSimulationCommandModel(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    command_id=command.command_id,
+                    request_fingerprint=request_fp,
+                    status="complete",
+                    result_json=json.dumps(
+                        payload, sort_keys=True, separators=(",", ":")
+                    ),
+                )
+            )
+            session.flush()
+            return payload
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

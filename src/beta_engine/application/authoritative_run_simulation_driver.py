@@ -249,6 +249,25 @@ class AuthoritativeNextRallyCommand(FrozenInput):
         return fingerprint(self.model_dump(mode="json"))
 
 
+class AuthoritativeLiveRangeCommand(FrozenInput):
+    """CAS-guarded live orchestration built only from persisted Next Rally children."""
+
+    command_id: str = Field(min_length=1, max_length=128)
+    run_id: str
+    branch_id: str
+    expected_week: RankingWeek
+    expected_position_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_revision_id: str = Field(min_length=1)
+    group_id: str = Field(min_length=1)
+    expected_live_state_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @property
+    def fingerprint(self) -> str:
+        return fingerprint(self.model_dump(mode="json"))
+
+
 class AuthoritativeMatchDayCommand(FrozenInput):
     """Resumable CAS-guarded orchestration of the current canonical Match Day."""
 

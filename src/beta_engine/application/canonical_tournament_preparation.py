@@ -13,6 +13,8 @@ from typing import Literal
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, sessionmaker
 
+from beta_engine.domain.simulation_slots import fingerprint
+
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
 )
@@ -50,6 +52,24 @@ TournamentPreparationNextAction = Literal[
     "generate_draw",
     "none",
 ]
+
+
+class CanonicalWeekSchedulePreparationState(BaseModel):
+    """Canonical readiness rollup for Week Schedule proposal/adoption."""
+
+    schema_version: Literal["canonical_week_schedule_preparation_state.v1"] = (
+        "canonical_week_schedule_preparation_state.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_ids: tuple[str, ...]
+    tournaments: tuple["CanonicalTournamentPreparationState", ...]
+    ready_for_week_schedule: bool
+    blockers: tuple[str, ...] = ()
+    preparation_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    authority_source: Literal["run_owned_db_authorities.v1"] = (
+        "run_owned_db_authorities.v1"
+    )
 
 
 class CanonicalTournamentPreparationState(BaseModel):
@@ -135,6 +155,70 @@ class CanonicalTournamentPreparationService:
                 branch_id=branch_id,
                 event_id=event_id,
             )
+
+    def inspect_many(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_ids: tuple[str, ...],
+    ) -> CanonicalWeekSchedulePreparationState:
+        with self.factory() as session:
+            return self.inspect_many_in_session(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_ids=event_ids,
+            )
+
+    @classmethod
+    def inspect_many_in_session(
+        cls,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_ids: tuple[str, ...],
+    ) -> CanonicalWeekSchedulePreparationState:
+        canonical_event_ids = tuple(sorted(set(event_ids)))
+        if not canonical_event_ids:
+            raise ValueError("Week Schedule preparation requires at least one event")
+        if event_ids != canonical_event_ids:
+            raise ValueError(
+                "Week Schedule preparation event IDs must be sorted and unique"
+            )
+
+        states = tuple(
+            cls.inspect_in_session(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            for event_id in canonical_event_ids
+        )
+        blockers = tuple(
+            f"{state.event_id}:{state.phase}"
+            for state in states
+            if not state.ready_for_match_schedule
+        )
+        payload = {
+            "schema_version": "canonical_week_schedule_preparation_state.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "event_ids": canonical_event_ids,
+            "tournaments": [
+                state.model_dump(mode="json")
+                for state in states
+            ],
+            "ready_for_week_schedule": not blockers,
+            "blockers": blockers,
+            "authority_source": "run_owned_db_authorities.v1",
+        }
+        return CanonicalWeekSchedulePreparationState(
+            **payload,
+            preparation_fingerprint=fingerprint(payload),
+        )
 
     @staticmethod
     def inspect_in_session(

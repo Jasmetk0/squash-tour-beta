@@ -548,8 +548,27 @@ export function simulateOneEvent(eventId: string, payload: SimulateOneEventReque
   return request(`/admin/events/${encodeURIComponent(eventId)}/simulate`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
-export function preflightSeasonWeek(payload: SimulateSeasonWeekPreflightRequest): Promise<SimulateSeasonWeekPreflightResult> {
-  return request(`/admin/weeks/preflight`, { method: 'POST', body: JSON.stringify(payload) })
+function verifyLegacySeasonReadinessBoundary(metadata: {
+  authority_scope: string
+  canonical_run_readiness_eligible: boolean
+}): void {
+  if (
+    metadata.authority_scope !== 'legacy_global_season_tooling.v1' ||
+    metadata.canonical_run_readiness_eligible !== false
+  ) {
+    throw new Error(
+      'Legacy season readiness endpoint returned an invalid authority boundary.'
+    )
+  }
+}
+
+export async function preflightSeasonWeek(payload: SimulateSeasonWeekPreflightRequest): Promise<SimulateSeasonWeekPreflightResult> {
+  const data = await request<SimulateSeasonWeekPreflightResult>(
+    `/admin/weeks/preflight`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyLegacySeasonReadinessBoundary(data.metadata)
+  return data
 }
 
 export function runSeasonWeek(payload: RunSeasonWeekRequest): Promise<RunSeasonWeekResult> {
@@ -560,12 +579,22 @@ export function recoverSeasonWeek(payload: SeasonWeekRecoveryRequest): Promise<S
   return request(`/admin/weeks/recovery`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
-export function getSeasonReadiness(payload: SeasonReadinessRequest): Promise<SeasonReadinessResult> {
-  return request(`/admin/seasons/readiness`, { method: 'POST', body: JSON.stringify(payload) })
+export async function getSeasonReadiness(payload: SeasonReadinessRequest): Promise<SeasonReadinessResult> {
+  const data = await request<SeasonReadinessResult>(
+    `/admin/seasons/readiness`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyLegacySeasonReadinessBoundary(data.metadata)
+  return data
 }
 
-export function preflightSeasonRange(payload: SeasonRangePreflightRequest): Promise<SeasonRangePreflightResult> {
-  return request(`/admin/seasons/range-preflight`, { method: 'POST', body: JSON.stringify(payload) })
+export async function preflightSeasonRange(payload: SeasonRangePreflightRequest): Promise<SeasonRangePreflightResult> {
+  const data = await request<SeasonRangePreflightResult>(
+    `/admin/seasons/range-preflight`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  verifyLegacySeasonReadinessBoundary(data.metadata)
+  return data
 }
 
 export function runSeasonRange(payload: RunSeasonRangeRequest): Promise<RunSeasonRangeResult> {

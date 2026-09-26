@@ -2842,6 +2842,57 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def list_authoritative_match_replays(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        limit: int = 20,
+    ) -> dict:
+        """List recent completed authoritative matches available for read-only replay."""
+
+        if limit < 1 or limit > 100:
+            raise ValueError("replay list limit must be between 1 and 100")
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            rows = session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.run_id == run_id,
+                    SimulationEventGroupModel.branch_id == branch_id,
+                )
+            ).all()
+            ordered = sorted(
+                rows,
+                key=lambda row: (row.week_ordinal, row.slot_id, row.group_id),
+                reverse=True,
+            )[:limit]
+            matches = []
+            for row in ordered:
+                payload = json.loads(row.payload_json)
+                result = MatchResult.model_validate(payload["result"])
+                rally_log = result.rally_log
+                matches.append(
+                    {
+                        "week_ordinal": row.week_ordinal,
+                        "slot_id": row.slot_id,
+                        "group_id": row.group_id,
+                        "match_id": row.match_id,
+                        "result_fingerprint": row.result_fingerprint,
+                        "winner_player_id": result.winner_player_id,
+                        "loser_player_id": result.loser_player_id,
+                        "total_rallies": rally_log.total_rallies if rally_log else 0,
+                        "match_log_hash": rally_log.match_log_hash if rally_log else None,
+                        "replay_available": bool(rally_log and rally_log.events),
+                    }
+                )
+            return {
+                "schema_version": "authoritative_match_replay_list.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "matches": matches,
+                "read_only": True,
+            }
+
     def get_authoritative_match_replay(
         self,
         *,

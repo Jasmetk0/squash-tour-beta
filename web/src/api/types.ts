@@ -1386,6 +1386,7 @@ export type AuthoritativeLiveRangeResult = {
   group_id: string
   match_id: string
   start_set_number: number
+  return_point_id: string
   rallies_simulated: number
   child_command_ids: string[]
   status: 'active' | 'complete'

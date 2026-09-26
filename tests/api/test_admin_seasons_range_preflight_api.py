@@ -7,7 +7,7 @@ from urllib.error import HTTPError
 
 import test_admin_lifecycle_api as lifecycle_api
 from test_admin_lifecycle_api import Server, call
-from test_admin_weeks_run_api import write_complete_templates
+from legacy_season_api_test_support import write_complete_templates
 
 
 @pytest.mark.pr_critical

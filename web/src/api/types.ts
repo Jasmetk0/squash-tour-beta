@@ -1267,6 +1267,51 @@ export type AuthoritativeNextRallyResult = {
   position: AuthoritativeSimulationPosition
 }
 
+export type AuthoritativeMatchReplayList = {
+  schema_version: 'authoritative_match_replay_list.v1'
+  run_id: string
+  branch_id: string
+  read_only: boolean
+  matches: Array<{
+    week_ordinal: number
+    slot_id: string
+    group_id: string
+    match_id: string
+    result_fingerprint: string
+    winner_player_id: string
+    loser_player_id: string
+    total_rallies: number
+    match_log_hash: string | null
+    replay_available: boolean
+  }>
+}
+
+export type AuthoritativeMatchReplayCursor = {
+  schema_version: 'authoritative_match_replay_cursor.v1'
+  run_id: string
+  branch_id: string
+  week_ordinal: number
+  slot_id: string
+  group_id: string
+  match_id: string
+  result_fingerprint: string
+  match_log_hash: string
+  rally_index: number
+  rally: RallyEvent
+  navigation: {
+    total_rallies: number
+    rally_index: number
+    previous_rally_index: number | null
+    next_rally_index: number | null
+    at_start: boolean
+    at_end: boolean
+  }
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
 export type AuthoritativeLiveMatchInspection = {
   schema_version: 'authoritative_live_match_inspection.v1'
   run_id: string

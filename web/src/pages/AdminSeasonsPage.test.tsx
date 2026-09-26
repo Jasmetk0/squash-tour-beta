@@ -599,7 +599,6 @@ describe('AdminSeasonsPage', () => {
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
     api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
-    api.runSeasonWeek.mockResolvedValue(weekRunResult)
     api.recoverSeasonWeek.mockResolvedValue(weekRecoveryResult)
     api.getSeasonReadiness.mockResolvedValue(seasonReadinessResult)
   })

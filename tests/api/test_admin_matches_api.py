@@ -119,6 +119,28 @@ def test_simulate_selected_and_next(tmp_path: Path) -> None:
             == replay["timeline_log"]["match_log_hash"]
         )
 
+        cursor_status, cursor = call(
+            "GET",
+            f"{server.base_url}/admin/matches/{event_id}/replay/{match['match_id']}/cursor?rally_index=1",
+        )
+        assert cursor_status == 200
+        assert cursor["read_only"] is True
+        assert cursor["rng_rerun"] is False
+        assert cursor["verified"] is True
+        assert cursor["navigation"]["at_start"] is True
+        assert cursor["navigation"]["previous_rally_index"] is None
+        assert cursor["rally"]["rally_index"] == 1
+
+        total_rallies = cursor["navigation"]["total_rallies"]
+        last_status, last = call(
+            "GET",
+            f"{server.base_url}/admin/matches/{event_id}/replay/{match['match_id']}/cursor?rally_index={total_rallies}",
+        )
+        assert last_status == 200
+        assert last["navigation"]["at_end"] is True
+        assert last["navigation"]["next_rally_index"] is None
+        assert last["rally"]["post_rally_state"]["match_complete"] is True
+
 
 
 def test_simulate_next(tmp_path: Path) -> None:

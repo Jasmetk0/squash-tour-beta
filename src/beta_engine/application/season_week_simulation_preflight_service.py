@@ -87,6 +87,10 @@ class SeasonWeekPreflightMetadata(BaseModel):
     calendar_fingerprint: str | None = None
     generated_fingerprint: str
     read_only: bool = True
+    authority_scope: Literal["legacy_global_season_tooling.v1"] = (
+        "legacy_global_season_tooling.v1"
+    )
+    canonical_run_readiness_eligible: Literal[False] = False
 
 
 class SimulateSeasonWeekPreflightResult(BaseModel):
@@ -116,7 +120,10 @@ class SeasonWeekSimulationPreflightService:
     ranking_snapshot_service: SeasonRankingSnapshotService | None = None
 
     def preflight_week(self, *, season: str, season_week: int, request: SimulateSeasonWeekPreflightRequest) -> SimulateSeasonWeekPreflightResult:
-        warnings = [PREFLIGHT_READ_ONLY_WARNING]
+        warnings = [
+            PREFLIGHT_READ_ONLY_WARNING,
+            "Legacy season-week preflight is global season tooling only; it is not canonical Run/Branch readiness.",
+        ]
         errors: list[str] = []
         calendar_year, year_week = self._calendar_position(season=season, season_week=season_week, calendar=None)
         calendar_result = self.calendar_service.get_calendar(season=season)

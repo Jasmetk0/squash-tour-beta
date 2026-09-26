@@ -1087,23 +1087,20 @@ type AdminSectionProps = {
 
 function WorkflowBanner(): JSX.Element {
   return (
-    <aside className="admin-workflow-banner" aria-label="Recommended Phase 1 workflow">
+    <aside className="admin-workflow-banner" aria-label="Legacy Season workspace guidance">
       <div>
-        <h3>Recommended Phase 1 workflow</h3>
+        <h3>Legacy Season workspace guidance</h3>
         <ol>
-          <li>Bootstrap active players.</li>
-          <li>Build/persist season calendar.</li>
-          <li>Inspect season readiness.</li>
-          <li>Preview range.</li>
-          <li>Run range.</li>
-          <li>Inspect recovery/readiness.</li>
-          <li>Review rankings/snapshots.</li>
+          <li>Use these global season tools only for historical diagnostics and compatibility workflows.</li>
+          <li>Legacy readiness/preflight does not decide Official Run readiness.</li>
+          <li>Legacy week/range execution mutates global file-backed season artifacts.</li>
+          <li>For pre-alpha Official Run progression, open a Product Run and use its Run/Branch simulation workspace.</li>
         </ol>
       </div>
       <ul className="admin-workflow-banner__notes">
-        <li>Range 1–61 is effectively a full season run, but safer and more inspectable.</li>
-        <li>Mutating commands are explicitly marked.</li>
-        <li>No rollback is implemented.</li>
+        <li><Link to="/admin/runs">Open Product Runs</Link> to enter the canonical Run/Branch workflow.</li>
+        <li>Legacy mutating commands are explicitly marked and are not canonical-run eligible.</li>
+        <li>No rollback is implemented for legacy season mutation.</li>
       </ul>
     </aside>
   )

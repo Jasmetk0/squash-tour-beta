@@ -1,41 +1,38 @@
 # Current implementation and next action
 
-## Active implementation — resumable true Next-Rally kernel
+## Active implementation — persisted resumable live-match authority
 
-The Match Engine now has a serializable working-match boundary for true live stepping.
+The true Next-Rally kernel now has a durable SQLite boundary under canonical
+Run/Branch/Week/Slot/Group ownership.
 
-- `MatchWorkingInput` freezes the exact effective sporting inputs used before Rally 1:
-  MatchContext, seed, log anchor, timing, stamina, rally calibration, gameplans and
-  rally rules;
-- `MatchRallyWorkingState` stores only dynamic resumable truth: current set/points,
-  completed sets, momentum owner, rally cursor, replay count, server/service box,
-  authoritative rally hash chain, stamina state and gameplan state;
-- `MatchEngine.start_working_match(...)` creates the frozen input + pre-Rally-1 state;
-- `MatchEngine.simulate_next_rally(...)` advances **at most one actual rally** and
-  returns either the next resumable state or the final authoritative MatchResult;
-- the implementation does not calculate or hide future rallies;
-- the one sequential per-set terminal RNG stream is reconstructed at the exact
-  `rally_in_set` cursor, while all existing identity-derived RNG branches remain
-  unchanged;
-- explicit and probabilistic set-start retirement remain deterministic;
-- state/input fingerprints fail closed if a state is paired with the wrong frozen
-  match input or seed.
+- `LiveMatchWorkingModel` stores the immutable `MatchWorkingInput` plus exactly the
+  current `MatchRallyWorkingState`; no future rallies are persisted or precomputed;
+- `PersistedLiveMatchStore.start_from_engine_input(...)` freezes/reopens the same
+  effective MatchInputSnapshot used by authoritative Simulation Slot execution;
+- every persisted state carries and revalidates both working-input and working-state
+  fingerprints before simulation may continue;
+- `simulate_next_rally(...)` advances at most one real rally through the PR #997
+  `MatchEngine.simulate_next_rally` primitive;
+- each mutation requires an expected state fingerprint, so stale clients fail closed;
+- `LiveMatchRallyCommandModel` records command-id + request fingerprint + response,
+  making exact network retry idempotent while conflicting command-id reuse is rejected;
+- completion replaces resumable state with the final immutable MatchResult and its
+  fingerprint.
 
-PR-critical equivalence coverage runs a normal full match and the same match one rally
-at a time. Between every rally the working input/state are serialized to JSON and
-loaded again. The final `MatchResult` and every stored `RallyEvent` must be identical
-to the normal full-match simulation.
+PR-critical coverage closes and reopens the database between every rally, then proves
+the persisted path produces the same full MatchResult and exact RallyEvent sequence as
+normal full-match simulation. Separate coverage proves exact-command retry, stale-state
+rejection and frozen-input identity conflict behavior.
 
-This is the **sporting kernel**, not yet the persisted Run/Branch product workflow.
-It deliberately does not claim that Admin can resume an in-progress match after
-process restart yet.
+This PR deliberately stops at the persistence authority seam: the existing completed
+`SimulationEventGroupModel` remains unchanged, so partial matches cannot accidentally
+look complete to downstream tournament/effects/ranking code.
 
-**Next after this PR:** persist `MatchWorkingInput + MatchRallyWorkingState` under
-canonical Run/Branch ownership with command idempotency, then expose true
-`Simulate Next Rally`. After that, `Simulate Game` and `Simulate Rest of Match`
-must compose repeated calls to this same primitive rather than introduce another
-simulation path.
-
+**Next after this PR:** bind this store to `AuthoritativeSlotMatchExecutor` pre-match
+projection and expose the real Admin `Simulate Next Rally` command. When the final
+rally completes, atomically promote the final result through the existing group/effects/
+terminal-checkpoint commit path. Only then build `Simulate Game` and
+`Simulate Rest of Match` as loops over the same persisted primitive.
 
 ## Active implementation — canonical Tournament Preparation State
 

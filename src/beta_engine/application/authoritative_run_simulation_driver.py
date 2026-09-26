@@ -37,6 +37,7 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionResult,
     commit_final_season_transition,
 )
+from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchStore
 from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,

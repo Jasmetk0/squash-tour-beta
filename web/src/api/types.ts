@@ -6279,6 +6279,8 @@ export type SeasonRangeRunMetadata = {
   range_preflight_fingerprint: string
   final_fingerprint: string
   read_only: boolean
+  authority_scope: 'legacy_global_season_tooling.v1'
+  canonical_run_execution_eligible: false
 }
 
 export type RunSeasonRangeResult = {
@@ -6342,6 +6344,8 @@ export type SeasonWeekRunMetadata = {
   preflight_fingerprint: string
   final_fingerprint: string
   read_only: boolean
+  authority_scope: 'legacy_global_season_tooling.v1'
+  canonical_run_execution_eligible: false
 }
 
 export type RunSeasonWeekResult = {

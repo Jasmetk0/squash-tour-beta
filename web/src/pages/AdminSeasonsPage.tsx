@@ -676,8 +676,8 @@ export function AdminSeasonsPage(): JSX.Element {
         {rangePreflightResult ? <SeasonRangePreflightPanel result={rangePreflightResult} /> : <p className="status">Preview a season-week range to see backend-computed skip/run/recovery planning before any future mutating range command exists.</p>}
       </SectionCard>
 
-      <SectionCard title="Run Season Range">
-        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> This is mutating. It may run multiple weeks, apply points, and publish weekly snapshots. No rollback is implemented.</p>
+      <SectionCard title="Legacy Run Season Range">
+        <p className="status"><StatusBadge label="LEGACY / MUTATING" variant="danger" /> This global season command mutates legacy season artifacts. It is not canonical Official Run execution and no rollback is implemented.</p>
         <div className="form-grid">
           <label>Run range season<input value={rangeRunSeason} onChange={(event) => setRangeRunSeason(event.target.value)} placeholder="2000/2001" /></label>
           <label>Run start week<input type="number" min={1} max={61} value={rangeRunStartWeek} onChange={(event) => setRangeRunStartWeek(Number(event.target.value))} /></label>
@@ -802,9 +802,9 @@ export function AdminSeasonsPage(): JSX.Element {
         {weekRecoveryResult ? <SeasonWeekRecoveryPanel result={weekRecoveryResult} /> : <p className="status">Inspect a partially run or completed week to see persisted artifacts, point application status, snapshot status, and safe next actions.</p>}
       </SectionCard>
 
-      <SectionCard title="Run One Season Week">
-        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> This is mutating. It may create entries, draws, matches, results, point awards, apply points, and publish one weekly snapshot. No rollback is implemented.</p>
-        <p className="status">Run controls mirror the week preflight controls above. The backend runs preflight first, then executes selected events in deterministic order.</p>
+      <SectionCard title="Legacy Run One Season Week">
+        <p className="status"><StatusBadge label="LEGACY / MUTATING" variant="danger" /> This global season command mutates legacy entries, draws, matches, results, points and snapshots. It is not canonical Official Run execution and no rollback is implemented.</p>
+        <p className="status">Run controls mirror the legacy week preflight above. The backend runs that legacy preflight first, then executes selected events in deterministic order.</p>
         <div className="grid">
           <label><input type="checkbox" checked={weekRunAllowUnsafe} onChange={(event) => setWeekRunAllowUnsafe(event.target.checked)} /> Allow unsafe run after blocked preflight</label>
         </div>
@@ -1087,23 +1087,20 @@ type AdminSectionProps = {
 
 function WorkflowBanner(): JSX.Element {
   return (
-    <aside className="admin-workflow-banner" aria-label="Recommended Phase 1 workflow">
+    <aside className="admin-workflow-banner" aria-label="Legacy Season workspace guidance">
       <div>
-        <h3>Recommended Phase 1 workflow</h3>
+        <h3>Legacy Season workspace guidance</h3>
         <ol>
-          <li>Bootstrap active players.</li>
-          <li>Build/persist season calendar.</li>
-          <li>Inspect season readiness.</li>
-          <li>Preview range.</li>
-          <li>Run range.</li>
-          <li>Inspect recovery/readiness.</li>
-          <li>Review rankings/snapshots.</li>
+          <li>Use these global season tools only for historical diagnostics and compatibility workflows.</li>
+          <li>Legacy readiness/preflight does not decide Official Run readiness.</li>
+          <li>Legacy week/range execution mutates global file-backed season artifacts.</li>
+          <li>For pre-alpha Official Run progression, open a Product Run and use its Run/Branch simulation workspace.</li>
         </ol>
       </div>
       <ul className="admin-workflow-banner__notes">
-        <li>Range 1–61 is effectively a full season run, but safer and more inspectable.</li>
-        <li>Mutating commands are explicitly marked.</li>
-        <li>No rollback is implemented.</li>
+        <li><Link to="/admin/runs">Open Product Runs</Link> to enter the canonical Run/Branch workflow.</li>
+        <li>Legacy mutating commands are explicitly marked and are not canonical-run eligible.</li>
+        <li>No rollback is implemented for legacy season mutation.</li>
       </ul>
     </aside>
   )

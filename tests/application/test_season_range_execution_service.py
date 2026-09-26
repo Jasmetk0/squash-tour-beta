@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from beta_engine.application.season_calendar_service import SeasonCalendarRegistry
 from beta_engine.application.season_entry_list_service import EntryListGenerateRequest, EntryListValidationIssue
 from beta_engine.application.season_range_execution_service import RunSeasonRangeRequest, SeasonRangeExecutionService
@@ -37,10 +39,13 @@ def _add_second_week_event(execution: SeasonWeekSimulationExecutionService, week
     return second_week
 
 
+@pytest.mark.pr_critical
 def test_unsafe_preflight_no_mutation(tmp_path: Path) -> None:
     service, execution, event_id, week = make_range_service(tmp_path)
     result = service.run_range(RunSeasonRangeRequest(season="2000/2001", start_week=week, end_week=week, apply_points=False, publish_snapshot=True))
     assert result.summary.run_started is False
+    assert result.metadata.authority_scope == "legacy_global_season_tooling.v1"
+    assert result.metadata.canonical_run_execution_eligible is False
     assert result.summary.stop_reason == "range_preflight_not_safe"
     assert execution.event_simulation_service.entry_list_service.get_entry_list(event_id=event_id).entry_list_exists is False
 

@@ -97,6 +97,10 @@ class SeasonRangeRunMetadata(BaseModel):
     range_preflight_fingerprint: str
     final_fingerprint: str
     read_only: bool = False
+    authority_scope: Literal["legacy_global_season_tooling.v1"] = (
+        "legacy_global_season_tooling.v1"
+    )
+    canonical_run_execution_eligible: Literal[False] = False
 
 
 class RunSeasonRangeResult(BaseModel):
@@ -116,7 +120,11 @@ class SeasonRangeExecutionService:
     week_execution_service: SeasonWeekSimulationExecutionService
 
     def run_range(self, request: RunSeasonRangeRequest) -> RunSeasonRangeResult:
-        warnings = [RANGE_NO_ROLLBACK_WARNING, NO_ROLLBACK_WARNING]
+        warnings = [
+            RANGE_NO_ROLLBACK_WARNING,
+            NO_ROLLBACK_WARNING,
+            "Legacy season range execution is global season tooling only; it is not canonical Official Run execution.",
+        ]
         errors: list[str] = []
         preflight = self.preflight_service.preflight_range(SeasonRangePreflightRequest(
             season=request.season,

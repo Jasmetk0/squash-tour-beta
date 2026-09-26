@@ -254,6 +254,68 @@ def test_simulate_next_completes_first_pending_and_is_replay_deterministic(
     assert replay.stamina_log == a_completed.simulated_result.stamina_log
 
 
+@pytest.mark.pr_critical
+def test_match_replay_cursor_navigates_stored_rallies_without_rng_rerun(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    service, event_id = make_match_service(tmp_path / "replay-cursor")
+    service.generate_match_package(
+        event_id=event_id,
+        request=MatchPackageGenerateRequest(seed=101, dry_run=False),
+    )
+    package = service.simulate_next_match(
+        event_id=event_id,
+        request=MatchSimulateRequest(seed=777),
+    ).match_package
+    assert package is not None
+    completed = next(
+        match
+        for match in package.qualification_matches + package.main_draw_matches
+        if match.status == "completed"
+    )
+    assert completed.simulated_result is not None
+    assert completed.simulated_result.rally_log is not None
+    total = len(completed.simulated_result.rally_log.events)
+    assert total > 1
+
+    def fail_if_rng_is_rerun(*args: object, **kwargs: object) -> None:
+        raise AssertionError("replay cursor must never rerun MatchEngine")
+
+    monkeypatch.setattr(
+        "beta_engine.application.season_match_service.MatchEngine.simulate",
+        fail_if_rng_is_rerun,
+    )
+
+    first = service.get_match_replay_cursor(
+        event_id=event_id,
+        match_id=completed.match_id,
+        rally_index=1,
+    )
+    assert first.read_only is True
+    assert first.rng_rerun is False
+    assert first.navigation.at_start is True
+    assert first.navigation.previous_rally_index is None
+    assert first.navigation.next_rally_index == 2
+    assert first.rally["rally_index"] == 1
+
+    last = service.get_match_replay_cursor(
+        event_id=event_id,
+        match_id=completed.match_id,
+        rally_index=total,
+    )
+    assert last.navigation.at_end is True
+    assert last.navigation.next_rally_index is None
+    assert last.navigation.previous_rally_index == total - 1
+    assert last.rally["post_rally_state"]["match_complete"] is True
+
+    with pytest.raises(ValueError, match="rally_index must be between"):
+        service.get_match_replay_cursor(
+            event_id=event_id,
+            match_id=completed.match_id,
+            rally_index=total + 1,
+        )
+
+
 def test_match_package_stores_effective_format_with_nearest_override_provenance(tmp_path: Path) -> None:
     service, event_id = make_match_service(tmp_path / "format-snapshots")
     result = service.generate_match_package(

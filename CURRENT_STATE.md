@@ -1,26 +1,33 @@
 # Current implementation and next action
 
-## Active implementation — remove legacy one-week execution backend
+## Active implementation — read-only Match Replay step navigation
 
-The season-level legacy week orchestrator is now retired end-to-end without weakening
-read-only diagnostics.
+The first Master-decided stepwise match navigation surface is now exposed without
+changing or rerunning sporting truth.
 
-- `POST /admin/weeks/run` is removed from the API;
-- `SeasonWeekSimulationExecutionService`, its dependency wiring, web client contract
-  and dedicated execution tests are deleted;
-- recovery/readiness/range-preflight tests no longer use the retired orchestrator as a
-  state factory;
-- historical test states are now produced through the lower-level event simulation
-  service that already owns those individual legacy artifacts;
-- read-only Week Preflight, Week Recovery, Season Readiness and Range Preflight remain;
-- PR-critical API coverage asserts the retired week-run route returns `404`;
-- Official Run progression remains exclusively in Product Runs / Run/Branch
-  Authoritative Simulation;
-- this remains TECH cleanup aligned with Master §31.3, not a new PRODUCT decision.
+- completed stored matches expose a rally cursor over their authoritative
+  `MatchRallyLog`;
+- the cursor returns the exact stored `RallyEvent` and its
+  `PostRallyStateSnapshot`, with first/previous/next/last navigation;
+- replay navigation is explicitly `read_only=true` and `rng_rerun=false`;
+- the cursor reuses the existing replay verification path, so input snapshot, rally
+  hash chain, timeline, stamina log and result fingerprints are validated before any
+  rally is shown;
+- Admin Seasons / Event Matches now exposes **First rally**, **Step Back**,
+  **Step Forward** and **Last rally** for completed matches;
+- the panel shows score, game, server, winner/LET, terminal cause, estimated shots,
+  rally duration and completion state from stored authoritative data;
+- PR-critical coverage proves cursor navigation cannot invoke `MatchEngine.simulate`.
 
-**Next after this PR:** audit the remaining legacy one-event mutating UI/API and manual
-artifact tools. Keep diagnostics that still help migration, but retire mutation entry
-points once canonical Run/Branch equivalents cover the same supported workflow.
+This implements the Master-decided **read-only Step Back / Step Forward Replay**
+capability. It deliberately does **not** claim to implement live
+`Simulate Next Rally`, `Simulate Game` or `Simulate Rest of Match`: those require
+a persisted working-match state that can resume score, stamina, gameplan and
+deterministic RNG state without precomputing a hidden continuation.
+
+**Next after this PR:** design that resumable working-match authority and implement true
+live `Simulate Next Rally` first, then build Game / Rest-of-Match commands on the same
+state transition primitive.
 
 
 ## Active implementation — canonical Tournament Preparation State

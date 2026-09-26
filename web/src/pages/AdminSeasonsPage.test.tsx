@@ -23,6 +23,7 @@ const api = vi.hoisted(() => ({
   getEventDrawPackage: vi.fn(),
   generateEventDrawPackage: vi.fn(),
   getEventMatchPackage: vi.fn(),
+  getEventMatchReplayCursor: vi.fn(),
   generateEventMatchPackage: vi.fn(),
   simulateNextEventMatch: vi.fn(),
   simulateEventMatch: vi.fn(),
@@ -1046,6 +1047,74 @@ describe('AdminSeasonsPage', () => {
     await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
     await userEvent.click(screen.getByRole('button', { name: 'Simulate selected match' }))
     expect(api.simulateEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', { seed: 12345 })
+  })
+
+
+  it('navigates stored match replay with Step Back and Step Forward', async () => {
+    const replayMatchResult = {
+      ...simulatedMatchResult,
+      match_package: {
+        ...simulatedMatchResult.match_package,
+        main_draw_matches: [{
+          ...completedMatchRecord,
+          simulated_result: {
+            ...completedMatchRecord.simulated_result,
+            rally_log: { total_rallies: 2 }
+          }
+        }]
+      }
+    }
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
+    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
+    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue(replayMatchResult)
+    api.getEventMatchReplayCursor.mockImplementation(async (_eventId: string, _matchId: string, rallyIndex: number) => ({
+      event_id: 'EVT-2000-W01-wt_a',
+      match_id: 'm1',
+      rally_index: rallyIndex,
+      rally: {
+        rally_index: rallyIndex,
+        set_number: 1,
+        rally_in_set: rallyIndex,
+        serving_player_id: 'P-2000-AAA-0001',
+        winner_player_id: rallyIndex === 1 ? 'P-2000-AAA-0001' : 'P-2000-BBB-0002',
+        primary_terminal_trigger: 'GOOD_RETURN_UNANSWERED',
+        estimated_shot_count: 7,
+        elapsed_seconds: 9.5,
+        score_after: { player_a_id: 'P-2000-AAA-0001', player_b_id: 'P-2000-BBB-0002', sets_a: 0, sets_b: 0, points_a: rallyIndex === 1 ? 1 : 1, points_b: rallyIndex === 1 ? 0 : 1 },
+        post_rally_state: { set_complete: false, match_complete: false },
+        event_hash: 'a'.repeat(64),
+        previous_event_hash: 'b'.repeat(64)
+      },
+      navigation: {
+        total_rallies: 2,
+        rally_index: rallyIndex,
+        previous_rally_index: rallyIndex > 1 ? rallyIndex - 1 : null,
+        next_rally_index: rallyIndex < 2 ? rallyIndex + 1 : null,
+        at_start: rallyIndex === 1,
+        at_end: rallyIndex === 2
+      },
+      replay_source: 'stored_authoritative_events',
+      rng_rerun: false,
+      read_only: true,
+      verified: true
+    }))
+
+    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
+    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
+
+    expect(await screen.findByRole('heading', { name: 'Read-only Match Replay' })).toBeInTheDocument()
+    expect(await screen.findByText('1 / 2')).toBeInTheDocument()
+    expect(api.getEventMatchReplayCursor).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', 1)
+
+    await userEvent.click(screen.getByRole('button', { name: 'Step Forward' }))
+    expect(await screen.findByText('2 / 2')).toBeInTheDocument()
+    expect(api.getEventMatchReplayCursor).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', 2)
+    expect(screen.getByRole('button', { name: 'Step Forward' })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole('button', { name: 'Step Back' }))
+    expect(await screen.findByText('1 / 2')).toBeInTheDocument()
   })
 
 

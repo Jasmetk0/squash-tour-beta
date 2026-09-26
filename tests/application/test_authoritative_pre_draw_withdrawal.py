@@ -4,6 +4,9 @@ from __future__ import annotations
 
 import pytest
 
+from beta_engine.application.canonical_tournament_preparation import (
+    CanonicalTournamentPreparationService,
+)
 from beta_engine.application.authoritative_pre_draw_withdrawal import (
     CanonicalPreDrawWithdrawalCommand,
     CanonicalPreDrawWithdrawalService,
@@ -32,6 +35,9 @@ from beta_engine.infrastructure.db.models import (
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldConflict,
@@ -170,6 +176,77 @@ def _stage_initial(factory):
             ),
             command_id="initial-field",
         )
+
+
+@pytest.mark.pr_critical
+def test_preparation_state_tracks_pre_draw_repair_to_draw_ready(factory):
+    initial = _stage_initial(factory)
+    preparation = CanonicalTournamentPreparationService(factory)
+
+    before = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert before.phase == "draw_input_ready"
+    assert before.next_required_action == "review_pre_draw_or_commit_draw_input"
+    assert before.entry_field_fingerprint == initial.fingerprint
+    assert before.pre_draw_repair_open is True
+    assert before.can_apply_pre_draw_withdrawal is True
+    assert before.can_commit_draw_input is True
+    assert before.ready_for_match_schedule is False
+    assert before.authority_source == "run_owned_db_authorities.v1"
+
+    repaired = CanonicalPreDrawWithdrawalService(factory).execute(
+        CanonicalPreDrawWithdrawalCommand(
+            command_id="prep-withdraw-d",
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            expected_field_fingerprint=initial.fingerprint,
+            withdrawn_player_ids=("D",),
+        )
+    )
+    after_repair = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert after_repair.field_sequence == 2
+    assert after_repair.entry_field_fingerprint == repaired.field_fingerprint
+    assert after_repair.withdrawn_player_count == 1
+    assert after_repair.phase == "draw_input_ready"
+
+    with factory.begin() as session:
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="prep-draw-input",
+            draw_seed=5001,
+        )
+    input_ready = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert input_ready.phase == "draw_generation_ready"
+    assert input_ready.next_required_action == "generate_draw"
+    assert input_ready.draw_input_fingerprint == draw_input.fingerprint
+    assert input_ready.pre_draw_repair_open is False
+    assert input_ready.can_apply_pre_draw_withdrawal is False
+    assert input_ready.can_generate_draw is True
+
+    with factory.begin() as session:
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="event",
+            command_id="prep-draw",
+        )
+    ready = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert ready.phase == "draw_ready"
+    assert ready.next_required_action == "none"
+    assert ready.initial_draw_fingerprint == draw.fingerprint
+    assert ready.effective_draw_fingerprint == draw.fingerprint
+    assert ready.ready_for_match_schedule is True
+    assert ready.blockers == ()
 
 
 def test_main_withdrawal_promotes_q_and_backfills_from_frozen_inputs(factory):

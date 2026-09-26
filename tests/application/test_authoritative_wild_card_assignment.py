@@ -1,5 +1,8 @@
 import pytest
 
+from beta_engine.application.canonical_tournament_preparation import (
+    CanonicalTournamentPreparationService,
+)
 from beta_engine.application.authoritative_wild_card_assignment import (
     AuthoritativeWildCardAssignmentService,
     AuthoritativeWildCardCommitCommand,
@@ -368,6 +371,54 @@ def test_preview_cannot_overtake_unresolved_entry_slot(database):
             event_id="event",
             request=_request(),
         )
+
+
+@pytest.mark.pr_critical
+def test_preparation_state_blocks_draw_until_required_wc_review(database):
+    with database.begin() as session:
+        _install_world(session)
+
+    preparation = CanonicalTournamentPreparationService(database)
+    blocked = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert blocked.phase == "wild_card_review_required"
+    assert blocked.next_required_action == "review_wild_cards"
+    assert blocked.blockers == ("tournament_wild_card_review_required",)
+    assert blocked.wild_card_required is True
+    assert blocked.wild_card_ready is False
+    assert blocked.can_review_wild_cards is True
+    assert blocked.can_commit_draw_input is False
+
+    service = AuthoritativeWildCardAssignmentService(database)
+    request = _request()
+    preview = service.preview(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        request=request,
+    )
+    committed = service.commit(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        command=AuthoritativeWildCardCommitCommand(
+            **request.model_dump(),
+            expected_week=preview.week,
+            expected_revision_id=preview.expected_revision_id,
+            expected_decision_slot_ordinal=preview.decision_slot_ordinal,
+            expected_proposal_fingerprint=preview.proposal_fingerprint,
+        ),
+    )
+    after_wc = preparation.inspect(
+        run_id="run", branch_id="branch", event_id="event"
+    )
+    assert after_wc.phase == "draw_input_ready"
+    assert after_wc.blockers == ()
+    assert after_wc.wild_card_ready is True
+    assert after_wc.wild_card_authority_fingerprint == committed.authority.fingerprint
+    assert after_wc.active_wild_card_player_ids == ("PROSPECT",)
+    assert after_wc.can_commit_draw_input is True
 
 
 @pytest.mark.pr_critical

@@ -98,6 +98,11 @@ from beta_engine.domain.matches.timing import (
     RestartDecisionFactor,
     RestartIntent,
 )
+from beta_engine.domain.matches.working_state import (
+    MatchRallyStepOutcome,
+    MatchRallyWorkingState,
+    MatchWorkingInput,
+)
 
 __all__ = [
     "OFFICIAL_MATCH_FORMAT",
@@ -122,11 +127,14 @@ __all__ = [
     "MatchInputSnapshot",
     "MatchParticipantContext",
     "MatchRallyLog",
+    "MatchRallyStepOutcome",
+    "MatchRallyWorkingState",
     "MatchResult",
     "MatchStaminaLog",
     "MatchTerminationReason",
     "MatchTimelineLog",
     "MatchTimingOverride",
+    "MatchWorkingInput",
     "ObjectiveDelayEvent",
     "OfficialRallyCall",
     "OpponentStyleEstimate",

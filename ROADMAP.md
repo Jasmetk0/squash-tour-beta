@@ -1,18 +1,20 @@
 # Squash Engine roadmap
 
-## Active pre-alpha sequence — read-only Match Replay step navigation
+## Active pre-alpha sequence — resumable live match simulation
 
-1. Keep the authoritative completed-match rally log as the only Replay sporting truth.
-2. Expose a read-only rally cursor with first/previous/next/last navigation.
-3. Reuse existing replay integrity verification; never rerun RNG while navigating.
-4. Surface Master-decided `Step Back / Step Forward` in Admin Event Matches with
-   rally score, server, winner/call, terminal cause, duration, shots and completion
-   state.
-5. Cover both cursor boundaries and an explicit no-`MatchEngine.simulate` guarantee.
-6. Next: add a persisted working-match authority for true
-   `Simulate Next Rally`, then compose `Simulate Game` and
-   `Simulate Rest of Match` from the same resumable transition model. Do not fake
-   live stepping by precomputing a whole match and revealing prefixes.
+1. Freeze one immutable `MatchWorkingInput` before Rally 1.
+2. Persist all dynamic truth needed to resume exactly at the next rally in
+   `MatchRallyWorkingState`.
+3. Implement one deterministic `simulate_next_rally` transition that computes no
+   future rally.
+4. Prove rally-by-rally JSON serialize/reopen is byte-equivalent to existing full-match
+   simulation, including probabilistic set-start retirement.
+5. Next: store frozen input + working state in canonical Run/Branch persistence with
+   idempotent commands and expose Admin `Simulate Next Rally`.
+6. Then implement `Simulate Game` and `Simulate Rest of Match` only as repeated
+   execution of the same persisted next-rally primitive.
+7. Keep completed-match `Step Back / Step Forward` Replay read-only and separate from
+   live forward simulation.
 
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation

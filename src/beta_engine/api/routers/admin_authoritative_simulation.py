@@ -944,6 +944,30 @@ def restore_live_match_return_point(
         ) from exc
 
 
+@router.get("/match-replays")
+def list_match_replays(
+    run_id: str,
+    branch_id: str,
+    limit: int = 20,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).list_authoritative_match_replays(
+            run_id=run_id,
+            branch_id=branch_id,
+            limit=limit,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "authoritative_match_replay_list_conflict", "message": str(exc)},
+        ) from exc
+
+
 @router.get("/match-replay")
 def get_match_replay(
     run_id: str,

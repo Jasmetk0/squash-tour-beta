@@ -739,7 +739,7 @@ describe('AdminSeasonsPage', () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findAllByText('READ-ONLY')).not.toHaveLength(0)
-    expect(screen.getByText(/Range preflight is read-only/)).toBeInTheDocument()
+    expect(screen.getByText(/Range preflight is global legacy season tooling/)).toBeInTheDocument()
     expect(screen.getAllByText('MUTATING').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/No rollback is implemented/).length).toBeGreaterThan(0)
   })

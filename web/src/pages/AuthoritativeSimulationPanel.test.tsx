@@ -1726,6 +1726,17 @@ describe('AuthoritativeSimulationPanel', () => {
   })
 
   it('navigates completed authoritative replay with Step Back and Step Forward without simulation mutations', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
     api.listAuthoritativeMatchReplays.mockResolvedValue({
       schema_version: 'authoritative_match_replay_list.v1',
       run_id: 'run-a',

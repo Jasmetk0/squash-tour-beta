@@ -139,6 +139,7 @@ import type {
   AuthoritativeSimulationCommandPayload,
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
+  AuthoritativeLiveMatchInspection,
   AuthoritativeLiveRangePayload,
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchDayPreview,
@@ -1584,6 +1585,26 @@ export async function simulateAuthoritativeNextRally(
   verifyAuthoritativeSimulationScope(runId, branchId, data.position)
   if (data.schema_version !== 'authoritative_next_rally_result.v1') {
     throw new Error('Authoritative Next Rally response is invalid.')
+  }
+  return data
+}
+
+export async function inspectAuthoritativeLiveMatch(
+  runId: string,
+  branchId: string,
+  groupId: string
+): Promise<AuthoritativeLiveMatchInspection> {
+  const data = await request<AuthoritativeLiveMatchInspection>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/live-match?group_id=' +
+      encodeURIComponent(groupId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_live_match_inspection.v1' ||
+    data.group_id !== groupId
+  ) {
+    throw new Error('Authoritative live match inspection response is invalid.')
   }
   return data
 }

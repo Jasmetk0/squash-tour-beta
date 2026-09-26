@@ -7934,6 +7934,7 @@ def test_authoritative_next_rally_matches_normal_full_match_and_commits_only_at_
             group_id=group_id,
         )
     )
+    assert first["schema_version"] == "authoritative_next_rally_result.v1"
     assert first["authoritative_group_committed"] is False
     assert first["status"] == "active"
     assert first["rally"] is not None
@@ -8170,3 +8171,191 @@ def test_simulate_game_can_finish_match_without_overshooting(tmp_path):
     assert result["authoritative_group_committed"] is True
     with factory() as session:
         assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 1
+
+
+@pytest.mark.pr_critical
+def test_live_range_reopens_after_mid_game_child_commit_without_duplicate_rally(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "range-mid-fault")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    command = AuthoritativeLiveRangeCommand(
+        command_id="resume-game",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+    )
+
+    with pytest.raises(RuntimeError, match="child 7"):
+        driver.simulate_game(command, fault_after_child=7)
+
+    with factory() as session:
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert parent is not None
+        assert parent.status == "pending"
+        child_rows = session.scalars(
+            select(AuthoritativeSimulationCommandModel).where(
+                AuthoritativeSimulationCommandModel.run_id == "run",
+                AuthoritativeSimulationCommandModel.branch_id == "branch",
+                AuthoritativeSimulationCommandModel.command_id.like("game-rally:%"),
+            )
+        ).all()
+        assert len(child_rows) == 7
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+        live = session.scalar(select(LiveMatchWorkingModel))
+        assert live is not None
+        state_after_fault = live.state_fingerprint
+
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    resumed = reopened.simulate_game(command)
+    assert resumed["rallies_simulated"] >= 7
+    assert resumed["idempotent_replay"] is False
+
+    with factory() as session:
+        child_rows = session.scalars(
+            select(AuthoritativeSimulationCommandModel).where(
+                AuthoritativeSimulationCommandModel.run_id == "run",
+                AuthoritativeSimulationCommandModel.branch_id == "branch",
+                AuthoritativeSimulationCommandModel.command_id.like("game-rally:%"),
+            )
+        ).all()
+        assert len(child_rows) == resumed["rallies_simulated"]
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+        live = session.scalar(select(LiveMatchWorkingModel))
+        assert live is not None
+        assert live.state_fingerprint != state_after_fault
+
+    retry = reopened.simulate_game(command)
+    assert retry["idempotent_replay"] is True
+    assert retry["child_command_ids"] == resumed["child_command_ids"]
+    assert retry["state_fingerprint"] == resumed["state_fingerprint"]
+
+
+@pytest.mark.pr_critical
+def test_rest_of_match_reopens_after_terminal_child_before_parent_receipt(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "range-terminal-fault")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    command = AuthoritativeLiveRangeCommand(
+        command_id="resume-rest",
+        run_id="run",
+        branch_id="branch",
+        expected_week=week,
+        expected_position_fingerprint=opening.position_fingerprint,
+        expected_revision_id="revision",
+        group_id=group_id,
+    )
+
+    with pytest.raises(
+        RuntimeError,
+        match="terminal live-range child before parent completion",
+    ):
+        driver.simulate_rest_of_match(
+            command,
+            fault_after_terminal_child=True,
+        )
+
+    with factory() as session:
+        parent = session.get(
+            AuthoritativeSimulationCommandModel,
+            ("run", "branch", command.command_id),
+        )
+        assert parent is not None
+        assert parent.status == "pending"
+        groups = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(groups) == 1
+        committed_result_fp = groups[0].result_fingerprint
+        child_count_before = len(
+            session.scalars(
+                select(AuthoritativeSimulationCommandModel).where(
+                    AuthoritativeSimulationCommandModel.run_id == "run",
+                    AuthoritativeSimulationCommandModel.branch_id == "branch",
+                    AuthoritativeSimulationCommandModel.command_id.like(
+                        "rest_of_match-rally:%"
+                    ),
+                )
+            ).all()
+        )
+        assert child_count_before > 0
+
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    resumed = reopened.simulate_rest_of_match(command)
+    assert resumed["status"] == "complete"
+    assert resumed["authoritative_group_committed"] is True
+    assert resumed["authoritative_result_fingerprint"] == committed_result_fp
+    assert resumed["rallies_simulated"] == child_count_before
+
+    with factory() as session:
+        groups = session.scalars(select(SimulationEventGroupModel)).all()
+        assert len(groups) == 1
+        assert groups[0].result_fingerprint == committed_result_fp
+        child_count_after = len(
+            session.scalars(
+                select(AuthoritativeSimulationCommandModel).where(
+                    AuthoritativeSimulationCommandModel.run_id == "run",
+                    AuthoritativeSimulationCommandModel.branch_id == "branch",
+                    AuthoritativeSimulationCommandModel.command_id.like(
+                        "rest_of_match-rally:%"
+                    ),
+                )
+            ).all()
+        )
+        assert child_count_after == child_count_before
+
+    retry = reopened.simulate_rest_of_match(command)
+    assert retry["idempotent_replay"] is True
+    assert retry["rallies_simulated"] == child_count_before
+
+
+@pytest.mark.pr_critical
+def test_live_match_inspection_is_read_only_and_survives_driver_reopen(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "live-inspection")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+
+    first = driver.simulate_next_rally(
+        AuthoritativeNextRallyCommand(
+            command_id="inspect-rally",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    assert first["status"] == "active"
+
+    with factory() as session:
+        before_commands = len(
+            session.scalars(select(AuthoritativeSimulationCommandModel)).all()
+        )
+        before_groups = len(session.scalars(select(SimulationEventGroupModel)).all())
+
+    reopened = AuthoritativeRunSimulationDriver(
+        factory, driver.match_service, driver.awards_service
+    )
+    inspected = reopened.inspect_live_match(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    assert inspected["present"] is True
+    assert inspected["live"]["state_fingerprint"] == first["state_fingerprint"]
+    assert inspected["live"]["rally_index"] == first["rally_index"]
+    assert inspected["live"]["set_number"] == first["set_number"]
+    assert inspected["live"]["games_a"] == first["games_a"]
+    assert inspected["live"]["games_b"] == first["games_b"]
+
+    with factory() as session:
+        assert len(session.scalars(select(AuthoritativeSimulationCommandModel)).all()) == before_commands
+        assert len(session.scalars(select(SimulationEventGroupModel)).all()) == before_groups

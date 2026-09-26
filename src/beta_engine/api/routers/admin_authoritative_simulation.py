@@ -859,6 +859,33 @@ def simulate_standalone_match(
         ) from exc
 
 
+@router.get("/live-match")
+def inspect_live_match(
+    run_id: str,
+    branch_id: str,
+    group_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_live_match(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_live_match_inspection_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.post("/simulate-game")
 def simulate_game(
     run_id: str,

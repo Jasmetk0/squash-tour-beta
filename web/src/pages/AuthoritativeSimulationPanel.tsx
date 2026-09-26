@@ -21,6 +21,7 @@ import {
   proposeAuthoritativeWeekSchedule,
   previewAuthoritativeWeekSchedule,
   saveAuthoritativeSimulation,
+  inspectAuthoritativeLiveMatch,
   simulateAuthoritativeNextRally,
   simulateAuthoritativeGame,
   simulateAuthoritativeRestOfMatch,
@@ -308,6 +309,13 @@ export function AuthoritativeSimulationPanel({
     preview: WeekTournamentLockPreview
   } | null>(null)
 
+  const liveMatchQuery = useQuery({
+    queryKey: ['authoritative-live-match', runId, branchId, selectedGroupId],
+    queryFn: () => inspectAuthoritativeLiveMatch(runId, branchId, selectedGroupId),
+    enabled: enabled && Boolean(selectedGroupId),
+    retry: false
+  })
+
   const weekLockQuery = useQuery({
     queryKey: ['authoritative-week-tournament-lock', runId, branchId],
     queryFn: () => inspectWeekTournamentLock(runId, branchId),
@@ -536,6 +544,42 @@ export function AuthoritativeSimulationPanel({
   }, [runId, branchId, savedRevisionId])
 
   useEffect(() => {
+    const persisted = liveMatchQuery.data?.live
+    if (!persisted || persisted.status !== 'active') {
+      return
+    }
+    setLiveRallyStateFingerprint(persisted.state_fingerprint)
+    setLiveRallyResult({
+      schema_version: 'authoritative_next_rally_result.v1',
+      run_id: runId,
+      branch_id: branchId,
+      week: liveMatchQuery.data!.week,
+      slot_id: persisted.slot_id,
+      group_id: persisted.group_id,
+      match_id: persisted.match_id,
+      status: persisted.status,
+      working_input_fingerprint: persisted.working_input_fingerprint,
+      state_fingerprint: persisted.state_fingerprint,
+      rally_index: persisted.rally_index,
+      set_number: persisted.set_number,
+      games_a: persisted.games_a,
+      games_b: persisted.games_b,
+      final_result_fingerprint: persisted.final_result_fingerprint,
+      final_result: persisted.final_result,
+      idempotent_replay: false,
+      rally: null,
+      authoritative_group_committed: false,
+      position: positionQuery.data!
+    })
+  }, [
+    liveMatchQuery.data?.live?.state_fingerprint,
+    liveMatchQuery.data?.present,
+    positionQuery.data?.position_fingerprint,
+    runId,
+    branchId
+  ])
+
+  useEffect(() => {
     const inspection = weekLockQuery.data
     setWeekLockReview(null)
     setWeekLockCommandId(newCommandId())
@@ -623,6 +667,7 @@ export function AuthoritativeSimulationPanel({
   async function refreshCanonicalSimulation(): Promise<void> {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-position', runId, branchId] }),
+      queryClient.invalidateQueries({ queryKey: ['authoritative-live-match', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-week-schedule-preflight', runId, branchId] }),
       queryClient.invalidateQueries({ queryKey: ['authoritative-simulation-save-preview', runId, branchId] }),

@@ -37,6 +37,7 @@ from beta_engine.application.final_season_transition import (
     FinalSeasonTransitionResult,
     commit_final_season_transition,
 )
+from beta_engine.infrastructure.db.live_match_state import PersistedLiveMatchStore
 from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     ACTIVE_FULL_SIMULATION_GUARD,
     FullSimulationExecutionGuard,
@@ -2805,6 +2806,58 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
             return payload
 
+    def inspect_live_match(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+    ) -> dict:
+        """Read the persisted current live state without advancing simulation."""
+
+        from beta_engine.infrastructure.db.models import LiveMatchWorkingModel
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            week = self._current_week(session, run_id, branch_id)
+            rows = session.scalars(
+                select(LiveMatchWorkingModel).where(
+                    LiveMatchWorkingModel.run_id == run_id,
+                    LiveMatchWorkingModel.branch_id == branch_id,
+                    LiveMatchWorkingModel.week_ordinal == week.ordinal,
+                    LiveMatchWorkingModel.group_id == group_id,
+                )
+            ).all()
+            if not rows:
+                return {
+                    "schema_version": "authoritative_live_match_inspection.v1",
+                    "run_id": run_id,
+                    "branch_id": branch_id,
+                    "week": week.model_dump(mode="json"),
+                    "group_id": group_id,
+                    "present": False,
+                    "live": None,
+                }
+            if len(rows) != 1:
+                raise ValueError("live match group identity is ambiguous")
+            row = rows[0]
+            live = PersistedLiveMatchStore(session).inspect(
+                run_id=run_id,
+                branch_id=branch_id,
+                week_ordinal=week.ordinal,
+                slot_id=row.slot_id,
+                group_id=group_id,
+            )
+            return {
+                "schema_version": "authoritative_live_match_inspection.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week": week.model_dump(mode="json"),
+                "group_id": group_id,
+                "present": True,
+                "live": live,
+            }
+
     def simulate_next_rally(self, command: AuthoritativeNextRallyCommand) -> dict:
         """Advance one real rally inside the current authoritative Simulation Slot."""
 
@@ -2897,6 +2950,7 @@ class AuthoritativeRunSimulationDriver:
                 self._advance_or_close(session, command, packages)
             after = self._position(session, command.run_id, command.branch_id)
             payload = {
+                **step,
                 "schema_version": "authoritative_next_rally_result.v1",
                 "run_id": command.run_id,
                 "branch_id": command.branch_id,
@@ -2905,7 +2959,6 @@ class AuthoritativeRunSimulationDriver:
                 "group_id": command.group_id,
                 "match_id": event.match_id,
                 "position": after.model_dump(mode="json"),
-                **step,
             }
             payload["idempotent_replay"] = False
             session.add(
@@ -2937,6 +2990,8 @@ class AuthoritativeRunSimulationDriver:
         command: AuthoritativeLiveRangeCommand,
         *,
         mode: Literal["game", "rest_of_match"],
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
     ) -> dict:
         request_fp = fingerprint(
             {"mode": mode, "command": command.model_dump(mode="json")}
@@ -3033,25 +3088,61 @@ class AuthoritativeRunSimulationDriver:
                 mode=mode,
                 child_ordinal=child_ordinal,
             )
-            position = self.position(
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-            )
-            child = AuthoritativeNextRallyCommand(
-                command_id=child_id,
-                run_id=command.run_id,
-                branch_id=command.branch_id,
-                expected_week=command.expected_week,
-                expected_position_fingerprint=position.position_fingerprint,
-                expected_revision_id=command.expected_revision_id,
-                group_id=command.group_id,
-                expected_live_state_fingerprint=expected_live_state,
-            )
-            last = self.simulate_next_rally(child)
+
+            # Resume consumes already-committed child receipts as immutable facts.
+            # Do not reconstruct/re-submit their original CAS request: after later
+            # children commit, the current live fingerprint necessarily differs.
+            with self.factory() as session:
+                existing_child = session.get(
+                    AuthoritativeSimulationCommandModel,
+                    (command.run_id, command.branch_id, child_id),
+                )
+                if existing_child is not None:
+                    if existing_child.status != "complete":
+                        raise ValueError(
+                            "live-range child receipt exists but is not complete"
+                        )
+                    last = json.loads(existing_child.result_json)
+                    if (
+                        last.get("schema_version")
+                        != "authoritative_next_rally_result.v1"
+                        or last.get("run_id") != command.run_id
+                        or last.get("branch_id") != command.branch_id
+                        or last.get("group_id") != command.group_id
+                    ):
+                        raise ValueError(
+                            "live-range child receipt identity does not match parent"
+                        )
+                    last["idempotent_replay"] = True
+                else:
+                    position = self.position(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                    )
+                    child = AuthoritativeNextRallyCommand(
+                        command_id=child_id,
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        expected_week=command.expected_week,
+                        expected_position_fingerprint=position.position_fingerprint,
+                        expected_revision_id=command.expected_revision_id,
+                        group_id=command.group_id,
+                        expected_live_state_fingerprint=expected_live_state,
+                    )
+                    last = self.simulate_next_rally(child)
+
             child_ids.append(child_id)
             expected_live_state = last["state_fingerprint"]
 
+            if fault_after_child == child_ordinal:
+                raise RuntimeError(
+                    f"fault after committed live-range child {child_ordinal}"
+                )
             if last["status"] == "complete":
+                if fault_after_terminal_child:
+                    raise RuntimeError(
+                        "fault after terminal live-range child before parent completion"
+                    )
                 break
             if mode == "game" and last["set_number"] != start_set_number:
                 break
@@ -3106,15 +3197,35 @@ class AuthoritativeRunSimulationDriver:
             session.flush()
         return payload
 
-    def simulate_game(self, command: AuthoritativeLiveRangeCommand) -> dict:
+    def simulate_game(
+        self,
+        command: AuthoritativeLiveRangeCommand,
+        *,
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
+    ) -> dict:
         """Simulate only the remainder of the currently active squash game."""
-        return self._simulate_live_range(command, mode="game")
+        return self._simulate_live_range(
+            command,
+            mode="game",
+            fault_after_child=fault_after_child,
+            fault_after_terminal_child=fault_after_terminal_child,
+        )
 
     def simulate_rest_of_match(
-        self, command: AuthoritativeLiveRangeCommand
+        self,
+        command: AuthoritativeLiveRangeCommand,
+        *,
+        fault_after_child: int | None = None,
+        fault_after_terminal_child: bool = False,
     ) -> dict:
         """Simulate the remainder of the match strictly as Next Rally children."""
-        return self._simulate_live_range(command, mode="rest_of_match")
+        return self._simulate_live_range(
+            command,
+            mode="rest_of_match",
+            fault_after_child=fault_after_child,
+            fault_after_terminal_child=fault_after_terminal_child,
+        )
 
     def simulate_next_match(self, command: AuthoritativeSimulationCommand):
         return self._mutate(command, mode="match")

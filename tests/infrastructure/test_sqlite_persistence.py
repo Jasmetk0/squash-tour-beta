@@ -83,6 +83,8 @@ def test_database_bootstrap_creates_required_tables(tmp_path) -> None:
         "player_sporting_week_states",
         "published_official_rankings",
         "simulation_event_groups",
+        "live_match_working_states",
+        "live_match_rally_commands",
         "simulation_slots",
         "week_simulation_schedules",
     } <= set(repository.list_table_names())

@@ -5556,6 +5556,27 @@ export type MatchReplayResponse = {
   verified: true
 }
 
+export type MatchReplayCursorNavigation = {
+  total_rallies: number
+  rally_index: number
+  previous_rally_index: number | null
+  next_rally_index: number | null
+  at_start: boolean
+  at_end: boolean
+}
+
+export type MatchReplayCursorResponse = {
+  event_id: string
+  match_id: string
+  rally_index: number
+  rally: RallyEvent
+  navigation: MatchReplayCursorNavigation
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
 export type SeasonMatchRecord = {
   match_id: string
   event_id: string

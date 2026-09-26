@@ -1,5 +1,19 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — canonical tournament preparation navigation
+
+1. Compose Ranking Snapshot → Entry Field → WC/RWC → pre-draw repair → Draw Input →
+   Draw into one Run-owned preparation read model.
+2. Surface deterministic blocker codes and one next required Admin action.
+3. Keep preparation inspection independent of every legacy Entry/Draw/WC/pre-draw
+   file-backed registry.
+4. Cover both required-WC and pre-draw-withdrawal branches in PR-critical tests.
+5. Prove the main §31.3 release gate reports the same preparation state after legacy
+   tournament-preparation/result backends are removed.
+6. Next: drive authoritative Week Schedule/preflight readiness from this canonical
+   preparation state and remove duplicate legacy readiness inference where safe.
+
+
 ## Active pre-alpha sequence — canonical result/ranking source ownership
 
 1. Package-backed tournament close may only emit canonical Run-owned result/award

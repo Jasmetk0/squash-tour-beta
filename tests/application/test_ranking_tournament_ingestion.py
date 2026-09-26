@@ -625,6 +625,54 @@ def test_empty_corrections_keep_legacy_command_fingerprint(packages, database):
     assert command.fingerprint == expected
 
 
+@pytest.mark.pr_critical
+def test_package_backed_ranking_command_refuses_legacy_result_award_adoption(
+    packages, database
+):
+    from beta_engine.domain.run_packages import (
+        AppliedPackageVersion,
+        PackageType,
+        RunPackageState,
+    )
+    from beta_engine.infrastructure.db.ranking_week_command import (
+        RankingWeekCommandRunner,
+    )
+    from beta_engine.infrastructure.db.run_package_state import put_run_package_state
+
+    request = ranking_command(packages, database)
+    with database.begin() as session:
+        put_run_package_state(
+            session,
+            RunPackageState(
+                run_id="run",
+                branch_id="branch",
+                entities=(),
+                package_versions=(
+                    AppliedPackageVersion(
+                        package_type=PackageType.WORLD,
+                        package_id="world",
+                        source_version=1,
+                        source_fingerprint="1" * 64,
+                        document_explicit_scope=(),
+                        applied_entity_ids=(),
+                        provenance={"test": "package-backed ownership fence"},
+                    ),
+                ),
+            ),
+        )
+
+    # Legacy files still exist and are valid, but Package-backed ranking is not
+    # allowed to adopt them when its owned tournament source is missing.
+    with pytest.raises(
+        ValueError,
+        match="Package-backed ranking transition requires an owned canonical tournament source",
+    ):
+        RankingWeekCommandRunner(database, packages[0]).execute(request)
+
+    with database() as session:
+        assert_only_bootstrap(session)
+
+
 def test_tournament_command_requires_award_service_before_writing(packages, database):
     from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
 

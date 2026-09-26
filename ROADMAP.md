@@ -1,5 +1,22 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — remove authoritative player-file ownership
+
+1. Generalize the Run-owned Entry roster from Season 0 to every RankingWeek.
+2. Project current 57-attribute sporting truth into the old seven-attribute Entry DTO
+   only as a versioned compatibility adapter.
+3. Resolve original identities from InitialWorld and later prospect identities from
+   immutable RunProspect metadata; validate prospect profile evidence fail-closed.
+4. Keep AI Entry and explicit Admin Entry as two producers of the same Run-owned Entry
+   slot authority.
+5. Inject the Run-owned roster into legacy-topology tournament close so authoritative
+   award projection no longer reads `season_active_players.json`.
+6. Prove Season-1 Week-1 reconstruction after deleting the legacy registry in the main
+   Master §31.3 acceptance.
+7. Next audit: remaining authoritative mutable Calendar/template/result registry reads,
+   then migrate the largest coherent chain observed.
+
+
 ## Active pre-alpha sequence — Run-owned Entry evidence
 
 1. Project the first-season Entry AI roster from Run-owned InitialWorld + lifecycle +

@@ -487,6 +487,7 @@ def build_authoritative_tournament_ranking_packages(
     result_seed: int,
     award_seed: int,
     frozen_point_authority: FrozenPointAwardAuthority | None = None,
+    active_players_service=None,
 ) -> tuple[SeasonEventMatchPackage, SeasonEventResultPackage, EventPointAwardPackage]:
     """Reuse legacy completion/award builders without using global files as scratch.
 
@@ -537,7 +538,11 @@ def build_authoritative_tournament_ranking_packages(
     )
     award_builder = _ReadOnlyPointAwardsBuilder(
         result_service=cast(Any, result_reader),
-        active_players_service=service.active_players_service,
+        active_players_service=(
+            active_players_service
+            if active_players_service is not None
+            else service.active_players_service
+        ),
         calendar_service=service.calendar_service,
         template_service=service.template_service,
         awards_path=Path(".authoritative-award-builder-read-only"),

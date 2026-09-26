@@ -38,6 +38,7 @@ from beta_engine.infrastructure.db.full_simulation_execution_guard import (
     FullSimulationExecutionGuard,
 )
 from beta_engine.application.initial_world import InitialWorldState
+from beta_engine.application.run_owned_entry_roster import RunOwnedEntryRosterService
 from beta_engine.application.season_point_awards_service import FrozenPointAwardAuthority
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.application.ranking_tournament_ingestion import (
@@ -59,6 +60,9 @@ from beta_engine.domain.players.lifecycle import (
 )
 from beta_engine.domain.players.initial_pool import GeneratedPlayerAttributes
 from beta_engine.domain.players.models import HiddenCareerTraits
+from beta_engine.domain.players.prospect_sporting_profile import (
+    materialize_prospect_sporting_profile,
+)
 from beta_engine.domain.players.sporting import (
     PlayerDevelopmentPolicy,
     PlayerSportingRecord,
@@ -114,7 +118,9 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeSimulationCommandModel,
     AuthoritativeWorldStateModel,
     PlayerLifecycleWeekStateModel,
+    PlayerSportingWeekStateModel,
     PublishedOfficialRankingModel,
+    RunProspectModel,
     SimulationEventGroupModel,
     SimulationSlotModel,
     WeekSimulationScheduleModel,
@@ -359,6 +365,173 @@ def session_at(
     )
     session.commit()
     return session
+
+
+@pytest.mark.pr_critical
+def test_run_owned_entry_roster_projects_later_season_prospect_from_owned_state(tmp_path):
+    week = RankingWeek(season_index=1, week=1)
+    session = session_at(tmp_path / "entry-roster-season-two.sqlite", week=week)
+    lifecycle = get_lifecycle(
+        session, run_id="run", branch_id="branch", week=week
+    )
+    sporting = get_sporting(
+        session, run_id="run", branch_id="branch", week=week
+    )
+    assert lifecycle is not None and sporting is not None
+
+    position = season_week_to_calendar_position(2001, 1)
+    prospect_id = "prospect-s1-w1"
+    birth_year = position.calendar_year - 15
+    birth_week = position.year_week
+    canonical = materialize_prospect_sporting_profile(
+        player_id=prospect_id,
+        profile_seed="entry-profile-seed",
+        development_seed="entry-development-seed",
+        potential_seed="entry-potential-seed",
+    )
+    profile_payload = {
+        "canonical_sporting_profile": canonical.model_dump(mode="json"),
+        "canonical_sporting_profile_fingerprint": canonical.fingerprint,
+    }
+    development_payload = {
+        "development_timing": canonical.development_timing,
+        "source_development_seed_digest": canonical.source_development_seed_digest,
+        "sporting_profile_fingerprint": canonical.fingerprint,
+    }
+    potential_payload = {
+        "potential_ovr": canonical.potential_ovr,
+        "potential_identity": canonical.potential_identity,
+        "potential_provenance": canonical.potential_provenance,
+        "source_potential_seed_digest": canonical.source_potential_seed_digest,
+        "sporting_profile_fingerprint": canonical.fingerprint,
+    }
+    session.add(
+        RunProspectModel(
+            prospect_id=prospect_id,
+            run_id="run",
+            world_id="official_fax_world",
+            season_start_year=2001,
+            season_label="2001/2002",
+            season_week=1,
+            calendar_year=position.calendar_year,
+            year_week=position.year_week,
+            birth_year=birth_year,
+            birth_year_week=birth_week,
+            age=15,
+            country_code="EGY",
+            country_name="Egypt",
+            status="prospect",
+            source_type="weekly_15yo_cohort",
+            cohort_policy_version="weekly_15yo_cohort_v1",
+            profile_version="prospect_profile_v1",
+            display_name="EGY Prospect 0001",
+            short_name="EGY Prospect 0001",
+            identity_seed="entry-identity-seed",
+            profile_seed="entry-profile-seed",
+            development_seed="entry-development-seed",
+            potential_seed="entry-potential-seed",
+            trait_seed="entry-trait-seed",
+            profile_json=json.dumps(profile_payload),
+            development_json=json.dumps(development_payload),
+            potential_json=json.dumps(potential_payload),
+            trait_json=json.dumps({"reserved_for_future_traits": True}),
+        )
+    )
+
+    session.delete(
+        session.get(
+            PlayerLifecycleWeekStateModel,
+            ("run", "branch", week.ordinal),
+        )
+    )
+    session.delete(
+        session.get(
+            PlayerSportingWeekStateModel,
+            ("run", "branch", week.ordinal),
+        )
+    )
+    session.flush()
+
+    prospect_age = age_at_calendar_position(
+        birth_year=birth_year,
+        birth_year_week=birth_week,
+        calendar_year=position.calendar_year,
+        year_week=position.year_week,
+    )
+    next_lifecycle = lifecycle.model_copy(
+        update={
+            "players": tuple(
+                sorted(
+                    (
+                        *lifecycle.players,
+                        PlayerLifecycleIdentity(
+                            player_id=prospect_id,
+                            birth_year=birth_year,
+                            birth_year_week=birth_week,
+                            tie_break_token="prospect-entry-token",
+                            tie_break_provenance="run prospect Entry roster test",
+                            tour_entry_week=None,
+                            age=prospect_age,
+                            status="active",
+                            origin="run_prospect:weekly_15yo_cohort:prospect_profile_v1",
+                        ),
+                    ),
+                    key=lambda player: player.player_id,
+                )
+            )
+        }
+    )
+    put_lifecycle(session, next_lifecycle)
+
+    prospect_sporting = PlayerSportingRecord(
+        player_id=prospect_id,
+        attributes=canonical.attributes,
+        potential_ovr=canonical.potential_ovr,
+        potential_identity=canonical.potential_identity,
+        potential_provenance=canonical.potential_provenance,
+        development_timing=canonical.development_timing,
+        current_form=100,
+        long_term_form_norm=100,
+        match_sharpness=100,
+        long_term_fatigue=0,
+    )
+    next_sporting = sporting.model_copy(
+        update={
+            "players": tuple(
+                sorted(
+                    (*sporting.players, prospect_sporting),
+                    key=lambda player: player.player_id,
+                )
+            )
+        }
+    )
+    put_sporting(session, next_sporting)
+    session.commit()
+
+    roster = RunOwnedEntryRosterService(
+        session=session,
+        run_id="run",
+        branch_id="branch",
+        week=week,
+    ).get_active_players(season="2001/2002")
+    by_id = {player.player_id: player for player in roster.players}
+    assert set(by_id) == {"a", "b", "c", "d", prospect_id}
+
+    prospect = by_id[prospect_id]
+    assert prospect.name == "EGY Prospect 0001"
+    assert prospect.country_code == "EGY"
+    assert prospect.source_generation == "annual_intake"
+    assert prospect.age_years_at_season_start == 15
+    assert prospect.current_ability == max(
+        1, min(99, round(prospect_sporting.ovr * 99 / 200))
+    )
+    assert prospect.potential_ability == max(
+        prospect.current_ability,
+        max(1, min(99, round(canonical.potential_ovr * 99 / 200))),
+    )
+    assert prospect.attributes.technique != 0
+    assert prospect.bootstrap_fingerprint
+    assert by_id["a"].season == "2001/2002"
 
 
 def run_semifinals(path: Path, order: tuple[str, str]):
@@ -717,6 +890,14 @@ def test_driver_split_then_next_slot_closes_once_and_rejects_stale(tmp_path):
             AuthoritativeSimulationCommandModel,
             ("run", "branch", final.command_id),
         ) is None
+
+    # Remove the legacy active-player registry before the legacy-topology close.
+    # The authoritative driver must inject its Run-owned lifecycle/sporting roster
+    # into the read-only award projection instead of reading global player files.
+    legacy_players = service.active_players_service._load_registry()
+    legacy_players.players_by_season.clear()
+    legacy_players.bootstrap_metadata_by_season.clear()
+    service.active_players_service._save_registry(legacy_players)
 
     replacement_final = final.model_copy(update={"command_id": "final-replacement"})
     closed = driver.simulate_next_slot(replacement_final)

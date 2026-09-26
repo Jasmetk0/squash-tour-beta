@@ -136,6 +136,28 @@ def prospect_bridge(
         ) from exc
 
 
+@router.get("/entry-roster")
+def inspect_entry_roster(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).inspect_entry_roster(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "entry_roster_inspection_conflict", "message": str(exc)},
+        ) from exc
+
+
 @router.post("/entry-decision-slot/review", status_code=201)
 def review_entry_decision_slot(
     run_id: str,

@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -44,6 +44,7 @@ export function AdminSeasonsPage(): JSX.Element {
   const [matchDryRun, setMatchDryRun] = useState(true)
   const [matchOverwriteExisting, setMatchOverwriteExisting] = useState(false)
   const [selectedMatchId, setSelectedMatchId] = useState('')
+  const [replayRallyIndex, setReplayRallyIndex] = useState(1)
   const [matchResult, setMatchResult] = useState<SeasonEventMatchPackageResult | null>(null)
   const [progressionResult, setProgressionResult] = useState<ProgressionCommandResult | null>(null)
   const [progressionSeed, setProgressionSeed] = useState(12345)
@@ -243,6 +244,14 @@ export function AdminSeasonsPage(): JSX.Element {
   const matchWarnings = displayedMatchResult?.validation_warnings ?? displayedMatchPackage?.validation_warnings ?? []
   const matchErrors = displayedMatchResult?.validation_errors ?? displayedMatchPackage?.validation_errors ?? []
   const displayedMatches = displayedMatchPackage ? [...displayedMatchPackage.qualification_matches, ...displayedMatchPackage.main_draw_matches] : []
+  const selectedReplayMatch = displayedMatches.find((match) => match.match_id === selectedMatchId) ?? null
+  const replayAvailable = Boolean(selectedReplayMatch?.status === 'completed' && selectedReplayMatch.simulated_result?.rally_log)
+  const matchReplayQuery = useQuery<MatchReplayCursorResponse>({
+    queryKey: ['event-match-replay-cursor', effectiveEventId, selectedMatchId, replayRallyIndex],
+    queryFn: () => getEventMatchReplayCursor(effectiveEventId, selectedMatchId, replayRallyIndex),
+    enabled: Boolean(effectiveEventId && selectedMatchId && replayAvailable),
+    retry: false
+  })
   const displayedProgressionStatus: TournamentProgressionStatus | null = progressionResult?.progression_status ?? progressionStatusQuery.data ?? null
   const progressionWarnings = progressionResult?.validation_warnings ?? displayedProgressionStatus?.warnings ?? []
   const progressionErrors = progressionResult?.validation_errors ?? displayedProgressionStatus?.errors ?? []
@@ -797,7 +806,7 @@ export function AdminSeasonsPage(): JSX.Element {
           <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
           <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
           <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
-          <label>Selected match<select value={selectedMatchId} onChange={(event) => setSelectedMatchId(event.target.value)} disabled={!displayedMatches.length}><option value="">Choose a match</option>{displayedMatches.map((match) => <option key={match.match_id} value={match.match_id}>{match.status}: {match.match_id}</option>)}</select></label>
+          <label>Selected match<select value={selectedMatchId} onChange={(event) => { setSelectedMatchId(event.target.value); setReplayRallyIndex(1) }} disabled={!displayedMatches.length}><option value="">Choose a match</option>{displayedMatches.map((match) => <option key={match.match_id} value={match.match_id}>{match.status}: {match.match_id}</option>)}</select></label>
           <label>Progression seed<input type="number" value={progressionSeed} onChange={(event) => setProgressionSeed(Number(event.target.value))} /></label>
           <label>Progression draw<select value={progressionDrawType} onChange={(event) => setProgressionDrawType(event.target.value as 'qualification' | 'main')}><option value="qualification">Qualification</option><option value="main">Main draw</option></select></label>
           <label>Round number<input type="number" min={1} value={progressionRoundNumber} onChange={(event) => setProgressionRoundNumber(Number(event.target.value))} /></label>
@@ -845,6 +854,13 @@ export function AdminSeasonsPage(): JSX.Element {
         ]} /> : null}
         <MatchValidationPanel warnings={matchWarnings} errors={matchErrors} />
         {displayedMatchPackage ? <MatchRecordsTable matches={displayedMatches} /> : <p className="status">No match package is displayed yet. Preview or persist matches for a persisted draw package.</p>}
+        {selectedMatchId ? <div>
+          <h4>Read-only Match Replay</h4>
+          <p className="status">Step Back / Step Forward reads stored authoritative rally snapshots only. It never reruns RNG or changes the match.</p>
+          {!replayAvailable ? <p className="status">Select a completed simulated match with an authoritative rally log to navigate replay.</p> : null}
+          {matchReplayQuery.isError ? <p role="alert" className="error">{formatApiError(matchReplayQuery.error)}</p> : null}
+          {matchReplayQuery.data ? <MatchReplayCursorPanel result={matchReplayQuery.data} onSelectRally={setReplayRallyIndex} /> : null}
+        </div> : null}
       </SectionCard>
 
 
@@ -1448,6 +1464,39 @@ function EventLifecycleDetail({ event }: { event: EventLifecycleStatus }): JSX.E
     ]} />
     {event.block_reasons.length ? <><h5>Block reasons</h5><ul>{event.block_reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul></> : <p className="status">No lifecycle blockers detected for this event.</p>}
     {event.validation_warnings.length ? <><h5>Lifecycle warnings</h5><ul>{event.validation_warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul></> : null}
+  </div>
+}
+
+function MatchReplayCursorPanel({ result, onSelectRally }: { result: MatchReplayCursorResponse; onSelectRally: (rallyIndex: number) => void }): JSX.Element {
+  const rally = result.rally
+  const score = rally.score_after
+  const navigation = result.navigation
+  return <div>
+    <SummaryPills items={[
+      { label: 'Rally', value: `${navigation.rally_index} / ${navigation.total_rallies}` },
+      { label: 'Game', value: rally.set_number },
+      { label: 'Score', value: `${score.sets_a}-${score.sets_b} sets; ${score.points_a}-${score.points_b}` },
+      { label: 'Server', value: rally.serving_player_id },
+      { label: 'Winner', value: rally.winner_player_id ?? 'LET / replay' },
+      { label: 'Terminal cause', value: rally.primary_terminal_trigger },
+      { label: 'Shots', value: rally.estimated_shot_count },
+      { label: 'Rally seconds', value: rally.elapsed_seconds },
+      { label: 'Set complete', value: rally.post_rally_state.set_complete ? 'yes' : 'no' },
+      { label: 'Match complete', value: rally.post_rally_state.match_complete ? 'yes' : 'no' }
+    ]} />
+    <div className="button-row" aria-label="Match replay navigation">
+      <button type="button" onClick={() => onSelectRally(1)} disabled={navigation.at_start}>First rally</button>
+      <button type="button" onClick={() => navigation.previous_rally_index && onSelectRally(navigation.previous_rally_index)} disabled={navigation.previous_rally_index === null}>Step Back</button>
+      <button type="button" onClick={() => navigation.next_rally_index && onSelectRally(navigation.next_rally_index)} disabled={navigation.next_rally_index === null}>Step Forward</button>
+      <button type="button" onClick={() => onSelectRally(navigation.total_rallies)} disabled={navigation.at_end}>Last rally</button>
+    </div>
+    <MetadataList items={[
+      { label: 'Replay source', value: result.replay_source },
+      { label: 'Read only', value: result.read_only ? 'yes' : 'no' },
+      { label: 'RNG rerun', value: result.rng_rerun ? 'yes' : 'no' },
+      { label: 'Event hash', value: shortFingerprint(rally.event_hash) },
+      { label: 'Previous event hash', value: shortFingerprint(rally.previous_event_hash) }
+    ]} />
   </div>
 }
 

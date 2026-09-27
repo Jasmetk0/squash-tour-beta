@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import {
   getCanonicalTournamentEntryFieldState,
+  getCanonicalTournamentPreparation,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
@@ -72,6 +73,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     retry: false
   })
   const activeBranchId = viewed.time?.branchId ?? ''
+  const canonicalPreparationQuery = useQuery({
+    queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId],
+    queryFn: () => getCanonicalTournamentPreparation(runId, activeBranchId, eventId),
+    enabled: Boolean(runId && activeBranchId && eventId) && !viewed.historical,
+    retry: false
+  })
   const canonicalWildcardStateQuery = useQuery({
     queryKey: ['canonical-wild-card-state', runId, activeBranchId, eventId],
     queryFn: () => getCanonicalWildCardState(runId, activeBranchId, eventId),
@@ -219,6 +226,9 @@ export function PlannedEventDetailPage(): JSX.Element {
         }),
         queryClient.invalidateQueries({
           queryKey: ['canonical-entry-field', runId, activeBranchId, eventId]
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId]
         })
       ])
     }
@@ -226,6 +236,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   async function invalidateCanonicalDrawQueries(): Promise<void> {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] }),
+      queryClient.invalidateQueries({ queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-state', runId, activeBranchId, eventId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-draw-authority', runId, activeBranchId, eventId] }),
       queryClient.invalidateQueries({ queryKey: ['canonical-tournament-effective-draw-authority', runId, activeBranchId, eventId] }),
@@ -640,6 +651,36 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {eventsQuery.error ? <p className="error">Failed to load persisted events: {formatApiError(eventsQuery.error)}</p> : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId ? (
+        <SectionCard title="Canonical tournament preparation">
+          <p className="status">
+            One Run-owned readiness view across Ranking Snapshot, Entry Field, WC/RWC, Draw Input and Draw authority.
+          </p>
+          {canonicalPreparationQuery.isLoading ? <p className="status">Loading canonical tournament preparation...</p> : null}
+          {canonicalPreparationQuery.error ? (
+            <p className="error">Failed to load canonical tournament preparation: {formatApiError(canonicalPreparationQuery.error)}</p>
+          ) : null}
+          {canonicalPreparationQuery.data ? (
+            <>
+              <SummaryPills
+                items={[
+                  { label: 'Phase', value: canonicalPreparationQuery.data.phase },
+                  { label: 'Next action', value: canonicalPreparationQuery.data.next_required_action },
+                  { label: 'Schedule ready', value: canonicalPreparationQuery.data.ready_for_match_schedule ? 'Yes' : 'No' }
+                ]}
+              />
+              <MetadataList
+                items={[
+                  { label: 'Authority source', value: canonicalPreparationQuery.data.authority_source },
+                  { label: 'Effective Draw', value: canonicalPreparationQuery.data.effective_draw_fingerprint ?? 'Not generated' },
+                  { label: 'Blockers', value: canonicalPreparationQuery.data.blockers.join(', ') || 'None' }
+                ]}
+              />
+            </>
+          ) : null}
+        </SectionCard>
+      ) : null}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
         <SectionCard title="Canonical Main Draw preflight">

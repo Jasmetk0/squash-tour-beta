@@ -16,7 +16,6 @@ const api = vi.hoisted(() => ({
   bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonLifecycle: vi.fn(),
-  getEventLifecycle: vi.fn(),
   buildSeasonCalendar: vi.fn(),
   getEventEntryList: vi.fn(),
   generateEventEntryList: vi.fn(),

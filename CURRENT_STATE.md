@@ -1,5 +1,18 @@
 # Current implementation and next action
 
+## Active implementation — dead legacy Event Lifecycle web client retired
+
+The current web API surface no longer exposes the unused legacy single-event lifecycle reader.
+
+- `getEventLifecycle(eventId)` was not called by any production frontend page;
+- its frontend-only `EventLifecycleResponse` DTO and stale Admin Seasons test mock are removed;
+- the backend `GET /admin/lifecycle/event/{event_id}` reader remains untouched for historical/server compatibility;
+- the still-used aggregate Season Lifecycle, Entry and Draw compatibility tools on Admin Seasons are unchanged.
+
+This is a client-surface cleanup only: no tournament state, simulation semantics or historical server data changes.
+
+**Next after this PR:** continue auditing current tournament-preparation frontend/API compatibility entrypoints and remove only the next entrypoint proven unused by production UI.
+
 ## Active implementation — frontend full-suite regression synchronization
 
 The 2026-09-27 frontend baseline audit reproduced exactly four pre-existing failures out

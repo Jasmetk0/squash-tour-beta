@@ -4634,12 +4634,6 @@ export type SeasonLifecycleResponse = {
   validation_errors: string[]
 }
 
-export type EventLifecycleResponse = {
-  event: EventLifecycleStatus | null
-  metadata: LifecycleMetadata
-  validation_warnings: string[]
-  validation_errors: string[]
-}
 
 
 export type SimulateOneEventStepName = 'preflight_lifecycle' | 'generate_entries' | 'generate_draw' | 'generate_matches' | 'process_byes' | 'simulate_draw' | 'refresh_progression' | 'extract_results' | 'generate_point_awards' | 'apply_point_awards' | 'publish_ranking_snapshot' | 'final_lifecycle'

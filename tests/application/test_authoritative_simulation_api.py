@@ -323,6 +323,10 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             json.dumps(
                 {
                     "baseline_bias": 10.0,
+                    "main_quality_target": 0.0,
+                    "main_margin": 0.0,
+                    "qualification_quality_target": 0.0,
+                    "qualification_margin": 0.0,
                     "withdrawal_placeholder_slots": 0,
                     "late_replacement_placeholder_slots": 0,
                 }

@@ -333,6 +333,26 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             ),
             encoding="utf-8",
         )
+        countries_service = entry_service.countries_service
+        config_path = countries_service.config_path
+        assert config_path is not None
+        country_payload = json.loads(config_path.read_text(encoding="utf-8"))
+        countries = country_payload["countries"]
+        if not any(country["code"] == "CZE" for country in countries):
+            template = dict(countries[0])
+            template.update(
+                {
+                    "code": "CZE",
+                    "name": "Czechia HTTP test fixture",
+                    "region": "EUROPE",
+                    "travel_region": "EUROPE",
+                }
+            )
+            countries.append(template)
+            config_path.write_text(
+                json.dumps(country_payload),
+                encoding="utf-8",
+            )
 
         status, preview = _request(
             "POST",

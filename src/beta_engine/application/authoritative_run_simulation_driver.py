@@ -2995,6 +2995,65 @@ class AuthoritativeRunSimulationDriver:
             "verified": True,
         }
 
+    def get_authoritative_match_timeline_cursor(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+        timeline_index: int,
+    ) -> dict:
+        """Project one stored authoritative timeline event with read-only navigation."""
+
+        replay = self.get_authoritative_match_replay(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+        result = MatchResult.model_validate(replay["final_result"])
+        if result.timeline_log is None:
+            raise ValueError("completed authoritative match has no timeline log")
+        events = result.timeline_log.events
+        if not events:
+            raise ValueError("completed authoritative match has no stored timeline events")
+        if timeline_index < 1 or timeline_index > len(events):
+            raise ValueError(
+                f"timeline_index must be between 1 and {len(events)} for group '{group_id}'"
+            )
+        event = events[timeline_index - 1]
+        return {
+            "schema_version": "authoritative_match_timeline_cursor.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week_ordinal": replay["week_ordinal"],
+            "slot_id": replay["slot_id"],
+            "group_id": group_id,
+            "match_id": replay["match_id"],
+            "result_fingerprint": replay["result_fingerprint"],
+            "match_log_hash": result.timeline_log.match_log_hash,
+            "timeline_index": timeline_index,
+            "event": event.model_dump(mode="json"),
+            "navigation": {
+                "total_timeline_events": len(events),
+                "timeline_index": timeline_index,
+                "previous_timeline_index": timeline_index - 1 if timeline_index > 1 else None,
+                "next_timeline_index": timeline_index + 1 if timeline_index < len(events) else None,
+                "at_start": timeline_index == 1,
+                "at_end": timeline_index == len(events),
+            },
+            "timeline_summary": {
+                "rally_event_count": result.timeline_log.rally_event_count,
+                "between_rally_interval_count": result.timeline_log.between_rally_interval_count,
+                "game_break_count": result.timeline_log.game_break_count,
+                "objective_delay_count": result.timeline_log.objective_delay_count,
+                "total_elapsed_seconds": result.timeline_log.total_elapsed_seconds,
+            },
+            "replay_source": "stored_authoritative_events",
+            "rng_rerun": False,
+            "read_only": True,
+            "verified": True,
+        }
+
     def inspect_live_match(
         self,
         *,

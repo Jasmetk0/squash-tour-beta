@@ -53,9 +53,27 @@ withdrawal repair and WC/RWC review. The Master §31.3 release gate also proves 
 reported `draw_ready` state remains byte-for-byte identical after legacy Calendar,
 Draw, Result, Award and template/points backends are destroyed.
 
-**Next after this PR:** use this preparation state as the authoritative source for
-schedule/preflight readiness and then retire duplicate legacy preparation-status
-inspection from old season/event services.
+Week Schedule/preflight readiness now consumes this canonical preparation state
+from current Run-owned Calendar event identity before Draw generation is complete.
+
+- Package-backed current-week events are discovered from the Run-owned Calendar rather
+  than only from already-existing Draw/MatchPackage evidence;
+- preflight therefore exposes `entry_field_required`, `wild_card_review_required`,
+  `draw_input_ready` and `draw_generation_ready` as real schedule blockers;
+- `schedule_required` becomes true for a Package-backed authored event even before its
+  match topology exists;
+- proposal generation fails closed on the canonical preparation blocker before trying
+  to manufacture executable MatchPackage topology;
+- historical non-Package Runs retain the compatibility path and only opt into canonical
+  preparation when canonical Draw authority actually exists.
+
+The Master §31.3 acceptance now proves the same Week-1 event progresses through
+`draw_input_ready` → `draw_generation_ready` → `draw_ready` on the Week Schedule
+preflight itself.
+
+**Next after this PR:** audit and retire the next duplicate legacy tournament-preparation
+readiness/status path that is still reachable from authoritative Run orchestration, while
+preserving explicitly historical compatibility.
 
 
 ## Active implementation — canonical result/ranking source fence

@@ -9488,6 +9488,13 @@ class AuthoritativeRunSimulationDriver:
                 run_id=run_id,
                 branch_id=branch_id,
             )
+            event_ids = self._week_schedule_event_ids(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                packages=packages,
+            )
             schedule = self._schedule(session, run_id, branch_id, week)
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
@@ -9505,14 +9512,20 @@ class AuthoritativeRunSimulationDriver:
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
-                packages=packages,
+                event_ids=event_ids,
+            )
+            package_backed = self._run_uses_package_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
             )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "week": week.model_dump(mode="json"),
                 "required": (
-                    bool(entry_slot_ordinals)
+                    (package_backed and bool(event_ids))
+                    or bool(entry_slot_ordinals)
                     or bool(wc_slot_ordinals)
                     or len(packages) > 1
                     or len(plans) != 3
@@ -9530,7 +9543,7 @@ class AuthoritativeRunSimulationDriver:
                 ),
                 "reserved_entry_slot_ordinals": list(entry_slot_ordinals),
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
-                "event_ids": [p.event_id for p in packages],
+                "event_ids": list(event_ids),
                 "group_ids": list(plans),
                 "schedule": schedule.canonical_payload() if schedule else None,
                 "schedule_fingerprint": schedule.fingerprint if schedule else None,
@@ -9598,29 +9611,72 @@ class AuthoritativeRunSimulationDriver:
             "read_only": True,
         }
 
-    @staticmethod
-    def _canonical_schedule_preparation(
+    def _week_schedule_event_ids(
+        self,
         session: Session,
         *,
         run_id: str,
         branch_id: str,
+        week: RankingWeek,
         packages,
-    ):
-        """Return canonical Draw-backed Week Schedule readiness without mutating."""
+    ) -> tuple[str, ...]:
+        """Resolve current-week tournament identity before Draw readiness is complete."""
 
-        draw_store = TournamentDrawAuthorityStore(session)
-        canonical_event_ids = tuple(
+        if not self._run_uses_package_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        ):
+            return tuple(sorted(package.event_id for package in packages))
+
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        calendar, _, _ = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=season,
+        )
+        if calendar is None:
+            return ()
+        return tuple(
             sorted(
-                package.event_id
-                for package in packages
+                event.event_id
+                for event in calendar.events
+                if event.season_week == week.week
+            )
+        )
+
+    def _canonical_schedule_preparation(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_ids: tuple[str, ...],
+    ):
+        """Return canonical Week Schedule readiness without reconstructing legacy state."""
+
+        if not event_ids:
+            return None
+
+        if self._run_uses_package_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        ):
+            canonical_event_ids = event_ids
+        else:
+            draw_store = TournamentDrawAuthorityStore(session)
+            canonical_event_ids = tuple(
+                event_id
+                for event_id in event_ids
                 if draw_store.get(
                     run_id=run_id,
                     branch_id=branch_id,
-                    event_id=package.event_id,
+                    event_id=event_id,
                 )
                 is not None
             )
-        )
         if not canonical_event_ids:
             return None
 
@@ -9631,22 +9687,29 @@ class AuthoritativeRunSimulationDriver:
             event_ids=canonical_event_ids,
         )
 
-    @classmethod
     def _require_canonical_schedule_preparation(
-        cls,
+        self,
         session: Session,
         *,
         run_id: str,
         branch_id: str,
+        week: RankingWeek,
         packages,
     ):
-        """Fail closed when canonical Draw-backed events are not preparation-ready."""
+        """Fail closed when canonical Week Schedule preparation is incomplete."""
 
-        preparation = cls._canonical_schedule_preparation(
+        event_ids = self._week_schedule_event_ids(
             session,
             run_id=run_id,
             branch_id=branch_id,
+            week=week,
             packages=packages,
+        )
+        preparation = self._canonical_schedule_preparation(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_ids=event_ids,
         )
         if preparation is not None and not preparation.ready_for_week_schedule:
             raise ValueError(
@@ -9681,18 +9744,33 @@ class AuthoritativeRunSimulationDriver:
                 "Week Tournament Lock state is inconsistent with current Entry Fields"
             )
 
+        package_backed = self._run_uses_package_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        if package_backed:
+            self._require_canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                packages=(),
+            )
         packages = self._packages(
             week,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
         )
-        self._require_canonical_schedule_preparation(
-            session,
-            run_id=run_id,
-            branch_id=branch_id,
-            packages=packages,
-        )
+        if not package_backed:
+            self._require_canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                packages=packages,
+            )
         plans = self._topology_for_session(
             session, run_id, branch_id, packages, week=week
         )
@@ -9930,15 +10008,23 @@ class AuthoritativeRunSimulationDriver:
                 schedule,
                 position_fingerprint=position_fingerprint,
             )
+            proposal_packages = self._packages(
+                schedule.week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
             preparation = self._canonical_schedule_preparation(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
-                packages=self._packages(
-                    schedule.week,
-                    session=session,
+                event_ids=self._week_schedule_event_ids(
+                    session,
                     run_id=run_id,
                     branch_id=branch_id,
+                    week=schedule.week,
+                    packages=proposal_packages,
                 ),
             )
             payload["canonical_preparation"] = (

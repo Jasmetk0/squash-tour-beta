@@ -786,7 +786,7 @@ export function PlannedEventDetailPage(): JSX.Element {
                       <option value="">Select publication</option>
                       {(rankingPublicationOptionsQuery.data?.publications ?? []).map((publication) => {
                         const value = `${publication.ranking_week.season_index}:${publication.ranking_week.week}`
-                        return <option key={value} value={value}>Season index {publication.ranking_week.season_index} · Week {publication.ranking_week.week} · {publication.player_count} players · Best {publication.best_n}</option>
+                        return <option key={value} value={value}>Season index {publication.ranking_week.season_index} · Week {publication.ranking_week.week} · {publication.ranked_row_count} players · Best {publication.best_n}</option>
                       })}
                     </select>
                   </label>

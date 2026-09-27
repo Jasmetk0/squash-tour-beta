@@ -350,61 +350,6 @@ class CanonicalTournamentPreparationService:
                 if slot.active_player_id is not None and slot.source != "unfilled"
             )
 
-    @staticmethod
-    def _entry_capacity_suggestion(
-        session: Session,
-        *,
-        run_id: str,
-        branch_id: str,
-        event_id: str,
-    ) -> CanonicalEntryCapacitySuggestion | None:
-        state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
-        if state is None:
-            return None
-        candidates = [
-            entity
-            for entity in state.entities
-            if entity.entity_kind == CALENDAR_EVENT_ENTITY_KIND
-            and entity.source_entity_id == event_id
-        ]
-        if not candidates:
-            return None
-        if len(candidates) != 1:
-            raise ValueError(
-                f"Run-owned Calendar event '{event_id}' is ambiguous across Package state"
-            )
-        entity = candidates[0]
-        event = CalendarEvent.model_validate(entity.payload)
-        if event.event_id != event_id:
-            raise ValueError("Run-owned Calendar event identity mismatch")
-        package_id = CalendarPackageRunAdapter.package_id_for_season(str(event.season))
-        if entity.source_package_id != package_id:
-            raise ValueError("Run-owned Calendar event Package identity mismatch")
-        matching_versions = [
-            version
-            for version in state.package_versions
-            if version.package_id == package_id
-            and version.package_type == PackageType.CALENDAR
-            and version.source_version == entity.source_package_version
-            and version.source_fingerprint == entity.source_package_fingerprint
-        ]
-        if len(matching_versions) != 1:
-            raise ValueError("Run-owned Calendar event Package provenance mismatch")
-        capacity = TournamentEntryFieldCapacity(
-            main_draw_size=event.main_draw_size + event.byes,
-            qualification_draw_size=event.qualification_draw_size,
-            qualifier_spots=event.qualifier_spots,
-            wild_card_slots=event.wild_cards,
-            bye_slots=event.byes,
-        )
-        return CanonicalEntryCapacitySuggestion(
-            **capacity.model_dump(mode="json"),
-            source_package_id=package_id,
-            source_package_version=entity.source_package_version,
-            source_package_fingerprint=entity.source_package_fingerprint,
-            source_event_fingerprint=entity.content_fingerprint,
-        )
-
         return CanonicalTournamentPreparationState(
             run_id=run_id,
             branch_id=branch_id,
@@ -484,3 +429,60 @@ class CanonicalTournamentPreparationService:
             can_generate_draw=draw_input_ready and not draw_ready,
             ready_for_match_schedule=draw_ready,
         )
+
+
+    @staticmethod
+    def _entry_capacity_suggestion(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+    ) -> CanonicalEntryCapacitySuggestion | None:
+        state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
+        if state is None:
+            return None
+        candidates = [
+            entity
+            for entity in state.entities
+            if entity.entity_kind == CALENDAR_EVENT_ENTITY_KIND
+            and entity.source_entity_id == event_id
+        ]
+        if not candidates:
+            return None
+        if len(candidates) != 1:
+            raise ValueError(
+                f"Run-owned Calendar event '{event_id}' is ambiguous across Package state"
+            )
+        entity = candidates[0]
+        event = CalendarEvent.model_validate(entity.payload)
+        if event.event_id != event_id:
+            raise ValueError("Run-owned Calendar event identity mismatch")
+        package_id = CalendarPackageRunAdapter.package_id_for_season(str(event.season))
+        if entity.source_package_id != package_id:
+            raise ValueError("Run-owned Calendar event Package identity mismatch")
+        matching_versions = [
+            version
+            for version in state.package_versions
+            if version.package_id == package_id
+            and version.package_type == PackageType.CALENDAR
+            and version.source_version == entity.source_package_version
+            and version.source_fingerprint == entity.source_package_fingerprint
+        ]
+        if len(matching_versions) != 1:
+            raise ValueError("Run-owned Calendar event Package provenance mismatch")
+        capacity = TournamentEntryFieldCapacity(
+            main_draw_size=event.main_draw_size + event.byes,
+            qualification_draw_size=event.qualification_draw_size,
+            qualifier_spots=event.qualifier_spots,
+            wild_card_slots=event.wild_cards,
+            bye_slots=event.byes,
+        )
+        return CanonicalEntryCapacitySuggestion(
+            **capacity.model_dump(mode="json"),
+            source_package_id=package_id,
+            source_package_version=entity.source_package_version,
+            source_package_fingerprint=entity.source_package_fingerprint,
+            source_event_fingerprint=entity.content_fingerprint,
+        )
+

@@ -2,13 +2,15 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 65
-**Aktualizováno:** 12. 9. 2026 (UTC) – synchronizační audit po merge #720; canonical repo Master, nový Development Operating Model a integrační cesta k pre-alpha
+**Verze dokumentu:** 66
+**Aktualizováno:** 27. 9. 2026 (UTC) – rozhodnutí o Admin-only první pre-alpha, historickém prohlížení, deterministickém opakování a ručních zásazích
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
 
-**Rychlá orientace ve v65:** sportovní registry zůstávají **411 pevných / 88 prozatímních / 69 širokých otevřených bodů** a brána **48 vyřešených / 109 otevřených ze 157 PAQ**. Toto vydání neuzavírá žádnou PAQ implementací. Ověřený `buuk` je `08a29074250675a61434ba58fb42a185474648d5` po merge PR #720. #689 včetně #690 už je v `buuk`; staré označení „otevřeno“ níže je evidence k vydání v64. Nový aktuální stav je v **35.29–35.31**, pracovní model v **kapitole 36**. Ranking preparation je rozvinutá, ale publikace a skutečný end-to-end svět nejsou dokončené.
+**Historická rychlá orientace ve v65 (stav k 12. 9. 2026, nikoliv současný implementační HEAD):** sportovní registry zůstávají **411 pevných / 88 prozatímních / 69 širokých otevřených bodů** a brána **48 vyřešených / 109 otevřených ze 157 PAQ**. Toto vydání neuzavírá žádnou PAQ implementací. Ověřený `buuk` je `08a29074250675a61434ba58fb42a185474648d5` po merge PR #720. #689 včetně #690 už je v `buuk`; staré označení „otevřeno“ níže je evidence k vydání v64. Nový aktuální stav je v **35.29–35.31**, pracovní model v **kapitole 36**. Ranking preparation je rozvinutá, ale publikace a skutečný end-to-end svět nejsou dokončené.
+
+**Nová produktová rozhodnutí v66:** první pre-alpha má funkční Admin včetně libovolného historického weeku; Viewer zůstává cílovou součástí produktu, ale není podmínkou této pre-alpha. `PAQ-118` a `PAQ-127` jsou uzavřené, `PAQ-120`, `PAQ-121` a `PAQ-150` jsou výslovně mimo první pre-alpha. Implementovaný stav vždy ověřit v `CURRENT_STATE.md` a v aktuálním kódu; historická implementační evidence níže končí stavem uvedeným u příslušného vydání.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -264,6 +266,8 @@ Některé ostatní vyjmenované funkce mohou přijít ve velmi vzdálené verzi,
 
 Mohou mít oddělené route prostory, například `/viewer/...` a `/admin/...`. Nemá jít jen o jednu stránku, na které se schovají editační tlačítka.
 
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v66]** Oba povinné uživatelské průchody se dají provést a zkontrolovat v Adminu. Samostatně funkční Viewer, jeho stránky, mapa protějšků a reveal/privacy ovladače nejsou podmínkou první pre-alpha; dosavadní kód Vieweru se nemaže. Cílové oddělení módů, pravdivost veřejných dat, hranice jejich zveřejnění a zákaz úniku budoucích informací hráčské AI zůstávají platné. „První verze Vieweru“ v dalších kapitolách znamená první vydání této vrstvy, nikoliv automaticky první pre-alpha.
+
 ## 2.2 Viewer mód
 
 **[ROZHODNUTO]** Viewer je vždy pouze ke čtení.
@@ -294,6 +298,12 @@ Ve Vieweru nelze:
 **[ROZHODNUTO][ENGINE INVARIANT]** Admin může ručně zasáhnout do každého produktově modelovaného pravidla, stavu, rozhodnutí hráčské AI a autoritativního údaje enginu. Takový zásah musí respektovat zvolený Run, branch a časový bod, nést původ `Manual` nebo `Manual Override` a být dohledatelný v Audit Logu. U jednotlivých dalších systémů se proto znovu nerozhoduje, zda jejich podporovanou hodnotu Admin vůbec smí přepsat; otevřený může zůstat jen konkrétní workflow a UI.
 
 **[ROZHODNUTO][ENGINE INVARIANT]** Admin smí vědomě vytvořit výjimku z běžného sportovního nebo sezonního pravidla, pokud je výjimka zřetelně označená a potvrzená. Nesmí však uložit vnitřně nemožný či poškozený technický stav, například dva autoritativní vítěze téhož zápasu nebo odkaz na neexistujícího hráče. Pokud změna vyžaduje úpravu souvisejících údajů, engine ukáže potřebný rozsah a celý `Manual Override` zapíše atomicky.
+
+**[ROZHODNUTO v66 – AI zásah a výjimka]** Admin smí výslovně změnit rozhodnutí hráčské AI a vědomě udělit sportovní/policy výjimku, například umožnit přihlášku po uzávěrce. UI označí mimořádnost varováním, vysvětlí příčinu a dopady, nabídne možné řešení a požádá o výslovné potvrzení; změna nese důvod a auditní provenance. Při bezpečné výjimce jde o oranžové upozornění, při neproveditelné nebo integritu poškozující následné operaci se červeně blokuje právě dotčená operace. Engine zkontroluje návaznosti přihlášek, fieldu, losu, zápasů a rankingu a neprovede napůl platný zápis.
+
+**[ROZHODNUTO v66 – přirozenější alternativní minulost jako volba]** U mimořádně nepravděpodobného Admin zásahu nabídne Admin také možnost vrátit se k vhodnému dřívějšímu uloženému bodu a zkoušet alternativní vývoj, ve kterém hráčova AI dospěje k požadovanému rozhodnutí přirozeněji. Nabídka musí pojmenovat původní bod, případné změny, nejistotu/naturalness a možné dopady; vyhledávání pracuje v oddělené kandidátní branchi, původní historii nemění a kandidát se stává autoritativním jen výslovnou volbou. Není zaručeno, že uskutečnitelná přirozená cesta existuje. Přesný práh „mimořádně nepravděpodobné“, metoda měření a algoritmus hledání zůstávají otevřené; nejde o tvrzení, že současný Match Reconstruction už rekonstruuje všechna AI rozhodnutí.
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v66]** V Adminu lze vybrat libovolný existující week simulace ve zvoleném Runu a branchi, včetně minulých weeků, a prohlížet tehdejší dostupný stav světa, hráče, soutěže, výsledky, losy, rankingy, historii a Replay i příslušný interní audit podle skutečně uložených dat. Změna prohlíženého weeku sama nemění autoritativní přítomnost ani historii. Historická data se čtou z časově příslušného stavu/snapshotu; nesmějí se zpětně nahrazovat dnešní hodnotou ani doplňovat smyšlenými údaji. Přesný katalog obrazovek a všech polí zůstává otevřený v `PAQ-119`, `PAQ-124` a `PAQ-144`.
 
 **[ROZHODNUTO]** Hlavní stránka Runového Adminu se nazývá `Home`, nikoliv `Dashboard`. Je to nejvyšší souhrnná Admin stránka právě zvoleného Runu a branche a běžný vstup do jeho obsahu; není to další globální landing ani náhrada specializovaných stránek. Má poskytovat přehled o Runu a postupně také náhledy jeho hlavních oblastí. Vlastní řízení simulací patří primárně do sekce `Simulation`; úplná skladba ostatních bloků Home se doplní později.
 
@@ -5239,7 +5249,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 
 Tato kapitola je pracovní fronta otázek, které musí být pro první pre-alpha buď výslovně rozhodnuté, nebo opatřené vědomým minimálním defaultem či stubem podle priority. **Není novým seznamem rozhodnutí.** Odpověď vznikne až následným výslovným potvrzením a teprve potom se propíše do detailní kapitoly a příslušného registru.
 
-Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zvládne dva povinné akceptační průchody popsané v kapitole 31.3. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce.
+Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvládne dva povinné uživatelské akceptační průchody popsané v kapitole 31.3 prostřednictvím Adminu. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce. Viewer není akceptační branou první pre-alpha.
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Funkční minimum zahrnuje Runs a Packages, hráče/development/AI, čas a transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Plný Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases mohou být viditelně odložené nebo mimo build a dokončení pre-alpha neblokují.
 
@@ -5247,7 +5257,7 @@ Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zv
 
 ## 31.2 Pravidlo uzavření
 
-- Ve verzi 62 existují stabilní otázky `PAQ-001–PAQ-157`. Čtyřicet osm je **[RESOLVED]** a zbývajících 109 je stále **[OPEN]**. Kvůli čitelnosti se `[OPEN]` v nadpisu každé neuzavřené otázky neopakuje: absence výslovného terminálního markeru znamená otevřený stav. ID se nikdy nerecykluje ani nepřečísluje; otázka se pouze označí `[RESOLVED]`, `[DEFERRED]`, `[NOT REQUIRED FOR PRE-ALPHA]` nebo `[SUPERSEDED BY PAQ-…]` a zůstane auditovatelná.
+- Ve verzi 62 existují stabilní otázky `PAQ-001–PAQ-157`. Tehdy bylo čtyřicet osm **[RESOLVED]** a zbývajících 109 **[OPEN]**. Ve v66 je 50 vyřešených, 104 otevřených a 3 výslovně nevyžadované pro první pre-alpha. Kvůli čitelnosti se `[OPEN]` v nadpisu každé neuzavřené otázky neopakuje: absence výslovného terminálního markeru znamená otevřený stav. ID se nikdy nerecykluje ani nepřečísluje; otázka se pouze označí `[RESOLVED]`, `[DEFERRED]`, `[NOT REQUIRED FOR PRE-ALPHA]` nebo `[SUPERSEDED BY PAQ-…]` a zůstane auditovatelná.
 - Každá otázka `PA0` musí mít před označením specifikace pre-alpha za behaviorálně úplnou jedinou výslovnou odpověď, případně schválený konfigurovatelný default.
 - Každá otázka `PA1` musí mít před použitelnou pre-alpha alespoň bezpečné minimální chování; jemná kalibrace, bohatší UI nebo širší obsah mohou pokračovat později.
 - `PRODUCT` se nesmí rozhodnout pouze implementací. `TECH` může implementátor uzavřít autonomně při zachování Masteru. `CALIBRATION` vyžaduje měřitelný výchozí profil a testy. `CONTENT` se uzavírá daty konkrétního Runu, nikoliv globální konstantou enginu.
@@ -5257,10 +5267,10 @@ Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zv
 
 ## 31.3 Rozsah a definice hotové pre-alpha
 
-1. **PAQ-001 [RESOLVED v50][PA0][PRODUCT] – Jaký je nejmenší povinný end-to-end uživatelský průchod pre-alpha?** Odpověď: hlavní průchod odsimuluje kompletní sezonu Official Runu, bezpečně ji uloží/načte a dokončí Season Transition až do Weeku 1 následující sezony. Příklad: nestačí jeden turnajový week; musí se prokázat kontinuita výsledků, hráčských stavů, rankingů a season-scoped uzávěrky.
+1. **PAQ-001 [RESOLVED v50][PA0][PRODUCT] – Jaký je nejmenší povinný end-to-end uživatelský průchod pre-alpha?** Odpověď (upřesněna ve v66: provádí se v Adminu): hlavní průchod odsimuluje kompletní sezonu Official Runu, bezpečně ji uloží/načte a dokončí Season Transition až do Weeku 1 následující sezony. Příklad: nestačí jeden turnajový week; musí se prokázat kontinuita výsledků, hráčských stavů, rankingů a season-scoped uzávěrky.
 2. **PAQ-002 [RESOLVED v50][PA0][PRODUCT] – Které moduly musí být skutečně funkční a které smějí být pouze viditelný stub?** Odpověď: funkční musí být Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases pre-alpha neblokují.
-3. **PAQ-003 [RESOLVED v50][PA0][PRODUCT] – Jaké operace musí umět částečně sestavený Run bez globálního Start gate?** Odpověď: druhý povinný akceptační průchod vytvoří prázdný Run, ručně přidá dva hráče a jeden zápas a bezpečně jej odsimuluje bez kalendáře; chybějící data smějí blokovat jen operaci, která je potřebuje.
-4. **PAQ-004 [RESOLVED v50][PA0][PRODUCT] – Co přesně znamená „pre-alpha dokončena“ z pohledu uživatele?** Odpověď: oba povinné průchody musí opakovaně proběhnout čistě od začátku do konce včetně save/load bez pádu, poškozené historie nebo ruční opravy databáze. Správné operation-scoped zablokování operace s chybějícími či nevalidními vstupy není selhání testu.
+3. **PAQ-003 [RESOLVED v50][PA0][PRODUCT] – Jaké operace musí umět částečně sestavený Run bez globálního Start gate?** Odpověď (v Adminu): druhý povinný akceptační průchod vytvoří prázdný Run, ručně přidá dva hráče a jeden zápas a bezpečně jej odsimuluje bez kalendáře; chybějící data smějí blokovat jen operaci, která je potřebuje.
+4. **PAQ-004 [RESOLVED v50][PA0][PRODUCT] – Co přesně znamená „pre-alpha dokončena“ z pohledu uživatele?** Odpověď (v Adminu): oba povinné průchody musí opakovaně proběhnout čistě od začátku do konce včetně save/load bez pádu, poškozené historie nebo ruční opravy databáze. Správné operation-scoped zablokování operace s chybějícími či nevalidními vstupy není selhání testu.
 5. **PAQ-005 [RESOLVED v50][PA1][PRODUCT] – Bude hlavní akceptační průchod používat Official Run, prázdný Run, nebo oba?** Odpověď: povinné jsou oba; pouze Official Run musí dokončit celou sezonu a otevřít další, zatímco prázdný Run ověřuje operation-scoped modularitu na dvou hráčích a jednom zápase.
 6. **PAQ-006 [PA1][TECH] – Jak velký referenční Run musí pre-alpha zvládnout v přijatelném čase a paměti?** Příklad: jedna sezona se 300 hráči a 80 turnaji doběhne na běžném notebooku bez pádu.
 
@@ -5413,22 +5423,22 @@ Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zv
 115. **PAQ-115 [RESOLVED v58][PA1][PRODUCT] – Jaký minimální tréninkový a recovery choice AI používá, dokud je hluboký trénink odložený?** Odpověď: AI volí stejný `General Training Load: Recovery / Light / Normal / Heavy` podle vlastního nedokonalého odhadu zdraví a únavy, současného zápasového vytížení, kalendáře a významu nejbližších soutěží. Volba využívá společnou kapacitu s Match Preparation a nemusí být optimální; Admin override je povolený.
 116. **PAQ-116 [PA1][CALIBRATION] – Jak vzniká Inactive, dobrovolný retirement a comeback bez pevného časového automatu?** Příklad: dlouhá absence sama hráče neretiruje; musí vzniknout faktorové rozhodnutí.
 117. **PAQ-117 [PA0][TECH] – Jak se oddělí reprodukovatelná náhodnost, individuální preference a budoucí zlepšování AI?** Příklad: stejný seed a verze modelu zopakují volbu, novější AI verze se historicky zaznamená.
-118. **PAQ-118 [PA0][PRODUCT] – Jakou přesnou prioritu má univerzální Admin override vůči AI a automatickým validacím?** Příklad: Admin může jednorázově vynutit přihlášku, ale engine stále odmítne technicky nemožný dvojí start.
+118. **PAQ-118 [RESOLVED v66][PA0][PRODUCT] – Jakou přesnou prioritu má univerzální Admin override vůči AI a automatickým validacím?** Odpověď: Admin může výslovně přepsat AI rozhodnutí a potvrdit zdůvodněnou výjimku z běžné policy i po uzávěrce. UI ukáže varování, dopady a možná řešení; transakční validace a audit chrání související data a fyzickou/technickou integritu. Neproveditelná dotčená operace se zablokuje. U nepravděpodobného zásahu může Admin volit oddělenou alternativní cestu od minulého uloženého bodu podle kapitoly 2.3; práh a hledací algoritmus jsou otevřené.
 
 ## 31.17 Minimální Admin a Viewer UX
 
 119. **PAQ-119 [PA0][PRODUCT] – Které konkrétní Admin stránky tvoří minimální pre-alpha navigační strom?** Příklad: Run Home, Players, Tour/Calendar, Simulation, History a Settings mohou být funkční minimum.
-120. **PAQ-120 [PA0][PRODUCT] – Které konkrétní Viewer stránky musí být skutečně funkční?** Příklad: MSA homepage, Rankings, Players, Tournaments, Draw/Results a Scores.
-121. **PAQ-121 [PA1][PRODUCT] – Jaká je úplná minimální mapa Viewer ↔ Admin protějšků a fallbacků?** Příklad: přepnutí z Viewer profilu hráče otevře Admin profil stejného `player_id` ve stejném weeku.
+120. **PAQ-120 [NOT REQUIRED FOR PRE-ALPHA v66][PA0][PRODUCT] – Které konkrétní Viewer stránky musí být skutečně funkční?** Odpověď pro první pre-alpha: žádné. Cílové stránky Vieweru (například MSA homepage, Rankings, Players, Tournaments, Draw/Results a Scores) zůstávají k pozdějšímu rozhodnutí a realizaci.
+121. **PAQ-121 [NOT REQUIRED FOR PRE-ALPHA v66][PA1][PRODUCT] – Jaká je úplná minimální mapa Viewer ↔ Admin protějšků a fallbacků?** Odpověď pro první pre-alpha: žádná nová povinná mapa, protože Viewer není akceptačním rozhraním. Cílový kontextový kontrakt kapitoly 2.4 zůstává platný pro pozdější dopracování.
 122. **PAQ-122 [PA0][PRODUCT] – Jaký společný formulářový kontrakt používají editace, preview, Save/Discard a validační chyby?** Příklad: červený blok ukáže přesné pole a důvod, aniž by ztratil ostatní rozpracované změny.
 123. **PAQ-123 [PA0][PRODUCT] – Jak se zobrazí neúplná data, `Unresolved` reference a tři úrovně závažnosti?** Příklad: chybějící nepovinná cena je modrá informace, neplatný účastník zápasu červený blok.
-124. **PAQ-124 [PA0][PRODUCT] – Jaké minimum musí ukázat draw, zápasový detail, Scores a Replay?** Příklad: kompaktní výsledek se rozklikne na gamy, rally log, časové události a stavy stamina.
+124. **PAQ-124 [PA0][PRODUCT] – Jaké minimum musí ukázat draw, zápasový detail, Scores a Replay?** První pre-alpha zpřístupní potřebné výsledky, los a historický Replay v Adminu; přesný obsah zůstává otevřený. Příklad: kompaktní výsledek se rozklikne na gamy, rally log, časové události a stavy stamina.
 125. **PAQ-125 [PA1][PRODUCT] – Jaké minimum mapy branchí a časové Historie Runu patří do pre-alpha?** Příklad: lze vybrat branch a uložený bod, i když pokročilý graf a filtry přijdou později.
 126. **PAQ-126 [PA1][PRODUCT] – Jaké jsou minimální jazykové, zařízení a accessibility cíle?** Příklad: české Admin UI na desktopu musí být plně ovladatelné klávesnicí; mobil může být zatím read-only omezený.
 
 ## 31.18 Technická integrita, determinismus, testy a výkon
 
-127. **PAQ-127 [PA0][PRODUCT] – Jaký uživatelsky viditelný determinism contract platí pro pre-alpha?** Příklad: stejné vstupy, seed a verze modelu vytvoří stejný zápas, pokud se vědomě nezvolí nový náhodný běh.
+127. **PAQ-127 [RESOLVED v66][PA0][PRODUCT] – Jaký uživatelsky viditelný determinism contract platí pro pre-alpha?** Odpověď: stejný uložený výchozí stav, pravidla/konfigurace a verze modelu, seed a příkaz vedou ke stejnému výsledku včetně zápasu a rally. Výslovné `Opakovat` jako nová alternativa automaticky přidělí a zaznamená jiný seed; stejný sportovní výsledek může přesto nastat náhodou. Retry/resume téhož příkazu používá původní seed a zachovává idempotenci; historický Replay čte uložené události bez nového losování. Alternativa vzniká v izolovaném pracovním/branch kontextu, původní historie zůstává zachována. Přesné odvození a uložení seedů řeší `PAQ-128`; změna verze modelu zpětně nepřepíše uložené události.
 128. **PAQ-128 [PA0][TECH] – Jak se odvozují a ukládají seedy pro Run, slot, draw, zápas, rally a batch retry?** Příklad: retry jednoho selhaného turnaje bezdůvodně nepřehodí výsledek jiného turnaje.
 129. **PAQ-129 [PA0][TECH] – Jaká úplná invariant/validation matice chrání všechny kritické entity a operace?** Příklad: jeden hráč nemůže současně obsadit dva fyzické sloty stejného zápasu.
 130. **PAQ-130 [PA0][TECH] – Které operace jsou transakční a jak proběhne rollback při částečném selhání?** Příklad: entry slot buď zapíše všechna rozhodnutí a list, nebo žádné.
@@ -5451,19 +5461,19 @@ Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zv
 ## 31.20 Doplňkové průřezové mechanismy pre-alpha
 
 143. **PAQ-143 [PA1][PRODUCT] – Jaké minimální chování má změna reprezentované země, pokud nastane v akceptačním Runu?** Příklad: pre-alpha buď podporuje současný prozatímní eligibility workflow, nebo změnu dočasně bezpečně nepovolí místo náhodného nedokončeného výsledku.
-144. **PAQ-144 [PA0][PRODUCT] – Jaké historické objekty a stavy musí Viewer time machine umět zobrazit v minulém weeku?** Příklad: profil hráče ve Weeku 20 ukáže tehdejší zemi, ranking a veřejný zdravotní stav, ne dnešní hodnoty.
+144. **PAQ-144 [PA0][PRODUCT] – Jaké historické objekty a stavy musí být dostupné při prohlížení minulého weeku?** Rozhodnuté minimum v66: Admin dovolí prohlížet libovolný existující week simulace a tehdejší dostupná data včetně hráčů, soutěží, výsledků, rankingů a Replay bez změny historie a bez dnešních hodnot vydávaných za minulé. Přesný katalog objektů a UX je stále otevřený. Viewer time machine zůstává cílovou funkcí mimo první pre-alpha.
 145. **PAQ-145 [PA1][PRODUCT] – Jaký minimální katalog World Events a Notification pravidel potřebuje funkční turnajový průchod?** Příklad: oznámení turnaje vytvoří veřejnou MSA zprávu, zatímco neplatná reference zůstane jen Admin varováním.
 146. **PAQ-146 [PA1][TECH] – Jaké základní H2H a statistiky se musí automaticky dopočítat z autoritativních výsledků?** Příklad: RET se počítá jako sportovní výhra/prohra, ABN bez vítěze se do H2H výher nezapočte.
 147. **PAQ-147 [PA1][PRODUCT] – Jaké minimum pokrývá kopie Runu a vestavěný Match Test Lab?** Příklad: testovací session používá read-only snapshot hráčů a její výsledek nikdy nezmění zdrojový Run.
 148. **PAQ-148 [PA1][TECH] – Jaká minimální lock/concurrency matice platí pro souběžné úlohy, Runy a branche?** Příklad: Forecast v jedné branchi nesmí blokovat čtení jiné, ale dva zápisy do stejného snapshotu se serializují.
 149. **PAQ-149 [PA1][PRODUCT] – Jaké minimum CSV/XLSX staging importu musí být dostupné pro tvorbu potřebných dat?** Příklad: chybný řádek země lze opravit v preview a nezávislé platné řádky bezpečně importovat.
-150. **PAQ-150 [PA0][PRODUCT] – Jaký minimální Viewer reveal/privacy režim zabrání úniku Admin truth, dokud jsou detailní reveal režimy odložené?** Příklad: Viewer u zranění ukáže jen veřejný údaj nebo odhad, nikdy skrytou přesnou závažnost známou Adminu.
+150. **PAQ-150 [NOT REQUIRED FOR PRE-ALPHA v66][PA0][PRODUCT] – Jaký minimální Viewer reveal/privacy režim zabrání úniku Admin truth, dokud jsou detailní reveal režimy odložené?** Odpověď pro první pre-alpha: Viewer není povinným rozhraním; jeho cílové oddělení veřejného a Admin stavu zůstává závazné, pokud je už dostupný. AI nadále nesmí vidět skrytá nebo budoucí data. Konkrétní režimy se rozhodnou před dokončením Vieweru.
 
 ## 31.21 Pokrytí kapitol Masteru pre-alpha bránou
 
 | Kapitoly Masteru | Hlavní `PAQ` | Zacházení v pre-alpha |
 |---|---|---|
-| 1–2 Vize, Viewer a Admin | 001–005, 119–126, 150 | rozsah a minimální obě uživatelské vrstvy |
+| 1–2 Vize, Viewer a Admin | 001–005, 119, 122–126 | funkční Admin; Viewer mimo bránu první pre-alpha |
 | 3, 7–8 Runy, branche a ukládání | 014–021, 127–134, 147–148, 157 | autoritativní historie, bezpečné návraty, názvy branchí a technická integrita |
 | 4, 24 Packages a přenositelnost | 022–029, 134 | pět Package typů, bezpečný import/export a Setup |
 | 5, 9–10 Země a hráči | 038–044, 135–136, 143, 149 | počáteční data, generování, identity a minimální import |
@@ -5474,13 +5484,13 @@ Pre-alpha zde znamená první end-to-end backendovou verzi, která opakovaně zv
 | 18–20 Ranking, finance a disciplína | 095–102, 140, 156 | Official ranking, Financial Level a konfigurovatelné doprovodné policy |
 | 21 Statistiky a historie | 146 | odvozené minimum; pokročilé Awards/Records/Rivalries později |
 | 22 Predikce | mimo blokující bránu | současné směry zůstávají nezávazné a neautoritativní |
-| 23, 27 Viewer a UX | 119–126, 144–145, 150 | minimální navigace, veřejné stránky a informační hranice |
+| 23, 27 Viewer a UX | 119, 122–126, 144–145 | Admin navigace, historické prohlížení a informační hranice; Viewer stránky později |
 | 25 Audit a validace | 121–134, 145, 148 | validace, audit, recovery a bezpečný souběh |
 | 26 Samostatné soutěže | 141 | jen ty, které budou výslovně součástí akceptačního Runu |
 
 ## 31.22 Co tuto bránu vědomě neblokuje
 
-Výslovně odložená nebo pozdější funkce se do pre-alpha nevrací jen proto, že je uvedena v Masteru. Bránu neblokuje jejich detailní dopracování, pokud nejsou nutné pro zvolený akceptační průchod. Patří sem zejména plný Forecast/Future Locks/Forecast Markets systém, pokročilý forcing a rare-event výzkum nad rámec minimálního Match Reconstruction, hluboký tréninkový model, detailní kurtová fyzika a venue logistika, pokročilé rozhodcovské edge cases, vlastní očekávání budoucích turnajů hráčskou AI, Country Ranking, úplné Awards/Records/Rivalry modely, další veřejné weby a soutěžní obsah, který nebude součástí první testovací sady.
+Výslovně odložená nebo pozdější funkce se do pre-alpha nevrací jen proto, že je uvedena v Masteru. Bránu neblokuje jejich detailní dopracování, pokud nejsou nutné pro zvolený akceptační průchod. Patří sem zejména Viewer jako samostatně dokončené UI se svými stránkami, mapou protějšků a reveal režimy, pokročilé hledání přirozenější alternativní minulosti AI (přesný algoritmus a naturalness kalibrace zůstávají otevřené), plný Forecast/Future Locks/Forecast Markets systém, pokročilý forcing a rare-event výzkum nad rámec minimálního Match Reconstruction, hluboký tréninkový model, detailní kurtová fyzika a venue logistika, pokročilé rozhodcovské edge cases, vlastní očekávání budoucích turnajů hráčskou AI, Country Ranking, úplné Awards/Records/Rivalry modely, další veřejné weby a soutěžní obsah, který nebude součástí první testovací sady.
 
 Tato hranice není nové rozhodnutí o jejich definitivním odstranění. Znamená pouze, že již označené `ODLOŽENO / POZDĚJI` zůstává mimo pre-alpha, dokud uživatel výslovně nezmění rozsah.
 
@@ -5496,16 +5506,19 @@ Tato hranice není nové rozhodnutí o jejich definitivním odstranění. Znamen
 
 ## 31.24 Souhrn rozhodovací brány
 
-Ve v64 zůstávají níže uvedené počty z v63 beze změny. Nová vývojová priorita z 31.1 není další sportovní pravidlo a neuzavírá žádnou další PAQ.
+Počty v tabulce níže označené v63 jsou historický snapshot. Ve v66 je ze stejných 157 identifikátorů 50 `[RESOLVED]`, 104 `[OPEN]` a 3 `[NOT REQUIRED FOR PRE-ALPHA]`; poslední status odkládá pouze povinnost pro první pre-alpha, nikoli cílovou funkci produktu. Široký registry počet 411 / 88 / 69 je historický stav v65, nikoliv nově provedený přepočet produktových položek.
 
 | Vrstva | Počet | Podmínka uzavření |
 |---|---:|---|
 | Široké otevřené/odložené okruhy `OQ` | 69 | Zůstávají zdrojovým registrem kapitoly 30 |
 | Atomické pre-alpha otázky `PAQ` | 157 | Každá má odpověď, minimální default nebo vědomý stub podle `PA0 / PA1` |
 | Z toho ve verzi 63 `[RESOLVED]` | 48 | `PAQ-001–005`, `014`, `016`, `023–024`, `027`, `029–034`, `036–037`, `042–046`, `051`, `053`, `058`, `063–081`, `097`, `115` a `157` |
-| Z toho ve verzi 63 stále otevřeno | 109 | `PAQ-082` zůstává výslovně otevřená; absence terminálního markeru znamená `[OPEN]` a vyžaduje odpověď, default, kalibraci, obsah nebo vědomý stub podle vlastníka |
-| Pevná rozhodnutí | 411 | Včetně Match Format/snapshot kontraktu, minimálních turnajových entit, dědičnosti, materializace, lifecycle/public version matice a fair-rest scheduleru z v62 |
-| Prozatímní pravidla a směry | 88 | Přesný field-specific katalog, Country↔Country model, hluboký trénink, číselná kalibrace rally i mezi-rally času a další výslovně označené směry zůstávají prozatímní či otevřené |
+| Z toho ve verzi 63 stále otevřeno | 109 | Historický počet; `PAQ-082` tehdy zůstávala otevřená |
+| Z toho ve v66 `[RESOLVED]` | 50 | Dosavadních 48 plus `PAQ-118` a `PAQ-127` |
+| Z toho ve v66 `[NOT REQUIRED FOR PRE-ALPHA]` | 3 | `PAQ-120`, `PAQ-121`, `PAQ-150`; cílový Viewer zůstává otevřený pro další vydání |
+| Z toho ve v66 `[OPEN]` | 104 | Včetně přesného Admin UI a historického katalogu `PAQ-119`, `PAQ-124`, `PAQ-144` |
+| Pevná rozhodnutí (historický stav v65) | 411 | Včetně Match Format/snapshot kontraktu, minimálních turnajových entit, dědičnosti, materializace, lifecycle/public version matice a fair-rest scheduleru z v62 |
+| Prozatímní pravidla a směry (historický stav v65) | 88 | Přesný field-specific katalog, Country↔Country model, hluboký trénink, číselná kalibrace rally i mezi-rally času a další výslovně označené směry zůstávají prozatímní či otevřené |
 
 Počet `PAQ` není odhad všech budoucích rozhodnutí. Je to současná behaviorální a obsahová brána první pre-alpha; jedna otázka se při kalibraci může rozpadnout na další podotázky a několik otázek může uzavřít jedna společná odpověď.
 

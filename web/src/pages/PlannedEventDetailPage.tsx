@@ -799,6 +799,14 @@ export function PlannedEventDetailPage(): JSX.Element {
                 <div className="grid">
                   <h4>Build canonical Entry Field</h4>
                   <p className="status">Build only from persisted valid submissions. Capacity remains explicit at commit time.</p>
+                  <SummaryPills items={[
+                    { label: 'Valid submissions', value: canonicalPreparationQuery.data.valid_submission_count ?? 0 },
+                    { label: 'Main submissions', value: canonicalPreparationQuery.data.valid_main_submission_count ?? 0 },
+                    { label: 'Qualification submissions', value: canonicalPreparationQuery.data.valid_qualification_submission_count ?? 0 }
+                  ]} />
+                  {(canonicalPreparationQuery.data.valid_submission_count ?? 0) === 0 ? (
+                    <p className="status">No canonical valid submissions are persisted for this event yet. Entry Field creation would currently have no application evidence.</p>
+                  ) : null}
                   {canonicalPreparationQuery.data.entry_capacity_suggestion ? (
                     <p className="status">
                       Prefilled from frozen Run-owned Calendar Package {canonicalPreparationQuery.data.entry_capacity_suggestion.source_package_id}

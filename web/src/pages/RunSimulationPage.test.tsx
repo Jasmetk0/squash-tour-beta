@@ -35,7 +35,7 @@ describe('RunSimulationPage', () => {
     expect(await screen.findByText('Branch B (branch-b)')).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: 'Next Match' }))
     expect(screen.getByText('Review Next Match')).toBeInTheDocument()
-    expect(screen.getByText(/branch-b/i)).toBeInTheDocument()
+    expect(screen.getByText('branch-b', { selector: 'dd' })).toBeInTheDocument()
   })
   it('fails closed for a branch deep link that is not part of the run', async () => {
     renderHarness('/admin/runs/run-a/simulate?branch=missing-branch')

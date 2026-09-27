@@ -739,7 +739,7 @@ beforeEach(() => {
       primary_terminal_trigger: 'GOOD_RETURN_UNANSWERED',
       terminal_subtype: null,
       official_resolution: 'POINT_AWARDED',
-      analytical_attribution: 'WINNER',
+      analytical_attribution: 'CLEAN_WINNER',
       score_before: { player_a_id: 'p1', player_b_id: 'p2', sets_a: 0, sets_b: 0, points_a: 0, points_b: 0 },
       score_mutations: [],
       score_after: { player_a_id: 'p1', player_b_id: 'p2', sets_a: 0, sets_b: 0, points_a: 1, points_b: 0 },

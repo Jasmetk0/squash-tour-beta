@@ -3102,6 +3102,76 @@ class AuthoritativeRunSimulationDriver:
             "verified": True,
         }
 
+    def get_authoritative_match_replay_frame(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+        rally_index: int,
+    ) -> dict:
+        """Compose one read-only rally frame from already-stored authoritative evidence."""
+
+        rally_cursor = self.get_authoritative_match_replay_cursor(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+            rally_index=rally_index,
+        )
+        replay = self.get_authoritative_match_replay(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+        result = MatchResult.model_validate(replay["final_result"])
+        if result.timeline_log is None:
+            raise ValueError("completed authoritative match has no timeline log")
+        timeline_event = next(
+            (
+                event
+                for event in result.timeline_log.events
+                if event.event_type == "RALLY" and event.rally_index == rally_index
+            ),
+            None,
+        )
+        if timeline_event is None:
+            raise ValueError("stored rally has no matching authoritative timeline event")
+        stamina_transition = None
+        if result.stamina_log is not None:
+            result.stamina_log.validate_timeline(result.timeline_log)
+            stamina_transition = result.stamina_log.transitions[
+                timeline_event.timeline_index - 1
+            ]
+        context = self.get_authoritative_match_replay_context(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+        return {
+            "schema_version": "authoritative_match_replay_frame.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week_ordinal": replay["week_ordinal"],
+            "slot_id": replay["slot_id"],
+            "group_id": group_id,
+            "match_id": replay["match_id"],
+            "result_fingerprint": replay["result_fingerprint"],
+            "rally_index": rally_index,
+            "rally": rally_cursor["rally"],
+            "timeline_event": timeline_event.model_dump(mode="json"),
+            "stamina_transition": (
+                stamina_transition.model_dump(mode="json")
+                if stamina_transition is not None
+                else None
+            ),
+            "context_summary": context["summary"],
+            "navigation": rally_cursor["navigation"],
+            "replay_source": "stored_authoritative_events",
+            "rng_rerun": False,
+            "read_only": True,
+            "verified": True,
+        }
+
     def get_authoritative_match_timeline_cursor(
         self,
         *,

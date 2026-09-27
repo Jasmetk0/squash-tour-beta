@@ -122,8 +122,25 @@ There is still no invented Run Package contract for Entry tuning. Instead:
 This binds the last known global Package-backed AI Entry input without claiming new
 Package ownership or changing EntryEngine semantics.
 
-**Next after this PR:** re-audit Package-backed AI Entry for any remaining mutable/global
-inputs. If clean, return to the next largest decided pre-alpha ownership dependency.
+The re-audit confirms Package-backed AI Entry no longer has an unfrozen mutable/global
+sporting input: roster, Calendar event snapshots and World countries are Run-owned;
+Entry tuning is frozen and fingerprint-bound at preview/commit.
+
+The next live compatibility dependency was the current Planned Event Admin page still
+querying legacy simulation-run WC / pre-draw / late-replacement sidecar histories beside
+the canonical Run/Branch authorities.
+
+Current Planned Event no longer performs those three file-backed history reads:
+
+- canonical WC/RWC state remains the only current wildcard authority;
+- canonical Entry Field history remains the pre-draw withdrawal source;
+- canonical Draw revision history remains the current post-draw replacement source;
+- legacy sidecar history GET endpoints remain backend read-only compatibility for old
+  saves/history, but are no longer current product inputs or UI panels.
+
+**Next after this PR:** continue retiring legacy tournament-preparation compatibility
+surfaces that are still reachable from current Admin/product flows, while preserving
+explicit historical readers.
 
 
 ## Active implementation — canonical result/ranking source fence

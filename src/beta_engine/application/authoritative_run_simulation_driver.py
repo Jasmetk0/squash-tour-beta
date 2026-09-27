@@ -3026,6 +3026,23 @@ class AuthoritativeRunSimulationDriver:
                     projection.model_dump(mode="json")
                     for projection in protected.player_projections
                 ],
+                "summary": {
+                    "player_a_id": protected.player_projections[0].player_id,
+                    "player_a_name": protected.player_projections[0].name,
+                    "player_b_id": protected.player_projections[1].player_id,
+                    "player_b_name": protected.player_projections[1].name,
+                    "best_of": engine.context.best_of,
+                    "games_to": engine.context.games_to,
+                    "win_by": engine.context.win_by,
+                    "ruleset_version": rules.ruleset_version if rules is not None else None,
+                    "resolver_version": rules.resolver_version if rules is not None else None,
+                    "rules_calibration_version": (
+                        rules.calibration_version if rules is not None else None
+                    ),
+                    "rules_unsupported_components": (
+                        list(rules.unsupported_components) if rules is not None else []
+                    ),
+                },
                 "replay_source": "stored_authoritative_events",
                 "rng_rerun": False,
                 "read_only": True,

@@ -74,8 +74,20 @@
     controls already exist; do not fabricate local actions for Ranking Snapshot / Entry Field.
 19. ✅ Reuse the existing canonical Ranking Snapshot adoption and Entry Field-from-valid-submissions
     commands directly from Planned Event Admin with explicit ranking week/capacity inputs.
-20. Next: audit whether Entry Field capacity already has a frozen Tournament Edition/config source
-    that can safely drive the Admin form without creating a second authority.
+20. ✅ Derive a read-only Entry Field capacity suggestion from the frozen Run-owned Calendar
+    Package event, with Package/version/fingerprint provenance and no legacy fallback.
+21. ✅ Prefill the explicit Entry Field Admin command from that suggestion while preserving
+    explicit review/commit and manual fallback when no canonical suggestion exists.
+22. ✅ Expose validated published Official Ranking options for the exact Run/Branch and let
+    Admin explicitly select one for Tournament Ranking Snapshot adoption.
+23. ✅ Remove arbitrary season/week typing from Planned Event Ranking Snapshot adoption while
+    preserving explicit Admin choice and excluding unpublished ranking candidates.
+24. ✅ Expose canonical valid-submission counts (total/Main/Qualification) before Entry Field
+    creation using append-only Run-owned submission authority only.
+25. ✅ Show zero-submission readiness explicitly in Planned Event without inventing a new blocker
+    or changing the existing Entry Field command.
+26. Next: audit safe navigation from missing valid submissions to the existing Entry validation
+    workflow without duplicating Simulation Slot authority.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

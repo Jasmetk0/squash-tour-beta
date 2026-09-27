@@ -1129,6 +1129,23 @@ export type TournamentRankingSnapshotAuthority = {
   adopted_by_command_id: string
 }
 
+export type TournamentRankingPublicationOption = {
+  ranking_week: AuthoritativeRankingWeek
+  snapshot_fingerprint: string
+  ranked_row_count: number
+  policy_id: string
+  best_n: number
+}
+
+export type TournamentRankingPublicationOptions = {
+  run_id: string
+  branch_id: string
+  event_id: string
+  publications: TournamentRankingPublicationOption[]
+  publication_count: number
+  source: 'published_official_rankings.v1'
+}
+
 export type AdoptTournamentRankingSnapshotPayload = {
   command_id: string
   ranking_week: AuthoritativeRankingWeek
@@ -1164,11 +1181,29 @@ export type TournamentEntryField = {
   base_field_fingerprint: string | null
 }
 
+export type CanonicalEntryCapacitySuggestion = {
+  schema_version: 'canonical_entry_capacity_suggestion.v1'
+  main_draw_size: number
+  qualification_draw_size: number
+  qualifier_spots: number
+  wild_card_slots: number
+  bye_slots: number
+  source_package_id: string
+  source_package_version: number
+  source_package_fingerprint: string
+  source_event_fingerprint: string
+  source: 'run_owned_calendar_package.v1'
+}
+
 export type CanonicalTournamentPreparationState = {
   schema_version: 'canonical_tournament_preparation_state.v1'
   run_id: string
   branch_id: string
   event_id: string
+  entry_capacity_suggestion?: CanonicalEntryCapacitySuggestion | null
+  valid_submission_count?: number
+  valid_main_submission_count?: number
+  valid_qualification_submission_count?: number
   phase:
     | 'ranking_snapshot_required'
     | 'entry_field_required'

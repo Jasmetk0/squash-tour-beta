@@ -1,5 +1,59 @@
 # Current implementation and next action
 
+## Active implementation — canonical valid-submission readiness
+
+Tournament Preparation now exposes the already-persisted valid application evidence that
+feeds initial Entry Field construction.
+
+- counts come only from append-only Run/Branch/Event Tournament Application Submission authority;
+- preparation reports total, Main-window and Qualification-window valid submissions;
+- Planned Event shows the counts before the Entry Field command and calls out the zero-evidence case;
+- this is read-only readiness information: no new blocker, eligibility rule, deadline rule or
+  automatic Entry Field mutation is introduced;
+- the existing `from-valid-submissions` command remains the sole field-construction mutation.
+
+**Next after this PR:** audit whether the preparation page can link directly to the existing
+Entry validation/review workflow when valid submissions are absent, without duplicating the
+Simulation Slot authority or inventing application eligibility policy.
+
+## Active implementation — published Official Ranking selection for tournament authority
+
+Planned Event no longer asks Admin to type an arbitrary Ranking season/week when creating
+Tournament Ranking Snapshot authority.
+
+- the existing Tournament Ranking Snapshot store now exposes validated published Official
+  Ranking snapshots for the exact Run/Branch;
+- a new read-only event-scoped `/ranking-snapshot-authority/available` endpoint returns only
+  published snapshots after fingerprint/scope/week validation;
+- Planned Event presents those publications as explicit selectable options with week,
+  ranked row count and Best-N policy metadata;
+- adoption still uses the unchanged explicit canonical command and Admin must choose the
+  publication; the UI does not infer or recommend which ranking week is correct;
+- unpublished candidates are never presented as tournament authority sources.
+
+**Next after this PR:** continue canonical preparation UX by auditing submission readiness
+before Entry Field creation so the Admin can distinguish "no valid submissions yet" from
+capacity/configuration problems without attempting a mutation.
+
+## Active implementation — Run-owned Calendar capacity suggestion
+
+Canonical Tournament Preparation can now expose a read-only Entry Field capacity suggestion
+before the field exists, but only from frozen Run-owned Calendar Package evidence.
+
+- the suggestion resolves the exact `calendar.event.v1` entity for the event from Run
+  Package state and validates Package/version/fingerprint provenance;
+- canonical Main Draw capacity uses the frozen Calendar event's `main_draw_size + byes`
+  bracket geometry; Qualification, qualifier, WC and BYE values are carried explicitly;
+- ambiguous/mismatched Package evidence fails closed;
+- no mutable legacy Calendar/template fallback is used;
+- Planned Event pre-fills the explicit Entry Field command form from this suggestion but
+  still requires the existing explicit commit command;
+- source Calendar edits after Package application cannot change the suggestion.
+
+**Next after this PR:** audit whether Ranking Snapshot adoption can receive an equally safe
+read-only suggestion for the correct published Official Ranking week, without guessing or
+creating a live dependency.
+
 ## Active implementation — canonical preparation commands on Planned Event
 
 The two previously missing Tournament Preparation handoffs now use the existing canonical

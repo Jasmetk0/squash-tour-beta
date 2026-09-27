@@ -1129,6 +1129,23 @@ export type TournamentRankingSnapshotAuthority = {
   adopted_by_command_id: string
 }
 
+export type TournamentRankingPublicationOption = {
+  ranking_week: AuthoritativeRankingWeek
+  snapshot_fingerprint: string
+  player_count: number
+  policy_id: string
+  best_n: number
+}
+
+export type TournamentRankingPublicationOptions = {
+  run_id: string
+  branch_id: string
+  event_id: string
+  publications: TournamentRankingPublicationOption[]
+  publication_count: number
+  source: 'published_official_rankings.v1'
+}
+
 export type AdoptTournamentRankingSnapshotPayload = {
   command_id: string
   ranking_week: AuthoritativeRankingWeek

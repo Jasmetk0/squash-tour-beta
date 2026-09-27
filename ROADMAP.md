@@ -43,8 +43,12 @@
 11. ✅ Freeze the currently configured Entry tuning as typed authoritative proposal
     input, bind its fingerprint into snapshot-backed Entry batch identity and preserve
     legacy non-Package file-backed behavior.
-12. Next: re-audit Package-backed AI Entry for any remaining mutable/global inputs; if
-    clean, return to the next largest decided pre-alpha ownership dependency.
+12. ✅ Re-audit Package-backed AI Entry: no remaining unfrozen mutable/global sporting
+    input remains on the authoritative proposal path.
+13. ✅ Remove legacy WC / pre-draw / late-replacement sidecar history reads from current
+    Planned Event Admin UI; keep backend history GETs only for historical compatibility.
+14. Next: retire the next legacy tournament-preparation compatibility surface still
+    reachable from current Admin/product flows.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

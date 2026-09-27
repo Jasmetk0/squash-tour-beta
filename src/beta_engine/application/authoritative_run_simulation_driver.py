@@ -1589,6 +1589,9 @@ class AuthoritativeRunSimulationDriver:
                     batch.metadata.application_decisions_fingerprint
                 ),
                 "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "country_snapshot_fingerprint": (
+                    batch.metadata.country_snapshot_fingerprint
+                ),
                 "decision_count": len(authority.decisions),
                 "slot_fingerprint": authority.fingerprint,
                 "authority": authority.model_dump(mode="json"),
@@ -1659,6 +1662,9 @@ class AuthoritativeRunSimulationDriver:
                     batch.metadata.application_decisions_fingerprint
                 ),
                 "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "country_snapshot_fingerprint": (
+                    batch.metadata.country_snapshot_fingerprint
+                ),
                 "decision_count": len(stored.decisions),
                 "slot_fingerprint": stored.fingerprint,
                 "authority": stored.model_dump(mode="json"),

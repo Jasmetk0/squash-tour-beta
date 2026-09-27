@@ -33,8 +33,12 @@
    Calendar event identity + canonical preparation before Draw/MatchPackage exists.
 7. ✅ Fail schedule proposal on canonical preparation blockers before executable topology
    resolution, while preserving historical non-Package compatibility.
-8. Next: audit and retire the next duplicate legacy tournament-preparation readiness/status
-   path still reachable from authoritative Run orchestration.
+8. ✅ Audit confirms canonical Week Schedule readiness no longer reads legacy
+   Entry/Draw/WC preparation status.
+9. ✅ Feed Package-backed AI Entry batches from Run-owned Calendar event snapshots +
+   Run-owned roster without reading legacy EntryList/Calendar registries.
+10. Next: audit remaining Package-backed Entry inputs and old DTO compatibility
+    assumptions, preserving EntryEngine semantics.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

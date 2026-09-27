@@ -155,6 +155,56 @@ def test_overlapping_entry_batch_is_shared_atomic_and_order_independent(tmp_path
         )
 
 @pytest.mark.pr_critical
+def test_snapshot_backed_entry_batch_ignores_legacy_entry_and_calendar_registries(tmp_path):
+    service = make_service(tmp_path)
+    write_active(tmp_path / "active.json", count=40)
+    calendar = service.calendar_service.get_calendar(season="2000/2001").calendar
+    assert calendar is not None
+    event = calendar.events[0]
+
+    class ForbiddenCalendar:
+        def get_calendar(self, *args, **kwargs):
+            raise AssertionError("legacy Calendar lookup must not be used")
+
+    class SnapshotOnlyEntryService(type(service)):
+        def _load_registry(self):
+            raise AssertionError("legacy EntryList registry must not be used")
+
+        def _find_event(self, event_id):
+            raise AssertionError("legacy Calendar event lookup must not be used")
+
+    snapshot_service = SnapshotOnlyEntryService(
+        active_players_service=service.active_players_service,
+        calendar_service=ForbiddenCalendar(),
+        countries_service=service.countries_service,
+        entry_lists_path=service.entry_lists_path,
+        entry_tuning_path=service.entry_tuning_path,
+    )
+
+    result = SeasonEntryBatchService(
+        snapshot_service
+    ).generate_overlapping_entry_lists(
+        event_ids=[event.event_id],
+        request=EntryBatchGenerateRequest(
+            seed=123,
+            dry_run=True,
+            max_alternates=0,
+            include_not_entered=False,
+        ),
+        event_snapshots={event.event_id: event},
+    )
+
+    assert result.metadata.event_ids == (event.event_id,)
+    assert result.metadata.dry_run is True
+    assert result.metadata.persisted is False
+    assert result.application_decisions
+    assert {
+        decision.event_id for decision in result.application_decisions
+    } == {event.event_id}
+    assert not (tmp_path / "entries.json").exists()
+
+
+@pytest.mark.pr_critical
 def test_single_event_entry_decision_batch_preserves_complete_pre_cut_evidence(tmp_path):
     service = make_service(tmp_path)
     write_active(tmp_path / "active.json", count=40)

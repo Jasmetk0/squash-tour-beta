@@ -1249,6 +1249,67 @@ class AuthoritativeRunSimulationDriver:
         roster.get_active_players(season=season)
         return replace(base, active_players_service=roster)
 
+    def _generate_authoritative_entry_batch(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        event_ids: tuple[str, ...],
+        seed: int,
+    ):
+        """Generate deterministic Entry evidence from Run-owned inputs when available."""
+
+        entry_service = self._run_owned_entry_list_service(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        event_snapshots = None
+        if self._run_uses_package_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        ):
+            season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+            calendar, _, _ = self._calendar_authority(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                season=season,
+            )
+            if calendar is None:
+                raise ValueError(
+                    "Package-backed Entry proposal requires Run-owned Calendar authority"
+                )
+            by_id = {event.event_id: event for event in calendar.events}
+            missing = tuple(sorted(set(event_ids) - set(by_id)))
+            if missing:
+                raise ValueError(
+                    "Package-backed Entry proposal references event outside Run-owned Calendar: "
+                    + ", ".join(missing)
+                )
+            event_snapshots = {
+                event_id: by_id[event_id]
+                for event_id in event_ids
+            }
+
+        return SeasonEntryBatchService(
+            entry_service
+        ).generate_overlapping_entry_lists(
+            event_ids=list(event_ids),
+            request=EntryBatchGenerateRequest(
+                seed=seed,
+                dry_run=True,
+                overwrite_existing=False,
+                max_alternates=0,
+                include_not_entered=False,
+            ),
+            event_snapshots=event_snapshots,
+        )
+
     def commit_explicit_entry_decision_slot(
         self,
         command: AuthoritativeExplicitEntryDecisionSlotCommand,
@@ -1445,23 +1506,13 @@ class AuthoritativeRunSimulationDriver:
             if branch is None or not branch.saved_head_revision_id:
                 raise ValueError("Entry decision preview requires a saved Branch head")
 
-            entry_service = self._run_owned_entry_list_service(
+            batch = self._generate_authoritative_entry_batch(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
                 week=week,
-            )
-            batch = SeasonEntryBatchService(
-                entry_service
-            ).generate_overlapping_entry_lists(
-                event_ids=list(event_ids),
-                request=EntryBatchGenerateRequest(
-                    seed=seed,
-                    dry_run=True,
-                    overwrite_existing=False,
-                    max_alternates=0,
-                    include_not_entered=False,
-                ),
+                event_ids=event_ids,
+                seed=seed,
             )
             authority = freeze_entry_batch_proposal_as_run_slot(
                 batch=batch,
@@ -1516,23 +1567,13 @@ class AuthoritativeRunSimulationDriver:
             ):
                 raise ValueError("Entry decision Branch head is stale")
 
-            entry_service = self._run_owned_entry_list_service(
+            batch = self._generate_authoritative_entry_batch(
                 session,
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 week=week,
-            )
-            batch = SeasonEntryBatchService(
-                entry_service
-            ).generate_overlapping_entry_lists(
-                event_ids=list(command.event_ids),
-                request=EntryBatchGenerateRequest(
-                    seed=command.seed,
-                    dry_run=True,
-                    overwrite_existing=False,
-                    max_alternates=0,
-                    include_not_entered=False,
-                ),
+                event_ids=command.event_ids,
+                seed=command.seed,
             )
             if (
                 batch.metadata.build_fingerprint

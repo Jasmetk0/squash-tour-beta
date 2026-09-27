@@ -67,7 +67,11 @@ class SeasonEntryBatchService:
     entry_list_service: SeasonEntryListService
 
     def generate_overlapping_entry_lists(
-        self, *, event_ids: list[str], request: EntryBatchGenerateRequest
+        self,
+        *,
+        event_ids: list[str],
+        request: EntryBatchGenerateRequest,
+        event_snapshots: dict[str, SeasonCalendarEvent] | None = None,
     ) -> SeasonEntryBatchResult:
         if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
@@ -75,20 +79,37 @@ class SeasonEntryBatchService:
             )
         ordered_event_ids = tuple(sorted(event_ids))
         service = self.entry_list_service
-        registry = service._load_registry()
-        if not request.dry_run and not request.overwrite_existing:
-            existing = [
-                event_id
-                for event_id in ordered_event_ids
-                if event_id in registry.entry_lists_by_event_id
-            ]
-            if existing:
+        if event_snapshots is not None:
+            if not request.dry_run:
                 raise ValueError(
-                    "Entry batch contains existing event lists; set "
-                    f"overwrite_existing=true: {', '.join(existing)}"
+                    "snapshot-backed Entry batch is read-only and cannot persist legacy EntryLists"
                 )
-
-        events = {event_id: service._find_event(event_id) for event_id in ordered_event_ids}
+            if tuple(sorted(event_snapshots)) != ordered_event_ids:
+                raise ValueError(
+                    "snapshot-backed Entry batch must provide exactly the requested event IDs"
+                )
+            registry = SeasonEntryListsRegistry()
+            events = {
+                event_id: event_snapshots[event_id]
+                for event_id in ordered_event_ids
+            }
+        else:
+            registry = service._load_registry()
+            if not request.dry_run and not request.overwrite_existing:
+                existing = [
+                    event_id
+                    for event_id in ordered_event_ids
+                    if event_id in registry.entry_lists_by_event_id
+                ]
+                if existing:
+                    raise ValueError(
+                        "Entry batch contains existing event lists; set "
+                        f"overwrite_existing=true: {', '.join(existing)}"
+                    )
+            events = {
+                event_id: service._find_event(event_id)
+                for event_id in ordered_event_ids
+            }
         seasons = {str(event.season) for event in events.values()}
         if len(seasons) != 1:
             raise ValueError("overlapping Entry batch must belong to one season")
@@ -129,15 +150,19 @@ class SeasonEntryBatchService:
             tuning=load_entry_tuning_config(service.entry_tuning_path),
         )
 
-        calendar = service.calendar_service.get_calendar(season=season).calendar
-        calendar_events = {
-            event.event_id: event for event in (calendar.events if calendar else [])
-        }
-        external_lists = {
-            event_id: entry_list
-            for event_id, entry_list in registry.entry_lists_by_event_id.items()
-            if event_id not in ordered_event_ids
-        }
+        if event_snapshots is not None:
+            calendar_events = dict(event_snapshots)
+            external_lists = {}
+        else:
+            calendar = service.calendar_service.get_calendar(season=season).calendar
+            calendar_events = {
+                event.event_id: event for event in (calendar.events if calendar else [])
+            }
+            external_lists = {
+                event_id: entry_list
+                for event_id, entry_list in registry.entry_lists_by_event_id.items()
+                if event_id not in ordered_event_ids
+            }
         # Persisted overlapping EntryLists are not treated as irrevocable commitments.
         # They participate in unresolved-conflict evidence below; the product permits
         # overlapping provisional applications until an explicit commitment boundary.

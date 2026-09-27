@@ -39,6 +39,7 @@ import type {
   CanonicalTournamentEntryFieldState,
   CanonicalTournamentPreparationState,
   TournamentRankingSnapshotAuthority,
+  TournamentRankingPublicationOptions,
   AdoptTournamentRankingSnapshotPayload,
   TournamentEntryField,
   CreateTournamentEntryFieldPayload,
@@ -2716,6 +2717,23 @@ export async function commitCanonicalWildCardAssignment(
 
 function canonicalTournamentRankingSnapshotRoot(runId: string, branchId: string, eventId: string): string {
   return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/ranking-snapshot-authority`
+}
+
+export async function listTournamentRankingPublicationOptions(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<TournamentRankingPublicationOptions> {
+  const data = await request<TournamentRankingPublicationOptions>(
+    canonicalTournamentRankingSnapshotRoot(runId, branchId, eventId) + '/available'
+  )
+  if (
+    data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId ||
+    data.source !== 'published_official_rankings.v1' || data.publication_count !== data.publications.length
+  ) {
+    throw new Error('Published Official Ranking options do not match the requested tournament scope.')
+  }
+  return data
 }
 
 export async function adoptTournamentRankingSnapshotAuthority(

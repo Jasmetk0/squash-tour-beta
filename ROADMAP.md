@@ -78,8 +78,12 @@
     Package event, with Package/version/fingerprint provenance and no legacy fallback.
 21. ✅ Prefill the explicit Entry Field Admin command from that suggestion while preserving
     explicit review/commit and manual fallback when no canonical suggestion exists.
-22. Next: audit whether Ranking Snapshot adoption can receive a safe read-only published-week
-    suggestion from canonical Run/Branch authority rather than requiring manual week entry.
+22. ✅ Expose validated published Official Ranking options for the exact Run/Branch and let
+    Admin explicitly select one for Tournament Ranking Snapshot adoption.
+23. ✅ Remove arbitrary season/week typing from Planned Event Ranking Snapshot adoption while
+    preserving explicit Admin choice and excluding unpublished ranking candidates.
+24. Next: expose canonical valid-submission readiness before Entry Field creation so preparation
+    failures are visible before mutation.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

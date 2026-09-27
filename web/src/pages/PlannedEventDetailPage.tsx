@@ -6,6 +6,7 @@ import {
   getCanonicalTournamentEntryFieldState,
   getCanonicalTournamentPreparation,
   adoptTournamentRankingSnapshotAuthority,
+  listTournamentRankingPublicationOptions,
   createTournamentEntryFieldFromValidSubmissions,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
@@ -52,8 +53,7 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [canonicalWildcardReason, setCanonicalWildcardReason] = useState('')
   const [canonicalWildcardPreview, setCanonicalWildcardPreview] =
     useState<CanonicalWildCardPreview | null>(null)
-  const [rankingAuthoritySeasonIndex, setRankingAuthoritySeasonIndex] = useState('')
-  const [rankingAuthorityWeek, setRankingAuthorityWeek] = useState('')
+  const [rankingPublicationSelection, setRankingPublicationSelection] = useState('')
   const [entryMainDrawSize, setEntryMainDrawSize] = useState('')
   const [entryQualificationDrawSize, setEntryQualificationDrawSize] = useState('0')
   const [entryQualifierSpots, setEntryQualifierSpots] = useState('0')
@@ -90,13 +90,14 @@ export function PlannedEventDetailPage(): JSX.Element {
   })
   const rankingSnapshotAdoptMutation = useMutation({
     mutationFn: () => {
-      const seasonIndex = Number(rankingAuthoritySeasonIndex)
-      const week = Number(rankingAuthorityWeek)
-      if (!Number.isSafeInteger(seasonIndex) || seasonIndex < 0) throw new Error('Ranking season index must be a non-negative integer.')
-      if (!Number.isSafeInteger(week) || week < 1 || week > 61) throw new Error('Ranking week must be an integer from 1 to 61.')
+      const selected = rankingPublicationOptionsQuery.data?.publications.find(
+        (item) => `${item.ranking_week.season_index}:${item.ranking_week.week}` === rankingPublicationSelection
+      )
+      if (!selected) throw new Error('Select a published Official Ranking before adoption.')
+      const { season_index: seasonIndex, week } = selected.ranking_week
       return adoptTournamentRankingSnapshotAuthority(runId, activeBranchId, eventId, {
         command_id: `admin-ui-ranking-authority-${eventId}-${seasonIndex}-${week}`.slice(0, 128),
-        ranking_week: { season_index: seasonIndex, week }
+        ranking_week: selected.ranking_week
       })
     },
     onSuccess: async () => {
@@ -134,6 +135,15 @@ export function PlannedEventDetailPage(): JSX.Element {
         queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] })
       ])
     }
+  })
+  const rankingPublicationOptionsQuery = useQuery({
+    queryKey: ['tournament-ranking-publications', runId, activeBranchId, eventId],
+    queryFn: () => listTournamentRankingPublicationOptions(runId, activeBranchId, eventId),
+    enabled:
+      Boolean(runId && activeBranchId && eventId) &&
+      !viewed.historical &&
+      canonicalPreparationQuery.data?.next_required_action === 'adopt_ranking_snapshot',
+    retry: false
   })
   const canonicalWildcardStateQuery = useQuery({
     queryKey: ['canonical-wild-card-state', runId, activeBranchId, eventId],
@@ -766,10 +776,21 @@ export function PlannedEventDetailPage(): JSX.Element {
               {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (
                 <div className="grid">
                   <h4>Adopt Tournament Ranking Snapshot</h4>
-                  <p className="status">Select the already-published Official Ranking week explicitly. Planned Event does not guess this authority.</p>
-                  <label>Ranking season index<input aria-label="Ranking season index" type="number" min={0} value={rankingAuthoritySeasonIndex} onChange={(event) => setRankingAuthoritySeasonIndex(event.target.value)} /></label>
-                  <label>Ranking week<input aria-label="Ranking week" type="number" min={1} max={61} value={rankingAuthorityWeek} onChange={(event) => setRankingAuthorityWeek(event.target.value)} /></label>
-                  <button type="button" onClick={() => rankingSnapshotAdoptMutation.mutate()} disabled={rankingSnapshotAdoptMutation.isPending}>Adopt published Official Ranking</button>
+                  <p className="status">Select one already-published Official Ranking explicitly. Planned Event does not guess which publication should become tournament authority.</p>
+                  {rankingPublicationOptionsQuery.isLoading ? <p className="status">Loading published Official Rankings...</p> : null}
+                  {rankingPublicationOptionsQuery.error ? <p className="error">Published Official Rankings could not be loaded: {formatApiError(rankingPublicationOptionsQuery.error)}</p> : null}
+                  {rankingPublicationOptionsQuery.data?.publication_count === 0 ? <p className="status">No published Official Ranking is available for this Branch.</p> : null}
+                  <label>
+                    Published Official Ranking
+                    <select aria-label="Published Official Ranking" value={rankingPublicationSelection} onChange={(event) => setRankingPublicationSelection(event.target.value)}>
+                      <option value="">Select publication</option>
+                      {(rankingPublicationOptionsQuery.data?.publications ?? []).map((publication) => {
+                        const value = `${publication.ranking_week.season_index}:${publication.ranking_week.week}`
+                        return <option key={value} value={value}>Season index {publication.ranking_week.season_index} · Week {publication.ranking_week.week} · {publication.ranked_row_count} players · Best {publication.best_n}</option>
+                      })}
+                    </select>
+                  </label>
+                  <button type="button" onClick={() => rankingSnapshotAdoptMutation.mutate()} disabled={rankingSnapshotAdoptMutation.isPending || !rankingPublicationSelection}>Adopt selected Official Ranking</button>
                   {rankingSnapshotAdoptMutation.error ? <p className="error">Ranking Snapshot adoption failed: {formatApiError(rankingSnapshotAdoptMutation.error)}</p> : null}
                   {rankingSnapshotAdoptMutation.data ? <p className="status">Tournament Ranking Snapshot authority adopted for season index {rankingSnapshotAdoptMutation.data.ranking_week.season_index}, week {rankingSnapshotAdoptMutation.data.ranking_week.week}.</p> : null}
                 </div>

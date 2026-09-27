@@ -71,9 +71,28 @@ The Master §31.3 acceptance now proves the same Week-1 event progresses through
 `draw_input_ready` → `draw_generation_ready` → `draw_ready` on the Week Schedule
 preflight itself.
 
-**Next after this PR:** audit and retire the next duplicate legacy tournament-preparation
-readiness/status path that is still reachable from authoritative Run orchestration, while
-preserving explicitly historical compatibility.
+That audit found no remaining legacy Entry/Draw/WC status reader on the canonical
+Week Schedule readiness path. The next live ownership dependency was the optional
+AI Entry producer: it still reused `SeasonEntryListService` and therefore discovered
+events through the legacy Calendar/EntryList registries.
+
+Package-backed AI Entry preview/commit now keeps the same deterministic EntryEngine
+behavior but feeds it directly from Run-owned inputs:
+
+- current active players still come from Run-owned lifecycle + sporting state;
+- tournament event snapshots come from the Run-owned Calendar Package;
+- snapshot-backed Entry batching performs no legacy EntryList registry read and no
+  legacy Calendar event lookup;
+- the authoritative producer remains dry-run at the compatibility DTO layer and only
+  persists the canonical Run Entry Decision Slot authority;
+- historical Runs with no Package state retain the reviewed legacy compatibility path.
+
+PR-critical coverage deliberately makes legacy EntryList/Calendar lookup explode while
+Package-backed preview + commit still produce the same Run-owned slot contract.
+
+**Next after this PR:** audit the remaining Package-backed Entry inputs (country/tuning
+configuration and any old DTO-only assumptions), then continue the largest decided
+ownership dependency without changing Entry product semantics.
 
 
 ## Active implementation — canonical result/ranking source fence

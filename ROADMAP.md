@@ -37,8 +37,11 @@
    Entry/Draw/WC preparation status.
 9. ✅ Feed Package-backed AI Entry batches from Run-owned Calendar event snapshots +
    Run-owned roster without reading legacy EntryList/Calendar registries.
-10. Next: audit remaining Package-backed Entry inputs and old DTO compatibility
-    assumptions, preserving EntryEngine semantics.
+10. ✅ Source Package-backed AI Entry countries from the applied Run World Package
+    instead of the global CountriesConfigService, with frozen country evidence bound
+    into the Entry batch fingerprint.
+11. Next: audit and bind the remaining global `entry_tuning.json` input without
+    inventing new tuning/package semantics.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

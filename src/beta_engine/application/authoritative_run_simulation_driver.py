@@ -17,6 +17,7 @@ from sqlalchemy import select, text
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
+from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.canonical_tournament_preparation import (
     CanonicalTournamentPreparationService,
 )
@@ -103,6 +104,7 @@ from beta_engine.application.season_point_awards_service import (
     SeasonPointAwardsService,
 )
 from beta_engine.domain.matches.models import MatchResult
+from beta_engine.domain.run_packages import PackageType
 from beta_engine.domain.players.sporting import (
     CompletedWeekSportingContext,
     CompetitiveMatchCount,
@@ -1249,6 +1251,46 @@ class AuthoritativeRunSimulationDriver:
         roster.get_active_players(season=season)
         return replace(base, active_players_service=roster)
 
+    @staticmethod
+    def _run_owned_entry_country_snapshots(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+    ):
+        """Project Package-backed Entry country facts from the Run-owned World Package."""
+
+        state = get_run_package_state(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        if state is None or not state.package_versions:
+            return None
+
+        world_package_ids = tuple(
+            sorted(
+                {
+                    version.package_id
+                    for version in state.package_versions
+                    if version.package_type == PackageType.WORLD
+                }
+            )
+        )
+        if not world_package_ids:
+            raise ValueError(
+                "Package-backed Entry proposal requires one Run-owned World Package"
+            )
+        if len(world_package_ids) != 1:
+            raise ValueError(
+                "Package-backed Entry proposal requires exactly one Run-owned World Package"
+            )
+        projection = WorldPackageRunAdapter.project_countries(
+            state,
+            package_id=world_package_ids[0],
+        )
+        return projection.countries
+
     def _generate_authoritative_entry_batch(
         self,
         session: Session,
@@ -1268,6 +1310,7 @@ class AuthoritativeRunSimulationDriver:
             week=week,
         )
         event_snapshots = None
+        country_snapshots = None
         if self._run_uses_package_authority(
             session,
             run_id=run_id,
@@ -1295,6 +1338,11 @@ class AuthoritativeRunSimulationDriver:
                 event_id: by_id[event_id]
                 for event_id in event_ids
             }
+            country_snapshots = self._run_owned_entry_country_snapshots(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
 
         return SeasonEntryBatchService(
             entry_service
@@ -1308,6 +1356,7 @@ class AuthoritativeRunSimulationDriver:
                 include_not_entered=False,
             ),
             event_snapshots=event_snapshots,
+            country_snapshots=country_snapshots,
         )
 
     def commit_explicit_entry_decision_slot(
@@ -1540,6 +1589,9 @@ class AuthoritativeRunSimulationDriver:
                     batch.metadata.application_decisions_fingerprint
                 ),
                 "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "country_snapshot_fingerprint": (
+                    batch.metadata.country_snapshot_fingerprint
+                ),
                 "decision_count": len(authority.decisions),
                 "slot_fingerprint": authority.fingerprint,
                 "authority": authority.model_dump(mode="json"),
@@ -1610,6 +1662,9 @@ class AuthoritativeRunSimulationDriver:
                     batch.metadata.application_decisions_fingerprint
                 ),
                 "active_players_fingerprint": batch.metadata.active_players_fingerprint,
+                "country_snapshot_fingerprint": (
+                    batch.metadata.country_snapshot_fingerprint
+                ),
                 "decision_count": len(stored.decisions),
                 "slot_fingerprint": stored.fingerprint,
                 "authority": stored.model_dump(mode="json"),

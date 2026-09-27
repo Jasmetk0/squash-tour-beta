@@ -15,6 +15,7 @@ from beta_engine.application.season_entry_list_service import (
     SeasonEventEntryList,
 )
 from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.countries import Country
 from beta_engine.domain.entries import EntryDecision, EntryEngine, EntryTarget
 from beta_engine.domain.tournaments import SeasonCalendarEvent
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -35,6 +36,7 @@ class EntryBatchMetadata(BaseModel):
     dry_run: bool
     persisted: bool
     active_players_fingerprint: str
+    country_snapshot_fingerprint: str | None = None
     # Kept for wire compatibility with the short-lived #737 resolver contract.
     # Canonical entry batching no longer auto-resolves competing applications.
     resolved_conflict_player_count: int = Field(default=0, ge=0)
@@ -72,6 +74,7 @@ class SeasonEntryBatchService:
         event_ids: list[str],
         request: EntryBatchGenerateRequest,
         event_snapshots: dict[str, SeasonCalendarEvent] | None = None,
+        country_snapshots: tuple[Country, ...] | None = None,
     ) -> SeasonEntryBatchResult:
         if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
@@ -141,9 +144,22 @@ class SeasonEntryBatchService:
             [player.model_dump(mode="json") for player in active_players]
         )
         active_by_id = {player.player_id: player for player in active_players}
-        countries_by_code = {
-            country.code: country for country in service.countries_service.list_countries()
-        }
+        country_source = (
+            country_snapshots
+            if country_snapshots is not None
+            else tuple(service.countries_service.list_countries())
+        )
+        countries_by_code = {country.code: country for country in country_source}
+        country_snapshot_fingerprint = (
+            service._fingerprint(
+                [
+                    country.model_dump(mode="json")
+                    for country in sorted(country_source, key=lambda item: item.code)
+                ]
+            )
+            if country_snapshots is not None
+            else None
+        )
         players = [service._adapt_player(player) for player in active_players]
         engine = EntryEngine(
             rng=DeterministicRng(request.seed),
@@ -460,20 +476,23 @@ class SeasonEntryBatchService:
             raise ValueError(
                 f"Entry batch validation failed: {first.code}: {first.message}"
             )
-        batch_fp = service._fingerprint(
-            {
-                "event_ids": ordered_event_ids,
-                "season": season,
-                "seed": request.seed,
-                "active_players_fingerprint": active_fp,
-                "application_decisions_fingerprint": application_decisions_fingerprint,
-                "entry_lists": [
-                    lists[event_id].metadata.build_fingerprint
-                    for event_id in ordered_event_ids
-                ],
-                "unresolved_conflict_players": sorted(conflicted_players),
-            }
-        )
+        batch_fingerprint_payload = {
+            "event_ids": ordered_event_ids,
+            "season": season,
+            "seed": request.seed,
+            "active_players_fingerprint": active_fp,
+            "application_decisions_fingerprint": application_decisions_fingerprint,
+            "entry_lists": [
+                lists[event_id].metadata.build_fingerprint
+                for event_id in ordered_event_ids
+            ],
+            "unresolved_conflict_players": sorted(conflicted_players),
+        }
+        if country_snapshot_fingerprint is not None:
+            batch_fingerprint_payload["country_snapshot_fingerprint"] = (
+                country_snapshot_fingerprint
+            )
+        batch_fp = service._fingerprint(batch_fingerprint_payload)
         metadata = EntryBatchMetadata(
             event_ids=ordered_event_ids,
             season=season,
@@ -481,6 +500,7 @@ class SeasonEntryBatchService:
             dry_run=request.dry_run,
             persisted=not request.dry_run,
             active_players_fingerprint=active_fp,
+            country_snapshot_fingerprint=country_snapshot_fingerprint,
             resolved_conflict_player_count=0,
             unresolved_conflict_player_count=len(conflicted_players),
             application_decisions_fingerprint=application_decisions_fingerprint,

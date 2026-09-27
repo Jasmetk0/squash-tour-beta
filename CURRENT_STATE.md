@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Active implementation — direct Admin Tournament Preparation readiness
+
+The canonical Tournament Preparation read model is now surfaced directly on the current
+Planned Event Admin page instead of being visible only indirectly through Week Schedule
+preflight.
+
+- the web client reads the existing Run/Branch/Event preparation endpoint directly;
+- Planned Event shows the canonical phase, next required action, blockers, schedule
+  readiness, authority source and effective Draw fingerprint;
+- WC, pre-draw and Draw mutations invalidate the same preparation query so the summary
+  follows authoritative state changes instead of becoming a second state owner;
+- no sporting rule, backend authority or historical reader changes;
+- the existing detailed Entry/WC/Draw controls remain the action surfaces.
+
+**Next after this PR:** use the direct readiness surface to audit navigation/handoff gaps
+between preparation phases and their existing Admin controls; do not duplicate authority
+or invent actions for unresolved product mechanics.
+
 ## Active implementation — frontend full-suite regression synchronization
 
 The 2026-09-27 frontend baseline audit reproduced exactly four pre-existing failures out

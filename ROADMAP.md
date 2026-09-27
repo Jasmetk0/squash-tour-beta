@@ -2,21 +2,16 @@
 
 ## Active pre-alpha sequence — resumable live match simulation
 
-1. ✅ Freeze immutable `MatchWorkingInput` and true one-rally transition.
-2. ✅ Persist Run/Branch/Week/Slot/Group live state with CAS/idempotent receipts.
-3. ✅ Expose Next Rally / Game / Rest of Match from one sporting primitive.
-4. ✅ Prove restart-safe parent range orchestration.
-5. ✅ Hydrate live state from server truth after reload.
-6. ✅ Add automatic Game/Rest return points and alternative working paths.
-7. ✅ Stage terminal results as `completed_working` with explicit Confirm or Restore.
-8. ✅ Preserve displaced completed results as temporary alternatives.
-9. ✅ Promote into authoritative history only through CAS-guarded confirmation.
-10. ✅ Add canonical read-only completed Match Replay directly over stored authoritative
-    Rally Events and Post-Rally snapshots.
-11. ✅ Add First / Step Back / Step Forward / Last cursor navigation with zero RNG and
-    zero authoritative mutation.
-12. Next: expose richer stored timeline/time-event replay detail and continue the
-    pre-alpha match-viewer UX over immutable history.
+1. ✅ Freeze immutable MatchWorkingInput and true one-rally transition.
+2. ✅ Persist live state with CAS/idempotent receipts.
+3. ✅ Expose Next Rally / Game / Rest from one sporting primitive.
+4. ✅ Add return points, alternatives and explicit completed-working confirmation.
+5. ✅ Add canonical completed Match Replay over stored Rally Events.
+6. ✅ Add First / Step Back / Step Forward / Last rally navigation with zero mutation.
+7. ✅ Add full stored timeline replay over Rally, Between-Rally Interval, Game Break and
+   Objective Delay events with independent cursor navigation.
+8. Next: enrich immutable match-viewer detail with stored stamina/rules/context data,
+   preserving the no-rerun replay invariant.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

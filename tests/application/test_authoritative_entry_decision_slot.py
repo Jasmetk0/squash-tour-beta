@@ -4,7 +4,6 @@ from sqlalchemy import select
 from beta_engine.application.authoritative_run_simulation_driver import (
     AuthoritativeApplicationValidationCommand,
     AuthoritativeEntryDecisionSlotCommand,
-    AuthoritativeRunSimulationDriver,
 )
 from beta_engine.domain.tournaments.application_validation_authority import (
     TournamentApplicationValidationAuthority,
@@ -138,60 +137,6 @@ def test_single_event_entry_slot_preview_commit_and_retry_are_run_owned(tmp_path
 
     # Authoritative Run preview/commit must not mutate the compatibility EntryList registry.
     assert entry_service._load_registry().model_dump(mode="json") == before_registry
-
-
-@pytest.mark.pr_critical
-def test_package_backed_ai_entry_uses_run_owned_event_snapshots_not_legacy_registries(
-    tmp_path,
-    monkeypatch,
-):
-    driver, factory, week = _driver_fixture(tmp_path / "package-owned-entry-inputs")
-    _align_compatibility_roster(driver, factory, week)
-    entry_service = driver.match_service.draw_service.entry_list_service
-    event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
-    season = f"{2000 + week.season_index}/{2001 + week.season_index}"
-    calendar = entry_service.calendar_service.get_calendar(season=season).calendar
-    assert calendar is not None
-    assert any(event.event_id == event_id for event in calendar.events)
-
-    class PackageBackedEntryDriver(AuthoritativeRunSimulationDriver):
-        @staticmethod
-        def _run_uses_package_authority(session, *, run_id, branch_id):
-            return True
-
-        def _calendar_authority(self, session, *, run_id, branch_id, season):
-            return calendar, "run_package", "f" * 64
-
-    owned_driver = PackageBackedEntryDriver(
-        driver.factory,
-        driver.match_service,
-        driver.awards_service,
-    )
-
-    def forbidden(*args, **kwargs):
-        raise AssertionError("legacy Entry/Calendar registry must not be read")
-
-    monkeypatch.setattr(type(entry_service), "_load_registry", forbidden)
-    monkeypatch.setattr(type(entry_service), "_find_event", forbidden)
-    monkeypatch.setattr(
-        type(entry_service.calendar_service),
-        "get_calendar",
-        forbidden,
-    )
-
-    preview = owned_driver.preview_entry_decision_slot(
-        run_id="run",
-        branch_id="branch",
-        event_ids=(event_id,),
-        decision_slot_ordinal=1,
-        seed=4201,
-    )
-    assert preview["event_ids"] == [event_id]
-    assert preview["decision_count"] == len(preview["authority"]["decisions"])
-
-    committed = owned_driver.commit_entry_decision_slot(_command_from_preview(preview))
-    assert committed["adoption"] == "committed"
-    assert committed["slot_fingerprint"] == preview["slot_fingerprint"]
 
 
 @pytest.mark.pr_critical

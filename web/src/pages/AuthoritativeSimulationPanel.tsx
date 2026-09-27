@@ -25,6 +25,7 @@ import {
   inspectAuthoritativeLiveMatchTimeline,
   listAuthoritativeMatchReplays,
   getAuthoritativeMatchReplayCursor,
+  getAuthoritativeMatchReplayContext,
   getAuthoritativeMatchTimelineCursor,
   getAuthoritativeMatchStaminaCursor,
   confirmAuthoritativeLiveMatch,
@@ -65,6 +66,7 @@ import type {
   AuthoritativeNextRallyResult,
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchReplayCursor,
+  AuthoritativeMatchReplayContext,
   AuthoritativeMatchTimelineCursor,
   AuthoritativeMatchStaminaCursor,
   AuthoritativeMatchDayPreview,
@@ -328,6 +330,19 @@ export function AuthoritativeSimulationPanel({
     queryKey: ['authoritative-match-replays', runId, branchId],
     queryFn: () => listAuthoritativeMatchReplays(runId, branchId, 20),
     enabled,
+    retry: false
+  })
+
+  const replayContextQuery = useQuery<AuthoritativeMatchReplayContext>({
+    queryKey: [
+      'authoritative-match-replay-context',
+      runId,
+      branchId,
+      selectedReplayGroupId
+    ],
+    queryFn: () =>
+      getAuthoritativeMatchReplayContext(runId, branchId, selectedReplayGroupId),
+    enabled: Boolean(enabled && selectedReplayGroupId),
     retry: false
   })
 
@@ -3429,6 +3444,53 @@ export function AuthoritativeSimulationPanel({
                 </label>
                 {replayCursorQuery.data ? (
                   <>
+                    {replayContextQuery.data ? (
+                      <>
+                        <h6>Frozen match context</h6>
+                        <MetadataList
+                          items={[
+                            {
+                              label: 'Players',
+                              value: `${replayContextQuery.data.summary.player_a_name} vs ${replayContextQuery.data.summary.player_b_name}`
+                            },
+                            {
+                              label: 'Format',
+                              value: `BO${replayContextQuery.data.summary.best_of} · to ${replayContextQuery.data.summary.games_to} · win by ${replayContextQuery.data.summary.win_by}`
+                            },
+                            {
+                              label: 'Event',
+                              value: replayContextQuery.data.event_id
+                            },
+                            {
+                              label: 'Engine',
+                              value: replayContextQuery.data.match_engine_version
+                            },
+                            {
+                              label: 'Ruleset',
+                              value: replayContextQuery.data.summary.ruleset_version ?? 'not stored'
+                            },
+                            {
+                              label: 'Rules resolver',
+                              value: replayContextQuery.data.summary.resolver_version ?? 'not stored'
+                            },
+                            {
+                              label: 'Rules calibration',
+                              value: replayContextQuery.data.summary.rules_calibration_version ?? 'not stored'
+                            },
+                            {
+                              label: 'Unsupported rules',
+                              value:
+                                replayContextQuery.data.summary.rules_unsupported_components.join(', ') ||
+                                'none'
+                            },
+                            {
+                              label: 'Input fingerprint',
+                              value: replayContextQuery.data.match_input_fingerprint
+                            }
+                          ]}
+                        />
+                      </>
+                    ) : null}
                     <MetadataList
                       items={[
                         {
@@ -3456,6 +3518,30 @@ export function AuthoritativeSimulationPanel({
                         {
                           label: 'Terminal cause',
                           value: replayCursorQuery.data.rally.primary_terminal_trigger
+                        },
+                        {
+                          label: 'Official call',
+                          value: replayCursorQuery.data.rally.official_resolution
+                        },
+                        {
+                          label: 'Rule decision',
+                          value: replayCursorQuery.data.rally.rules_resolution?.decision_code ?? 'legacy rally'
+                        },
+                        {
+                          label: 'Rule situation',
+                          value: replayCursorQuery.data.rally.rules_resolution?.context.kind ?? 'legacy rally'
+                        },
+                        {
+                          label: 'Replay required',
+                          value: replayCursorQuery.data.rally.rules_resolution?.replay_required ? 'yes' : 'no'
+                        },
+                        {
+                          label: 'Service box',
+                          value: replayCursorQuery.data.rally.service_box ?? 'legacy rally'
+                        },
+                        {
+                          label: 'Next service box',
+                          value: replayCursorQuery.data.rally.next_service_box ?? 'legacy rally'
                         },
                         {
                           label: 'Shots',

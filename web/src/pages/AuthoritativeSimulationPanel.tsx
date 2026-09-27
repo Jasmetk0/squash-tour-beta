@@ -26,6 +26,7 @@ import {
   listAuthoritativeMatchReplays,
   getAuthoritativeMatchReplayCursor,
   getAuthoritativeMatchTimelineCursor,
+  getAuthoritativeMatchStaminaCursor,
   confirmAuthoritativeLiveMatch,
   restoreAuthoritativeLiveReturnPoint,
   simulateAuthoritativeNextRally,
@@ -65,6 +66,7 @@ import type {
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchReplayCursor,
   AuthoritativeMatchTimelineCursor,
+  AuthoritativeMatchStaminaCursor,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
@@ -358,6 +360,25 @@ export function AuthoritativeSimulationPanel({
     ],
     queryFn: () =>
       getAuthoritativeMatchTimelineCursor(
+        runId,
+        branchId,
+        selectedReplayGroupId,
+        replayTimelineIndex
+      ),
+    enabled: Boolean(enabled && selectedReplayGroupId),
+    retry: false
+  })
+
+  const replayStaminaQuery = useQuery<AuthoritativeMatchStaminaCursor>({
+    queryKey: [
+      'authoritative-match-replay-stamina-cursor',
+      runId,
+      branchId,
+      selectedReplayGroupId,
+      replayTimelineIndex
+    ],
+    queryFn: () =>
+      getAuthoritativeMatchStaminaCursor(
         runId,
         branchId,
         selectedReplayGroupId,
@@ -3534,6 +3555,49 @@ export function AuthoritativeSimulationPanel({
                             }
                           ]}
                         />
+                        {replayStaminaQuery.data ? (
+                          <>
+                            <h6>Stored stamina transition</h6>
+                            <MetadataList
+                              items={[
+                                {
+                                  label: 'Cause',
+                                  value: replayStaminaQuery.data.transition.cause
+                                },
+                                {
+                                  label: 'Workload units',
+                                  value: replayStaminaQuery.data.transition.workload_units
+                                },
+                                {
+                                  label: 'Elapsed seconds',
+                                  value: replayStaminaQuery.data.transition.elapsed_seconds
+                                },
+                                {
+                                  label: 'Player A after',
+                                  value: replayStaminaQuery.data.transition.states_after[0].bars
+                                    .map((bar) => `${bar.dimension}: ${bar.current}/${bar.capacity}`)
+                                    .join(' · ')
+                                },
+                                {
+                                  label: 'Player B after',
+                                  value: replayStaminaQuery.data.transition.states_after[1].bars
+                                    .map((bar) => `${bar.dimension}: ${bar.current}/${bar.capacity}`)
+                                    .join(' · ')
+                                },
+                                {
+                                  label: 'Calibration',
+                                  value: replayStaminaQuery.data.calibration_version
+                                },
+                                {
+                                  label: 'Unsupported',
+                                  value:
+                                    replayStaminaQuery.data.support_boundary.unsupported_components.join(', ') ||
+                                    'none'
+                                }
+                              ]}
+                            />
+                          </>
+                        ) : null}
                         <div className="button-row" aria-label="Authoritative match timeline replay navigation">
                           <button
                             type="button"

@@ -268,7 +268,6 @@ import type {
   EventResultExtractPayload,
   SeasonEventEntryListResult,
   SeasonLifecycleResponse,
-  EventLifecycleResponse,
   SimulateOneEventRequest,
   SimulateOneEventResult,
   SimulateSeasonWeekPreflightRequest,
@@ -550,9 +549,6 @@ export function getSeasonLifecycle(season: string): Promise<SeasonLifecycleRespo
   return request(`/admin/lifecycle/${encodeURIComponent(season)}`)
 }
 
-export function getEventLifecycle(eventId: string): Promise<EventLifecycleResponse> {
-  return request(`/admin/lifecycle/event/${encodeURIComponent(eventId)}`)
-}
 
 export function simulateOneEvent(eventId: string, payload: SimulateOneEventRequest): Promise<SimulateOneEventResult> {
   return request(`/admin/events/${encodeURIComponent(eventId)}/simulate`, { method: 'POST', body: JSON.stringify(payload) })

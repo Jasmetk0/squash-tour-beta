@@ -49,6 +49,7 @@ const api = vi.hoisted(() => ({
   listGeneratedPlayersProvenance: vi.fn(),
   bootstrapNextSeason: vi.fn(),
   getViewerRankingTable: vi.fn(),
+  getViewerOfficialRanking: vi.fn(),
   getAdminRankingTable: vi.fn(),
   getAdminRankingSnapshot: vi.fn(),
   getAdminPointBreakdown: vi.fn(),
@@ -3461,14 +3462,32 @@ describe('Module 17 pages through routes', () => {
     expect(runHrefs.some((href) => href?.includes('legacy-run-1') || href?.includes('/viewer/runs//'))).toBe(false)
   })
 
-  it('renders top-level Viewer rankings snapshot landing without duplicate active run nav', async () => {
+  it('renders top-level canonical Official Ranking without duplicate active run nav', async () => {
     localStorage.setItem('beta_engine:viewer_active_product_run_id', 'product-run-a')
     localStorage.setItem('beta_engine:viewer_active_run_id', 'legacy-run-a')
+    api.getViewerOfficialRanking.mockResolvedValue({
+      schema_version: 'viewer_official_ranking.v1',
+      product_run_id: 'product-run-a',
+      viewer_branch_id: 'branch-product-run-a',
+      season_index: 27,
+      week: 9,
+      week_ordinal: 1656,
+      snapshot_fingerprint: 'a'.repeat(64),
+      policy_id: 'best-15',
+      best_n: 15,
+      row_count: 1,
+      rows: [{ rank: 1, player_id: 'P1', points: 1400 }]
+    })
+
     renderAppAt('/viewer/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    expect(await screen.findByLabelText('MSA Rankings active run snapshot summary')).toHaveTextContent('legacy-run-a')
+    const panel = await screen.findByLabelText('MSA Rankings current Official Ranking')
+    expect(panel).toHaveTextContent('product-run-a')
+    expect(panel).toHaveTextContent('branch-product-run-a')
+    expect(panel).not.toHaveTextContent('legacy-run-a')
+    expect(api.getViewerOfficialRanking).toHaveBeenCalledWith('product-run-a')
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings')
-    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings/4')
+    expect(screen.queryByRole('link', { name: /View latest ranking snapshot/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })
 

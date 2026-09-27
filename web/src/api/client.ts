@@ -140,6 +140,7 @@ import type {
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
   AuthoritativeMatchReplayCursor,
+  AuthoritativeMatchReplayContext,
   AuthoritativeMatchReplayList,
   AuthoritativeMatchTimelineCursor,
   AuthoritativeMatchStaminaCursor,
@@ -1611,6 +1612,26 @@ export async function listAuthoritativeMatchReplays(
   verifyAuthoritativeSimulationScope(runId, branchId, data)
   if (data.schema_version !== 'authoritative_match_replay_list.v1') {
     throw new Error('Authoritative replay list response is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeMatchReplayContext(
+  runId: string,
+  branchId: string,
+  groupId: string
+): Promise<AuthoritativeMatchReplayContext> {
+  const data = await request<AuthoritativeMatchReplayContext>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replay/context?group_id=' +
+      encodeURIComponent(groupId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_replay_context.v1' ||
+    data.group_id !== groupId
+  ) {
+    throw new Error('Authoritative replay context response is invalid.')
   }
   return data
 }

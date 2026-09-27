@@ -47,8 +47,10 @@
     input remains on the authoritative proposal path.
 13. ✅ Remove legacy WC / pre-draw / late-replacement sidecar history reads from current
     Planned Event Admin UI; keep backend history GETs only for historical compatibility.
-14. Next: retire the next legacy tournament-preparation compatibility surface still
-    reachable from current Admin/product flows.
+14. ✅ Remove the retired WC / pre-draw / late-replacement sidecar history clients
+    and DTOs from the current web API surface while preserving backend historical readers.
+15. Next: audit remaining current frontend/API tournament-preparation compatibility
+    entrypoints and remove the next dead legacy surface.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

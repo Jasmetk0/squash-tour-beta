@@ -538,6 +538,25 @@ export function PlannedEventDetailPage(): JSX.Element {
     canonicalWildcardReason
   ])
 
+  function preparationActionHandoff(): JSX.Element | null {
+    const action = canonicalPreparationQuery.data?.next_required_action
+    if (!action || action === 'none') return null
+    if (action === 'review_wild_cards') {
+      return <p><a href="#canonical-wc-review">Open canonical WC/RWC review</a></p>
+    }
+    if (action === 'review_pre_draw_or_commit_draw_input') {
+      return <p><a href="#canonical-main-draw-preflight">Open canonical pre-draw / Draw Input controls</a></p>
+    }
+    if (action === 'generate_draw') {
+      return <p><a href="#canonical-draw-authority">Open canonical Draw generation</a></p>
+    }
+    return (
+      <p className="status">
+        This preparation step is not controlled on Planned Event Admin yet; no substitute action is exposed here.
+      </p>
+    )
+  }
+
     if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.failed) return <section className="panel"><h1>Failed to load historical calendar state.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
   if (viewed.historical && viewed.query.isLoading) return <section className="panel"><p className="status">Loading historical planned event...</p></section>
@@ -677,12 +696,14 @@ export function PlannedEventDetailPage(): JSX.Element {
                   { label: 'Blockers', value: canonicalPreparationQuery.data.blockers.join(', ') || 'None' }
                 ]}
               />
+              {preparationActionHandoff()}
             </>
           ) : null}
         </SectionCard>
       ) : null}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
+        <div id="canonical-main-draw-preflight">
         <SectionCard title="Canonical Main Draw preflight">
           {canonicalEntryFieldQuery.isLoading ? <p className="status">Loading canonical Main Draw geometry...</p> : null}
           {canonicalEntryFieldUnavailable ? (
@@ -783,9 +804,11 @@ export function PlannedEventDetailPage(): JSX.Element {
             </>
           ) : null}
         </SectionCard>
+        </div>
       ) : null}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (
+        <div id="canonical-draw-authority">
         <SectionCard title="Canonical Tournament Draw authority">
           {canonicalDrawStateQuery.isLoading ? <p className="status">Loading canonical Draw authority state...</p> : null}
           {canonicalDrawStateUnavailable ? (
@@ -1144,9 +1167,11 @@ export function PlannedEventDetailPage(): JSX.Element {
             </>
           ) : null}
         </SectionCard>
+        </div>
       ) : null}
 
       {plannedEvent && !viewed.historical ? (
+        <div id="canonical-wc-review">
         <SectionCard title="Canonical WC/RWC review">
           <p className="status">
             WC eligibility and construction of the RWC order are still intentionally open in the Master.
@@ -1309,6 +1334,7 @@ export function PlannedEventDetailPage(): JSX.Element {
             </>
           )}
         </SectionCard>
+        </div>
       ) : null}
     </section>
   )

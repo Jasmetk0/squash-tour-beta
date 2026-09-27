@@ -65,6 +65,26 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         assert len(projection["provenance"]) == len(source.events)
         frozen_fingerprint = projection["content_fingerprint"]
 
+        first_source_event = source.events[0]
+        preparation_url = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{first_source_event.event_id}/preparation"
+        )
+        status, preparation = _request("GET", preparation_url)
+        assert status == 200, preparation
+        suggestion = preparation["entry_capacity_suggestion"]
+        assert suggestion is not None
+        assert suggestion["source"] == "run_owned_calendar_package.v1"
+        assert suggestion["source_package_id"] == "calendar-2000-2001"
+        assert suggestion["main_draw_size"] == (
+            first_source_event.main_draw_size + first_source_event.byes
+        )
+        assert suggestion["qualification_draw_size"] == first_source_event.qualification_draw_size
+        assert suggestion["qualifier_spots"] == first_source_event.qualifier_spots
+        assert suggestion["wild_card_slots"] == first_source_event.wild_cards
+        assert suggestion["bye_slots"] == first_source_event.byes
+        frozen_capacity_suggestion = suggestion.copy()
+
         driver = AuthoritativeRunSimulationDriver(
             server.app.state.runtime.repository._session_factory,
             points.result_service.match_service,
@@ -97,6 +117,9 @@ def test_source_calendar_applies_to_run_and_projects_without_live_link(tmp_path)
         status, unchanged = _request("GET", projection_url)
         assert status == 200, unchanged
         assert unchanged["content_fingerprint"] == frozen_fingerprint
+        status, preparation_after_source_edit = _request("GET", preparation_url)
+        assert status == 200, preparation_after_source_edit
+        assert preparation_after_source_edit["entry_capacity_suggestion"] == frozen_capacity_suggestion
         assert all(
             not event["event_name"].endswith("SOURCE-EDIT")
             for event in unchanged["calendar"]["events"]

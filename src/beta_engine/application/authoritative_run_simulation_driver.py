@@ -145,6 +145,7 @@ from beta_engine.infrastructure.db.models import (
     WeekSimulationScheduleModel,
 )
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
+from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
@@ -1311,6 +1312,7 @@ class AuthoritativeRunSimulationDriver:
         )
         event_snapshots = None
         country_snapshots = None
+        tuning_snapshot = None
         if self._run_uses_package_authority(
             session,
             run_id=run_id,
@@ -1343,6 +1345,10 @@ class AuthoritativeRunSimulationDriver:
                 run_id=run_id,
                 branch_id=branch_id,
             )
+            # No Run Package contract for Entry tuning exists yet. Freeze the exact
+            # currently configured tuning at the authoritative proposal boundary so
+            # preview/commit evidence cannot silently drift if the global file changes.
+            tuning_snapshot = load_entry_tuning_config(entry_service.entry_tuning_path)
 
         return SeasonEntryBatchService(
             entry_service
@@ -1357,6 +1363,7 @@ class AuthoritativeRunSimulationDriver:
             ),
             event_snapshots=event_snapshots,
             country_snapshots=country_snapshots,
+            tuning_snapshot=tuning_snapshot,
         )
 
     def commit_explicit_entry_decision_slot(
@@ -1592,6 +1599,9 @@ class AuthoritativeRunSimulationDriver:
                 "country_snapshot_fingerprint": (
                     batch.metadata.country_snapshot_fingerprint
                 ),
+                "tuning_snapshot_fingerprint": (
+                    batch.metadata.tuning_snapshot_fingerprint
+                ),
                 "decision_count": len(authority.decisions),
                 "slot_fingerprint": authority.fingerprint,
                 "authority": authority.model_dump(mode="json"),
@@ -1664,6 +1674,9 @@ class AuthoritativeRunSimulationDriver:
                 "active_players_fingerprint": batch.metadata.active_players_fingerprint,
                 "country_snapshot_fingerprint": (
                     batch.metadata.country_snapshot_fingerprint
+                ),
+                "tuning_snapshot_fingerprint": (
+                    batch.metadata.tuning_snapshot_fingerprint
                 ),
                 "decision_count": len(stored.decisions),
                 "slot_fingerprint": stored.fingerprint,

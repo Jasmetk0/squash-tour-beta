@@ -53,6 +53,17 @@
     entrypoints and remove the next dead legacy surface.
 
 
+## Active pre-alpha sequence — AI Entry regression synchronization
+
+1. ✅ Re-audit #982 Run-owned roster migration against current preview/commit/validation paths.
+2. ✅ Replace legacy active-player-registry alignment in positive AI Entry tests with
+   controlled valid Entry inputs.
+3. ✅ Assert legacy active-player registry drift cannot change Run-owned AI Entry evidence.
+4. ✅ Exercise the same corrected contract through the authoritative HTTP Entry workflow.
+5. Next: after the relevant backend `pr_critical` modules are green on the final PR head,
+   return to the next decided pre-alpha dependency; do not treat the known pre-existing
+   four frontend full-suite failures as regressions from #967–#1013.
+
 ## Active pre-alpha sequence — canonical result/ranking source ownership
 
 1. Package-backed tournament close may only emit canonical Run-owned result/award

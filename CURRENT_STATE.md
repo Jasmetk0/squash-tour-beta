@@ -183,6 +183,28 @@ wild-card/pre-draw registries and collapse those into canonical Run-owned author
 where product semantics are already explicit.
 
 
+## Active implementation — AI Entry regression/test boundary after Run-owned roster migration
+
+Post-#1013 regression audit found that the broader backend `pr_critical` selection still
+contained tests written for the pre-#982 Entry roster contract.
+
+- Package-backed authoritative AI Entry already projects its player roster from Run-owned
+  InitialWorld + lifecycle + sporting state.
+- preview and commit rebuild the same frozen batch and retain batch/slot fingerprint CAS,
+  Branch-head checks and exact-retry behavior.
+- the failing positive validation scenarios were still mutating
+  `season_active_players.json` and relying on one arbitrary seed to produce at least one
+  AI application.
+- positive validation tests now use explicit high-entry test tuning so the scenario itself
+  controls the required valid application evidence.
+- legacy active-player registry drift is now asserted to leave the Run-owned preview,
+  active-player fingerprint, batch fingerprint, application-decision fingerprint and slot
+  fingerprint unchanged.
+- the HTTP Entry validation path uses the same controlled positive input and no longer
+  performs obsolete legacy-roster alignment.
+
+No production Entry semantics or Master decisions are changed by this synchronization.
+
 ## Active implementation — Package authority fence for authoritative simulation
 
 Package-backed Runs now use a strict ownership boundary instead of a preference order.

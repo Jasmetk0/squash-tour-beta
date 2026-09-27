@@ -805,7 +805,12 @@ export function PlannedEventDetailPage(): JSX.Element {
                     { label: 'Qualification submissions', value: canonicalPreparationQuery.data.valid_qualification_submission_count ?? 0 }
                   ]} />
                   {(canonicalPreparationQuery.data.valid_submission_count ?? 0) === 0 ? (
-                    <p className="status">No canonical valid submissions are persisted for this event yet. Entry Field creation would currently have no application evidence.</p>
+                    <div className="grid">
+                      <p className="status">No canonical valid submissions are persisted for this event yet. Entry Field creation would currently have no application evidence.</p>
+                      <Link to={`/admin/runs/${encodeURIComponent(runId)}/simulate?branch=${encodeURIComponent(activeBranchId)}`}>
+                        Open this Branch in authoritative Simulation / Entry validation
+                      </Link>
+                    </div>
                   ) : null}
                   {canonicalPreparationQuery.data.entry_capacity_suggestion ? (
                     <p className="status">

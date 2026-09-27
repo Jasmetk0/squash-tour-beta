@@ -66,8 +66,12 @@
     and DTOs from the current web API surface while preserving backend historical readers.
 15. ✅ Remove the unused legacy single-event Lifecycle reader from the current web API surface
     together with its frontend-only DTO/test mock, while preserving the backend historical reader.
-16. Next: continue auditing remaining current frontend/API tournament-preparation compatibility
-    entrypoints and remove only surfaces proven unused by production UI.
+16. ✅ Audit the remaining tournament-preparation clients: active Entry/Draw/Match/Result and
+    canonical preparation controls still have production UI consumers and are not dead cleanup targets.
+17. ✅ Surface the existing canonical Tournament Preparation read model directly on Planned Event
+    Admin with phase, next action, blockers and schedule readiness.
+18. Next: audit preparation-phase navigation/handoffs against the existing canonical controls;
+    preserve one authority and avoid inventing unresolved product actions.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

@@ -20,6 +20,7 @@ const api = vi.hoisted(() => ({
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),
   getCanonicalTournamentEntryFieldState: vi.fn(),
+  getCanonicalTournamentPreparation: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
@@ -90,6 +91,16 @@ describe('PlannedEventDetailPage', () => {
     api.listEvents.mockResolvedValue({
       run_id: 'run-a',
       events: [{ event_sequence: 2, event_id: 'E2', season: 2029, week: 4, template_id: 'TEMP-C', tournament_result: { ok: true } }]
+    })
+    api.getCanonicalTournamentPreparation.mockResolvedValue({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'draw_input_ready',
+      next_required_action: 'review_pre_draw_or_commit_draw_input',
+      blockers: [],
+      ready_for_match_schedule: false,
+      effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
     })
     api.getCanonicalWildCardState.mockResolvedValue({
       schema_version: 'authoritative_wild_card_assignment_state.v1',
@@ -942,5 +953,15 @@ describe('PlannedEventDetailPage', () => {
 
 
 
+
+  it('shows canonical tournament preparation readiness on the planned event', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    renderAt('/runs/run-a/calendar/E1')
+    expect(await screen.findByText('Canonical tournament preparation')).toBeInTheDocument()
+    expect(screen.getByText('draw_input_ready')).toBeInTheDocument()
+    expect(screen.getByText('review_pre_draw_or_commit_draw_input')).toBeInTheDocument()
+    expect(screen.getByText('run_owned_db_authorities.v1')).toBeInTheDocument()
+    expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
+  })
 
 })

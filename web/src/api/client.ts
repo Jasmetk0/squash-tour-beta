@@ -37,6 +37,7 @@ import type {
   NextSeasonPlayersResponse,
   PlayerTransitionsResponse,
   CanonicalTournamentEntryFieldState,
+  CanonicalTournamentPreparationState,
   CanonicalPreDrawWithdrawalPayload,
   CanonicalPreDrawWithdrawalResult,
   CanonicalTournamentDrawState,
@@ -2707,6 +2708,16 @@ export async function commitCanonicalWildCardAssignment(
     throw new Error('Canonical WC commit does not match the reviewed proposal.')
   }
   return data
+}
+
+export function getCanonicalTournamentPreparation(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<CanonicalTournamentPreparationState> {
+  return request(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/preparation`
+  )
 }
 
 export async function getCanonicalTournamentEntryFieldState(

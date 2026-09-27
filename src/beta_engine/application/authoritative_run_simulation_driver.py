@@ -10008,15 +10008,23 @@ class AuthoritativeRunSimulationDriver:
                 schedule,
                 position_fingerprint=position_fingerprint,
             )
+            proposal_packages = self._packages(
+                schedule.week,
+                required=False,
+                session=session,
+                run_id=run_id,
+                branch_id=branch_id,
+            )
             preparation = self._canonical_schedule_preparation(
                 session,
                 run_id=run_id,
                 branch_id=branch_id,
-                packages=self._packages(
-                    schedule.week,
-                    session=session,
+                event_ids=self._week_schedule_event_ids(
+                    session,
                     run_id=run_id,
                     branch_id=branch_id,
+                    week=schedule.week,
+                    packages=proposal_packages,
                 ),
             )
             payload["canonical_preparation"] = (

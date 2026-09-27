@@ -265,8 +265,8 @@ Některé ostatní vyjmenované funkce mohou přijít ve velmi vzdálené verzi,
 2. **Admin mód** – generování, simulace, editace a správa celého světa.
 
 Mohou mít oddělené route prostory, například `/viewer/...` a `/admin/...`. Nemá jít jen o jednu stránku, na které se schovají editační tlačítka.
-**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v66]** Oba povinné uživatelské průchody se dají provést a zkontrolovat v Adminu. Samostatně funkční Viewer, jeho stránky, mapa protějšků a reveal/privacy ovladače nejsou podmínkou první pre-alpha; dosavadní kód Vieweru se nemaže. Cílové oddělení módů, pravdivost veřejných dat, hranice jejich zveřejnění a zákaz úniku budoucích informací hráčské AI zůstávají platné. „První verze Vieweru“ v dalších kapitolách znamená první vydání této vrstvy, nikoliv automaticky první pre-alpha.
 
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v66]** Oba povinné uživatelské průchody se dají provést a zkontrolovat v Adminu. Samostatně funkční Viewer, jeho stránky, mapa protějšků a reveal/privacy ovladače nejsou podmínkou první pre-alpha; dosavadní kód Vieweru se nemaže. Cílové oddělení módů, pravdivost veřejných dat, hranice jejich zveřejnění a zákaz úniku budoucích informací hráčské AI zůstávají platné. „První verze Vieweru“ v dalších kapitolách znamená první vydání této vrstvy, nikoliv automaticky první pre-alpha.
 
 ## 2.2 Viewer mód
 
@@ -298,12 +298,12 @@ Ve Vieweru nelze:
 **[ROZHODNUTO][ENGINE INVARIANT]** Admin může ručně zasáhnout do každého produktově modelovaného pravidla, stavu, rozhodnutí hráčské AI a autoritativního údaje enginu. Takový zásah musí respektovat zvolený Run, branch a časový bod, nést původ `Manual` nebo `Manual Override` a být dohledatelný v Audit Logu. U jednotlivých dalších systémů se proto znovu nerozhoduje, zda jejich podporovanou hodnotu Admin vůbec smí přepsat; otevřený může zůstat jen konkrétní workflow a UI.
 
 **[ROZHODNUTO][ENGINE INVARIANT]** Admin smí vědomě vytvořit výjimku z běžného sportovního nebo sezonního pravidla, pokud je výjimka zřetelně označená a potvrzená. Nesmí však uložit vnitřně nemožný či poškozený technický stav, například dva autoritativní vítěze téhož zápasu nebo odkaz na neexistujícího hráče. Pokud změna vyžaduje úpravu souvisejících údajů, engine ukáže potřebný rozsah a celý `Manual Override` zapíše atomicky.
+
 **[ROZHODNUTO v66 – AI zásah a výjimka]** Admin smí výslovně změnit rozhodnutí hráčské AI a vědomě udělit sportovní/policy výjimku, například umožnit přihlášku po uzávěrce. UI označí mimořádnost varováním, vysvětlí příčinu a dopady, nabídne možné řešení a požádá o výslovné potvrzení; změna nese důvod a auditní provenance. Při bezpečné výjimce jde o oranžové upozornění, při neproveditelné nebo integritu poškozující následné operaci se červeně blokuje právě dotčená operace. Engine zkontroluje návaznosti přihlášek, fieldu, losu, zápasů a rankingu a neprovede napůl platný zápis.
 
 **[ROZHODNUTO v66 – přirozenější alternativní minulost jako volba]** U mimořádně nepravděpodobného Admin zásahu nabídne Admin také možnost vrátit se k vhodnému dřívějšímu uloženému bodu a zkoušet alternativní vývoj, ve kterém hráčova AI dospěje k požadovanému rozhodnutí přirozeněji. Nabídka musí pojmenovat původní bod, případné změny, nejistotu/naturalness a možné dopady; vyhledávání pracuje v oddělené kandidátní branchi, původní historii nemění a kandidát se stává autoritativním jen výslovnou volbou. Není zaručeno, že uskutečnitelná přirozená cesta existuje. Přesný práh „mimořádně nepravděpodobné“, metoda měření a algoritmus hledání zůstávají otevřené; nejde o tvrzení, že současný Match Reconstruction už rekonstruuje všechna AI rozhodnutí.
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v66]** V Adminu lze vybrat libovolný existující week simulace ve zvoleném Runu a branchi, včetně minulých weeků, a prohlížet tehdejší dostupný stav světa, hráče, soutěže, výsledky, losy, rankingy, historii a Replay i příslušný interní audit podle skutečně uložených dat. Změna prohlíženého weeku sama nemění autoritativní přítomnost ani historii. Historická data se čtou z časově příslušného stavu/snapshotu; nesmějí se zpětně nahrazovat dnešní hodnotou ani doplňovat smyšlenými údaji. Přesný katalog obrazovek a všech polí zůstává otevřený v `PAQ-119`, `PAQ-124` a `PAQ-144`.
-
 
 **[ROZHODNUTO]** Hlavní stránka Runového Adminu se nazývá `Home`, nikoliv `Dashboard`. Je to nejvyšší souhrnná Admin stránka právě zvoleného Runu a branche a běžný vstup do jeho obsahu; není to další globální landing ani náhrada specializovaných stránek. Má poskytovat přehled o Runu a postupně také náhledy jeho hlavních oblastí. Vlastní řízení simulací patří primárně do sekce `Simulation`; úplná skladba ostatních bloků Home se doplní později.
 

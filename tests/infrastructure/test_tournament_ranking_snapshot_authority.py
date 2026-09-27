@@ -94,7 +94,7 @@ def publish(session, snapshot):
     session.flush()
 
 
-@pytest.mark.smoke
+@pytest.mark.pr_critical
 def test_adopt_requires_publication_is_idempotent_and_conflicts_fail_closed(database):
     first = ranking()
     second = ranking(2, previous=first)

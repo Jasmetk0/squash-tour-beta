@@ -10,7 +10,7 @@ Tournament Ranking Snapshot authority.
 - a new read-only event-scoped `/ranking-snapshot-authority/available` endpoint returns only
   published snapshots after fingerprint/scope/week validation;
 - Planned Event presents those publications as explicit selectable options with week,
-  player count and Best-N policy metadata;
+  ranked row count and Best-N policy metadata;
 - adoption still uses the unchanged explicit canonical command and Admin must choose the
   publication; the UI does not infer or recommend which ranking week is correct;
 - unpublished candidates are never presented as tournament authority sources.

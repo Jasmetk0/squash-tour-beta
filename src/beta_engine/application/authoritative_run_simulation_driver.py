@@ -118,6 +118,7 @@ from beta_engine.domain.run_containers import (
 from beta_engine.domain.run_revisions import FINAL_SEASON_CLOSURE_SAVED_REVISION_KIND
 from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.simulation_slots import (
+    AuthoritativeMatchInput,
     SimulationMatchEventPlan,
     WeekSimulationSchedule,
     WeekSimulationScheduleSlot,
@@ -2938,6 +2939,93 @@ class AuthoritativeRunSimulationDriver:
                 "match_log_hash": result.rally_log.match_log_hash,
                 "total_rallies": result.rally_log.total_rallies,
                 "final_result": result.model_dump(mode="json"),
+                "replay_source": "stored_authoritative_events",
+                "rng_rerun": False,
+                "read_only": True,
+                "verified": True,
+            }
+
+    def get_authoritative_match_replay_context(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+    ) -> dict:
+        """Project frozen pre-match context/rules without rerunning match simulation."""
+
+        with self.factory() as session:
+            self._require_writable_scope(session, run_id, branch_id)
+            rows = session.scalars(
+                select(SimulationEventGroupModel).where(
+                    SimulationEventGroupModel.run_id == run_id,
+                    SimulationEventGroupModel.branch_id == branch_id,
+                    SimulationEventGroupModel.group_id == group_id,
+                )
+            ).all()
+            if not rows:
+                raise ValueError("completed authoritative match group does not exist")
+            if len(rows) != 1:
+                raise ValueError("completed authoritative match group identity is ambiguous")
+            row = rows[0]
+            payload = json.loads(row.payload_json)
+            if payload.get("schema_version") == "authoritative_walkover_group.v1":
+                raise ValueError("walkover groups do not have played match replay context")
+            protected = AuthoritativeMatchInput.model_validate(payload["authoritative_input"])
+            result = MatchResult.model_validate(payload["result"])
+            if (
+                protected.run_id != run_id
+                or protected.branch_id != branch_id
+                or protected.group_id != group_id
+                or protected.match_id != row.match_id
+                or result.match_id != row.match_id
+            ):
+                raise ValueError("stored replay context identity does not match group")
+            if protected.fingerprint != row.match_input_fingerprint:
+                raise ValueError("stored replay match input fingerprint does not match group")
+            if payload.get("result_fingerprint") != row.result_fingerprint:
+                raise ValueError("stored replay result fingerprint does not match group")
+            engine = protected.engine_input
+            rules = engine.effective_rally_rules
+            return {
+                "schema_version": "authoritative_match_replay_context.v1",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "week_ordinal": row.week_ordinal,
+                "slot_id": row.slot_id,
+                "group_id": group_id,
+                "event_id": protected.event_id,
+                "match_id": row.match_id,
+                "match_input_fingerprint": protected.fingerprint,
+                "result_fingerprint": row.result_fingerprint,
+                "snapshot_hash": engine.snapshot_hash,
+                "simulation_seed": engine.simulation_seed,
+                "match_engine_version": engine.match_engine_version,
+                "context": engine.context.model_dump(mode="json"),
+                "effective_match_format": engine.effective_match_format.model_dump(mode="json"),
+                "effective_match_timing": (
+                    engine.effective_match_timing.model_dump(mode="json")
+                    if engine.effective_match_timing is not None
+                    else None
+                ),
+                "effective_match_gameplans": (
+                    engine.effective_match_gameplans.model_dump(mode="json")
+                    if engine.effective_match_gameplans is not None
+                    else None
+                ),
+                "effective_rally_rules": (
+                    rules.model_dump(mode="json") if rules is not None else None
+                ),
+                "rally_calibration_profile": (
+                    engine.rally_calibration_profile.model_dump(mode="json")
+                    if engine.rally_calibration_profile is not None
+                    else None
+                ),
+                "unsupported_future_inputs": list(engine.unsupported_future_inputs),
+                "player_projections": [
+                    projection.model_dump(mode="json")
+                    for projection in protected.player_projections
+                ],
                 "replay_source": "stored_authoritative_events",
                 "rng_rerun": False,
                 "read_only": True,

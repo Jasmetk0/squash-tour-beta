@@ -154,45 +154,53 @@ def test_package_backed_ai_entry_uses_run_owned_event_snapshots_not_legacy_regis
     assert calendar is not None
     assert any(event.event_id == event_id for event in calendar.events)
 
-    monkeypatch.setattr(
-        AuthoritativeRunSimulationDriver,
-        "_run_uses_package_authority",
-        staticmethod(lambda session, *, run_id, branch_id: True),
+    original_package_authority_descriptor = (
+        AuthoritativeRunSimulationDriver.__dict__["_run_uses_package_authority"]
     )
-    monkeypatch.setattr(
-        AuthoritativeRunSimulationDriver,
-        "_calendar_authority",
-        lambda self, session, *, run_id, branch_id, season: (
-            calendar,
-            "run_package",
-            "f" * 64,
-        ),
+    AuthoritativeRunSimulationDriver._run_uses_package_authority = staticmethod(
+        lambda session, *, run_id, branch_id: True
     )
+    try:
+        monkeypatch.setattr(
+            AuthoritativeRunSimulationDriver,
+            "_calendar_authority",
+            lambda self, session, *, run_id, branch_id, season: (
+                calendar,
+                "run_package",
+                "f" * 64,
+            ),
+        )
 
-    def forbidden(*args, **kwargs):
-        raise AssertionError("legacy Entry/Calendar registry must not be read")
+        def forbidden(*args, **kwargs):
+            raise AssertionError("legacy Entry/Calendar registry must not be read")
 
-    monkeypatch.setattr(type(entry_service), "_load_registry", forbidden)
-    monkeypatch.setattr(type(entry_service), "_find_event", forbidden)
-    monkeypatch.setattr(
-        type(entry_service.calendar_service),
-        "get_calendar",
-        forbidden,
-    )
+        monkeypatch.setattr(type(entry_service), "_load_registry", forbidden)
+        monkeypatch.setattr(type(entry_service), "_find_event", forbidden)
+        monkeypatch.setattr(
+            type(entry_service.calendar_service),
+            "get_calendar",
+            forbidden,
+        )
 
-    preview = driver.preview_entry_decision_slot(
-        run_id="run",
-        branch_id="branch",
-        event_ids=(event_id,),
-        decision_slot_ordinal=1,
-        seed=4201,
-    )
-    assert preview["event_ids"] == [event_id]
-    assert preview["decision_count"] == len(preview["authority"]["decisions"])
+        preview = driver.preview_entry_decision_slot(
+            run_id="run",
+            branch_id="branch",
+            event_ids=(event_id,),
+            decision_slot_ordinal=1,
+            seed=4201,
+        )
+        assert preview["event_ids"] == [event_id]
+        assert preview["decision_count"] == len(preview["authority"]["decisions"])
 
-    committed = driver.commit_entry_decision_slot(_command_from_preview(preview))
-    assert committed["adoption"] == "committed"
-    assert committed["slot_fingerprint"] == preview["slot_fingerprint"]
+        committed = driver.commit_entry_decision_slot(_command_from_preview(preview))
+        assert committed["adoption"] == "committed"
+        assert committed["slot_fingerprint"] == preview["slot_fingerprint"]
+    finally:
+        setattr(
+            AuthoritativeRunSimulationDriver,
+            "_run_uses_package_authority",
+            original_package_authority_descriptor,
+        )
 
 
 @pytest.mark.pr_critical

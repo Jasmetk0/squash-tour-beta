@@ -3054,6 +3054,71 @@ class AuthoritativeRunSimulationDriver:
             "verified": True,
         }
 
+    def get_authoritative_match_stamina_cursor(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        group_id: str,
+        timeline_index: int,
+    ) -> dict:
+        """Project one stored stamina transition aligned to authoritative timeline."""
+
+        replay = self.get_authoritative_match_replay(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+        result = MatchResult.model_validate(replay["final_result"])
+        if result.timeline_log is None:
+            raise ValueError("completed authoritative match has no timeline log")
+        if result.stamina_log is None:
+            raise ValueError("completed authoritative match has no stamina log")
+        result.stamina_log.validate_timeline(result.timeline_log)
+        transitions = result.stamina_log.transitions
+        if not transitions:
+            raise ValueError("completed authoritative match has no stored stamina transitions")
+        if timeline_index < 1 or timeline_index > len(transitions):
+            raise ValueError(
+                f"timeline_index must be between 1 and {len(transitions)} for group '{group_id}'"
+            )
+        transition = transitions[timeline_index - 1]
+        source_event = result.timeline_log.events[timeline_index - 1]
+        return {
+            "schema_version": "authoritative_match_stamina_cursor.v1",
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "week_ordinal": replay["week_ordinal"],
+            "slot_id": replay["slot_id"],
+            "group_id": group_id,
+            "match_id": replay["match_id"],
+            "result_fingerprint": replay["result_fingerprint"],
+            "timeline_index": timeline_index,
+            "source_event_type": source_event.event_type,
+            "source_timeline_event_hash": source_event.event_hash,
+            "stamina_match_log_hash": result.stamina_log.match_log_hash,
+            "calibration_version": result.stamina_log.calibration_version,
+            "transition": transition.model_dump(mode="json"),
+            "navigation": {
+                "total_transitions": len(transitions),
+                "timeline_index": timeline_index,
+                "previous_timeline_index": timeline_index - 1 if timeline_index > 1 else None,
+                "next_timeline_index": timeline_index + 1 if timeline_index < len(transitions) else None,
+                "at_start": timeline_index == 1,
+                "at_end": timeline_index == len(transitions),
+            },
+            "support_boundary": {
+                "outcome_effect_applied": result.stamina_log.outcome_effect_applied,
+                "pre_rally_effort_applied": result.stamina_log.pre_rally_effort_applied,
+                "within_rally_effort_applied": result.stamina_log.within_rally_effort_applied,
+                "unsupported_components": list(result.stamina_log.unsupported_components),
+            },
+            "replay_source": "stored_authoritative_events",
+            "rng_rerun": False,
+            "read_only": True,
+            "verified": True,
+        }
+
     def inspect_live_match(
         self,
         *,

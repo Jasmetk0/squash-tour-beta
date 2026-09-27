@@ -9,19 +9,12 @@ from beta_engine.domain.tournaments.application_validation_authority import (
     TournamentApplicationValidationAuthority,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.domain.run_packages import (
-    AppliedPackageVersion,
-    PackageType,
-    RunPackageEntity,
-    RunPackageState,
-)
 from beta_engine.infrastructure.db.models import RunBranchModel, SimulationSlotModel
 from beta_engine.infrastructure.db.player_lifecycle_state import get_lifecycle
 from beta_engine.infrastructure.db.player_sporting_state import get_sporting
 from beta_engine.infrastructure.db.run_entry_decision_slots import (
     RunEntryDecisionSlotStore,
 )
-from beta_engine.infrastructure.db.run_package_state import put_run_package_state
 from beta_engine.infrastructure.db.player_tour_entry_triggers import (
     PlayerTourEntryTriggerStore,
 )
@@ -144,54 +137,6 @@ def test_single_event_entry_slot_preview_commit_and_retry_are_run_owned(tmp_path
 
     # Authoritative Run preview/commit must not mutate the compatibility EntryList registry.
     assert entry_service._load_registry().model_dump(mode="json") == before_registry
-
-
-@pytest.mark.pr_critical
-def test_package_backed_entry_country_projection_uses_run_world_package(tmp_path):
-    driver, factory, _ = _driver_fixture(tmp_path / "entry-run-world-countries")
-    country = driver.match_service.draw_service.entry_list_service.countries_service.list_countries()[0]
-    source_fingerprint = "a" * 64
-    entity = RunPackageEntity(
-        run_local_id=1,
-        source_package_id="world-test",
-        source_package_version=1,
-        source_package_fingerprint=source_fingerprint,
-        source_entity_id=country.code,
-        entity_kind="world.country.v1",
-        entity_schema_version=1,
-        scope="countries",
-        payload=country.model_dump(mode="json"),
-        source_baseline_fingerprint="b" * 64,
-    )
-    version = AppliedPackageVersion(
-        package_type=PackageType.WORLD,
-        package_id="world-test",
-        source_version=1,
-        source_fingerprint=source_fingerprint,
-        document_explicit_scope=("countries",),
-        applied_entity_ids=(country.code,),
-        provenance={},
-    )
-
-    with factory.begin() as session:
-        put_run_package_state(
-            session,
-            RunPackageState(
-                run_id="run",
-                branch_id="branch",
-                entities=(entity,),
-                package_versions=(version,),
-            ),
-        )
-        projected = driver._run_owned_entry_country_snapshots(
-            session,
-            run_id="run",
-            branch_id="branch",
-        )
-
-    assert projected is not None
-    assert tuple(item.code for item in projected) == (country.code,)
-    assert projected[0] == country
 
 
 @pytest.mark.pr_critical

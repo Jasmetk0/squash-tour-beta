@@ -172,9 +172,13 @@ def test_package_backed_ai_entry_uses_run_owned_event_snapshots_not_legacy_regis
     def forbidden(*args, **kwargs):
         raise AssertionError("legacy Entry/Calendar registry must not be read")
 
-    monkeypatch.setattr(entry_service, "_load_registry", forbidden)
-    monkeypatch.setattr(entry_service, "_find_event", forbidden)
-    monkeypatch.setattr(entry_service.calendar_service, "get_calendar", forbidden)
+    monkeypatch.setattr(type(entry_service), "_load_registry", forbidden)
+    monkeypatch.setattr(type(entry_service), "_find_event", forbidden)
+    monkeypatch.setattr(
+        type(entry_service.calendar_service),
+        "get_calendar",
+        forbidden,
+    )
 
     preview = driver.preview_entry_decision_slot(
         run_id="run",

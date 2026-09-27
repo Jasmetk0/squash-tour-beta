@@ -9744,19 +9744,33 @@ class AuthoritativeRunSimulationDriver:
                 "Week Tournament Lock state is inconsistent with current Entry Fields"
             )
 
+        package_backed = self._run_uses_package_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+        if package_backed:
+            self._require_canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                packages=(),
+            )
         packages = self._packages(
             week,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
         )
-        self._require_canonical_schedule_preparation(
-            session,
-            run_id=run_id,
-            branch_id=branch_id,
-            week=week,
-            packages=packages,
-        )
+        if not package_backed:
+            self._require_canonical_schedule_preparation(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                packages=packages,
+            )
         plans = self._topology_for_session(
             session, run_id, branch_id, packages, week=week
         )

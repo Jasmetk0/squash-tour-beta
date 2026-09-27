@@ -21,6 +21,8 @@ const api = vi.hoisted(() => ({
   commitCanonicalWildCardAssignment: vi.fn(),
   getCanonicalTournamentEntryFieldState: vi.fn(),
   getCanonicalTournamentPreparation: vi.fn(),
+  adoptTournamentRankingSnapshotAuthority: vi.fn(),
+  createTournamentEntryFieldFromValidSubmissions: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
@@ -101,6 +103,19 @@ describe('PlannedEventDetailPage', () => {
       ready_for_match_schedule: false,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
+    })
+    api.adoptTournamentRankingSnapshotAuthority.mockResolvedValue({
+      schema_version: 'tournament_ranking_snapshot_authority.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      ranking_week: { season_index: 0, week: 5 },
+      ranking_snapshot: { run_id: 'run-a', branch_id: 'branch-a', week: { season_index: 0, week: 5 }, rows: [] },
+      adopted_by_command_id: 'admin-ui-ranking-authority-E1-0-5'
+    })
+    api.createTournamentEntryFieldFromValidSubmissions.mockResolvedValue({
+      schema_version: 'tournament_entry_field.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1', mode: 'initial',
+      capacity: { main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0 },
+      tournament_ranking_authority_fingerprint: '1'.repeat(64), ranking_snapshot_fingerprint: '2'.repeat(64), applications_fingerprint: '3'.repeat(64),
+      direct_main_player_ids: ['P1'], qualification_player_ids: ['Q1'], below_qualification_cut_player_ids: [], withdrawn_player_ids: [], base_field_fingerprint: null
     })
     api.getCanonicalWildCardState.mockResolvedValue({
       schema_version: 'authoritative_wild_card_assignment_state.v1',
@@ -980,21 +995,43 @@ describe('PlannedEventDetailPage', () => {
     expect(await screen.findByRole('link', { name: 'Open canonical WC/RWC review' })).toHaveAttribute('href', '#canonical-wc-review')
   })
 
-  it('does not invent a Planned Event action for preparation steps owned elsewhere', async () => {
+
+
+  it('adopts an explicit published Ranking Snapshot for canonical preparation', async () => {
     adminTime.viewed.mockImplementation(presentBranchView)
     api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
-      schema_version: 'canonical_tournament_preparation_state.v1',
-      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
-      phase: 'ranking_snapshot_required',
-      next_required_action: 'adopt_ranking_snapshot',
-      blockers: ['tournament_ranking_snapshot_required'],
-      ready_for_match_schedule: false,
-      effective_draw_fingerprint: null,
-      authority_source: 'run_owned_db_authorities.v1'
+      schema_version: 'canonical_tournament_preparation_state.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'ranking_snapshot_required', next_required_action: 'adopt_ranking_snapshot', blockers: ['tournament_ranking_snapshot_required'],
+      ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
     })
     renderAt('/runs/run-a/calendar/E1')
-    expect(await screen.findByText(/This preparation step is not controlled on Planned Event Admin yet/i)).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /ranking snapshot/i })).not.toBeInTheDocument()
+    fireEvent.change(await screen.findByLabelText('Ranking season index'), { target: { value: '0' } })
+    fireEvent.change(screen.getByLabelText('Ranking week'), { target: { value: '5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adopt published Official Ranking' }))
+    await waitFor(() => expect(api.adoptTournamentRankingSnapshotAuthority).toHaveBeenCalledWith(
+      'run-a', 'branch-a', 'E1', { command_id: 'admin-ui-ranking-authority-E1-0-5', ranking_week: { season_index: 0, week: 5 } }
+    ))
+  })
+
+  it('builds the initial canonical Entry Field only from persisted valid submissions', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'entry_field_required', next_required_action: 'build_entry_field', blockers: ['tournament_entry_field_required'],
+      ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
+    })
+    renderAt('/runs/run-a/calendar/E1')
+    fireEvent.change(await screen.findByLabelText('Entry Main Draw capacity'), { target: { value: '8' } })
+    fireEvent.change(screen.getByLabelText('Entry Qualification Draw capacity'), { target: { value: '4' } })
+    fireEvent.change(screen.getByLabelText('Entry qualifier spots'), { target: { value: '2' } })
+    fireEvent.change(screen.getByLabelText('Entry Wild Card slots'), { target: { value: '1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Build Entry Field from valid submissions' }))
+    await waitFor(() => expect(api.createTournamentEntryFieldFromValidSubmissions).toHaveBeenCalledWith(
+      'run-a', 'branch-a', 'E1', {
+        command_id: 'admin-ui-entry-field-E1-8-4-2-1-0',
+        capacity: { main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0 }
+      }
+    ))
   })
 
 })

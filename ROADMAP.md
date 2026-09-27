@@ -10,8 +10,10 @@
 6. ✅ Add First / Step Back / Step Forward / Last rally navigation with zero mutation.
 7. ✅ Add full stored timeline replay over Rally, Between-Rally Interval, Game Break and
    Objective Delay events with independent cursor navigation.
-8. Next: enrich immutable match-viewer detail with stored stamina/rules/context data,
-   preserving the no-rerun replay invariant.
+8. ✅ Project the persisted stamina transition for each timeline event, including stored
+   before/after bars, deltas, workload, calibration and explicit support boundaries.
+9. Next: enrich immutable match-viewer detail with stored rules/officiating and context
+   facts, preserving the no-rerun replay invariant.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

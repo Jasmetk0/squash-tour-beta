@@ -30,6 +30,7 @@ const api = vi.hoisted(() => ({
   listAuthoritativeMatchReplays: vi.fn(),
   getAuthoritativeMatchReplayCursor: vi.fn(),
   getAuthoritativeMatchTimelineCursor: vi.fn(),
+  getAuthoritativeMatchStaminaCursor: vi.fn(),
   confirmAuthoritativeLiveMatch: vi.fn(),
   restoreAuthoritativeLiveReturnPoint: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
@@ -713,6 +714,65 @@ beforeEach(() => {
       game_break_count: 0,
       objective_delay_count: 0,
       total_elapsed_seconds: 18
+    },
+    replay_source: 'stored_authoritative_events',
+    rng_rerun: false,
+    read_only: true,
+    verified: true
+  })
+  api.getAuthoritativeMatchStaminaCursor.mockResolvedValue({
+    schema_version: 'authoritative_match_stamina_cursor.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week_ordinal: 138,
+    slot_id: 'slot-1',
+    group_id: 'replay-g1',
+    match_id: 'match-1',
+    result_fingerprint: '1'.repeat(64),
+    timeline_index: 1,
+    source_event_type: 'RALLY',
+    source_timeline_event_hash: '3'.repeat(64),
+    stamina_match_log_hash: '4'.repeat(64),
+    calibration_version: 'pre_alpha_physical_v4',
+    transition: {
+      schema_version: 'stamina_transition.v2',
+      match_id: 'match-1',
+      transition_index: 1,
+      source_timeline_index: 1,
+      source_timeline_event_hash: '3'.repeat(64),
+      cause: 'RALLY_WORKLOAD',
+      elapsed_seconds: 5,
+      workload_units: 1.25,
+      player_workloads: [],
+      states_before: [
+        { player_id: 'p1', bars: [{ dimension: 'EXPLOSIVE', capacity: 100, current: 100 }, { dimension: 'RALLY', capacity: 100, current: 100 }, { dimension: 'MATCH', capacity: 100, current: 100 }] },
+        { player_id: 'p2', bars: [{ dimension: 'EXPLOSIVE', capacity: 100, current: 100 }, { dimension: 'RALLY', capacity: 100, current: 100 }, { dimension: 'MATCH', capacity: 100, current: 100 }] }
+      ],
+      deltas: [
+        { player_id: 'p1', explosive: -1, rally: -1, match: -1 },
+        { player_id: 'p2', explosive: -1, rally: -1, match: -1 }
+      ],
+      states_after: [
+        { player_id: 'p1', bars: [{ dimension: 'EXPLOSIVE', capacity: 100, current: 99 }, { dimension: 'RALLY', capacity: 100, current: 99 }, { dimension: 'MATCH', capacity: 100, current: 99 }] },
+        { player_id: 'p2', bars: [{ dimension: 'EXPLOSIVE', capacity: 100, current: 99 }, { dimension: 'RALLY', capacity: 100, current: 99 }, { dimension: 'MATCH', capacity: 100, current: 99 }] }
+      ],
+      previous_transition_hash: '5'.repeat(64),
+      transition_hash_algorithm: 'sha256',
+      transition_hash: '6'.repeat(64)
+    },
+    navigation: {
+      total_transitions: 3,
+      timeline_index: 1,
+      previous_timeline_index: null,
+      next_timeline_index: 2,
+      at_start: true,
+      at_end: false
+    },
+    support_boundary: {
+      outcome_effect_applied: false,
+      pre_rally_effort_applied: true,
+      within_rally_effort_applied: true,
+      unsupported_components: []
     },
     replay_source: 'stored_authoritative_events',
     rng_rerun: false,

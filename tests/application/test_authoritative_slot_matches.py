@@ -8828,3 +8828,88 @@ def test_authoritative_timeline_replay_reads_stored_time_events_without_mutation
     with factory() as session:
         group_after = session.scalars(select(SimulationEventGroupModel)).one()
         assert group_after.result_fingerprint == fp_before
+
+
+@pytest.mark.pr_critical
+def test_authoritative_stamina_replay_tracks_stored_timeline_without_mutation(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-stamina-replay")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="stamina-replay-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    replay = driver.get_authoritative_match_replay(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    result = replay["final_result"]
+    total = result["stamina_log"]["total_transitions"]
+    assert total == result["timeline_log"]["total_timeline_events"]
+
+    with factory() as session:
+        group_before = session.scalars(select(SimulationEventGroupModel)).one()
+        fp_before = group_before.result_fingerprint
+
+    first = driver.get_authoritative_match_stamina_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        timeline_index=1,
+    )
+    assert first["read_only"] is True
+    assert first["rng_rerun"] is False
+    assert first["verified"] is True
+    assert first["navigation"]["at_start"] is True
+    assert first["transition"]["source_timeline_index"] == 1
+    assert first["transition"]["source_timeline_event_hash"] == first["source_timeline_event_hash"]
+    assert len(first["transition"]["states_before"]) == 2
+    assert len(first["transition"]["states_after"]) == 2
+
+    last = driver.get_authoritative_match_stamina_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        timeline_index=total,
+    )
+    assert last["navigation"]["at_end"] is True
+    assert last["transition"]["transition_index"] == total
+    assert last["stamina_match_log_hash"] == result["stamina_log"]["match_log_hash"]
+
+    with factory() as session:
+        group_after = session.scalars(select(SimulationEventGroupModel)).one()
+        assert group_after.result_fingerprint == fp_before
+
+
+@pytest.mark.pr_critical
+def test_authoritative_stamina_replay_rejects_out_of_range_cursor(tmp_path):
+    driver, _, week = _driver_fixture(tmp_path / "authoritative-stamina-replay-range")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="stamina-replay-range-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    with pytest.raises(ValueError, match="timeline_index must be between"):
+        driver.get_authoritative_match_stamina_cursor(
+            run_id="run",
+            branch_id="branch",
+            group_id=group_id,
+            timeline_index=0,
+        )

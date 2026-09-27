@@ -2,29 +2,31 @@
 
 ## Active implementation — authoritative read-only Match Replay
 
-Canonical completed Match Replay now covers both rally snapshots and the full stored
-authoritative timeline.
+Canonical completed Match Replay now covers rally snapshots, the full stored
+authoritative timeline and the stored physical stamina transition aligned to each timeline
+event.
 
 - rally cursor navigation remains read-only over immutable stored Rally Events;
-- a second timeline cursor exposes every stored Match Timeline event in order;
-- timeline navigation includes rally markers, between-rally intervals, game breaks and
-  objective delays without reconstructing or resimulating any event;
-- each response carries navigation state, elapsed time, event type and aggregate timeline
-  counts/total elapsed seconds;
-- timeline and rally cursors are independent UI projections over the same verified
-  completed MatchResult;
+- timeline cursor navigation exposes Rally, Between-Rally Interval, Game Break and
+  Objective Delay events without reconstruction or resimulation;
+- stamina replay reads the already-persisted MatchStaminaLog transition for the exact same
+  timeline_index and exposes states before/after, deltas, workload, cause and calibration;
+- the stamina log is revalidated against the stored timeline before projection, including
+  source event hashes and one transition per timeline event;
+- Admin timeline and stamina views move together while rally navigation remains an
+  independent sporting cursor;
+- replay exposes the explicit stamina support boundary instead of pretending unsupported
+  components were simulated;
 - no replay action writes a simulation command, mutates live state, applies effects or
-  advances Run/Branch position;
-- domain validation of MatchResult/Timeline verifies identities, timing references and
-  hash chains before any event is exposed.
+  advances Run/Branch position.
 
-This now implements the decided Master/PAQ replay invariant beyond rally-only stepping:
-Replay can inspect both sporting rally state and the persisted time chronology between
-rallies.
+This extends the decided Master/PAQ no-rerun replay invariant into physical match state:
+completed history can now explain both what happened in time and how the stored physical
+bars changed at that exact event.
 
-**Next after this PR:** continue the pre-alpha match-viewer surface over immutable
-history, surfacing richer stored stamina/rules/context detail without introducing
-replay-time simulation.
+**Next after this PR:** continue the immutable match-viewer with stored rules/officiating
+and match-context detail where those facts are already authoritative; do not invent or
+recompute missing context at replay time.
 
 ## Active implementation — canonical Tournament Preparation State
 

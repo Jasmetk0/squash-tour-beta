@@ -104,9 +104,26 @@ Package and passes that frozen snapshot into the compatibility Entry calculation
 - historical non-Package Entry generation still uses the legacy country service;
 - EntryEngine behavior itself is unchanged.
 
-**Next after this PR:** `entry_tuning.json` is now the last known global configuration
-input on the Package-backed AI Entry proposal path. Audit and bind that input without
-inventing new tuning/package semantics, then continue the next decided ownership chain.
+Package-backed AI Entry now also freezes the exact typed Entry tuning at the
+authoritative proposal boundary.
+
+There is still no invented Run Package contract for Entry tuning. Instead:
+
+- the current `entry_tuning.json` is loaded once before the authoritative batch is built;
+- the compatibility Entry calculation receives the typed frozen snapshot directly and
+  no longer rereads the file during snapshot-backed generation;
+- the tuning snapshot receives its own SHA-256 fingerprint;
+- that fingerprint is included in the snapshot-backed Entry batch fingerprint and
+  exposed by authoritative preview/commit;
+- therefore changing global tuning between preview and commit changes the rebuilt batch
+  identity and the existing expected-entry-batch CAS guard rejects the stale commit;
+- legacy non-Package Entry generation preserves the historical direct file-backed path.
+
+This binds the last known global Package-backed AI Entry input without claiming new
+Package ownership or changing EntryEngine semantics.
+
+**Next after this PR:** re-audit Package-backed AI Entry for any remaining mutable/global
+inputs. If clean, return to the next largest decided pre-alpha ownership dependency.
 
 
 ## Active implementation — canonical result/ranking source fence

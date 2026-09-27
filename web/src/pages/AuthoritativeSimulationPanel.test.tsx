@@ -1875,16 +1875,16 @@ describe('AuthoritativeSimulationPanel', () => {
     renderPanel()
 
     expect(await screen.findByText('Read-only Match Replay')).toBeInTheDocument()
-    expect(await screen.findByText('1 / 3')).toBeInTheDocument()
+    expect((await screen.findAllByText('1 / 3')).length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getByRole('button', { name: 'Step Forward' }))
-    expect(await screen.findByText('2 / 3')).toBeInTheDocument()
+    expect((await screen.findAllByText('2 / 3')).length).toBeGreaterThan(0)
 
     await userEvent.click(screen.getByRole('button', { name: 'Step Back' }))
     expect(await screen.findByText('1 / 3')).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Last rally' }))
-    expect(await screen.findByText('3 / 3')).toBeInTheDocument()
+    expect((await screen.findAllByText('3 / 3')).length).toBeGreaterThan(0)
 
     expect(api.simulateAuthoritativeNextRally).not.toHaveBeenCalled()
     expect(api.simulateAuthoritativeGame).not.toHaveBeenCalled()

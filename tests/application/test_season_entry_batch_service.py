@@ -205,6 +205,49 @@ def test_snapshot_backed_entry_batch_ignores_legacy_entry_and_calendar_registrie
 
 
 @pytest.mark.pr_critical
+def test_snapshot_backed_entry_batch_uses_frozen_countries_not_global_country_service(tmp_path):
+    service = make_service(tmp_path)
+    write_active(tmp_path / "active.json", count=40)
+    calendar = service.calendar_service.get_calendar(season="2000/2001").calendar
+    assert calendar is not None
+    event = calendar.events[0]
+    countries = tuple(service.countries_service.list_countries())
+    assert countries
+
+    class ForbiddenCountries:
+        def list_countries(self):
+            raise AssertionError("global CountriesConfigService must not be used")
+
+    snapshot_service = type(service)(
+        active_players_service=service.active_players_service,
+        calendar_service=service.calendar_service,
+        countries_service=ForbiddenCountries(),
+        entry_lists_path=service.entry_lists_path,
+        entry_tuning_path=service.entry_tuning_path,
+    )
+
+    result = SeasonEntryBatchService(
+        snapshot_service
+    ).generate_overlapping_entry_lists(
+        event_ids=[event.event_id],
+        request=EntryBatchGenerateRequest(
+            seed=123,
+            dry_run=True,
+            max_alternates=0,
+            include_not_entered=False,
+        ),
+        event_snapshots={event.event_id: event},
+        country_snapshots=countries,
+    )
+
+    assert result.application_decisions
+    assert result.metadata.event_ids == (event.event_id,)
+    assert {
+        decision.event_id for decision in result.application_decisions
+    } == {event.event_id}
+
+
+@pytest.mark.pr_critical
 def test_single_event_entry_decision_batch_preserves_complete_pre_cut_evidence(tmp_path):
     service = make_service(tmp_path)
     write_active(tmp_path / "active.json", count=40)

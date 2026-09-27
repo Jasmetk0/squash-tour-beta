@@ -8913,3 +8913,103 @@ def test_authoritative_stamina_replay_rejects_out_of_range_cursor(tmp_path):
             group_id=group_id,
             timeline_index=0,
         )
+
+
+@pytest.mark.pr_critical
+def test_authoritative_replay_context_reads_frozen_match_input_without_mutation(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-replay-context")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="replay-context-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    with factory() as session:
+        group_before = session.scalars(select(SimulationEventGroupModel)).one()
+        fp_before = group_before.result_fingerprint
+        input_fp_before = group_before.match_input_fingerprint
+
+    context = driver.get_authoritative_match_replay_context(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    assert context["read_only"] is True
+    assert context["rng_rerun"] is False
+    assert context["verified"] is True
+    assert context["match_input_fingerprint"] == input_fp_before
+    assert context["context"]["match_id"] == context["match_id"]
+    assert context["effective_match_format"]["format"]["best_of"] in {3, 5}
+    assert context["effective_rally_rules"]["ruleset_version"] == "world_squash_singles_2025_v1_2_2"
+    assert context["effective_rally_rules"]["resolver_version"] == "pre_alpha_rules_v1"
+    assert len(context["player_projections"]) == 2
+
+    replay = driver.get_authoritative_match_replay(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    first_rally = replay["final_result"]["rally_log"]["events"][0]
+    assert first_rally["rules_resolution"] is not None
+    assert first_rally["rules_resolution"]["final_call"] == first_rally["official_resolution"]
+
+    with factory() as session:
+        group_after = session.scalars(select(SimulationEventGroupModel)).one()
+        assert group_after.result_fingerprint == fp_before
+        assert group_after.match_input_fingerprint == input_fp_before
+
+
+@pytest.mark.pr_critical
+def test_authoritative_replay_frame_composes_rally_timeline_stamina_and_context(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-replay-frame")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="replay-frame-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    with factory() as session:
+        before = session.scalars(select(SimulationEventGroupModel)).one()
+        result_fp = before.result_fingerprint
+        input_fp = before.match_input_fingerprint
+
+    frame = driver.get_authoritative_match_replay_frame(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=1,
+    )
+    assert frame["schema_version"] == "authoritative_match_replay_frame.v1"
+    assert frame["rally"]["rally_index"] == 1
+    assert frame["timeline_event"]["event_type"] == "RALLY"
+    assert frame["timeline_event"]["rally_index"] == 1
+    assert frame["stamina_transition"] is not None
+    assert (
+        frame["stamina_transition"]["source_timeline_index"]
+        == frame["timeline_event"]["timeline_index"]
+    )
+    assert frame["context_summary"]["best_of"] in {3, 5}
+    assert frame["read_only"] is True
+    assert frame["rng_rerun"] is False
+    assert frame["verified"] is True
+
+    with factory() as session:
+        after = session.scalars(select(SimulationEventGroupModel)).one()
+        assert after.result_fingerprint == result_fp
+        assert after.match_input_fingerprint == input_fp

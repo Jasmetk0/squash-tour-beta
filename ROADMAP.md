@@ -12,8 +12,12 @@
    Objective Delay events with independent cursor navigation.
 8. ✅ Project the persisted stamina transition for each timeline event, including stored
    before/after bars, deltas, workload, calibration and explicit support boundaries.
-9. Next: enrich immutable match-viewer detail with stored rules/officiating and context
-   facts, preserving the no-rerun replay invariant.
+9. ✅ Expose frozen MatchInput context/rules and stored per-rally officiating decisions,
+   including explicit legacy/support boundaries and zero replay-time rule resolution.
+10. ✅ Add one unified Replay Frame per selected rally, composing stored rally, timeline,
+    stamina and context evidence while retaining the detailed independent inspectors.
+11. Next: return to the next decided pre-alpha dependency without inventing new match
+    semantics.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

@@ -140,6 +140,8 @@ import type {
   AuthoritativeNextRallyPayload,
   AuthoritativeNextRallyResult,
   AuthoritativeMatchReplayCursor,
+  AuthoritativeMatchReplayContext,
+  AuthoritativeMatchReplayFrame,
   AuthoritativeMatchReplayList,
   AuthoritativeMatchTimelineCursor,
   AuthoritativeMatchStaminaCursor,
@@ -1615,6 +1617,26 @@ export async function listAuthoritativeMatchReplays(
   return data
 }
 
+export async function getAuthoritativeMatchReplayContext(
+  runId: string,
+  branchId: string,
+  groupId: string
+): Promise<AuthoritativeMatchReplayContext> {
+  const data = await request<AuthoritativeMatchReplayContext>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replay/context?group_id=' +
+      encodeURIComponent(groupId)
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_replay_context.v1' ||
+    data.group_id !== groupId
+  ) {
+    throw new Error('Authoritative replay context response is invalid.')
+  }
+  return data
+}
+
 export async function getAuthoritativeMatchReplayCursor(
   runId: string,
   branchId: string,
@@ -1635,6 +1657,30 @@ export async function getAuthoritativeMatchReplayCursor(
     data.rally_index !== rallyIndex
   ) {
     throw new Error('Authoritative replay cursor response is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeMatchReplayFrame(
+  runId: string,
+  branchId: string,
+  groupId: string,
+  rallyIndex: number
+): Promise<AuthoritativeMatchReplayFrame> {
+  const data = await request<AuthoritativeMatchReplayFrame>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replay/frame?group_id=' +
+      encodeURIComponent(groupId) +
+      '&rally_index=' +
+      encodeURIComponent(String(rallyIndex))
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_replay_frame.v1' ||
+    data.group_id !== groupId ||
+    data.rally_index !== rallyIndex
+  ) {
+    throw new Error('Authoritative replay frame response is invalid.')
   }
   return data
 }

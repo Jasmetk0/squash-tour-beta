@@ -1286,6 +1286,47 @@ export type AuthoritativeMatchReplayList = {
   }>
 }
 
+export type AuthoritativeMatchReplayContext = {
+  schema_version: 'authoritative_match_replay_context.v1'
+  run_id: string
+  branch_id: string
+  week_ordinal: number
+  slot_id: string
+  group_id: string
+  event_id: string
+  match_id: string
+  match_input_fingerprint: string
+  result_fingerprint: string
+  snapshot_hash: string
+  simulation_seed: number
+  match_engine_version: string
+  context: Record<string, unknown>
+  effective_match_format: Record<string, unknown>
+  effective_match_timing: Record<string, unknown> | null
+  effective_match_gameplans: Record<string, unknown> | null
+  effective_rally_rules: EffectiveRallyRulesSnapshot | null
+  rally_calibration_profile: Record<string, unknown> | null
+  unsupported_future_inputs: string[]
+  player_projections: Array<Record<string, unknown>>
+  summary: {
+    player_a_id: string
+    player_a_name: string
+    player_b_id: string
+    player_b_name: string
+    best_of: number
+    games_to: number
+    win_by: number
+    ruleset_version: string | null
+    resolver_version: string | null
+    rules_calibration_version: string | null
+    rules_unsupported_components: string[]
+  }
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
 export type AuthoritativeMatchReplayCursor = {
   schema_version: 'authoritative_match_replay_cursor.v1'
   run_id: string
@@ -1306,6 +1347,27 @@ export type AuthoritativeMatchReplayCursor = {
     at_start: boolean
     at_end: boolean
   }
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
+export type AuthoritativeMatchReplayFrame = {
+  schema_version: 'authoritative_match_replay_frame.v1'
+  run_id: string
+  branch_id: string
+  week_ordinal: number
+  slot_id: string
+  group_id: string
+  match_id: string
+  result_fingerprint: string
+  rally_index: number
+  rally: RallyEvent
+  timeline_event: Extract<MatchTimelineEvent, { event_type: 'RALLY' }>
+  stamina_transition: StaminaTransition | null
+  context_summary: AuthoritativeMatchReplayContext['summary']
+  navigation: AuthoritativeMatchReplayCursor['navigation']
   replay_source: 'stored_authoritative_events'
   rng_rerun: false
   read_only: true

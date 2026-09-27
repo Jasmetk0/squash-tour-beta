@@ -22,6 +22,7 @@ const api = vi.hoisted(() => ({
   getCanonicalTournamentEntryFieldState: vi.fn(),
   getCanonicalTournamentPreparation: vi.fn(),
   adoptTournamentRankingSnapshotAuthority: vi.fn(),
+  listTournamentRankingPublicationOptions: vi.fn(),
   createTournamentEntryFieldFromValidSubmissions: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
@@ -103,6 +104,14 @@ describe('PlannedEventDetailPage', () => {
       ready_for_match_schedule: false,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
+    })
+    api.listTournamentRankingPublicationOptions.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      publications: [{
+        ranking_week: { season_index: 0, week: 5 }, snapshot_fingerprint: '6'.repeat(64),
+        player_count: 32, policy_id: 'policy-a', best_n: 15
+      }],
+      publication_count: 1, source: 'published_official_rankings.v1'
     })
     api.adoptTournamentRankingSnapshotAuthority.mockResolvedValue({
       schema_version: 'tournament_ranking_snapshot_authority.v1',
@@ -1005,9 +1014,8 @@ describe('PlannedEventDetailPage', () => {
       ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
     })
     renderAt('/runs/run-a/calendar/E1')
-    fireEvent.change(await screen.findByLabelText('Ranking season index'), { target: { value: '0' } })
-    fireEvent.change(screen.getByLabelText('Ranking week'), { target: { value: '5' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Adopt published Official Ranking' }))
+    fireEvent.change(await screen.findByLabelText('Published Official Ranking'), { target: { value: '0:5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adopt selected Official Ranking' }))
     await waitFor(() => expect(api.adoptTournamentRankingSnapshotAuthority).toHaveBeenCalledWith(
       'run-a', 'branch-a', 'E1', { command_id: 'admin-ui-ranking-authority-E1-0-5', ranking_week: { season_index: 0, week: 5 } }
     ))

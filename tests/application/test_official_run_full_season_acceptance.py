@@ -767,6 +767,37 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         assert status == 200, entry_field_state
         assert set(entry_field_state["direct_main_player_ids"]) == set(generated_ids)
 
+        # Week Schedule readiness must already see the Run-owned Calendar event before
+        # any Draw exists. The canonical preparation state, not MatchPackage/Draw
+        # existence, owns the blocker and next action.
+        status, schedule_before_draw_input = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_before_draw_input
+        assert schedule_before_draw_input["event_ids"] == [event_id]
+        assert schedule_before_draw_input["group_ids"] == []
+        assert schedule_before_draw_input["schedule_required"] is True
+        assert schedule_before_draw_input["canonical_preparation_ready"] is False
+        assert schedule_before_draw_input["can_propose_schedule"] is False
+        assert schedule_before_draw_input["blockers"] == [
+            f"{event_id}:draw_input_ready"
+        ]
+        assert (
+            schedule_before_draw_input["canonical_preparation"]["tournaments"][0][
+                "phase"
+            ]
+            == "draw_input_ready"
+        )
+        status, blocked_schedule_proposal = _request(
+            "GET",
+            sim_root + "/week-schedule/proposal",
+        )
+        assert status == 409, blocked_schedule_proposal
+        assert "canonical tournament preparation draw_ready" in str(
+            blocked_schedule_proposal
+        )
+
         draw_root = tournament_root + "/draw"
         status, draw_input = _request(
             "POST",
@@ -782,6 +813,22 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
         )
         assert status == 200, draw_input
         assert draw_input["draw_input_committed"] is True
+
+        status, schedule_before_draw_generation = _request(
+            "GET",
+            sim_root + "/week-schedule/preflight",
+        )
+        assert status == 200, schedule_before_draw_generation
+        assert schedule_before_draw_generation["canonical_preparation_ready"] is False
+        assert schedule_before_draw_generation["blockers"] == [
+            f"{event_id}:draw_generation_ready"
+        ]
+        assert (
+            schedule_before_draw_generation["canonical_preparation"]["tournaments"][0][
+                "next_required_action"
+            ]
+            == "generate_draw"
+        )
 
         status, generated_draw = _request(
             "POST",

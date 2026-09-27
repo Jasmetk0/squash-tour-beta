@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import ValidationError
+from pydantic import BaseModel, Field, ValidationError
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
 from beta_engine.domain.rankings.official import RankingWeek
@@ -25,6 +25,63 @@ router = APIRouter(
     ),
     tags=["admin-tournament-ranking-snapshot-authority"],
 )
+
+
+class TournamentRankingPublicationOption(BaseModel):
+    ranking_week: RankingWeek
+    snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    ranked_row_count: int = Field(ge=0)
+    policy_id: str
+    best_n: int = Field(ge=1)
+
+
+class TournamentRankingPublicationOptions(BaseModel):
+    run_id: str
+    branch_id: str
+    event_id: str
+    publications: tuple[TournamentRankingPublicationOption, ...]
+    publication_count: int = Field(ge=0)
+    source: str = "published_official_rankings.v1"
+
+
+@router.get("/available", response_model=TournamentRankingPublicationOptions)
+def list_available_tournament_ranking_publications(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentRankingPublicationOptions:
+    try:
+        with runtime.repository._session_factory() as session:
+            snapshots = TournamentRankingSnapshotAuthorityStore(session).published_rankings(
+                run_id=run_id,
+                branch_id=branch_id,
+            )
+        publications = tuple(
+            TournamentRankingPublicationOption(
+                ranking_week=snapshot.week,
+                snapshot_fingerprint=snapshot.fingerprint,
+                ranked_row_count=len(snapshot.rows),
+                policy_id=snapshot.policy.policy_id,
+                best_n=snapshot.policy.best_n,
+            )
+            for snapshot in snapshots
+        )
+        return TournamentRankingPublicationOptions(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            publications=publications,
+            publication_count=len(publications),
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_ranking_publications_unavailable",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.get("", response_model=TournamentRankingSnapshotAuthority)

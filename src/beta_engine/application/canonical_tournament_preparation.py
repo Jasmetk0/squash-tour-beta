@@ -14,6 +14,13 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, sessionmaker
 
 from beta_engine.domain.simulation_slots import fingerprint
+from beta_engine.application.calendar_package_run_adapter import (
+    CALENDAR_EVENT_ENTITY_KIND,
+    CalendarPackageRunAdapter,
+)
+from beta_engine.domain.run_packages import PackageType
+from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
+from beta_engine.domain.tournaments.models import CalendarEvent
 
 from beta_engine.infrastructure.db.tournament_draw_authority import (
     TournamentDrawAuthorityStore,
@@ -33,6 +40,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
 )
+from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 
 
 TournamentPreparationPhase = Literal[
@@ -72,6 +80,24 @@ class CanonicalWeekSchedulePreparationState(BaseModel):
     )
 
 
+class CanonicalEntryCapacitySuggestion(BaseModel):
+    """Read-only canonical Entry Field capacity suggestion from Run-owned Calendar."""
+
+    schema_version: Literal["canonical_entry_capacity_suggestion.v1"] = (
+        "canonical_entry_capacity_suggestion.v1"
+    )
+    main_draw_size: int = Field(ge=2, le=128)
+    qualification_draw_size: int = Field(ge=0, le=128)
+    qualifier_spots: int = Field(ge=0, le=128)
+    wild_card_slots: int = Field(ge=0, le=128)
+    bye_slots: int = Field(ge=0, le=128)
+    source_package_id: str
+    source_package_version: int = Field(ge=1)
+    source_package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_event_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source: Literal["run_owned_calendar_package.v1"] = "run_owned_calendar_package.v1"
+
+
 class CanonicalTournamentPreparationState(BaseModel):
     """One authoritative navigation/readiness snapshot for tournament preparation."""
 
@@ -93,6 +119,7 @@ class CanonicalTournamentPreparationState(BaseModel):
     ranking_week_ordinal: int | None = Field(default=None, ge=0)
 
     entry_field_ready: bool
+    entry_capacity_suggestion: CanonicalEntryCapacitySuggestion | None = None
     field_sequence: int = Field(ge=0)
     entry_field_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
@@ -228,6 +255,12 @@ class CanonicalTournamentPreparationService:
         branch_id: str,
         event_id: str,
     ) -> CanonicalTournamentPreparationState:
+        capacity_suggestion = CanonicalTournamentPreparationService._entry_capacity_suggestion(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
         ranking = TournamentRankingSnapshotAuthorityStore(session).get(
             run_id=run_id,
             branch_id=branch_id,
@@ -332,6 +365,7 @@ class CanonicalTournamentPreparationService:
                 ranking.ranking_week.ordinal if ranking is not None else None
             ),
             entry_field_ready=field_ready,
+            entry_capacity_suggestion=capacity_suggestion,
             field_sequence=len(history),
             entry_field_fingerprint=(
                 field.fingerprint if field is not None else None
@@ -395,3 +429,60 @@ class CanonicalTournamentPreparationService:
             can_generate_draw=draw_input_ready and not draw_ready,
             ready_for_match_schedule=draw_ready,
         )
+
+
+    @staticmethod
+    def _entry_capacity_suggestion(
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+    ) -> CanonicalEntryCapacitySuggestion | None:
+        state = get_run_package_state(session, run_id=run_id, branch_id=branch_id)
+        if state is None:
+            return None
+        candidates = [
+            entity
+            for entity in state.entities
+            if entity.entity_kind == CALENDAR_EVENT_ENTITY_KIND
+            and entity.source_entity_id == event_id
+        ]
+        if not candidates:
+            return None
+        if len(candidates) != 1:
+            raise ValueError(
+                f"Run-owned Calendar event '{event_id}' is ambiguous across Package state"
+            )
+        entity = candidates[0]
+        event = CalendarEvent.model_validate(entity.payload)
+        if event.event_id != event_id:
+            raise ValueError("Run-owned Calendar event identity mismatch")
+        package_id = CalendarPackageRunAdapter.package_id_for_season(str(event.season))
+        if entity.source_package_id != package_id:
+            raise ValueError("Run-owned Calendar event Package identity mismatch")
+        matching_versions = [
+            version
+            for version in state.package_versions
+            if version.package_id == package_id
+            and version.package_type == PackageType.CALENDAR
+            and version.source_version == entity.source_package_version
+            and version.source_fingerprint == entity.source_package_fingerprint
+        ]
+        if len(matching_versions) != 1:
+            raise ValueError("Run-owned Calendar event Package provenance mismatch")
+        capacity = TournamentEntryFieldCapacity(
+            main_draw_size=event.main_draw_size + event.byes,
+            qualification_draw_size=event.qualification_draw_size,
+            qualifier_spots=event.qualifier_spots,
+            wild_card_slots=event.wild_cards,
+            bye_slots=event.byes,
+        )
+        return CanonicalEntryCapacitySuggestion(
+            **capacity.model_dump(mode="json"),
+            source_package_id=package_id,
+            source_package_version=entity.source_package_version,
+            source_package_fingerprint=entity.source_package_fingerprint,
+            source_event_fingerprint=entity.content_fingerprint,
+        )
+

@@ -581,6 +581,20 @@ export function PlannedEventDetailPage(): JSX.Element {
   }, [canonicalDrawRevisionHistoryQuery.data?.effective_draw_fingerprint, frozenReplacementWithdrawnPlayerId])
 
   useEffect(() => {
+    const suggestion = canonicalPreparationQuery.data?.entry_capacity_suggestion
+    if (
+      canonicalPreparationQuery.data?.next_required_action !== 'build_entry_field' ||
+      !suggestion ||
+      entryMainDrawSize
+    ) return
+    setEntryMainDrawSize(String(suggestion.main_draw_size))
+    setEntryQualificationDrawSize(String(suggestion.qualification_draw_size))
+    setEntryQualifierSpots(String(suggestion.qualifier_spots))
+    setEntryWildCardSlots(String(suggestion.wild_card_slots))
+    setEntryByeSlots(String(suggestion.bye_slots))
+  }, [canonicalPreparationQuery.data, entryMainDrawSize])
+
+  useEffect(() => {
     setFrozenReplacementPreview(null)
   }, [frozenReplacementWithdrawnPlayerId, frozenReplacementUnavailableInput])
 
@@ -763,7 +777,15 @@ export function PlannedEventDetailPage(): JSX.Element {
               {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' ? (
                 <div className="grid">
                   <h4>Build canonical Entry Field</h4>
-                  <p className="status">Build only from persisted valid submissions. Capacity is explicit; the UI does not infer unresolved tournament rules.</p>
+                  <p className="status">Build only from persisted valid submissions. Capacity remains explicit at commit time.</p>
+                  {canonicalPreparationQuery.data.entry_capacity_suggestion ? (
+                    <p className="status">
+                      Prefilled from frozen Run-owned Calendar Package {canonicalPreparationQuery.data.entry_capacity_suggestion.source_package_id}
+                      {' '}v{canonicalPreparationQuery.data.entry_capacity_suggestion.source_package_version}. Review before commit.
+                    </p>
+                  ) : (
+                    <p className="status">No canonical Run-owned Calendar capacity suggestion is available; enter capacity explicitly.</p>
+                  )}
                   <label>Main Draw capacity<input aria-label="Entry Main Draw capacity" type="number" value={entryMainDrawSize} onChange={(event) => setEntryMainDrawSize(event.target.value)} /></label>
                   <label>Qualification Draw capacity<input aria-label="Entry Qualification Draw capacity" type="number" min={0} value={entryQualificationDrawSize} onChange={(event) => setEntryQualificationDrawSize(event.target.value)} /></label>
                   <label>Qualifier spots<input aria-label="Entry qualifier spots" type="number" min={0} value={entryQualifierSpots} onChange={(event) => setEntryQualifierSpots(event.target.value)} /></label>

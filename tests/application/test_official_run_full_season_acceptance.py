@@ -673,7 +673,7 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             {
                 "ranking_week": {"season_index": 0, "week": 1},
                 "snapshot_fingerprint": initial_ranking_fingerprint,
-                "player_count": len(generated_ids),
+                "ranked_row_count": 0,
                 "policy_id": "msa-official-2000-01",
                 "best_n": 15,
             }

@@ -4193,9 +4193,9 @@ export type RankingTableRow = {
 export type RankingTableSummary = {
   season: string
   table_type: RankingTableType
-  ranked_row_count: number
+  player_count: number
   total_source_players: number
-  ranked_ranked_row_count: number
+  ranked_player_count: number
   zero_point_players: number
   countries_represented: number
   leader_player_id: string | null
@@ -4241,8 +4241,8 @@ export type RankingSnapshotSummary = {
   season: string
   season_week: number
   table_type: RankingTableType
-  ranked_row_count: number
-  ranked_ranked_row_count: number
+  player_count: number
+  ranked_player_count: number
   zero_point_players: number
   countries_represented: number
   leader_player_id: string | null
@@ -4478,7 +4478,7 @@ export type SeasonBootstrapMetadata = {
   source_initial_pool_fingerprint: string
   bootstrap_id: string
   bootstrap_fingerprint: string
-  ranked_row_count: number
+  player_count: number
   persistence_path: string | null
   ranking_seeding_implemented: boolean
 }
@@ -6176,9 +6176,9 @@ export type MatchResultRef = {
 export type EventResultSummary = {
   event_id: string
   completion_status: 'incomplete' | 'complete' | 'blocked'
-  ranked_row_count: number
-  main_draw_ranked_row_count: number
-  qualification_ranked_row_count: number
+  player_count: number
+  main_draw_player_count: number
+  qualification_player_count: number
   completed_matches: number
   incomplete_matches: number
   champion_player_id: string | null
@@ -6287,8 +6287,8 @@ export type PlayerPointAward = {
 
 export type PointAwardSummary = {
   event_id: string
-  ranked_row_count: number
-  awarded_ranked_row_count: number
+  player_count: number
+  awarded_player_count: number
   total_ranking_points: number
   total_race_points: number
   champion_player_id: string | null

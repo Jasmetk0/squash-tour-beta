@@ -1114,6 +1114,56 @@ export type AuthoritativeWeekSchedule = {
   slots: AuthoritativeWeekScheduleSlot[]
 }
 
+export type TournamentRankingSnapshotAuthority = {
+  schema_version: 'tournament_ranking_snapshot_authority.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  ranking_week: AuthoritativeRankingWeek
+  ranking_snapshot: {
+    run_id: string
+    branch_id: string
+    week: AuthoritativeRankingWeek
+    rows: Array<{ player_id: string; rank: number; points: number }>
+  }
+  adopted_by_command_id: string
+}
+
+export type AdoptTournamentRankingSnapshotPayload = {
+  command_id: string
+  ranking_week: AuthoritativeRankingWeek
+}
+
+export type TournamentEntryFieldCapacity = {
+  main_draw_size: number
+  qualification_draw_size: number
+  qualifier_spots: number
+  wild_card_slots: number
+  bye_slots: number
+}
+
+export type CreateTournamentEntryFieldPayload = {
+  command_id: string
+  capacity: TournamentEntryFieldCapacity
+}
+
+export type TournamentEntryField = {
+  schema_version: 'tournament_entry_field.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  mode: 'initial' | 'pre_draw_repair'
+  capacity: TournamentEntryFieldCapacity
+  tournament_ranking_authority_fingerprint: string
+  ranking_snapshot_fingerprint: string
+  applications_fingerprint: string
+  direct_main_player_ids: string[]
+  qualification_player_ids: string[]
+  below_qualification_cut_player_ids: string[]
+  withdrawn_player_ids: string[]
+  base_field_fingerprint: string | null
+}
+
 export type CanonicalTournamentPreparationState = {
   schema_version: 'canonical_tournament_preparation_state.v1'
   run_id: string

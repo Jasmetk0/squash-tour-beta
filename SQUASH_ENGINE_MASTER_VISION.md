@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 66
-**Aktualizováno:** 27. 9. 2026 (UTC) – rozhodnutí o Admin-only první pre-alpha, historickém prohlížení, deterministickém opakování a ručních zásazích
+**Verze dokumentu:** 67
+**Aktualizováno:** 27. 9. 2026 (UTC) – rozhodnutí o World Tour Finals, Race a hranicích první pre-alpha
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -11,6 +11,8 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 **Historická rychlá orientace ve v65 (stav k 12. 9. 2026, nikoliv současný implementační HEAD):** sportovní registry zůstávají **411 pevných / 88 prozatímních / 69 širokých otevřených bodů** a brána **48 vyřešených / 109 otevřených ze 157 PAQ**. Toto vydání neuzavírá žádnou PAQ implementací. Ověřený `buuk` je `08a29074250675a61434ba58fb42a185474648d5` po merge PR #720. #689 včetně #690 už je v `buuk`; staré označení „otevřeno“ níže je evidence k vydání v64. Nový aktuální stav je v **35.29–35.31**, pracovní model v **kapitole 36**. Ranking preparation je rozvinutá, ale publikace a skutečný end-to-end svět nejsou dokončené.
 
 **Nová produktová rozhodnutí v66:** první pre-alpha má funkční Admin včetně libovolného historického weeku; Viewer zůstává cílovou součástí produktu, ale není podmínkou této pre-alpha. `PAQ-118` a `PAQ-127` jsou uzavřené, `PAQ-120`, `PAQ-121` a `PAQ-150` jsou výslovně mimo první pre-alpha. Implementovaný stav vždy ověřit v `CURRENT_STATE.md` a v aktuálním kódu; historická implementační evidence níže končí stavem uvedeným u příslušného vydání.
+
+**Nová produktová rozhodnutí v67:** první pre-alpha zahrnuje individuální World Tour Finals, ale nezahrnuje týmové soutěže. World Tour Finals Race čerpá v Official FAX Runu sezonní body jen z nejvyšší World Tour, pracuje s konfigurovaným počtem nejlepších výsledků, rozhoduje účast i nasazení a má pevný sezonní uzávěrkový snapshot. Kapacitu a formát Finals určuje uživatel; přímé vstupy za jím zvolená vítězství a náhrady z Race zachovávají níže uvedené hranice. Implementační stav zůstává výhradně otázkou aktuálního GitHubu a `CURRENT_STATE.md`.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -4341,11 +4343,23 @@ Tato kapitola rozlišuje současná rozhodnutí od starších nebo odložených 
 
 ## 26.1 World Tour Finals
 
-**[STARŠÍ NÁVRH]** Finals jako samostatný vrchol sezony pro osm hráčů kvalifikovaných přes Race.
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA]** World Tour Finals jsou individuální sezonní turnaj v pre-alpha Official Runu. Admin pro každý ročník sestaví běžnou Tournament Edition s vlastní konfigurovanou kapacitou, kalendářem, přihlašovacími týdny/uzávěrkami a formátem. Engine nevnucuje pevnou osmičku ani konkrétní skupiny či pavouk. Rozhodnutá sezonní kvalifikace přes Race a přímé vstupy ústí rovnou do vlastního turnaje Finals; samostatný kvalifikační pavouk před Finals se nehraje. Volba soutěžního formátu se řídí podporovanými pravidly turnajů, nesmí se domýšlet nerozhodnutá mechanika.
 
-Preferovaná originální varianta používala jméno `The Eight / Final Eight` a ladder strukturu, ve které lepší Race pozice poskytuje výhodnější cestu. Starší alternativou byly dvě skupiny po čtyřech.
+**[ROZHODNUTO]** Každá sezonní konfigurace Finals určí počet nejlepších bodovaných výsledků započítávaných do `World Tour Finals Race` a výběr způsobilých turnajových kategorií. Výchozí Official FAX konfigurace zahrnuje jen individuální bodované soutěže nejvyšší **World Tour**, včetně World Championship zařazeného do této Tour; body z Elite, Challenger, Development a týmových soutěží se do této Race nezahrnují. Výsledky patří do dané sezony a zachovávají skutečně přidělené rankingové body. Finals samotné nemohou zpětně měnit pořadí, podle něhož byl sestaven jejich ročník. Jiný Run nebo jiná sezona mohou mít vlastní konfigurovaný rozsah; změny nepřepisují starší sezonní snapshoty.
 
-**[ODLOŽENO]** Počet hráčů, kvalifikace, formát, rankingové body a definitivní identita Finals.
+**[ROZHODNUTO]** Admin v nastavení sezony určí **poslední publikovaný World Tour ranking před Finals** jako časovou hranici Race pro daný ročník. Po jeho publikaci vznikne pevný dohledatelný snapshot World Tour Finals Race z do té doby způsobilých dokončených a bodovaných výsledků; tento snapshot určuje účast, pořadí náhradníků i nasazení. Zvolený World Tour ranking vymezuje rozhodný okamžik, ale nenahrazuje samostatné sezonní pořadí Race běžným Official Ranking pořadím. Další týdenní ranking ani pozdější výsledky už automaticky nemění potvrzenou účast či los tohoto ročníku. Přihlášky, turnajové locky a jejich korekce zůstávají v běžném Tournament Edition workflow; nevzniká paralelní autorita.
+
+**[ROZHODNUTO]** Admin u sezonní Finals konfigurace vybere vítězství konkrétních turnajů či pravidla jejich výběru, která dávají přímý vstup; Diamond nebo World Championship jsou příklady, ne povinný univerzální seznam. Konfigurace předem kontroluje, že počet **možných odlišných přímých vstupů** je striktně menší než kapacita Finals, aby vždy zbývalo alespoň jedno místo z Race. Jeden hráč může získat jen jeden přímý vstup, i když vyhraje více vybraných turnajů; další vstup nepřechází na finalistu ani jiného hráče. Zbylá místa se plní v pořadí Race. Přímý vstup nezlepšuje nasazení: všichni účastníci se nasazují výhradně podle finálního World Tour Finals Race pořadí.
+
+**[ROZHODNUTO]** Race řadí hráče nejdříve podle součtu započtených nejlepších výsledků. Při shodě porovnává postupně nejvyšší jednotlivý bodový výsledek, druhý nejvyšší a další; teprve při úplné shodě rozhodne jednou uložený deterministicky reprodukovatelný los/tie-break token. Žádné pořadí z předchozí sezony ani běžný Official Ranking nepřidává další výhodu. Každý hráč může vidět své pořadí v Race a relevantní veřejné průběžné pořadí ostatních; v první pre-alpha jsou tyto informace dostupné v Adminu, budoucí Viewer respektuje svou historickou hranici bez future leaku.
+
+**[ROZHODNUTO]** Kvalifikovaný hráč má účast ve Finals povinnou; odstoupení vyžaduje jasně uvedený důvod. Tím se zde nezavádí nový automatický trest ani definitivní katalog omluv. Uvolněné místo po kvalifikovaném účastníkovi, včetně držitele přímého vstupu, se nabídne dalšímu způsobilému dostupnému hráči podle uloženého Race pořadí. Náhradník účast před přijetím povinnou nemá a nabídku může odmítnout bez sankce; následuje další čekající v Race. Přijetím se stane potvrzeným účastníkem a další odstoupení podléhá běžným pravidlům. Každý hráč vidí své pořadí Race, avšak samostatné předběžné oznamování a počet formálně vedených rezerv dosud nejsou rozhodnuty.
+
+**[ROZHODNUTO]** Engine automaticky připraví účastníky i los podle schválené konfigurace stejně jako u ostatních turnajů. Admin může účast, náhradníky, nasazení a los výslovně ručně upravit; nestandardní zásah musí být viditelný, auditovaný a kontrolovaný proti kapacitě, uzávěrkám, návaznostem a odehraným výsledkům. Konkrétní bezpečná oprava se řídí obecnými historickými/branch pravidly; nelze tiše přepsat uzamčenou nebo odehranou historii.
+
+**[STARŠÍ NÁVRH, NAHRAZEN]** Pevná osmička, jméno `The Eight / Final Eight`, ladder se zvýhodněním pozic Race nebo dvě skupiny po čtyřech byly dřívější návrhy. Zde nejsou výchozím závazným formátem.
+
+**[ODLOŽENO]** Konkrétní výchozí počet účastníků a počet započítaných výsledků Official FAX sezony, definitivní značka Finals, výsledkové/bodové tabulky Finals, sankční důsledky neodůvodněného odstoupení a detailní předběžný rezervační workflow.
 
 ## 26.2 Individual World Championship
 
@@ -5252,6 +5266,8 @@ Tato kapitola je pracovní fronta otázek, které musí být pro první pre-alph
 Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvládne dva povinné uživatelské akceptační průchody popsané v kapitole 31.3 prostřednictvím Adminu. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce. Viewer není akceptační branou první pre-alpha.
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Funkční minimum zahrnuje Runs a Packages, hráče/development/AI, čas a transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Plný Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases mohou být viditelně odložené nebo mimo build a dokončení pre-alpha neblokují.
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v67]** Do Official Run akceptačního průchodu patří individuální World Tour Finals podle kapitoly 26.1. Týmové soutěže jsou z první pre-alpha zcela vyjmuté; jejich existující implementace ani cílová pravidla se nemažou a týmové soutěže neblokují vydání této první verze. Admin musí zprostředkovat funkční ovládání a prohlížení rozhodnutého rozsahu, včetně skutečně zaznamenané historie zvoleného weeku. Funkční rozdělení Adminu je užitečné průběžně, rozsáhlý vizuální redesign a velký polish se odkládají až za funkční pokrytí.
 
 **[ROZHODNUTO – VÝVOJOVÁ PRIORITA v64, 8. 9. 2026]** Nejprve dokončit funkční pre-alpha podle obou akceptačních průchodů v 31.3; další jemné ladění, vyvažování a empirické zrealističťování odložit na následnou fázi. Dosavadní měřicí nástroje a výsledky zůstávají zachované, ale další autonomní práce nemá pokračovat sérií kalibračních auditů místo chybějících funkcí. Neodkládají se správnost pravidel, determinismus, bezpečný save/load, integrita historie ani nezbytné opravy. Existující verzované výchozí profily lze použít jako prozatímní základ; nejsou tím prohlášeny za empiricky realistické. Chybí-li skutečné produktové rozhodnutí nutné pro další řez, předložit jednu doporučenou variantu s vysvětlením a krátce ji s uživatelem uzavřít. Toto rozhodnutí mění pořadí práce, nikoliv rozsah pre-alpha či status všech otevřených kalibračních PAQ.
 

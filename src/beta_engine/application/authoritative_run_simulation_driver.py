@@ -2971,7 +2971,9 @@ class AuthoritativeRunSimulationDriver:
             payload = json.loads(row.payload_json)
             if payload.get("schema_version") == "authoritative_walkover_group.v1":
                 raise ValueError("walkover groups do not have played match replay context")
-            protected = AuthoritativeMatchInput.model_validate(payload["authoritative_input"])
+            protected = AuthoritativeMatchInput.model_validate_json(
+                json.dumps(payload["authoritative_input"])
+            )
             result = MatchResult.model_validate(payload["result"])
             if (
                 protected.run_id != run_id

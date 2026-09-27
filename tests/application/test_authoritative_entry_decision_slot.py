@@ -47,6 +47,23 @@ def _force_positive_entry_tuning(driver) -> None:
         ),
         encoding="utf-8",
     )
+    countries_service = entry_service.countries_service
+    config_path = countries_service.config_path
+    assert config_path is not None
+    payload = json.loads(config_path.read_text(encoding="utf-8"))
+    countries = payload["countries"]
+    if not any(country["code"] == "CZE" for country in countries):
+        template = dict(countries[0])
+        template.update(
+            {
+                "code": "CZE",
+                "name": "Czechia test fixture",
+                "region": "EUROPE",
+                "travel_region": "EUROPE",
+            }
+        )
+        countries.append(template)
+        config_path.write_text(json.dumps(payload), encoding="utf-8")
 
 
 def _lifecycle_tokens(factory, week):

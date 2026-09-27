@@ -8648,3 +8648,115 @@ def test_confirm_completed_working_result_is_atomic_idempotent_and_matches_full_
     ]
     with factory() as session:
         assert len(session.scalars(select(SimulationEventGroupModel)).all()) == 1
+
+
+@pytest.mark.pr_critical
+def test_completed_authoritative_match_replay_cursor_is_read_only_and_hash_verified(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-replay")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="replay-source-match",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    with factory() as session:
+        groups_before = session.scalars(select(SimulationEventGroupModel)).all()
+        commands_before = session.scalars(
+            select(AuthoritativeSimulationCommandModel)
+        ).all()
+        assert len(groups_before) == 1
+        result_fp = groups_before[0].result_fingerprint
+
+    replay = driver.get_authoritative_match_replay(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    assert replay["read_only"] is True
+    assert replay["rng_rerun"] is False
+    assert replay["verified"] is True
+    assert replay["result_fingerprint"] == result_fp
+    assert replay["total_rallies"] > 1
+
+    first = driver.get_authoritative_match_replay_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=1,
+    )
+    assert first["navigation"]["at_start"] is True
+    assert first["navigation"]["previous_rally_index"] is None
+    assert first["navigation"]["next_rally_index"] == 2
+    assert first["rally"]["rally_index"] == 1
+    assert first["rng_rerun"] is False
+    assert first["read_only"] is True
+
+    last_index = first["navigation"]["total_rallies"]
+    last = driver.get_authoritative_match_replay_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=last_index,
+    )
+    assert last["navigation"]["at_end"] is True
+    assert last["navigation"]["next_rally_index"] is None
+    assert last["rally"]["post_rally_state"]["match_complete"] is True
+    assert last["match_log_hash"] == replay["match_log_hash"]
+    assert last["rally"]["event_hash"] == replay["match_log_hash"]
+
+    back = driver.get_authoritative_match_replay_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=last_index - 1,
+    )
+    forward = driver.get_authoritative_match_replay_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=last_index,
+    )
+    assert back["navigation"]["next_rally_index"] == last_index
+    assert forward["rally"]["event_hash"] == last["rally"]["event_hash"]
+
+    with factory() as session:
+        groups_after = session.scalars(select(SimulationEventGroupModel)).all()
+        commands_after = session.scalars(
+            select(AuthoritativeSimulationCommandModel)
+        ).all()
+        assert len(groups_after) == len(groups_before)
+        assert len(commands_after) == len(commands_before)
+        assert groups_after[0].result_fingerprint == result_fp
+
+
+@pytest.mark.pr_critical
+def test_authoritative_replay_rejects_out_of_range_cursor(tmp_path):
+    driver, _, week = _driver_fixture(tmp_path / "authoritative-replay-range")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="replay-range-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+    with pytest.raises(ValueError, match="rally_index must be between"):
+        driver.get_authoritative_match_replay_cursor(
+            run_id="run",
+            branch_id="branch",
+            group_id=group_id,
+            rally_index=0,
+        )

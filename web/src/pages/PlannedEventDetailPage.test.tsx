@@ -964,4 +964,37 @@ describe('PlannedEventDetailPage', () => {
     expect(api.getCanonicalTournamentPreparation).toHaveBeenCalledWith('run-a', 'branch-a', 'E1')
   })
 
+  it('links canonical preparation next actions to existing Planned Event controls', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'wild_card_review_required',
+      next_required_action: 'review_wild_cards',
+      blockers: ['tournament_wild_card_review_required'],
+      ready_for_match_schedule: false,
+      effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+    renderAt('/runs/run-a/calendar/E1')
+    expect(await screen.findByRole('link', { name: 'Open canonical WC/RWC review' })).toHaveAttribute('href', '#canonical-wc-review')
+  })
+
+  it('does not invent a Planned Event action for preparation steps owned elsewhere', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'ranking_snapshot_required',
+      next_required_action: 'adopt_ranking_snapshot',
+      blockers: ['tournament_ranking_snapshot_required'],
+      ready_for_match_schedule: false,
+      effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+    renderAt('/runs/run-a/calendar/E1')
+    expect(await screen.findByText(/This preparation step is not controlled on Planned Event Admin yet/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /ranking snapshot/i })).not.toBeInTheDocument()
+  })
+
 })

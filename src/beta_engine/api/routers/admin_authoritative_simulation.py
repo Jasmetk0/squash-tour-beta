@@ -1021,6 +1021,35 @@ def get_match_replay_cursor(
         ) from exc
 
 
+@router.get("/match-replay/timeline-cursor")
+def get_match_replay_timeline_cursor(
+    run_id: str,
+    branch_id: str,
+    group_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+    timeline_index: int = 1,
+):
+    try:
+        return _driver(runtime, matches, awards).get_authoritative_match_timeline_cursor(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+            timeline_index=timeline_index,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_match_timeline_cursor_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("/live-match")
 def inspect_live_match(
     run_id: str,

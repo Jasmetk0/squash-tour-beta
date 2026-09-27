@@ -16,16 +16,18 @@ context/rules.
 - stamina replay remains aligned 1:1 to the stored timeline transition chain;
 - legacy rally versions explicitly remain legacy instead of receiving reconstructed rule
   facts that were never stored;
+- a unified read-only Replay Frame now composes one selected rally with its matching
+  stored timeline event, matching stamina transition and frozen match-context summary;
 - no Replay read invokes RNG, rules resolution, stamina calculation, match simulation,
   sporting effects or Run/Branch mutation.
 
-This now covers the core pre-alpha Match Viewer audit story: the viewer can inspect what
-happened, when it happened, the stored physical change, and the frozen rules/context that
-were actually used.
+This now covers the core pre-alpha Match Viewer audit story: one current replay frame can
+show what happened, when it happened, the stored physical state after it, the officiating
+result and the frozen context that was actually used, while the detailed independent
+rally/timeline/stamina inspectors remain available.
 
-**Next after this PR:** improve the Match Viewer presentation/summary around these stored
-facts and then continue the next decided pre-alpha dependency rather than inventing new
-match semantics.
+**Next after this PR:** return to the next decided pre-alpha dependency; do not expand
+Replay with invented semantics unless a concrete stored-history requirement appears.
 
 ## Active implementation — canonical Tournament Preparation State
 

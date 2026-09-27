@@ -38,6 +38,10 @@ import type {
   PlayerTransitionsResponse,
   CanonicalTournamentEntryFieldState,
   CanonicalTournamentPreparationState,
+  TournamentRankingSnapshotAuthority,
+  AdoptTournamentRankingSnapshotPayload,
+  TournamentEntryField,
+  CreateTournamentEntryFieldPayload,
   CanonicalPreDrawWithdrawalPayload,
   CanonicalPreDrawWithdrawalResult,
   CanonicalTournamentDrawState,
@@ -2706,6 +2710,52 @@ export async function commitCanonicalWildCardAssignment(
     data.proposal_fingerprint !== payload.expected_proposal_fingerprint
   ) {
     throw new Error('Canonical WC commit does not match the reviewed proposal.')
+  }
+  return data
+}
+
+function canonicalTournamentRankingSnapshotRoot(runId: string, branchId: string, eventId: string): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/ranking-snapshot-authority`
+}
+
+export async function adoptTournamentRankingSnapshotAuthority(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: AdoptTournamentRankingSnapshotPayload
+): Promise<TournamentRankingSnapshotAuthority> {
+  const data = await request<TournamentRankingSnapshotAuthority>(
+    canonicalTournamentRankingSnapshotRoot(runId, branchId, eventId),
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.schema_version !== 'tournament_ranking_snapshot_authority.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId ||
+    data.ranking_week.season_index !== payload.ranking_week.season_index ||
+    data.ranking_week.week !== payload.ranking_week.week ||
+    data.adopted_by_command_id !== payload.command_id
+  ) {
+    throw new Error('Tournament Ranking Snapshot authority response does not match the requested command.')
+  }
+  return data
+}
+
+export async function createTournamentEntryFieldFromValidSubmissions(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CreateTournamentEntryFieldPayload
+): Promise<TournamentEntryField> {
+  const data = await request<TournamentEntryField>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field/from-valid-submissions`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.schema_version !== 'tournament_entry_field.v1' ||
+    data.run_id !== runId || data.branch_id !== branchId || data.event_id !== eventId ||
+    data.mode !== 'initial'
+  ) {
+    throw new Error('Tournament Entry Field response does not match the requested scope.')
   }
   return data
 }

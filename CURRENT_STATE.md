@@ -1,5 +1,23 @@
 # Current implementation and next action
 
+## Active implementation — canonical preparation commands on Planned Event
+
+The two previously missing Tournament Preparation handoffs now use the existing canonical
+backend commands directly from Planned Event Admin.
+
+- Ranking Snapshot adoption requires an explicit published Official Ranking season/week;
+- Entry Field creation consumes persisted valid submissions only and requires explicit
+  bracket capacity inputs;
+- the frontend does not send player lists, reconstruct applications, infer ranking week,
+  or invent unresolved tournament capacity policy;
+- successful commands refresh the shared canonical Tournament Preparation / Entry Field
+  read models;
+- no backend authority, sporting semantics or Master decisions changed.
+
+**Next after this PR:** audit whether the explicit capacity inputs can be sourced from an
+already-frozen Tournament Edition/config authority without introducing a second source of
+truth; until proven, keep them explicit.
+
 ## Active implementation — canonical preparation action handoffs
 
 Planned Event now turns canonical Tournament Preparation `next_required_action` into

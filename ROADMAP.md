@@ -66,6 +66,10 @@
     and DTOs from the current web API surface while preserving backend historical readers.
 15. Next: audit remaining current frontend/API tournament-preparation compatibility
     entrypoints and remove the next dead legacy surface.
+16. ✅ Surface the existing canonical Tournament Preparation read model directly on Planned
+    Event Admin with phase, next action, blockers and schedule readiness.
+17. Next: audit preparation-phase navigation/handoffs against the existing canonical
+    controls; preserve one authority and avoid inventing unresolved product actions.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

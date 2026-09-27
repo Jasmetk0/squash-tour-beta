@@ -106,7 +106,12 @@ class TournamentRankingSnapshotAuthorityStore:
         ).all()
         snapshots = []
         for row in rows:
-            week = RankingWeek.from_ordinal(row.week_ordinal)
+            if not 0 <= row.week_ordinal < 50 * 61:
+                raise ValueError("Published Official Ranking has invalid week ordinal")
+            week = RankingWeek(
+                season_index=row.week_ordinal // 61,
+                week=row.week_ordinal % 61 + 1,
+            )
             snapshots.append(
                 load_official_ranking_snapshot(
                     row.payload_json,

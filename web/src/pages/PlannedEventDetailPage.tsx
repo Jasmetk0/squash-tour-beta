@@ -3,8 +3,6 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
 import {
-  getEventLateReplacementActions,
-  getEventPreDrawWithdrawalActions,
   getCanonicalTournamentEntryFieldState,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
@@ -20,7 +18,6 @@ import {
   getCanonicalWildCardState,
   previewCanonicalWildCardAssignment,
   commitCanonicalWildCardAssignment,
-  getEventWildcardActions,
   getRun,
   listEvents
 } from '../api/client'
@@ -62,22 +59,6 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [frozenReplacementRepairSeed, setFrozenReplacementRepairSeed] = useState('')
   const [frozenReplacementPreview, setFrozenReplacementPreview] =
     useState<CanonicalFrozenMainReplacementPreview | null>(null)
-  const commissionerQueryKeys = [
-    ['wildcard-actions', runId, eventId],
-    ['pre-draw-withdrawal-actions', runId, eventId],
-    ['late-replacement-actions', runId, eventId]
-  ] as const
-
-  async function invalidateCommissionerQueries(): Promise<void> {
-    await Promise.all(
-      commissionerQueryKeys.map((queryKey) =>
-        queryClient.invalidateQueries({
-          queryKey
-        })
-      )
-    )
-  }
-
   const runQuery = useQuery({
     queryKey: ['run', runId],
     queryFn: () => getRun(runId),
@@ -88,12 +69,6 @@ export function PlannedEventDetailPage(): JSX.Element {
     queryKey: ['events', runId],
     queryFn: () => listEvents(runId),
     enabled: Boolean(runId) && !viewed.historical,
-    retry: false
-  })
-  const wildcardActionsQuery = useQuery({
-    queryKey: ['wildcard-actions', runId, eventId],
-    queryFn: () => getEventWildcardActions(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   const activeBranchId = viewed.time?.branchId ?? ''
@@ -161,18 +136,6 @@ export function PlannedEventDetailPage(): JSX.Element {
       Boolean(runId && activeBranchId && eventId) &&
       !viewed.historical &&
       canonicalDrawStateQuery.data?.initial_draw_generated === true,
-    retry: false
-  })
-  const preDrawWithdrawalActionsQuery = useQuery({
-    queryKey: ['pre-draw-withdrawal-actions', runId, eventId],
-    queryFn: () => getEventPreDrawWithdrawalActions(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
-    retry: false
-  })
-  const lateReplacementActionsQuery = useQuery({
-    queryKey: ['late-replacement-actions', runId, eventId],
-    queryFn: () => getEventLateReplacementActions(runId, eventId),
-    enabled: Boolean(runId && eventId) && !viewed.historical,
     retry: false
   })
   function parseOrderedPlayerIds(value: string): string[] {
@@ -256,8 +219,7 @@ export function PlannedEventDetailPage(): JSX.Element {
         }),
         queryClient.invalidateQueries({
           queryKey: ['canonical-entry-field', runId, activeBranchId, eventId]
-        }),
-        queryClient.invalidateQueries({ queryKey: ['wildcard-actions', runId, eventId] })
+        })
       ])
     }
   })
@@ -1144,60 +1106,6 @@ export function PlannedEventDetailPage(): JSX.Element {
       ) : null}
 
       {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Legacy late-replacement history">
-          <p className="status">
-            Read-only audit of historical sidecar actions. New replacement decisions use the active Branch canonical Tournament Draw workflow above.
-          </p>
-          {lateReplacementActionsQuery.isLoading ? <p className="status">Loading legacy late-replacement history...</p> : null}
-          {lateReplacementActionsQuery.error ? (
-            <p className="error">Failed to load late-replacement history: {formatApiError(lateReplacementActionsQuery.error)}</p>
-          ) : null}
-          {lateReplacementActionsQuery.data ? (
-            lateReplacementActionsQuery.data.actions.length > 0 ? (
-              <ol>
-                {lateReplacementActionsQuery.data.actions.map((action) => (
-                  <li key={action.action_sequence}>
-                    #{action.action_sequence} · {action.action_kind} · {action.withdrawn_player_id} → {action.replacement_player_id} (
-                    {action.replacement_source})
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState message="No late-replacement lucky loser actions have been recorded for this event yet." />
-            )
-          ) : null}
-        </SectionCard>
-      ) : null}
-
-      {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Legacy pre-draw withdrawal history">
-          <p className="status">
-            Read-only audit of historical simulation-run sidecar actions. New pre-draw withdrawals use the active Branch canonical Tournament Entry Field workflow above.
-          </p>
-          {preDrawWithdrawalActionsQuery.isLoading ? <p className="status">Loading legacy pre-draw withdrawal history...</p> : null}
-          {preDrawWithdrawalActionsQuery.error ? (
-            <p className="error">
-              Failed to load pre-draw withdrawal history: {formatApiError(preDrawWithdrawalActionsQuery.error)}
-            </p>
-          ) : null}
-          {preDrawWithdrawalActionsQuery.data ? (
-            preDrawWithdrawalActionsQuery.data.actions.length > 0 ? (
-              <ol>
-                {preDrawWithdrawalActionsQuery.data.actions.map((action) => (
-                  <li key={action.action_sequence}>
-                    #{action.action_sequence} · {action.action_kind} · {action.withdrawn_player_id} → {action.replacement_player_id} (
-                    {action.replacement_source})
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState message="No pre-draw withdrawal replacement actions have been recorded for this event yet." />
-            )
-          ) : null}
-        </SectionCard>
-      ) : null}
-
-      {plannedEvent && !viewed.historical ? (
         <SectionCard title="Canonical WC/RWC review">
           <p className="status">
             WC eligibility and construction of the RWC order are still intentionally open in the Master.
@@ -1359,36 +1267,6 @@ export function PlannedEventDetailPage(): JSX.Element {
               ) : null}
             </>
           )}
-        </SectionCard>
-      ) : null}
-      {plannedEvent && !viewed.historical ? (
-        <SectionCard title="Wildcard action history">
-          <p className="status">
-            Append-only event audit trail sourced from admin actions for this event.{' '}
-            <Link to={`/runs/${runId}/activity`}>Open run activity</Link>
-          </p>
-          {wildcardActionsQuery.isLoading ? <p className="status">Loading wildcard action history...</p> : null}
-          {wildcardActionsQuery.error ? (
-            <p className="error">Failed to load wildcard action history: {formatApiError(wildcardActionsQuery.error)}</p>
-          ) : null}
-          {wildcardActionsQuery.data ? (
-            wildcardActionsQuery.data.actions.length > 0 ? (
-              <ol>
-                {wildcardActionsQuery.data.actions.map((action) => (
-                  <li key={action.action_sequence}>
-                    #{action.action_sequence} · {action.action_kind} ·{' '}
-                    {action.assignment_payload_summary.length > 0
-                      ? action.assignment_payload_summary
-                          .map((assignment) => `slot ${assignment.slot_index} → ${assignment.player_id}`)
-                          .join(', ')
-                      : 'No valid assignment payload entries'}
-                  </li>
-                ))}
-              </ol>
-            ) : (
-              <EmptyState message="No wildcard commissioner actions have been recorded for this event yet." />
-            )
-          ) : null}
         </SectionCard>
       ) : null}
     </section>

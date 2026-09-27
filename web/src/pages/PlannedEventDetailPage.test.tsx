@@ -1039,8 +1039,8 @@ describe('PlannedEventDetailPage', () => {
         withdrawn_player_ids: ['P2']
       })
     )
-    expect(await screen.findByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).toBeInTheDocument()
-    expect(screen.getByText(/Read-only audit of historical simulation-run sidecar actions/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).not.toBeInTheDocument()
+    expect(api.getEventPreDrawWithdrawalActions).not.toHaveBeenCalled()
   })
 
   it('retires legacy late-replacement controls while preserving read-only history', async () => {
@@ -1050,10 +1050,8 @@ describe('PlannedEventDetailPage', () => {
       screen.queryByRole('heading', { name: 'Commissioner late replacement lucky loser' })
     ).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Withdraw + late-replace' })).not.toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Legacy late-replacement history' })).toBeInTheDocument()
-    expect(
-      screen.getByText(/Read-only audit of historical sidecar actions/i)
-    ).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Legacy late-replacement history' })).not.toBeInTheDocument()
+    expect(api.getEventLateReplacementActions).not.toHaveBeenCalled()
     expect(api.getEventLateReplacementState).not.toHaveBeenCalled()
     expect(api.getEventLateReplacementCandidates).not.toHaveBeenCalled()
     expect(api.applyEventLateReplacement).not.toHaveBeenCalled()
@@ -1071,32 +1069,10 @@ describe('PlannedEventDetailPage', () => {
     expect(api.getEventWildcardCandidates).not.toHaveBeenCalled()
     expect(api.assignEventWildcards).not.toHaveBeenCalled()
 
-    expect(await screen.findByRole('heading', { name: 'Wildcard action history' })).toBeInTheDocument()
-    expect(screen.getByText(/#1 · assign_wildcards/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Wildcard action history' })).not.toBeInTheDocument()
+    expect(api.getEventWildcardActions).not.toHaveBeenCalled()
   })
 
-  it('renders wildcard action history in append-only sequence order', async () => {
-    renderAt('/runs/run-a/calendar/E1')
-
-    expect(await screen.findByRole('heading', { name: 'Wildcard action history' })).toBeInTheDocument()
-    const historyItems = await screen.findAllByRole('listitem')
-    const actionRows = historyItems.filter((item) => item.textContent?.includes('assign_wildcards'))
-    expect(actionRows[0]).toHaveTextContent('#1 · assign_wildcards · slot 1 → P1')
-    expect(actionRows[1]).toHaveTextContent('#2 · assign_wildcards · slot 1 → P2')
-    expect(screen.getByRole('link', { name: 'Open run activity' })).toHaveAttribute('href', '/runs/run-a/activity')
-  })
-
-  it('renders legacy pre-draw withdrawal history in append-only sequence order', async () => {
-    renderAt('/runs/run-a/calendar/E1')
-    expect(await screen.findByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).toBeInTheDocument()
-    expect(await screen.findByText('#1 · pre_draw_withdrawal_replacement · P100 → P200 (main_draw_waitlist)')).toBeInTheDocument()
-  })
-
-  it('renders legacy late-replacement history in append-only sequence order', async () => {
-    renderAt('/runs/run-a/calendar/E1')
-    expect(await screen.findByRole('heading', { name: 'Legacy late-replacement history' })).toBeInTheDocument()
-    expect(await screen.findByText('#1 · late_replacement_lucky_loser · P100 → P300 (qualification_waitlist)')).toBeInTheDocument()
-  })
 
 
 

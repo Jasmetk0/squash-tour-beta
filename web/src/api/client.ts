@@ -35,9 +35,7 @@ import type {
   RaceSnapshotListResponse,
   RankingSnapshotListResponse,
   NextSeasonPlayersResponse,
-  LateReplacementActionHistoryResponse,
   PlayerTransitionsResponse,
-  PreDrawWithdrawalActionHistoryResponse,
   CanonicalTournamentEntryFieldState,
   CanonicalPreDrawWithdrawalPayload,
   CanonicalPreDrawWithdrawalResult,
@@ -205,7 +203,6 @@ import type {
   SeasonStateResponse,
   HistoricalBranchSeasonStateResponse,
   SimulateResponse,
-  WildcardActionHistoryResponse,
   CanonicalWildCardState,
   CanonicalWildCardReviewPayload,
   CanonicalWildCardPreview,
@@ -2651,10 +2648,6 @@ export function getEvent(runId: string, eventId: string): Promise<EventRecord> {
   return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}`)
 }
 
-export function getEventWildcardActions(runId: string, eventId: string): Promise<WildcardActionHistoryResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/wildcard-actions`)
-}
-
 function canonicalWildCardRoot(runId: string, branchId: string, eventId: string): string {
   return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/wild-cards`
 }
@@ -2940,20 +2933,6 @@ export async function commitCanonicalFrozenMainReplacement(
     throw new Error('Frozen Main replacement commit response is invalid.')
   }
   return data
-}
-
-export function getEventPreDrawWithdrawalActions(
-  runId: string,
-  eventId: string
-): Promise<PreDrawWithdrawalActionHistoryResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/pre-draw-withdrawal-actions`)
-}
-
-export function getEventLateReplacementActions(
-  runId: string,
-  eventId: string
-): Promise<LateReplacementActionHistoryResponse> {
-  return request(`/runs/${encodeURIComponent(runId)}/events/${encodeURIComponent(eventId)}/late-replacement-actions`)
 }
 
 export function listRankingSnapshots(runId: string): Promise<RankingSnapshotListResponse> {

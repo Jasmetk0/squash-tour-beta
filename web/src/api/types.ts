@@ -1164,11 +1164,26 @@ export type TournamentEntryField = {
   base_field_fingerprint: string | null
 }
 
+export type CanonicalEntryCapacitySuggestion = {
+  schema_version: 'canonical_entry_capacity_suggestion.v1'
+  main_draw_size: number
+  qualification_draw_size: number
+  qualifier_spots: number
+  wild_card_slots: number
+  bye_slots: number
+  source_package_id: string
+  source_package_version: number
+  source_package_fingerprint: string
+  source_event_fingerprint: string
+  source: 'run_owned_calendar_package.v1'
+}
+
 export type CanonicalTournamentPreparationState = {
   schema_version: 'canonical_tournament_preparation_state.v1'
   run_id: string
   branch_id: string
   event_id: string
+  entry_capacity_suggestion?: CanonicalEntryCapacitySuggestion | null
   phase:
     | 'ranking_snapshot_required'
     | 'entry_field_required'

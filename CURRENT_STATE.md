@@ -1,5 +1,24 @@
 # Current implementation and next action
 
+## Active implementation — Run-owned Calendar capacity suggestion
+
+Canonical Tournament Preparation can now expose a read-only Entry Field capacity suggestion
+before the field exists, but only from frozen Run-owned Calendar Package evidence.
+
+- the suggestion resolves the exact `calendar.event.v1` entity for the event from Run
+  Package state and validates Package/version/fingerprint provenance;
+- canonical Main Draw capacity uses the frozen Calendar event's `main_draw_size + byes`
+  bracket geometry; Qualification, qualifier, WC and BYE values are carried explicitly;
+- ambiguous/mismatched Package evidence fails closed;
+- no mutable legacy Calendar/template fallback is used;
+- Planned Event pre-fills the explicit Entry Field command form from this suggestion but
+  still requires the existing explicit commit command;
+- source Calendar edits after Package application cannot change the suggestion.
+
+**Next after this PR:** audit whether Ranking Snapshot adoption can receive an equally safe
+read-only suggestion for the correct published Official Ranking week, without guessing or
+creating a live dependency.
+
 ## Active implementation — canonical preparation commands on Planned Event
 
 The two previously missing Tournament Preparation handoffs now use the existing canonical

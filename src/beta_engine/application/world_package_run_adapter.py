@@ -180,8 +180,9 @@ class WorldPackageRunAdapter:
             entities=tuple(sorted(entities, key=lambda item: item.source_entity_id)),
         )
 
+    @staticmethod
     def project_countries(
-        self, state: RunPackageState, *, package_id: str
+        state: RunPackageState, *, package_id: str
     ) -> RunWorldCountryProjection:
         versions = [
             version

@@ -30,7 +30,7 @@ router = APIRouter(
 class TournamentRankingPublicationOption(BaseModel):
     ranking_week: RankingWeek
     snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    player_count: int = Field(ge=0)
+    ranked_row_count: int = Field(ge=0)
     policy_id: str
     best_n: int = Field(ge=1)
 
@@ -61,7 +61,7 @@ def list_available_tournament_ranking_publications(
             TournamentRankingPublicationOption(
                 ranking_week=snapshot.week,
                 snapshot_fingerprint=snapshot.fingerprint,
-                player_count=len(snapshot.rows),
+                ranked_row_count=len(snapshot.rows),
                 policy_id=snapshot.policy.policy_id,
                 best_n=snapshot.policy.best_n,
             )

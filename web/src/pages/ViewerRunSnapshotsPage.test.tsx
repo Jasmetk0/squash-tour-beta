@@ -1,4 +1,3 @@
-// Temporary full-suite audit trigger; removed before final PR head.
 import { cleanup, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'

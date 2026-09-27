@@ -1353,6 +1353,27 @@ export type AuthoritativeMatchReplayCursor = {
   verified: true
 }
 
+export type AuthoritativeMatchReplayFrame = {
+  schema_version: 'authoritative_match_replay_frame.v1'
+  run_id: string
+  branch_id: string
+  week_ordinal: number
+  slot_id: string
+  group_id: string
+  match_id: string
+  result_fingerprint: string
+  rally_index: number
+  rally: RallyEvent
+  timeline_event: Extract<MatchTimelineEvent, { event_type: 'RALLY' }>
+  stamina_transition: StaminaTransition | null
+  context_summary: AuthoritativeMatchReplayContext['summary']
+  navigation: AuthoritativeMatchReplayCursor['navigation']
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
 export type AuthoritativeMatchTimelineCursor = {
   schema_version: 'authoritative_match_timeline_cursor.v1'
   run_id: string

@@ -109,7 +109,7 @@ describe('PlannedEventDetailPage', () => {
       run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
       publications: [{
         ranking_week: { season_index: 0, week: 5 }, snapshot_fingerprint: '6'.repeat(64),
-        player_count: 32, policy_id: 'policy-a', best_n: 15
+        ranked_row_count: 32, policy_id: 'policy-a', best_n: 15
       }],
       publication_count: 1, source: 'published_official_rankings.v1'
     })

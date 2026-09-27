@@ -5,6 +5,8 @@ import { Link, useParams } from 'react-router-dom'
 import {
   getCanonicalTournamentEntryFieldState,
   getCanonicalTournamentPreparation,
+  adoptTournamentRankingSnapshotAuthority,
+  createTournamentEntryFieldFromValidSubmissions,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
@@ -50,6 +52,13 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [canonicalWildcardReason, setCanonicalWildcardReason] = useState('')
   const [canonicalWildcardPreview, setCanonicalWildcardPreview] =
     useState<CanonicalWildCardPreview | null>(null)
+  const [rankingAuthoritySeasonIndex, setRankingAuthoritySeasonIndex] = useState('')
+  const [rankingAuthorityWeek, setRankingAuthorityWeek] = useState('')
+  const [entryMainDrawSize, setEntryMainDrawSize] = useState('')
+  const [entryQualificationDrawSize, setEntryQualificationDrawSize] = useState('0')
+  const [entryQualifierSpots, setEntryQualifierSpots] = useState('0')
+  const [entryWildCardSlots, setEntryWildCardSlots] = useState('0')
+  const [entryByeSlots, setEntryByeSlots] = useState('0')
   const [canonicalPreDrawWithdrawnPlayerId, setCanonicalPreDrawWithdrawnPlayerId] = useState('')
   const [canonicalDrawSeed, setCanonicalDrawSeed] = useState(12345)
   const [mainProcessWindowCount, setMainProcessWindowCount] = useState('')
@@ -78,6 +87,53 @@ export function PlannedEventDetailPage(): JSX.Element {
     queryFn: () => getCanonicalTournamentPreparation(runId, activeBranchId, eventId),
     enabled: Boolean(runId && activeBranchId && eventId) && !viewed.historical,
     retry: false
+  })
+  const rankingSnapshotAdoptMutation = useMutation({
+    mutationFn: () => {
+      const seasonIndex = Number(rankingAuthoritySeasonIndex)
+      const week = Number(rankingAuthorityWeek)
+      if (!Number.isSafeInteger(seasonIndex) || seasonIndex < 0) throw new Error('Ranking season index must be a non-negative integer.')
+      if (!Number.isSafeInteger(week) || week < 1 || week > 61) throw new Error('Ranking week must be an integer from 1 to 61.')
+      return adoptTournamentRankingSnapshotAuthority(runId, activeBranchId, eventId, {
+        command_id: `admin-ui-ranking-authority-${eventId}-${seasonIndex}-${week}`.slice(0, 128),
+        ranking_week: { season_index: seasonIndex, week }
+      })
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId] })
+    }
+  })
+  const entryFieldCreateMutation = useMutation({
+    mutationFn: () => {
+      const capacity = {
+        main_draw_size: Number(entryMainDrawSize),
+        qualification_draw_size: Number(entryQualificationDrawSize),
+        qualifier_spots: Number(entryQualifierSpots),
+        wild_card_slots: Number(entryWildCardSlots),
+        bye_slots: Number(entryByeSlots)
+      }
+      if (![capacity.main_draw_size, capacity.qualification_draw_size, capacity.qualifier_spots, capacity.wild_card_slots, capacity.bye_slots].every(Number.isSafeInteger)) {
+        throw new Error('Entry Field capacity values must be integers.')
+      }
+      if (![2, 4, 8, 16, 32, 64, 128].includes(capacity.main_draw_size)) throw new Error('Main Draw capacity must be 2, 4, 8, 16, 32, 64 or 128.')
+      if (capacity.qualification_draw_size < 0 || capacity.qualifier_spots < 0 || capacity.wild_card_slots < 0 || capacity.bye_slots < 0) {
+        throw new Error('Entry Field capacity values cannot be negative.')
+      }
+      if (capacity.qualifier_spots + capacity.wild_card_slots + capacity.bye_slots > capacity.main_draw_size) {
+        throw new Error('Reserved Main Draw slots exceed Main Draw capacity.')
+      }
+      const commandId = [
+        'admin-ui-entry-field', eventId, capacity.main_draw_size, capacity.qualification_draw_size,
+        capacity.qualifier_spots, capacity.wild_card_slots, capacity.bye_slots
+      ].join('-').slice(0, 128)
+      return createTournamentEntryFieldFromValidSubmissions(runId, activeBranchId, eventId, { command_id: commandId, capacity })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId] }),
+        queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] })
+      ])
+    }
   })
   const canonicalWildcardStateQuery = useQuery({
     queryKey: ['canonical-wild-card-state', runId, activeBranchId, eventId],
@@ -550,11 +606,7 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'generate_draw') {
       return <p><a href="#canonical-draw-authority">Open canonical Draw generation</a></p>
     }
-    return (
-      <p className="status">
-        This preparation step is not controlled on Planned Event Admin yet; no substitute action is exposed here.
-      </p>
-    )
+    return null
   }
 
     if (viewed.historical && viewed.unavailable) return <section className="panel"><h1>Historical calendar is not available for this checkpoint.</h1><p>Checkpoint: {viewed.time?.viewCheckpointId}</p><button onClick={() => viewed.time?.selectPresent()}>Return to Present</button> <Link to={`/admin/runs/${encodeURIComponent(runId)}`}>Open Run Home</Link></section>
@@ -697,6 +749,31 @@ export function PlannedEventDetailPage(): JSX.Element {
                 ]}
               />
               {preparationActionHandoff()}
+              {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (
+                <div className="grid">
+                  <h4>Adopt Tournament Ranking Snapshot</h4>
+                  <p className="status">Select the already-published Official Ranking week explicitly. Planned Event does not guess this authority.</p>
+                  <label>Ranking season index<input aria-label="Ranking season index" type="number" min={0} value={rankingAuthoritySeasonIndex} onChange={(event) => setRankingAuthoritySeasonIndex(event.target.value)} /></label>
+                  <label>Ranking week<input aria-label="Ranking week" type="number" min={1} max={61} value={rankingAuthorityWeek} onChange={(event) => setRankingAuthorityWeek(event.target.value)} /></label>
+                  <button type="button" onClick={() => rankingSnapshotAdoptMutation.mutate()} disabled={rankingSnapshotAdoptMutation.isPending}>Adopt published Official Ranking</button>
+                  {rankingSnapshotAdoptMutation.error ? <p className="error">Ranking Snapshot adoption failed: {formatApiError(rankingSnapshotAdoptMutation.error)}</p> : null}
+                  {rankingSnapshotAdoptMutation.data ? <p className="status">Tournament Ranking Snapshot authority adopted for season index {rankingSnapshotAdoptMutation.data.ranking_week.season_index}, week {rankingSnapshotAdoptMutation.data.ranking_week.week}.</p> : null}
+                </div>
+              ) : null}
+              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' ? (
+                <div className="grid">
+                  <h4>Build canonical Entry Field</h4>
+                  <p className="status">Build only from persisted valid submissions. Capacity is explicit; the UI does not infer unresolved tournament rules.</p>
+                  <label>Main Draw capacity<input aria-label="Entry Main Draw capacity" type="number" value={entryMainDrawSize} onChange={(event) => setEntryMainDrawSize(event.target.value)} /></label>
+                  <label>Qualification Draw capacity<input aria-label="Entry Qualification Draw capacity" type="number" min={0} value={entryQualificationDrawSize} onChange={(event) => setEntryQualificationDrawSize(event.target.value)} /></label>
+                  <label>Qualifier spots<input aria-label="Entry qualifier spots" type="number" min={0} value={entryQualifierSpots} onChange={(event) => setEntryQualifierSpots(event.target.value)} /></label>
+                  <label>Wild Card slots<input aria-label="Entry Wild Card slots" type="number" min={0} value={entryWildCardSlots} onChange={(event) => setEntryWildCardSlots(event.target.value)} /></label>
+                  <label>Explicit BYE slots<input aria-label="Entry BYE slots" type="number" min={0} value={entryByeSlots} onChange={(event) => setEntryByeSlots(event.target.value)} /></label>
+                  <button type="button" onClick={() => entryFieldCreateMutation.mutate()} disabled={entryFieldCreateMutation.isPending}>Build Entry Field from valid submissions</button>
+                  {entryFieldCreateMutation.error ? <p className="error">Entry Field creation failed: {formatApiError(entryFieldCreateMutation.error)}</p> : null}
+                  {entryFieldCreateMutation.data ? <p className="status">Canonical Entry Field created from persisted valid submissions.</p> : null}
+                </div>
+              ) : null}
             </>
           ) : null}
         </SectionCard>

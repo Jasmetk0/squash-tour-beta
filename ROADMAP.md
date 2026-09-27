@@ -72,8 +72,10 @@
     Admin with phase, next action, blockers and schedule readiness.
 18. ✅ Map canonical preparation next actions to existing Planned Event controls where those
     controls already exist; do not fabricate local actions for Ranking Snapshot / Entry Field.
-19. Next: audit the existing backend authority for Ranking Snapshot adoption and Entry Field
-    construction and determine the smallest explicit Admin surface needed to close those handoffs.
+19. ✅ Reuse the existing canonical Ranking Snapshot adoption and Entry Field-from-valid-submissions
+    commands directly from Planned Event Admin with explicit ranking week/capacity inputs.
+20. Next: audit whether Entry Field capacity already has a frozen Tournament Edition/config source
+    that can safely drive the Admin form without creating a second authority.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

@@ -15,6 +15,7 @@ from beta_engine.application.season_entry_list_service import (
     SeasonEventEntryList,
 )
 from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.countries import Country
 from beta_engine.domain.entries import EntryDecision, EntryEngine, EntryTarget
 from beta_engine.domain.tournaments import SeasonCalendarEvent
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
@@ -72,6 +73,7 @@ class SeasonEntryBatchService:
         event_ids: list[str],
         request: EntryBatchGenerateRequest,
         event_snapshots: dict[str, SeasonCalendarEvent] | None = None,
+        country_snapshots: tuple[Country, ...] | None = None,
     ) -> SeasonEntryBatchResult:
         if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
@@ -141,9 +143,12 @@ class SeasonEntryBatchService:
             [player.model_dump(mode="json") for player in active_players]
         )
         active_by_id = {player.player_id: player for player in active_players}
-        countries_by_code = {
-            country.code: country for country in service.countries_service.list_countries()
-        }
+        country_source = (
+            country_snapshots
+            if country_snapshots is not None
+            else tuple(service.countries_service.list_countries())
+        )
+        countries_by_code = {country.code: country for country in country_source}
         players = [service._adapt_player(player) for player in active_players]
         engine = EntryEngine(
             rng=DeterministicRng(request.seed),

@@ -29,6 +29,7 @@ const api = vi.hoisted(() => ({
   inspectAuthoritativeLiveMatchTimeline: vi.fn(),
   listAuthoritativeMatchReplays: vi.fn(),
   getAuthoritativeMatchReplayCursor: vi.fn(),
+  getAuthoritativeMatchTimelineCursor: vi.fn(),
   confirmAuthoritativeLiveMatch: vi.fn(),
   restoreAuthoritativeLiveReturnPoint: vi.fn(),
   simulateAuthoritativeNextRally: vi.fn(),
@@ -673,6 +674,50 @@ beforeEach(() => {
     branch_id: 'branch-a',
     read_only: true,
     matches: []
+  })
+  api.getAuthoritativeMatchTimelineCursor.mockResolvedValue({
+    schema_version: 'authoritative_match_timeline_cursor.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    week_ordinal: 138,
+    slot_id: 'slot-1',
+    group_id: 'replay-g1',
+    match_id: 'match-1',
+    result_fingerprint: '1'.repeat(64),
+    match_log_hash: '3'.repeat(64),
+    timeline_index: 1,
+    event: {
+      schema_version: 'rally_timeline_event.v1',
+      event_type: 'RALLY',
+      match_id: 'match-1',
+      timeline_index: 1,
+      rally_index: 1,
+      set_number: 1,
+      rally_event_hash: '3'.repeat(64),
+      elapsed_seconds: 5,
+      previous_event_hash: '2'.repeat(64),
+      event_hash_algorithm: 'sha256',
+      event_hash: '3'.repeat(64)
+    },
+    navigation: {
+      total_timeline_events: 3,
+      timeline_index: 1,
+      previous_timeline_index: null,
+      next_timeline_index: 2,
+      at_start: true,
+      at_end: false
+    },
+    timeline_summary: {
+      rally_event_count: 2,
+      between_rally_interval_count: 1,
+      game_break_count: 0,
+      objective_delay_count: 0,
+      total_elapsed_seconds: 18
+    },
+    replay_source: 'stored_authoritative_events',
+    rng_rerun: false,
+    read_only: true,
+    verified: true
   })
   api.getPendingAuthoritativeFullSimulations.mockResolvedValue({
     schema_version: 'authoritative_full_simulation_pending_collection.v1',
@@ -1844,6 +1889,116 @@ describe('AuthoritativeSimulationPanel', () => {
     expect(api.simulateAuthoritativeNextRally).not.toHaveBeenCalled()
     expect(api.simulateAuthoritativeGame).not.toHaveBeenCalled()
     expect(api.simulateAuthoritativeRestOfMatch).not.toHaveBeenCalled()
+  })
+
+  it('navigates stored timeline events independently from rally replay', async () => {
+    api.inspectAuthoritativeWeekSchedule.mockResolvedValue({
+      ...scheduleInspection,
+      schedule: proposal.schedule,
+      schedule_fingerprint: proposal.schedule_fingerprint
+    })
+    api.inspectAuthoritativeWeekSchedulePreflight.mockResolvedValue({
+      ...schedulePreflight,
+      schedule_already_adopted: true,
+      blockers: ['week_schedule_already_adopted'],
+      can_propose_schedule: false
+    })
+    api.listAuthoritativeMatchReplays.mockResolvedValue({
+      schema_version: 'authoritative_match_replay_list.v1',
+      run_id: 'run-a',
+      branch_id: 'branch-a',
+      read_only: true,
+      matches: [{
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: 'replay-g1',
+        match_id: 'match-1',
+        result_fingerprint: '1'.repeat(64),
+        winner_player_id: 'P001',
+        loser_player_id: 'P002',
+        total_rallies: 2,
+        match_log_hash: '3'.repeat(64),
+        replay_available: true
+      }]
+    })
+    api.getAuthoritativeMatchTimelineCursor.mockImplementation(
+      async (_runId: string, _branchId: string, groupId: string, timelineIndex: number) => ({
+        schema_version: 'authoritative_match_timeline_cursor.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        week_ordinal: 138,
+        slot_id: 'slot-1',
+        group_id: groupId,
+        match_id: 'match-1',
+        result_fingerprint: '1'.repeat(64),
+        match_log_hash: '3'.repeat(64),
+        timeline_index: timelineIndex,
+        event: timelineIndex === 2 ? {
+          schema_version: 'between_rally_interval_event.v1',
+          event_type: 'BETWEEN_RALLY_INTERVAL',
+          match_id: 'match-1',
+          timeline_index: 2,
+          after_rally_index: 1,
+          set_number: 1,
+          server_player_id: 'P001',
+          receiver_player_id: 'P002',
+          server_intent: 'NATURAL',
+          receiver_intent: 'NATURAL',
+          server_decision_factors: [],
+          receiver_decision_factors: [],
+          server_ready_seconds: 8,
+          receiver_ready_seconds: 7,
+          official_ready_seconds: 5,
+          court_ready_seconds: 4,
+          dominant_readiness: 'SERVER',
+          conduct_outcome: 'NONE',
+          interval_seed: '2',
+          elapsed_seconds: 8,
+          previous_event_hash: '2'.repeat(64),
+          event_hash_algorithm: 'sha256',
+          event_hash: '4'.repeat(64)
+        } : {
+          schema_version: 'rally_timeline_event.v1',
+          event_type: 'RALLY',
+          match_id: 'match-1',
+          timeline_index: timelineIndex,
+          rally_index: timelineIndex === 1 ? 1 : 2,
+          set_number: 1,
+          rally_event_hash: '3'.repeat(64),
+          elapsed_seconds: 5,
+          previous_event_hash: '2'.repeat(64),
+          event_hash_algorithm: 'sha256',
+          event_hash: '3'.repeat(64)
+        },
+        navigation: {
+          total_timeline_events: 3,
+          timeline_index: timelineIndex,
+          previous_timeline_index: timelineIndex > 1 ? timelineIndex - 1 : null,
+          next_timeline_index: timelineIndex < 3 ? timelineIndex + 1 : null,
+          at_start: timelineIndex === 1,
+          at_end: timelineIndex === 3
+        },
+        timeline_summary: {
+          rally_event_count: 2,
+          between_rally_interval_count: 1,
+          game_break_count: 0,
+          objective_delay_count: 0,
+          total_elapsed_seconds: 18
+        },
+        replay_source: 'stored_authoritative_events',
+        rng_rerun: false,
+        read_only: true,
+        verified: true
+      })
+    )
+    renderPanel()
+    expect(await screen.findByText('Full stored timeline')).toBeInTheDocument()
+    expect(await screen.findByText('RALLY')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Next event' }))
+    expect(await screen.findByText('BETWEEN_RALLY_INTERVAL')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Previous event' }))
+    expect(await screen.findByText('RALLY')).toBeInTheDocument()
+    expect(api.simulateAuthoritativeNextRally).not.toHaveBeenCalled()
   })
 
   it('advances exactly one live rally and keeps the resumable state fingerprint in Admin', async () => {

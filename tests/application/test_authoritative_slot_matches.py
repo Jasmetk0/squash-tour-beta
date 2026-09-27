@@ -8760,3 +8760,71 @@ def test_authoritative_replay_rejects_out_of_range_cursor(tmp_path):
             group_id=group_id,
             rally_index=0,
         )
+
+
+@pytest.mark.pr_critical
+def test_authoritative_timeline_replay_reads_stored_time_events_without_mutation(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-timeline-replay")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="timeline-replay-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    replay = driver.get_authoritative_match_replay(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+    )
+    result = replay["final_result"]
+    total = result["timeline_log"]["total_timeline_events"]
+    assert total > replay["total_rallies"]
+
+    with factory() as session:
+        group_before = session.scalars(select(SimulationEventGroupModel)).one()
+        fp_before = group_before.result_fingerprint
+
+    first = driver.get_authoritative_match_timeline_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        timeline_index=1,
+    )
+    assert first["read_only"] is True
+    assert first["rng_rerun"] is False
+    assert first["verified"] is True
+    assert first["navigation"]["at_start"] is True
+    assert first["event"]["event_type"] == "RALLY"
+
+    second = driver.get_authoritative_match_timeline_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        timeline_index=2,
+    )
+    assert second["event"]["event_type"] in {
+        "BETWEEN_RALLY_INTERVAL",
+        "GAME_BREAK",
+        "OBJECTIVE_DELAY",
+    }
+
+    last = driver.get_authoritative_match_timeline_cursor(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        timeline_index=total,
+    )
+    assert last["navigation"]["at_end"] is True
+    assert last["timeline_summary"]["total_elapsed_seconds"] > 0
+
+    with factory() as session:
+        group_after = session.scalars(select(SimulationEventGroupModel)).one()
+        assert group_after.result_fingerprint == fp_before

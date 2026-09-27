@@ -2,33 +2,29 @@
 
 ## Active implementation — authoritative read-only Match Replay
 
-Canonical completed matches now expose Replay directly from the immutable
-`SimulationEventGroupModel` payload.
+Canonical completed Match Replay now covers both rally snapshots and the full stored
+authoritative timeline.
 
-- Replay parses the stored authoritative `MatchResult` and validates its rally log/hash
-  chain through the normal domain model; it never rebuilds the match from current
-  simulation code.
-- Branch history exposes a read-only list of recent completed matches with replay
-  availability, result fingerprint, rally count and `match_log_hash`.
-- one cursor endpoint projects exactly one stored `Rally Event` and navigation metadata.
-- `First rally`, `Step Back`, `Step Forward` and `Last rally` change only the
-  replay cursor; there is no simulation command, RNG call, working-state mutation,
-  sporting effect or ledger mutation.
-- Admin Replay survives page reload because selection comes from persisted completed
-  Branch history rather than transient live-match state.
-- replay responses explicitly report `replay_source=stored_authoritative_events`,
-  `rng_rerun=false`, `read_only=true` and `verified=true`.
-- PR-critical acceptance proves navigation leaves authoritative groups and command
-  receipts unchanged and that the final replay rally hash equals the stored
-  `match_log_hash`.
+- rally cursor navigation remains read-only over immutable stored Rally Events;
+- a second timeline cursor exposes every stored Match Timeline event in order;
+- timeline navigation includes rally markers, between-rally intervals, game breaks and
+  objective delays without reconstructing or resimulating any event;
+- each response carries navigation state, elapsed time, event type and aggregate timeline
+  counts/total elapsed seconds;
+- timeline and rally cursors are independent UI projections over the same verified
+  completed MatchResult;
+- no replay action writes a simulation command, mutates live state, applies effects or
+  advances Run/Branch position;
+- domain validation of MatchResult/Timeline verifies identities, timing references and
+  hash chains before any event is exposed.
 
-This implements the decided Master/PAQ replay invariant on the canonical Run/Branch
-simulation path while reusing the existing replay UX language from the legacy Admin
-surface.
+This now implements the decided Master/PAQ replay invariant beyond rally-only stepping:
+Replay can inspect both sporting rally state and the persisted time chronology between
+rallies.
 
-**Next after this PR:** extend Replay from rally cursor navigation into richer stored
-timeline/time-event inspection and then continue the next pre-alpha match-viewer slice,
-still without introducing any replay-time simulation.
+**Next after this PR:** continue the pre-alpha match-viewer surface over immutable
+history, surfacing richer stored stamina/rules/context detail without introducing
+replay-time simulation.
 
 ## Active implementation — canonical Tournament Preparation State
 

@@ -1312,6 +1312,39 @@ export type AuthoritativeMatchReplayCursor = {
   verified: true
 }
 
+export type AuthoritativeMatchTimelineCursor = {
+  schema_version: 'authoritative_match_timeline_cursor.v1'
+  run_id: string
+  branch_id: string
+  week_ordinal: number
+  slot_id: string
+  group_id: string
+  match_id: string
+  result_fingerprint: string
+  match_log_hash: string
+  timeline_index: number
+  event: MatchTimelineEvent
+  navigation: {
+    total_timeline_events: number
+    timeline_index: number
+    previous_timeline_index: number | null
+    next_timeline_index: number | null
+    at_start: boolean
+    at_end: boolean
+  }
+  timeline_summary: {
+    rally_event_count: number
+    between_rally_interval_count: number
+    game_break_count: number
+    objective_delay_count: number
+    total_elapsed_seconds: number
+  }
+  replay_source: 'stored_authoritative_events'
+  rng_rerun: false
+  read_only: true
+  verified: true
+}
+
 export type AuthoritativeLiveMatchInspection = {
   schema_version: 'authoritative_live_match_inspection.v1'
   run_id: string

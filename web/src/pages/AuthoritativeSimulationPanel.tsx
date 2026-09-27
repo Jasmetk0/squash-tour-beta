@@ -25,6 +25,7 @@ import {
   inspectAuthoritativeLiveMatchTimeline,
   listAuthoritativeMatchReplays,
   getAuthoritativeMatchReplayCursor,
+  getAuthoritativeMatchTimelineCursor,
   confirmAuthoritativeLiveMatch,
   restoreAuthoritativeLiveReturnPoint,
   simulateAuthoritativeNextRally,
@@ -63,6 +64,7 @@ import type {
   AuthoritativeNextRallyResult,
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchReplayCursor,
+  AuthoritativeMatchTimelineCursor,
   AuthoritativeMatchDayPreview,
   AuthoritativeRoundPreview,
   AuthoritativeTournamentPreview,
@@ -242,6 +244,7 @@ export function AuthoritativeSimulationPanel({
   const [liveRangeResult, setLiveRangeResult] = useState<AuthoritativeLiveRangeResult | null>(null)
   const [selectedReplayGroupId, setSelectedReplayGroupId] = useState('')
   const [replayRallyIndex, setReplayRallyIndex] = useState(1)
+  const [replayTimelineIndex, setReplayTimelineIndex] = useState(1)
   const [nextMatchCommandId, setNextMatchCommandId] = useState(newCommandId)
   const [nextSlotCommandId, setNextSlotCommandId] = useState(newCommandId)
   const [nextMatchDayCommandId, setNextMatchDayCommandId] = useState(newCommandId)
@@ -340,6 +343,25 @@ export function AuthoritativeSimulationPanel({
         branchId,
         selectedReplayGroupId,
         replayRallyIndex
+      ),
+    enabled: Boolean(enabled && selectedReplayGroupId),
+    retry: false
+  })
+
+  const replayTimelineQuery = useQuery<AuthoritativeMatchTimelineCursor>({
+    queryKey: [
+      'authoritative-match-replay-timeline-cursor',
+      runId,
+      branchId,
+      selectedReplayGroupId,
+      replayTimelineIndex
+    ],
+    queryFn: () =>
+      getAuthoritativeMatchTimelineCursor(
+        runId,
+        branchId,
+        selectedReplayGroupId,
+        replayTimelineIndex
       ),
     enabled: Boolean(enabled && selectedReplayGroupId),
     retry: false
@@ -3372,6 +3394,7 @@ export function AuthoritativeSimulationPanel({
                     onChange={(event) => {
                       setSelectedReplayGroupId(event.target.value)
                       setReplayRallyIndex(1)
+                      setReplayTimelineIndex(1)
                     }}
                   >
                     {replayListQuery.data.matches
@@ -3472,6 +3495,87 @@ export function AuthoritativeSimulationPanel({
                         { label: 'Match log hash', value: replayCursorQuery.data.match_log_hash }
                       ]}
                     />
+                    {replayTimelineQuery.data ? (
+                      <>
+                        <h6>Full stored timeline</h6>
+                        <MetadataList
+                          items={[
+                            {
+                              label: 'Timeline event',
+                              value: `${replayTimelineQuery.data.navigation.timeline_index} / ${replayTimelineQuery.data.navigation.total_timeline_events}`
+                            },
+                            {
+                              label: 'Type',
+                              value: replayTimelineQuery.data.event.event_type
+                            },
+                            {
+                              label: 'Elapsed seconds',
+                              value: replayTimelineQuery.data.event.elapsed_seconds
+                            },
+                            {
+                              label: 'Rallies',
+                              value: replayTimelineQuery.data.timeline_summary.rally_event_count
+                            },
+                            {
+                              label: 'Between-rally intervals',
+                              value: replayTimelineQuery.data.timeline_summary.between_rally_interval_count
+                            },
+                            {
+                              label: 'Game breaks',
+                              value: replayTimelineQuery.data.timeline_summary.game_break_count
+                            },
+                            {
+                              label: 'Objective delays',
+                              value: replayTimelineQuery.data.timeline_summary.objective_delay_count
+                            },
+                            {
+                              label: 'Total elapsed seconds',
+                              value: replayTimelineQuery.data.timeline_summary.total_elapsed_seconds
+                            }
+                          ]}
+                        />
+                        <div className="button-row" aria-label="Authoritative match timeline replay navigation">
+                          <button
+                            type="button"
+                            onClick={() => setReplayTimelineIndex(1)}
+                            disabled={replayTimelineQuery.data.navigation.at_start}
+                          >
+                            First event
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const previous = replayTimelineQuery.data?.navigation.previous_timeline_index
+                              if (previous) setReplayTimelineIndex(previous)
+                            }}
+                            disabled={replayTimelineQuery.data.navigation.previous_timeline_index === null}
+                          >
+                            Previous event
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const next = replayTimelineQuery.data?.navigation.next_timeline_index
+                              if (next) setReplayTimelineIndex(next)
+                            }}
+                            disabled={replayTimelineQuery.data.navigation.next_timeline_index === null}
+                          >
+                            Next event
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setReplayTimelineIndex(
+                                replayTimelineQuery.data?.navigation.total_timeline_events ?? 1
+                              )
+                            }
+                            disabled={replayTimelineQuery.data.navigation.at_end}
+                          >
+                            Last event
+                          </button>
+                        </div>
+                      </>
+                    ) : null}
                   </>
                 ) : (
                   <p className="status">Loading stored authoritative rally…</p>

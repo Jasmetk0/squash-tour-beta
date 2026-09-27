@@ -142,6 +142,7 @@ import type {
   AuthoritativeMatchReplayCursor,
   AuthoritativeMatchReplayList,
   AuthoritativeMatchTimelineCursor,
+  AuthoritativeMatchStaminaCursor,
   AuthoritativeLiveMatchInspection,
   AuthoritativeLiveMatchTimeline,
   AuthoritativeLiveConfirmPayload,
@@ -1658,6 +1659,30 @@ export async function getAuthoritativeMatchTimelineCursor(
     data.timeline_index !== timelineIndex
   ) {
     throw new Error('Authoritative timeline replay cursor response is invalid.')
+  }
+  return data
+}
+
+export async function getAuthoritativeMatchStaminaCursor(
+  runId: string,
+  branchId: string,
+  groupId: string,
+  timelineIndex: number
+): Promise<AuthoritativeMatchStaminaCursor> {
+  const data = await request<AuthoritativeMatchStaminaCursor>(
+    authoritativeSimulationRoot(runId, branchId) +
+      '/match-replay/stamina-cursor?group_id=' +
+      encodeURIComponent(groupId) +
+      '&timeline_index=' +
+      encodeURIComponent(String(timelineIndex))
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'authoritative_match_stamina_cursor.v1' ||
+    data.group_id !== groupId ||
+    data.timeline_index !== timelineIndex
+  ) {
+    throw new Error('Authoritative stamina replay cursor response is invalid.')
   }
   return data
 }

@@ -91,9 +91,22 @@ PR-critical coverage proves snapshot-backed Entry batching still produces determ
 application evidence while legacy EntryList registry and legacy Calendar lookups are
 unavailable; authoritative preview/commit both consume that same snapshot-backed batch path.
 
-**Next after this PR:** audit the remaining Package-backed Entry inputs (country/tuning
-configuration and any old DTO-only assumptions), then continue the largest decided
-ownership dependency without changing Entry product semantics.
+The next ownership audit found that Entry countries were already authored inside the
+Run-owned World Package but AI Entry still read the mutable global CountriesConfigService.
+
+Package-backed AI Entry now projects country facts from exactly one applied Run World
+Package and passes that frozen snapshot into the compatibility Entry calculation layer.
+
+- missing or ambiguous World Package ownership fails closed;
+- the global CountriesConfigService is no longer an input to Package-backed AI Entry;
+- the exact frozen country set receives a dedicated SHA-256 fingerprint and that
+  fingerprint is included in the new snapshot-backed Entry batch fingerprint;
+- historical non-Package Entry generation still uses the legacy country service;
+- EntryEngine behavior itself is unchanged.
+
+**Next after this PR:** `entry_tuning.json` is now the last known global configuration
+input on the Package-backed AI Entry proposal path. Audit and bind that input without
+inventing new tuning/package semantics, then continue the next decided ownership chain.
 
 
 ## Active implementation — canonical result/ranking source fence

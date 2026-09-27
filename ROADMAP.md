@@ -27,10 +27,14 @@
 3. Keep preparation inspection independent of every legacy Entry/Draw/WC/pre-draw
    file-backed registry.
 4. Cover both required-WC and pre-draw-withdrawal branches in PR-critical tests.
-5. Prove the main §31.3 release gate reports the same preparation state after legacy
+5. ✅ Prove the main §31.3 release gate reports the same preparation state after legacy
    tournament-preparation/result backends are removed.
-6. Next: drive authoritative Week Schedule/preflight readiness from this canonical
-   preparation state and remove duplicate legacy readiness inference where safe.
+6. ✅ Drive Package-backed Week Schedule/preflight readiness from current Run-owned
+   Calendar event identity + canonical preparation before Draw/MatchPackage exists.
+7. ✅ Fail schedule proposal on canonical preparation blockers before executable topology
+   resolution, while preserving historical non-Package compatibility.
+8. Next: audit and retire the next duplicate legacy tournament-preparation readiness/status
+   path still reachable from authoritative Run orchestration.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

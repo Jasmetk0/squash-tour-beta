@@ -794,7 +794,7 @@ describe('PlannedEventDetailPage', () => {
       run_id: 'run-a',
       branch_id: 'branch-a',
       event_id: 'E1',
-      withdrawn_player_id: 'P1',
+      withdrawn_player_id: 'P2',
       source: 'walkover',
       selected_player_id: null,
       physical_slot_index: 1,
@@ -805,15 +805,26 @@ describe('PlannedEventDetailPage', () => {
     })
 
     renderAt('/runs/run-a/calendar/E1')
-    await waitFor(() =>
-      expect(screen.getByLabelText('Frozen Main withdrawn player')).toHaveValue('P1')
-    )
+    const player = await screen.findByLabelText('Frozen Main withdrawn player')
+    fireEvent.change(player, { target: { value: 'P2' } })
+    await waitFor(() => expect(player).toHaveValue('P2'))
     fireEvent.click(
       screen.getByRole('button', {
         name: 'Preview frozen Main replacement'
       })
     )
 
+    await waitFor(() =>
+      expect(api.previewCanonicalFrozenMainReplacement).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        {
+          withdrawn_player_id: 'P2',
+          unavailable_player_ids: []
+        }
+      )
+    )
     expect(
       await screen.findByText(/complete the next consuming match through canonical post-cutoff W\/O in Simulation/i)
     ).toBeInTheDocument()

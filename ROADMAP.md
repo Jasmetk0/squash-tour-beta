@@ -64,8 +64,10 @@
     Planned Event Admin UI; keep backend history GETs only for historical compatibility.
 14. ✅ Remove the retired WC / pre-draw / late-replacement sidecar history clients
     and DTOs from the current web API surface while preserving backend historical readers.
-15. Next: audit remaining current frontend/API tournament-preparation compatibility
-    entrypoints and remove the next dead legacy surface.
+15. ✅ Remove the unused legacy single-event Lifecycle reader from the current web API surface
+    together with its frontend-only DTO/test mock, while preserving the backend historical reader.
+16. Next: continue auditing remaining current frontend/API tournament-preparation compatibility
+    entrypoints and remove only surfaces proven unused by production UI.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

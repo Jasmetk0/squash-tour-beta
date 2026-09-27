@@ -1,5 +1,28 @@
 # Current implementation and next action
 
+## Active implementation — frontend full-suite regression synchronization
+
+The 2026-09-27 frontend baseline audit reproduced exactly four pre-existing failures out
+of 1,319 tests. None required a production semantic change.
+
+- three App-level Viewer ranking tests still expected the retired legacy snapshot-summary
+  surface at `/viewer/rankings`; that route now correctly reads the canonical current
+  Official Ranking for the active Product Run;
+- those integration tests now assert the current Official Ranking metadata/table/link
+  contract instead of legacy snapshot counts, source-event metadata and latest-snapshot
+  links;
+- the Planned Event walkover-handoff test no longer relies on an automatically initialized
+  withdrawn-player selection that can be cleared by the component's preview-reset effect;
+  it explicitly selects the reviewed player before requesting the preview and verifies the
+  exact canonical handoff request;
+- the production Viewer ranking page and Planned Event implementation are unchanged.
+
+A temporary PR-only diagnostic CI edit ran the complete frontend suite after these test
+repairs and reported all 1,319 tests passing. That diagnostic edit was then removed; the
+repository's normal Fast CI policy remains unchanged. This does not claim the complete
+release gate, because the full backend suite and release-specific acceptance/performance
+gates were not run by this task.
+
 ## Active implementation — authoritative read-only Match Replay
 
 Canonical completed Match Replay now exposes four immutable evidence layers:

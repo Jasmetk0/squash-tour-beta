@@ -87,8 +87,9 @@ behavior but feeds it directly from Run-owned inputs:
   persists the canonical Run Entry Decision Slot authority;
 - historical Runs with no Package state retain the reviewed legacy compatibility path.
 
-PR-critical coverage deliberately makes legacy EntryList/Calendar lookup explode while
-Package-backed preview + commit still produce the same Run-owned slot contract.
+PR-critical coverage proves snapshot-backed Entry batching still produces deterministic
+application evidence while legacy EntryList registry and legacy Calendar lookups are
+unavailable; authoritative preview/commit both consume that same snapshot-backed batch path.
 
 **Next after this PR:** audit the remaining Package-backed Entry inputs (country/tuning
 configuration and any old DTO-only assumptions), then continue the largest decided

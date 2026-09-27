@@ -1,5 +1,20 @@
 # Squash Engine roadmap
 
+## Active pre-alpha sequence — frontend regression synchronization
+
+1. ✅ Reproduce the audited pre-existing frontend baseline: 4 failed / 1,315 passed of
+   1,319 tests.
+2. ✅ Confirm the three Viewer ranking failures are stale legacy snapshot expectations
+   after `/viewer/rankings` moved to canonical current Official Ranking.
+3. ✅ Synchronize those App-level integration tests with the canonical Product Run ranking
+   contract without changing production Viewer behavior.
+4. ✅ Make the Planned Event walkover-handoff test use an explicit reviewed-player
+   selection instead of relying on automatic select initialization.
+5. ✅ Re-run the complete frontend suite successfully, then restore the normal Fast CI
+   configuration before the final PR head.
+6. Next: return to the highest-value decided pre-alpha implementation dependency; the
+   complete release gate still remains separate.
+
 ## Active pre-alpha sequence — resumable live match simulation
 
 1. ✅ Freeze immutable MatchWorkingInput and true one-rally transition.

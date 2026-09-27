@@ -56,6 +56,7 @@ const api = vi.hoisted(() => ({
   getViewerOfficialRunContext: vi.fn(),
   getViewerVisibleProspects: vi.fn(),
   getViewerRankingTable: vi.fn(),
+  getViewerOfficialRanking: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
@@ -141,6 +142,19 @@ function resetApiMocks(): void {
     prospects: []
   })
   api.getViewerRankingTable.mockRejectedValue(new Error('Viewer read model unavailable in test'))
+  api.getViewerOfficialRanking.mockImplementation(async (productRunId: string) => ({
+    schema_version: 'viewer_official_ranking.v1',
+    product_run_id: productRunId,
+    viewer_branch_id: `${productRunId}-official`,
+    season_index: 29,
+    week: 1,
+    week_ordinal: 1769,
+    snapshot_fingerprint: 'a'.repeat(64),
+    policy_id: 'best-15',
+    best_n: 15,
+    row_count: 0,
+    rows: []
+  }))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
     season_state: {
@@ -1267,43 +1281,44 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows top-level rankings snapshot metadata when an active run has ranking snapshots', async () => {
+  it('shows canonical current Official Ranking metadata for the active Product Run', async () => {
     setTestActiveRun('run-a')
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: 'run-a',
-      snapshots: [
-        { snapshot_sequence: 4, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
-        { snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: 'E3', payload: { standings: { rows: topRankingRows(11) } } }
+    api.getViewerOfficialRanking.mockResolvedValue({
+      schema_version: 'viewer_official_ranking.v1',
+      product_run_id: 'run-a',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 29,
+      week: 6,
+      week_ordinal: 1774,
+      snapshot_fingerprint: 'b'.repeat(64),
+      policy_id: 'best-15',
+      best_n: 15,
+      row_count: 2,
+      rows: [
+        { rank: 1, player_id: 'P1', points: 1000 },
+        { rank: 2, player_id: 'P2', points: 900 }
       ]
     })
 
     renderAppAt('/viewer/rankings')
 
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('MSA Rankings active run snapshot summary')
+    const panel = await screen.findByLabelText('MSA Rankings current Official Ranking')
     expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Ranking snapshot count')
+    expect(panel).toHaveTextContent('branch-viewer')
+    expect(panel).toHaveTextContent('2029')
+    expect(panel).toHaveTextContent('6')
     expect(panel).toHaveTextContent('2')
-    expect(panel).toHaveTextContent('Latest snapshot sequence')
-    expect(panel).toHaveTextContent('8')
-    expect(panel).toHaveTextContent('Latest source event ID')
-    expect(panel).toHaveTextContent('E3')
-    expect(panel).toHaveTextContent('Latest snapshot kind')
-    expect(panel).toHaveTextContent('WEEK')
-    expect(screen.getByRole('heading', { name: 'Top 10 Ranking Preview' })).toBeInTheDocument()
-    const table = screen.getByRole('table', { name: 'Latest Top 10 ranking preview table' })
-    expect(within(table).getByRole('link', { name: 'Nour El Sherbini' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/run-a/players/P1/career'
-    )
-    expect(within(table).getByRole('link', { name: 'EG' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/EG')
+    expect(panel).toHaveTextContent('15')
+    expect(api.getViewerOfficialRanking).toHaveBeenCalledWith('run-a')
+    const table = screen.getByRole('table', { name: 'Current Top 10 Official Ranking table' })
+    expect(within(table).getByText('P1')).toBeInTheDocument()
     expect(within(table).getByText('1000')).toBeInTheDocument()
-    expect(within(table).getAllByText('9').length).toBeGreaterThan(0)
-    expect(within(table).getAllByText('Previous 2').length).toBeGreaterThan(0)
-    expect(within(table).getAllByRole('row')).toHaveLength(11)
-    expect(screen.queryByText('Top Player 11')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.getByRole('link', { name: 'View latest ranking snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings/8')
+    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run-a/rankings'
+    )
+    expect(screen.queryByRole('link', { name: /View latest ranking snapshot/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -1348,13 +1363,26 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows top-level rankings and race empty snapshot states for active runs without snapshots', async () => {
+  it('shows canonical ranking empty-player state and race empty snapshot state for active runs', async () => {
     setTestActiveRun('run-a')
+    api.getViewerOfficialRanking.mockResolvedValue({
+      schema_version: 'viewer_official_ranking.v1',
+      product_run_id: 'run-a',
+      viewer_branch_id: 'run-a-official',
+      season_index: 29,
+      week: 1,
+      week_ordinal: 1769,
+      snapshot_fingerprint: 'a'.repeat(64),
+      policy_id: 'best-15',
+      best_n: 15,
+      row_count: 0,
+      rows: []
+    })
 
     renderAppAt('/viewer/rankings')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('The published Official Ranking contains no players.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/run-a/rankings')
-    expect(screen.queryByRole('link', { name: 'View latest ranking snapshot' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /View latest ranking snapshot/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
 
     cleanup()

@@ -86,8 +86,12 @@
     creation using append-only Run-owned submission authority only.
 25. ✅ Show zero-submission readiness explicitly in Planned Event without inventing a new blocker
     or changing the existing Entry Field command.
-26. Next: audit safe navigation from missing valid submissions to the existing Entry validation
-    workflow without duplicating Simulation Slot authority.
+26. ✅ Add branch-safe navigation from missing valid submissions to the existing authoritative
+    Simulation / Entry-validation workflow using an explicit requested Branch deep link.
+27. ✅ Fail closed when a requested Simulation Branch is not part of the Product Run and do not
+    expose mutation controls for the wrong timeline.
+28. Next: return to the canonical pre-alpha ownership audit; prioritize the largest remaining
+    Entry/WC/pre-draw file-backed authority chain whose semantics are already decided.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Active implementation — canonical preparation action handoffs
+
+Planned Event now turns canonical Tournament Preparation `next_required_action` into
+navigation only where the matching canonical control already exists on that page.
+
+- WC review links to the existing canonical WC/RWC section;
+- pre-draw / Draw Input review links to the existing Main Draw preflight controls;
+- Draw generation links to the existing canonical Draw authority section;
+- `adopt_ranking_snapshot` and `build_entry_field` deliberately expose no invented
+  local command because Planned Event does not own those controls yet;
+- the handoff adds no mutation, authority, fallback or sporting semantics.
+
+**Next after this PR:** decide whether the missing Ranking Snapshot / Entry Field preparation
+commands should receive explicit Admin surfaces in this page/workflow or remain separate
+Admin operations, based only on existing backend authority and Master decisions.
+
 ## Active implementation — direct Admin Tournament Preparation readiness
 
 The canonical Tournament Preparation read model is now surfaced directly on the current

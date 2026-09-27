@@ -91,6 +91,38 @@ class TournamentRankingSnapshotAuthorityStore:
         )
         return None if row is None else self._load_row(row)
 
+    def published_rankings(
+        self, *, run_id: str, branch_id: str
+    ):
+        """Return validated published Official Ranking snapshots for explicit adoption."""
+        self._scope(run_id, branch_id)
+        rows = self.session.scalars(
+            select(PublishedOfficialRankingModel)
+            .where(
+                PublishedOfficialRankingModel.run_id == run_id,
+                PublishedOfficialRankingModel.branch_id == branch_id,
+            )
+            .order_by(PublishedOfficialRankingModel.week_ordinal)
+        ).all()
+        snapshots = []
+        for row in rows:
+            if not 0 <= row.week_ordinal < 50 * 61:
+                raise ValueError("Published Official Ranking has invalid week ordinal")
+            week = RankingWeek(
+                season_index=row.week_ordinal // 61,
+                week=row.week_ordinal % 61 + 1,
+            )
+            snapshots.append(
+                load_official_ranking_snapshot(
+                    row.payload_json,
+                    expected_fingerprint=row.snapshot_fingerprint,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                )
+            )
+        return tuple(snapshots)
+
     def history(
         self, *, run_id: str, branch_id: str
     ) -> tuple[TournamentRankingSnapshotAuthority, ...]:

@@ -1018,13 +1018,21 @@ describe('PlannedEventDetailPage', () => {
     api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
       schema_version: 'canonical_tournament_preparation_state.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
       phase: 'entry_field_required', next_required_action: 'build_entry_field', blockers: ['tournament_entry_field_required'],
+      entry_capacity_suggestion: {
+        schema_version: 'canonical_entry_capacity_suggestion.v1',
+        main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0,
+        source_package_id: 'calendar-2000-2001', source_package_version: 1,
+        source_package_fingerprint: '4'.repeat(64), source_event_fingerprint: '5'.repeat(64),
+        source: 'run_owned_calendar_package.v1'
+      },
       ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
     })
     renderAt('/runs/run-a/calendar/E1')
-    fireEvent.change(await screen.findByLabelText('Entry Main Draw capacity'), { target: { value: '8' } })
-    fireEvent.change(screen.getByLabelText('Entry Qualification Draw capacity'), { target: { value: '4' } })
-    fireEvent.change(screen.getByLabelText('Entry qualifier spots'), { target: { value: '2' } })
-    fireEvent.change(screen.getByLabelText('Entry Wild Card slots'), { target: { value: '1' } })
+    expect(await screen.findByText(/Prefilled from frozen Run-owned Calendar Package calendar-2000-2001 v1/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByLabelText('Entry Main Draw capacity')).toHaveValue(8))
+    expect(screen.getByLabelText('Entry Qualification Draw capacity')).toHaveValue(4)
+    expect(screen.getByLabelText('Entry qualifier spots')).toHaveValue(2)
+    expect(screen.getByLabelText('Entry Wild Card slots')).toHaveValue(1)
     fireEvent.click(screen.getByRole('button', { name: 'Build Entry Field from valid submissions' }))
     await waitFor(() => expect(api.createTournamentEntryFieldFromValidSubmissions).toHaveBeenCalledWith(
       'run-a', 'branch-a', 'E1', {

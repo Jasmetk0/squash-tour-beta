@@ -41,6 +41,9 @@ from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
 )
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
+from beta_engine.infrastructure.db.tournament_application_submissions import (
+    TournamentApplicationSubmissionStore,
+)
 
 
 TournamentPreparationPhase = Literal[
@@ -119,6 +122,9 @@ class CanonicalTournamentPreparationState(BaseModel):
     ranking_week_ordinal: int | None = Field(default=None, ge=0)
 
     entry_field_ready: bool
+    valid_submission_count: int = Field(ge=0)
+    valid_main_submission_count: int = Field(ge=0)
+    valid_qualification_submission_count: int = Field(ge=0)
     entry_capacity_suggestion: CanonicalEntryCapacitySuggestion | None = None
     field_sequence: int = Field(ge=0)
     entry_field_fingerprint: str | None = Field(
@@ -255,6 +261,11 @@ class CanonicalTournamentPreparationService:
         branch_id: str,
         event_id: str,
     ) -> CanonicalTournamentPreparationState:
+        submissions = TournamentApplicationSubmissionStore(session).list_for_event(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
         capacity_suggestion = CanonicalTournamentPreparationService._entry_capacity_suggestion(
             session,
             run_id=run_id,
@@ -365,6 +376,11 @@ class CanonicalTournamentPreparationService:
                 ranking.ranking_week.ordinal if ranking is not None else None
             ),
             entry_field_ready=field_ready,
+            valid_submission_count=len(submissions),
+            valid_main_submission_count=sum(sub.entry_window == "main" for sub in submissions),
+            valid_qualification_submission_count=sum(
+                sub.entry_window == "qualification" for sub in submissions
+            ),
             entry_capacity_suggestion=capacity_suggestion,
             field_sequence=len(history),
             entry_field_fingerprint=(

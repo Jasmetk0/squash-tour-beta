@@ -1,5 +1,24 @@
 # Current implementation and next action
 
+## Active implementation — published Official Ranking selection for tournament authority
+
+Planned Event no longer asks Admin to type an arbitrary Ranking season/week when creating
+Tournament Ranking Snapshot authority.
+
+- the existing Tournament Ranking Snapshot store now exposes validated published Official
+  Ranking snapshots for the exact Run/Branch;
+- a new read-only event-scoped `/ranking-snapshot-authority/available` endpoint returns only
+  published snapshots after fingerprint/scope/week validation;
+- Planned Event presents those publications as explicit selectable options with week,
+  player count and Best-N policy metadata;
+- adoption still uses the unchanged explicit canonical command and Admin must choose the
+  publication; the UI does not infer or recommend which ranking week is correct;
+- unpublished candidates are never presented as tournament authority sources.
+
+**Next after this PR:** continue canonical preparation UX by auditing submission readiness
+before Entry Field creation so the Admin can distinguish "no valid submissions yet" from
+capacity/configuration problems without attempting a mutation.
+
 ## Active implementation — Run-owned Calendar capacity suggestion
 
 Canonical Tournament Preparation can now expose a read-only Entry Field capacity suggestion

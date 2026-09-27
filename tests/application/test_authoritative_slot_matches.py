@@ -8965,3 +8965,51 @@ def test_authoritative_replay_context_reads_frozen_match_input_without_mutation(
         group_after = session.scalars(select(SimulationEventGroupModel)).one()
         assert group_after.result_fingerprint == fp_before
         assert group_after.match_input_fingerprint == input_fp_before
+
+
+@pytest.mark.pr_critical
+def test_authoritative_replay_frame_composes_rally_timeline_stamina_and_context(tmp_path):
+    driver, factory, week = _driver_fixture(tmp_path / "authoritative-replay-frame")
+    opening = driver.position(run_id="run", branch_id="branch")
+    group_id = opening.unresolved_group_ids[0]
+    driver.simulate_next_match(
+        AuthoritativeSimulationCommand(
+            command_id="replay-frame-source",
+            run_id="run",
+            branch_id="branch",
+            expected_week=week,
+            expected_position_fingerprint=opening.position_fingerprint,
+            expected_revision_id="revision",
+            group_id=group_id,
+        )
+    )
+
+    with factory() as session:
+        before = session.scalars(select(SimulationEventGroupModel)).one()
+        result_fp = before.result_fingerprint
+        input_fp = before.match_input_fingerprint
+
+    frame = driver.get_authoritative_match_replay_frame(
+        run_id="run",
+        branch_id="branch",
+        group_id=group_id,
+        rally_index=1,
+    )
+    assert frame["schema_version"] == "authoritative_match_replay_frame.v1"
+    assert frame["rally"]["rally_index"] == 1
+    assert frame["timeline_event"]["event_type"] == "RALLY"
+    assert frame["timeline_event"]["rally_index"] == 1
+    assert frame["stamina_transition"] is not None
+    assert (
+        frame["stamina_transition"]["source_timeline_index"]
+        == frame["timeline_event"]["timeline_index"]
+    )
+    assert frame["context_summary"]["best_of"] in {3, 5}
+    assert frame["read_only"] is True
+    assert frame["rng_rerun"] is False
+    assert frame["verified"] is True
+
+    with factory() as session:
+        after = session.scalars(select(SimulationEventGroupModel)).one()
+        assert after.result_fingerprint == result_fp
+        assert after.match_input_fingerprint == input_fp

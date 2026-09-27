@@ -70,8 +70,10 @@
     canonical preparation controls still have production UI consumers and are not dead cleanup targets.
 17. ✅ Surface the existing canonical Tournament Preparation read model directly on Planned Event
     Admin with phase, next action, blockers and schedule readiness.
-18. Next: audit preparation-phase navigation/handoffs against the existing canonical controls;
-    preserve one authority and avoid inventing unresolved product actions.
+18. ✅ Map canonical preparation next actions to existing Planned Event controls where those
+    controls already exist; do not fabricate local actions for Ranking Snapshot / Entry Field.
+19. Next: audit the existing backend authority for Ranking Snapshot adoption and Entry Field
+    construction and determine the smallest explicit Admin surface needed to close those handoffs.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

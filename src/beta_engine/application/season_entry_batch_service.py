@@ -16,7 +16,12 @@ from beta_engine.application.season_entry_list_service import (
 )
 from beta_engine.core import DeterministicRng, SeedScope
 from beta_engine.domain.countries import Country
-from beta_engine.domain.entries import EntryDecision, EntryEngine, EntryTarget
+from beta_engine.domain.entries import (
+    EntryDecision,
+    EntryEngine,
+    EntryTarget,
+    EntryTuningConfig,
+)
 from beta_engine.domain.tournaments import SeasonCalendarEvent
 from beta_engine.infrastructure.entry_config import load_entry_tuning_config
 
@@ -37,6 +42,7 @@ class EntryBatchMetadata(BaseModel):
     persisted: bool
     active_players_fingerprint: str
     country_snapshot_fingerprint: str | None = None
+    tuning_snapshot_fingerprint: str | None = None
     # Kept for wire compatibility with the short-lived #737 resolver contract.
     # Canonical entry batching no longer auto-resolves competing applications.
     resolved_conflict_player_count: int = Field(default=0, ge=0)
@@ -75,6 +81,7 @@ class SeasonEntryBatchService:
         request: EntryBatchGenerateRequest,
         event_snapshots: dict[str, SeasonCalendarEvent] | None = None,
         country_snapshots: tuple[Country, ...] | None = None,
+        tuning_snapshot: EntryTuningConfig | None = None,
     ) -> SeasonEntryBatchResult:
         if not event_ids or len(set(event_ids)) != len(event_ids):
             raise ValueError(
@@ -161,9 +168,19 @@ class SeasonEntryBatchService:
             else None
         )
         players = [service._adapt_player(player) for player in active_players]
+        tuning = (
+            tuning_snapshot
+            if tuning_snapshot is not None
+            else load_entry_tuning_config(service.entry_tuning_path)
+        )
+        tuning_snapshot_fingerprint = (
+            service._fingerprint(tuning.model_dump(mode="json"))
+            if tuning_snapshot is not None
+            else None
+        )
         engine = EntryEngine(
             rng=DeterministicRng(request.seed),
-            tuning=load_entry_tuning_config(service.entry_tuning_path),
+            tuning=tuning,
         )
 
         if event_snapshots is not None:
@@ -492,6 +509,10 @@ class SeasonEntryBatchService:
             batch_fingerprint_payload["country_snapshot_fingerprint"] = (
                 country_snapshot_fingerprint
             )
+        if tuning_snapshot_fingerprint is not None:
+            batch_fingerprint_payload["tuning_snapshot_fingerprint"] = (
+                tuning_snapshot_fingerprint
+            )
         batch_fp = service._fingerprint(batch_fingerprint_payload)
         metadata = EntryBatchMetadata(
             event_ids=ordered_event_ids,
@@ -501,6 +522,7 @@ class SeasonEntryBatchService:
             persisted=not request.dry_run,
             active_players_fingerprint=active_fp,
             country_snapshot_fingerprint=country_snapshot_fingerprint,
+            tuning_snapshot_fingerprint=tuning_snapshot_fingerprint,
             resolved_conflict_player_count=0,
             unresolved_conflict_player_count=len(conflicted_players),
             application_decisions_fingerprint=application_decisions_fingerprint,

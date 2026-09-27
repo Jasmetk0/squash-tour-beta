@@ -14,8 +14,10 @@
    before/after bars, deltas, workload, calibration and explicit support boundaries.
 9. ✅ Expose frozen MatchInput context/rules and stored per-rally officiating decisions,
    including explicit legacy/support boundaries and zero replay-time rule resolution.
-10. Next: refine the immutable Match Viewer presentation/summary, then return to the next
-    decided pre-alpha dependency without inventing new match semantics.
+10. ✅ Add one unified Replay Frame per selected rally, composing stored rally, timeline,
+    stamina and context evidence while retaining the detailed independent inspectors.
+11. Next: return to the next decided pre-alpha dependency without inventing new match
+    semantics.
 
 ## Active pre-alpha sequence — canonical tournament preparation navigation
 

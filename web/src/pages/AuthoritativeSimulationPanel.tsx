@@ -26,6 +26,7 @@ import {
   listAuthoritativeMatchReplays,
   getAuthoritativeMatchReplayCursor,
   getAuthoritativeMatchReplayContext,
+  getAuthoritativeMatchReplayFrame,
   getAuthoritativeMatchTimelineCursor,
   getAuthoritativeMatchStaminaCursor,
   confirmAuthoritativeLiveMatch,
@@ -67,6 +68,7 @@ import type {
   AuthoritativeLiveRangeResult,
   AuthoritativeMatchReplayCursor,
   AuthoritativeMatchReplayContext,
+  AuthoritativeMatchReplayFrame,
   AuthoritativeMatchTimelineCursor,
   AuthoritativeMatchStaminaCursor,
   AuthoritativeMatchDayPreview,
@@ -356,6 +358,25 @@ export function AuthoritativeSimulationPanel({
     ],
     queryFn: () =>
       getAuthoritativeMatchReplayCursor(
+        runId,
+        branchId,
+        selectedReplayGroupId,
+        replayRallyIndex
+      ),
+    enabled: Boolean(enabled && selectedReplayGroupId),
+    retry: false
+  })
+
+  const replayFrameQuery = useQuery<AuthoritativeMatchReplayFrame>({
+    queryKey: [
+      'authoritative-match-replay-frame',
+      runId,
+      branchId,
+      selectedReplayGroupId,
+      replayRallyIndex
+    ],
+    queryFn: () =>
+      getAuthoritativeMatchReplayFrame(
         runId,
         branchId,
         selectedReplayGroupId,
@@ -3444,6 +3465,55 @@ export function AuthoritativeSimulationPanel({
                 </label>
                 {replayCursorQuery.data ? (
                   <>
+                    {replayFrameQuery.data ? (
+                      <>
+                        <h6>Current replay frame</h6>
+                        <MetadataList
+                          items={[
+                            {
+                              label: 'Match',
+                              value: `${replayFrameQuery.data.context_summary.player_a_name} vs ${replayFrameQuery.data.context_summary.player_b_name}`
+                            },
+                            {
+                              label: 'Rally',
+                              value: `${replayFrameQuery.data.rally_index} / ${replayFrameQuery.data.navigation.total_rallies}`
+                            },
+                            {
+                              label: 'Score',
+                              value:
+                                `${replayFrameQuery.data.rally.score_after.sets_a}-${replayFrameQuery.data.rally.score_after.sets_b} sets; ` +
+                                `${replayFrameQuery.data.rally.score_after.points_a}-${replayFrameQuery.data.rally.score_after.points_b}`
+                            },
+                            {
+                              label: 'Official call',
+                              value: replayFrameQuery.data.rally.official_resolution
+                            },
+                            {
+                              label: 'Rule decision',
+                              value: replayFrameQuery.data.rally.rules_resolution?.decision_code ?? 'legacy rally'
+                            },
+                            {
+                              label: 'Timeline event',
+                              value: replayFrameQuery.data.timeline_event.timeline_index
+                            },
+                            {
+                              label: 'Timeline seconds',
+                              value: replayFrameQuery.data.timeline_event.elapsed_seconds
+                            },
+                            {
+                              label: 'Physical state',
+                              value: replayFrameQuery.data.stamina_transition
+                                ? replayFrameQuery.data.stamina_transition.states_after
+                                    .map((state) =>
+                                      `${state.player_id}: ${state.bars.map((bar) => `${bar.dimension} ${bar.current}/${bar.capacity}`).join(', ')}`
+                                    )
+                                    .join(' · ')
+                                : 'not stored'
+                            }
+                          ]}
+                        />
+                      </>
+                    ) : null}
                     {replayContextQuery.data ? (
                       <>
                         <h6>Frozen match context</h6>

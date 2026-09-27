@@ -242,6 +242,8 @@ def test_snapshot_backed_entry_batch_uses_frozen_countries_not_global_country_se
 
     assert result.application_decisions
     assert result.metadata.event_ids == (event.event_id,)
+    assert result.metadata.country_snapshot_fingerprint is not None
+    assert len(result.metadata.country_snapshot_fingerprint) == 64
     assert {
         decision.event_id for decision in result.application_decisions
     } == {event.event_id}

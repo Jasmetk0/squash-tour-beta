@@ -288,6 +288,17 @@ def test_initial_entry_field_can_be_created_from_persisted_valid_submissions_htt
                 )
 
         root = _root(server, run_id, branch_id, event_id)
+        preparation_root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{event_id}/preparation"
+        )
+        status, preparation = _request("GET", preparation_root)
+        assert status == 200, preparation
+        assert preparation["phase"] == "entry_field_required"
+        assert preparation["valid_submission_count"] == 7
+        assert preparation["valid_main_submission_count"] == 3
+        assert preparation["valid_qualification_submission_count"] == 4
+
         status, field = _request(
             "POST",
             root + "/from-valid-submissions",

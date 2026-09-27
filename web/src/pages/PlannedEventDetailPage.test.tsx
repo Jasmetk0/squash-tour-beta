@@ -19,11 +19,6 @@ const api = vi.hoisted(() => ({
   getCanonicalWildCardState: vi.fn(),
   previewCanonicalWildCardAssignment: vi.fn(),
   commitCanonicalWildCardAssignment: vi.fn(),
-  getEventWildcards: vi.fn(),
-  getEventLateReplacementState: vi.fn(),
-  getEventLateReplacementCandidates: vi.fn(),
-  getEventLateReplacementActions: vi.fn(),
-  applyEventLateReplacement: vi.fn(),
   getCanonicalTournamentEntryFieldState: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
@@ -36,10 +31,6 @@ const api = vi.hoisted(() => ({
   generateCanonicalTournamentDraw: vi.fn(),
   previewCanonicalFrozenMainReplacement: vi.fn(),
   commitCanonicalFrozenMainReplacement: vi.fn(),
-  getEventPreDrawWithdrawalActions: vi.fn(),
-  getEventWildcardCandidates: vi.fn(),
-  getEventWildcardActions: vi.fn(),
-  assignEventWildcards: vi.fn()
 }))
 const adminTime = vi.hoisted(() => ({ viewed: vi.fn() }))
 
@@ -392,71 +383,10 @@ describe('PlannedEventDetailPage', () => {
       draw_revision_fingerprints: ['8'.repeat(64)],
       successor_draw_fingerprint: '9'.repeat(64)
     })
-    api.getEventLateReplacementState.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      eligible: true,
-      eligibility_reason: null,
-      replaceable_main_draw_players: [
-        {
-          player_id: 'P100',
-          player_name: 'Player Main',
-          country_code: 'EGY',
-          country_name: 'Egypt',
-          entry_id: 'E1:P100:MAIN',
-          acceptance_status: 'DIRECT_ACCEPTANCE'
-        }
-      ],
-      remaining_capacity: 2
-    })
-    api.getEventLateReplacementCandidates.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      candidates: [
-        {
-          candidate_slot_index: 1,
-          player_id: 'P300',
-          player_name: 'Player Three',
-          country_code: 'ENG',
-          country_name: 'England',
-          source: 'qualification_waitlist',
-          source_priority: 0,
-          ranking_priority: 3,
-          entry_id: 'E1:P300:APPLICANT_QUALIFICATION'
-        }
-      ]
-    })
-    api.getEventLateReplacementActions.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      actions: [
-        {
-          action_sequence: 1,
-          action_kind: 'late_replacement_lucky_loser',
-          event_id: 'E1',
-          withdrawn_player_id: 'P100',
-          replacement_player_id: 'P300',
-          replacement_source: 'qualification_waitlist',
-          withdrawn_entry_id: 'E1:P100:MAIN',
-          replacement_entry_id: 'E1:LATE_REPLACEMENT_PLACEHOLDER:1',
-          candidate_slot_index: 1,
-          notes: null
-        }
-      ]
-    })
-    api.applyEventLateReplacement.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      withdrawn_player_id: 'P100',
-      replacement_player_id: 'P300',
-      replacement_source: 'qualification_waitlist',
-      withdrawn_entry_id: 'E1:P100:MAIN',
-      replacement_entry_id: 'E1:LATE_REPLACEMENT_PLACEHOLDER:1',
-      candidate_slot_index: 1,
-      eligible: true,
-      eligibility_reason: null,
-      remaining_capacity: 1
-    })
+
+
+
+
     api.commitCanonicalPreDrawWithdrawal.mockResolvedValue({
       schema_version: 'canonical_pre_draw_withdrawal_result.v1',
       command_id: 'admin-ui-pre-draw-withdrawal-aaaaaaaaaaaaaaaa-P2',
@@ -474,73 +404,10 @@ describe('PlannedEventDetailPage', () => {
       below_qualification_cut_player_ids: [],
       withdrawn_player_ids: ['P2']
     })
-    api.getEventPreDrawWithdrawalActions.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      actions: [
-        {
-          action_sequence: 1,
-          action_kind: 'pre_draw_withdrawal_replacement',
-          event_id: 'E1',
-          withdrawn_player_id: 'P100',
-          replacement_player_id: 'P200',
-          replacement_source: 'main_draw_waitlist',
-          withdrawn_entry_id: 'E1:P100:MAIN',
-          replacement_entry_id: 'E1:WITHDRAWAL_PLACEHOLDER:1',
-          notes: null
-        }
-      ]
-    })
-    api.assignEventWildcards.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      eligible: true,
-      eligibility_reason: null,
-      total_slots: 1,
-      slots: [{ slot_index: 1, entry_id: 'E1:WILD_CARD_PLACEHOLDER:1', assigned_player_id: 'P1' }]
-    })
-    api.getEventWildcardCandidates.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      candidates: [
-        {
-          player_id: 'P1',
-          player_name: 'Player One',
-          country_code: 'EGY',
-          country_name: 'Egypt',
-          source: 'main_draw_waitlist',
-          source_priority: 1,
-          entry_score: 0.98
-        },
-        {
-          player_id: 'P2',
-          player_name: 'Player Two',
-          country_code: 'ENG',
-          country_name: 'England',
-          source: 'qualification_waitlist',
-          source_priority: 2,
-          entry_score: 0.79
-        }
-      ]
-    })
-    api.getEventWildcardActions.mockResolvedValue({
-      run_id: 'run-a',
-      event_id: 'E1',
-      actions: [
-        {
-          action_sequence: 1,
-          action_kind: 'assign_wildcards',
-          event_id: 'E1',
-          assignment_payload_summary: [{ slot_index: 1, player_id: 'P1' }]
-        },
-        {
-          action_sequence: 2,
-          action_kind: 'assign_wildcards',
-          event_id: 'E1',
-          assignment_payload_summary: [{ slot_index: 1, player_id: 'P2' }]
-        }
-      ]
-    })
+
+
+
+
   })
 
   it('renders historical planned-event detail without current or commissioner API reads', async () => {
@@ -553,7 +420,7 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.getAllByText('Completed').length).toBeGreaterThan(0); expect(screen.getByText('Yes')).toBeInTheDocument()
     expect(screen.getAllByText('event-before').length).toBeGreaterThan(0); expect(screen.getAllByText('event-after').length).toBeGreaterThan(0)
     for (const name of ['Canonical WC/RWC review', 'Wildcard action history', 'Commissioner pre-draw withdrawal replacement', 'Legacy pre-draw withdrawal history', 'Commissioner late replacement lucky loser', 'Legacy late-replacement history']) expect(screen.queryByRole('heading', { name })).not.toBeInTheDocument()
-    for (const method of ['getRun', 'listEvents', 'getCanonicalWildCardState', 'previewCanonicalWildCardAssignment', 'commitCanonicalWildCardAssignment', 'getEventWildcardActions', 'getEventPreDrawWithdrawalActions', 'getEventLateReplacementState', 'getEventLateReplacementCandidates', 'getEventLateReplacementActions', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
+    for (const method of ['getRun', 'listEvents', 'getCanonicalWildCardState', 'previewCanonicalWildCardAssignment', 'commitCanonicalWildCardAssignment', 'getCanonicalTournamentEntryFieldState', 'commitCanonicalPreDrawWithdrawal', 'getCanonicalTournamentDrawState', 'getCanonicalTournamentDrawAuthority', 'getCanonicalTournamentEffectiveDrawAuthority', 'getCanonicalTournamentDrawRevisionHistory', 'getCanonicalTournamentDrawProcessState', 'configureCanonicalTournamentDrawProcess', 'commitCanonicalTournamentDrawInput', 'generateCanonicalTournamentDraw'] as const) expect(api[method]).not.toHaveBeenCalled()
     expect(screen.queryByRole('link', { name: /Inspect persisted event detail/ })).not.toBeInTheDocument()
   })
 
@@ -614,8 +481,6 @@ describe('PlannedEventDetailPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Canonical WC/RWC review' })).toBeInTheDocument()
     expect(screen.getByText(/eligibility and construction of the RWC order are still intentionally open/i)).toBeInTheDocument()
-    expect(api.getEventWildcards).not.toHaveBeenCalled()
-    expect(api.getEventWildcardCandidates).not.toHaveBeenCalled()
 
     fireEvent.change(screen.getByLabelText('Original WC slot nominations'), {
       target: { value: 'P1' }
@@ -1040,10 +905,9 @@ describe('PlannedEventDetailPage', () => {
       })
     )
     expect(screen.queryByRole('heading', { name: 'Legacy pre-draw withdrawal history' })).not.toBeInTheDocument()
-    expect(api.getEventPreDrawWithdrawalActions).not.toHaveBeenCalled()
   })
 
-  it('retires legacy late-replacement controls while preserving read-only history', async () => {
+  it('keeps legacy late-replacement client surface retired from current Planned Event', async () => {
     renderAt('/runs/run-a/calendar/E1')
 
     expect(
@@ -1051,13 +915,9 @@ describe('PlannedEventDetailPage', () => {
     ).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Withdraw + late-replace' })).not.toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Legacy late-replacement history' })).not.toBeInTheDocument()
-    expect(api.getEventLateReplacementActions).not.toHaveBeenCalled()
-    expect(api.getEventLateReplacementState).not.toHaveBeenCalled()
-    expect(api.getEventLateReplacementCandidates).not.toHaveBeenCalled()
-    expect(api.applyEventLateReplacement).not.toHaveBeenCalled()
   })
 
-  it('retires legacy wildcard controls while preserving read-only history', async () => {
+  it('keeps legacy wildcard client surface retired from current Planned Event', async () => {
     adminTime.viewed.mockImplementation(presentBranchView)
     renderAt('/runs/run-a/calendar/E1')
 
@@ -1065,12 +925,8 @@ describe('PlannedEventDetailPage', () => {
     expect(screen.queryByLabelText('Candidate player')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Slot')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Assign wildcard' })).not.toBeInTheDocument()
-    expect(api.getEventWildcards).not.toHaveBeenCalled()
-    expect(api.getEventWildcardCandidates).not.toHaveBeenCalled()
-    expect(api.assignEventWildcards).not.toHaveBeenCalled()
 
     expect(screen.queryByRole('heading', { name: 'Wildcard action history' })).not.toBeInTheDocument()
-    expect(api.getEventWildcardActions).not.toHaveBeenCalled()
   })
 
 

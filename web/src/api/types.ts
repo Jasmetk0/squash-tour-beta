@@ -2817,22 +2817,6 @@ export type WildcardCandidatesResponse = {
   candidates: WildcardCandidate[]
 }
 
-export type WildcardActionHistoryItem = {
-  action_sequence: number
-  action_kind: string
-  event_id: string
-  assignment_payload_summary: Array<{
-    slot_index: number
-    player_id: string
-  }>
-}
-
-export type WildcardActionHistoryResponse = {
-  run_id: string
-  event_id: string
-  actions: WildcardActionHistoryItem[]
-}
-
 export type AssignWildcardsPayload = {
   assignments: Array<{
     slot_index: number
@@ -3209,43 +3193,6 @@ export type CanonicalPreDrawWithdrawalResult = {
   qualification_player_ids: string[]
   below_qualification_cut_player_ids: string[]
   withdrawn_player_ids: string[]
-}
-
-export type PreDrawWithdrawalActionHistoryItem = {
-  action_sequence: number
-  action_kind: string
-  event_id: string
-  withdrawn_player_id: string
-  replacement_player_id: string
-  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
-  withdrawn_entry_id: string
-  replacement_entry_id: string
-  notes: string | null
-}
-
-export type PreDrawWithdrawalActionHistoryResponse = {
-  run_id: string
-  event_id: string
-  actions: PreDrawWithdrawalActionHistoryItem[]
-}
-
-export type LateReplacementActionHistoryItem = {
-  action_sequence: number
-  action_kind: string
-  event_id: string
-  withdrawn_player_id: string
-  replacement_player_id: string
-  replacement_source: 'main_draw_waitlist' | 'qualification_waitlist'
-  withdrawn_entry_id: string
-  replacement_entry_id: string
-  candidate_slot_index: number | null
-  notes: string | null
-}
-
-export type LateReplacementActionHistoryResponse = {
-  run_id: string
-  event_id: string
-  actions: LateReplacementActionHistoryItem[]
 }
 
 type SnapshotRecordBase = {

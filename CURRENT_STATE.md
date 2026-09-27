@@ -138,9 +138,21 @@ Current Planned Event no longer performs those three file-backed history reads:
 - legacy sidecar history GET endpoints remain backend read-only compatibility for old
   saves/history, but are no longer current product inputs or UI panels.
 
-**Next after this PR:** continue retiring legacy tournament-preparation compatibility
-surfaces that are still reachable from current Admin/product flows, while preserving
-explicit historical readers.
+The frontend API surface now matches that ownership boundary as well.
+
+- current web clients no longer export legacy wildcard-action, pre-draw-withdrawal
+  sidecar-history or late-replacement sidecar-history readers;
+- their web DTOs are removed from `web/src/api/types.ts`;
+- Planned Event tests no longer mock those retired legacy client capabilities;
+- backend historical GET endpoints and server DTOs remain available for explicitly
+  historical compatibility outside the current product client.
+
+This prevents a future current UI from accidentally reintroducing the retired sidecar
+histories simply by importing an old convenience client.
+
+**Next after this PR:** audit the remaining current frontend/API compatibility surface
+around tournament preparation and remove the next dead legacy entrypoint without
+touching historical server readers.
 
 
 ## Active implementation — canonical result/ranking source fence

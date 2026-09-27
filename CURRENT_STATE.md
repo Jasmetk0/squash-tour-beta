@@ -2,31 +2,30 @@
 
 ## Active implementation — authoritative read-only Match Replay
 
-Canonical completed Match Replay now covers rally snapshots, the full stored
-authoritative timeline and the stored physical stamina transition aligned to each timeline
-event.
+Canonical completed Match Replay now exposes four immutable evidence layers:
+rally state, full match timeline, physical stamina transitions and frozen pre-match
+context/rules.
 
-- rally cursor navigation remains read-only over immutable stored Rally Events;
-- timeline cursor navigation exposes Rally, Between-Rally Interval, Game Break and
-  Objective Delay events without reconstruction or resimulation;
-- stamina replay reads the already-persisted MatchStaminaLog transition for the exact same
-  timeline_index and exposes states before/after, deltas, workload, cause and calibration;
-- the stamina log is revalidated against the stored timeline before projection, including
-  source event hashes and one transition per timeline event;
-- Admin timeline and stamina views move together while rally navigation remains an
-  independent sporting cursor;
-- replay exposes the explicit stamina support boundary instead of pretending unsupported
-  components were simulated;
-- no replay action writes a simulation command, mutates live state, applies effects or
-  advances Run/Branch position.
+- rally cursor navigation reads stored Rally Events only;
+- each Rally Event surfaces its stored official call, rule decision code, rule-situation
+  facts and service-box state when the historical event version contains them;
+- the frozen authoritative MatchInputSnapshot is exposed read-only with participants,
+  format, engine version, ruleset/resolver/calibration identities and support boundaries;
+- full timeline navigation still exposes Rally, Between-Rally Interval, Game Break and
+  Objective Delay events without reconstruction;
+- stamina replay remains aligned 1:1 to the stored timeline transition chain;
+- legacy rally versions explicitly remain legacy instead of receiving reconstructed rule
+  facts that were never stored;
+- no Replay read invokes RNG, rules resolution, stamina calculation, match simulation,
+  sporting effects or Run/Branch mutation.
 
-This extends the decided Master/PAQ no-rerun replay invariant into physical match state:
-completed history can now explain both what happened in time and how the stored physical
-bars changed at that exact event.
+This now covers the core pre-alpha Match Viewer audit story: the viewer can inspect what
+happened, when it happened, the stored physical change, and the frozen rules/context that
+were actually used.
 
-**Next after this PR:** continue the immutable match-viewer with stored rules/officiating
-and match-context detail where those facts are already authoritative; do not invent or
-recompute missing context at replay time.
+**Next after this PR:** improve the Match Viewer presentation/summary around these stored
+facts and then continue the next decided pre-alpha dependency rather than inventing new
+match semantics.
 
 ## Active implementation — canonical Tournament Preparation State
 

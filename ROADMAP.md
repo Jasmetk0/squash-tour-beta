@@ -40,8 +40,11 @@
 10. ✅ Source Package-backed AI Entry countries from the applied Run World Package
     instead of the global CountriesConfigService, with frozen country evidence bound
     into the Entry batch fingerprint.
-11. Next: audit and bind the remaining global `entry_tuning.json` input without
-    inventing new tuning/package semantics.
+11. ✅ Freeze the currently configured Entry tuning as typed authoritative proposal
+    input, bind its fingerprint into snapshot-backed Entry batch identity and preserve
+    legacy non-Package file-backed behavior.
+12. Next: re-audit Package-backed AI Entry for any remaining mutable/global inputs; if
+    clean, return to the next largest decided pre-alpha ownership dependency.
 
 
 ## Active pre-alpha sequence — canonical result/ranking source ownership

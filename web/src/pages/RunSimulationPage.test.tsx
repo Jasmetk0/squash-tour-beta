@@ -29,8 +29,9 @@ beforeEach(() => { vi.clearAllMocks(); context.time = { mode: 'present' }; selec
 describe('RunSimulationPage', () => {
   it('honors an explicit branch deep link before exposing simulation controls', async () => {
     select('branch-a', 'cp-a')
+    const requestedSelection = context.value.selectBranch
     renderHarness('/admin/runs/run-a/simulate?branch=branch-b')
-    await waitFor(() => expect(context.value.selectBranch).toHaveBeenCalledWith('branch-b'))
+    await waitFor(() => expect(requestedSelection).toHaveBeenCalledWith('branch-b'))
     expect(await screen.findByText('Branch B (branch-b)')).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: 'Next Match' }))
     expect(screen.getByText('Review Next Match')).toBeInTheDocument()

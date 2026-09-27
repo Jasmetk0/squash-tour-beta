@@ -663,6 +663,21 @@ def test_official_run_completes_whole_season_reopens_and_rolls_to_next_season(
             f"/tournaments/{event_id}"
         )
         ranking_authority_root = tournament_root + "/ranking-snapshot-authority"
+        status, available_rankings = _request(
+            "GET", ranking_authority_root + "/available"
+        )
+        assert status == 200, available_rankings
+        assert available_rankings["source"] == "published_official_rankings.v1"
+        assert available_rankings["publication_count"] == 1
+        assert available_rankings["publications"] == [
+            {
+                "ranking_week": {"season_index": 0, "week": 1},
+                "snapshot_fingerprint": initial_ranking_fingerprint,
+                "player_count": len(generated_ids),
+                "policy_id": "msa-official-2000-01",
+                "best_n": 15,
+            }
+        ]
         status, tournament_ranking = _request(
             "POST",
             ranking_authority_root,

@@ -992,6 +992,33 @@ def get_match_replay(
         ) from exc
 
 
+@router.get("/match-replay/context")
+def get_match_replay_context(
+    run_id: str,
+    branch_id: str,
+    group_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+):
+    try:
+        return _driver(runtime, matches, awards).get_authoritative_match_replay_context(
+            run_id=run_id,
+            branch_id=branch_id,
+            group_id=group_id,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "authoritative_match_replay_context_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("/match-replay/cursor")
 def get_match_replay_cursor(
     run_id: str,

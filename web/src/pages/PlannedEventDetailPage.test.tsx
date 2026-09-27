@@ -22,6 +22,7 @@ const api = vi.hoisted(() => ({
   getCanonicalTournamentEntryFieldState: vi.fn(),
   getCanonicalTournamentPreparation: vi.fn(),
   adoptTournamentRankingSnapshotAuthority: vi.fn(),
+  listTournamentRankingPublicationOptions: vi.fn(),
   createTournamentEntryFieldFromValidSubmissions: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
@@ -103,6 +104,14 @@ describe('PlannedEventDetailPage', () => {
       ready_for_match_schedule: false,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
+    })
+    api.listTournamentRankingPublicationOptions.mockResolvedValue({
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      publications: [{
+        ranking_week: { season_index: 0, week: 5 }, snapshot_fingerprint: '6'.repeat(64),
+        ranked_row_count: 32, policy_id: 'policy-a', best_n: 15
+      }],
+      publication_count: 1, source: 'published_official_rankings.v1'
     })
     api.adoptTournamentRankingSnapshotAuthority.mockResolvedValue({
       schema_version: 'tournament_ranking_snapshot_authority.v1',
@@ -1005,9 +1014,8 @@ describe('PlannedEventDetailPage', () => {
       ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
     })
     renderAt('/runs/run-a/calendar/E1')
-    fireEvent.change(await screen.findByLabelText('Ranking season index'), { target: { value: '0' } })
-    fireEvent.change(screen.getByLabelText('Ranking week'), { target: { value: '5' } })
-    fireEvent.click(screen.getByRole('button', { name: 'Adopt published Official Ranking' }))
+    fireEvent.change(await screen.findByLabelText('Published Official Ranking'), { target: { value: '0:5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Adopt selected Official Ranking' }))
     await waitFor(() => expect(api.adoptTournamentRankingSnapshotAuthority).toHaveBeenCalledWith(
       'run-a', 'branch-a', 'E1', { command_id: 'admin-ui-ranking-authority-E1-0-5', ranking_week: { season_index: 0, week: 5 } }
     ))
@@ -1018,13 +1026,26 @@ describe('PlannedEventDetailPage', () => {
     api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
       schema_version: 'canonical_tournament_preparation_state.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
       phase: 'entry_field_required', next_required_action: 'build_entry_field', blockers: ['tournament_entry_field_required'],
+      valid_submission_count: 7, valid_main_submission_count: 3, valid_qualification_submission_count: 4,
+      entry_capacity_suggestion: {
+        schema_version: 'canonical_entry_capacity_suggestion.v1',
+        main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0,
+        source_package_id: 'calendar-2000-2001', source_package_version: 1,
+        source_package_fingerprint: '4'.repeat(64), source_event_fingerprint: '5'.repeat(64),
+        source: 'run_owned_calendar_package.v1'
+      },
       ready_for_match_schedule: false, effective_draw_fingerprint: null, authority_source: 'run_owned_db_authorities.v1'
     })
     renderAt('/runs/run-a/calendar/E1')
-    fireEvent.change(await screen.findByLabelText('Entry Main Draw capacity'), { target: { value: '8' } })
-    fireEvent.change(screen.getByLabelText('Entry Qualification Draw capacity'), { target: { value: '4' } })
-    fireEvent.change(screen.getByLabelText('Entry qualifier spots'), { target: { value: '2' } })
-    fireEvent.change(screen.getByLabelText('Entry Wild Card slots'), { target: { value: '1' } })
+    expect(await screen.findByText(/Prefilled from frozen Run-owned Calendar Package calendar-2000-2001 v1/i)).toBeInTheDocument()
+    expect(screen.getByText('Valid submissions')).toBeInTheDocument()
+    expect(screen.getAllByText('7').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0)
+    await waitFor(() => expect(screen.getByLabelText('Entry Main Draw capacity')).toHaveValue(8))
+    expect(screen.getByLabelText('Entry Qualification Draw capacity')).toHaveValue(4)
+    expect(screen.getByLabelText('Entry qualifier spots')).toHaveValue(2)
+    expect(screen.getByLabelText('Entry Wild Card slots')).toHaveValue(1)
     fireEvent.click(screen.getByRole('button', { name: 'Build Entry Field from valid submissions' }))
     await waitFor(() => expect(api.createTournamentEntryFieldFromValidSubmissions).toHaveBeenCalledWith(
       'run-a', 'branch-a', 'E1', {

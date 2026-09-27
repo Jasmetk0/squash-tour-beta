@@ -1201,6 +1201,9 @@ export type CanonicalTournamentPreparationState = {
   branch_id: string
   event_id: string
   entry_capacity_suggestion?: CanonicalEntryCapacitySuggestion | null
+  valid_submission_count?: number
+  valid_main_submission_count?: number
+  valid_qualification_submission_count?: number
   phase:
     | 'ranking_snapshot_required'
     | 'entry_field_required'

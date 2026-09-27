@@ -1026,6 +1026,7 @@ describe('PlannedEventDetailPage', () => {
     api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
       schema_version: 'canonical_tournament_preparation_state.v1', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
       phase: 'entry_field_required', next_required_action: 'build_entry_field', blockers: ['tournament_entry_field_required'],
+      valid_submission_count: 7, valid_main_submission_count: 3, valid_qualification_submission_count: 4,
       entry_capacity_suggestion: {
         schema_version: 'canonical_entry_capacity_suggestion.v1',
         main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0,
@@ -1037,6 +1038,10 @@ describe('PlannedEventDetailPage', () => {
     })
     renderAt('/runs/run-a/calendar/E1')
     expect(await screen.findByText(/Prefilled from frozen Run-owned Calendar Package calendar-2000-2001 v1/i)).toBeInTheDocument()
+    expect(screen.getByText('Valid submissions')).toBeInTheDocument()
+    expect(screen.getAllByText('7').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('4').length).toBeGreaterThan(0)
     await waitFor(() => expect(screen.getByLabelText('Entry Main Draw capacity')).toHaveValue(8))
     expect(screen.getByLabelText('Entry Qualification Draw capacity')).toHaveValue(4)
     expect(screen.getByLabelText('Entry qualifier spots')).toHaveValue(2)

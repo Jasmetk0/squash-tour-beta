@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Active implementation — canonical valid-submission readiness
+
+Tournament Preparation now exposes the already-persisted valid application evidence that
+feeds initial Entry Field construction.
+
+- counts come only from append-only Run/Branch/Event Tournament Application Submission authority;
+- preparation reports total, Main-window and Qualification-window valid submissions;
+- Planned Event shows the counts before the Entry Field command and calls out the zero-evidence case;
+- this is read-only readiness information: no new blocker, eligibility rule, deadline rule or
+  automatic Entry Field mutation is introduced;
+- the existing `from-valid-submissions` command remains the sole field-construction mutation.
+
+**Next after this PR:** audit whether the preparation page can link directly to the existing
+Entry validation/review workflow when valid submissions are absent, without duplicating the
+Simulation Slot authority or inventing application eligibility policy.
+
 ## Active implementation — published Official Ranking selection for tournament authority
 
 Planned Event no longer asks Admin to type an arbitrary Ranking season/week when creating

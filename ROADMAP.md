@@ -82,8 +82,12 @@
     Admin explicitly select one for Tournament Ranking Snapshot adoption.
 23. ✅ Remove arbitrary season/week typing from Planned Event Ranking Snapshot adoption while
     preserving explicit Admin choice and excluding unpublished ranking candidates.
-24. Next: expose canonical valid-submission readiness before Entry Field creation so preparation
-    failures are visible before mutation.
+24. ✅ Expose canonical valid-submission counts (total/Main/Qualification) before Entry Field
+    creation using append-only Run-owned submission authority only.
+25. ✅ Show zero-submission readiness explicitly in Planned Event without inventing a new blocker
+    or changing the existing Entry Field command.
+26. Next: audit safe navigation from missing valid submissions to the existing Entry validation
+    workflow without duplicating Simulation Slot authority.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

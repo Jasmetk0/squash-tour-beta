@@ -99,6 +99,7 @@ class RankingRevisionState(FrozenInput):
             "ranking_revision_state.v5",
             "ranking_revision_state.v6",
             "ranking_revision_state.v7",
+            "ranking_revision_state.v8",
         } and self.authoritative_transition_state is not None:
             raise ValueError("Legacy ranking revision state cannot contain Week Transition state")
         if (

@@ -270,9 +270,9 @@ def test_finals_groups_format_and_topology_replay_from_race_seed_order(finals_da
         branch_id="branch",
         event_id="FINALS",
     )
-    assert state.phase == "group_match_execution_adapter_required"
+    assert state.phase == "group_match_execution_ready"
     assert state.next_required_action == "none"
-    assert state.blockers == ("group_match_execution_adapter_required",)
+    assert state.blockers == ()
     assert state.format_authority_ready is True
     assert state.format_kind == "groups"
     assert state.topology_ready is True
@@ -281,7 +281,7 @@ def test_finals_groups_format_and_topology_replay_from_race_seed_order(finals_da
     assert state.group_match_count == 6
     assert state.group_match_day_count == 3
     assert state.group_match_schedule_fingerprint == schedule.fingerprint
-    assert state.ready_for_match_schedule is False
+    assert state.ready_for_match_schedule is True
 
 
 @pytest.mark.pr_critical

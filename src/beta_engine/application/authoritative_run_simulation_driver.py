@@ -10849,6 +10849,31 @@ class AuthoritativeRunSimulationDriver:
                     )
                     target.setdefault(package.event_id, []).append(match.match_id)
 
+            fixed_group_day: dict[str, int] = {}
+            for event, group_schedule in self._group_match_schedules_for_week(
+                session,
+                run_id=schedule.run_id,
+                branch_id=schedule.branch_id,
+                week=schedule.week,
+            ):
+                for match in group_schedule.matches:
+                    if match.match_id not in plans:
+                        continue
+                    if match.match_id in match_meta:
+                        raise ValueError(
+                            "Match Day schedule metadata contains duplicate match identity"
+                        )
+                    match_meta[match.match_id] = (
+                        event.event_id,
+                        "group",
+                        match.match_day_ordinal,
+                    )
+                    known_players[match.match_id] = (
+                        match.top_player_id,
+                        match.bottom_player_id,
+                    )
+                    fixed_group_day[match.match_id] = match.match_day_ordinal
+
             if set(match_meta) != set(plans):
                 raise ValueError(
                     "Match Day schedule metadata does not cover canonical match topology"
@@ -10874,6 +10899,13 @@ class AuthoritativeRunSimulationDriver:
                     )
                 assert slot.match_day_ordinal is not None
                 assert slot.match_order is not None
+                if (
+                    group_id in fixed_group_day
+                    and slot.match_day_ordinal != fixed_group_day[group_id]
+                ):
+                    raise ValueError(
+                        "global Week Schedule changed frozen group Match Day chronology"
+                    )
                 day_of[group_id] = slot.match_day_ordinal
                 order_by_day.setdefault(slot.match_day_ordinal, []).append(
                     (slot.match_order, slot.ordinal, group_id)

@@ -2,6 +2,12 @@
 
 from beta_engine.domain.finals.engine import FinalsEngine
 from beta_engine.domain.finals.race_configuration import WorldTourFinalsRaceConfiguration
+from beta_engine.domain.finals.participant_selection import (
+    WorldTourFinalsParticipantSelectionConfiguration,
+    WorldTourFinalsParticipantSelectionSnapshot,
+    WorldTourFinalsSelectedPlayer,
+    select_world_tour_finals_participants,
+)
 from beta_engine.domain.finals.race import (
     WorldTourFinalsRaceCountedResult,
     WorldTourFinalsRaceInput,
@@ -34,6 +40,10 @@ __all__ = [
     "FinalsQualificationResult",
     "FinalsQualifiedPlayer",
     "FinalsResult",
+    "WorldTourFinalsParticipantSelectionConfiguration",
+    "WorldTourFinalsParticipantSelectionSnapshot",
+    "WorldTourFinalsSelectedPlayer",
+    "select_world_tour_finals_participants",
     "WorldTourFinalsRaceConfiguration",
     "WorldTourFinalsRaceCountedResult",
     "WorldTourFinalsRaceInput",

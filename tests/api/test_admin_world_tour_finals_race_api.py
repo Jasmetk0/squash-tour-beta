@@ -78,7 +78,7 @@ def _install_calendar(session, *, run_id: str, branch_id: str) -> None:
             source_package_id="calendar-2000-2001",
             source_package_version=1,
             source_package_fingerprint=source_fingerprint,
-            source_entity_id="finals",
+            source_entity_id="FINALS",
             entity_kind="calendar.event.v1",
             entity_schema_version=1,
             scope="season_calendar",
@@ -103,7 +103,7 @@ def _install_calendar(session, *, run_id: str, branch_id: str) -> None:
         source_version=1,
         source_fingerprint=source_fingerprint,
         document_explicit_scope=("season_calendar",),
-        applied_entity_ids=("calendar.metadata", "event-1", "finals"),
+        applied_entity_ids=("calendar.metadata", "event-1", "FINALS"),
         provenance={"test": "finals-race-api"},
     )
     put_run_package_state(

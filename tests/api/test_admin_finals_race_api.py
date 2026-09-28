@@ -203,7 +203,7 @@ def test_admin_finals_race_requires_publication_then_persists_snapshot(tmp_path)
         assert configured["eligible_categories"] == ["DIAMOND"]
         assert configured["best_n_results"] == 2
 
-        status, race = _request("POST", base + "/snapshot", {})
+        status, race = _request("POST", base + "/snapshot")
         assert status == 201
         assert race["cutoff_ranking_week"] == cutoff_week.model_dump(mode="json")
         assert race["source_event_ids"] == []
@@ -212,9 +212,9 @@ def test_admin_finals_race_requires_publication_then_persists_snapshot(tmp_path)
             (2, "p2", 0),
         ]
 
-        status, replay = _request("POST", base + "/snapshot", {})
+        status, replay = _request("POST", base + "/snapshot")
         assert status == 201
-        assert replay["fingerprint"] if "fingerprint" in replay else race == race
+        assert replay == race
 
         status, inspected = _request("GET", base)
         assert status == 200

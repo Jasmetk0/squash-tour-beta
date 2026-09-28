@@ -1054,6 +1054,7 @@ def remap_coupled_player_slot_history(
         "group_rules_policies",
         "format_authorities",
         "topology_authorities",
+        "group_match_schedules",
         "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",

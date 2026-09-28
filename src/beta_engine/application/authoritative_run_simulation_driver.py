@@ -11521,7 +11521,33 @@ class AuthoritativeRunSimulationDriver:
             event = next(e for e in plan.match_events if e.group_id == group_id)
         except StopIteration as exc:
             raise ValueError("target match group is not planned in the current slot") from exc
-        package = next(p for p in packages if p.event_id == event.event_id)
+        package = next(
+            (p for p in packages if p.event_id == event.event_id),
+            None,
+        )
+        group_match = None
+        if package is None:
+            group_schedule = TournamentGroupMatchScheduleAuthorityStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event.event_id,
+            )
+            if group_schedule is None:
+                raise ValueError(
+                    "planned match has neither MatchPackage nor Group Match Schedule source"
+                )
+            group_match = next(
+                (
+                    match
+                    for match in group_schedule.matches
+                    if match.match_id == event.match_id
+                ),
+                None,
+            )
+            if group_match is None:
+                raise ValueError(
+                    "planned group match is absent from frozen Group Match Schedule"
+                )
         if event.participant_sources:
             players = tuple(
                 source.removeprefix("player:")
@@ -11559,12 +11585,36 @@ class AuthoritativeRunSimulationDriver:
             )
         if len(players) != 2:
             raise ValueError("supported reconstruction requires exactly two participants")
-        return slot, plan, event, package, players
+        effective_match_format = None
+        if group_match is not None:
+            if tuple(players) != (
+                group_match.top_player_id,
+                group_match.bottom_player_id,
+            ):
+                raise ValueError(
+                    "planned group participants differ from frozen Group Match Schedule"
+                )
+            effective_match_format = group_match.effective_match_format
+        return (
+            slot,
+            plan,
+            event,
+            event.event_id,
+            players,
+            effective_match_format,
+        )
 
     def _execute_group(
         self, session, command, packages, group_id, *, seed_override: int | None = None
     ):
-        slot, plan, event, package, players = self._group_execution_context(
+        (
+            slot,
+            plan,
+            event,
+            event_id,
+            players,
+            effective_match_format,
+        ) = self._group_execution_context(
             session, command, packages, group_id
         )
         authority_fp = self._authority_package(
@@ -11590,12 +11640,13 @@ class AuthoritativeRunSimulationDriver:
             week=command.expected_week,
             slot_id=slot.slot_id,
             group_id=group_id,
-            event_id=package.event_id,
+            event_id=event_id,
             match_id=event.match_id,
             player_a_id=players[0],
             player_b_id=players[1],
             seed=seed,
             expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+            effective_match_format=effective_match_format,
         )
 
     def _advance_or_close(self, session, command, packages, *, fault_at=None):

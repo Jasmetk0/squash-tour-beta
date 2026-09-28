@@ -8957,7 +8957,10 @@ class AuthoritativeRunSimulationDriver:
                 if (
                     item.calendar_event is None
                     or item.point_award_authority is None
-                    or item.draw_authority_fingerprint is None
+                    or (
+                        (item.draw_authority_fingerprint is None)
+                        == (item.group_match_schedule_fingerprint is None)
+                    )
                 ):
                     raise ValueError(
                         "canonical adopted tournament evidence is incomplete"
@@ -8971,10 +8974,15 @@ class AuthoritativeRunSimulationDriver:
                     "point_award_authority": (
                         item.point_award_authority.model_dump(mode="json")
                     ),
-                    "draw_authority_fingerprint": (
-                        item.draw_authority_fingerprint
-                    ),
                 }
+                if item.draw_authority_fingerprint is not None:
+                    body["draw_authority_fingerprint"] = (
+                        item.draw_authority_fingerprint
+                    )
+                else:
+                    body["group_match_schedule_fingerprint"] = (
+                        item.group_match_schedule_fingerprint
+                    )
             bodies.append(body)
         return fingerprint(
             {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}

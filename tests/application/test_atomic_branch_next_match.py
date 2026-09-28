@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import pytest
+
 from beta_engine.application.api_services import SimulationApiService
 from beta_engine.infrastructure.db import BranchSimulateNextMatchCommand, BranchSimulateNextMatchResult, DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
+from beta_engine.domain.run_packages import RunPackageState
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchSimulationCommandModel, BranchStateModel, RunBranchModel, RunContainerModel
+from beta_engine.infrastructure.db.run_package_state import put_run_package_state
 
 
 def _setup(tmp_path):
@@ -43,3 +47,56 @@ def test_branch_next_match_is_atomic_and_replay_is_journal_only(tmp_path):
     assert replay.new_head_checkpoint_id == result.new_head_checkpoint_id
     with repository._session_factory() as session:
         assert session.query(BranchCheckpointModel).filter_by(branch_id=branch_id).count() == 2
+
+
+@pytest.mark.pr_critical
+def test_package_backed_branch_does_not_read_legacy_entry_sidecars(tmp_path, monkeypatch):
+    repository, service, branch_id, head = _setup(tmp_path)
+    with repository._session_factory.begin() as session:
+        put_run_package_state(
+            session,
+            RunPackageState(run_id="source", branch_id=branch_id),
+        )
+
+    def poisoned(*args, **kwargs):
+        raise AssertionError("legacy Entry/WC/pre-draw sidecar must not be read")
+
+    monkeypatch.setattr(repository, "get_wildcard_assignments_for_run", poisoned)
+    monkeypatch.setattr(repository, "get_pre_draw_withdrawal_replacements_for_run", poisoned)
+    monkeypatch.setattr(repository, "get_late_replacements_for_run", poisoned)
+
+    result = service.simulate_next_match_on_branch_atomically(
+        BranchSimulateNextMatchCommand(
+            "source", branch_id, head, "package-fence-next-match", "ownership fence", True
+        )
+    )
+    assert isinstance(result, BranchSimulateNextMatchResult)
+
+
+@pytest.mark.pr_critical
+def test_non_package_branch_preserves_legacy_entry_sidecar_compatibility(tmp_path, monkeypatch):
+    repository, service, branch_id, head = _setup(tmp_path)
+    calls = {"wildcards": 0, "pre_draw": 0, "late": 0}
+
+    def wildcards(*, run_id):
+        calls["wildcards"] += 1
+        return {}
+
+    def pre_draw(*, run_id):
+        calls["pre_draw"] += 1
+        return {}
+
+    def late(*, run_id):
+        calls["late"] += 1
+        return {}
+
+    monkeypatch.setattr(repository, "get_wildcard_assignments_for_run", wildcards)
+    monkeypatch.setattr(repository, "get_pre_draw_withdrawal_replacements_for_run", pre_draw)
+    monkeypatch.setattr(repository, "get_late_replacements_for_run", late)
+
+    service.simulate_next_match_on_branch_atomically(
+        BranchSimulateNextMatchCommand(
+            "source", branch_id, head, "legacy-sidecar-next-match", "compatibility", True
+        )
+    )
+    assert calls == {"wildcards": 1, "pre_draw": 1, "late": 1}

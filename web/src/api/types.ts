@@ -5303,7 +5303,13 @@ export type EffectiveMatchTimingSnapshot = {
 export type EffectiveMatchFormatSnapshot = {
   schema_version: 'effective_match_format.v1'
   format: MatchFormat
-  source_scope: 'official_default' | 'tournament_edition_override' | 'phase_override' | 'round_override'
+  source_scope:
+    | 'official_default'
+    | 'tournament_edition_override'
+    | 'phase_override'
+    | 'round_override'
+    | 'tournament_group_rules_policy'
+    | 'tournament_group_edition_override'
   source_key: string
   snapshot_hash_algorithm: 'sha256'
   snapshot_hash: string

@@ -102,9 +102,11 @@
     Branches in current Admin UI while preserving historical non-Package and Finals behavior.
 33. ✅ Establish canonical Finals Race configuration/snapshot domain + immutable persistence
     with Master-v67 Best-N/result-profile/tie-token ordering over canonical tournament evidence.
-34. Next: add the explicit Admin/service command boundary that binds Finals Race configuration
-    to one published Official Ranking cutoff, Ranking Transition roster and Run-owned Calendar,
-    then persist the deterministic snapshot from canonical OwnedTournamentRankingSource history.
+34. ✅ Add the explicit Admin/service command boundary that binds Finals Race configuration
+    to one published Official Ranking cutoff, matching Ranking Transition roster/policy and
+    Run-owned Calendar, then persist the deterministic snapshot from canonical source history.
+35. Next: migrate Package-backed Finals qualification/seeding to the canonical Race snapshot;
+    preserve historical non-Package Finals compatibility and do not decide deferred Finals rules.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization
@@ -137,8 +139,10 @@
    preserving historical non-Package tools and separate Finals behavior.
 9. ✅ Add canonical World Tour Finals Race configuration/snapshot authority foundation without
    changing legacy Finals execution.
-10. Next: wire Package-backed Finals Race snapshot creation to published ranking cutoff +
-    Run-owned Calendar/tournament authorities before migrating Finals qualification consumers.
+10. ✅ Wire Package-backed Finals Race snapshot creation to published Ranking cutoff +
+    matching Ranking Transition + Run-owned Calendar/tournament authorities.
+11. Next: migrate Package-backed Finals qualification/seeding away from legacy RaceSnapshot
+    onto canonical FinalsRaceSnapshot without changing deferred Finals format/capacity rules.
 
 
 ## Active pre-alpha sequence — strict Package ownership

@@ -9,6 +9,14 @@ from typing import Iterable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from beta_engine.application.calendar_package_run_adapter import (
+    CALENDAR_EVENT_ENTITY_KIND,
+    CalendarPackageRunAdapter,
+)
+from beta_engine.domain.run_packages import PackageType
+from beta_engine.domain.tournaments.models import CalendarEvent
+from beta_engine.infrastructure.db.run_package_state import get_run_package_state
+
 from beta_engine.domain.tournaments.format_authority import (
     TournamentFormatAuthority,
     TournamentFormatKind,
@@ -25,9 +33,6 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
 from beta_engine.infrastructure.db.tournament_group_rules_policy import (
     TournamentGroupRulesPolicyStore,
-)
-from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
-    TournamentRankingSnapshotAuthorityStore,
 )
 
 
@@ -53,21 +58,64 @@ class TournamentFormatAuthorityStore:
         if writing and (run.read_only or branch.read_only or branch.status == "archived"):
             raise ValueError("Tournament Format scope is not writable")
 
-    def _target_season_index(self, *, run_id: str, branch_id: str, event_id: str, field) -> int:
+    def _target_season_index(
+        self, *, run_id: str, branch_id: str, event_id: str, field
+    ) -> int:
         if field.source_kind == "finals_participant_selection":
             if field.finals_target_season_index is None:
                 raise ValueError("Finals Entry Field is missing target season identity")
             return field.finals_target_season_index
-        ranking = TournamentRankingSnapshotAuthorityStore(self.session).get(
+
+        state = get_run_package_state(
+            self.session,
             run_id=run_id,
             branch_id=branch_id,
-            event_id=event_id,
         )
-        if ranking is None:
+        if state is None:
             raise ValueError(
-                "Ranking/Application Format configuration requires Ranking Snapshot authority"
+                "Tournament Format requires Run-owned Calendar Edition season"
             )
-        return ranking.ranking_week.season_index
+        candidates = [
+            entity
+            for entity in state.entities
+            if entity.entity_kind == CALENDAR_EVENT_ENTITY_KIND
+            and entity.source_entity_id == event_id
+        ]
+        if len(candidates) != 1:
+            raise ValueError(
+                "Tournament Format requires one unambiguous Run-owned Calendar Edition"
+            )
+        entity = candidates[0]
+        event = CalendarEvent.model_validate(entity.payload)
+        package_id = CalendarPackageRunAdapter.package_id_for_season(str(event.season))
+        matching_versions = [
+            version
+            for version in state.package_versions
+            if version.package_id == package_id
+            and version.package_type == PackageType.CALENDAR
+            and version.source_version == entity.source_package_version
+            and version.source_fingerprint == entity.source_package_fingerprint
+        ]
+        if len(matching_versions) != 1:
+            raise ValueError(
+                "Tournament Format Calendar Edition provenance is inconsistent"
+            )
+        season_value = event.season
+        if isinstance(season_value, int):
+            start_year = season_value
+        else:
+            try:
+                start_year = int(str(season_value).split("/", 1)[0])
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    "Tournament Format Calendar Edition season is invalid"
+                ) from exc
+        target = start_year - 2000
+        if not 0 <= target <= 49:
+            raise ValueError(
+                "Tournament Format Calendar Edition season is outside Run timeline"
+            )
+        return target
 
     @staticmethod
     def _request(

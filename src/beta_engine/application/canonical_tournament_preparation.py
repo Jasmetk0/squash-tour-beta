@@ -49,6 +49,9 @@ from beta_engine.infrastructure.db.tournament_format_authority import (
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthorityStore,
+)
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
@@ -63,6 +66,7 @@ TournamentPreparationPhase = Literal[
     "tournament_format_required",
     "tournament_topology_required",
     "group_match_schedule_required",
+    "group_match_execution_adapter_required",
     "knockout_draw_adapter_required",
     "draw_generation_ready",
     "draw_ready",
@@ -192,6 +196,12 @@ class CanonicalTournamentPreparationState(BaseModel):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     topology_group_match_count: int = Field(default=0, ge=0)
+    group_match_schedule_ready: bool = False
+    group_match_schedule_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    group_match_count: int = Field(default=0, ge=0)
+    group_match_day_count: int = Field(default=0, ge=0)
 
     draw_ready: bool
     initial_draw_fingerprint: str | None = Field(
@@ -352,6 +362,7 @@ class CanonicalTournamentPreparationService:
 
         format_authority = None
         topology = None
+        group_match_schedule = None
         if field is not None:
             format_authority = TournamentFormatAuthorityStore(session).get(
                 run_id=run_id,
@@ -364,6 +375,17 @@ class CanonicalTournamentPreparationService:
                     branch_id=branch_id,
                     event_id=event_id,
                 )
+                if (
+                    topology is not None
+                    and format_authority.format_kind in {"groups", "groups_knockout"}
+                ):
+                    group_match_schedule = (
+                        TournamentGroupMatchScheduleAuthorityStore(session).get(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            event_id=event_id,
+                        )
+                    )
 
         draw_input = None
         if field is not None:
@@ -433,10 +455,19 @@ class CanonicalTournamentPreparationService:
             format_authority is not None
             and format_authority.format_kind in {"groups", "groups_knockout"}
             and topology is not None
+            and group_match_schedule is None
         ):
             phase = "group_match_schedule_required"
             next_action = "prepare_group_match_schedule"
             blockers.append("group_match_schedule_authority_required")
+        elif (
+            format_authority is not None
+            and format_authority.format_kind in {"groups", "groups_knockout"}
+            and group_match_schedule is not None
+        ):
+            phase = "group_match_execution_adapter_required"
+            next_action = "none"
+            blockers.append("group_match_execution_adapter_required")
         elif (
             finals_field
             and format_authority is not None
@@ -601,6 +632,22 @@ class CanonicalTournamentPreparationService:
             ),
             topology_group_match_count=(
                 len(topology.group_matches) if topology is not None else 0
+            ),
+            group_match_schedule_ready=group_match_schedule is not None,
+            group_match_schedule_fingerprint=(
+                group_match_schedule.fingerprint
+                if group_match_schedule is not None
+                else None
+            ),
+            group_match_count=(
+                len(group_match_schedule.matches)
+                if group_match_schedule is not None
+                else 0
+            ),
+            group_match_day_count=(
+                group_match_schedule.match_day_count
+                if group_match_schedule is not None
+                else 0
             ),
             draw_ready=draw_ready,
             initial_draw_fingerprint=(

@@ -8,6 +8,8 @@ from beta_engine.domain.finals import FinalsRaceConfiguration, FinalsRaceSnapsho
 from beta_engine.infrastructure.db.models import (
     FinalsRaceConfigurationModel,
     FinalsRaceSnapshotModel,
+    RunBranchModel,
+    RunContainerModel,
 )
 
 
@@ -19,9 +21,18 @@ class FinalsRaceAuthorityStore:
     def __init__(self, session: Session):
         self.session = session
 
+    def _scope(self, run_id: str, branch_id: str, *, writing: bool = False) -> None:
+        run = self.session.get(RunContainerModel, run_id)
+        branch = self.session.get(RunBranchModel, branch_id)
+        if run is None or branch is None or branch.run_id != run_id:
+            raise ValueError("Finals Race Run/Branch scope does not exist")
+        if writing and (run.read_only or branch.read_only or branch.status == "archived"):
+            raise ValueError("Finals Race scope is not writable")
+
     def get_configuration(
         self, *, run_id: str, branch_id: str, season_index: int
     ) -> FinalsRaceConfiguration | None:
+        self._scope(run_id, branch_id)
         row = self.session.get(
             FinalsRaceConfigurationModel,
             (run_id, branch_id, season_index),
@@ -48,6 +59,7 @@ class FinalsRaceAuthorityStore:
     def put_configuration(
         self, configuration: FinalsRaceConfiguration
     ) -> FinalsRaceConfiguration:
+        self._scope(configuration.run_id, configuration.branch_id, writing=True)
         existing = self.get_configuration(
             run_id=configuration.run_id,
             branch_id=configuration.branch_id,
@@ -75,6 +87,7 @@ class FinalsRaceAuthorityStore:
     def get_snapshot(
         self, *, run_id: str, branch_id: str, season_index: int
     ) -> FinalsRaceSnapshot | None:
+        self._scope(run_id, branch_id)
         row = self.session.get(
             FinalsRaceSnapshotModel,
             (run_id, branch_id, season_index),
@@ -101,6 +114,7 @@ class FinalsRaceAuthorityStore:
         return snapshot
 
     def put_snapshot(self, snapshot: FinalsRaceSnapshot) -> FinalsRaceSnapshot:
+        self._scope(snapshot.run_id, snapshot.branch_id, writing=True)
         configuration = self.get_configuration(
             run_id=snapshot.run_id,
             branch_id=snapshot.branch_id,

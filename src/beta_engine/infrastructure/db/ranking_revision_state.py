@@ -110,6 +110,7 @@ def capture_ranking_revision_state(
     ).history(
         run_id=run_id,
         branch_id=branch_id,
+        validate_dependencies=False,
     )
     has_season_transition_event = any(
         row["event_kind"] == "season_transition_completed"
@@ -316,7 +317,7 @@ def install_ranking_revision_state(
             tournament_rankings.append(authority)
         finals_races = WorldTourFinalsRaceSnapshotStore(session)
         for snapshot in state.world_tour_finals_race_snapshots:
-            finals_races.append(snapshot)
+            finals_races.append(snapshot, validate_dependencies=False)
         session.flush()
         installed = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
         if not ranking_revision_states_equivalent(installed, state):

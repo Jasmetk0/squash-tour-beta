@@ -2721,6 +2721,22 @@ def restore_saved_simulation_slots(
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_topology_authorities}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
+    if live_group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_group_match_schedules}):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2872,6 +2888,11 @@ def restore_saved_simulation_slots(
                 bool(live_topology_authorities)
                 or bool(expected is not None and "topology_authorities" in expected)
             ),
+            group_match_schedules=live_group_match_schedules,
+            include_group_match_schedules=(
+                bool(live_group_match_schedules)
+                or bool(expected is not None and "group_match_schedules" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -2912,6 +2933,7 @@ def restore_saved_simulation_slots(
         or live_group_rules_policies
         or live_format_authorities
         or live_topology_authorities
+        or live_group_match_schedules
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities
@@ -2921,6 +2943,12 @@ def restore_saved_simulation_slots(
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentGroupMatchScheduleAuthorityModel).where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(TournamentTopologyAuthorityModel).where(
             TournamentTopologyAuthorityModel.run_id == run_id,
@@ -3063,6 +3091,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentFormatAuthorityModel(**value))
     for value in (target or {}).get("topology_authorities", []):
         session.add(TournamentTopologyAuthorityModel(**value))
+    for value in (target or {}).get("group_match_schedules", []):
+        session.add(TournamentGroupMatchScheduleAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -3124,6 +3154,19 @@ def restore_saved_simulation_slots(
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({value["event_id"] for value in target_topologies}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_group_match_schedules = (target or {}).get(
+        "group_match_schedules", []
+    )
+    if target_group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_group_match_schedules}
+        ):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

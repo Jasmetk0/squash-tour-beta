@@ -1,5 +1,26 @@
 # Current implementation and next action
 
+## Active implementation — retire new legacy Branch simulation for Package-backed Runs
+
+The current Admin surface already has canonical authoritative Next Match / Next Round /
+Next Tournament / Next Week / Full Simulation commands. The older branch wrapper is now
+strictly historical compatibility for those actions.
+
+- if the exact Product Run/Branch owns RunPackageState, new legacy branch commands for
+  Next Match, Next Round, Next Week, Next Tournament and Full Season fail closed before
+  loading the legacy Season orchestrator;
+- historical non-Package Branches retain the old compatibility behavior;
+- a command already completed before Package adoption remains journal-replayable, so
+  idempotency/history is not invalidated retroactively;
+- World Tour Finals is intentionally excluded from this slice because it has separate
+  product semantics and remains outside this ownership cleanup;
+- canonical authoritative simulation remains the only new sporting execution path for
+  Package-backed Branches.
+
+**Next after this PR:** remove or disable the corresponding current Admin compatibility
+controls for Package-backed Branches, while keeping historical/non-Package tooling where
+it is still intentionally supported.
+
 ## Active implementation — Package fence for legacy Entry/WC/pre-draw sidecars
 
 The legacy Branch simulation wrapper remains available as compatibility, but Package-backed

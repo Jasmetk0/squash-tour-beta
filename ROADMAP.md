@@ -106,9 +106,15 @@
     Run-owned Calendar plus an explicit published Official Ranking/Ranking Transition cutoff,
     project canonical tournament race-point awards into the single Race kernel, persist the
     snapshot and expose scoped Admin configure/build/inspect commands.
-35. Next: migrate Finals participant selection and seeding to the persisted canonical Race
-    snapshot together with the decided capacity/direct-entry authority; preserve legacy
-    historical compatibility without using legacy Race ordering as a new fallback.
+35. ✅ Migrate Finals participant selection and entry seeding to the persisted canonical
+    Race snapshot: derive capacity from the frozen Finals Edition, freeze explicit direct-
+    entry winner events, deduplicate repeat winners, fill remaining places by Race and seed
+    every selected participant only by Race order; persist and expose the immutable Admin
+    authority without legacy Race fallback.
+36. Next: feed the selected Finals field into the general canonical Tournament Preparation /
+    Entry Field path and then the configured general tournament format; keep withdrawal /
+    replacement offers separate so unresolved reserve workflow and legacy fixed-eight/group
+    assumptions are not reintroduced.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

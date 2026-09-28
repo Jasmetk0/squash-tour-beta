@@ -20,6 +20,9 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
 )
+from beta_engine.infrastructure.db.finals_participant_selection import (
+    WorldTourFinalsParticipantSelectionStore,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
 )
@@ -133,7 +136,7 @@ class TournamentEntryFieldStore:
             field.event_id,
             field.fingerprint,
             field.base_field_fingerprint,
-            field.tournament_ranking_authority_fingerprint,
+            field.source_authority_fingerprint,
             field.applications_fingerprint,
             applications_fp,
         ) != (
@@ -155,7 +158,8 @@ class TournamentEntryFieldStore:
         rows: tuple[TournamentEntryFieldVersionModel, ...]
         | list[TournamentEntryFieldVersionModel],
         *,
-        authority,
+        authority=None,
+        finals_selection=None,
     ) -> tuple[TournamentEntryField, ...]:
         ordered = tuple(sorted(rows, key=lambda row: row.sequence))
         if not ordered:
@@ -167,70 +171,113 @@ class TournamentEntryFieldStore:
         previous: TournamentEntryField | None = None
         for row in ordered:
             field, applications = cls._load_row(row)
-            if (row.run_id, row.branch_id, row.event_id) != (
-                authority.run_id,
-                authority.branch_id,
-                authority.event_id,
-            ):
-                raise ValueError(
-                    "Tournament Entry Field row scope differs from ranking authority"
-                )
-            if row.sequence == 1:
-                if field.mode != "initial" or previous is not None:
+            if field.source_kind == "ranking_applications":
+                if authority is None or finals_selection is not None:
                     raise ValueError(
-                        "First Tournament Entry Field version must be initial"
+                        "Tournament Entry Field ranking source authority is missing"
                     )
-                rebuilt = TournamentEntryFieldResolver.build_initial(
-                    authority=authority,
-                    applications=applications,
-                    capacity=field.capacity,
-                )
-                expected_request_fingerprint = _request_fingerprint(
-                    {
-                        "mode": "initial",
-                        "run_id": authority.run_id,
-                        "branch_id": authority.branch_id,
-                        "event_id": authority.event_id,
-                        "authority_fingerprint": authority.fingerprint,
-                        "applications_fingerprint": field.applications_fingerprint,
-                        "capacity": field.capacity.model_dump(mode="json"),
-                    }
-                )
+                if (row.run_id, row.branch_id, row.event_id) != (
+                    authority.run_id,
+                    authority.branch_id,
+                    authority.event_id,
+                ):
+                    raise ValueError(
+                        "Tournament Entry Field row scope differs from ranking authority"
+                    )
+                if row.sequence == 1:
+                    if field.mode != "initial" or previous is not None:
+                        raise ValueError(
+                            "First Tournament Entry Field version must be initial"
+                        )
+                    rebuilt = TournamentEntryFieldResolver.build_initial(
+                        authority=authority,
+                        applications=applications,
+                        capacity=field.capacity,
+                    )
+                    expected_request_fingerprint = _request_fingerprint(
+                        {
+                            "mode": "initial",
+                            "run_id": authority.run_id,
+                            "branch_id": authority.branch_id,
+                            "event_id": authority.event_id,
+                            "authority_fingerprint": authority.fingerprint,
+                            "applications_fingerprint": field.applications_fingerprint,
+                            "capacity": field.capacity.model_dump(mode="json"),
+                        }
+                    )
+                else:
+                    if previous is None or field.mode != "pre_draw_repair":
+                        raise ValueError(
+                            "Later Tournament Entry Field versions must be pre-draw repairs"
+                        )
+                    if field.base_field_fingerprint != previous.fingerprint:
+                        raise ValueError(
+                            "Tournament Entry Field predecessor fingerprint is corrupt"
+                        )
+                    newly_withdrawn = tuple(
+                        sorted(
+                            set(field.withdrawn_player_ids)
+                            - set(previous.withdrawn_player_ids)
+                        )
+                    )
+                    if not newly_withdrawn:
+                        raise ValueError(
+                            "Persisted Tournament Entry Field repair has no new withdrawal"
+                        )
+                    rebuilt = TournamentEntryFieldResolver.repair_pre_draw(
+                        authority=authority,
+                        applications=applications,
+                        previous=previous,
+                        withdrawn_player_ids=newly_withdrawn,
+                    )
+                    expected_request_fingerprint = _request_fingerprint(
+                        {
+                            "mode": "pre_draw_repair",
+                            "run_id": authority.run_id,
+                            "branch_id": authority.branch_id,
+                            "event_id": authority.event_id,
+                            "authority_fingerprint": authority.fingerprint,
+                            "applications_fingerprint": field.applications_fingerprint,
+                            "predecessor_fingerprint": previous.fingerprint,
+                            "withdrawn_player_ids": newly_withdrawn,
+                        }
+                    )
             else:
-                if previous is None or field.mode != "pre_draw_repair":
+                if authority is not None or finals_selection is None:
                     raise ValueError(
-                        "Later Tournament Entry Field versions must be pre-draw repairs"
+                        "Finals Tournament Entry Field selection authority is missing"
                     )
-                if field.base_field_fingerprint != previous.fingerprint:
+                if row.sequence != 1 or previous is not None or len(ordered) != 1:
                     raise ValueError(
-                        "Tournament Entry Field predecessor fingerprint is corrupt"
+                        "Finals participant Entry Field cannot use generic pre-draw repair history"
                     )
-                newly_withdrawn = tuple(
-                    sorted(
-                        set(field.withdrawn_player_ids)
-                        - set(previous.withdrawn_player_ids)
-                    )
-                )
-                if not newly_withdrawn:
+                if applications:
                     raise ValueError(
-                        "Persisted Tournament Entry Field repair has no new withdrawal"
+                        "Finals participant Entry Field cannot contain application evidence"
                     )
-                rebuilt = TournamentEntryFieldResolver.repair_pre_draw(
-                    authority=authority,
-                    applications=applications,
-                    previous=previous,
-                    withdrawn_player_ids=newly_withdrawn,
+                if (row.run_id, row.branch_id, row.event_id) != (
+                    finals_selection.run_id,
+                    finals_selection.branch_id,
+                    finals_selection.finals_event_id,
+                ):
+                    raise ValueError(
+                        "Finals Tournament Entry Field scope differs from participant selection"
+                    )
+                if field.finals_target_season_index != finals_selection.target_season_index:
+                    raise ValueError(
+                        "Finals Tournament Entry Field season differs from participant selection"
+                    )
+                rebuilt = TournamentEntryFieldResolver.build_from_finals_participant_selection(
+                    selection=finals_selection,
                 )
                 expected_request_fingerprint = _request_fingerprint(
                     {
-                        "mode": "pre_draw_repair",
-                        "run_id": authority.run_id,
-                        "branch_id": authority.branch_id,
-                        "event_id": authority.event_id,
-                        "authority_fingerprint": authority.fingerprint,
-                        "applications_fingerprint": field.applications_fingerprint,
-                        "predecessor_fingerprint": previous.fingerprint,
-                        "withdrawn_player_ids": newly_withdrawn,
+                        "mode": "initial_finals_participant_selection",
+                        "run_id": finals_selection.run_id,
+                        "branch_id": finals_selection.branch_id,
+                        "event_id": finals_selection.finals_event_id,
+                        "target_season_index": finals_selection.target_season_index,
+                        "selection_fingerprint": finals_selection.fingerprint,
                     }
                 )
             if rebuilt != field:
@@ -254,14 +301,29 @@ class TournamentEntryFieldStore:
         rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if not rows:
             return ()
-        authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
-        if authority is None:
-            raise ValueError(
-                "Tournament entry field references missing Tournament Ranking Snapshot authority"
+        first = TournamentEntryField.model_validate_json(rows[0].payload_json)
+        if first.source_kind == "ranking_applications":
+            authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
             )
-        return self.validate_rows(rows, authority=authority)
+            if authority is None:
+                raise ValueError(
+                    "Tournament entry field references missing Tournament Ranking Snapshot authority"
+                )
+            return self.validate_rows(rows, authority=authority)
+
+        if first.finals_target_season_index is None:
+            raise ValueError("Finals Tournament Entry Field is missing season identity")
+        selection = WorldTourFinalsParticipantSelectionStore(self.session).get_snapshot(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_season_index=first.finals_target_season_index,
+        )
+        if selection is None:
+            raise ValueError(
+                "Finals Tournament Entry Field references missing participant-selection snapshot"
+            )
+        return self.validate_rows(rows, finals_selection=selection)
 
     def latest(
         self, *, run_id: str, branch_id: str, event_id: str
@@ -301,6 +363,77 @@ class TournamentEntryFieldStore:
             capacity=capacity,
             command_id=command_id,
         )
+
+    def stage_initial_from_finals_participant_selection(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        target_season_index: int,
+        command_id: str,
+    ) -> TournamentEntryField:
+        """Materialize a frozen Finals selected field into shared Tournament Entry authority."""
+
+        self._scope(run_id, branch_id, writing=True)
+        selection = WorldTourFinalsParticipantSelectionStore(self.session).get_snapshot(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_season_index=target_season_index,
+        )
+        if selection is None:
+            raise ValueError(
+                "Finals Entry Field requires persisted participant-selection snapshot"
+            )
+        if selection.finals_event_id != event_id:
+            raise ValueError(
+                "Finals participant-selection snapshot belongs to another Tournament Edition"
+            )
+
+        field = TournamentEntryFieldResolver.build_from_finals_participant_selection(
+            selection=selection
+        )
+        request_fp = _request_fingerprint(
+            {
+                "mode": "initial_finals_participant_selection",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "target_season_index": target_season_index,
+                "selection_fingerprint": selection.fingerprint,
+            }
+        )
+        retry = self._command_row(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=command_id,
+        )
+        if retry is not None:
+            stored, frozen_apps = self._load_row(retry)
+            if (
+                retry.event_id != event_id
+                or retry.request_fingerprint != request_fp
+                or frozen_apps
+                or stored != field
+            ):
+                raise TournamentEntryFieldConflict(
+                    "Tournament entry field command ID already has a different request"
+                )
+            return stored
+
+        if self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id):
+            raise TournamentEntryFieldConflict(
+                "Tournament entry field already exists for this event"
+            )
+
+        self._append(
+            field=field,
+            applications=(),
+            command_id=command_id,
+            request_fingerprint=request_fp,
+            sequence=1,
+        )
+        return field
 
     def stage_initial(
         self,
@@ -391,6 +524,12 @@ class TournamentEntryFieldStore:
                 "Pre-draw repair requires an initial Tournament Entry Field"
             )
 
+        latest_source, _ = self._load_row(rows[-1])
+        if latest_source.source_kind == "finals_participant_selection":
+            raise TournamentEntryFieldConflict(
+                "Finals withdrawal/replacement must use the separate Finals replacement authority"
+            )
+
         retry = self._command_row(
             run_id=run_id,
             branch_id=branch_id,
@@ -426,6 +565,17 @@ class TournamentEntryFieldStore:
         command_id: str,
     ) -> TournamentEntryField:
         self._scope(run_id, branch_id, writing=True)
+        existing_rows = self._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if existing_rows:
+            latest_source, _ = self._load_row(existing_rows[-1])
+            if latest_source.source_kind == "finals_participant_selection":
+                raise TournamentEntryFieldConflict(
+                    "Finals withdrawal/replacement must use the separate Finals replacement authority"
+                )
         draw_committed = self.session.get(
             TournamentDrawInputAuthorityModel,
             (run_id, branch_id, event_id),
@@ -570,9 +720,7 @@ class TournamentEntryFieldStore:
                 request_fingerprint=request_fingerprint,
                 field_fingerprint=field.fingerprint,
                 predecessor_fingerprint=field.base_field_fingerprint,
-                ranking_authority_fingerprint=(
-                    field.tournament_ranking_authority_fingerprint
-                ),
+                ranking_authority_fingerprint=field.source_authority_fingerprint,
                 applications_fingerprint=field.applications_fingerprint,
                 applications_json=_applications_json(applications),
                 payload_json=field.model_dump_json(),

@@ -151,6 +151,53 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
         assert preparation["blockers"] == ["group_match_schedule_authority_required"]
         assert preparation["topology_ready"] is True
         assert preparation["topology_group_match_count"] == 6
+        assert preparation["group_match_schedule_ready"] is False
+        assert preparation["ready_for_match_schedule"] is False
+
+        status, schedule = _request(
+            "POST",
+            tournament + "/format/group-match-schedule/generate",
+            {"command_id": "group-match-schedule"},
+        )
+        assert status == 201
+        assert schedule["group_count"] == 2
+        assert schedule["group_size"] == 3
+        assert schedule["match_day_count"] == 3
+        assert len(schedule["matches"]) == 6
+        assert all(
+            match["effective_match_format"]["format"]["best_of"] == 5
+            for match in schedule["matches"]
+        )
+
+        for day in (1, 2, 3):
+            players = []
+            for match in schedule["matches"]:
+                if match["match_day_ordinal"] != day:
+                    continue
+                players.extend(
+                    (match["top_player_id"], match["bottom_player_id"])
+                )
+            assert len(players) == len(set(players))
+
+        status, replay = _request(
+            "GET",
+            tournament + "/format/group-match-schedule",
+        )
+        assert status == 200
+        assert replay == schedule
+
+        status, preparation = _request("GET", tournament + "/preparation")
+        assert status == 200
+        assert preparation["phase"] == "group_match_execution_adapter_required"
+        assert preparation["next_required_action"] == "none"
+        assert preparation["blockers"] == ["group_match_execution_adapter_required"]
+        assert preparation["group_match_schedule_ready"] is True
+        assert preparation["group_match_count"] == 6
+        assert preparation["group_match_day_count"] == 3
+        assert (
+            preparation["group_match_schedule_fingerprint"]
+            == schedule["fingerprint"]
+        )
         assert preparation["ready_for_match_schedule"] is False
 
         status, effective = _request(

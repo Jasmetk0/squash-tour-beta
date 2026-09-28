@@ -1,39 +1,39 @@
 # Current implementation and next action
 
-## Active implementation — canonical World Tour Finals Race season authority
+## Active implementation — canonical World Tour Finals participant selection
 
-The independent Race calculation kernel now has the Master-v68 upstream authority it
-requires before a snapshot can become product history.
+The stored World Tour Finals Race authority now feeds an independent immutable participant-
+selection authority instead of the legacy fixed-eight Finals qualification path.
 
-- one immutable configuration is stored per exact Run/Branch/season;
-- configuration freezes the Finals Edition identity, eligible Calendar categories,
-  configured Best-N, Run-owned Calendar fingerprint and one explicit published Official
-  Ranking cutoff;
-- the cutoff is accepted only when the persisted Official Ranking and the exact Ranking
-  Transition authority agree on scope, week, fingerprint and policy;
-- the Official Ranking rows are not reused as Race eligibility or order: the frozen
-  Ranking Transition roster supplies player identities/tie tokens and the publication
-  remains only the configured time boundary;
-- canonical Run-owned tournament sources are filtered by season, Calendar category and
-  first publication at/before the cutoff; an eligible source must carry canonical
-  Tournament Result and Point Award authorities;
-- the projection passes only per-player `race_points_awarded` evidence into the existing
-  `calculate_world_tour_finals_race` kernel, so no second Race ordering implementation
-  exists in the application/persistence layers;
-- one immutable Race snapshot is persisted per exact Run/Branch/season with exact
-  idempotent retry and conflicting replacements rejected;
-- Admin can inspect the authority, explicitly create the season configuration and build
-  the snapshot through the scoped `/admin/runs/{run}/branches/{branch}/finals-race`
-  boundary.
+- participant capacity is derived from the frozen Run-owned Finals Tournament Edition;
+  no global/default eight-player capacity is imposed by the canonical path;
+- Admin explicitly freezes the selected tournament event IDs whose winners receive direct
+  entry, and the possible distinct direct entries must remain strictly below Finals
+  capacity so at least one Race place always exists;
+- each configured direct-entry event must exist in the same frozen season Calendar,
+  precede the Finals Edition, and resolve to exactly one canonical Tournament Result
+  authority known no later than the stored Race cutoff;
+- one player can consume only one Finals place even after multiple selected direct-entry
+  wins; those source wins remain attached as provenance and no unused berth transfers to
+  a finalist or another player;
+- remaining places are filled strictly in the immutable Race order;
+- every selected player's entry seed is assigned only from the final Race order among the
+  selected field, so a direct entry never improves seeding;
+- configuration and selected field are each immutable per exact Run/Branch/season and
+  fingerprint-bound to the Race snapshot and frozen Calendar;
+- Admin can inspect, configure and build this authority through the scoped
+  `/admin/runs/{run}/branches/{branch}/finals-participants` boundary.
 
-Legacy Finals qualification/simulation and Viewer readers are deliberately unchanged.
-This slice does not decide capacity, direct-berth selection, reserve count, withdrawal
-penalties or tournament format details beyond the already-decided Race inputs.
+The current direct-entry resolver intentionally has no legacy-result fallback: a selected
+event without canonical result authority fails closed. Legacy `FinalsEngine` simulation,
+withdrawal/replacement workflow, group/bracket creation and Viewer consumers remain
+unchanged by this slice.
 
-**Next after this PR:** migrate Finals participant selection/seeding only through the
-persisted canonical Race snapshot together with the separately decided capacity/direct-
-entry authority; do not fall back to legacy Race ordering or silently invent unresolved
-replacement mechanics.
+**Next after this PR:** feed the persisted participant-selection snapshot into the general
+canonical Tournament Preparation / Entry Field path for the Finals Edition, preserving
+Race-only initial seeding and the configured general tournament format. Handle withdrawal
+offers/replacements as a separate authority rather than reviving the legacy reserve-count
+or fixed-group assumptions.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

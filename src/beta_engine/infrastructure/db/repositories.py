@@ -131,6 +131,9 @@ from beta_engine.infrastructure.db.ranking_fork_remap import (
 from beta_engine.infrastructure.db.ranking_revision_state import (
     install_ranking_revision_state,
 )
+from beta_engine.infrastructure.db.world_tour_finals_race import (
+    WorldTourFinalsRaceSnapshotStore,
+)
 from beta_engine.infrastructure.db.saved_revision_season_closure import (
     SEASON_CLOSURE_COMPONENT_KEY,
     load_saved_revision_season_closure,
@@ -4187,23 +4190,6 @@ class SimulationPersistenceRepository:
                         "generated restore identity is already in use"
                     )
 
-                # Package state is foundational evidence for ranking-owned
-                # authorities such as the World Tour Finals Race Calendar boundary.
-                # Restore it first inside the same atomic writer transaction.
-                if (
-                    RUN_PACKAGE_COMPONENT_KEY in current_content
-                    or RUN_PACKAGE_COMPONENT_KEY in target_content
-                ):
-                    try:
-                        restore_saved_run_package_state(
-                            session, current_payload=state.saved_revision.payload,
-                            target_payload=target_revision.payload, run_id=run_id,
-                            branch_id=branch_id,
-                        )
-                    except ValueError as exc:
-                        raise SavedRevisionRestoreUnsupportedError(
-                            f"Cannot restore Run Package state: {exc}"
-                        ) from exc
                 if (
                     RANKING_COMPONENT_KEY in current_content
                     or RANKING_COMPONENT_KEY in target_content
@@ -4237,6 +4223,33 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore initial world: {exc}"
                         ) from exc
+                if (
+                    RUN_PACKAGE_COMPONENT_KEY in current_content
+                    or RUN_PACKAGE_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_run_package_state(
+                            session, current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload, run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore Run Package state: {exc}"
+                        ) from exc
+                # Ranking v8 keeps the Race snapshot inside ranking history while its
+                # eligible-event boundary belongs to the separate Run Package component.
+                # Validate that cross-component edge only after both target components
+                # have been staged inside this same writer transaction.
+                try:
+                    WorldTourFinalsRaceSnapshotStore(session).history(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                    )
+                except ValueError as exc:
+                    raise SavedRevisionRestoreUnsupportedError(
+                        f"Cannot validate restored World Tour Finals Race: {exc}"
+                    ) from exc
                 if (
                     PLAYER_LIFECYCLE_COMPONENT_KEY in current_content
                     or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content

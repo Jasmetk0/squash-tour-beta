@@ -98,6 +98,25 @@ class TournamentGroupMatchScheduleGenerateRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
+class TournamentGroupMatchScheduleResponse(
+    TournamentGroupMatchScheduleAuthority
+):
+    """Admin projection exposing immutable Match Schedule identity."""
+
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentGroupMatchScheduleAuthority
+    ) -> "TournamentGroupMatchScheduleResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="json"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
 @router.get(
     "/admin/runs/{run_id}/branches/{branch_id}/tournament-group-rules",
     response_model=TournamentGroupRulesState,
@@ -289,14 +308,14 @@ def generate_topology(
 
 @router.get(
     "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/format/group-match-schedule",
-    response_model=TournamentGroupMatchScheduleAuthority,
+    response_model=TournamentGroupMatchScheduleResponse,
 )
 def inspect_group_match_schedule(
     run_id: str,
     branch_id: str,
     event_id: str,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
-) -> TournamentGroupMatchScheduleAuthority:
+) -> TournamentGroupMatchScheduleResponse:
     try:
         with runtime.repository._session_factory() as session:
             value = TournamentGroupMatchScheduleAuthorityStore(session).get(
@@ -309,7 +328,7 @@ def inspect_group_match_schedule(
                     status_code=404,
                     detail="Tournament Group Match Schedule authority not found",
                 )
-            return value
+            return TournamentGroupMatchScheduleResponse.from_authority(value)
     except HTTPException:
         raise
     except ValueError as exc:
@@ -324,7 +343,7 @@ def inspect_group_match_schedule(
 
 @router.post(
     "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/format/group-match-schedule/generate",
-    response_model=TournamentGroupMatchScheduleAuthority,
+    response_model=TournamentGroupMatchScheduleResponse,
     status_code=201,
 )
 def generate_group_match_schedule(
@@ -333,15 +352,16 @@ def generate_group_match_schedule(
     event_id: str,
     payload: TournamentGroupMatchScheduleGenerateRequest,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
-) -> TournamentGroupMatchScheduleAuthority:
+) -> TournamentGroupMatchScheduleResponse:
     try:
         with runtime.repository._session_factory.begin() as session:
-            return TournamentGroupMatchScheduleAuthorityStore(session).generate(
+            authority = TournamentGroupMatchScheduleAuthorityStore(session).generate(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
                 command_id=payload.command_id,
             )
+            return TournamentGroupMatchScheduleResponse.from_authority(authority)
     except (TournamentGroupMatchScheduleAuthorityConflict, ValueError) as exc:
         raise HTTPException(
             status_code=409,

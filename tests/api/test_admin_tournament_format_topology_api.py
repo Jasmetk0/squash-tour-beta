@@ -196,7 +196,7 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
         assert preparation["group_match_day_count"] == 3
         assert (
             preparation["group_match_schedule_fingerprint"]
-            == schedule["fingerprint"]
+            == schedule["authority_fingerprint"]
         )
         assert preparation["ready_for_match_schedule"] is False
 

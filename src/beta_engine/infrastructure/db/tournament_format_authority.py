@@ -87,7 +87,11 @@ class TournamentFormatAuthorityStore:
             )
         entity = candidates[0]
         event = CalendarEvent.model_validate(entity.payload)
+        if event.event_id != event_id:
+            raise ValueError("Tournament Format Calendar event identity mismatch")
         package_id = CalendarPackageRunAdapter.package_id_for_season(str(event.season))
+        if entity.source_package_id != package_id:
+            raise ValueError("Tournament Format Calendar Package identity mismatch")
         matching_versions = [
             version
             for version in state.package_versions

@@ -131,7 +131,6 @@ def capture_ranking_revision_state(
                     else "ranking_revision_state.v4"
                 )
             )
-        )
         ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),

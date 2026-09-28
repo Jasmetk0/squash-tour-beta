@@ -1,5 +1,6 @@
 """Projection from canonical Run-owned evidence into the single Finals Race kernel."""
 
+import hashlib
 from types import SimpleNamespace
 
 import pytest
@@ -174,9 +175,9 @@ def source(
                 SimpleNamespace(
                     player_id=player_id,
                     race_points_awarded=value,
-                    award_fingerprint=fp(
-                        chr(ord(marker) + index + 1)
-                    ),
+                    award_fingerprint=hashlib.sha256(
+                        f"{edition_id}:{player_id}".encode()
+                    ).hexdigest(),
                 )
                 for index, (player_id, value) in enumerate(sorted(points.items()))
             ),

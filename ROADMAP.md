@@ -111,10 +111,14 @@
     entry winner events, deduplicate repeat winners, fill remaining places by Race and seed
     every selected participant only by Race order; persist and expose the immutable Admin
     authority without legacy Race fallback.
-36. Next: feed the selected Finals field into the general canonical Tournament Preparation /
-    Entry Field path and then the configured general tournament format; keep withdrawal /
-    replacement offers separate so unresolved reserve workflow and legacy fixed-eight/group
-    assumptions are not reintroduced.
+36. ✅ Bridge the persisted Finals participant-selection snapshot into the shared canonical
+    Tournament Preparation / Entry Field authority without fabricating Official Ranking or
+    application evidence: support fixed non-bracket participant capacity, preserve Race seed
+    order, keep historical v1 fingerprints stable, block generic withdrawal repair and stop
+    Finals preparation before classic Draw Input at an explicit format-authority blocker.
+37. Next: add an immutable season-versioned Tournament Format authority for the decided
+    Pavouk / Skupiny / Skupiny + pavouk modes and make canonical Draw/Match topology consume
+    it; preserve Race input seeding for Finals and group-result crossing without Race reseeding.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

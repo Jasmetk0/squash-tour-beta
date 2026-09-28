@@ -94,8 +94,12 @@
     simulation sidecars as still reachable from current Admin compatibility controls.
 29. ✅ Fence Package-backed Branch simulation from legacy wildcard, pre-draw withdrawal and
     late-replacement sidecar reads while preserving historical non-Package compatibility.
-30. Next: audit the remaining current legacy branch-wrapper sporting inputs and fence only
-    inputs that can still override Package-owned Run/Branch truth.
+30. ✅ Audit the remaining legacy branch-wrapper inputs and confirm that canonical authoritative
+    simulation already owns Match/Round/Tournament/Week/Full Simulation for Package-backed Runs.
+31. ✅ Reject new legacy branch Match/Round/Week/Tournament/Full-Season commands for Package-backed
+    Branches while preserving historical non-Package compatibility and completed journal replay.
+32. Next: remove or disable the corresponding current Admin compatibility controls when the
+    selected Branch is Package-backed; do not touch separate Finals mechanics.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization
@@ -122,8 +126,10 @@
 5. Preserve legacy result adoption only for historical Runs with no Package state.
 6. ✅ Fence Package-backed legacy Branch simulation from repository WC/pre-draw/late-replacement
    sidecars; preserve these reads only for historical non-Package compatibility.
-7. Next audit: remaining legacy Branch-wrapper sporting inputs that can still override canonical
-   Package-owned truth.
+7. ✅ Stop new legacy Branch Match/Round/Week/Tournament/Full-Season execution entirely once
+   RunPackageState exists; canonical authoritative simulation is the Package-backed path.
+8. Next: align current Admin compatibility controls with that backend ownership fence while
+   preserving historical non-Package tools and separate Finals behavior.
 
 
 ## Active pre-alpha sequence — strict Package ownership

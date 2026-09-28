@@ -1,15 +1,20 @@
 """Persistence acceptance for Finals Tournament Format -> group topology."""
 
 import pytest
+from sqlalchemy import delete
 
 from beta_engine.application.canonical_tournament_preparation import (
     CanonicalTournamentPreparationService,
 )
 from beta_engine.domain.finals import (
     WorldTourFinalsParticipantSelectionConfiguration,
-    WorldTourFinalsParticipantSelectionSnapshot,
-    WorldTourFinalsSelectedPlayer,
+    WorldTourFinalsRaceConfiguration,
+    WorldTourFinalsRaceInput,
+    WorldTourFinalsRacePlayer,
+    calculate_world_tour_finals_race,
+    select_world_tour_finals_participants,
 )
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.format_authority import (
     TournamentGroupCrossingMatch,
     TournamentGroupCrossingSource,
@@ -23,10 +28,25 @@ from beta_engine.infrastructure.db.engine import (
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
 )
+from beta_engine.infrastructure.db.finals_race_authority import (
+    WorldTourFinalsRaceAuthorityStore,
+)
 from beta_engine.infrastructure.db.models import (
     Base,
     RunBranchModel,
     RunContainerModel,
+    TournamentEntryFieldVersionModel,
+    TournamentFormatAuthorityModel,
+    TournamentGroupRulesPolicyModel,
+    TournamentTopologyAuthorityModel,
+    WorldTourFinalsRaceConfigurationModel,
+    WorldTourFinalsRaceSnapshotModel,
+    WorldTourFinalsParticipantSelectionConfigurationModel,
+    WorldTourFinalsParticipantSelectionSnapshotModel,
+)
+from beta_engine.infrastructure.db.simulation_slot_state import (
+    capture_saved_simulation_slots,
+    restore_saved_simulation_slots,
 )
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
@@ -70,6 +90,41 @@ def finals_database(tmp_path):
         )
         session.flush()
 
+        race_config = WorldTourFinalsRaceConfiguration(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            finals_event_id="FINALS",
+            eligible_categories=("DIAMOND",),
+            best_n=2,
+            cutoff_week=RankingWeek(season_index=0, week=10),
+            cutoff_official_ranking_fingerprint=fp("a"),
+            cutoff_transition_fingerprint=fp("b"),
+            calendar_content_fingerprint=fp("c"),
+            adopted_by_command_id="race-config",
+        )
+        race = calculate_world_tour_finals_race(
+            WorldTourFinalsRaceInput(
+                run_id="run",
+                branch_id="branch",
+                target_season_index=0,
+                cutoff_week=race_config.cutoff_week,
+                cutoff_official_ranking_fingerprint=(
+                    race_config.cutoff_official_ranking_fingerprint
+                ),
+                eligibility_fingerprint=race_config.eligibility_fingerprint,
+                policy_id=race_config.policy_id,
+                best_n=race_config.best_n,
+                players=tuple(
+                    WorldTourFinalsRacePlayer(
+                        player_id=f"p{index}",
+                        tie_break_token=f"token-{index:02d}",
+                    )
+                    for index in range(1, 7)
+                ),
+                eligible_results=(),
+            )
+        )
         config = WorldTourFinalsParticipantSelectionConfiguration(
             run_id="run",
             branch_id="branch",
@@ -77,30 +132,18 @@ def finals_database(tmp_path):
             finals_event_id="FINALS",
             participant_capacity=6,
             direct_entry_event_ids=(),
-            race_snapshot_fingerprint=fp("a"),
-            calendar_content_fingerprint=fp("b"),
+            race_snapshot_fingerprint=race.fingerprint,
+            calendar_content_fingerprint=race_config.calendar_content_fingerprint,
             adopted_by_command_id="participants-config",
         )
-        selected = WorldTourFinalsParticipantSelectionSnapshot(
-            run_id="run",
-            branch_id="branch",
-            target_season_index=0,
-            finals_event_id="FINALS",
-            participant_capacity=6,
-            configuration_fingerprint=config.fingerprint,
-            race_snapshot_fingerprint=config.race_snapshot_fingerprint,
-            direct_entry_winner_event_ids=(),
-            participants=tuple(
-                WorldTourFinalsSelectedPlayer(
-                    player_id=f"p{index}",
-                    race_rank=index,
-                    race_points=1000 - index,
-                    seed=index,
-                    qualification_source="race",
-                )
-                for index in range(1, 7)
-            ),
+        selected = select_world_tour_finals_participants(
+            configuration=config,
+            race_snapshot=race,
+            direct_entry_winners=(),
         )
+        race_store = WorldTourFinalsRaceAuthorityStore(session)
+        race_store.put_configuration(race_config)
+        race_store.put_snapshot(race)
         selection_store = WorldTourFinalsParticipantSelectionStore(session)
         selection_store.put_configuration(config)
         selection_store.put_snapshot(selected)
@@ -292,3 +335,103 @@ def test_group_format_rejects_unequal_or_partial_participant_partition(finals_da
                 group_count=2,
                 group_size=4,
             )
+
+
+@pytest.mark.pr_critical
+def test_saved_revision_restores_group_rules_format_and_topology_chain(finals_database):
+    with finals_database.begin() as session:
+        policy = TournamentGroupRulesPolicyStore(session).adopt(
+            run_id="run",
+            branch_id="branch",
+            effective_from_season_index=0,
+            command_id="group-rules",
+            default_match_best_of=5,
+        )
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="format-groups",
+            format_kind="groups",
+            group_count=2,
+            group_size=3,
+            seeded_slots_per_group=1,
+            group_seed_placements=(
+                TournamentGroupSeedPlacement(
+                    seed_number=1, group_index=1, slot_index=1
+                ),
+                TournamentGroupSeedPlacement(
+                    seed_number=2, group_index=2, slot_index=1
+                ),
+            ),
+        )
+        topology = TournamentTopologyAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="topology-groups",
+            topology_seed=999,
+        )
+
+        target_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        component = target_payload["content"]["simulation_slot_match_state"]
+        assert len(component["group_rules_policies"]) == 1
+        assert len(component["format_authorities"]) == 1
+        assert len(component["topology_authorities"]) == 1
+
+        for model in (
+            TournamentTopologyAuthorityModel,
+            TournamentFormatAuthorityModel,
+            TournamentGroupRulesPolicyModel,
+            TournamentEntryFieldVersionModel,
+            WorldTourFinalsParticipantSelectionSnapshotModel,
+            WorldTourFinalsParticipantSelectionConfigurationModel,
+            WorldTourFinalsRaceSnapshotModel,
+            WorldTourFinalsRaceConfigurationModel,
+        ):
+            session.execute(
+                delete(model).where(
+                    model.run_id == "run",
+                    model.branch_id == "branch",
+                )
+            )
+        session.flush()
+
+        current_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            current_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert "simulation_slot_match_state" not in current_payload["content"]
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=current_payload,
+            target_payload=target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        assert TournamentGroupRulesPolicyStore(session).resolve(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+        ) == policy
+        assert TournamentFormatAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == format_authority
+        assert TournamentTopologyAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == topology

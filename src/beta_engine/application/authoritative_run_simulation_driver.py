@@ -8820,19 +8820,24 @@ class AuthoritativeRunSimulationDriver:
 
         packages = self._packages(
             week,
+            required=False,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
         )
-        if (
-            len(packages) > 1
-            or len(
-                self._topology_for_session(
-                    session, run_id, branch_id, packages, week=week
-                )
-            )
-            != 3
-        ) and self._schedule(
+        group_entries = self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if not packages and not group_entries:
+            raise ValueError("supported tournament authority is missing")
+        plans = self._topology_for_session(
+            session, run_id, branch_id, packages, week=week
+        )
+        requires_schedule = bool(group_entries) or len(packages) > 1 or len(plans) != 3
+        if requires_schedule and self._schedule(
             session, run_id, branch_id, week
         ) is None:
             raise ValueError(
@@ -8897,7 +8902,23 @@ class AuthoritativeRunSimulationDriver:
                     draw_authority_fingerprint=draw.fingerprint,
                 )
             )
-        items = tuple(items)
+
+        package_event_ids = {package.event_id for package in packages}
+        for event, group_schedule in group_entries:
+            if event.event_id in package_event_ids:
+                raise ValueError(
+                    "Tournament Edition cannot use Draw and Group Match Schedule "
+                    "execution sources simultaneously"
+                )
+            items.append(
+                _AdoptedTournamentEvidence(
+                    event_id=event.event_id,
+                    calendar_event=event,
+                    point_award_authority=self._run_owned_point_award_authority(event),
+                    group_match_schedule_fingerprint=group_schedule.fingerprint,
+                )
+            )
+        items = tuple(sorted(items, key=lambda item: item.event_id))
 
         authority_fp = self._tournament_authority_fingerprint(
             run_id, branch_id, week, items
@@ -8908,8 +8929,8 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=branch_id,
                 week_ordinal=week.ordinal,
                 event_id=(
-                    packages[0].event_id
-                    if len(packages) == 1
+                    items[0].event_id
+                    if len(items) == 1
                     else "__week_tournament_authority_bundle_v1__"
                 ),
                 authority_fingerprint=authority_fp,

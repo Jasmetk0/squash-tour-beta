@@ -1272,7 +1272,7 @@ export type CanonicalTournamentPreparationState = {
     | 'tournament_format_required'
     | 'tournament_topology_required'
     | 'group_match_schedule_required'
-    | 'group_match_execution_adapter_required'
+    | 'group_match_execution_ready'
     | 'knockout_draw_adapter_required'
     | 'draw_generation_ready'
     | 'draw_ready'

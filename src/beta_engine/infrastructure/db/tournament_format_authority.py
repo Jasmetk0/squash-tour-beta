@@ -237,10 +237,12 @@ class TournamentFormatAuthorityStore:
         raw = TournamentFormatAuthority.model_validate_json(row.payload_json)
         policy = None
         if raw.group_configuration is not None:
-            policy = TournamentGroupRulesPolicyStore(self.session).resolve(
+            policy = TournamentGroupRulesPolicyStore(self.session).get_by_fingerprint(
                 run_id=run_id,
                 branch_id=branch_id,
-                target_season_index=raw.target_season_index,
+                authority_fingerprint=(
+                    raw.group_configuration.group_rules_policy_fingerprint
+                ),
             )
         return self.validate_row(row, field=field, group_rules_policy=policy)
 

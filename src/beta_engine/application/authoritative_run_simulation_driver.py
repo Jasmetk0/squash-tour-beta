@@ -10497,6 +10497,78 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
+    def _group_match_schedules_for_week(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ):
+        """Resolve frozen group Match Schedule authorities in the current Calendar week."""
+
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        calendar, _, _ = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=season,
+        )
+        if calendar is None:
+            return ()
+        store = TournamentGroupMatchScheduleAuthorityStore(session)
+        values = []
+        for event in calendar.events:
+            if event.season_week != week.week:
+                continue
+            authority = store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            )
+            if authority is None:
+                continue
+            if authority.event_id != event.event_id:
+                raise ValueError(
+                    "group Match Schedule event identity differs from Calendar"
+                )
+            frozen_event = CalendarEvent.model_validate(
+                event.model_dump(mode="json", exclude_computed_fields=True)
+            )
+            values.append((frozen_event, authority))
+        return tuple(sorted(values, key=lambda item: item[0].event_id))
+
+    def _group_match_schedule_plans(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> dict[str, SimulationMatchEventPlan]:
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        for event, authority in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for match in authority.matches:
+                if match.match_id in plans:
+                    raise ValueError(
+                        "group Match Schedule contains duplicate week match identity"
+                    )
+                plans[match.match_id] = SimulationMatchEventPlan(
+                    group_id=match.match_id,
+                    event_id=event.event_id,
+                    match_id=match.match_id,
+                    direct_player_ids=(
+                        match.top_player_id,
+                        match.bottom_player_id,
+                    ),
+                )
+        return plans
+
     def _topology_for_session(
         self, session, run_id, branch_id, packages, *, week
     ):

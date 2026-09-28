@@ -18,6 +18,9 @@ from beta_engine.infrastructure.db.models import (
     TournamentDrawProcessAuthorityModel,
     TournamentDrawRevisionModel,
     TournamentEntryFieldVersionModel,
+    TournamentFormatAuthorityModel,
+    TournamentGroupRulesPolicyModel,
+    TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
@@ -989,6 +992,12 @@ def _component(
     include_schedules=True,
     entry_fields=(),
     include_entry_fields=True,
+    group_rules_policies=(),
+    include_group_rules_policies=False,
+    format_authorities=(),
+    include_format_authorities=False,
+    topology_authorities=(),
+    include_topology_authorities=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1099,6 +1108,48 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in entry_fields
+        ]
+    if include_group_rules_policies:
+        body["group_rules_policies"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "effective_from_season_index": row.effective_from_season_index,
+                "command_id": row.command_id,
+                "authority_fingerprint": row.authority_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in group_rules_policies
+        ]
+    if include_format_authorities:
+        body["format_authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "entry_field_fingerprint": row.entry_field_fingerprint,
+                "group_rules_policy_fingerprint": row.group_rules_policy_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in format_authorities
+        ]
+    if include_topology_authorities:
+        body["topology_authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "format_authority_fingerprint": row.format_authority_fingerprint,
+                "entry_field_fingerprint": row.entry_field_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in topology_authorities
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [

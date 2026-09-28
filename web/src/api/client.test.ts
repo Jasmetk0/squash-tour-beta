@@ -20,6 +20,7 @@ import {
   materializeRunProspects,
   listRunContainers,
   getRunContainer,
+  getRunPackageState,
   getViewerOfficialRunContext,
   listRunBranches,
   getRunBranch,
@@ -66,6 +67,28 @@ import type {
   SeasonBuilderFutureApplyRequestValidationPreviewRequest,
   SeasonBuilderFutureApplyRequestValidationPreviewResponse
 } from './types'
+
+
+describe('run Package state client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads null Package state with encoded Run and Branch IDs', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ state: null, fingerprint: null }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(getRunPackageState('run/a', 'branch b')).resolves.toEqual({ state: null, fingerprint: null })
+    expect(fetchMock).toHaveBeenCalledWith('http://127.0.0.1:8000/admin/runs/run%2Fa/branches/branch%20b/packages', expect.anything())
+  })
+
+  it('accepts Package state scoped to the requested Branch', async () => {
+    const body = { state: { run_id: 'run-a', branch_id: 'branch-a', source_package_id: 'fax' }, fingerprint: 'abc' }
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(getRunPackageState('run-a', 'branch-a')).resolves.toEqual(body)
+  })
+
+  it('fails closed when returned Package state has the wrong scope', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ state: { run_id: 'run-a', branch_id: 'other' }, fingerprint: 'abc' }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+    await expect(getRunPackageState('run-a', 'branch-a')).rejects.toThrow('does not match the requested Run and Branch')
+  })
+})
 
 describe('validateFutureApplyRequestPreview', () => {
   afterEach(() => {

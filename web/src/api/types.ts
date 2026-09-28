@@ -771,6 +771,17 @@ export type AdminBranchSimulateWorldTourFinalsRequest = AdminBranchSimulationReq
 
 export type BranchSimulationMode = 'simulate_next_match' | 'simulate_next_round' | 'simulate_next_week' | 'simulate_next_tournament' | 'simulate_full_season'
 
+export type RunPackageState = {
+  run_id: string
+  branch_id: string
+  [key: string]: unknown
+}
+
+export type RunPackageStateResponse = {
+  state: RunPackageState | null
+  fingerprint: string | null
+}
+
 export type BranchSimulationBaseSummary<Mode extends BranchSimulationMode> = {
   mode: Mode
   active_tournament: string | null

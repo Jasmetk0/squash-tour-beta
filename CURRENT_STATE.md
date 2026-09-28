@@ -1,25 +1,43 @@
 # Current implementation and next action
 
-## Active implementation — retire new legacy Branch simulation for Package-backed Runs
+## Active implementation — canonical World Tour Finals Race snapshot authority
 
-The current Admin surface already has canonical authoritative Next Match / Next Round /
-Next Tournament / Next Week / Full Simulation commands. The older branch wrapper is now
-strictly historical compatibility for those actions.
+The first pre-alpha Race slice is now separate from both legacy `RaceSnapshot` files and
+the old hard-coded Finals format.
 
-- if the exact Product Run/Branch owns RunPackageState, new legacy branch commands for
-  Next Match, Next Round, Next Week, Next Tournament and Full Season fail closed before
-  loading the legacy Season orchestrator;
-- historical non-Package Branches retain the old compatibility behavior;
-- a command already completed before Package adoption remains journal-replayable, so
-  idempotency/history is not invalidated retroactively;
-- World Tour Finals is intentionally excluded from this slice because it has separate
-  product semantics and remains outside this ownership cleanup;
-- canonical authoritative simulation remains the only new sporting execution path for
-  Package-backed Branches.
+- one immutable `world_tour_finals_race_snapshot.v1` is owned by an exact
+  Run/Branch/season;
+- Admin supplies an explicit **published Official Ranking** cutoff, explicit Best-N and a
+  resolved frozen set of eligible season event IDs;
+- eligible event identity is validated only against the frozen Run-owned Calendar Package;
+- Race points come only from canonical `OwnedTournamentRankingSource.canonical_awards`
+  and their stored `race_points_awarded`; no legacy result/points files are read;
+- only tournament sources whose first-publication week is at or before the cutoff can count;
+- ordering is total Race points → highest counted result → next-highest result → a stored,
+  deterministic branch/season/player tie-break token;
+- the snapshot stores Calendar, cutoff-ranking and tournament-source fingerprints and
+  revalidates them on normal reads;
+- `ranking_revision_state.v8` captures/restores the Race snapshot with the ranking bundle;
+  whole-Saved-Revision restore validates its Calendar dependency after both ranking and
+  Run Package components are staged atomically;
+- ranking-bearing fork remap rebuilds Race identity from target-owned Official Ranking and
+  canonical tournament sources wherever the existing fork-support boundary already permits
+  that ranking history.
 
-**Next after this PR:** remove or disable the corresponding current Admin compatibility
-controls for Package-backed Branches, while keeping historical/non-Package tooling where
-it is still intentionally supported.
+This slice deliberately does **not** select Finals participants, resolve direct-entry winners,
+set reserve count, create the Finals Draw or reuse the legacy fixed 8-player/group Finals engine.
+Those remain later Tournament Edition/configuration work.
+
+**Next after this PR:** add an Admin-facing season Race configuration/resolver that turns
+explicit eligible category configuration into the frozen event-id set and exposes valid
+published cutoff options, without moving participant selection into the Race snapshot.
+
+## Completed ownership alignment — Package-backed legacy simulation
+
+Package-backed Branches now reject the old Match/Round/Week/Tournament/Full-Season wrapper
+in the backend, and current Admin UI reads exact Run/Branch Package ownership before exposing
+those compatibility controls. Historical non-Package Branches retain compatibility tooling.
+World Tour Finals remains deliberately outside that legacy-wrapper retirement boundary.
 
 ## Active implementation — Package fence for legacy Entry/WC/pre-draw sidecars
 
@@ -34,8 +52,8 @@ Run/Branches no longer inject repository sidecar history into its sporting orche
   Product Run/Branch Package ownership context;
 - canonical WC/RWC, Entry Field, Draw and Draw Revision authorities remain untouched.
 
-**Next after this PR:** audit the remaining current legacy branch-wrapper sporting inputs beyond
-Entry/WC/pre-draw sidecars and fence only those that can still override Package-owned truth.
+**Follow-up completed:** Package-backed legacy Match/Round/Week/Tournament/Full-Season execution
+is now rejected entirely and the Admin compatibility controls follow the same ownership fence.
 
 ## Active implementation — canonical valid-submission readiness
 

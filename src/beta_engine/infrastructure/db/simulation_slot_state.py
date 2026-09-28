@@ -870,6 +870,141 @@ def _validate_finals_authority_rows_shape(
         participants[key] = value
 
 
+def _validate_format_topology_rows_shape(
+    group_rules_policies,
+    format_authorities,
+    topology_authorities,
+    entry_fields,
+):
+    """Validate immutable Format/Topology dependency rows inside one checkpoint."""
+
+    from beta_engine.domain.tournaments.entry_field import TournamentEntryField
+    from beta_engine.domain.tournaments.format_authority import (
+        TournamentFormatAuthority,
+        TournamentGroupRulesPolicy,
+    )
+    from beta_engine.domain.tournaments.topology_authority import (
+        TournamentTopologyAuthority,
+    )
+
+    policies_by_fingerprint = {}
+    for row in group_rules_policies:
+        policy = TournamentGroupRulesPolicy.model_validate_json(row.payload_json)
+        if (
+            policy.run_id,
+            policy.branch_id,
+            policy.effective_from_season_index,
+            policy.adopted_by_command_id,
+            policy.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.effective_from_season_index,
+            row.command_id,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament group-rules policy row is corrupt")
+        policies_by_fingerprint[policy.fingerprint] = policy
+
+    latest_fields = {}
+    for row in sorted(
+        entry_fields,
+        key=lambda value: (value.event_id, value.sequence),
+    ):
+        latest_fields[row.event_id] = TournamentEntryField.model_validate_json(
+            row.payload_json
+        )
+
+    formats_by_event = {}
+    for row in format_authorities:
+        authority = TournamentFormatAuthority.model_validate_json(row.payload_json)
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.configured_by_command_id,
+            authority.entry_field_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.entry_field_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Format authority row is corrupt")
+        field = latest_fields.get(row.event_id)
+        if field is None or field.fingerprint != authority.entry_field_fingerprint:
+            raise ValueError(
+                "Saved Tournament Format authority references missing/stale Entry Field"
+            )
+        group = authority.group_configuration
+        configured_policy_fp = (
+            group.group_rules_policy_fingerprint if group is not None else None
+        )
+        if configured_policy_fp != row.group_rules_policy_fingerprint:
+            raise ValueError(
+                "Saved Tournament Format group-rules provenance row is corrupt"
+            )
+        if configured_policy_fp is not None:
+            policy = policies_by_fingerprint.get(configured_policy_fp)
+            if policy is None:
+                raise ValueError(
+                    "Saved Tournament Format authority references missing group-rules policy"
+                )
+            if (
+                group.group_rules_effective_from_season_index
+                != policy.effective_from_season_index
+            ):
+                raise ValueError(
+                    "Saved Tournament Format group-rules effective season is corrupt"
+                )
+            if (
+                group.rules_source_kind == "season_policy"
+                and group.match_best_of != policy.default_match_best_of
+            ):
+                raise ValueError(
+                    "Saved Tournament Format inherited BO differs from saved season policy"
+                )
+        formats_by_event[row.event_id] = authority
+
+    for row in topology_authorities:
+        topology = TournamentTopologyAuthority.model_validate_json(row.payload_json)
+        if (
+            topology.run_id,
+            topology.branch_id,
+            topology.event_id,
+            topology.generated_by_command_id,
+            topology.format_authority_fingerprint,
+            topology.entry_field_fingerprint,
+            topology.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.format_authority_fingerprint,
+            row.entry_field_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Topology authority row is corrupt")
+        format_authority = formats_by_event.get(row.event_id)
+        field = latest_fields.get(row.event_id)
+        if (
+            format_authority is None
+            or format_authority.fingerprint
+            != topology.format_authority_fingerprint
+        ):
+            raise ValueError(
+                "Saved Tournament Topology references missing/stale Format authority"
+            )
+        if field is None or field.fingerprint != topology.entry_field_fingerprint:
+            raise ValueError(
+                "Saved Tournament Topology references missing/stale Entry Field"
+            )
+
+
 def _validate_semantics(slots, groups):
     from beta_engine.application.authoritative_slot_matches import (
         AuthoritativeSlotMatchExecutor,
@@ -1022,6 +1157,12 @@ def _component(
     _validate_semantics(slots, groups)
     _validate_command_rows_shape(commands)
     _validate_entry_field_rows(entry_fields)
+    _validate_format_topology_rows_shape(
+        group_rules_policies,
+        format_authorities,
+        topology_authorities,
+        entry_fields,
+    )
     _validate_finals_authority_rows_shape(
         finals_race_configurations,
         finals_race_snapshots,

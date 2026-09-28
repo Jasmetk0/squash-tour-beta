@@ -103,7 +103,7 @@ describe('PlannedEventDetailPage', () => {
       phase: 'draw_input_ready',
       next_required_action: 'review_pre_draw_or_commit_draw_input',
       blockers: [],
-      ready_for_match_schedule: false,
+      ready_for_match_schedule: true,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
     })
@@ -1089,9 +1089,9 @@ describe('PlannedEventDetailPage', () => {
     api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
       schema_version: 'canonical_tournament_preparation_state.v1',
       run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
-      phase: 'group_match_execution_adapter_required',
+      phase: 'group_match_execution_ready',
       next_required_action: 'none',
-      blockers: ['group_match_execution_adapter_required'],
+      blockers: [],
       format_authority_ready: true,
       format_kind: 'groups',
       topology_ready: true,
@@ -1107,7 +1107,7 @@ describe('PlannedEventDetailPage', () => {
 
     renderAt('/runs/run-a/calendar/E1')
     expect(
-      await screen.findByText(/remaining blocker is the canonical Simulation Slot execution adapter/i)
+      await screen.findByText(/ready for canonical Simulation Slot execution/i)
     ).toBeInTheDocument()
     expect(screen.getAllByText('6').length).toBeGreaterThan(0)
     expect(screen.getAllByText('3').length).toBeGreaterThan(0)

@@ -2612,6 +2612,7 @@ class SimulationPersistenceRepository:
 
                 remapped_ranking = None
                 remapped_initial_world = None
+                remapped_packages = None
                 source_initial_world = None
                 materialize_fork_root = bool(
                     {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, RUN_PACKAGE_COMPONENT_KEY}
@@ -2685,6 +2686,13 @@ class SimulationPersistenceRepository:
                                 branch_id=source_branch_id,
                             )
                             remapped_initial_world = remap_saved_initial_world_for_branch(
+                                source_revision.payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                            )
+                        if RUN_PACKAGE_COMPONENT_KEY in source_content:
+                            remapped_packages = remap_saved_run_package_state(
                                 source_revision.payload,
                                 run_id=run_id,
                                 source_branch_id=source_branch_id,
@@ -2802,6 +2810,13 @@ class SimulationPersistenceRepository:
 
                 if materialize_fork_root:
                     assert materialized_fork_revision_id is not None
+                    if remapped_packages is not None:
+                        try:
+                            put_run_package_state(session, remapped_packages)
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"Run Package fork cannot be materialized safely: {exc}"
+                            ) from exc
                     if remapped_initial_world is not None:
                         try:
                             installed_world = put_initial_world(
@@ -2850,21 +2865,11 @@ class SimulationPersistenceRepository:
                             source_revision.payload
                         ),
                     )
-                    if RUN_PACKAGE_COMPONENT_KEY in source_content:
-                        try:
-                            remapped_packages = remap_saved_run_package_state(
-                                source_revision.payload, run_id=run_id,
-                                source_branch_id=source_branch_id, target_branch_id=branch_id,
-                            )
-                            put_run_package_state(session, remapped_packages)
-                            target_payload["content"][RUN_PACKAGE_COMPONENT_KEY] = {
-                                "fingerprint": remapped_packages.fingerprint,
-                                "state": remapped_packages.model_dump(mode="json"),
-                            }
-                        except ValueError as exc:
-                            raise SavedRevisionBranchForkConflictError(
-                                f"Run Package fork cannot be materialized safely: {exc}"
-                            ) from exc
+                    if remapped_packages is not None:
+                        target_payload["content"][RUN_PACKAGE_COMPONENT_KEY] = {
+                            "fingerprint": remapped_packages.fingerprint,
+                            "state": remapped_packages.model_dump(mode="json"),
+                        }
                     if remapped_initial_world is not None:
                         target_payload["content"][INITIAL_WORLD_COMPONENT_KEY] = {
                             "fingerprint": remapped_initial_world.fingerprint,

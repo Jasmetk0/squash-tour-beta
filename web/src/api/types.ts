@@ -1228,6 +1228,7 @@ export type CanonicalTournamentPreparationState = {
   valid_qualification_submission_count?: number
   entry_source_kind?: 'ranking_applications' | 'finals_participant_selection' | null
   entry_source_authority_fingerprint?: string | null
+  entry_source_target_season_index?: number | null
   entry_seed_order_player_ids?: string[]
   phase:
     | 'ranking_snapshot_required'

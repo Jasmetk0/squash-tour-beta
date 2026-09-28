@@ -989,6 +989,14 @@ def _component(
     include_schedules=True,
     entry_fields=(),
     include_entry_fields=True,
+    finals_race_configurations=(),
+    include_finals_race_configurations=False,
+    finals_race_snapshots=(),
+    include_finals_race_snapshots=False,
+    finals_participant_configurations=(),
+    include_finals_participant_configurations=False,
+    finals_participant_snapshots=(),
+    include_finals_participant_snapshots=False,
     wild_card_authorities=(),
     include_wild_card_authorities=False,
     draw_inputs=(),
@@ -1005,6 +1013,12 @@ def _component(
     _validate_semantics(slots, groups)
     _validate_command_rows_shape(commands)
     _validate_entry_field_rows(entry_fields)
+    _validate_finals_authority_rows_shape(
+        finals_race_configurations,
+        finals_race_snapshots,
+        finals_participant_configurations,
+        finals_participant_snapshots,
+    )
     _validate_wild_card_rows_shape(wild_card_authorities)
     _validate_draw_input_rows_shape(draw_inputs)
     _validate_draw_authority_rows_shape(draw_authorities)
@@ -1085,6 +1099,58 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in entry_fields
+        ]
+    if include_finals_race_configurations:
+        body["finals_race_configurations"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "configuration_fingerprint": row.configuration_fingerprint,
+                "adopted_by_command_id": row.adopted_by_command_id,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_race_configurations
+        ]
+    if include_finals_race_snapshots:
+        body["finals_race_snapshots"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "snapshot_fingerprint": row.snapshot_fingerprint,
+                "configuration_fingerprint": row.configuration_fingerprint,
+                "input_fingerprint": row.input_fingerprint,
+                "cutoff_week_ordinal": row.cutoff_week_ordinal,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_race_snapshots
+        ]
+    if include_finals_participant_configurations:
+        body["finals_participant_configurations"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "configuration_fingerprint": row.configuration_fingerprint,
+                "race_snapshot_fingerprint": row.race_snapshot_fingerprint,
+                "adopted_by_command_id": row.adopted_by_command_id,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_participant_configurations
+        ]
+    if include_finals_participant_snapshots:
+        body["finals_participant_snapshots"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "snapshot_fingerprint": row.snapshot_fingerprint,
+                "configuration_fingerprint": row.configuration_fingerprint,
+                "race_snapshot_fingerprint": row.race_snapshot_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_participant_snapshots
         ]
     if include_wild_card_authorities:
         body["wild_card_authorities"] = [

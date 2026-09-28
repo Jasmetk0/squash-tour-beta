@@ -201,6 +201,78 @@ class TournamentWildCardAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentGroupRulesPolicyModel(Base):
+    """Immutable Run/Branch group-rules policy version effective from one season."""
+
+    __tablename__ = "tournament_group_rules_policies"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_rules_policy_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    effective_from_season_index: Mapped[int] = mapped_column(
+        Integer, primary_key=True
+    )
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentFormatAuthorityModel(Base):
+    """Immutable effective Tournament Edition format bound to Entry Field."""
+
+    __tablename__ = "tournament_format_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_format_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    group_rules_policy_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class TournamentTopologyAuthorityModel(Base):
+    """Immutable canonical topology derived from Format and Entry authorities."""
+
+    __tablename__ = "tournament_topology_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_topology_authority_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    format_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    entry_field_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

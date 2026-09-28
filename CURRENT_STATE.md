@@ -1,39 +1,43 @@
 # Current implementation and next action
 
-## Active implementation — canonical World Tour Finals participant selection
+## Active implementation — Finals selection bridged into canonical Tournament Preparation
 
-The stored World Tour Finals Race authority now feeds an independent immutable participant-
-selection authority instead of the legacy fixed-eight Finals qualification path.
+The immutable World Tour Finals selected field now enters the same Run-owned Tournament
+Preparation / Entry Field authority used by other Tournament Editions without pretending
+that Finals are ranked by Official Ranking or already have a classic bracket.
 
-- participant capacity is derived from the frozen Run-owned Finals Tournament Edition;
-  no global/default eight-player capacity is imposed by the canonical path;
-- Admin explicitly freezes the selected tournament event IDs whose winners receive direct
-  entry, and the possible distinct direct entries must remain strictly below Finals
-  capacity so at least one Race place always exists;
-- each configured direct-entry event must exist in the same frozen season Calendar,
-  precede the Finals Edition, and resolve to exactly one canonical Tournament Result
-  authority known no later than the stored Race cutoff;
-- one player can consume only one Finals place even after multiple selected direct-entry
-  wins; those source wins remain attached as provenance and no unused berth transfers to
-  a finalist or another player;
-- remaining places are filled strictly in the immutable Race order;
-- every selected player's entry seed is assigned only from the final Race order among the
-  selected field, so a direct entry never improves seeding;
-- configuration and selected field are each immutable per exact Run/Branch/season and
-  fingerprint-bound to the Race snapshot and frozen Calendar;
-- Admin can inspect, configure and build this authority through the scoped
-  `/admin/runs/{run}/branches/{branch}/finals-participants` boundary.
+- the shared Tournament Entry Field now has two explicit source modes:
+  `ranking_applications` for the existing Ranking Snapshot + application workflow and
+  `finals_participant_selection` for the persisted Finals selection snapshot;
+- Finals materialization preserves the exact selected identities and Race-derived input
+  seed order from the immutable participant snapshot; it does not create applications,
+  adopt an Official Ranking or re-sort the field;
+- Entry Field capacity can now represent a `fixed_participant_field` independently of
+  bracket geometry, so a configured Finals capacity such as 6 remains valid even though
+  6 is not a classic power-of-two bracket size;
+- classic tournament Entry Field capacity validation remains unchanged for the historical
+  `classic_bracket` mode;
+- persistence/replay validates each Entry Field against its actual source authority, and
+  the newly added default metadata is omitted from historical v1 serialization so old
+  Entry Field JSON/fingerprints remain stable;
+- canonical Tournament Preparation recognizes a persisted Finals participant snapshot as
+  a valid upstream Entry source: before materialization it asks for the Entry Field, not
+  an Official Ranking; after materialization it stops at
+  `tournament_format_authority_required`;
+- generic pre-draw withdrawal repair is blocked for Finals-sourced fields because Finals
+  replacement offers remain a separate product authority;
+- classic Tournament Draw Input commitment is likewise blocked for Finals until a
+  configured Tournament Format authority exists;
+- Planned Event Admin exposes an explicit `Build Entry Field from Finals selection`
+  handoff and does not show the normal submission/capacity form for that source.
 
-The current direct-entry resolver intentionally has no legacy-result fallback: a selected
-event without canonical result authority fails closed. Legacy `FinalsEngine` simulation,
-withdrawal/replacement workflow, group/bracket creation and Viewer consumers remain
-unchanged by this slice.
+No group, hybrid or knockout topology is invented in this slice, and the legacy fixed-eight
+`FinalsEngine` is not used as a fallback.
 
-**Next after this PR:** feed the persisted participant-selection snapshot into the general
-canonical Tournament Preparation / Entry Field path for the Finals Edition, preserving
-Race-only initial seeding and the configured general tournament format. Handle withdrawal
-offers/replacements as a separate authority rather than reviving the legacy reserve-count
-or fixed-group assumptions.
+**Next after this PR:** implement one immutable, season-versioned Tournament Format authority
+for the general decided formats `Pavouk`, `Skupiny` and `Skupiny + pavouk`, then make
+canonical Draw/Match topology consume it. Finals must preserve Race input seeding while any
+post-group knockout crossing comes from group results rather than Race reseeding.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

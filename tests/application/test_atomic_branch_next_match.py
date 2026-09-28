@@ -136,18 +136,14 @@ def test_package_backed_branch_blocks_new_legacy_simulation_commands(
             RunPackageState(run_id="source", branch_id=branch_id),
         )
 
-    before_checkpoints = repository.list_branch_checkpoints(
-        product_run_id="source", branch_id=branch_id
-    )
+    before_checkpoints = repository.list_branch_checkpoints(branch_id=branch_id)
     with pytest.raises(
         BranchSimulationValidationError,
         match="must use authoritative simulation",
     ):
         getattr(service, method_name)(command(branch_id, head))
 
-    after_checkpoints = repository.list_branch_checkpoints(
-        product_run_id="source", branch_id=branch_id
-    )
+    after_checkpoints = repository.list_branch_checkpoints(branch_id=branch_id)
     assert after_checkpoints == before_checkpoints
 
 

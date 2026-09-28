@@ -124,11 +124,15 @@
     seed placement/crossing configuration, preserve Finals Race input seeding, carry hybrid
     crossing as group-result positions without Race reseeding, and recover the authority chain
     through Saved Revision while fork remap fails closed.
-38. Next: make canonical Match/Schedule execution consume group topology: materialize the
-    round-robin Match authority with effective BO3/BO5, produce conflict-safe Match Day
-    chronology, then add group standings / W/O / decided tie-break authority before resolving
-    hybrid knockout entrants. Keep the pure-knockout Finals Draw adapter as an explicit
-    separate dependency rather than fabricating Official Ranking.
+38. ✅ Materialize canonical group Match + local Match Day schedule authority from frozen
+    Tournament Topology: cover every round-robin pairing exactly once, freeze hash-protected
+    effective BO3/BO5 provenance, use minimal conflict-free circle-method chronology, expose
+    Admin/Planned Event controls, recover the full chain through Saved Revision and fail fork
+    remap closed; do not mark the event globally schedule-ready before Simulation consumes it.
+39. Next: adapt canonical Simulation Slot execution to consume the frozen group Match Schedule
+    and persist group results, then implement the decided standings / W/O / tie-break authority
+    and resolve hybrid knockout entrants from final group positions. Keep the pure-knockout
+    Finals Draw adapter as a separate explicit dependency rather than fabricating Official Ranking.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

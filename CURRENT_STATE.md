@@ -1,54 +1,52 @@
 # Current implementation and next action
 
-## Active implementation — season-versioned Tournament Format and structural topology authority
+## Active implementation — canonical group Match + Match Day schedule authority
 
-The canonical Tournament Preparation path now has an explicit format layer between Entry Field
-and executable Match scheduling instead of treating every event as an implicit classic bracket.
+The season-versioned Tournament Format / Topology chain now materializes group pairings into
+one immutable local Match/Schedule authority without routing them through the bracket-only
+Week Simulation Schedule contract.
 
-- Run/Branch owns immutable `TournamentGroupRulesPolicy` versions selected by
-  `effective_from_season_index`; later policy versions do not rewrite earlier seasons;
-- each Tournament Edition can freeze one immutable `TournamentFormatAuthority` for the
-  decided product modes `knockout` (Pavouk), `groups` (Skupiny) or
-  `groups_knockout` (Skupiny + pavouk), bound to the exact canonical Entry Field;
-- group-based formats require equal planned group sizes and a complete exact partition of
-  the participant field; uneven automatic distributions such as 5+4+4 are not invented;
-- group BO3/BO5 inherits the effective season policy unless the Edition stores an explicit
-  override with provenance;
-- arbitrary group seeding does not invent a universal seed-layer algorithm: configured
-  seeded places use explicit seed → group/slot mappings and deterministic randomness is
-  applied only to the remaining unseeded players;
-- Finals group topology consumes the frozen Race-derived Entry seed order directly;
-- hybrid first-round knockout crossing is stored as explicit group-standing sources
-  (`group_index + finishing_position`), so post-group placement cannot silently reseed
-  players from Race;
-- `TournamentTopologyAuthority` stores immutable group slots and all round-robin pairings
-  without pretending that pairing order is already Match Day chronology;
-- a pure knockout topology remains a provenance wrapper over the existing canonical Draw
-  authority, preserving the mature bracket path rather than duplicating it;
-- Tournament Preparation now exposes Format and Topology fingerprints and moves group-based
-  events through `tournament_topology_required` to
-  `group_match_schedule_required`; it intentionally keeps
-  `ready_for_match_schedule = false` until a real group Match/Schedule adapter exists;
-- Finals configured as pure knockout fail closed at
-  `finals_knockout_draw_adapter_required` until the fixed-participant Finals field can be
-  materialized into the general knockout Draw contract without fake Official Ranking;
-- Saved Revision captures, fingerprints and restores Group Rules → Format → Topology with
-  Entry/Finals dependencies in dependency order; historical branch fork remap fails closed
-  while these new seasonal/event identities have no defined remapping contract;
-- Admin HTTP endpoints can inspect/adopt season group rules, configure an Edition format,
-  inspect the immutable format, generate deterministic topology and inspect that topology;
-- Planned Event surfaces the new Preparation blockers but does not hide undecided seed or
-  crossing mechanics behind automatic defaults.
+- `TournamentGroupMatchScheduleAuthority` is fingerprint-bound to the exact frozen
+  Tournament Format and Tournament Topology authorities;
+- every topology pairing becomes one concrete group match with direct player identities,
+  canonical group/slot provenance and one hash-protected `EffectiveMatchFormatSnapshot`;
+- inherited group BO3/BO5 records `tournament_group_rules_policy` provenance, while an
+  explicit Tournament Edition override records `tournament_group_edition_override`;
+  both keep the normal games-to-11, win-by-2 match contract;
+- Match Day chronology uses one deterministic round-robin circle schedule: an even
+  `N`-player group uses `N-1` days, an odd group uses `N` days with an implicit bye;
+- no player can occur twice on one group Match Day, Match Day ordinals are contiguous and
+  each day's match order is deterministic across all groups;
+- the authority must cover every frozen topology pairing exactly once and replays exactly
+  from Format + Topology; stale dependencies fail closed;
+- Tournament Preparation now progresses from `group_match_schedule_required` to
+  `group_match_execution_adapter_required`; it exposes the frozen schedule fingerprint,
+  match count and Match Day count but deliberately remains
+  `ready_for_match_schedule = false` because the global Simulation Slot adapter does not
+  yet consume this group authority;
+- Admin HTTP can generate/inspect the group Match Schedule and returns an explicit
+  `authority_fingerprint`; Planned Event exposes the generation command and resulting
+  match/day counts;
+- Saved Revision captures, hashes, restores and replay-validates the complete
+  Group Rules → Format → Topology → Group Match Schedule chain in dependency order;
+- restore preflight coverage now includes the earlier Finals Race/participant and
+  Group Rules/Format/Topology row families as well as this Match Schedule authority, so
+  live structural truth absent from a saved head fails closed before restore;
+- historical branch fork remap explicitly rejects the whole Format/Topology/Group Match
+  Schedule chain until a dedicated identity-remap contract exists;
+- Finals group input still preserves Race-derived Entry seed order; this slice does not
+  use Race again after groups have been assigned.
 
-This slice is **structural authority only**. It does not yet create group MatchPackage
-execution payloads, group Match Day schedules, group standings, W/O table effects or
-post-group knockout entrant resolution.
+This slice freezes **what group matches exist and their local conflict-free Match Day
+chronology**. It does not yet materialize those matches into global Simulation Slots,
+simulate results, calculate group standings/W/O effects/tie-breaks or resolve hybrid
+knockout entrants.
 
-**Next after this PR:** adapt canonical Match/Schedule execution to consume group topology:
-materialize round-robin group matches with the effective BO3/BO5 contract, schedule them
-without same-day player conflicts, persist their results, then implement the decided group
-table/tie-break/W/O authority before resolving hybrid knockout entrants from final group
-positions. The pure-knockout Finals adapter remains a separate explicit follow-up.
+**Next after this PR:** add a canonical Simulation Slot adapter that consumes the frozen
+group Match Schedule and its effective match-format snapshots, persists match results,
+then build the decided group standings/W/O/tie-break authority before resolving hybrid
+knockout entrants from final group positions. The pure-knockout Finals Draw adapter
+remains a separate explicit dependency.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

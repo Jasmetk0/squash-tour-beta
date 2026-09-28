@@ -19,6 +19,9 @@ from beta_engine.domain.tournaments.format_authority import (
 from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthority,
 )
+from beta_engine.domain.tournaments.group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthority,
+)
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityConflict,
     TournamentFormatAuthorityStore,
@@ -30,6 +33,10 @@ from beta_engine.infrastructure.db.tournament_group_rules_policy import (
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityConflict,
     TournamentTopologyAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthorityConflict,
+    TournamentGroupMatchScheduleAuthorityStore,
 )
 
 
@@ -85,6 +92,29 @@ class TournamentFormatConfigureRequest(BaseModel):
 class TournamentTopologyGenerateRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
     topology_seed: int | None = None
+
+
+class TournamentGroupMatchScheduleGenerateRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+class TournamentGroupMatchScheduleResponse(
+    TournamentGroupMatchScheduleAuthority
+):
+    """Admin projection exposing immutable Match Schedule identity."""
+
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentGroupMatchScheduleAuthority
+    ) -> "TournamentGroupMatchScheduleResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
 
 
 @router.get(
@@ -273,4 +303,70 @@ def generate_topology(
         raise HTTPException(
             status_code=409,
             detail={"code": "tournament_topology_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/format/group-match-schedule",
+    response_model=TournamentGroupMatchScheduleResponse,
+)
+def inspect_group_match_schedule(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupMatchScheduleResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentGroupMatchScheduleAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Group Match Schedule authority not found",
+                )
+            return TournamentGroupMatchScheduleResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_match_schedule_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/format/group-match-schedule/generate",
+    response_model=TournamentGroupMatchScheduleResponse,
+    status_code=201,
+)
+def generate_group_match_schedule(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentGroupMatchScheduleGenerateRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupMatchScheduleResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            authority = TournamentGroupMatchScheduleAuthorityStore(session).generate(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            return TournamentGroupMatchScheduleResponse.from_authority(authority)
+    except (TournamentGroupMatchScheduleAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_match_schedule_conflict",
+                "message": str(exc),
+            },
         ) from exc

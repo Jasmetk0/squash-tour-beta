@@ -20,6 +20,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     TournamentFormatAuthorityModel,
     TournamentGroupRulesPolicyModel,
+    TournamentGroupMatchScheduleAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -874,6 +875,7 @@ def _validate_format_topology_rows_shape(
     group_rules_policies,
     format_authorities,
     topology_authorities,
+    group_match_schedules,
     entry_fields,
 ):
     """Validate immutable Format/Topology dependency rows inside one checkpoint."""
@@ -885,6 +887,10 @@ def _validate_format_topology_rows_shape(
     )
     from beta_engine.domain.tournaments.topology_authority import (
         TournamentTopologyAuthority,
+    )
+    from beta_engine.domain.tournaments.group_match_schedule_authority import (
+        TournamentGroupMatchScheduleAuthority,
+        TournamentGroupMatchScheduleBuilder,
     )
 
     policies_by_fingerprint = {}
@@ -1002,6 +1008,55 @@ def _validate_format_topology_rows_shape(
         if field is None or field.fingerprint != topology.entry_field_fingerprint:
             raise ValueError(
                 "Saved Tournament Topology references missing/stale Entry Field"
+            )
+
+    topologies_by_event = {
+        row.event_id: TournamentTopologyAuthority.model_validate_json(row.payload_json)
+        for row in topology_authorities
+    }
+    for row in group_match_schedules:
+        authority = TournamentGroupMatchScheduleAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.format_authority_fingerprint,
+            authority.topology_authority_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.format_authority_fingerprint,
+            row.topology_authority_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Group Match Schedule row is corrupt")
+        format_authority = formats_by_event.get(row.event_id)
+        topology = topologies_by_event.get(row.event_id)
+        if format_authority is None or topology is None:
+            raise ValueError(
+                "Saved Tournament Group Match Schedule lacks Format/Topology dependency"
+            )
+        if (
+            format_authority.fingerprint != authority.format_authority_fingerprint
+            or topology.fingerprint != authority.topology_authority_fingerprint
+        ):
+            raise ValueError(
+                "Saved Tournament Group Match Schedule dependency fingerprint is stale"
+            )
+        rebuilt = TournamentGroupMatchScheduleBuilder.build(
+            format_authority=format_authority,
+            topology_authority=topology,
+            command_id=row.command_id,
+        )
+        if rebuilt != authority:
+            raise ValueError(
+                "Saved Tournament Group Match Schedule does not replay from frozen dependencies"
             )
 
 
@@ -1133,6 +1188,8 @@ def _component(
     include_format_authorities=False,
     topology_authorities=(),
     include_topology_authorities=False,
+    group_match_schedules=(),
+    include_group_match_schedules=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1161,6 +1218,7 @@ def _component(
         group_rules_policies,
         format_authorities,
         topology_authorities,
+        group_match_schedules,
         entry_fields,
     )
     _validate_finals_authority_rows_shape(
@@ -1291,6 +1349,21 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in topology_authorities
+        ]
+    if include_group_match_schedules:
+        body["group_match_schedules"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "format_authority_fingerprint": row.format_authority_fingerprint,
+                "topology_authority_fingerprint": row.topology_authority_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in group_match_schedules
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [
@@ -1602,6 +1675,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({row.event_id for row in topology_authorities}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
+    if group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in group_match_schedules}):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -1720,6 +1809,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or group_rules_policies
         or format_authorities
         or topology_authorities
+        or group_match_schedules
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -1751,6 +1841,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_format_authorities=bool(format_authorities),
             topology_authorities=topology_authorities,
             include_topology_authorities=bool(topology_authorities),
+            group_match_schedules=group_match_schedules,
+            include_group_match_schedules=bool(group_match_schedules),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -1779,6 +1871,7 @@ def _load(payload, *, run_id, branch_id):
         "group_rules_policies",
         "format_authorities",
         "topology_authorities",
+        "group_match_schedules",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -1830,6 +1923,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("topology_authorities", [])
         ],
         include_topology_authorities="topology_authorities" in component,
+        group_match_schedules=[
+            TournamentGroupMatchScheduleAuthorityModel(**value)
+            for value in component.get("group_match_schedules", [])
+        ],
+        include_group_match_schedules="group_match_schedules" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])
@@ -2310,6 +2408,14 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentTopologyAuthorityModel.event_id)
     ).all()
+    group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2370,6 +2476,7 @@ def _live_component_with_saved_shape(
             group_rules_policies,
             format_authorities,
             topology_authorities,
+            group_match_schedules,
             wild_cards,
             draw_inputs,
             draws,
@@ -2411,6 +2518,8 @@ def _live_component_with_saved_shape(
         include_format_authorities="format_authorities" in shape_hint,
         topology_authorities=topology_authorities,
         include_topology_authorities="topology_authorities" in shape_hint,
+        group_match_schedules=group_match_schedules,
+        include_group_match_schedules="group_match_schedules" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,
@@ -2612,6 +2721,22 @@ def restore_saved_simulation_slots(
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_topology_authorities}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
+    if live_group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_group_match_schedules}):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2763,6 +2888,11 @@ def restore_saved_simulation_slots(
                 bool(live_topology_authorities)
                 or bool(expected is not None and "topology_authorities" in expected)
             ),
+            group_match_schedules=live_group_match_schedules,
+            include_group_match_schedules=(
+                bool(live_group_match_schedules)
+                or bool(expected is not None and "group_match_schedules" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -2803,6 +2933,7 @@ def restore_saved_simulation_slots(
         or live_group_rules_policies
         or live_format_authorities
         or live_topology_authorities
+        or live_group_match_schedules
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities
@@ -2812,6 +2943,12 @@ def restore_saved_simulation_slots(
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentGroupMatchScheduleAuthorityModel).where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(TournamentTopologyAuthorityModel).where(
             TournamentTopologyAuthorityModel.run_id == run_id,
@@ -2954,6 +3091,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentFormatAuthorityModel(**value))
     for value in (target or {}).get("topology_authorities", []):
         session.add(TournamentTopologyAuthorityModel(**value))
+    for value in (target or {}).get("group_match_schedules", []):
+        session.add(TournamentGroupMatchScheduleAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -3015,6 +3154,19 @@ def restore_saved_simulation_slots(
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({value["event_id"] for value in target_topologies}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_group_match_schedules = (target or {}).get(
+        "group_match_schedules", []
+    )
+    if target_group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_group_match_schedules}
+        ):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

@@ -1054,6 +1054,7 @@ def remap_coupled_player_slot_history(
         "group_rules_policies",
         "format_authorities",
         "topology_authorities",
+        "group_match_schedules",
         "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",
@@ -1069,6 +1070,22 @@ def remap_coupled_player_slot_history(
         raise SimulationSlotForkRemapUnsupportedError(
             "Coupled player/Slot fork does not yet support auxiliary authorities: "
             + ", ".join(sorted(nonempty_auxiliary))
+        )
+
+    unsupported_tournament_structure_sections = tuple(
+        key
+        for key in (
+            "group_rules_policies",
+            "format_authorities",
+            "topology_authorities",
+            "group_match_schedules",
+        )
+        if source_slot_component.get(key)
+    )
+    if unsupported_tournament_structure_sections:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Tournament Format/Topology/Group Match Schedule fork remap is not defined: "
+            + ", ".join(unsupported_tournament_structure_sections)
         )
 
     source_command_rows = [

@@ -13,6 +13,8 @@ MatchFormatSourceScope = Literal[
     "tournament_edition_override",
     "phase_override",
     "round_override",
+    "tournament_group_rules_policy",
+    "tournament_group_edition_override",
 ]
 
 

@@ -1217,6 +1217,40 @@ export type CanonicalEntryCapacitySuggestion = {
   source: 'run_owned_calendar_package.v1'
 }
 
+export type TournamentGroupScheduledMatch = {
+  match_id: string
+  group_index: number
+  topology_match_index: number
+  match_day_ordinal: number
+  match_order: number
+  top_slot_index: number
+  bottom_slot_index: number
+  top_player_id: string
+  bottom_player_id: string
+  effective_match_format: EffectiveMatchFormatSnapshot
+}
+
+export type TournamentGroupMatchScheduleAuthority = {
+  schema_version: 'tournament_group_match_schedule_authority.v1'
+  run_id: string
+  branch_id: string
+  event_id: string
+  generated_by_command_id: string
+  format_authority_fingerprint: string
+  topology_authority_fingerprint: string
+  group_rules_policy_fingerprint: string
+  schedule_policy_id: 'round_robin_circle.v1'
+  group_count: number
+  group_size: number
+  match_day_count: number
+  matches: TournamentGroupScheduledMatch[]
+  authority_fingerprint: string
+}
+
+export type GenerateTournamentGroupMatchSchedulePayload = {
+  command_id: string
+}
+
 export type CanonicalTournamentPreparationState = {
   schema_version: 'canonical_tournament_preparation_state.v1'
   run_id: string
@@ -1238,6 +1272,7 @@ export type CanonicalTournamentPreparationState = {
     | 'tournament_format_required'
     | 'tournament_topology_required'
     | 'group_match_schedule_required'
+    | 'group_match_execution_adapter_required'
     | 'knockout_draw_adapter_required'
     | 'draw_generation_ready'
     | 'draw_ready'
@@ -1259,6 +1294,10 @@ export type CanonicalTournamentPreparationState = {
   topology_ready?: boolean
   topology_authority_fingerprint?: string | null
   topology_group_match_count?: number
+  group_match_schedule_ready?: boolean
+  group_match_schedule_fingerprint?: string | null
+  group_match_count?: number
+  group_match_day_count?: number
   ready_for_match_schedule: boolean
   effective_draw_fingerprint: string | null
   authority_source: 'run_owned_db_authorities.v1'
@@ -5264,7 +5303,13 @@ export type EffectiveMatchTimingSnapshot = {
 export type EffectiveMatchFormatSnapshot = {
   schema_version: 'effective_match_format.v1'
   format: MatchFormat
-  source_scope: 'official_default' | 'tournament_edition_override' | 'phase_override' | 'round_override'
+  source_scope:
+    | 'official_default'
+    | 'tournament_edition_override'
+    | 'phase_override'
+    | 'round_override'
+    | 'tournament_group_rules_policy'
+    | 'tournament_group_edition_override'
   source_key: string
   snapshot_hash_algorithm: 'sha256'
   snapshot_hash: string

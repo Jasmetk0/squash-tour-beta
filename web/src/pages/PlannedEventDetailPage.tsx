@@ -9,6 +9,7 @@ import {
   listTournamentRankingPublicationOptions,
   createTournamentEntryFieldFromValidSubmissions,
   createTournamentEntryFieldFromFinalsSelection,
+  generateTournamentGroupMatchSchedule,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
@@ -168,6 +169,23 @@ export function PlannedEventDetailPage(): JSX.Element {
       ])
     }
   })
+  const groupMatchScheduleMutation = useMutation({
+    mutationFn: () =>
+      generateTournamentGroupMatchSchedule(
+        runId,
+        activeBranchId,
+        eventId,
+        {
+          command_id: `admin-ui-group-match-schedule-${eventId}`.slice(0, 128)
+        }
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId]
+      })
+    }
+  })
+
   const rankingPublicationOptionsQuery = useQuery({
     queryKey: ['tournament-ranking-publications', runId, activeBranchId, eventId],
     queryFn: () => listTournamentRankingPublicationOptions(runId, activeBranchId, eventId),
@@ -669,7 +687,32 @@ export function PlannedEventDetailPage(): JSX.Element {
       return <p className="status">Tournament Format is frozen. Generate the canonical Tournament Topology from the explicit group seed placements / crossing configuration before any group-match chronology is created.</p>
     }
     if (action === 'prepare_group_match_schedule') {
-      return <p className="status">Canonical group assignment and round-robin pairing topology are frozen. The next implementation slice must materialize group Match/Schedule authority; this event is intentionally not marked schedule-ready yet.</p>
+      return (
+        <div className="grid">
+          <p className="status">
+            Canonical group assignment and every round-robin pairing are frozen.
+            Materialize the immutable group Match + Match Day schedule from that topology.
+          </p>
+          <button
+            type="button"
+            onClick={() => groupMatchScheduleMutation.mutate()}
+            disabled={groupMatchScheduleMutation.isPending}
+          >
+            Generate group Match Schedule
+          </button>
+          {groupMatchScheduleMutation.error ? (
+            <p className="error">
+              Group Match Schedule generation failed: {formatApiError(groupMatchScheduleMutation.error)}
+            </p>
+          ) : null}
+          {groupMatchScheduleMutation.data ? (
+            <p className="status">
+              Frozen {groupMatchScheduleMutation.data.matches.length} group matches across{' '}
+              {groupMatchScheduleMutation.data.match_day_count} Match Days.
+            </p>
+          ) : null}
+        </div>
+      )
     }
     return null
   }
@@ -810,11 +853,20 @@ export function PlannedEventDetailPage(): JSX.Element {
                 items={[
                   { label: 'Authority source', value: canonicalPreparationQuery.data.authority_source },
                   { label: 'Entry source', value: canonicalPreparationQuery.data.entry_source_kind ?? 'Not resolved' },
+                  { label: 'Group matches', value: canonicalPreparationQuery.data.group_match_count ?? 0 },
+                  { label: 'Group Match Days', value: canonicalPreparationQuery.data.group_match_day_count ?? 0 },
                   { label: 'Effective Draw', value: canonicalPreparationQuery.data.effective_draw_fingerprint ?? 'Not generated' },
                   { label: 'Blockers', value: canonicalPreparationQuery.data.blockers.join(', ') || 'None' }
                 ]}
               />
               {preparationActionHandoff()}
+              {canonicalPreparationQuery.data.phase === 'group_match_execution_adapter_required' ? (
+                <p className="status">
+                  Group Match authority and conflict-free Match Day chronology are frozen.
+                  The remaining blocker is the canonical Simulation Slot execution adapter;
+                  standings and hybrid knockout resolution are intentionally not inferred here.
+                </p>
+              ) : null}
               {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (
                 <div className="grid">
                   <h4>Adopt Tournament Ranking Snapshot</h4>

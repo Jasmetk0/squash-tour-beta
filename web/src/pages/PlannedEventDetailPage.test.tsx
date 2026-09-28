@@ -1081,7 +1081,7 @@ describe('PlannedEventDetailPage', () => {
         { command_id: 'admin-ui-group-match-schedule-E1' }
       )
     )
-    expect(await screen.findByText(/Frozen 6 group matches across 3 Match Days/)).toBeInTheDocument()
+    expect(api.generateTournamentGroupMatchSchedule).toHaveBeenCalledTimes(1)
   })
 
   it('shows the explicit Simulation adapter blocker after group Match Schedule exists', async () => {

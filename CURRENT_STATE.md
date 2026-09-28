@@ -1,48 +1,54 @@
 # Current implementation and next action
 
-## Active implementation — Finals selection bridged into canonical Tournament Preparation
+## Active implementation — season-versioned Tournament Format and structural topology authority
 
-The immutable World Tour Finals selected field now enters the same Run-owned Tournament
-Preparation / Entry Field authority used by other Tournament Editions without pretending
-that Finals are ranked by Official Ranking or already have a classic bracket.
+The canonical Tournament Preparation path now has an explicit format layer between Entry Field
+and executable Match scheduling instead of treating every event as an implicit classic bracket.
 
-- the shared Tournament Entry Field now has two explicit source modes:
-  `ranking_applications` for the existing Ranking Snapshot + application workflow and
-  `finals_participant_selection` for the persisted Finals selection snapshot;
-- Finals materialization preserves the exact selected identities and Race-derived input
-  seed order from the immutable participant snapshot; it does not create applications,
-  adopt an Official Ranking or re-sort the field;
-- Entry Field capacity can now represent a `fixed_participant_field` independently of
-  bracket geometry, so a configured Finals capacity such as 6 remains valid even though
-  6 is not a classic power-of-two bracket size;
-- classic tournament Entry Field capacity validation remains unchanged for the historical
-  `classic_bracket` mode;
-- persistence/replay validates each Entry Field against its actual source authority, and
-  the newly added default metadata is omitted from historical v1 serialization so old
-  Entry Field JSON/fingerprints remain stable;
-- Saved Revision now captures and restores the complete Finals dependency chain
-  (Race configuration/snapshot, participant configuration/snapshot and Entry Field) in
-  dependency order, so a restored Finals field remains self-contained and replayable;
-- historical branch fork remap explicitly fails closed when Finals authority is present
-  until a dedicated Run/Branch identity remap for those seasonal authorities is defined;
-- canonical Tournament Preparation recognizes a persisted Finals participant snapshot as
-  a valid upstream Entry source: before materialization it asks for the Entry Field, not
-  an Official Ranking; after materialization it stops at
-  `tournament_format_authority_required`;
-- generic pre-draw withdrawal repair is blocked for Finals-sourced fields because Finals
-  replacement offers remain a separate product authority;
-- classic Tournament Draw Input commitment is likewise blocked for Finals until a
-  configured Tournament Format authority exists;
-- Planned Event Admin exposes an explicit `Build Entry Field from Finals selection`
-  handoff and does not show the normal submission/capacity form for that source.
+- Run/Branch owns immutable `TournamentGroupRulesPolicy` versions selected by
+  `effective_from_season_index`; later policy versions do not rewrite earlier seasons;
+- each Tournament Edition can freeze one immutable `TournamentFormatAuthority` for the
+  decided product modes `knockout` (Pavouk), `groups` (Skupiny) or
+  `groups_knockout` (Skupiny + pavouk), bound to the exact canonical Entry Field;
+- group-based formats require equal planned group sizes and a complete exact partition of
+  the participant field; uneven automatic distributions such as 5+4+4 are not invented;
+- group BO3/BO5 inherits the effective season policy unless the Edition stores an explicit
+  override with provenance;
+- arbitrary group seeding does not invent a universal seed-layer algorithm: configured
+  seeded places use explicit seed → group/slot mappings and deterministic randomness is
+  applied only to the remaining unseeded players;
+- Finals group topology consumes the frozen Race-derived Entry seed order directly;
+- hybrid first-round knockout crossing is stored as explicit group-standing sources
+  (`group_index + finishing_position`), so post-group placement cannot silently reseed
+  players from Race;
+- `TournamentTopologyAuthority` stores immutable group slots and all round-robin pairings
+  without pretending that pairing order is already Match Day chronology;
+- a pure knockout topology remains a provenance wrapper over the existing canonical Draw
+  authority, preserving the mature bracket path rather than duplicating it;
+- Tournament Preparation now exposes Format and Topology fingerprints and moves group-based
+  events through `tournament_topology_required` to
+  `group_match_schedule_required`; it intentionally keeps
+  `ready_for_match_schedule = false` until a real group Match/Schedule adapter exists;
+- Finals configured as pure knockout fail closed at
+  `finals_knockout_draw_adapter_required` until the fixed-participant Finals field can be
+  materialized into the general knockout Draw contract without fake Official Ranking;
+- Saved Revision captures, fingerprints and restores Group Rules → Format → Topology with
+  Entry/Finals dependencies in dependency order; historical branch fork remap fails closed
+  while these new seasonal/event identities have no defined remapping contract;
+- Admin HTTP endpoints can inspect/adopt season group rules, configure an Edition format,
+  inspect the immutable format, generate deterministic topology and inspect that topology;
+- Planned Event surfaces the new Preparation blockers but does not hide undecided seed or
+  crossing mechanics behind automatic defaults.
 
-No group, hybrid or knockout topology is invented in this slice, and the legacy fixed-eight
-`FinalsEngine` is not used as a fallback.
+This slice is **structural authority only**. It does not yet create group MatchPackage
+execution payloads, group Match Day schedules, group standings, W/O table effects or
+post-group knockout entrant resolution.
 
-**Next after this PR:** implement one immutable, season-versioned Tournament Format authority
-for the general decided formats `Pavouk`, `Skupiny` and `Skupiny + pavouk`, then make
-canonical Draw/Match topology consume it. Finals must preserve Race input seeding while any
-post-group knockout crossing comes from group results rather than Race reseeding.
+**Next after this PR:** adapt canonical Match/Schedule execution to consume group topology:
+materialize round-robin group matches with the effective BO3/BO5 contract, schedule them
+without same-day player conflicts, persist their results, then implement the decided group
+table/tie-break/W/O authority before resolving hybrid knockout entrants from final group
+positions. The pure-knockout Finals adapter remains a separate explicit follow-up.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

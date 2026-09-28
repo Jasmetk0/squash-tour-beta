@@ -2776,7 +2776,7 @@ class AuthoritativeRunSimulationDriver:
             "slot_id": slot.slot_id,
             "slot_start_fingerprint": plan.slot_start_fingerprint,
             "group_id": request.group_id,
-            "event_id": package.event_id,
+            "event_id": event_id,
             "match_id": event.match_id,
             "player_a_id": players[0],
             "player_b_id": players[1],

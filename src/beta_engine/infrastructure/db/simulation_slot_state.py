@@ -2408,6 +2408,14 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentTopologyAuthorityModel.event_id)
     ).all()
+    group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2468,6 +2476,7 @@ def _live_component_with_saved_shape(
             group_rules_policies,
             format_authorities,
             topology_authorities,
+            group_match_schedules,
             wild_cards,
             draw_inputs,
             draws,
@@ -2509,6 +2518,8 @@ def _live_component_with_saved_shape(
         include_format_authorities="format_authorities" in shape_hint,
         topology_authorities=topology_authorities,
         include_topology_authorities="topology_authorities" in shape_hint,
+        group_match_schedules=group_match_schedules,
+        include_group_match_schedules="group_match_schedules" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

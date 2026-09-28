@@ -11672,14 +11672,26 @@ class AuthoritativeRunSimulationDriver:
             ).package_json
         )
         evidence_by_event = {item.event_id: item for item in items}
-        if set(evidence_by_event) != {package.event_id for package in packages}:
+        package_event_ids = {package.event_id for package in packages}
+        if not package_event_ids <= set(evidence_by_event):
             raise ValueError(
                 "frozen tournament authority package universe changed"
             )
+        for event_id, evidence in evidence_by_event.items():
+            if event_id in package_event_ids:
+                continue
+            if evidence.group_match_schedule_fingerprint is None:
+                raise ValueError(
+                    "frozen non-package tournament lacks Group Match Schedule evidence"
+                )
         for package in packages:
             evidence = evidence_by_event[package.event_id]
             point_authority = evidence.point_award_authority
             draw_fp = evidence.draw_authority_fingerprint
+            if evidence.group_match_schedule_fingerprint is not None:
+                raise ValueError(
+                    "MatchPackage tournament cannot close from Group Match Schedule evidence"
+                )
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches

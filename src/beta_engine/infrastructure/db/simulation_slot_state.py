@@ -717,6 +717,156 @@ def _validate_week_tournament_lock_rows_shape(rows):
             raise ValueError("Saved Week Tournament Lock authority row is corrupt")
 
 
+def _validate_finals_authority_rows_shape(
+    race_configurations,
+    race_snapshots,
+    participant_configurations,
+    participant_snapshots,
+):
+    """Validate self-contained immutable Finals authority chains in Saved Revision."""
+
+    from beta_engine.domain.finals import (
+        WorldTourFinalsParticipantSelectionConfiguration,
+        WorldTourFinalsParticipantSelectionSnapshot,
+        WorldTourFinalsRaceConfiguration,
+        WorldTourFinalsRaceSnapshot,
+    )
+    from beta_engine.infrastructure.db.finals_race_authority import (
+        WorldTourFinalsRaceAuthorityStore,
+    )
+
+    race_configs = {}
+    for row in race_configurations:
+        key = (row.run_id, row.branch_id, row.target_season_index)
+        if key in race_configs:
+            raise ValueError("Saved Finals Race configuration identity is duplicated")
+        value = WorldTourFinalsRaceConfiguration.model_validate_json(row.payload_json)
+        if (
+            value.run_id,
+            value.branch_id,
+            value.target_season_index,
+            value.fingerprint,
+            value.adopted_by_command_id,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.target_season_index,
+            row.configuration_fingerprint,
+            row.adopted_by_command_id,
+        ):
+            raise ValueError("Saved Finals Race configuration row is corrupt")
+        race_configs[key] = value
+
+    races = {}
+    for row in race_snapshots:
+        key = (row.run_id, row.branch_id, row.target_season_index)
+        if key in races:
+            raise ValueError("Saved Finals Race snapshot identity is duplicated")
+        value = WorldTourFinalsRaceSnapshot.model_validate_json(row.payload_json)
+        config = race_configs.get(key)
+        if config is None:
+            raise ValueError("Saved Finals Race snapshot has no saved configuration")
+        if (
+            value.run_id,
+            value.branch_id,
+            value.target_season_index,
+            value.fingerprint,
+            value.input_fingerprint,
+            value.cutoff_week.ordinal,
+            row.configuration_fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.target_season_index,
+            row.snapshot_fingerprint,
+            row.input_fingerprint,
+            row.cutoff_week_ordinal,
+            config.fingerprint,
+        ):
+            raise ValueError("Saved Finals Race snapshot row is corrupt")
+        WorldTourFinalsRaceAuthorityStore._validate_snapshot_configuration(
+            config,
+            value,
+        )
+        races[key] = value
+
+    participant_configs = {}
+    for row in participant_configurations:
+        key = (row.run_id, row.branch_id, row.target_season_index)
+        if key in participant_configs:
+            raise ValueError(
+                "Saved Finals participant configuration identity is duplicated"
+            )
+        value = WorldTourFinalsParticipantSelectionConfiguration.model_validate_json(
+            row.payload_json
+        )
+        race = races.get(key)
+        if race is None:
+            raise ValueError(
+                "Saved Finals participant configuration has no saved Race snapshot"
+            )
+        if (
+            value.run_id,
+            value.branch_id,
+            value.target_season_index,
+            value.fingerprint,
+            value.race_snapshot_fingerprint,
+            value.adopted_by_command_id,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.target_season_index,
+            row.configuration_fingerprint,
+            row.race_snapshot_fingerprint,
+            row.adopted_by_command_id,
+        ):
+            raise ValueError("Saved Finals participant configuration row is corrupt")
+        if value.race_snapshot_fingerprint != race.fingerprint:
+            raise ValueError(
+                "Saved Finals participant configuration Race fingerprint is stale"
+            )
+        participant_configs[key] = value
+
+    participants = {}
+    for row in participant_snapshots:
+        key = (row.run_id, row.branch_id, row.target_season_index)
+        if key in participants:
+            raise ValueError("Saved Finals participant snapshot identity is duplicated")
+        value = WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
+            row.payload_json
+        )
+        config = participant_configs.get(key)
+        race = races.get(key)
+        if config is None or race is None:
+            raise ValueError(
+                "Saved Finals participant snapshot lacks saved dependency authority"
+            )
+        if (
+            value.run_id,
+            value.branch_id,
+            value.target_season_index,
+            value.fingerprint,
+            value.configuration_fingerprint,
+            value.race_snapshot_fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.target_season_index,
+            row.snapshot_fingerprint,
+            row.configuration_fingerprint,
+            row.race_snapshot_fingerprint,
+        ):
+            raise ValueError("Saved Finals participant snapshot row is corrupt")
+        if (
+            value.configuration_fingerprint != config.fingerprint
+            or value.race_snapshot_fingerprint != race.fingerprint
+            or value.finals_event_id != config.finals_event_id
+            or value.participant_capacity != config.participant_capacity
+        ):
+            raise ValueError("Saved Finals participant snapshot binding is corrupt")
+        participants[key] = value
+
+
 def _validate_semantics(slots, groups):
     from beta_engine.application.authoritative_slot_matches import (
         AuthoritativeSlotMatchExecutor,

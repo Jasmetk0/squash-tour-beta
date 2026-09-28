@@ -8111,7 +8111,10 @@ class AuthoritativeRunSimulationDriver:
             if (
                 item.calendar_event is None
                 or item.point_award_authority is None
-                or item.draw_authority_fingerprint is None
+                or (
+                    (item.draw_authority_fingerprint is None)
+                    == (item.group_match_schedule_fingerprint is None)
+                )
             ):
                 raise ValueError(
                     "canonical frozen tournament authority is incomplete"
@@ -8132,6 +8135,25 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "canonical frozen tournament Calendar Event season changed"
                 )
+
+            if item.group_match_schedule_fingerprint is not None:
+                group_schedule = TournamentGroupMatchScheduleAuthorityStore(
+                    session
+                ).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=item.event_id,
+                )
+                if (
+                    group_schedule is None
+                    or group_schedule.fingerprint
+                    != item.group_match_schedule_fingerprint
+                ):
+                    raise ValueError(
+                        "frozen tournament Group Match Schedule binding changed"
+                    )
+                continue
+
             draw = draw_store.get(
                 run_id=run_id,
                 branch_id=branch_id,

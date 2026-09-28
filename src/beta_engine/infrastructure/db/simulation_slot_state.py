@@ -1577,6 +1577,9 @@ def _load(payload, *, run_id, branch_id):
         "authorities",
         "schedules",
         "entry_fields",
+        "group_rules_policies",
+        "format_authorities",
+        "topology_authorities",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -1613,6 +1616,21 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("entry_fields", [])
         ],
         include_entry_fields="entry_fields" in component,
+        group_rules_policies=[
+            TournamentGroupRulesPolicyModel(**value)
+            for value in component.get("group_rules_policies", [])
+        ],
+        include_group_rules_policies="group_rules_policies" in component,
+        format_authorities=[
+            TournamentFormatAuthorityModel(**value)
+            for value in component.get("format_authorities", [])
+        ],
+        include_format_authorities="format_authorities" in component,
+        topology_authorities=[
+            TournamentTopologyAuthorityModel(**value)
+            for value in component.get("topology_authorities", [])
+        ],
+        include_topology_authorities="topology_authorities" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])
@@ -1682,6 +1700,9 @@ def _load(payload, *, run_id, branch_id):
                 "authorities",
                 "schedules",
                 "entry_fields",
+                "group_rules_policies",
+                "format_authorities",
+                "topology_authorities",
                 "finals_race_configurations",
                 "finals_race_snapshots",
                 "finals_participant_configurations",

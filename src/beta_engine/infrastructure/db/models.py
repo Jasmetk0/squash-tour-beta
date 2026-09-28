@@ -273,6 +273,29 @@ class TournamentTopologyAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentGroupMatchScheduleAuthorityModel(Base):
+    """Immutable group match contracts plus conflict-free Match Day chronology."""
+
+    __tablename__ = "tournament_group_match_schedule_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_match_schedule_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    format_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    topology_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

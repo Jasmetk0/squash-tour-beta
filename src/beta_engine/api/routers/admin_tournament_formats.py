@@ -42,6 +42,23 @@ class TournamentGroupRulesAdoptRequest(BaseModel):
     default_match_best_of: TournamentGroupMatchBestOf
 
 
+class TournamentGroupRulesPolicyResponse(TournamentGroupRulesPolicy):
+    """Admin projection with the immutable policy identity made explicit."""
+
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_policy(
+        cls, policy: TournamentGroupRulesPolicy
+    ) -> "TournamentGroupRulesPolicyResponse":
+        return cls.model_validate(
+            {
+                **policy.model_dump(mode="json"),
+                "authority_fingerprint": policy.fingerprint,
+            }
+        )
+
+
 class TournamentGroupRulesState(BaseModel):
     schema_version: Literal["tournament_group_rules_state.v1"] = (
         "tournament_group_rules_state.v1"
@@ -49,8 +66,8 @@ class TournamentGroupRulesState(BaseModel):
     run_id: str
     branch_id: str
     target_season_index: int = Field(ge=0, le=49)
-    effective: TournamentGroupRulesPolicy | None
-    versions: tuple[TournamentGroupRulesPolicy, ...]
+    effective: TournamentGroupRulesPolicyResponse | None
+    versions: tuple[TournamentGroupRulesPolicyResponse, ...]
 
 
 class TournamentFormatConfigureRequest(BaseModel):
@@ -93,8 +110,15 @@ def inspect_group_rules(
                 run_id=run_id,
                 branch_id=branch_id,
                 target_season_index=target_season_index,
-                effective=effective,
-                versions=versions,
+                effective=(
+                    TournamentGroupRulesPolicyResponse.from_policy(effective)
+                    if effective is not None
+                    else None
+                ),
+                versions=tuple(
+                    TournamentGroupRulesPolicyResponse.from_policy(value)
+                    for value in versions
+                ),
             )
     except ValueError as exc:
         raise HTTPException(
@@ -105,7 +129,7 @@ def inspect_group_rules(
 
 @router.post(
     "/admin/runs/{run_id}/branches/{branch_id}/tournament-group-rules/versions",
-    response_model=TournamentGroupRulesPolicy,
+    response_model=TournamentGroupRulesPolicyResponse,
     status_code=201,
 )
 def adopt_group_rules(
@@ -113,16 +137,17 @@ def adopt_group_rules(
     branch_id: str,
     payload: TournamentGroupRulesAdoptRequest,
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
-) -> TournamentGroupRulesPolicy:
+) -> TournamentGroupRulesPolicyResponse:
     try:
         with runtime.repository._session_factory.begin() as session:
-            return TournamentGroupRulesPolicyStore(session).adopt(
+            policy = TournamentGroupRulesPolicyStore(session).adopt(
                 run_id=run_id,
                 branch_id=branch_id,
                 effective_from_season_index=payload.effective_from_season_index,
                 command_id=payload.command_id,
                 default_match_best_of=payload.default_match_best_of,
             )
+            return TournamentGroupRulesPolicyResponse.from_policy(policy)
     except (TournamentGroupRulesPolicyConflict, ValueError) as exc:
         raise HTTPException(
             status_code=409,

@@ -134,6 +134,7 @@ class CanonicalTournamentPreparationState(BaseModel):
     entry_source_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
+    entry_source_target_season_index: int | None = Field(default=None, ge=0, le=49)
     entry_seed_order_player_ids: tuple[str, ...] = ()
     valid_submission_count: int = Field(ge=0)
     valid_main_submission_count: int = Field(ge=0)
@@ -425,6 +426,16 @@ class CanonicalTournamentPreparationService:
                     finals_selection.fingerprint
                     if finals_selection is not None
                     else (ranking.fingerprint if ranking is not None else None)
+                )
+            ),
+            entry_source_target_season_index=(
+                field.finals_target_season_index
+                if field is not None
+                and field.source_kind == "finals_participant_selection"
+                else (
+                    finals_selection.target_season_index
+                    if finals_selection is not None
+                    else None
                 )
             ),
             entry_seed_order_player_ids=(

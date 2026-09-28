@@ -1130,6 +1130,13 @@ def remap_coupled_player_slot_history(
 
     for event_id, rows in source_entries_by_event.items():
         ordered = tuple(sorted(rows, key=lambda row: row.sequence))
+        first_field = TournamentEntryField.model_validate_json(
+            ordered[0].payload_json
+        )
+        if first_field.source_kind == "finals_participant_selection":
+            raise SimulationSlotForkRemapUnsupportedError(
+                "Finals participant Entry Field fork remap requires Finals authority remap support"
+            )
         source_authority_fingerprint = ordered[0].ranking_authority_fingerprint
         target_authority = tournament_ranking_authority_map.get(
             source_authority_fingerprint

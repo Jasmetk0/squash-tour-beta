@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 
-import { getBranchCheckpoint, getBranchState, getRunContainer } from '../api/client'
+import { getBranchCheckpoint, getBranchState, getRunContainer, getRunPackageState } from '../api/client'
 import type { AdminBranchExecutionResponse, BranchState } from '../api/types'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
@@ -45,6 +45,8 @@ export function RunSimulationPage(): JSX.Element {
   const state = stateQuery.data?.run_id === runId && stateQuery.data.branch_id === executionBranchId ? stateQuery.data : undefined
   const headId = executionBranch?.head_checkpoint_id && state?.head_checkpoint_id === executionBranch.head_checkpoint_id ? executionBranch.head_checkpoint_id : null
   const checkpointQuery = useQuery({ queryKey: adminBranchHeadQueryKey(runId, executionBranchId, headId), queryFn: () => getBranchCheckpoint(headId!), enabled: Boolean(headId), retry: false })
+  const packageQuery = useQuery({ queryKey: ['run-package-state', runId, executionBranchId], queryFn: () => getRunPackageState(runId, executionBranchId!), enabled: Boolean(runId && executionBranchId), retry: false })
+  const packageOwnership = packageQuery.isSuccess ? (packageQuery.data.state === null ? 'historical' : 'package') : 'unknown'
   const checkpoint = checkpointQuery.data?.checkpoint_id === headId && checkpointQuery.data.run_id === runId && checkpointQuery.data.branch_id === executionBranchId ? checkpointQuery.data : undefined
   const eligibility = executionBranch ? simulationEligibility(runQuery.data, executionBranch, state, checkpoint ? [checkpoint] : []) : requestedBranchInvalid ? 'Requested Branch does not exist in this Product Run.' : requestedBranchPending ? 'Selecting requested Branch…' : 'Select an Active Admin Branch in the header.'
   const currentHead = !eligibility ? headId : null
@@ -71,6 +73,12 @@ export function RunSimulationPage(): JSX.Element {
   useEffect(() => {
     setReview(null); setReason(''); setConfirmed(false); setNotice(null); setResult(null); setCommandId(newCommandId())
   }, [runId, executionBranchId])
+
+  useEffect(() => {
+    if (review?.action !== 'world_tour_finals' && packageOwnership !== 'historical') {
+      setReview(null); setConfirmed(false)
+    }
+  }, [packageOwnership, review?.action])
 
   async function refreshTarget(targetRunId: string, targetBranchId: string): Promise<void> {
     await Promise.all([
@@ -111,12 +119,13 @@ export function RunSimulationPage(): JSX.Element {
   })
 
   function choose(action: BranchSimulationAction): void {
+    if (action !== 'world_tour_finals' && packageOwnership !== 'historical') return
     if (!executionBranchId || !state || !checkpoint || !currentHead) return
     setReview({ action, runId, branchId: executionBranchId, head: currentHead, state, checkpointKind: checkpoint.kind })
     setConfirmed(false); setReason(''); setNotice(null); setResult(null); setCommandId(newCommandId())
   }
   const stale = Boolean(review && (review.runId !== runId || review.branchId !== executionBranchId || review.head !== currentHead))
-  const canSubmit = Boolean(review && !stale && !eligibility && reason.trim() && commandId.trim() && confirmed && !mutation.isPending)
+  const canSubmit = Boolean(review && (review.action === 'world_tour_finals' || packageOwnership === 'historical') && !stale && !eligibility && reason.trim() && commandId.trim() && confirmed && !mutation.isPending)
   const mutationBelongsToCurrentContext = mutation.variables?.runId === runId && mutation.variables.branchId === executionBranchId
 
   return <section className="panel">
@@ -143,7 +152,9 @@ export function RunSimulationPage(): JSX.Element {
       <p className="status">
         These controls still use the legacy branch simulation wrapper. Canonical Next Match, Next Slot, Next Match Day, Next Round, Next Tournament, Next Week, Next Season and Full Simulation now live in the authoritative panel above; legacy actions remain compatibility tools only.
       </p>
-      <div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).map(action => <button key={action} type="button" disabled={Boolean(eligibility)} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div>
+      {packageOwnership === 'package' && <p className="status">This Branch is Package-backed. Use the authoritative simulation panel above for Next Match, Next Round, Next Week, Next Tournament, and Full Season.</p>}
+      {packageOwnership === 'unknown' && <p role="alert" className="error">Package ownership is being verified or is unavailable. Legacy non-Finals actions are blocked until this Branch is verified as historical.</p>}
+      <div className="quick-actions">{(Object.keys(simulationActions) as BranchSimulationAction[]).filter(action => action === 'world_tour_finals' || packageOwnership !== 'package').map(action => <button key={action} type="button" disabled={Boolean(eligibility) || (action !== 'world_tour_finals' && packageOwnership !== 'historical')} onClick={() => choose(action)}>{simulationActions[action].label}</button>)}</div>
     </SectionCard>
     {review && <SectionCard title={`Review ${simulationActions[review.action].label}`}>
       <form onSubmit={event => { event.preventDefault(); if (canSubmit && review) mutation.mutate({ ...review, auditReason: reason.trim(), commandId: commandId.trim(), viewerBranchId }) }}>

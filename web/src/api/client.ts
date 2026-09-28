@@ -3168,6 +3168,14 @@ export async function getRankingCandidates(runId: string, branchId: string): Pro
   return data
 }
 
+export async function getRunPackageState(runId: string, branchId: string): Promise<import('./types').RunPackageStateResponse> {
+  const data = await request<import('./types').RunPackageStateResponse>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages`)
+  if (data.state !== null && (data.state.run_id !== runId || data.state.branch_id !== branchId)) {
+    throw new Error('Run Package state does not match the requested Run and Branch.')
+  }
+  return data
+}
+
 export async function getRankingCandidateSources(runId: string, branchId: string, seasonIndex: number, week: number): Promise<import('./rankingCandidates').RankingCandidateSources> {
   const data = await request<import('./rankingCandidates').RankingCandidateSources>(`/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/ranking-candidates/${seasonIndex}/${week}/sources`)
   if (data.run_id !== runId || data.branch_id !== branchId || data.week.season_index !== seasonIndex || data.week.week !== week || data.publication_status !== 'candidate_only') throw new Error('Ranking sources do not match the requested scope and week.')

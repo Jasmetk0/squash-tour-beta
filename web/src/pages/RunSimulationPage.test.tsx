@@ -8,7 +8,7 @@ import { adminBranchStateQueryKey } from '../admin/adminQueryKeys'
 import { RunSimulationPage } from './RunSimulationPage'
 
 const context = vi.hoisted(() => ({ value: null as any, time: { mode: 'present' } as any }))
-const api = vi.hoisted(() => ({ getRunContainer: vi.fn(), getBranchState: vi.fn(), getBranchCheckpoint: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn(), simulateWorldTourFinalsOnBranch: vi.fn(), makeOfficialRunBranch: vi.fn() }))
+const api = vi.hoisted(() => ({ getRunContainer: vi.fn(), getBranchState: vi.fn(), getBranchCheckpoint: vi.fn(), getRunPackageState: vi.fn(), simulateNextMatchOnBranch: vi.fn(), simulateNextRoundOnBranch: vi.fn(), simulateNextWeekOnBranch: vi.fn(), simulateNextTournamentOnBranch: vi.fn(), simulateFullSeasonOnBranch: vi.fn(), simulateWorldTourFinalsOnBranch: vi.fn(), makeOfficialRunBranch: vi.fn() }))
 vi.mock('../admin/AdminBranchContext', () => ({ useAdminBranch: () => context.value }))
 vi.mock('../admin/AdminTimeContext', () => ({ useAdminTime: () => context.time }))
 vi.mock('../api/client', () => api)
@@ -24,7 +24,7 @@ function renderHarness(initialEntry = '/admin/runs/run-a/simulate') {
   return { client, ...render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/admin/runs/:runId/simulate" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>) }
 }
 async function submitNextMatch() { await userEvent.click(await screen.findByRole('button', { name: 'Next Match' })); const command = screen.getByLabelText('Simulation command ID').textContent; await userEvent.type(screen.getByLabelText('Simulation audit reason'), ' reviewed reason '); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Match' })); return command }
-beforeEach(() => { vi.clearAllMocks(); context.time = { mode: 'present' }; select('branch-a', 'cp-a'); api.getRunContainer.mockResolvedValue({ run_id: 'run-a', display_name: 'Run A', status: 'active', read_only: false, storage_kind: 'custom_local' }); api.getBranchState.mockImplementation((id: string) => Promise.resolve(state(id, id === 'branch-a' ? context.value.selectedBranch.head_checkpoint_id : 'cp-b'))); api.getBranchCheckpoint.mockImplementation((id: string) => Promise.resolve(checkpoint(id, id === 'cp-a' ? 'branch-a' : id === 'cp-b' && context.value.selectedBranchId === 'branch-a' ? 'branch-a' : 'branch-b'))); api.simulateNextMatchOnBranch.mockResolvedValue(response()) })
+beforeEach(() => { vi.clearAllMocks(); context.time = { mode: 'present' }; select('branch-a', 'cp-a'); api.getRunPackageState.mockImplementation((runId: string, branchId: string) => Promise.resolve({ state: null, fingerprint: null })); api.getRunContainer.mockResolvedValue({ run_id: 'run-a', display_name: 'Run A', status: 'active', read_only: false, storage_kind: 'custom_local' }); api.getBranchState.mockImplementation((id: string) => Promise.resolve(state(id, id === 'branch-a' ? context.value.selectedBranch.head_checkpoint_id : 'cp-b'))); api.getBranchCheckpoint.mockImplementation((id: string) => Promise.resolve(checkpoint(id, id === 'cp-a' ? 'branch-a' : id === 'cp-b' && context.value.selectedBranchId === 'branch-a' ? 'branch-a' : 'branch-b'))); api.simulateNextMatchOnBranch.mockResolvedValue(response()) })
 
 describe('RunSimulationPage', () => {
   it('honors an explicit branch deep link before exposing simulation controls', async () => {
@@ -54,4 +54,23 @@ describe('RunSimulationPage', () => {
   it('invalidates Viewer reads without changing its pointer when the Viewer Branch advances', async () => { const invalidate = vi.spyOn(QueryClient.prototype, 'invalidateQueries'); renderHarness(); await submitNextMatch(); await waitFor(() => expect(invalidate).toHaveBeenCalledWith({ queryKey: ['viewer-official-run-context', 'run-a'] })); expect(api.makeOfficialRunBranch).not.toHaveBeenCalled(); expect(context.value.viewerBranchId).toBe('branch-a') })
   it('shows a read-only target and disables actions', async () => { select('branch-a', 'cp-a', 'branch-a', true); renderHarness(); expect(await screen.findByText('Legacy compatibility simulation blocked: Branch is read-only.')).toBeInTheDocument(); expect(screen.getByRole('button', { name: 'Next Match' })).toBeDisabled() })
   it('blocks mismatched BranchState identity', async () => { api.getBranchState.mockResolvedValue({ ...state('branch-a', 'cp-a'), branch_id: 'wrong' }); renderHarness(); expect(await screen.findByText('Legacy compatibility simulation blocked: BranchState is missing.')).toBeInTheDocument(); expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalled() })
+  it('keeps Finals but removes five legacy controls for a Package-backed Branch', async () => {
+    api.getRunPackageState.mockResolvedValue({ state: { run_id: 'run-a', branch_id: 'branch-a' }, fingerprint: 'pkg' })
+    renderHarness(); await screen.findByText(/This Branch is Package-backed/)
+    for (const name of ['Next Match', 'Next Round', 'Next Week', 'Next Tournament', 'Full Season']) expect(screen.queryByRole('button', { name })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'World Tour Finals' })).toBeEnabled()
+    expect(screen.getByRole('heading', { name: 'Canonical authoritative sporting simulation' })).toBeInTheDocument()
+  })
+  it('fails closed while Package ownership cannot be verified', async () => {
+    api.getRunPackageState.mockRejectedValue(new Error('lookup failed')); renderHarness()
+    expect(await screen.findByText(/Package ownership is being verified or is unavailable/)).toBeInTheDocument()
+    for (const name of ['Next Match', 'Next Round', 'Next Week', 'Next Tournament', 'Full Season']) expect(screen.getByRole('button', { name })).toBeDisabled()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'World Tour Finals' })).toBeEnabled())
+  })
+  it('rechecks ownership on Branch switch and clears a stale legacy review', async () => {
+    api.getRunPackageState.mockImplementation((_runId: string, branchId: string) => Promise.resolve(branchId === 'branch-b' ? { state: { run_id: 'run-a', branch_id: 'branch-b' }, fingerprint: 'pkg-b' } : { state: null, fingerprint: null }))
+    renderHarness(); await userEvent.click(await screen.findByRole('button', { name: 'Next Match' })); expect(screen.getByText('Review Next Match')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Switch to B' })); await screen.findByText(/This Branch is Package-backed/); expect(screen.queryByText('Review Next Match')).not.toBeInTheDocument(); expect(api.getRunPackageState).toHaveBeenCalledWith('run-a', 'branch-b')
+  })
+
 })

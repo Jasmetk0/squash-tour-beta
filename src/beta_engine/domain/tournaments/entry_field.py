@@ -46,7 +46,10 @@ class TournamentEntryApplication(FrozenInput):
 
 
 class TournamentEntryFieldCapacity(FrozenInput):
-    geometry_kind: EntryFieldGeometry = "classic_bracket"
+    geometry_kind: EntryFieldGeometry = Field(
+        default="classic_bracket",
+        exclude_if=lambda value: value == "classic_bracket",
+    )
     main_draw_size: int = Field(ge=1, le=128)
     qualification_draw_size: int = Field(default=0, ge=0)
     qualifier_spots: int = Field(default=0, ge=0)
@@ -139,7 +142,10 @@ class TournamentEntryField(FrozenInput):
     event_id: str = Field(min_length=1)
     mode: FieldResolutionMode
     capacity: TournamentEntryFieldCapacity
-    source_kind: EntryFieldSourceKind = "ranking_applications"
+    source_kind: EntryFieldSourceKind = Field(
+        default="ranking_applications",
+        exclude_if=lambda value: value == "ranking_applications",
+    )
     tournament_ranking_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
@@ -147,13 +153,25 @@ class TournamentEntryField(FrozenInput):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     finals_participant_selection_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
     )
     finals_race_snapshot_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
     )
-    finals_target_season_index: int | None = Field(default=None, ge=0, le=49)
-    seed_order_player_ids: tuple[str, ...] = ()
+    finals_target_season_index: int | None = Field(
+        default=None,
+        ge=0,
+        le=49,
+        exclude_if=lambda value: value is None,
+    )
+    seed_order_player_ids: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     applications_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     direct_main_player_ids: tuple[str, ...] = ()
     qualification_player_ids: tuple[str, ...] = ()

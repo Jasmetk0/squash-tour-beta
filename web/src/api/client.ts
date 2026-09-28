@@ -38,6 +38,8 @@ import type {
   PlayerTransitionsResponse,
   CanonicalTournamentEntryFieldState,
   CanonicalTournamentPreparationState,
+  TournamentGroupMatchScheduleAuthority,
+  GenerateTournamentGroupMatchSchedulePayload,
   TournamentRankingSnapshotAuthority,
   TournamentRankingPublicationOptions,
   AdoptTournamentRankingSnapshotPayload,
@@ -2799,6 +2801,48 @@ export async function createTournamentEntryFieldFromFinalsSelection(
     data.finals_target_season_index !== payload.target_season_index
   ) {
     throw new Error('Finals Tournament Entry Field response does not match the requested selection authority.')
+  }
+  return data
+}
+
+export async function generateTournamentGroupMatchSchedule(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: GenerateTournamentGroupMatchSchedulePayload
+): Promise<TournamentGroupMatchScheduleAuthority> {
+  const data = await request<TournamentGroupMatchScheduleAuthority>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/format/group-match-schedule/generate`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.schema_version !== 'tournament_group_match_schedule_authority.v1' ||
+    data.run_id !== runId ||
+    data.branch_id !== branchId ||
+    data.event_id !== eventId ||
+    !data.authority_fingerprint
+  ) {
+    throw new Error('Tournament Group Match Schedule response does not match the requested authority scope.')
+  }
+  return data
+}
+
+export async function getTournamentGroupMatchSchedule(
+  runId: string,
+  branchId: string,
+  eventId: string
+): Promise<TournamentGroupMatchScheduleAuthority> {
+  const data = await request<TournamentGroupMatchScheduleAuthority>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/format/group-match-schedule`
+  )
+  if (
+    data.schema_version !== 'tournament_group_match_schedule_authority.v1' ||
+    data.run_id !== runId ||
+    data.branch_id !== branchId ||
+    data.event_id !== eventId ||
+    !data.authority_fingerprint
+  ) {
+    throw new Error('Tournament Group Match Schedule response does not match the requested authority scope.')
   }
   return data
 }

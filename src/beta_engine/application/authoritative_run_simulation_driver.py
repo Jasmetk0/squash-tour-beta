@@ -158,6 +158,9 @@ from beta_engine.infrastructure.db.tournament_draw_authority import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
+from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthorityStore,
+)
 from beta_engine.infrastructure.db.week_tournament_lock import (
     WeekTournamentLockStore,
     derive_week_tournament_lock_authority,
@@ -815,6 +818,28 @@ class _AdoptedTournamentEvidence(FrozenInput):
     draw_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
+    group_match_schedule_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @model_validator(mode="after")
+    def canonical_source_kind(self):
+        if self.package is not None:
+            return self
+        if self.calendar_event is None or self.point_award_authority is None:
+            raise ValueError("canonical adopted tournament evidence is incomplete")
+        source_count = sum(
+            value is not None
+            for value in (
+                self.draw_authority_fingerprint,
+                self.group_match_schedule_fingerprint,
+            )
+        )
+        if source_count != 1:
+            raise ValueError(
+                "canonical tournament evidence requires exactly one execution source"
+            )
+        return self
 
 
 class AuthoritativeSeasonTransitionPreflight(FrozenInput):

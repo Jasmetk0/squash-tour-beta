@@ -3649,7 +3649,14 @@ class AuthoritativeRunSimulationDriver:
                     "live rally target is completed, blocked, or outside the current slot"
                 )
 
-            slot, plan, event, package, players = self._group_execution_context(
+            (
+                slot,
+                plan,
+                event,
+                event_id,
+                players,
+                effective_match_format,
+            ) = self._group_execution_context(
                 session, command, packages, command.group_id
             )
             seed = int(
@@ -3665,12 +3672,13 @@ class AuthoritativeRunSimulationDriver:
                 week=command.expected_week,
                 slot_id=slot.slot_id,
                 group_id=command.group_id,
-                event_id=package.event_id,
+                event_id=event_id,
                 match_id=event.match_id,
                 player_a_id=players[0],
                 player_b_id=players[1],
                 seed=seed,
                 expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+                effective_match_format=effective_match_format,
             )
             current_state_fp = started["state_fingerprint"]
             if current_state_fp is None:

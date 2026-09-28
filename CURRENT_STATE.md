@@ -5,9 +5,9 @@
 Master v68 now has a first Run/Branch-owned Race authority foundation without changing the
 legacy Finals consumer yet.
 
-- `FinalsRaceConfiguration` freezes one season's Best-N rule, eligible category selectors,
-  exact published Official Ranking cutoff fingerprint, exact Ranking Transition fingerprint
-  and frozen Run-owned Calendar content fingerprint;
+- `FinalsRaceConfiguration` freezes the exact Finals Tournament Edition event ID, one season's
+  Best-N rule, eligible category selectors, exact published Official Ranking cutoff fingerprint,
+  exact Ranking Transition fingerprint and frozen Run-owned Calendar content fingerprint;
 - `FinalsRaceTournamentSource` accepts only canonical Run/Branch tournament point-award
   evidence and carries exact source/award fingerprints;
 - Race ordering follows the current Master v68 Race contract: Best-N total, then highest individual result,
@@ -21,8 +21,9 @@ legacy Finals consumer yet.
   untouched in this slice.
 
 **Next after this PR:** add the explicit Admin command/service boundary that resolves the
-configuration only from validated published Official Ranking + Ranking Transition + Run-owned
-Calendar evidence, then build/persist the snapshot from OwnedTournamentRankingSource history.
+configuration only from an exact frozen Finals Tournament Edition plus validated published Official
+Ranking + Ranking Transition + Run-owned Calendar evidence, then build/persist the snapshot from
+OwnedTournamentRankingSource history.
 Only after that should Package-backed Finals qualification stop reading legacy RaceSnapshot.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs

@@ -2,7 +2,7 @@
 
 ## Active implementation — canonical World Tour Finals Race authority foundation
 
-Master v67 now has a first Run/Branch-owned Race authority foundation without changing the
+Master v68 now has a first Run/Branch-owned Race authority foundation without changing the
 legacy Finals consumer yet.
 
 - `FinalsRaceConfiguration` freezes one season's Best-N rule, eligible category selectors,
@@ -10,7 +10,7 @@ legacy Finals consumer yet.
   and frozen Run-owned Calendar content fingerprint;
 - `FinalsRaceTournamentSource` accepts only canonical Run/Branch tournament point-award
   evidence and carries exact source/award fingerprints;
-- Race ordering is exactly Master v67: Best-N total, then highest individual result,
+- Race ordering follows the current Master v68 Race contract: Best-N total, then highest individual result,
   second-highest and onward, then the already-frozen canonical player tie-break token;
 - no previous-season order or Official Ranking position is used as a Race tie-break;
 - the immutable snapshot freezes the exact eligible event/source set and includes zero-point

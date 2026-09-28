@@ -298,6 +298,14 @@ class CanonicalTournamentPreparationService:
             event_id=event_id,
         )
         field = history[-1] if history else None
+        if (
+            finals_selection is not None
+            and field is not None
+            and field.source_kind != "finals_participant_selection"
+        ):
+            raise ValueError(
+                "Finals participant selection conflicts with existing Ranking/Application Entry Field"
+            )
         capacity_suggestion = (
             None
             if finals_selection is not None

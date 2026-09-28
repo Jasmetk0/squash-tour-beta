@@ -111,7 +111,7 @@ class TournamentGroupMatchScheduleResponse(
     ) -> "TournamentGroupMatchScheduleResponse":
         return cls.model_validate(
             {
-                **authority.model_dump(mode="json"),
+                **authority.model_dump(mode="python"),
                 "authority_fingerprint": authority.fingerprint,
             }
         )

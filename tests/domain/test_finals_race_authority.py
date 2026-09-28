@@ -42,7 +42,7 @@ def source(
             season_index=0, week=publication_week
         ),
         owned_source_fingerprint=fp(marker),
-        point_award_fingerprint=fp(marker.upper()),
+        point_award_fingerprint=fp(marker),
         awards=tuple(
             FinalsRaceTournamentAward(
                 player_id=player_id,

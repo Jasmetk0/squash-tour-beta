@@ -30,13 +30,25 @@ def calendar_projection() -> RunCalendarProjection:
         region="EUROPE",
         main_draw_size=4,
     )
+    finals = CalendarEvent(
+        event_id="FINALS",
+        season="2000/2001",
+        season_week=20,
+        template_id="FINALS-TPL",
+        event_name="World Tour Finals",
+        category="FINALS",
+        tour_level="WORLD_TOUR",
+        host_country="CZE",
+        region="EUROPE",
+        main_draw_size=8,
+    )
     return RunCalendarProjection(
         package_id="calendar-2000-2001",
         run_id="run",
         branch_id="branch",
         run_package_state_fingerprint=fp("a"),
         season="2000/2001",
-        calendar=SeasonCalendar(season="2000/2001", events=[event]),
+        calendar=SeasonCalendar(season="2000/2001", events=[event, finals]),
         provenance=(),
     )
 
@@ -46,6 +58,7 @@ def configuration(projection: RunCalendarProjection) -> FinalsRaceConfiguration:
         run_id="run",
         branch_id="branch",
         season_index=0,
+        finals_event_id="FINALS",
         best_n_results=2,
         eligible_categories=("DIAMOND",),
         cutoff_ranking_week=RankingWeek(season_index=0, week=10),
@@ -128,5 +141,39 @@ def test_projection_rejects_legacy_only_eligible_tournament_source():
             configuration=configuration(projection),
             calendar=projection,
             tournament_sources=(source(canonical=False),),
+            transition_authority=transition(),
+        )
+
+
+@pytest.mark.pr_critical
+def test_projection_requires_exact_finals_edition_and_pre_finals_cutoff():
+    projection = calendar_projection()
+    missing = configuration(projection).model_copy(
+        update={"finals_event_id": "MISSING"}
+    )
+    with pytest.raises(ValueError, match="Finals Edition absent"):
+        project_canonical_finals_race_snapshot(
+            configuration=missing,
+            calendar=projection,
+            tournament_sources=(),
+            transition_authority=transition(),
+        )
+
+    early_calendar = SeasonCalendar(
+        season="2000/2001",
+        events=[
+            item.model_copy(update={"season_week": 5})
+            if item.event_id == "FINALS"
+            else item
+            for item in projection.calendar.events
+        ],
+    )
+    early_projection = projection.model_copy(update={"calendar": early_calendar})
+    after_start = configuration(early_projection)
+    with pytest.raises(ValueError, match="before the configured Finals Edition"):
+        project_canonical_finals_race_snapshot(
+            configuration=after_start,
+            calendar=early_projection,
+            tournament_sources=(),
             transition_authority=transition(),
         )

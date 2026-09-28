@@ -29,6 +29,12 @@ from beta_engine.domain.rankings.transition_authority import RankingTransitionAu
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
+from beta_engine.domain.finals.race import (
+    WorldTourFinalsRaceEventAwards,
+    WorldTourFinalsRacePlayerAward,
+    WorldTourFinalsRaceSnapshot,
+    calculate_world_tour_finals_race,
+)
 from beta_engine.domain.rankings.zero_history import (
     RankingZeroVersion,
     resolve_zero_versions,
@@ -563,6 +569,101 @@ def _remap_tournament_ranking_snapshot_authorities(
     return tuple(remapped), by_source_fingerprint
 
 
+def _remap_world_tour_finals_race_snapshots(
+    snapshots: tuple[WorldTourFinalsRaceSnapshot, ...],
+    *,
+    run_id: str,
+    source_branch_id: str,
+    target_branch_id: str,
+    source_entries: tuple[RankingRevisionEntry, ...],
+    target_entries: tuple[RankingRevisionEntry, ...],
+    source_tournament_sources: tuple[OwnedTournamentRankingSource, ...],
+    target_tournament_sources: tuple[OwnedTournamentRankingSource, ...],
+) -> tuple[WorldTourFinalsRaceSnapshot, ...]:
+    source_rankings = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in source_entries
+    }
+    target_rankings = {
+        entry.snapshot.week.ordinal: entry.snapshot for entry in target_entries
+    }
+    source_by_event_and_fp = {
+        (source.binding.event_id, source.fingerprint): source
+        for source in source_tournament_sources
+    }
+    target_by_edition = {
+        source.binding.edition_id: source for source in target_tournament_sources
+    }
+    remapped = []
+    for snapshot in snapshots:
+        if (snapshot.run_id, snapshot.branch_id) != (
+            run_id,
+            source_branch_id,
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "World Tour Finals Race snapshot scope differs from source Branch"
+            )
+        source_cutoff = source_rankings.get(snapshot.cutoff_week.ordinal)
+        target_cutoff = target_rankings.get(snapshot.cutoff_week.ordinal)
+        if (
+            source_cutoff is None
+            or target_cutoff is None
+            or source_cutoff.fingerprint != snapshot.cutoff_ranking_fingerprint
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "World Tour Finals Race cutoff differs from frozen ranking history"
+            )
+
+        event_sources = []
+        for event_id, source_fingerprint in snapshot.source_tournament_fingerprints:
+            source = source_by_event_and_fp.get((event_id, source_fingerprint))
+            if source is None:
+                raise RankingForkRemapUnsupportedError(
+                    "World Tour Finals Race source is absent from source ranking bundle"
+                )
+            target = target_by_edition.get(source.binding.edition_id)
+            if (
+                target is None
+                or target.binding.event_id != event_id
+                or target.canonical_awards is None
+                or target.binding.first_publication_week is None
+            ):
+                raise RankingForkRemapUnsupportedError(
+                    "World Tour Finals Race source could not be rebound to target Branch"
+                )
+            event_sources.append(
+                WorldTourFinalsRaceEventAwards(
+                    event_id=event_id,
+                    completed_week=target.binding.completed_week,
+                    first_publication_week=target.binding.first_publication_week,
+                    source_fingerprint=target.fingerprint,
+                    awards=tuple(
+                        WorldTourFinalsRacePlayerAward(
+                            player_id=award.player_id,
+                            race_points=award.race_points_awarded,
+                            award_fingerprint=award.award_fingerprint,
+                        )
+                        for award in target.canonical_awards.awards
+                    ),
+                )
+            )
+
+        remapped.append(
+            calculate_world_tour_finals_race(
+                run_id=run_id,
+                branch_id=target_branch_id,
+                season_index=snapshot.season_index,
+                cutoff_week=snapshot.cutoff_week,
+                cutoff_ranking_fingerprint=target_cutoff.fingerprint,
+                best_result_count=snapshot.best_result_count,
+                eligible_event_ids=snapshot.eligible_event_ids,
+                calendar_projection_fingerprint=snapshot.calendar_projection_fingerprint,
+                event_sources=tuple(event_sources),
+                command_id=snapshot.command_id,
+            )
+        )
+    return tuple(remapped)
+
+
 def remap_source_free_ranking_state_for_branch(
     source: RankingRevisionState,
     *,
@@ -998,12 +1099,26 @@ def remap_source_free_ranking_state_for_branch(
         source_entries=source.entries,
         target_entries=remapped_entries_tuple,
     )
+    remapped_world_tour_finals_races = _remap_world_tour_finals_race_snapshots(
+        source.world_tour_finals_race_snapshots,
+        run_id=run_id,
+        source_branch_id=source_branch_id,
+        target_branch_id=target_branch_id,
+        source_entries=source.entries,
+        target_entries=remapped_entries_tuple,
+        source_tournament_sources=source.tournament_sources,
+        target_tournament_sources=remapped_tournament_sources,
+    )
 
     return RankingRevisionState(
         schema_version=(
-            "ranking_revision_state.v5"
-            if remapped_tournament_ranking_snapshot_authorities
-            else "ranking_revision_state.v4"
+            "ranking_revision_state.v8"
+            if remapped_world_tour_finals_races
+            else (
+                "ranking_revision_state.v5"
+                if remapped_tournament_ranking_snapshot_authorities
+                else "ranking_revision_state.v4"
+            )
         ),
         run_id=run_id,
         branch_id=target_branch_id,
@@ -1015,6 +1130,7 @@ def remap_source_free_ranking_state_for_branch(
         tournament_ranking_snapshot_authorities=(
             remapped_tournament_ranking_snapshot_authorities
         ),
+        world_tour_finals_race_snapshots=remapped_world_tour_finals_races,
         authoritative_transition_state=remapped_transition_state,
     )
 

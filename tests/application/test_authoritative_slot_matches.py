@@ -9051,12 +9051,12 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         source_key="test-group-bo3",
     )
     pairings = (
-        (1, 1, 4, a, d),
-        (1, 2, 3, b, c_player),
-        (2, 1, 3, a, c_player),
-        (2, 2, 4, b, d),
-        (3, 1, 2, a, b),
-        (3, 3, 4, c_player, d),
+        (1, 1, 1, 4, a, d),
+        (1, 2, 2, 3, b, c_player),
+        (2, 1, 1, 3, a, c_player),
+        (2, 2, 2, 4, b, d),
+        (3, 1, 1, 2, a, b),
+        (3, 2, 3, 4, c_player, d),
     )
     scheduled_matches = tuple(
         TournamentGroupScheduledMatch(
@@ -9074,23 +9074,11 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         for index, (
             day,
             order,
+            top_slot,
             bottom_slot,
             top_player,
             bottom_player,
         ) in enumerate(pairings, start=1)
-        for top_slot in (
-            {
-                (1, 4): 1,
-                (2, 3): 2,
-                (1, 3): 1,
-                (2, 4): 2,
-                (1, 2): 1,
-                (3, 4): 3,
-            }[(min(
-                {a: 1, b: 2, c_player: 3, d: 4}[top_player],
-                {a: 1, b: 2, c_player: 3, d: 4}[bottom_player],
-            ), bottom_slot)],
-        )
     )
     group_schedule = TournamentGroupMatchScheduleAuthority(
         run_id="run",

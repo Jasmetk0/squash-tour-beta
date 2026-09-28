@@ -1412,6 +1412,55 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({row.event_id for row in entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    group_rules_policies = session.scalars(
+        select(TournamentGroupRulesPolicyModel)
+        .where(
+            TournamentGroupRulesPolicyModel.run_id == run_id,
+            TournamentGroupRulesPolicyModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupRulesPolicyModel.effective_from_season_index)
+    ).all()
+    if group_rules_policies:
+        from beta_engine.infrastructure.db.tournament_group_rules_policy import (
+            TournamentGroupRulesPolicyStore,
+        )
+
+        TournamentGroupRulesPolicyStore(session).list_versions(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    format_authorities = session.scalars(
+        select(TournamentFormatAuthorityModel)
+        .where(
+            TournamentFormatAuthorityModel.run_id == run_id,
+            TournamentFormatAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentFormatAuthorityModel.event_id)
+    ).all()
+    if format_authorities:
+        from beta_engine.infrastructure.db.tournament_format_authority import (
+            TournamentFormatAuthorityStore,
+        )
+
+        format_store = TournamentFormatAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in format_authorities}):
+            format_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    topology_authorities = session.scalars(
+        select(TournamentTopologyAuthorityModel)
+        .where(
+            TournamentTopologyAuthorityModel.run_id == run_id,
+            TournamentTopologyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentTopologyAuthorityModel.event_id)
+    ).all()
+    if topology_authorities:
+        from beta_engine.infrastructure.db.tournament_topology_authority import (
+            TournamentTopologyAuthorityStore,
+        )
+
+        topology_store = TournamentTopologyAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in topology_authorities}):
+            topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -1527,6 +1576,9 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or finals_participant_configurations
         or finals_participant_snapshots
         or entry_fields
+        or group_rules_policies
+        or format_authorities
+        or topology_authorities
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -1552,6 +1604,12 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_finals_participant_snapshots=bool(finals_participant_snapshots),
             entry_fields=entry_fields,
             include_entry_fields=bool(entry_fields),
+            group_rules_policies=group_rules_policies,
+            include_group_rules_policies=bool(group_rules_policies),
+            format_authorities=format_authorities,
+            include_format_authorities=bool(format_authorities),
+            topology_authorities=topology_authorities,
+            include_topology_authorities=bool(topology_authorities),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,

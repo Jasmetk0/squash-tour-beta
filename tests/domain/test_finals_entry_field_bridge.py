@@ -107,7 +107,9 @@ def test_historical_v1_entry_field_json_keeps_identical_fingerprint():
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
 
-    reopened = TournamentEntryField.model_validate(payload)
+    reopened = TournamentEntryField.model_validate_json(
+        json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    )
 
     assert reopened.model_dump(mode="json") == payload
     assert reopened.fingerprint == expected

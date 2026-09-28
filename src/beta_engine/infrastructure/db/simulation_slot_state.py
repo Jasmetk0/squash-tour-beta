@@ -1960,6 +1960,42 @@ def _live_component_with_saved_shape(
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
+    finals_race_configurations = session.scalars(
+        select(WorldTourFinalsRaceConfigurationModel)
+        .where(
+            WorldTourFinalsRaceConfigurationModel.run_id == run_id,
+            WorldTourFinalsRaceConfigurationModel.branch_id == branch_id,
+        )
+        .order_by(WorldTourFinalsRaceConfigurationModel.target_season_index)
+    ).all()
+    finals_race_snapshots = session.scalars(
+        select(WorldTourFinalsRaceSnapshotModel)
+        .where(
+            WorldTourFinalsRaceSnapshotModel.run_id == run_id,
+            WorldTourFinalsRaceSnapshotModel.branch_id == branch_id,
+        )
+        .order_by(WorldTourFinalsRaceSnapshotModel.target_season_index)
+    ).all()
+    finals_participant_configurations = session.scalars(
+        select(WorldTourFinalsParticipantSelectionConfigurationModel)
+        .where(
+            WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsParticipantSelectionConfigurationModel.target_season_index
+        )
+    ).all()
+    finals_participant_snapshots = session.scalars(
+        select(WorldTourFinalsParticipantSelectionSnapshotModel)
+        .where(
+            WorldTourFinalsParticipantSelectionSnapshotModel.run_id == run_id,
+            WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index
+        )
+    ).all()
     week_tournament_locks = session.scalars(
         select(WeekTournamentLockAuthorityModel)
         .where(
@@ -2030,6 +2066,10 @@ def _live_component_with_saved_shape(
             commands,
             authorities,
             schedules,
+            finals_race_configurations,
+            finals_race_snapshots,
+            finals_participant_configurations,
+            finals_participant_snapshots,
             week_tournament_locks,
             entry_fields,
             wild_cards,
@@ -2051,6 +2091,18 @@ def _live_component_with_saved_shape(
         include_authorities="authorities" in shape_hint,
         schedules=schedules,
         include_schedules="schedules" in shape_hint,
+        finals_race_configurations=finals_race_configurations,
+        include_finals_race_configurations="finals_race_configurations" in shape_hint,
+        finals_race_snapshots=finals_race_snapshots,
+        include_finals_race_snapshots="finals_race_snapshots" in shape_hint,
+        finals_participant_configurations=finals_participant_configurations,
+        include_finals_participant_configurations=(
+            "finals_participant_configurations" in shape_hint
+        ),
+        finals_participant_snapshots=finals_participant_snapshots,
+        include_finals_participant_snapshots=(
+            "finals_participant_snapshots" in shape_hint
+        ),
         week_tournament_locks=week_tournament_locks,
         include_week_tournament_locks="week_tournament_locks" in shape_hint,
         entry_fields=entry_fields,

@@ -129,7 +129,10 @@ class WorldTourFinalsRaceSnapshotStore:
         return tuple(resolved)
 
     def _load_row(
-        self, row: WorldTourFinalsRaceSnapshotModel
+        self,
+        row: WorldTourFinalsRaceSnapshotModel,
+        *,
+        validate_dependencies: bool = True,
     ) -> WorldTourFinalsRaceSnapshot:
         snapshot = WorldTourFinalsRaceSnapshot.model_validate_json(row.payload_json)
         if (
@@ -148,6 +151,8 @@ class WorldTourFinalsRaceSnapshotStore:
             row.command_id,
         ):
             raise ValueError("Stored World Tour Finals Race snapshot is corrupt")
+        if not validate_dependencies:
+            return snapshot
         event_sources = self._dependencies(snapshot)
         rebuilt = calculate_world_tour_finals_race(
             run_id=snapshot.run_id,
@@ -166,16 +171,31 @@ class WorldTourFinalsRaceSnapshotStore:
         return snapshot
 
     def get(
-        self, *, run_id: str, branch_id: str, season_index: int
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        season_index: int,
+        validate_dependencies: bool = True,
     ) -> WorldTourFinalsRaceSnapshot | None:
         self._scope(run_id, branch_id)
         row = self.session.get(
             WorldTourFinalsRaceSnapshotModel, (run_id, branch_id, season_index)
         )
-        return None if row is None else self._load_row(row)
+        return (
+            None
+            if row is None
+            else self._load_row(
+                row, validate_dependencies=validate_dependencies
+            )
+        )
 
     def history(
-        self, *, run_id: str, branch_id: str
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        validate_dependencies: bool = True,
     ) -> tuple[WorldTourFinalsRaceSnapshot, ...]:
         self._scope(run_id, branch_id)
         rows = self.session.scalars(
@@ -186,22 +206,33 @@ class WorldTourFinalsRaceSnapshotStore:
             )
             .order_by(WorldTourFinalsRaceSnapshotModel.season_index)
         ).all()
-        return tuple(self._load_row(row) for row in rows)
+        return tuple(
+            self._load_row(
+                row, validate_dependencies=validate_dependencies
+            )
+            for row in rows
+        )
 
     def append(
-        self, snapshot: WorldTourFinalsRaceSnapshot
+        self,
+        snapshot: WorldTourFinalsRaceSnapshot,
+        *,
+        validate_dependencies: bool = True,
     ) -> WorldTourFinalsRaceSnapshot:
         snapshot = WorldTourFinalsRaceSnapshot.model_validate_json(
             snapshot.model_dump_json()
         )
         self._scope(snapshot.run_id, snapshot.branch_id, writing=True)
-        self._dependencies(snapshot)
+        if validate_dependencies:
+            self._dependencies(snapshot)
         existing = self.session.get(
             WorldTourFinalsRaceSnapshotModel,
             (snapshot.run_id, snapshot.branch_id, snapshot.season_index),
         )
         if existing is not None:
-            current = self._load_row(existing)
+            current = self._load_row(
+                existing, validate_dependencies=validate_dependencies
+            )
             if current.fingerprint != snapshot.fingerprint:
                 raise WorldTourFinalsRaceConflict(
                     "World Tour Finals Race season already has a different snapshot"
@@ -223,6 +254,7 @@ class WorldTourFinalsRaceSnapshotStore:
             run_id=snapshot.run_id,
             branch_id=snapshot.branch_id,
             season_index=snapshot.season_index,
+            validate_dependencies=validate_dependencies,
         )
         if stored != snapshot:
             raise ValueError("World Tour Finals Race snapshot write could not be verified")

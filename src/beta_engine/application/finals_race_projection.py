@@ -95,12 +95,18 @@ def project_canonical_world_tour_finals_race_input(
         raise ValueError(
             "Finals Race published cutoff roster is absent from Ranking Transition authority"
         )
+    # The selected Official Ranking is the Race time boundary, not a player-eligibility
+    # or ordering authority. Freeze the transition roster and its stored tie tokens;
+    # later Finals participant selection handles availability/qualification separately.
     players = tuple(
         WorldTourFinalsRacePlayer(
-            player_id=player_id,
-            tie_break_token=transition_players[player_id].tie_break_token,
+            player_id=player.player_id,
+            tie_break_token=player.tie_break_token,
         )
-        for player_id in sorted(published_player_ids)
+        for player in sorted(
+            transition_authority.players,
+            key=lambda item: item.player_id,
+        )
     )
 
     eligible_results: list[WorldTourFinalsRaceResult] = []
@@ -178,8 +184,6 @@ def project_canonical_world_tour_finals_race_input(
                 raise ValueError(
                     "Finals Race tournament source references player outside cutoff transition roster"
                 )
-            if award.player_id not in published_player_ids:
-                continue
             eligible_results.append(
                 WorldTourFinalsRaceResult(
                     run_id=configuration.run_id,

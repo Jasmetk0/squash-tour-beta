@@ -15,6 +15,24 @@
 6. Next: return to the highest-value decided pre-alpha implementation dependency; the
    complete release gate still remains separate.
 
+## Active pre-alpha sequence — canonical World Tour Finals Race
+
+1. ✅ Define immutable `world_tour_finals_race_snapshot.v1` with explicit season,
+   published-ranking cutoff, Best-N, frozen eligible event set and deterministic tie token.
+2. ✅ Resolve Race points only from canonical tournament point-award authorities whose
+   publication boundary is at or before the selected cutoff.
+3. ✅ Bind eligible events to the frozen Run-owned Calendar Package and persist source,
+   Calendar and cutoff-ranking fingerprints.
+4. ✅ Persist one immutable Race snapshot per Run/Branch/season and expose explicit Admin
+   create/read API without participant-selection or Draw side effects.
+5. ✅ Capture/restore Race through `ranking_revision_state.v8` and remap target-owned Race
+   identity across the currently supported ranking-bearing fork subset.
+6. Next: add Admin season Race configuration/resolution from eligible Category configuration
+   to frozen event IDs plus validated published cutoff choices.
+7. Later: consume the final Race in ordinary Tournament Edition participant selection,
+   direct-entry replacement and seeding only after those separate rules/configuration are
+   wired; do not revive the legacy fixed 8-player/group Finals engine.
+
 ## Active pre-alpha sequence — resumable live match simulation
 
 1. ✅ Freeze immutable MatchWorkingInput and true one-rally transition.
@@ -98,8 +116,9 @@
     simulation already owns Match/Round/Tournament/Week/Full Simulation for Package-backed Runs.
 31. ✅ Reject new legacy branch Match/Round/Week/Tournament/Full-Season commands for Package-backed
     Branches while preserving historical non-Package compatibility and completed journal replay.
-32. Next: remove or disable the corresponding current Admin compatibility controls when the
-    selected Branch is Package-backed; do not touch separate Finals mechanics.
+32. ✅ Align current Admin compatibility controls with exact Run/Branch Package ownership:
+    hide/block the five retired non-Finals actions on Package-backed Branches, preserve
+    historical non-Package tools and leave World Tour Finals semantics unchanged.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization
@@ -128,7 +147,7 @@
    sidecars; preserve these reads only for historical non-Package compatibility.
 7. ✅ Stop new legacy Branch Match/Round/Week/Tournament/Full-Season execution entirely once
    RunPackageState exists; canonical authoritative simulation is the Package-backed path.
-8. Next: align current Admin compatibility controls with that backend ownership fence while
+8. ✅ Align current Admin compatibility controls with that backend ownership fence while
    preserving historical non-Package tools and separate Finals behavior.
 
 
@@ -145,8 +164,11 @@
    have no Package state at all.
 6. Prove the main Official Run season still completes after deleting the live legacy
    Calendar registry.
-7. Next audit: legacy result/template compatibility builders and remaining global
-   config reads reachable from authoritative simulation.
+7. ✅ Re-audit the remaining legacy result/template builder seam in
+   `authoritative_slot_matches.py`; it has no production `src/` call path and remains
+   test/compatibility code rather than a live Package-backed authority fallback.
+8. Next: continue strict ownership only when a production authoritative call path is proven;
+   do not delete compatibility builders merely because they are old.
 
 
 ## Active pre-alpha sequence — remove authoritative player-file ownership

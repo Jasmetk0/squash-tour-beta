@@ -8555,6 +8555,30 @@ class AuthoritativeRunSimulationDriver:
         payload = json.loads(payload_json)
         version = payload.get("schema_version")
 
+        if version == "adopted_tournament_authority.v7":
+            items = []
+            for item in payload["tournaments"]:
+                event = CalendarEvent.model_validate(item["calendar_event"])
+                evidence = _AdoptedTournamentEvidence(
+                    event_id=item["event_id"],
+                    calendar_event=event,
+                    point_award_authority=FrozenPointAwardAuthority.model_validate(
+                        item["point_award_authority"]
+                    ),
+                    draw_authority_fingerprint=item.get(
+                        "draw_authority_fingerprint"
+                    ),
+                    group_match_schedule_fingerprint=item.get(
+                        "group_match_schedule_fingerprint"
+                    ),
+                )
+                if evidence.event_id != event.event_id:
+                    raise ValueError(
+                        "canonical adopted tournament event identity mismatch"
+                    )
+                items.append(evidence)
+            return tuple(sorted(items, key=lambda item: item.event_id))
+
         if version == "adopted_tournament_authority.v6":
             items = []
             for item in payload["tournaments"]:
@@ -8647,13 +8671,43 @@ class AuthoritativeRunSimulationDriver:
             item.package is None
             and item.calendar_event is not None
             and item.point_award_authority is not None
-            and item.draw_authority_fingerprint is not None
+            and (
+                (item.draw_authority_fingerprint is None)
+                != (item.group_match_schedule_fingerprint is None)
+            )
             for item in items
         )
         if canonical:
+            has_group_schedule = any(
+                item.group_match_schedule_fingerprint is not None for item in items
+            )
+            if not has_group_schedule:
+                return json.dumps(
+                    {
+                        "schema_version": "adopted_tournament_authority.v6",
+                        "tournaments": [
+                            {
+                                "event_id": item.event_id,
+                                "calendar_event": item.calendar_event.model_dump(
+                                    mode="json",
+                                    exclude_computed_fields=True,
+                                ),
+                                "point_award_authority": (
+                                    item.point_award_authority.model_dump(mode="json")
+                                ),
+                                "draw_authority_fingerprint": (
+                                    item.draw_authority_fingerprint
+                                ),
+                            }
+                            for item in items
+                        ],
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
             return json.dumps(
                 {
-                    "schema_version": "adopted_tournament_authority.v6",
+                    "schema_version": "adopted_tournament_authority.v7",
                     "tournaments": [
                         {
                             "event_id": item.event_id,
@@ -8664,8 +8718,21 @@ class AuthoritativeRunSimulationDriver:
                             "point_award_authority": (
                                 item.point_award_authority.model_dump(mode="json")
                             ),
-                            "draw_authority_fingerprint": (
-                                item.draw_authority_fingerprint
+                            **(
+                                {
+                                    "draw_authority_fingerprint":
+                                    item.draw_authority_fingerprint
+                                }
+                                if item.draw_authority_fingerprint is not None
+                                else {}
+                            ),
+                            **(
+                                {
+                                    "group_match_schedule_fingerprint":
+                                    item.group_match_schedule_fingerprint
+                                }
+                                if item.group_match_schedule_fingerprint is not None
+                                else {}
                             ),
                         }
                         for item in items

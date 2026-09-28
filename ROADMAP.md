@@ -101,7 +101,7 @@
 32. ✅ Remove/disable the five retired non-Finals compatibility controls for Package-backed
     Branches in current Admin UI while preserving historical non-Package and Finals behavior.
 33. ✅ Establish canonical Finals Race configuration/snapshot domain + immutable persistence
-    with Master-v67 Best-N/result-profile/tie-token ordering over canonical tournament evidence.
+    with current Master v68 Best-N/result-profile/tie-token Race ordering over canonical tournament evidence.
 34. ✅ Add the explicit Admin/service command boundary that binds Finals Race configuration
     to one published Official Ranking cutoff, matching Ranking Transition roster/policy and
     Run-owned Calendar, then persist the deterministic snapshot from canonical source history.

@@ -1852,6 +1852,7 @@ def _load(payload, *, run_id, branch_id):
         "group_rules_policies",
         "format_authorities",
         "topology_authorities",
+        "group_match_schedules",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -1903,6 +1904,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("topology_authorities", [])
         ],
         include_topology_authorities="topology_authorities" in component,
+        group_match_schedules=[
+            TournamentGroupMatchScheduleAuthorityModel(**value)
+            for value in component.get("group_match_schedules", [])
+        ],
+        include_group_match_schedules="group_match_schedules" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])

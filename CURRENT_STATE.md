@@ -20,6 +20,11 @@ that Finals are ranked by Official Ranking or already have a classic bracket.
 - persistence/replay validates each Entry Field against its actual source authority, and
   the newly added default metadata is omitted from historical v1 serialization so old
   Entry Field JSON/fingerprints remain stable;
+- Saved Revision now captures and restores the complete Finals dependency chain
+  (Race configuration/snapshot, participant configuration/snapshot and Entry Field) in
+  dependency order, so a restored Finals field remains self-contained and replayable;
+- historical branch fork remap explicitly fails closed when Finals authority is present
+  until a dedicated Run/Branch identity remap for those seasonal authorities is defined;
 - canonical Tournament Preparation recognizes a persisted Finals participant snapshot as
   a valid upstream Entry source: before materialization it asks for the Entry Field, not
   an Official Ranking; after materialization it stops at

@@ -8,6 +8,7 @@ import {
   adoptTournamentRankingSnapshotAuthority,
   listTournamentRankingPublicationOptions,
   createTournamentEntryFieldFromValidSubmissions,
+  createTournamentEntryFieldFromFinalsSelection,
   commitCanonicalPreDrawWithdrawal,
   getCanonicalTournamentDrawState,
   getCanonicalTournamentDrawAuthority,
@@ -128,6 +129,37 @@ export function PlannedEventDetailPage(): JSX.Element {
         capacity.qualifier_spots, capacity.wild_card_slots, capacity.bye_slots
       ].join('-').slice(0, 128)
       return createTournamentEntryFieldFromValidSubmissions(runId, activeBranchId, eventId, { command_id: commandId, capacity })
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId] }),
+        queryClient.invalidateQueries({ queryKey: ['canonical-entry-field', runId, activeBranchId, eventId] })
+      ])
+    }
+  })
+  const finalsEntryFieldCreateMutation = useMutation({
+    mutationFn: () => {
+      const preparation = canonicalPreparationQuery.data
+      if (
+        preparation?.entry_source_kind !== 'finals_participant_selection' ||
+        preparation.entry_source_target_season_index == null
+      ) {
+        throw new Error('Finals participant-selection authority is not ready for Entry Field materialization.')
+      }
+      const commandId = [
+        'admin-ui-finals-entry-field',
+        eventId,
+        preparation.entry_source_target_season_index
+      ].join('-').slice(0, 128)
+      return createTournamentEntryFieldFromFinalsSelection(
+        runId,
+        activeBranchId,
+        eventId,
+        {
+          command_id: commandId,
+          target_season_index: preparation.entry_source_target_season_index
+        }
+      )
     },
     onSuccess: async () => {
       await Promise.all([
@@ -630,6 +662,9 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'generate_draw') {
       return <p><a href="#canonical-draw-authority">Open canonical Draw generation</a></p>
     }
+    if (action === 'configure_tournament_format') {
+      return <p className="status">The selected Finals field is frozen. A configured Tournament Format authority is required before Draw generation; classic Draw Input is intentionally unavailable here.</p>
+    }
     return null
   }
 
@@ -768,6 +803,7 @@ export function PlannedEventDetailPage(): JSX.Element {
               <MetadataList
                 items={[
                   { label: 'Authority source', value: canonicalPreparationQuery.data.authority_source },
+                  { label: 'Entry source', value: canonicalPreparationQuery.data.entry_source_kind ?? 'Not resolved' },
                   { label: 'Effective Draw', value: canonicalPreparationQuery.data.effective_draw_fingerprint ?? 'Not generated' },
                   { label: 'Blockers', value: canonicalPreparationQuery.data.blockers.join(', ') || 'None' }
                 ]}
@@ -795,7 +831,39 @@ export function PlannedEventDetailPage(): JSX.Element {
                   {rankingSnapshotAdoptMutation.data ? <p className="status">Tournament Ranking Snapshot authority adopted for season index {rankingSnapshotAdoptMutation.data.ranking_week.season_index}, week {rankingSnapshotAdoptMutation.data.ranking_week.week}.</p> : null}
                 </div>
               ) : null}
-              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' ? (
+              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' &&
+              canonicalPreparationQuery.data.entry_source_kind === 'finals_participant_selection' ? (
+                <div className="grid">
+                  <h4>Materialize Finals Entry Field</h4>
+                  <p className="status">
+                    Build the shared Tournament Entry Field directly from the immutable Finals participant-selection snapshot.
+                    No Official Ranking, application list, Qualification field, Wild Card slot or bracket geometry is invented.
+                  </p>
+                  <SummaryPills items={[
+                    { label: 'Source', value: 'Finals participant selection' },
+                    { label: 'Season index', value: canonicalPreparationQuery.data.entry_source_target_season_index ?? 'Unknown' },
+                    { label: 'Selected players', value: canonicalPreparationQuery.data.entry_seed_order_player_ids?.length ?? 0 }
+                  ]} />
+                  <button
+                    type="button"
+                    onClick={() => finalsEntryFieldCreateMutation.mutate()}
+                    disabled={
+                      finalsEntryFieldCreateMutation.isPending ||
+                      canonicalPreparationQuery.data.entry_source_target_season_index == null
+                    }
+                  >
+                    Build Entry Field from Finals selection
+                  </button>
+                  {finalsEntryFieldCreateMutation.error ? (
+                    <p className="error">Finals Entry Field creation failed: {formatApiError(finalsEntryFieldCreateMutation.error)}</p>
+                  ) : null}
+                  {finalsEntryFieldCreateMutation.data ? (
+                    <p className="status">Canonical Finals participant field is now stored in shared Tournament Entry Field authority.</p>
+                  ) : null}
+                </div>
+              ) : null}
+              {canonicalPreparationQuery.data.next_required_action === 'build_entry_field' &&
+              canonicalPreparationQuery.data.entry_source_kind !== 'finals_participant_selection' ? (
                 <div className="grid">
                   <h4>Build canonical Entry Field</h4>
                   <p className="status">Build only from persisted valid submissions. Capacity remains explicit at commit time.</p>

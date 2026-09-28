@@ -1071,6 +1071,22 @@ def remap_coupled_player_slot_history(
             + ", ".join(sorted(nonempty_auxiliary))
         )
 
+    unsupported_tournament_structure_sections = tuple(
+        key
+        for key in (
+            "group_rules_policies",
+            "format_authorities",
+            "topology_authorities",
+            "group_match_schedules",
+        )
+        if source_slot_component.get(key)
+    )
+    if unsupported_tournament_structure_sections:
+        raise SimulationSlotForkRemapUnsupportedError(
+            "Tournament Format/Topology/Group Match Schedule fork remap is not defined: "
+            + ", ".join(unsupported_tournament_structure_sections)
+        )
+
     source_command_rows = [
         AuthoritativeSimulationCommandModel(**value)
         for value in source_slot_component.get("commands", [])

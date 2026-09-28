@@ -665,6 +665,12 @@ export function PlannedEventDetailPage(): JSX.Element {
     if (action === 'configure_tournament_format') {
       return <p className="status">The selected Finals field is frozen. A configured Tournament Format authority is required before Draw generation; classic Draw Input is intentionally unavailable here.</p>
     }
+    if (action === 'generate_tournament_topology') {
+      return <p className="status">Tournament Format is frozen. Generate the canonical Tournament Topology from the explicit group seed placements / crossing configuration before any group-match chronology is created.</p>
+    }
+    if (action === 'prepare_group_match_schedule') {
+      return <p className="status">Canonical group assignment and round-robin pairing topology are frozen. The next implementation slice must materialize group Match/Schedule authority; this event is intentionally not marked schedule-ready yet.</p>
+    }
     return null
   }
 

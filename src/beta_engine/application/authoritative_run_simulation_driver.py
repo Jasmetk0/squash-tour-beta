@@ -10572,35 +10572,52 @@ class AuthoritativeRunSimulationDriver:
     def _topology_for_session(
         self, session, run_id, branch_id, packages, *, week
     ):
-        """Prefer the Draw source frozen for this tournament authority generation."""
-        if not packages:
-            return {}
-        canonical = []
-        for package in packages:
-            draw = self._canonical_draw_binding(
-                session,
-                run_id=run_id,
-                branch_id=branch_id,
-                week=week,
-                event_id=package.event_id,
-            )
-            canonical.append((package, draw))
-        if all(draw is None for _, draw in canonical):
-            return self._topology(packages)
-        if any(draw is None for _, draw in canonical):
+        """Combine bracket Draw topology and frozen group Match Schedule topology."""
+
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        if packages:
+            canonical = []
+            for package in packages:
+                draw = self._canonical_draw_binding(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    event_id=package.event_id,
+                )
+                canonical.append((package, draw))
+            if all(draw is None for _, draw in canonical):
+                plans.update(self._topology(packages))
+            elif any(draw is None for _, draw in canonical):
+                raise ValueError(
+                    "week mixes canonical Draw authority with legacy-only tournament topology"
+                )
+            else:
+                for package, draw in canonical:
+                    projection = project_canonical_draw_to_match_topology(
+                        draw=draw,
+                        package=package,
+                    )
+                    for plan in projection.plans:
+                        if plan.group_id in plans:
+                            raise ValueError(
+                                "week topology contains duplicate group identity"
+                            )
+                        plans[plan.group_id] = plan
+
+        group_plans = self._group_match_schedule_plans(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        overlap = set(plans) & set(group_plans)
+        if overlap:
             raise ValueError(
-                "week mixes canonical Draw authority with legacy-only tournament topology"
+                "week bracket and group topology share match identity: "
+                + ", ".join(sorted(overlap))
             )
-        plans = {}
-        for package, draw in canonical:
-            projection = project_canonical_draw_to_match_topology(
-                draw=draw,
-                package=package,
-            )
-            for plan in projection.plans:
-                if plan.group_id in plans:
-                    raise ValueError("week topology contains duplicate group identity")
-                plans[plan.group_id] = plan
+        plans.update(group_plans)
         return plans
 
     def _validate_schedule(self, session, schedule, packages):

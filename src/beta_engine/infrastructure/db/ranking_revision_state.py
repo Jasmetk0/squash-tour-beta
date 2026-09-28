@@ -15,6 +15,7 @@ from beta_engine.infrastructure.db.models import (
     RankingTransitionAuthorityModel,
     TournamentRankingSnapshotAuthorityModel,
     SeasonClosingRankingModel,
+    WorldTourFinalsRaceSnapshotModel,
 )
 from beta_engine.infrastructure.db.ranking_inspection import inspect_ranking_history
 from beta_engine.infrastructure.db.ranking_result_history import OfficialRankingResultStore
@@ -26,6 +27,9 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 )
 from beta_engine.infrastructure.db.season_closing_rankings import (
     SeasonClosingRankingStore,
+)
+from beta_engine.infrastructure.db.world_tour_finals_race import (
+    WorldTourFinalsRaceSnapshotStore,
 )
 from beta_engine.infrastructure.db.models import (AuthoritativeWorldStateModel,
     PublishedOfficialRankingModel, AuthoritativeWeekTransitionReceiptModel,
@@ -101,15 +105,24 @@ def capture_ranking_revision_state(
         run_id=run_id,
         branch_id=branch_id,
     )
+    world_tour_finals_race_snapshots = WorldTourFinalsRaceSnapshotStore(
+        session
+    ).history(
+        run_id=run_id,
+        branch_id=branch_id,
+    )
     has_season_transition_event = any(
         row["event_kind"] == "season_transition_completed"
         for row in events
     )
     return RankingRevisionState(
         schema_version=(
-            "ranking_revision_state.v7"
-            if has_season_transition_event
+            "ranking_revision_state.v8"
+            if world_tour_finals_race_snapshots
             else (
+                "ranking_revision_state.v7"
+                if has_season_transition_event
+                else (
                 "ranking_revision_state.v6"
                 if season_closing_rankings
                 else (
@@ -118,6 +131,7 @@ def capture_ranking_revision_state(
                     else "ranking_revision_state.v4"
                 )
             )
+        )
         ),
         run_id=run_id, branch_id=branch_id, entries=tuple(entries),
         sources=OfficialRankingResultStore(session).history(run_id=run_id, branch_id=branch_id),
@@ -126,6 +140,7 @@ def capture_ranking_revision_state(
         transition_authorities=tuple(value for value in authorities if value is not None),
         tournament_ranking_snapshot_authorities=frozen_tournament_rankings,
         season_closing_rankings=season_closing_rankings,
+        world_tour_finals_race_snapshots=world_tour_finals_race_snapshots,
         authoritative_transition_state=transition_state,
     )
 
@@ -190,6 +205,7 @@ def install_ranking_revision_state(
             RankingTransitionAuthorityModel,
             TournamentRankingSnapshotAuthorityModel,
             SeasonClosingRankingModel,
+            WorldTourFinalsRaceSnapshotModel,
             AuthoritativeWorldStateModel,
             PublishedOfficialRankingModel,
             AuthoritativeWeekTransitionReceiptModel,
@@ -228,6 +244,7 @@ def install_ranking_revision_state(
         or current.transition_authorities
         or current.tournament_ranking_snapshot_authorities
         or current.season_closing_rankings
+        or current.world_tour_finals_race_snapshots
         or current.authoritative_transition_state is not None
     ):
         raise ValueError("Ranking restore target is not empty and differs from saved state")
@@ -298,6 +315,9 @@ def install_ranking_revision_state(
         tournament_rankings = TournamentRankingSnapshotAuthorityStore(session)
         for authority in state.tournament_ranking_snapshot_authorities:
             tournament_rankings.append(authority)
+        finals_races = WorldTourFinalsRaceSnapshotStore(session)
+        for snapshot in state.world_tour_finals_race_snapshots:
+            finals_races.append(snapshot)
         session.flush()
         installed = capture_ranking_revision_state(session, run_id=run_id, branch_id=branch_id)
         if not ranking_revision_states_equivalent(installed, state):

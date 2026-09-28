@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 67
-**Aktualizováno:** 27. 9. 2026 (UTC) – rozhodnutí o World Tour Finals, Race a hranicích první pre-alpha
+**Verze dokumentu:** 68
+**Aktualizováno:** 28. 9. 2026 (UTC) – obecné skupiny, hybridní turnaje, W/O a verzované ověřování férovosti
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -13,6 +13,8 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 **Nová produktová rozhodnutí v66:** první pre-alpha má funkční Admin včetně libovolného historického weeku; Viewer zůstává cílovou součástí produktu, ale není podmínkou této pre-alpha. `PAQ-118` a `PAQ-127` jsou uzavřené, `PAQ-120`, `PAQ-121` a `PAQ-150` jsou výslovně mimo první pre-alpha. Implementovaný stav vždy ověřit v `CURRENT_STATE.md` a v aktuálním kódu; historická implementační evidence níže končí stavem uvedeným u příslušného vydání.
 
 **Nová produktová rozhodnutí v67:** první pre-alpha zahrnuje individuální World Tour Finals, ale nezahrnuje týmové soutěže. World Tour Finals Race čerpá v Official FAX Runu sezonní body jen z nejvyšší World Tour, pracuje s konfigurovaným počtem nejlepších výsledků, rozhoduje účast i nasazení a má pevný sezonní uzávěrkový snapshot. Kapacitu a formát Finals určuje uživatel; přímé vstupy za jím zvolená vítězství a náhrady z Race zachovávají níže uvedené hranice. Implementační stav zůstává výhradně otázkou aktuálního GitHubu a `CURRENT_STATE.md`.
+
+**Nová produktová rozhodnutí v68:** obecné formáty `Skupiny` a `Skupiny + pavouk`, stejně velké skupiny, nastavitelná skupinová nasazení, bodování BO3/BO5 a pořadí skupiny, upozornění při nerozhodnuté shodě bez automatického losu, zachování dokončených výsledků po odstoupení a skupinové W/O bez smyšleného skóre. World Tour Finals používají obecné formáty, mohou přidělovat Official Ranking body po fázích a po skupinách postupují podle výsledků a křížení, nikoliv nového nasazení z Race. Rozhodnutá pravidla lze později porovnávat z hlediska férovosti a u podporovaných konfigurací verzovat po Runech/sezonách; tím se nemění pevná pravidla klasického pavouku ani automaticky nezavádějí nové přepínače. Detail v 15.14–15.15 a 26.1. Jde o produktový zápis dostupných potvrzených dohod, nikoliv tvrzení o jejich implementaci nebo nové celkové počty vyřešených PAQ.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -2646,7 +2648,7 @@ Příklad tří Q pavouků pro osm hráčů:
 
 > `seed_layers ≤ velikost skupiny − 2`
 
-**[ODLOŽENO]** Kompletní určování pořadí uvnitř skupiny, tie-breaky, odstoupení během skupiny a zacházení s nekompletní skupinou.
+**[AKTUALIZOVÁNO v68]** Společná pravidla pořadí, bodování, úplné shody a odstoupení ze skupiny určuje 15.14. Nadále zůstávají otevřené tam vyjmenované mimořádné případy, zejména zvláštní skupinové vyhodnocení RET a srovnání stejných nepostupových míst napříč skupinami pro LL. Zdejší konkrétní Q pravidla (jeden postupující, jedno vzájemné utkání, minimální velikost a omezení seed vrstev) nejsou obecným skupinovým kontraktem zrušena.
 
 ## 15.8 Lucky loseři
 
@@ -2798,6 +2800,74 @@ Přesný grafický styl badge a umístění přepínače se doladí později.
 
 ---
 
+
+## 15.14 Obecné skupiny a kombinace skupin s pavoukem
+
+**[ROZHODNUTO v68 – PRVNÍ PRE-ALPHA]** Skupinová pravidla jsou společnou schopností enginu pro individuální soutěže, včetně kvalifikací a World Tour Finals; nejde o oddělený Finals-only systém. Uživatelské názvy formátů jsou `Pavouk`, `Skupiny` a `Skupiny + pavouk`. Round robin označuje samotné vzájemné hraní ve skupině, nikoliv automaticky skupiny s následným pavoukem. Double round robin znamená dvě vzájemná utkání každé dvojice; toto vysvětlení samo nezavádí povinnou podporu dvojkolové varianty v pre-alpha ani nemění jedno utkání v Q skupině dle 15.7.
+
+**[ROZHODNUTO]** Skupinový nebo hybridní formát je dostupný i jinému turnaji než Finals. Má sloužit zejména unikátním soutěžím. U běžného klasického turnaje Admin výrazně upozorní na neobvyklou volbu, její kapacitní a časové důsledky. Samotná neobvyklost je advisory warning; technicky neplatná konfigurace nebo nevyřešená závislost blokuje jen dotčenou operaci. Přesný vzhled upozornění a širší visual polish se řeší později.
+
+**[ROZHODNUTO]** V rámci jedné skupinové fáze mají všechny skupiny stejnou plánovanou velikost. Například 12 účastníků může tvořit tři skupiny po čtyřech, ale 13 účastníků se automaticky nerozdělí na 5 + 4 + 4. Pozdější odstoupení hráče není důvodem k přelosování nebo přestavbě skupin.
+
+### Pravidla, formát zápasu a nasazení
+
+**[ROZHODNUTO]** Run má společná pravidla skupin. Lze zavést jejich novou verzi od určené sezony a výjimečně výslovný override pro konkrétní Tournament Edition. Efektivní verze a její původ musí být dohledatelné; pozdější změna nepřepočítá odehranou historii. Tato dědičnost skupinových pravidel nemění samostatný Match Format Contract v 16.1.
+
+**[ROZHODNUTO]** Skupinové zápasy mohou být na dvě vítězné hry (BO3) nebo tři (BO5). Různé fáze turnaje mohou mít jiný formát, například skupiny BO3 a finále BO5, podle 16.1. Bodová tabulka musí odpovídat efektivnímu formátu.
+
+**[ROZHODNUTO]** Počet nasazených míst ve skupinách je nastavitelný; dvě nasazená místa jsou možná konfigurace, nikoliv pevná hodnota všech skupin. Zbývající nenasazení hráči se losují náhodně. Konkrétní již rozhodnuté rozdělování a omezení seed vrstev skupinové kvalifikace dle 15.7 zůstává zachováno. Pro jiné skupinové formáty se nesmí bez rozhodnutí vymyslet nový univerzální algoritmus seed vrstev.
+
+**[HRANICE]** Nastavitelnost skupin se nepřenáší na klasický eliminační pavouk: 15.2–15.6 nadále určují automatickou kapacitu, automatický počet nasazených, rozmístění seed vrstev a BYE. Není tím schválen nový běžný Admin override těchto hodnot.
+
+### Pořadí a body do skupinové tabulky
+
+**[ROZHODNUTO]** Pořadí se určuje nejprve počtem výher pro účely skupiny, následně skupinovými body. Výchozí rozhodnuté bodování dokončených zápasů:
+
+| Formát | Výsledek hráče | Skupinové body |
+|---|---|---:|
+| BO3 | 2:0 | 4 |
+| BO3 | 2:1 | 3 |
+| BO3 | 1:2 | 1 |
+| BO3 | 0:2 | 0 |
+| BO5 | 3:0 | 6 |
+| BO5 | 3:1 | 5 |
+| BO5 | 3:2 | 4 |
+| BO5 | 2:3 | 2 |
+| BO5 | 1:3 | 1 |
+| BO5 | 0:3 | 0 |
+
+Skupinové body jsou autorita pořadí skupiny, nikoliv automaticky body do Official Rankingu. Případné rankingové odměny za skupinové výhry mají vlastní tabulku dle 26.1.
+
+**[ROZHODNUTO]** Při přetrvávající shodě dvou hráčů rozhodne vzájemný zápas. Při shodě tří a více se porovnává poměr vyhraných/prohraných her ze všech vlastních zápasů v dané skupině, nikoliv jen minitabulka vzájemných zápasů shodných hráčů; následuje poměr vyhraných/prohraných míčků. Když se shoda zúží na dva hráče, použije se jejich vzájemný zápas. Výsledek se nesmí měnit zaokrouhlením zobrazovaných poměrů.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Pokud ani tato kritéria nerozhodnou, vznikne viditelné upozornění/vykřičník a dohledatelný záznam případu. Dotčený postup či jiná operace vyžadující jednoznačné pořadí čeká na výslovné řešení Adminem. Automatický los, player ID, Race ani jiný skrytý fallback nerozhoduje. Při dlouhých testech lze počítat výskyty těchto stavů a později vyhodnotit jejich četnost; zatím nejde o skutečně provedené měření.
+
+### Odstoupení ze skupiny a W/O
+
+**[ROZHODNUTO]** Již dokončené zápasy odstoupivšího hráče zůstávají započítané. Jeho zbývající soupeři získají W/O; ostatní skupiny ani již odehrané výsledky se kvůli tomu nepřestavují a nemažou.
+
+**[ROZHODNUTO, NIKOLIV PROVISIONAL]** W/O přidá oprávněnému soupeři jednu výhru výhradně pro pořadí skupiny a maximum skupinových bodů příslušného formátu (ve výchozí tabulce 4 pro BO3, 6 pro BO5). Do poměrů her ani míčků se nepřidává žádné smyšlené skóre. Jde o skupinovou výjimku pro hodnocení pořadí, nikoliv odehraný zápas: podle 16.3 stále nevzniká kariérní zápasová výhra/prohra, H2H, rally ani délka zápasu.
+
+**[OTEVŘENO – UŽŠÍ SKUPINOVÝ DOPAD]** Obecný význam RET v 16.3 je již rozhodnutý a zůstává platný. Dosud není rozhodnuto jeho zvláštní přidělení skupinových bodů a případná zvláštní úprava podkladů pro skupinový tie-break; pravidlo W/O se na rozehranou skreč nesmí bez dalšího rozhodnutí rozšířit. Stejně se automaticky nepřebírají cizí sportovní předpisy pro DQ, Default, ABN či jiné neúplné výsledky.
+
+### Postup do pavouku
+
+**[ROZHODNUTO]** V kombinaci `Skupiny + pavouk` postupují nejlepší hráči podle výsledného pořadí skupin a nakonfigurovaného počtu postupujících. Použije se předem stanovené křížení skupin. Například při dvou skupinách a dvou postupujících: `A1–B2` a `B1–A2`. Postup ani nové rozmístění po skupinách se neurčuje opět podle původního žebříčku; u Finals není nové reseeding podle Race.
+
+Příklad pro čtyři skupiny se dvěma postupujícími je čtvrtfinále `A1–B2 / C1–D2 / B1–A2 / D1–C2` a semifinále vítězů prvních dvou a posledních dvou čtvrtfinále. Jde o příklad platného křížení, nikoliv jediný univerzálně povinný mapping všech turnajů. Hráči stejné skupiny se v tomto příkladu mohou znovu potkat až ve finále.
+
+**[OTEVŘENO]** Obecný mapping všech dalších kombinací počtu skupin a postupujících, srovnávání nejlepších druhých či stejných nepostupových míst napříč skupinami (včetně LL), určení jediného vítěze z více samostatných skupin bez navazující fáze a mimořádné případy bez dostatku odehraných dat pro poměry. Smíšený BO3/BO5 uvnitř téže skupiny a jeho srovnatelnost nebyly tímto blokem samostatně rozhodnuty. Tyto mezery nesmí implementace uzavřít tichým defaultem.
+
+## 15.15 Rozhodnutá pravidla, férovost a sezonní verze
+
+**[ROZHODNUTO v68]** Rozhodnuté soutěžní pravidlo je platným základem pro implementaci, i když lze později simulacemi porovnat jeho férovost, sportovní důsledky a možnosti zneužití s alternativami. Možnost budoucího testování sama nemění status na OPEN/PROVISIONAL a nepřepisuje aktivní pravidlo.
+
+**[ROZHODNUTO]** Tam, kde produkt výslovně umožňuje konfiguraci pravidel, mohou mít jednotlivé Runy jiné hodnoty/policy a tentýž Run novou verzi od určené sezony; konkrétní turnajová výjimka je možná jen v povoleném rozsahu. Historie uchovává tehdy účinnou verzi, výsledek i provenance. Experimenty jsou oddělené od aktivní historie. Změnu aktivních pravidel schvaluje Admin, nikoliv automatický optimalizátor férovosti.
+
+**[VÝSLOVNÁ HRANICE]** Tato zásada nečiní každé pravidlo libovolným přepínačem, neschvaluje dosud nerozhodnuté alternativy a nemění konkrétní klasický pavouk v 15.2–15.6. Jeho automatické počty nasazených/kapacita, limit 128, seed sektory a BYE zůstávají platné. Determinismus, Run/Branch isolation a nepřepisování historie nejsou nastavitelné sportovní varianty.
+
+**[PRIORITA PRE-ALPHA]** Implementovat rozhodnuté varianty a potřebnou konfiguraci/verzování; všechny možné experimentální alternativy ani rozsáhlé fairness kampaně nejsou podmínkou první pre-alphy. Výsledek výzkumu nebo reálný předpis sám o sobě nemění FAX canon. Konkrétní budoucí srovnávací metodika zůstává plánem testování, nikoliv už provedeným důkazem férovosti.
+
 # 16. Formát a výsledek zápasu
 
 **Rozsah kapitoly:** schopnost definovat formát podle soutěže a kola je Engine invariant. BO5 do 11 o dva body je **Official Run default**, nikoliv povinný formát všech Runů. Individuální zápas bez remízy a význam uložených výsledkových statusů tvoří současný kontrakt Match Enginu.
@@ -2851,6 +2921,8 @@ Základní hranicí je zahájení zápasu, tedy odehrání prvního míčku.
 **[ROZHODNUTO]** Jakmile hráč odehraje první zápas turnaje a potom před dalším zápasem odstoupí, nesmí jej nahradit LL ani rezerva. Jeho následující soupeř postupuje přes W/O.
 
 **[ROZHODNUTO]** W/O je pro turnajový postup plnohodnotné dosažení dalšího kola: postupující hráč získá rankingovou hodnotu a případné prize money podle svého následného skutečně dosaženého finishing stage, přestože samotný W/O nevytvoří zápasovou výhru, prohru ani H2H. Jde o výslovnou výjimku z pravidla, že samotný BYE vyšší rankingovou hodnotu neodemkne.
+
+**[UPŘESNĚNÍ v68]** U skupin může W/O přidělit výhru a body pouze do skupinového pořadí podle 15.14. To není zápasová bilance ani H2H; nevytváří se smyšlené skóre. Skupinové bodování RET je samostatná dosud otevřená otázka, nikoliv znovuotevření obecného RET kontraktu výše.
 
 ### DQ – diskvalifikace
 
@@ -4357,9 +4429,13 @@ Tato kapitola rozlišuje současná rozhodnutí od starších nebo odložených 
 
 **[ROZHODNUTO]** Engine automaticky připraví účastníky i los podle schválené konfigurace stejně jako u ostatních turnajů. Admin může účast, náhradníky, nasazení a los výslovně ručně upravit; nestandardní zásah musí být viditelný, auditovaný a kontrolovaný proti kapacitě, uzávěrkám, návaznostem a odehraným výsledkům. Konkrétní bezpečná oprava se řídí obecnými historickými/branch pravidly; nelze tiše přepsat uzamčenou nebo odehranou historii.
 
+**[ROZHODNUTO v68]** Finals používají obecné `Skupiny` / `Skupiny + pavouk` / `Pavouk` podle 15.14 a příslušných pravidel formátu. Race určuje vstupní nasazení; navazující pavouk po skupinách se sestavuje z dosaženého skupinového pořadí a předem stanoveného křížení, nikoliv novým přenasazením podle Race.
+
+**[ROZHODNUTO v68]** Finals přidělují body do Official Rankingu podle vlastní nakonfigurované bodové tabulky. U hybridního turnaje mohou mít jednotlivé fáze vlastní bodové tabulky, například odměny za skupinové výhry a následně odměnu za výsledek v pavouku. Výsledkem je jeden turnajový rankingový výsledek složený podle explicitních pravidel Edition, ne několik samostatných turnajů v Best N. Skupinové tabulkové body z 15.14 se nesmějí automaticky vydávat za Official Ranking body. Konkrétní částky/hodnoty tabulek a detailní kombinace mimořádných výsledků nejsou tím stanovené; nesmí dojít k nechtěnému dvojímu započtení téže odměny. Body z Finals zpětně nemění uzavřený Race snapshot použitý pro účast a nasazení daného ročníku.
+
 **[STARŠÍ NÁVRH, NAHRAZEN]** Pevná osmička, jméno `The Eight / Final Eight`, ladder se zvýhodněním pozic Race nebo dvě skupiny po čtyřech byly dřívější návrhy. Zde nejsou výchozím závazným formátem.
 
-**[ODLOŽENO]** Konkrétní výchozí počet účastníků a počet započítaných výsledků Official FAX sezony, definitivní značka Finals, výsledkové/bodové tabulky Finals, sankční důsledky neodůvodněného odstoupení a detailní předběžný rezervační workflow.
+**[ODLOŽENO]** Konkrétní výchozí počet účastníků a počet započítaných výsledků Official FAX sezony, definitivní značka Finals, konkrétní číselné rankingové tabulky jednotlivých fází Finals a zbývající otevřené formátové detaily dle 15.14, sankční důsledky neodůvodněného odstoupení a detailní předběžný rezervační workflow.
 
 ## 26.2 Individual World Championship
 
@@ -5212,7 +5288,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 31. Přesný obecný vztah technického statusu `Default` k DQ, konkrétní katalog a sazby disciplinárního forfeitu bodů či prize money po DQ zahájeného zápasu a pravděpodobnostní model RET/W/O/DQ/ABN. Při obnovení suspendovaného zápasu je už rozhodnuto, že zdravotní nemožnost pokračovat znamená RET, neodůvodněné odmítnutí či no-show Default a vnější příčina ABN. DQ před startem s nulou bodů i prize money a sportovní výhra/prohra po zahájeném DQ jsou rovněž rozhodnuté.
 32. Přesná matematika rally-by-rally Match Enginu: transition probabilities mezi pěti stavy kontroly, pravděpodobnosti terminálních incidentů, kontextové váhy atributů, styly, gameplany a úsilí, dva mentální a tři fyzické bary, finální kalibrace délky, úderů, pace, individuální zátěže, podání a interference. Granularita bez shot-by-shot simulace, čtyřvrstvá pipeline, atributové role, čtyřosý styl/gameplan, setrvačné transitions, `0–24` segmentů, opening podání, ground truth, rules resolver, terminální katalog, Rally Resolution Record, společný zdroj délky/úderů/workloadu, RallyCalibrationProfile, kauzální tempo mezi rally i neměnný hashovaný Rally Event/Post-Rally Snapshot log jsou rozhodnuté. Stejně tak Step Back/Forward, Auto Play a Replay používají uloženou pravdu bez rerunu RNG. Otevřené zůstávají přesné matice a distribuční křivky, datový fit, retence alternativních pracovních cest po opuštění zápasu, ruční override AI, kalibrace analytického připsání, finální restartové distribuce a conduct thresholds, zdravotní triggery, účinek ošetření a matematika dalších přerušení. Minimální turning, further attempt, zásah hráče míčem i taktické tempo patří do pre-alpha; chyby a individuální profily rozhodčích, detailní review, přesné trajektorie a jemná subjektivita enforcementu zůstávají pokročilé.
 33. Mimořádné edge cases seed cascade, detailní atomické preview a pravidla vědomého ručního porušení standardního repair workflow. Běžné tři fáze, tier-aware cascade, zachování seed čísel, přímá náhrada nenasazeného slotu a zákaz automatického úplného redraw po příslušném cut-offu jsou již rozhodnuté.
-34. Kompletní pořadí skupinové kvalifikace, tie-breaky, odstoupení během skupiny a srovnání stejných nepostupových míst pro LL.
+34. Zbývající skupinové otázky po v68: zvláštní skupinové bodování RET a dalších mimořádných výsledků, srovnání stejných nepostupových míst napříč skupinami pro LL / best runners-up, úplný mapping dalších kombinací skupin a postupujících, vítěz více samostatných skupin bez navazující fáze a okrajové poměry bez dostatku odehraných dat. Obecné bodování BO3/BO5, pořadí podle 15.14, upozornění při úplné shodě bez automatického losu, zachování dokončených výsledků po odstoupení a skupinové W/O bez umělého skóre jsou rozhodnuté; konkrétní Q omezení 15.7 zůstávají.
 35. Přesná WC eligibility, tvorba a seřazení RWC seznamu, důvody ztráty dostupnosti a detailní Admin/Viewer historie. Priorita dostupné RWC, její trvající `Available` status, implicitní přijetí finálního přidělení, automatické odebrání WC při přímém vstupu a zachování historického původu jsou již rozhodnuté.
 36. Přesný celkový počet, názvy, délka a výchozí rozložení časných procesních oken uvnitř weeku, optimalizace souběžných turnajů, vztah samostatných Qualification a Main Draw plánů a mimořádné edge cases přesunu hráče z hotového Q losu. Pevné už je, že existuje jediná globální osa Simulation Slots, procesní okna začínají na jejích hranicích, Match Day Slots se na ni mapují a dependency scheduler dovolí současnost jen nezávislým událostem.
 37. Přesná dlouhodobá historie draw verzí a rozdíl mezi preview Undo, auditem, uloženou verzí a branchí. Poslední návrh, aby každý potvrzený los nebo jeho oprava vytvořily novou neměnnou `Draw Version`, zůstal bez uživatelské odpovědi a není rozhodnutý.

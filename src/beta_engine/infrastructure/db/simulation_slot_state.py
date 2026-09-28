@@ -20,6 +20,10 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
+    WorldTourFinalsRaceConfigurationModel,
+    WorldTourFinalsRaceSnapshotModel,
+    WorldTourFinalsParticipantSelectionConfigurationModel,
+    WorldTourFinalsParticipantSelectionSnapshotModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"

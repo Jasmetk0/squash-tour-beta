@@ -706,8 +706,10 @@ describe('PlannedEventDetailPage', () => {
     renderAt('/runs/run-a/calendar/E1')
 
     expect(await screen.findByText('Draw process windows')).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Main process windows'), { target: { value: '4' } })
-    fireEvent.change(screen.getByLabelText('Qualification process windows'), { target: { value: '3' } })
+    const mainWindows = await screen.findByLabelText('Main process windows')
+    const qualificationWindows = await screen.findByLabelText('Qualification process windows')
+    fireEvent.change(mainWindows, { target: { value: '4' } })
+    fireEvent.change(qualificationWindows, { target: { value: '3' } })
     fireEvent.click(screen.getByRole('button', { name: 'Configure canonical Draw process' }))
 
     await waitFor(() =>

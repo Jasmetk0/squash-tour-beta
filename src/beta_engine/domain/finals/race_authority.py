@@ -35,6 +35,7 @@ class FinalsRaceConfiguration(FrozenInput):
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     season_index: int = Field(ge=0, le=49)
+    finals_event_id: str = Field(min_length=1)
     best_n_results: int = Field(ge=1)
     eligible_categories: tuple[str, ...]
     cutoff_ranking_week: RankingWeek
@@ -152,6 +153,7 @@ class FinalsRaceSnapshot(FrozenInput):
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     season_index: int = Field(ge=0, le=49)
+    finals_event_id: str = Field(min_length=1)
     cutoff_ranking_week: RankingWeek
     configuration_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     cutoff_ranking_snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -298,6 +300,7 @@ def build_finals_race_snapshot(
         run_id=configuration.run_id,
         branch_id=configuration.branch_id,
         season_index=configuration.season_index,
+        finals_event_id=configuration.finals_event_id,
         cutoff_ranking_week=configuration.cutoff_ranking_week,
         configuration_fingerprint=configuration.fingerprint,
         cutoff_ranking_snapshot_fingerprint=(

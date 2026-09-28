@@ -4,9 +4,13 @@ import pytest
 
 from beta_engine.domain.finals import (
     WorldTourFinalsParticipantSelectionConfiguration,
-    WorldTourFinalsParticipantSelectionSnapshot,
-    WorldTourFinalsSelectedPlayer,
+    WorldTourFinalsRaceConfiguration,
+    WorldTourFinalsRaceInput,
+    WorldTourFinalsRacePlayer,
+    calculate_world_tour_finals_race,
+    select_world_tour_finals_participants,
 )
+from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
     create_session_factory,
@@ -14,6 +18,9 @@ from beta_engine.infrastructure.db.engine import (
 )
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
+)
+from beta_engine.infrastructure.db.finals_race_authority import (
+    WorldTourFinalsRaceAuthorityStore,
 )
 from beta_engine.infrastructure.db.models import (
     Base,
@@ -61,6 +68,41 @@ def database(tmp_path):
 
 
 def install_selection(factory, *, capacity: int = 6):
+    race_config = WorldTourFinalsRaceConfiguration(
+        run_id="run",
+        branch_id="branch",
+        target_season_index=0,
+        finals_event_id="FINALS",
+        eligible_categories=("DIAMOND",),
+        best_n=2,
+        cutoff_week=RankingWeek(season_index=0, week=10),
+        cutoff_official_ranking_fingerprint=fp("a"),
+        cutoff_transition_fingerprint=fp("b"),
+        calendar_content_fingerprint=fp("c"),
+        adopted_by_command_id="configure-finals-race",
+    )
+    race = calculate_world_tour_finals_race(
+        WorldTourFinalsRaceInput(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            cutoff_week=race_config.cutoff_week,
+            cutoff_official_ranking_fingerprint=(
+                race_config.cutoff_official_ranking_fingerprint
+            ),
+            eligibility_fingerprint=race_config.eligibility_fingerprint,
+            policy_id=race_config.policy_id,
+            best_n=race_config.best_n,
+            players=tuple(
+                WorldTourFinalsRacePlayer(
+                    player_id=f"p{index}",
+                    tie_break_token=f"token-{index:02d}",
+                )
+                for index in range(1, capacity + 1)
+            ),
+            eligible_results=(),
+        )
+    )
     config = WorldTourFinalsParticipantSelectionConfiguration(
         run_id="run",
         branch_id="branch",
@@ -68,36 +110,23 @@ def install_selection(factory, *, capacity: int = 6):
         finals_event_id="FINALS",
         participant_capacity=capacity,
         direct_entry_event_ids=(),
-        race_snapshot_fingerprint=fp("a"),
-        calendar_content_fingerprint=fp("b"),
+        race_snapshot_fingerprint=race.fingerprint,
+        calendar_content_fingerprint=race_config.calendar_content_fingerprint,
         adopted_by_command_id="configure-finals-participants",
     )
-    snapshot = WorldTourFinalsParticipantSelectionSnapshot(
-        run_id="run",
-        branch_id="branch",
-        target_season_index=0,
-        finals_event_id="FINALS",
-        participant_capacity=capacity,
-        configuration_fingerprint=config.fingerprint,
-        race_snapshot_fingerprint=config.race_snapshot_fingerprint,
-        direct_entry_winner_event_ids=(),
-        participants=tuple(
-            WorldTourFinalsSelectedPlayer(
-                player_id=f"p{index}",
-                race_rank=index,
-                race_points=1000 - index,
-                seed=index,
-                qualification_source="race",
-            )
-            for index in range(1, capacity + 1)
-        ),
+    snapshot = select_world_tour_finals_participants(
+        configuration=config,
+        race_snapshot=race,
+        direct_entry_winners=(),
     )
     with factory.begin() as session:
-        store = WorldTourFinalsParticipantSelectionStore(session)
-        store.put_configuration(config)
-        store.put_snapshot(snapshot)
+        race_store = WorldTourFinalsRaceAuthorityStore(session)
+        race_store.put_configuration(race_config)
+        race_store.put_snapshot(race)
+        participant_store = WorldTourFinalsParticipantSelectionStore(session)
+        participant_store.put_configuration(config)
+        participant_store.put_snapshot(snapshot)
     return snapshot
-
 
 @pytest.mark.pr_critical
 def test_store_materializes_and_replays_finals_selection_as_shared_entry_field(database):

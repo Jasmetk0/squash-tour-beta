@@ -90,8 +90,12 @@
     Simulation / Entry-validation workflow using an explicit requested Branch deep link.
 27. ✅ Fail closed when a requested Simulation Branch is not part of the Product Run and do not
     expose mutation controls for the wrong timeline.
-28. Next: return to the canonical pre-alpha ownership audit; prioritize the largest remaining
-    Entry/WC/pre-draw file-backed authority chain whose semantics are already decided.
+28. ✅ Audit the remaining Entry/WC/pre-draw compatibility path and identify legacy Branch
+    simulation sidecars as still reachable from current Admin compatibility controls.
+29. ✅ Fence Package-backed Branch simulation from legacy wildcard, pre-draw withdrawal and
+    late-replacement sidecar reads while preserving historical non-Package compatibility.
+30. Next: audit the remaining current legacy branch-wrapper sporting inputs and fence only
+    inputs that can still override Package-owned Run/Branch truth.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization
@@ -116,8 +120,10 @@
 4. Poison legacy Result/Template backends and clear Draw/Result/Award registries in the
    main Master §31.3 acceptance after canonical preparation.
 5. Preserve legacy result adoption only for historical Runs with no Package state.
-6. Next audit: remaining authoritative Entry/WC/pre-draw file-backed registries and
-   migrate the largest coherent chain whose semantics are already decided in Master.
+6. ✅ Fence Package-backed legacy Branch simulation from repository WC/pre-draw/late-replacement
+   sidecars; preserve these reads only for historical non-Package compatibility.
+7. Next audit: remaining legacy Branch-wrapper sporting inputs that can still override canonical
+   Package-owned truth.
 
 
 ## Active pre-alpha sequence — strict Package ownership

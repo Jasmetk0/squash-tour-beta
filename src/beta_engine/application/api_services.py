@@ -83,6 +83,7 @@ from beta_engine.infrastructure.db import (
     ViewerOfficialRunContext,
     SimulationRunInfo,
 )
+from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 from beta_engine.infrastructure.db.repositories import (
     PersistedGeneratedPlayerProvenanceRecord,
     PersistedRunTalentCountryAllocationRecord,
@@ -1761,7 +1762,13 @@ class SimulationApiService:
             raise BranchSimulationConflictError("branch belongs to another product run")
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
-        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_tournament(state=state)
+        step = self._build_orchestrator(
+            season=run_info.season,
+            seed=run_info.seed,
+            run_info=run_info,
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        ).simulate_next_tournament(state=state)
         if step.season_state == state:
             raise BranchSimulationValidationError("no executable next tournament is available")
         return self.repository.simulate_next_tournament_on_branch_atomically(
@@ -1796,7 +1803,11 @@ class SimulationApiService:
         if state.active_tournament is None and state.next_event_index == len(state.ordered_events):
             raise BranchSimulationValidationError("no executable full season is available")
         step = self._build_orchestrator(
-            season=run_info.season, seed=run_info.seed, run_info=run_info,
+            season=run_info.season,
+            seed=run_info.seed,
+            run_info=run_info,
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
         ).simulate_full_season(state=state)
         if step.season_state == state:
             raise BranchSimulationValidationError("no executable full season is available")
@@ -1822,7 +1833,13 @@ class SimulationApiService:
             raise BranchSimulationConflictError("branch belongs to another product run")
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
-        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_match(state=state)
+        step = self._build_orchestrator(
+            season=run_info.season,
+            seed=run_info.seed,
+            run_info=run_info,
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        ).simulate_next_match(state=state)
         return self.repository.simulate_next_match_on_branch_atomically(
             command, step=step, reviewed_pre_state=state,
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json"))
@@ -1844,7 +1861,13 @@ class SimulationApiService:
             raise BranchSimulationConflictError("branch belongs to another product run")
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
-        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_round(state=state)
+        step = self._build_orchestrator(
+            season=run_info.season,
+            seed=run_info.seed,
+            run_info=run_info,
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        ).simulate_next_round(state=state)
         if step.season_state == state:
             raise ValueError("no executable next round is available")
         return self.repository.simulate_next_round_on_branch_atomically(
@@ -1868,7 +1891,13 @@ class SimulationApiService:
             raise BranchSimulationConflictError("branch belongs to another product run")
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
-        step = self._build_orchestrator(season=run_info.season, seed=run_info.seed, run_info=run_info).simulate_next_week(state=state)
+        step = self._build_orchestrator(
+            season=run_info.season,
+            seed=run_info.seed,
+            run_info=run_info,
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        ).simulate_next_week(state=state)
         if step.season_state == state:
             raise BranchSimulationValidationError("no executable next week is available")
         return self.repository.simulate_next_week_on_branch_atomically(
@@ -2454,6 +2483,8 @@ class SimulationApiService:
         seed: int,
         run_info: SimulationRunInfo | None,
         parent_run_id: str | None = None,
+        product_run_id: str | None = None,
+        branch_id: str | None = None,
     ) -> SeasonSimulationOrchestrator:
         calendar = load_season_calendar(season=season)
 
@@ -2469,6 +2500,29 @@ class SimulationApiService:
             parent_run_id=parent_run_id,
         )
 
+        legacy_wildcards: dict[str, dict[int, str]] = {}
+        legacy_pre_draw: dict[str, list[dict[str, object]]] = {}
+        legacy_late_replacements: dict[str, list[dict[str, object]]] = {}
+        if run_info is not None:
+            package_backed = False
+            if product_run_id and branch_id:
+                with self.repository._session_factory() as session:
+                    package_backed = get_run_package_state(
+                        session,
+                        run_id=product_run_id,
+                        branch_id=branch_id,
+                    ) is not None
+            if not package_backed:
+                legacy_wildcards = self.repository.get_wildcard_assignments_for_run(
+                    run_id=run_info.run_id
+                )
+                legacy_pre_draw = self.repository.get_pre_draw_withdrawal_replacements_for_run(
+                    run_id=run_info.run_id
+                )
+                legacy_late_replacements = self.repository.get_late_replacements_for_run(
+                    run_id=run_info.run_id
+                )
+
         return SeasonSimulationOrchestrator.build(
             calendar=calendar,
             templates=templates,
@@ -2477,21 +2531,9 @@ class SimulationApiService:
             points_by_ref=load_points_config(),
             entry_tuning=load_entry_tuning_config(),
             seed=seed,
-            wildcard_assignments_by_event=(
-                {}
-                if run_info is None
-                else self.repository.get_wildcard_assignments_for_run(run_id=run_info.run_id)
-            ),
-            pre_draw_withdrawal_replacements_by_event=(
-                {}
-                if run_info is None
-                else self.repository.get_pre_draw_withdrawal_replacements_for_run(run_id=run_info.run_id)
-            ),
-            late_replacements_by_event=(
-                {}
-                if run_info is None
-                else self.repository.get_late_replacements_for_run(run_id=run_info.run_id)
-            ),
+            wildcard_assignments_by_event=legacy_wildcards,
+            pre_draw_withdrawal_replacements_by_event=legacy_pre_draw,
+            late_replacements_by_event=legacy_late_replacements,
         )
 
     def _load_run_context(self, *, run_id: str) -> tuple[SimulationRunInfo, SeasonState]:

@@ -860,11 +860,11 @@ export function PlannedEventDetailPage(): JSX.Element {
                 ]}
               />
               {preparationActionHandoff()}
-              {canonicalPreparationQuery.data.phase === 'group_match_execution_adapter_required' ? (
+              {canonicalPreparationQuery.data.phase === 'group_match_execution_ready' ? (
                 <p className="status">
                   Group Match authority and conflict-free Match Day chronology are frozen.
-                  The remaining blocker is the canonical Simulation Slot execution adapter;
-                  standings and hybrid knockout resolution are intentionally not inferred here.
+                  These frozen group matches are ready for canonical Simulation Slot execution.
+                  Standings, W/O table effects and hybrid knockout resolution remain a later explicit authority.
                 </p>
               ) : null}
               {canonicalPreparationQuery.data.next_required_action === 'adopt_ranking_snapshot' ? (

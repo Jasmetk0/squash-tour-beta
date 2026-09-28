@@ -103,7 +103,7 @@ describe('PlannedEventDetailPage', () => {
       phase: 'draw_input_ready',
       next_required_action: 'review_pre_draw_or_commit_draw_input',
       blockers: [],
-      ready_for_match_schedule: true,
+      ready_for_match_schedule: false,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
     })
@@ -1100,7 +1100,7 @@ describe('PlannedEventDetailPage', () => {
       group_match_schedule_fingerprint: 'e'.repeat(64),
       group_match_count: 6,
       group_match_day_count: 3,
-      ready_for_match_schedule: false,
+      ready_for_match_schedule: true,
       effective_draw_fingerprint: null,
       authority_source: 'run_owned_db_authorities.v1'
     })

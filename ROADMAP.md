@@ -118,9 +118,17 @@
     before classic Draw Input at an explicit format-authority blocker, and carry the complete
     Race → participant → Entry authority chain through Saved Revision recovery while branch
     fork remap fails closed until dedicated Finals identity remapping exists.
-37. Next: add an immutable season-versioned Tournament Format authority for the decided
-    Pavouk / Skupiny / Skupiny + pavouk modes and make canonical Draw/Match topology consume
-    it; preserve Race input seeding for Finals and group-result crossing without Race reseeding.
+37. ✅ Add immutable season-versioned Tournament Format authority for Pavouk / Skupiny /
+    Skupiny + pavouk plus structural Tournament Topology authority: inherit versioned Run group
+    rules with explicit Edition override provenance, require equal groups and explicit arbitrary
+    seed placement/crossing configuration, preserve Finals Race input seeding, carry hybrid
+    crossing as group-result positions without Race reseeding, and recover the authority chain
+    through Saved Revision while fork remap fails closed.
+38. Next: make canonical Match/Schedule execution consume group topology: materialize the
+    round-robin Match authority with effective BO3/BO5, produce conflict-safe Match Day
+    chronology, then add group standings / W/O / decided tie-break authority before resolving
+    hybrid knockout entrants. Keep the pure-knockout Finals Draw adapter as an explicit
+    separate dependency rather than fabricating Official Ranking.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

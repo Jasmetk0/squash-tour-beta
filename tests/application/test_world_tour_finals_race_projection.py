@@ -122,6 +122,9 @@ def transition():
         players=(
             SimpleNamespace(player_id="p1", tie_break_token="token-b"),
             SimpleNamespace(player_id="p2", tie_break_token="token-a"),
+            # Deliberately absent from Official Ranking rows: the ranking is only
+            # the cutoff boundary and must not become a Race eligibility filter.
+            SimpleNamespace(player_id="p3", tie_break_token="token-c"),
         ),
     )
 
@@ -236,11 +239,13 @@ def test_projection_uses_canonical_race_points_and_never_official_ranking_order(
     assert [(row.rank, row.player_id, row.race_points) for row in race.rows] == [
         (1, "p2", 800),
         (2, "p1", 800),
+        (3, "p3", 0),
     ]
     assert all(
         [result.race_points for result in row.counted_results] == [500, 300]
-        for row in race.rows
+        for row in race.rows[:2]
     )
+    assert race.rows[2].counted_results == ()
     assert race.eligible_result_count == 4
     assert race.eligibility_fingerprint == configuration(
         calendar

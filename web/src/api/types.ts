@@ -1810,7 +1810,7 @@ export type AuthoritativeMatchDayResult = {
 
 export type AuthoritativeRoundIdentity = {
   event_id: string
-  draw_phase: 'qualification' | 'main'
+  draw_phase: 'qualification' | 'main' | 'group'
   round_number: number
 }
 

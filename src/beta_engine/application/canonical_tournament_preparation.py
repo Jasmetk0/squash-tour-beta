@@ -43,6 +43,12 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_topology_authority import (
+    TournamentTopologyAuthorityStore,
+)
 from beta_engine.infrastructure.db.run_package_state import get_run_package_state
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
@@ -55,6 +61,9 @@ TournamentPreparationPhase = Literal[
     "wild_card_review_required",
     "draw_input_ready",
     "tournament_format_required",
+    "tournament_topology_required",
+    "group_match_schedule_required",
+    "knockout_draw_adapter_required",
     "draw_generation_ready",
     "draw_ready",
 ]
@@ -65,6 +74,8 @@ TournamentPreparationNextAction = Literal[
     "review_wild_cards",
     "review_pre_draw_or_commit_draw_input",
     "configure_tournament_format",
+    "generate_tournament_topology",
+    "prepare_group_match_schedule",
     "generate_draw",
     "none",
 ]
@@ -167,6 +178,20 @@ class CanonicalTournamentPreparationState(BaseModel):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     draw_seed: int | None = None
+
+    format_authority_ready: bool = False
+    format_kind: Literal["knockout", "groups", "groups_knockout"] | None = None
+    format_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    format_group_rules_policy_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    topology_ready: bool = False
+    topology_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    topology_group_match_count: int = Field(default=0, ge=0)
 
     draw_ready: bool
     initial_draw_fingerprint: str | None = Field(
@@ -325,6 +350,21 @@ class CanonicalTournamentPreparationService:
                 event_id=event_id,
             )
 
+        format_authority = None
+        topology = None
+        if field is not None:
+            format_authority = TournamentFormatAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if format_authority is not None:
+                topology = TournamentTopologyAuthorityStore(session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                )
+
         draw_input = None
         if field is not None:
             draw_input = TournamentDrawInputAuthorityStore(session).get(
@@ -377,10 +417,35 @@ class CanonicalTournamentPreparationService:
             phase = "entry_field_required"
             next_action = "build_entry_field"
             blockers.append("tournament_entry_field_required")
-        elif finals_field and not draw_input_ready:
+        elif finals_field and format_authority is None:
             phase = "tournament_format_required"
             next_action = "configure_tournament_format"
             blockers.append("tournament_format_authority_required")
+        elif (
+            format_authority is not None
+            and format_authority.format_kind in {"groups", "groups_knockout"}
+            and topology is None
+        ):
+            phase = "tournament_topology_required"
+            next_action = "generate_tournament_topology"
+            blockers.append("tournament_topology_authority_required")
+        elif (
+            format_authority is not None
+            and format_authority.format_kind in {"groups", "groups_knockout"}
+            and topology is not None
+        ):
+            phase = "group_match_schedule_required"
+            next_action = "prepare_group_match_schedule"
+            blockers.append("group_match_schedule_authority_required")
+        elif (
+            finals_field
+            and format_authority is not None
+            and format_authority.format_kind == "knockout"
+            and not draw_input_ready
+        ):
+            phase = "knockout_draw_adapter_required"
+            next_action = "none"
+            blockers.append("finals_knockout_draw_adapter_required")
         elif wc_required and not wc_ready:
             phase = "wild_card_review_required"
             next_action = "review_wild_cards"
@@ -503,12 +568,40 @@ class CanonicalTournamentPreparationService:
                 wc.fingerprint if wc is not None else None
             ),
             active_wild_card_player_ids=active_wc_ids,
-            pre_draw_repair_open=field_ready and not draw_input_ready,
+            pre_draw_repair_open=(
+                field_ready
+                and format_authority is None
+                and not draw_input_ready
+            ),
             draw_input_ready=draw_input_ready,
             draw_input_fingerprint=(
                 draw_input.fingerprint if draw_input is not None else None
             ),
             draw_seed=draw_input.draw_seed if draw_input is not None else None,
+            format_authority_ready=format_authority is not None,
+            format_kind=(
+                format_authority.format_kind
+                if format_authority is not None
+                else None
+            ),
+            format_authority_fingerprint=(
+                format_authority.fingerprint
+                if format_authority is not None
+                else None
+            ),
+            format_group_rules_policy_fingerprint=(
+                format_authority.group_configuration.group_rules_policy_fingerprint
+                if format_authority is not None
+                and format_authority.group_configuration is not None
+                else None
+            ),
+            topology_ready=topology is not None,
+            topology_authority_fingerprint=(
+                topology.fingerprint if topology is not None else None
+            ),
+            topology_group_match_count=(
+                len(topology.group_matches) if topology is not None else 0
+            ),
             draw_ready=draw_ready,
             initial_draw_fingerprint=(
                 initial_draw.fingerprint if initial_draw is not None else None
@@ -521,13 +614,20 @@ class CanonicalTournamentPreparationService:
                 field_ready and wc_required and not wc_ready and not draw_input_ready
             ),
             can_apply_pre_draw_withdrawal=(
-                field_ready and not finals_field and not draw_input_ready
+                field_ready
+                and not finals_field
+                and format_authority is None
+                and not draw_input_ready
             ),
             can_commit_draw_input=(
                 ranking_ready
                 and field_ready
                 and not finals_field
                 and wc_ready
+                and (
+                    format_authority is None
+                    or format_authority.format_kind == "knockout"
+                )
                 and not draw_input_ready
             ),
             can_generate_draw=draw_input_ready and not draw_ready,

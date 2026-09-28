@@ -11,6 +11,7 @@ from sqlalchemy import select
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches import (
+    EffectiveMatchFormatSnapshot,
     MatchContext,
     MatchEngine,
     MatchInputSnapshot,
@@ -797,12 +798,16 @@ class AuthoritativeSlotMatchExecutor:
         player_b_id: str,
         seed: int,
         expected_slot_start_fingerprint: str,
+        effective_match_format: EffectiveMatchFormatSnapshot | None = None,
         projection_policy: CanonicalMatchInputProjectionPolicy | None = None,
         effects_policy: MatchSportingEffectsPolicy | None = None,
         fault_at: str | None = None,
     ) -> AuthoritativeGroupResult:
         projection_policy = projection_policy or CanonicalMatchInputProjectionPolicy()
         effects_policy = effects_policy or MatchSportingEffectsPolicy()
+        effective_match_format = (
+            effective_match_format or official_match_format_snapshot()
+        )
         slot = self._get_slot(run_id, branch_id, week, slot_id)
         plan = self._load_plan(slot)
         if group_id not in plan.group_ids:
@@ -864,6 +869,7 @@ class AuthoritativeSlotMatchExecutor:
                 "players": [player_a_id, player_b_id],
                 "seed": seed,
                 "engine": MATCH_ENGINE_VERSION,
+                "effective_match_format": effective_match_format.model_dump(mode="json"),
                 "projection": projection_policy.fingerprint,
                 "effects": effects_policy.fingerprint,
             }
@@ -944,7 +950,7 @@ class AuthoritativeSlotMatchExecutor:
         )
         engine_input = MatchInputSnapshot.create(
             context=context,
-            effective_match_format=official_match_format_snapshot(),
+            effective_match_format=effective_match_format,
             simulation_seed=seed,
             match_engine_version=MATCH_ENGINE_VERSION,
             rally_calibration_profile=RallyCalibrationProfile(),

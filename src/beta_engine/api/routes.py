@@ -10,6 +10,7 @@ from beta_engine.api.routers.admin_tournament_ranking_snapshots import router as
 from beta_engine.api.routers.admin_tournament_wild_cards import router as admin_tournament_wild_cards_router
 from beta_engine.api.routers.admin_tournament_draw_authority import router as admin_tournament_draw_authority_router
 from beta_engine.api.routers.admin_tournament_preparation import router as admin_tournament_preparation_router
+from beta_engine.api.routers.admin_tournament_formats import router as admin_tournament_formats_router
 from beta_engine.api.routers.admin_tournament_draw_process import router as admin_tournament_draw_process_router
 from beta_engine.api.routers.admin_player_prize_money import router as admin_player_prize_money_router
 from beta_engine.api.routers.admin_finals_race import router as admin_finals_race_router
@@ -62,6 +63,7 @@ router.include_router(admin_tournament_ranking_snapshots_router)
 router.include_router(admin_tournament_wild_cards_router)
 router.include_router(admin_tournament_draw_authority_router)
 router.include_router(admin_tournament_preparation_router)
+router.include_router(admin_tournament_formats_router)
 router.include_router(admin_tournament_draw_process_router)
 router.include_router(admin_player_prize_money_router)
 router.include_router(admin_finals_race_router)

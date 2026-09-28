@@ -2672,6 +2672,18 @@ def restore_saved_simulation_slots(
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
     session.execute(
+        delete(TournamentTopologyAuthorityModel).where(
+            TournamentTopologyAuthorityModel.run_id == run_id,
+            TournamentTopologyAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(TournamentFormatAuthorityModel).where(
+            TournamentFormatAuthorityModel.run_id == run_id,
+            TournamentFormatAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
         delete(TournamentDrawRevisionModel).where(
             TournamentDrawRevisionModel.run_id == run_id,
             TournamentDrawRevisionModel.branch_id == branch_id,
@@ -2705,6 +2717,12 @@ def restore_saved_simulation_slots(
         delete(TournamentEntryFieldVersionModel).where(
             TournamentEntryFieldVersionModel.run_id == run_id,
             TournamentEntryFieldVersionModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(TournamentGroupRulesPolicyModel).where(
+            TournamentGroupRulesPolicyModel.run_id == run_id,
+            TournamentGroupRulesPolicyModel.branch_id == branch_id,
         )
     )
     session.execute(
@@ -2787,8 +2805,14 @@ def restore_saved_simulation_slots(
         session.add(WorldTourFinalsParticipantSelectionConfigurationModel(**value))
     for value in (target or {}).get("finals_participant_snapshots", []):
         session.add(WorldTourFinalsParticipantSelectionSnapshotModel(**value))
+    for value in (target or {}).get("group_rules_policies", []):
+        session.add(TournamentGroupRulesPolicyModel(**value))
     for value in (target or {}).get("entry_fields", []):
         session.add(TournamentEntryFieldVersionModel(**value))
+    for value in (target or {}).get("format_authorities", []):
+        session.add(TournamentFormatAuthorityModel(**value))
+    for value in (target or {}).get("topology_authorities", []):
+        session.add(TournamentTopologyAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -2822,6 +2846,34 @@ def restore_saved_simulation_slots(
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({value["event_id"] for value in target_entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_group_rules = (target or {}).get("group_rules_policies", [])
+    if target_group_rules:
+        from beta_engine.infrastructure.db.tournament_group_rules_policy import (
+            TournamentGroupRulesPolicyStore,
+        )
+
+        TournamentGroupRulesPolicyStore(session).list_versions(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    target_formats = (target or {}).get("format_authorities", [])
+    if target_formats:
+        from beta_engine.infrastructure.db.tournament_format_authority import (
+            TournamentFormatAuthorityStore,
+        )
+
+        format_store = TournamentFormatAuthorityStore(session)
+        for event_id in sorted({value["event_id"] for value in target_formats}):
+            format_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_topologies = (target or {}).get("topology_authorities", [])
+    if target_topologies:
+        from beta_engine.infrastructure.db.tournament_topology_authority import (
+            TournamentTopologyAuthorityStore,
+        )
+
+        topology_store = TournamentTopologyAuthorityStore(session)
+        for event_id in sorted({value["event_id"] for value in target_topologies}):
+            topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

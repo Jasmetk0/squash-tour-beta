@@ -1658,16 +1658,30 @@ def load_saved_simulation_slot_component(payload, *, run_id: str, branch_id: str
 def _validate_saved_entry_fields_against_live_ranking_authority(
     session, component, *, run_id: str, branch_id: str
 ) -> None:
+    """Validate Entry Fields against their actual saved/live upstream authority."""
+
     values = (component or {}).get("entry_fields", [])
     if not values:
         return
 
+    from beta_engine.domain.finals import (
+        WorldTourFinalsParticipantSelectionSnapshot,
+    )
+    from beta_engine.domain.tournaments.entry_field import TournamentEntryField
     from beta_engine.infrastructure.db.tournament_entry_field import (
         TournamentEntryFieldStore,
     )
     from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
         TournamentRankingSnapshotAuthorityStore,
     )
+
+    participant_snapshots = {
+        value["target_season_index"]:
+        WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("finals_participant_snapshots", [])
+    }
 
     rows = [TournamentEntryFieldVersionModel(**value) for value in values]
     by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
@@ -1676,6 +1690,24 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
 
     ranking_store = TournamentRankingSnapshotAuthorityStore(session)
     for event_id, event_rows in sorted(by_event.items()):
+        ordered = sorted(event_rows, key=lambda row: row.sequence)
+        first = TournamentEntryField.model_validate_json(ordered[0].payload_json)
+        if first.source_kind == "finals_participant_selection":
+            if first.finals_target_season_index is None:
+                raise ValueError(
+                    "Saved Finals Entry Field has no target season identity"
+                )
+            selection = participant_snapshots.get(first.finals_target_season_index)
+            if selection is None:
+                raise ValueError(
+                    "Saved Finals Entry Field references missing saved participant-selection snapshot"
+                )
+            TournamentEntryFieldStore.validate_rows(
+                event_rows,
+                finals_selection=selection,
+            )
+            continue
+
         authority = ranking_store.get(
             run_id=run_id,
             branch_id=branch_id,

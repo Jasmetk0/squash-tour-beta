@@ -44,6 +44,15 @@ def project_canonical_finals_race_snapshot(
         raise ValueError("Finals Race cutoff transition authority mismatch")
 
     events = {event.event_id: event for event in calendar.calendar.events}
+    finals_event = events.get(configuration.finals_event_id)
+    if finals_event is None:
+        raise ValueError(
+            "Finals Race configuration references a Finals Edition absent from frozen Calendar"
+        )
+    if configuration.cutoff_ranking_week.week >= finals_event.season_week:
+        raise ValueError(
+            "Finals Race cutoff must be a published Ranking before the configured Finals Edition"
+        )
     categories = {event.category for event in calendar.calendar.events}
     missing_categories = sorted(
         set(configuration.eligible_categories) - categories

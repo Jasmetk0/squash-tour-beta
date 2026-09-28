@@ -1,6 +1,7 @@
 """Persistence bridge from Finals participant selection into shared Entry Field."""
 
 import pytest
+from sqlalchemy import delete
 
 from beta_engine.domain.finals import (
     WorldTourFinalsParticipantSelectionConfiguration,
@@ -26,6 +27,15 @@ from beta_engine.infrastructure.db.models import (
     Base,
     RunBranchModel,
     RunContainerModel,
+    TournamentEntryFieldVersionModel,
+    WorldTourFinalsRaceConfigurationModel,
+    WorldTourFinalsRaceSnapshotModel,
+    WorldTourFinalsParticipantSelectionConfigurationModel,
+    WorldTourFinalsParticipantSelectionSnapshotModel,
+)
+from beta_engine.infrastructure.db.simulation_slot_state import (
+    capture_saved_simulation_slots,
+    restore_saved_simulation_slots,
 )
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
@@ -219,3 +229,93 @@ def test_finals_selection_blocks_generic_ranking_application_entry_creation(data
                 capacity=TournamentEntryFieldCapacity(main_draw_size=8),
                 command_id="wrong-ranking-entry-field",
             )
+
+
+@pytest.mark.pr_critical
+def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field(database):
+    selected = install_selection(database, capacity=6)
+    with database.begin() as session:
+        field = TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+        target_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        session.execute(
+            delete(TournamentEntryFieldVersionModel).where(
+                TournamentEntryFieldVersionModel.run_id == "run",
+                TournamentEntryFieldVersionModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsParticipantSelectionSnapshotModel).where(
+                WorldTourFinalsParticipantSelectionSnapshotModel.run_id == "run",
+                WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsParticipantSelectionConfigurationModel).where(
+                WorldTourFinalsParticipantSelectionConfigurationModel.run_id == "run",
+                WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsRaceSnapshotModel).where(
+                WorldTourFinalsRaceSnapshotModel.run_id == "run",
+                WorldTourFinalsRaceSnapshotModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsRaceConfigurationModel).where(
+                WorldTourFinalsRaceConfigurationModel.run_id == "run",
+                WorldTourFinalsRaceConfigurationModel.branch_id == "branch",
+            )
+        )
+        session.flush()
+
+        current_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            current_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        assert "simulation_slot_match_state" not in current_payload["content"]
+
+        restore_saved_simulation_slots(
+            session,
+            current_payload=current_payload,
+            target_payload=target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        restored_selection = WorldTourFinalsParticipantSelectionStore(
+            session
+        ).get_snapshot(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+        )
+        assert restored_selection == selected
+        assert WorldTourFinalsRaceAuthorityStore(session).get_snapshot(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+        ) is not None
+        assert TournamentEntryFieldStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == (field,)

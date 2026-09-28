@@ -116,7 +116,7 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
         assert format_authority["format_kind"] == "groups"
         assert (
             format_authority["group_configuration"]["group_rules_policy_fingerprint"]
-            == policy["fingerprint"]
+            == policy["authority_fingerprint"]
         )
 
         status, preparation = _request("GET", tournament + "/preparation")
@@ -158,5 +158,8 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
             root + "/tournament-group-rules?target_season_index=0",
         )
         assert status == 200
-        assert effective["effective"]["fingerprint"] == policy["fingerprint"]
+        assert (
+            effective["effective"]["authority_fingerprint"]
+            == policy["authority_fingerprint"]
+        )
         assert len(effective["versions"]) == 1

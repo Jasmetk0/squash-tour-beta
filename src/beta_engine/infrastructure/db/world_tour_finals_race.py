@@ -86,20 +86,18 @@ class WorldTourFinalsRaceSnapshotStore:
         sources = OwnedTournamentRankingSourceStore(self.session).history(
             run_id=snapshot.run_id, branch_id=snapshot.branch_id
         )
-        by_event = {}
-        for source in sources:
-            if source is None:
-                raise ValueError("World Tour Finals Race tournament source identity is missing")
-            event_id = source.binding.event_id
-            if event_id in by_event:
-                raise ValueError("World Tour Finals Race has ambiguous tournament source identity")
-            by_event[event_id] = source
-
         resolved = []
         for event_id, source_fingerprint in snapshot.source_tournament_fingerprints:
-            source = by_event.get(event_id)
-            if source is None or source.fingerprint != source_fingerprint:
+            matches = [
+                source
+                for source in sources
+                if source is not None
+                and source.binding.event_id == event_id
+                and source.fingerprint == source_fingerprint
+            ]
+            if len(matches) != 1:
                 raise ValueError("World Tour Finals Race tournament source fingerprint mismatch")
+            source = matches[0]
             binding = source.binding
             awards = source.canonical_awards
             if awards is None:

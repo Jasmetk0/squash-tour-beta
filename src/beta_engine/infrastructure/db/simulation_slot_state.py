@@ -2145,6 +2145,30 @@ def _live_component_with_saved_shape(
             TournamentEntryFieldVersionModel.sequence,
         )
     ).all()
+    group_rules_policies = session.scalars(
+        select(TournamentGroupRulesPolicyModel)
+        .where(
+            TournamentGroupRulesPolicyModel.run_id == run_id,
+            TournamentGroupRulesPolicyModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupRulesPolicyModel.effective_from_season_index)
+    ).all()
+    format_authorities = session.scalars(
+        select(TournamentFormatAuthorityModel)
+        .where(
+            TournamentFormatAuthorityModel.run_id == run_id,
+            TournamentFormatAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentFormatAuthorityModel.event_id)
+    ).all()
+    topology_authorities = session.scalars(
+        select(TournamentTopologyAuthorityModel)
+        .where(
+            TournamentTopologyAuthorityModel.run_id == run_id,
+            TournamentTopologyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentTopologyAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2202,6 +2226,9 @@ def _live_component_with_saved_shape(
             finals_participant_snapshots,
             week_tournament_locks,
             entry_fields,
+            group_rules_policies,
+            format_authorities,
+            topology_authorities,
             wild_cards,
             draw_inputs,
             draws,
@@ -2237,6 +2264,12 @@ def _live_component_with_saved_shape(
         include_week_tournament_locks="week_tournament_locks" in shape_hint,
         entry_fields=entry_fields,
         include_entry_fields="entry_fields" in shape_hint,
+        group_rules_policies=group_rules_policies,
+        include_group_rules_policies="group_rules_policies" in shape_hint,
+        format_authorities=format_authorities,
+        include_format_authorities="format_authorities" in shape_hint,
+        topology_authorities=topology_authorities,
+        include_topology_authorities="topology_authorities" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

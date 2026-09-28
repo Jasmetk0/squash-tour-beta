@@ -1236,6 +1236,9 @@ export type CanonicalTournamentPreparationState = {
     | 'wild_card_review_required'
     | 'draw_input_ready'
     | 'tournament_format_required'
+    | 'tournament_topology_required'
+    | 'group_match_schedule_required'
+    | 'knockout_draw_adapter_required'
     | 'draw_generation_ready'
     | 'draw_ready'
   next_required_action:
@@ -1244,9 +1247,18 @@ export type CanonicalTournamentPreparationState = {
     | 'review_wild_cards'
     | 'review_pre_draw_or_commit_draw_input'
     | 'configure_tournament_format'
+    | 'generate_tournament_topology'
+    | 'prepare_group_match_schedule'
     | 'generate_draw'
     | 'none'
   blockers: string[]
+  format_authority_ready?: boolean
+  format_kind?: 'knockout' | 'groups' | 'groups_knockout' | null
+  format_authority_fingerprint?: string | null
+  format_group_rules_policy_fingerprint?: string | null
+  topology_ready?: boolean
+  topology_authority_fingerprint?: string | null
+  topology_group_match_count?: number
   ready_for_match_schedule: boolean
   effective_draw_fingerprint: string | null
   authority_source: 'run_owned_db_authorities.v1'

@@ -947,6 +947,9 @@ class AuthoritativeSlotMatchExecutor:
                 sharpness_modifier=projections[1].sharpness_modifier,
                 fatigue_modifier=projections[1].fatigue_modifier,
             ),
+            best_of=effective_match_format.format.best_of,
+            games_to=effective_match_format.format.games_to,
+            win_by=effective_match_format.format.win_by,
         )
         engine_input = MatchInputSnapshot.create(
             context=context,

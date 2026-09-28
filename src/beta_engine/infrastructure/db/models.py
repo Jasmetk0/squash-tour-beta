@@ -1135,6 +1135,33 @@ class RaceSnapshotModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+
+class WorldTourFinalsRaceConfigurationModel(Base):
+    """Immutable per-Run/Branch/season World Tour Finals Race configuration."""
+
+    __tablename__ = "world_tour_finals_race_configurations"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    adopted_by_command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsRaceSnapshotModel(Base):
+    """Immutable Race snapshot bound to one stored seasonal configuration."""
+
+    __tablename__ = "world_tour_finals_race_snapshots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    configuration_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    cutoff_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class FinalsQualificationModel(Base):
     __tablename__ = "finals_qualification"
     __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),)

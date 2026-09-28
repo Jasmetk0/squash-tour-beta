@@ -1760,6 +1760,10 @@ class SimulationApiService:
         if target.product_run_id != command.product_run_id:
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("branch belongs to another product run")
+        self._reject_package_backed_legacy_branch_simulation(
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        )
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(
@@ -1791,6 +1795,10 @@ class SimulationApiService:
         if target.product_run_id != command.product_run_id:
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("branch belongs to another product run")
+        self._reject_package_backed_legacy_branch_simulation(
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        )
         if target.head_checkpoint_id != command.expected_head_checkpoint_id:
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("expected head checkpoint is stale")
@@ -1816,6 +1824,21 @@ class SimulationApiService:
             reviewed_pre_state_fingerprint=self.repository.checkpoint_content_hash(state.model_dump(mode="json")),
         )
 
+    def _reject_package_backed_legacy_branch_simulation(
+        self, *, product_run_id: str, branch_id: str
+    ) -> None:
+        with self.repository._session_factory() as session:
+            package_state = get_run_package_state(
+                session,
+                run_id=product_run_id,
+                branch_id=branch_id,
+            )
+        if package_state is not None:
+            raise BranchSimulationValidationError(
+                "Package-backed Branches must use authoritative simulation; "
+                "legacy branch simulation is historical compatibility only"
+            )
+
     def simulate_next_match(self, *, run_id: str) -> SimulationStepResult:
         return self._simulate_step(run_id=run_id, mode="simulate_next_match")
 
@@ -1831,6 +1854,10 @@ class SimulationApiService:
             # The repository repeats this inside its transaction; this avoids doing expensive work for a bad path.
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("branch belongs to another product run")
+        self._reject_package_backed_legacy_branch_simulation(
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        )
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(
@@ -1859,6 +1886,10 @@ class SimulationApiService:
         if target.product_run_id != command.product_run_id:
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("branch belongs to another product run")
+        self._reject_package_backed_legacy_branch_simulation(
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        )
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(
@@ -1889,6 +1920,10 @@ class SimulationApiService:
         if target.product_run_id != command.product_run_id:
             from beta_engine.infrastructure.db import BranchSimulationConflictError
             raise BranchSimulationConflictError("branch belongs to another product run")
+        self._reject_package_backed_legacy_branch_simulation(
+            product_run_id=command.product_run_id,
+            branch_id=command.branch_id,
+        )
         run_info, state = self._load_run_context(run_id=target.legacy_simulation_run_id)
         self._validate_finals_phase_not_started(run_id=target.legacy_simulation_run_id, season=run_info.season)
         step = self._build_orchestrator(

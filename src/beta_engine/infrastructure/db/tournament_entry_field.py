@@ -447,6 +447,17 @@ class TournamentEntryFieldStore:
         command_id: str,
     ) -> TournamentEntryField:
         self._scope(run_id, branch_id, writing=True)
+        finals_selection = WorldTourFinalsParticipantSelectionStore(
+            self.session
+        ).find_snapshot_for_event(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if finals_selection is not None:
+            raise TournamentEntryFieldConflict(
+                "Finals participant selection must materialize the Entry Field from its own frozen authority"
+            )
         authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )

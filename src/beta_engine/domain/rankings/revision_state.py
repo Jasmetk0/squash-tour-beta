@@ -367,12 +367,6 @@ class RankingRevisionState(FrozenInput):
         ]
         if race_seasons != sorted(set(race_seasons)):
             raise ValueError("World Tour Finals Race snapshot order or uniqueness is invalid")
-        owned_by_event = {
-            source.binding.event_id: source
-            for source in self.tournament_sources
-        }
-        if len(owned_by_event) != len(self.tournament_sources):
-            raise ValueError("Owned tournament event identity is ambiguous")
         publications_by_ordinal = {}
         if self.authoritative_transition_state is not None:
             publications_by_ordinal = {
@@ -392,8 +386,13 @@ class RankingRevisionState(FrozenInput):
                     "World Tour Finals Race cutoff publication is missing from ranking revision state"
                 )
             for event_id, fingerprint in race.source_tournament_fingerprints:
-                source = owned_by_event.get(event_id)
-                if source is None or source.fingerprint != fingerprint:
+                matches = [
+                    source
+                    for source in self.tournament_sources
+                    if source.binding.event_id == event_id
+                    and source.fingerprint == fingerprint
+                ]
+                if len(matches) != 1:
                     raise ValueError(
                         "World Tour Finals Race source is missing from ranking revision state"
                     )

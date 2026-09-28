@@ -114,8 +114,10 @@
 36. ✅ Bridge the persisted Finals participant-selection snapshot into the shared canonical
     Tournament Preparation / Entry Field authority without fabricating Official Ranking or
     application evidence: support fixed non-bracket participant capacity, preserve Race seed
-    order, keep historical v1 fingerprints stable, block generic withdrawal repair and stop
-    Finals preparation before classic Draw Input at an explicit format-authority blocker.
+    order, keep historical v1 fingerprints stable, block generic withdrawal repair, stop
+    before classic Draw Input at an explicit format-authority blocker, and carry the complete
+    Race → participant → Entry authority chain through Saved Revision recovery while branch
+    fork remap fails closed until dedicated Finals identity remapping exists.
 37. Next: add an immutable season-versioned Tournament Format authority for the decided
     Pavouk / Skupiny / Skupiny + pavouk modes and make canonical Draw/Match topology consume
     it; preserve Race input seeding for Finals and group-result crossing without Race reseeding.

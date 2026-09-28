@@ -2652,7 +2652,14 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "reconstruction target is completed, blocked, or outside the current slot"
             )
-        slot, plan, event, package, players = self._group_execution_context(
+        (
+            slot,
+            plan,
+            event,
+            event_id,
+            players,
+            effective_match_format,
+        ) = self._group_execution_context(
             session, request, packages, request.group_id
         )
         if (
@@ -2663,7 +2670,11 @@ class AuthoritativeRunSimulationDriver:
                 "reconstruction winner constraint is not one of the frozen match participants"
             )
 
-        max_sets = 5
+        max_sets = (
+            effective_match_format.format.best_of
+            if effective_match_format is not None
+            else 5
+        )
         needed_sets = max_sets // 2 + 1
         if request.constraints.player_a_sets_won is not None:
             a_sets = request.constraints.player_a_sets_won
@@ -2674,7 +2685,7 @@ class AuthoritativeRunSimulationDriver:
                 or a_sets + b_sets > max_sets
             ):
                 raise ValueError(
-                    "reconstruction exact match score is not a completed best-of-five result"
+                    "reconstruction exact match score is not a completed match result"
                 )
 
         attempt_budget = min(400, max(40, request.candidate_count * 20))
@@ -2816,7 +2827,14 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "reconstruction target is completed, blocked, or outside the current slot"
                 )
-            slot, plan, event, package, players = self._group_execution_context(
+            (
+                slot,
+                plan,
+                event,
+                event_id,
+                players,
+                _,
+            ) = self._group_execution_context(
                 session, command, packages, group_id
             )
             payload = {
@@ -2828,7 +2846,7 @@ class AuthoritativeRunSimulationDriver:
                 "slot_id": slot.slot_id,
                 "slot_start_fingerprint": plan.slot_start_fingerprint,
                 "group_id": group_id,
-                "event_id": package.event_id,
+                "event_id": event_id,
                 "match_id": event.match_id,
                 "player_a_id": players[0],
                 "player_b_id": players[1],
@@ -4055,7 +4073,7 @@ class AuthoritativeRunSimulationDriver:
                 adopt=True,
             )
             self._ensure_current_slot(session, command, packages)
-            slot, _, _, _, _ = self._group_execution_context(
+            slot, *_ = self._group_execution_context(
                 session, command, packages, command.group_id
             )
 

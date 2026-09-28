@@ -162,6 +162,19 @@ class PublishedOfficialRankingModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class WorldTourFinalsRaceSnapshotModel(Base):
+    """Immutable canonical World Tour Finals Race snapshot for one season."""
+
+    __tablename__ = "world_tour_finals_race_snapshots"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cutoff_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
+    snapshot_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentRankingSnapshotAuthorityModel(Base):
     """Immutable event binding to one published Official Ranking snapshot."""
 

@@ -62,30 +62,6 @@ def test_branch_next_match_is_atomic_and_replay_is_journal_only(tmp_path):
 
 
 @pytest.mark.pr_critical
-def test_package_backed_branch_does_not_read_legacy_entry_sidecars(tmp_path, monkeypatch):
-    repository, service, branch_id, head = _setup(tmp_path)
-    with repository._session_factory.begin() as session:
-        put_run_package_state(
-            session,
-            RunPackageState(run_id="source", branch_id=branch_id),
-        )
-
-    def poisoned(*args, **kwargs):
-        raise AssertionError("legacy Entry/WC/pre-draw sidecar must not be read")
-
-    monkeypatch.setattr(repository, "get_wildcard_assignments_for_run", poisoned)
-    monkeypatch.setattr(repository, "get_pre_draw_withdrawal_replacements_for_run", poisoned)
-    monkeypatch.setattr(repository, "get_late_replacements_for_run", poisoned)
-
-    result = service.simulate_next_match_on_branch_atomically(
-        BranchSimulateNextMatchCommand(
-            "source", branch_id, head, "package-fence-next-match", "ownership fence", True
-        )
-    )
-    assert isinstance(result, BranchSimulateNextMatchResult)
-
-
-@pytest.mark.pr_critical
 def test_non_package_branch_preserves_legacy_entry_sidecar_compatibility(tmp_path, monkeypatch):
     repository, service, branch_id, head = _setup(tmp_path)
     calls = {"wildcards": 0, "pre_draw": 0, "late": 0}

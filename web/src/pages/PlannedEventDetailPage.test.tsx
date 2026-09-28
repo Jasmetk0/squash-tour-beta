@@ -25,6 +25,7 @@ const api = vi.hoisted(() => ({
   listTournamentRankingPublicationOptions: vi.fn(),
   createTournamentEntryFieldFromValidSubmissions: vi.fn(),
   createTournamentEntryFieldFromFinalsSelection: vi.fn(),
+  generateTournamentGroupMatchSchedule: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
@@ -135,6 +136,36 @@ describe('PlannedEventDetailPage', () => {
       finals_participant_selection_fingerprint: '8'.repeat(64), finals_race_snapshot_fingerprint: '9'.repeat(64), finals_target_season_index: 0,
       seed_order_player_ids: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], applications_fingerprint: '0'.repeat(64),
       direct_main_player_ids: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], qualification_player_ids: [], below_qualification_cut_player_ids: [], withdrawn_player_ids: [], base_field_fingerprint: null
+    })
+    api.generateTournamentGroupMatchSchedule.mockResolvedValue({
+      schema_version: 'tournament_group_match_schedule_authority.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      generated_by_command_id: 'admin-ui-group-match-schedule-E1',
+      format_authority_fingerprint: 'a'.repeat(64),
+      topology_authority_fingerprint: 'b'.repeat(64),
+      group_rules_policy_fingerprint: 'c'.repeat(64),
+      schedule_policy_id: 'round_robin_circle.v1',
+      group_count: 2, group_size: 3, match_day_count: 3,
+      matches: Array.from({ length: 6 }, (_, index) => ({
+        match_id: `M${index + 1}`,
+        group_index: index < 3 ? 1 : 2,
+        topology_match_index: (index % 3) + 1,
+        match_day_ordinal: (index % 3) + 1,
+        match_order: index < 3 ? 1 : 2,
+        top_slot_index: 1,
+        bottom_slot_index: 2,
+        top_player_id: `P${index + 1}`,
+        bottom_player_id: `Q${index + 1}`,
+        effective_match_format: {
+          schema_version: 'effective_match_format.v1',
+          format: { best_of: 5, games_to: 11, win_by: 2 },
+          source_scope: 'tournament_group_rules_policy',
+          source_key: 'group-rules-policy:' + 'c'.repeat(64),
+          snapshot_hash_algorithm: 'sha256',
+          snapshot_hash: 'd'.repeat(64)
+        }
+      })),
+      authority_fingerprint: 'e'.repeat(64)
     })
     api.getCanonicalWildCardState.mockResolvedValue({
       schema_version: 'authoritative_wild_card_assignment_state.v1',
@@ -1017,6 +1048,71 @@ describe('PlannedEventDetailPage', () => {
   })
 
 
+
+  it('materializes canonical group Match Schedule from frozen topology', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'group_match_schedule_required',
+      next_required_action: 'prepare_group_match_schedule',
+      blockers: ['group_match_schedule_authority_required'],
+      format_authority_ready: true,
+      format_kind: 'groups',
+      topology_ready: true,
+      topology_group_match_count: 6,
+      group_match_schedule_ready: false,
+      group_match_count: 0,
+      group_match_day_count: 0,
+      ready_for_match_schedule: false,
+      effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+    const button = await screen.findByRole('button', { name: 'Generate group Match Schedule' })
+    fireEvent.click(button)
+
+    await waitFor(() =>
+      expect(api.generateTournamentGroupMatchSchedule).toHaveBeenCalledWith(
+        'run-a',
+        'branch-a',
+        'E1',
+        { command_id: 'admin-ui-group-match-schedule-E1' }
+      )
+    )
+    expect(await screen.findByText(/Frozen 6 group matches across 3 Match Days/)).toBeInTheDocument()
+  })
+
+  it('shows the explicit Simulation adapter blocker after group Match Schedule exists', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'group_match_execution_adapter_required',
+      next_required_action: 'none',
+      blockers: ['group_match_execution_adapter_required'],
+      format_authority_ready: true,
+      format_kind: 'groups',
+      topology_ready: true,
+      topology_group_match_count: 6,
+      group_match_schedule_ready: true,
+      group_match_schedule_fingerprint: 'e'.repeat(64),
+      group_match_count: 6,
+      group_match_day_count: 3,
+      ready_for_match_schedule: false,
+      effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+
+    renderAt('/runs/run-a/calendar/E1')
+    expect(
+      await screen.findByText(/remaining blocker is the canonical Simulation Slot execution adapter/i)
+    ).toBeInTheDocument()
+    expect(screen.getByText('6')).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Generate group Match Schedule' })).not.toBeInTheDocument()
+  })
 
   it('adopts an explicit published Ranking Snapshot for canonical preparation', async () => {
     adminTime.viewed.mockImplementation(presentBranchView)

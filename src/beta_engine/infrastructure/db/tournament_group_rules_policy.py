@@ -65,6 +65,24 @@ class TournamentGroupRulesPolicyStore:
         ).all()
         return tuple(self.validate_row(row) for row in rows)
 
+    def get_by_fingerprint(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        authority_fingerprint: str,
+    ) -> TournamentGroupRulesPolicy | None:
+        self._scope(run_id, branch_id)
+        row = self.session.scalar(
+            select(TournamentGroupRulesPolicyModel).where(
+                TournamentGroupRulesPolicyModel.run_id == run_id,
+                TournamentGroupRulesPolicyModel.branch_id == branch_id,
+                TournamentGroupRulesPolicyModel.authority_fingerprint
+                == authority_fingerprint,
+            )
+        )
+        return None if row is None else self.validate_row(row)
+
     def resolve(
         self,
         *,

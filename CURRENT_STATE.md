@@ -20,10 +20,16 @@ legacy Finals consumer yet.
 - the existing legacy `SeasonState.race_snapshot` / Finals simulation path is intentionally
   untouched in this slice.
 
-**Next after this PR:** add the explicit Admin command/service boundary that resolves the
-configuration only from validated published Official Ranking + Ranking Transition + Run-owned
-Calendar evidence, then build/persist the snapshot from OwnedTournamentRankingSource history.
-Only after that should Package-backed Finals qualification stop reading legacy RaceSnapshot.
+**Admin command/service boundary now implemented:** configuration can be committed only against
+an existing published Official Ranking cutoff, its exact Ranking Transition roster/policy and
+the exact Run-owned Calendar projection. Snapshot creation revalidates those frozen fingerprints,
+loads only canonical OwnedTournamentRankingSource history and persists the deterministic Race
+snapshot idempotently. The Admin HTTP boundary exposes inspect, explicit configuration commit and
+snapshot build commands; it never auto-selects a cutoff week.
+
+**Next after this PR:** migrate Package-backed Finals qualification/seeding to consume this
+canonical Race snapshot while preserving historical non-Package Finals compatibility. Do not
+change deferred Finals capacity/format/direct-entry/replacement rules in that migration.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

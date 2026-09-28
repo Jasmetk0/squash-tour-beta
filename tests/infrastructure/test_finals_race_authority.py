@@ -16,7 +16,11 @@ from beta_engine.infrastructure.db.finals_race_authority import (
     FinalsRaceAuthorityConflict,
     FinalsRaceAuthorityStore,
 )
-from beta_engine.infrastructure.db.models import Base
+from beta_engine.infrastructure.db.models import (
+    Base,
+    RunBranchModel,
+    RunContainerModel,
+)
 
 
 def fp(char: str) -> str:
@@ -30,6 +34,21 @@ def database(tmp_path):
     )
     Base.metadata.create_all(engine)
     factory = create_session_factory(engine)
+    with factory.begin() as session:
+        session.add(
+            RunContainerModel(
+                run_id="run",
+                timeline_start_season=2000,
+                timeline_end_season=2049,
+            )
+        )
+        session.add(
+            RunBranchModel(
+                run_id="run",
+                branch_id="branch",
+                display_name="Timeline 1",
+            )
+        )
     yield factory
     engine.dispose()
 
@@ -99,3 +118,12 @@ def test_snapshot_requires_matching_persisted_configuration(database):
         store = FinalsRaceAuthorityStore(session)
         with pytest.raises(ValueError, match="requires persisted season configuration"):
             store.put_snapshot(snapshot(config))
+
+
+@pytest.mark.pr_critical
+def test_store_rejects_missing_run_branch_scope(database):
+    config = configuration().model_copy(update={"branch_id": "missing"})
+    with database.begin() as session:
+        store = FinalsRaceAuthorityStore(session)
+        with pytest.raises(ValueError, match="scope does not exist"):
+            store.put_configuration(config)

@@ -171,3 +171,24 @@ def test_finals_entry_field_rejects_generic_withdrawal_and_classic_draw_input(da
                 command_id="wrong-classic-draw",
                 draw_seed=123,
             )
+
+@pytest.mark.pr_critical
+def test_finals_selection_blocks_generic_ranking_application_entry_creation(database):
+    install_selection(database, capacity=6)
+
+    with database.begin() as session:
+        store = TournamentEntryFieldStore(session)
+        with pytest.raises(
+            TournamentEntryFieldConflict,
+            match="must materialize the Entry Field from its own frozen authority",
+        ):
+            store.stage_initial_from_persisted_submissions(
+                run_id="run",
+                branch_id="branch",
+                event_id="FINALS",
+                capacity=__import__(
+                    "beta_engine.domain.tournaments.entry_field",
+                    fromlist=["TournamentEntryFieldCapacity"],
+                ).TournamentEntryFieldCapacity(main_draw_size=8),
+                command_id="wrong-ranking-entry-field",
+            )

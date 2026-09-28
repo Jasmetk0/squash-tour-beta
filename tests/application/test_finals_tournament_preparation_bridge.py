@@ -54,6 +54,7 @@ def prepared(tmp_path):
                 display_name="Timeline 1",
             )
         )
+        session.flush()
         config = WorldTourFinalsParticipantSelectionConfiguration(
             run_id="run",
             branch_id="branch",

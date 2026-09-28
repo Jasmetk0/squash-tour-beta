@@ -1675,6 +1675,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({row.event_id for row in topology_authorities}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    group_match_schedules = session.scalars(
+        select(TournamentGroupMatchScheduleAuthorityModel)
+        .where(
+            TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
+            TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
+    ).all()
+    if group_match_schedules:
+        from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+            TournamentGroupMatchScheduleAuthorityStore,
+        )
+
+        schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in group_match_schedules}):
+            schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -1793,6 +1809,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or group_rules_policies
         or format_authorities
         or topology_authorities
+        or group_match_schedules
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -1824,6 +1841,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_format_authorities=bool(format_authorities),
             topology_authorities=topology_authorities,
             include_topology_authorities=bool(topology_authorities),
+            group_match_schedules=group_match_schedules,
+            include_group_match_schedules=bool(group_match_schedules),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,

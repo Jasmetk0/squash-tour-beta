@@ -38,6 +38,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     TournamentFormatAuthorityModel,
     TournamentGroupRulesPolicyModel,
+    TournamentGroupMatchScheduleAuthorityModel,
     TournamentTopologyAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
@@ -56,6 +57,9 @@ from beta_engine.infrastructure.db.tournament_format_authority import (
 )
 from beta_engine.infrastructure.db.tournament_group_rules_policy import (
     TournamentGroupRulesPolicyStore,
+)
+from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityStore,
@@ -228,6 +232,12 @@ def test_finals_groups_format_and_topology_replay_from_race_seed_order(finals_da
             command_id="topology-groups",
             topology_seed=777,
         )
+        schedule = TournamentGroupMatchScheduleAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="group-match-schedule",
+        )
 
         assert (
             format_authority.group_configuration.group_rules_policy_fingerprint
@@ -239,6 +249,15 @@ def test_finals_groups_format_and_topology_replay_from_race_seed_order(finals_da
         assert topology.group_slots[0].player_id == "p1"
         assert topology.group_slots[3].player_id == "p2"
         assert len(topology.group_matches) == 6
+        assert schedule.match_day_count == 3
+        assert len(schedule.matches) == 6
+        assert all(
+            match.effective_match_format.format.best_of == 5
+            for match in schedule.matches
+        )
+        assert TournamentGroupMatchScheduleAuthorityStore(session).get(
+            run_id="run", branch_id="branch", event_id="FINALS"
+        ) == schedule
         assert TournamentFormatAuthorityStore(session).get(
             run_id="run", branch_id="branch", event_id="FINALS"
         ) == format_authority
@@ -251,13 +270,17 @@ def test_finals_groups_format_and_topology_replay_from_race_seed_order(finals_da
         branch_id="branch",
         event_id="FINALS",
     )
-    assert state.phase == "group_match_schedule_required"
-    assert state.next_required_action == "prepare_group_match_schedule"
-    assert state.blockers == ("group_match_schedule_authority_required",)
+    assert state.phase == "group_match_execution_adapter_required"
+    assert state.next_required_action == "none"
+    assert state.blockers == ("group_match_execution_adapter_required",)
     assert state.format_authority_ready is True
     assert state.format_kind == "groups"
     assert state.topology_ready is True
     assert state.topology_group_match_count == 6
+    assert state.group_match_schedule_ready is True
+    assert state.group_match_count == 6
+    assert state.group_match_day_count == 3
+    assert state.group_match_schedule_fingerprint == schedule.fingerprint
     assert state.ready_for_match_schedule is False
 
 
@@ -372,6 +395,12 @@ def test_saved_revision_restores_group_rules_format_and_topology_chain(finals_da
             command_id="topology-groups",
             topology_seed=999,
         )
+        schedule = TournamentGroupMatchScheduleAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="group-match-schedule",
+        )
 
         target_payload = {"content": {}}
         capture_saved_simulation_slots(
@@ -384,8 +413,10 @@ def test_saved_revision_restores_group_rules_format_and_topology_chain(finals_da
         assert len(component["group_rules_policies"]) == 1
         assert len(component["format_authorities"]) == 1
         assert len(component["topology_authorities"]) == 1
+        assert len(component["group_match_schedules"]) == 1
 
         for model in (
+            TournamentGroupMatchScheduleAuthorityModel,
             TournamentTopologyAuthorityModel,
             TournamentFormatAuthorityModel,
             TournamentGroupRulesPolicyModel,
@@ -435,3 +466,9 @@ def test_saved_revision_restores_group_rules_format_and_topology_chain(finals_da
             branch_id="branch",
             event_id="FINALS",
         ) == topology
+        assert TournamentGroupMatchScheduleAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == schedule
+

@@ -439,7 +439,16 @@ class CanonicalTournamentPreparationService:
                 )
             ),
             entry_seed_order_player_ids=(
-                field.seed_order_player_ids if field is not None else ()
+                field.seed_order_player_ids
+                if field is not None
+                else (
+                    tuple(
+                        participant.player_id
+                        for participant in finals_selection.participants
+                    )
+                    if finals_selection is not None
+                    else ()
+                )
             ),
             valid_submission_count=len(submissions),
             valid_main_submission_count=sum(sub.entry_window == "main" for sub in submissions),

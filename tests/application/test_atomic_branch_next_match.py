@@ -3,7 +3,19 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.api_services import SimulationApiService
-from beta_engine.infrastructure.db import BranchSimulateNextMatchCommand, BranchSimulateNextMatchResult, DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db import (
+    BranchSimulateFullSeasonCommand,
+    BranchSimulateNextMatchCommand,
+    BranchSimulateNextMatchResult,
+    BranchSimulateNextRoundCommand,
+    BranchSimulateNextTournamentCommand,
+    BranchSimulateNextWeekCommand,
+    BranchSimulationValidationError,
+    DatabaseSettings,
+    SimulationPersistenceRepository,
+    create_session_factory,
+    create_sqlite_engine,
+)
 from beta_engine.domain.run_packages import RunPackageState
 from beta_engine.infrastructure.db.models import BranchCheckpointModel, BranchSimulationCommandModel, BranchStateModel, RunBranchModel, RunContainerModel
 from beta_engine.infrastructure.db.run_package_state import put_run_package_state
@@ -50,30 +62,6 @@ def test_branch_next_match_is_atomic_and_replay_is_journal_only(tmp_path):
 
 
 @pytest.mark.pr_critical
-def test_package_backed_branch_does_not_read_legacy_entry_sidecars(tmp_path, monkeypatch):
-    repository, service, branch_id, head = _setup(tmp_path)
-    with repository._session_factory.begin() as session:
-        put_run_package_state(
-            session,
-            RunPackageState(run_id="source", branch_id=branch_id),
-        )
-
-    def poisoned(*args, **kwargs):
-        raise AssertionError("legacy Entry/WC/pre-draw sidecar must not be read")
-
-    monkeypatch.setattr(repository, "get_wildcard_assignments_for_run", poisoned)
-    monkeypatch.setattr(repository, "get_pre_draw_withdrawal_replacements_for_run", poisoned)
-    monkeypatch.setattr(repository, "get_late_replacements_for_run", poisoned)
-
-    result = service.simulate_next_match_on_branch_atomically(
-        BranchSimulateNextMatchCommand(
-            "source", branch_id, head, "package-fence-next-match", "ownership fence", True
-        )
-    )
-    assert isinstance(result, BranchSimulateNextMatchResult)
-
-
-@pytest.mark.pr_critical
 def test_non_package_branch_preserves_legacy_entry_sidecar_compatibility(tmp_path, monkeypatch):
     repository, service, branch_id, head = _setup(tmp_path)
     calls = {"wildcards": 0, "pre_draw": 0, "late": 0}
@@ -100,3 +88,79 @@ def test_non_package_branch_preserves_legacy_entry_sidecar_compatibility(tmp_pat
         )
     )
     assert calls == {"wildcards": 1, "pre_draw": 1, "late": 1}
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    ("method_name", "command"),
+    [
+        (
+            "simulate_next_match_on_branch_atomically",
+            lambda branch_id, head: BranchSimulateNextMatchCommand(
+                "source", branch_id, head, "blocked-match", "package ownership", True
+            ),
+        ),
+        (
+            "simulate_next_round_on_branch_atomically",
+            lambda branch_id, head: BranchSimulateNextRoundCommand(
+                "source", branch_id, head, "blocked-round", "package ownership", True
+            ),
+        ),
+        (
+            "simulate_next_week_on_branch_atomically",
+            lambda branch_id, head: BranchSimulateNextWeekCommand(
+                "source", branch_id, head, "blocked-week", "package ownership", True
+            ),
+        ),
+        (
+            "simulate_next_tournament_on_branch_atomically",
+            lambda branch_id, head: BranchSimulateNextTournamentCommand(
+                "source", branch_id, head, "blocked-tournament", "package ownership", True
+            ),
+        ),
+        (
+            "simulate_full_season_on_branch_atomically",
+            lambda branch_id, head: BranchSimulateFullSeasonCommand(
+                "source", branch_id, head, "blocked-full-season", "package ownership", True
+            ),
+        ),
+    ],
+)
+def test_package_backed_branch_blocks_new_legacy_simulation_commands(
+    tmp_path, method_name, command
+):
+    repository, service, branch_id, head = _setup(tmp_path)
+    with repository._session_factory.begin() as session:
+        put_run_package_state(
+            session,
+            RunPackageState(run_id="source", branch_id=branch_id),
+        )
+
+    before_checkpoints = repository.list_branch_checkpoints(branch_id=branch_id)
+    with pytest.raises(
+        BranchSimulationValidationError,
+        match="must use authoritative simulation",
+    ):
+        getattr(service, method_name)(command(branch_id, head))
+
+    after_checkpoints = repository.list_branch_checkpoints(branch_id=branch_id)
+    assert after_checkpoints == before_checkpoints
+
+
+@pytest.mark.pr_critical
+def test_completed_legacy_branch_command_replays_after_package_adoption(tmp_path):
+    repository, service, branch_id, head = _setup(tmp_path)
+    command = BranchSimulateNextMatchCommand(
+        "source", branch_id, head, "pre-package-match", "historical compatibility", True
+    )
+    first = service.simulate_next_match_on_branch_atomically(command)
+
+    with repository._session_factory.begin() as session:
+        put_run_package_state(
+            session,
+            RunPackageState(run_id="source", branch_id=branch_id),
+        )
+
+    replay = service.simulate_next_match_on_branch_atomically(command)
+    assert replay.idempotent_replay is True
+    assert replay.new_head_checkpoint_id == first.new_head_checkpoint_id

@@ -10431,6 +10431,7 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError("schedule week is stale")
             packages = self._packages(
                 schedule.week,
+                required=False,
                 session=session,
                 run_id=schedule.run_id,
                 branch_id=schedule.branch_id,
@@ -10475,6 +10476,7 @@ class AuthoritativeRunSimulationDriver:
                 schedule,
                 self._packages(
                     schedule.week,
+                    required=False,
                     session=session,
                     run_id=schedule.run_id,
                     branch_id=schedule.branch_id,

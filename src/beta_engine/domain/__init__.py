@@ -42,6 +42,13 @@ from beta_engine.domain.finals import (
     FinalsQualificationResult,
     FinalsQualifiedPlayer,
     FinalsResult,
+    WorldTourFinalsRaceCountedResult,
+    WorldTourFinalsRaceInput,
+    WorldTourFinalsRacePlayer,
+    WorldTourFinalsRaceResult,
+    WorldTourFinalsRaceRow,
+    WorldTourFinalsRaceSnapshot,
+    calculate_world_tour_finals_race,
 )
 
 from beta_engine.domain.entries import (
@@ -120,6 +127,13 @@ __all__ = [
     "FinalsQualificationResult",
     "FinalsQualifiedPlayer",
     "FinalsResult",
+    "WorldTourFinalsRaceCountedResult",
+    "WorldTourFinalsRaceInput",
+    "WorldTourFinalsRacePlayer",
+    "WorldTourFinalsRaceResult",
+    "WorldTourFinalsRaceRow",
+    "WorldTourFinalsRaceSnapshot",
+    "calculate_world_tour_finals_race",
     "AcceptanceList",
     "AcceptanceStatus",
     "EntryDecision",

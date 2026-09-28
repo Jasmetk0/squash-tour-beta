@@ -1306,6 +1306,42 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         )
         .order_by(WeekSimulationScheduleModel.week_ordinal)
     ).all()
+    finals_race_configurations = session.scalars(
+        select(WorldTourFinalsRaceConfigurationModel)
+        .where(
+            WorldTourFinalsRaceConfigurationModel.run_id == run_id,
+            WorldTourFinalsRaceConfigurationModel.branch_id == branch_id,
+        )
+        .order_by(WorldTourFinalsRaceConfigurationModel.target_season_index)
+    ).all()
+    finals_race_snapshots = session.scalars(
+        select(WorldTourFinalsRaceSnapshotModel)
+        .where(
+            WorldTourFinalsRaceSnapshotModel.run_id == run_id,
+            WorldTourFinalsRaceSnapshotModel.branch_id == branch_id,
+        )
+        .order_by(WorldTourFinalsRaceSnapshotModel.target_season_index)
+    ).all()
+    finals_participant_configurations = session.scalars(
+        select(WorldTourFinalsParticipantSelectionConfigurationModel)
+        .where(
+            WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsParticipantSelectionConfigurationModel.target_season_index
+        )
+    ).all()
+    finals_participant_snapshots = session.scalars(
+        select(WorldTourFinalsParticipantSelectionSnapshotModel)
+        .where(
+            WorldTourFinalsParticipantSelectionSnapshotModel.run_id == run_id,
+            WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index
+        )
+    ).all()
     entry_fields = session.scalars(
         select(TournamentEntryFieldVersionModel)
         .where(
@@ -1435,6 +1471,10 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or commands
         or authorities
         or schedules
+        or finals_race_configurations
+        or finals_race_snapshots
+        or finals_participant_configurations
+        or finals_participant_snapshots
         or entry_fields
         or wild_card_authorities
         or draw_inputs
@@ -1449,6 +1489,16 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             commands,
             authorities,
             schedules=schedules,
+            finals_race_configurations=finals_race_configurations,
+            include_finals_race_configurations=bool(finals_race_configurations),
+            finals_race_snapshots=finals_race_snapshots,
+            include_finals_race_snapshots=bool(finals_race_snapshots),
+            finals_participant_configurations=finals_participant_configurations,
+            include_finals_participant_configurations=bool(
+                finals_participant_configurations
+            ),
+            finals_participant_snapshots=finals_participant_snapshots,
+            include_finals_participant_snapshots=bool(finals_participant_snapshots),
             entry_fields=entry_fields,
             include_entry_fields=bool(entry_fields),
             wild_card_authorities=wild_card_authorities,

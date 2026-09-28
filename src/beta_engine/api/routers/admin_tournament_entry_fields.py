@@ -70,6 +70,41 @@ def create_entry_field_from_valid_submissions(
         ) from exc
 
 
+@router.post(
+    "/from-finals-participant-selection",
+    status_code=201,
+    response_model=TournamentEntryField,
+)
+def create_entry_field_from_finals_participant_selection(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: dict,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentEntryField:
+    try:
+        target_season_index = int(payload["target_season_index"])
+        command_id = payload["command_id"]
+        with runtime.repository._session_factory.begin() as session:
+            return TournamentEntryFieldStore(
+                session
+            ).stage_initial_from_finals_participant_selection(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                target_season_index=target_season_index,
+                command_id=command_id,
+            )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "canonical_finals_entry_field_creation_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
 @router.get("", response_model=CanonicalTournamentEntryFieldState)
 def inspect_entry_field(
     run_id: str,

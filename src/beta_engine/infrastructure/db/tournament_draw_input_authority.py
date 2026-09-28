@@ -219,15 +219,6 @@ class TournamentDrawInputAuthorityStore:
         if not isinstance(command_id, str) or not command_id.strip() or len(command_id) > 128:
             raise ValueError("Tournament Draw Input requires a valid command ID")
 
-        ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-        )
-        if ranking_authority is None:
-            raise ValueError(
-                "Tournament Draw Input requires Tournament Ranking Snapshot authority"
-            )
         history = TournamentEntryFieldStore(self.session).history(
             run_id=run_id,
             branch_id=branch_id,
@@ -238,6 +229,20 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament Draw Input requires a persisted Tournament Entry Field"
             )
         field = history[-1]
+        if field.source_kind == "finals_participant_selection":
+            raise ValueError(
+                "Finals Draw Input requires configured tournament-format authority"
+            )
+
+        ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if ranking_authority is None:
+            raise ValueError(
+                "Tournament Draw Input requires Tournament Ranking Snapshot authority"
+            )
         field_sequence = len(history)
         wild_card_authority = (
             TournamentWildCardAuthorityStore(self.session).get(

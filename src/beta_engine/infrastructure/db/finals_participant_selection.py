@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from beta_engine.domain.finals import (
@@ -156,6 +157,46 @@ class WorldTourFinalsParticipantSelectionStore:
                 "Stored Finals participant-selection snapshot binding mismatch"
             )
         return snapshot
+
+    def find_snapshot_for_event(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+    ) -> WorldTourFinalsParticipantSelectionSnapshot | None:
+        """Find the one immutable Finals participant snapshot owning an event."""
+
+        self._scope(run_id, branch_id)
+        rows = tuple(
+            self.session.scalars(
+                select(WorldTourFinalsParticipantSelectionConfigurationModel).where(
+                    WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
+                    WorldTourFinalsParticipantSelectionConfigurationModel.branch_id
+                    == branch_id,
+                )
+            ).all()
+        )
+        matches: list[WorldTourFinalsParticipantSelectionConfiguration] = []
+        for row in rows:
+            configuration = self.get_configuration(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=row.target_season_index,
+            )
+            if configuration is not None and configuration.finals_event_id == event_id:
+                matches.append(configuration)
+        if len(matches) > 1:
+            raise ValueError(
+                "More than one Finals participant configuration owns this Tournament Edition"
+            )
+        if not matches:
+            return None
+        return self.get_snapshot(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_season_index=matches[0].target_season_index,
+        )
 
     def put_snapshot(
         self,

@@ -43,6 +43,7 @@ import type {
   AdoptTournamentRankingSnapshotPayload,
   TournamentEntryField,
   CreateTournamentEntryFieldPayload,
+  CreateFinalsTournamentEntryFieldPayload,
   CanonicalPreDrawWithdrawalPayload,
   CanonicalPreDrawWithdrawalResult,
   CanonicalTournamentDrawState,
@@ -2774,6 +2775,30 @@ export async function createTournamentEntryFieldFromValidSubmissions(
     data.mode !== 'initial'
   ) {
     throw new Error('Tournament Entry Field response does not match the requested scope.')
+  }
+  return data
+}
+
+export async function createTournamentEntryFieldFromFinalsSelection(
+  runId: string,
+  branchId: string,
+  eventId: string,
+  payload: CreateFinalsTournamentEntryFieldPayload
+): Promise<TournamentEntryField> {
+  const data = await request<TournamentEntryField>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/tournaments/${encodeURIComponent(eventId)}/entry-field/from-finals-participant-selection`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.schema_version !== 'tournament_entry_field.v2' ||
+    data.run_id !== runId ||
+    data.branch_id !== branchId ||
+    data.event_id !== eventId ||
+    data.mode !== 'initial' ||
+    data.source_kind !== 'finals_participant_selection' ||
+    data.finals_target_season_index !== payload.target_season_index
+  ) {
+    throw new Error('Finals Tournament Entry Field response does not match the requested selection authority.')
   }
   return data
 }

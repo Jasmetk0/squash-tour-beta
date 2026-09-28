@@ -24,6 +24,7 @@ const api = vi.hoisted(() => ({
   adoptTournamentRankingSnapshotAuthority: vi.fn(),
   listTournamentRankingPublicationOptions: vi.fn(),
   createTournamentEntryFieldFromValidSubmissions: vi.fn(),
+  createTournamentEntryFieldFromFinalsSelection: vi.fn(),
   commitCanonicalPreDrawWithdrawal: vi.fn(),
   getCanonicalTournamentDrawState: vi.fn(),
   getCanonicalTournamentDrawAuthority: vi.fn(),
@@ -125,6 +126,15 @@ describe('PlannedEventDetailPage', () => {
       capacity: { main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0 },
       tournament_ranking_authority_fingerprint: '1'.repeat(64), ranking_snapshot_fingerprint: '2'.repeat(64), applications_fingerprint: '3'.repeat(64),
       direct_main_player_ids: ['P1'], qualification_player_ids: ['Q1'], below_qualification_cut_player_ids: [], withdrawn_player_ids: [], base_field_fingerprint: null
+    })
+    api.createTournamentEntryFieldFromFinalsSelection.mockResolvedValue({
+      schema_version: 'tournament_entry_field.v2', run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1', mode: 'initial',
+      capacity: { geometry_kind: 'fixed_participant_field', main_draw_size: 6, qualification_draw_size: 0, qualifier_spots: 0, wild_card_slots: 0, bye_slots: 0 },
+      source_kind: 'finals_participant_selection',
+      tournament_ranking_authority_fingerprint: null, ranking_snapshot_fingerprint: null,
+      finals_participant_selection_fingerprint: '8'.repeat(64), finals_race_snapshot_fingerprint: '9'.repeat(64), finals_target_season_index: 0,
+      seed_order_player_ids: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], applications_fingerprint: '0'.repeat(64),
+      direct_main_player_ids: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'], qualification_player_ids: [], below_qualification_cut_player_ids: [], withdrawn_player_ids: [], base_field_fingerprint: null
     })
     api.getCanonicalWildCardState.mockResolvedValue({
       schema_version: 'authoritative_wild_card_assignment_state.v1',
@@ -696,8 +706,10 @@ describe('PlannedEventDetailPage', () => {
     renderAt('/runs/run-a/calendar/E1')
 
     expect(await screen.findByText('Draw process windows')).toBeInTheDocument()
-    fireEvent.change(screen.getByLabelText('Main process windows'), { target: { value: '4' } })
-    fireEvent.change(screen.getByLabelText('Qualification process windows'), { target: { value: '3' } })
+    const mainWindows = await screen.findByLabelText('Main process windows')
+    const qualificationWindows = await screen.findByLabelText('Qualification process windows')
+    fireEvent.change(mainWindows, { target: { value: '4' } })
+    fireEvent.change(qualificationWindows, { target: { value: '3' } })
     fireEvent.click(screen.getByRole('button', { name: 'Configure canonical Draw process' }))
 
     await waitFor(() =>
@@ -1053,6 +1065,38 @@ describe('PlannedEventDetailPage', () => {
         capacity: { main_draw_size: 8, qualification_draw_size: 4, qualifier_spots: 2, wild_card_slots: 1, bye_slots: 0 }
       }
     ))
+  })
+
+
+  it('materializes Finals selection through the shared Entry Field without using submissions', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'entry_field_required', next_required_action: 'build_entry_field',
+      blockers: ['tournament_entry_field_required'],
+      entry_source_kind: 'finals_participant_selection',
+      entry_source_authority_fingerprint: '8'.repeat(64),
+      entry_source_target_season_index: 0,
+      entry_seed_order_player_ids: ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'],
+      valid_submission_count: 0, valid_main_submission_count: 0, valid_qualification_submission_count: 0,
+      entry_capacity_suggestion: null,
+      ready_for_match_schedule: false, effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+    renderAt('/runs/run-a/calendar/E1')
+
+    expect(await screen.findByRole('button', { name: 'Build Entry Field from Finals selection' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Build Entry Field from valid submissions' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Build Entry Field from Finals selection' }))
+
+    await waitFor(() => expect(api.createTournamentEntryFieldFromFinalsSelection).toHaveBeenCalledWith(
+      'run-a', 'branch-a', 'E1', {
+        command_id: 'admin-ui-finals-entry-field-E1-0',
+        target_season_index: 0
+      }
+    ))
+    expect(api.createTournamentEntryFieldFromValidSubmissions).not.toHaveBeenCalled()
   })
 
   it('links zero valid submissions to authoritative Simulation on the exact active Branch', async () => {

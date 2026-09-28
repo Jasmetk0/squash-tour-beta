@@ -20,6 +20,8 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 
 EntryWindow = Literal["main", "qualification"]
 FieldResolutionMode = Literal["initial", "pre_draw_repair"]
+EntryFieldGeometry = Literal["classic_bracket", "fixed_participant_field"]
+EntryFieldSourceKind = Literal["ranking_applications", "finals_participant_selection"]
 
 
 class TournamentEntryApplication(FrozenInput):
@@ -44,6 +46,10 @@ class TournamentEntryApplication(FrozenInput):
 
 
 class TournamentEntryFieldCapacity(FrozenInput):
+    geometry_kind: EntryFieldGeometry = Field(
+        default="classic_bracket",
+        exclude_if=lambda value: value == "classic_bracket",
+    )
     main_draw_size: int = Field(ge=1, le=128)
     qualification_draw_size: int = Field(default=0, ge=0)
     qualifier_spots: int = Field(default=0, ge=0)
@@ -82,20 +88,33 @@ class TournamentEntryFieldCapacity(FrozenInput):
         )
 
     @model_validator(mode="after")
-    def validate_classic_main_capacity(self) -> "TournamentEntryFieldCapacity":
-        if self.main_draw_size < 2 or self.main_draw_size & (self.main_draw_size - 1):
-            raise ValueError(
-                "Classic Main Draw capacity must be one of 2, 4, 8, 16, 32, 64, 128"
-            )
+    def validate_capacity(self) -> "TournamentEntryFieldCapacity":
         reserved = self.qualifier_spots + self.wild_card_slots + self.bye_slots
         if reserved > self.main_draw_size:
             raise ValueError("Reserved Main Draw slots exceed Main Draw capacity")
+        if self.geometry_kind == "classic_bracket":
+            if self.main_draw_size < 2 or self.main_draw_size & (self.main_draw_size - 1):
+                raise ValueError(
+                    "Classic Main Draw capacity must be one of 2, 4, 8, 16, 32, 64, 128"
+                )
+        else:
+            if (
+                self.qualification_draw_size
+                or self.qualifier_spots
+                or self.wild_card_slots
+                or self.bye_slots
+            ):
+                raise ValueError(
+                    "Fixed participant field cannot reserve Qualification, Wild Card or BYE slots"
+                )
         return self
 
     @property
     def main_diagnostics(self) -> tuple[TournamentBracketDiagnostic, ...]:
         """Derived Admin diagnostics; not persisted and not part of field identity."""
 
+        if self.geometry_kind != "classic_bracket":
+            return ()
         entrant_count = self.main_draw_size - self.bye_slots
         return main_bracket_diagnostics(
             entrant_count=entrant_count,
@@ -114,16 +133,45 @@ class TournamentEntryFieldCapacity(FrozenInput):
 
 
 class TournamentEntryField(FrozenInput):
-    schema_version: Literal["tournament_entry_field.v1"] = "tournament_entry_field.v1"
+    schema_version: Literal[
+        "tournament_entry_field.v1",
+        "tournament_entry_field.v2",
+    ] = "tournament_entry_field.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     mode: FieldResolutionMode
     capacity: TournamentEntryFieldCapacity
-    tournament_ranking_authority_fingerprint: str = Field(
-        pattern=r"^[0-9a-f]{64}$"
+    source_kind: EntryFieldSourceKind = Field(
+        default="ranking_applications",
+        exclude_if=lambda value: value == "ranking_applications",
     )
-    ranking_snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    tournament_ranking_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    ranking_snapshot_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    finals_participant_selection_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_race_snapshot_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_target_season_index: int | None = Field(
+        default=None,
+        ge=0,
+        le=49,
+        exclude_if=lambda value: value is None,
+    )
+    seed_order_player_ids: tuple[str, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     applications_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     direct_main_player_ids: tuple[str, ...] = ()
     qualification_player_ids: tuple[str, ...] = ()
@@ -155,7 +203,81 @@ class TournamentEntryField(FrozenInput):
             raise ValueError("Initial field cannot reference a predecessor field")
         if self.mode == "pre_draw_repair" and self.base_field_fingerprint is None:
             raise ValueError("Pre-draw repair requires predecessor field identity")
+
+        if self.source_kind == "ranking_applications":
+            if (
+                self.tournament_ranking_authority_fingerprint is None
+                or self.ranking_snapshot_fingerprint is None
+            ):
+                raise ValueError(
+                    "Ranking/Application Entry Field requires Ranking Snapshot authority"
+                )
+            if (
+                self.finals_participant_selection_fingerprint is not None
+                or self.finals_race_snapshot_fingerprint is not None
+                or self.finals_target_season_index is not None
+                or self.seed_order_player_ids
+            ):
+                raise ValueError(
+                    "Ranking/Application Entry Field cannot carry Finals selection authority"
+                )
+        else:
+            if self.schema_version != "tournament_entry_field.v2":
+                raise ValueError(
+                    "Finals participant Entry Field requires tournament_entry_field.v2"
+                )
+            if (
+                self.tournament_ranking_authority_fingerprint is not None
+                or self.ranking_snapshot_fingerprint is not None
+            ):
+                raise ValueError(
+                    "Finals participant Entry Field cannot depend on Official Ranking authority"
+                )
+            if (
+                self.finals_participant_selection_fingerprint is None
+                or self.finals_race_snapshot_fingerprint is None
+                or self.finals_target_season_index is None
+            ):
+                raise ValueError(
+                    "Finals participant Entry Field requires frozen participant/Race authority"
+                )
+            if self.capacity.geometry_kind != "fixed_participant_field":
+                raise ValueError(
+                    "Finals participant Entry Field requires fixed participant geometry"
+                )
+            if self.mode != "initial":
+                raise ValueError(
+                    "Finals participant Entry Field repairs use the separate replacement authority"
+                )
+            if (
+                self.qualification_player_ids
+                or self.below_qualification_cut_player_ids
+                or self.withdrawn_player_ids
+            ):
+                raise ValueError(
+                    "Initial Finals participant Entry Field contains only selected participants"
+                )
+            if self.seed_order_player_ids != self.direct_main_player_ids:
+                raise ValueError(
+                    "Finals Entry Field seed order must equal frozen Race-selected participant order"
+                )
+            if len(self.direct_main_player_ids) != self.capacity.main_draw_size:
+                raise ValueError(
+                    "Finals Entry Field must exactly fill configured participant capacity"
+                )
+            if self.applications_fingerprint != _fingerprint([]):
+                raise ValueError(
+                    "Finals participant Entry Field cannot fabricate application evidence"
+                )
         return self
+
+    @property
+    def source_authority_fingerprint(self) -> str:
+        if self.source_kind == "ranking_applications":
+            assert self.tournament_ranking_authority_fingerprint is not None
+            return self.tournament_ranking_authority_fingerprint
+        assert self.finals_participant_selection_fingerprint is not None
+        return self.finals_participant_selection_fingerprint
 
     @property
     def active_main_entrant_count(self) -> int:
@@ -182,6 +304,8 @@ class TournamentEntryField(FrozenInput):
     def main_diagnostics(self) -> tuple[TournamentBracketDiagnostic, ...]:
         """Derived Admin warnings for the *current* field, never persisted."""
 
+        if self.capacity.geometry_kind != "classic_bracket":
+            return ()
         entrant_count = self.active_main_entrant_count
         if entrant_count < 2:
             # The bracket itself cannot execute below two entrants. Keep inspection
@@ -246,6 +370,48 @@ class TournamentEntryFieldResolver:
             below_qualification_cut_player_ids=tuple(
                 app.player_id for app in below_qualification_cut
             ),
+        )
+
+    @classmethod
+    def build_from_finals_participant_selection(
+        cls,
+        *,
+        selection,
+    ) -> TournamentEntryField:
+        """Materialize the frozen Finals selected field without inventing applications.
+
+        Participant order is already authoritative Race order from the Finals selection
+        snapshot. This adapter deliberately does not consult Official Ranking and does not
+        choose a tournament format; it only feeds the selected identities/order into the
+        shared Tournament Preparation Entry Field boundary.
+        """
+
+        player_ids = tuple(player.player_id for player in selection.participants)
+        if len(player_ids) != selection.participant_capacity:
+            raise ValueError(
+                "Finals participant selection does not exactly fill configured capacity"
+            )
+        if tuple(player.seed for player in selection.participants) != tuple(
+            range(1, len(selection.participants) + 1)
+        ):
+            raise ValueError("Finals participant selection seed order is not canonical")
+        return TournamentEntryField(
+            schema_version="tournament_entry_field.v2",
+            run_id=selection.run_id,
+            branch_id=selection.branch_id,
+            event_id=selection.finals_event_id,
+            mode="initial",
+            capacity=TournamentEntryFieldCapacity(
+                geometry_kind="fixed_participant_field",
+                main_draw_size=selection.participant_capacity,
+            ),
+            source_kind="finals_participant_selection",
+            finals_participant_selection_fingerprint=selection.fingerprint,
+            finals_race_snapshot_fingerprint=selection.race_snapshot_fingerprint,
+            finals_target_season_index=selection.target_season_index,
+            seed_order_player_ids=player_ids,
+            applications_fingerprint=_fingerprint([]),
+            direct_main_player_ids=player_ids,
         )
 
     @classmethod

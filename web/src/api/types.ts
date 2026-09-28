@@ -1163,6 +1163,7 @@ export type AdoptTournamentRankingSnapshotPayload = {
 }
 
 export type TournamentEntryFieldCapacity = {
+  geometry_kind?: 'classic_bracket' | 'fixed_participant_field'
   main_draw_size: number
   qualification_draw_size: number
   qualifier_spots: number
@@ -1175,15 +1176,25 @@ export type CreateTournamentEntryFieldPayload = {
   capacity: TournamentEntryFieldCapacity
 }
 
+export type CreateFinalsTournamentEntryFieldPayload = {
+  command_id: string
+  target_season_index: number
+}
+
 export type TournamentEntryField = {
-  schema_version: 'tournament_entry_field.v1'
+  schema_version: 'tournament_entry_field.v1' | 'tournament_entry_field.v2'
   run_id: string
   branch_id: string
   event_id: string
   mode: 'initial' | 'pre_draw_repair'
   capacity: TournamentEntryFieldCapacity
-  tournament_ranking_authority_fingerprint: string
-  ranking_snapshot_fingerprint: string
+  source_kind?: 'ranking_applications' | 'finals_participant_selection'
+  tournament_ranking_authority_fingerprint: string | null
+  ranking_snapshot_fingerprint: string | null
+  finals_participant_selection_fingerprint?: string | null
+  finals_race_snapshot_fingerprint?: string | null
+  finals_target_season_index?: number | null
+  seed_order_player_ids?: string[]
   applications_fingerprint: string
   direct_main_player_ids: string[]
   qualification_player_ids: string[]
@@ -1215,11 +1226,16 @@ export type CanonicalTournamentPreparationState = {
   valid_submission_count?: number
   valid_main_submission_count?: number
   valid_qualification_submission_count?: number
+  entry_source_kind?: 'ranking_applications' | 'finals_participant_selection' | null
+  entry_source_authority_fingerprint?: string | null
+  entry_source_target_season_index?: number | null
+  entry_seed_order_player_ids?: string[]
   phase:
     | 'ranking_snapshot_required'
     | 'entry_field_required'
     | 'wild_card_review_required'
     | 'draw_input_ready'
+    | 'tournament_format_required'
     | 'draw_generation_ready'
     | 'draw_ready'
   next_required_action:
@@ -1227,6 +1243,7 @@ export type CanonicalTournamentPreparationState = {
     | 'build_entry_field'
     | 'review_wild_cards'
     | 'review_pre_draw_or_commit_draw_input'
+    | 'configure_tournament_format'
     | 'generate_draw'
     | 'none'
   blockers: string[]

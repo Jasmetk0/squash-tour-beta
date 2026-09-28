@@ -117,7 +117,12 @@ class WorldTourFinalsRaceSnapshot(FrozenInput):
                 if result.first_publication_week.ordinal > self.cutoff_week.ordinal:
                     raise ValueError("Race row counts a result after the cutoff publication")
 
-        ordered = tuple(sorted(self.rows, key=_row_sort_key))
+        ordered = tuple(
+            sorted(
+                self.rows,
+                key=lambda row: _row_sort_key(row, self.best_result_count),
+            )
+        )
         if ordered != self.rows:
             raise ValueError("Race standings are not in canonical order")
         return self
@@ -127,8 +132,13 @@ class WorldTourFinalsRaceSnapshot(FrozenInput):
         return _hash(self.model_dump(mode="json"))
 
 
-def _row_sort_key(row: WorldTourFinalsRaceRow) -> tuple:
-    profile = tuple(-item.points for item in row.counted_results)
+def _row_sort_key(
+    row: WorldTourFinalsRaceRow, best_result_count: int
+) -> tuple:
+    points = tuple(item.points for item in row.counted_results)
+    profile = tuple(-value for value in points) + (0,) * (
+        best_result_count - len(points)
+    )
     return (-row.race_points, profile, row.tie_break_token, row.player_id)
 
 
@@ -203,7 +213,9 @@ def calculate_world_tour_finals_race(
             )
         )
 
-    ordered = sorted(rows, key=_row_sort_key)
+    ordered = sorted(
+        rows, key=lambda row: _row_sort_key(row, best_result_count)
+    )
     ranked = tuple(
         row.model_copy(update={"rank": index})
         for index, row in enumerate(ordered, start=1)

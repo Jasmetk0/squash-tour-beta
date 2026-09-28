@@ -10011,6 +10011,7 @@ class AuthoritativeRunSimulationDriver:
             )
         packages = self._packages(
             week,
+            required=False,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
@@ -10057,6 +10058,26 @@ class AuthoritativeRunSimulationDriver:
                     match.round_number,
                     match.bracket_position,
                 )
+
+        for event, group_schedule in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for match in group_schedule.matches:
+                if match.match_id not in plans:
+                    continue
+                if match.match_id in match_meta:
+                    raise ValueError(
+                        "Match Day schedule contains duplicate canonical match identity"
+                    )
+                match_meta[match.match_id] = (
+                    event.event_id,
+                    "group",
+                    match.match_day_ordinal,
+                    match.match_order,
+                )
         if set(match_meta) != set(plans):
             missing = sorted(set(plans) - set(match_meta))
             raise ValueError(
@@ -10070,7 +10091,7 @@ class AuthoritativeRunSimulationDriver:
             qualification_rounds = qualification_rounds_by_event.get(event_id, 0)
             day_by_group[group_id] = (
                 round_number
-                if draw_phase == "qualification"
+                if draw_phase in {"qualification", "group"}
                 else qualification_rounds + round_number
             )
 

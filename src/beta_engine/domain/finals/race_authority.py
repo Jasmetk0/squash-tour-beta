@@ -191,7 +191,7 @@ def build_finals_race_snapshot(
     calendar_content_fingerprint: str,
     cutoff_transition_fingerprint: str,
 ) -> FinalsRaceSnapshot:
-    """Build Master-v67 Race standings from already frozen canonical evidence.
+    """Build current Master v68 Race standings from already frozen canonical evidence.
 
     Ranking order is exactly:
     1) sum of the configured best N results;

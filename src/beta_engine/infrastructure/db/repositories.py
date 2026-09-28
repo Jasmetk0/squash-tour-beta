@@ -4182,6 +4182,23 @@ class SimulationPersistenceRepository:
                         "generated restore identity is already in use"
                     )
 
+                # Package state is foundational evidence for ranking-owned
+                # authorities such as the World Tour Finals Race Calendar boundary.
+                # Restore it first inside the same atomic writer transaction.
+                if (
+                    RUN_PACKAGE_COMPONENT_KEY in current_content
+                    or RUN_PACKAGE_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_run_package_state(
+                            session, current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload, run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore Run Package state: {exc}"
+                        ) from exc
                 if (
                     RANKING_COMPONENT_KEY in current_content
                     or RANKING_COMPONENT_KEY in target_content
@@ -4214,20 +4231,6 @@ class SimulationPersistenceRepository:
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore initial world: {exc}"
-                        ) from exc
-                if (
-                    RUN_PACKAGE_COMPONENT_KEY in current_content
-                    or RUN_PACKAGE_COMPONENT_KEY in target_content
-                ):
-                    try:
-                        restore_saved_run_package_state(
-                            session, current_payload=state.saved_revision.payload,
-                            target_payload=target_revision.payload, run_id=run_id,
-                            branch_id=branch_id,
-                        )
-                    except ValueError as exc:
-                        raise SavedRevisionRestoreUnsupportedError(
-                            f"Cannot restore Run Package state: {exc}"
                         ) from exc
                 if (
                     PLAYER_LIFECYCLE_COMPONENT_KEY in current_content

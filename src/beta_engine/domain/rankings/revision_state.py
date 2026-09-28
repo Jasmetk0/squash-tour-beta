@@ -22,6 +22,7 @@ from beta_engine.domain.rankings.transition_authority import RankingTransitionAu
 from beta_engine.domain.tournaments.ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthority,
 )
+from beta_engine.domain.finals.race import WorldTourFinalsRaceSnapshot
 
 
 class RankingRevisionReceipt(FrozenInput):
@@ -52,6 +53,7 @@ class RankingRevisionState(FrozenInput):
         "ranking_revision_state.v5",
         "ranking_revision_state.v6",
         "ranking_revision_state.v7",
+        "ranking_revision_state.v8",
     ] = "ranking_revision_state.v4"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -64,6 +66,7 @@ class RankingRevisionState(FrozenInput):
         TournamentRankingSnapshotAuthority, ...
     ] = ()
     season_closing_rankings: tuple[SeasonClosingRankingSnapshot, ...] = ()
+    world_tour_finals_race_snapshots: tuple[WorldTourFinalsRaceSnapshot, ...] = ()
     authoritative_transition_state: dict | None = None
 
     @model_serializer(mode="wrap")
@@ -79,6 +82,8 @@ class RankingRevisionState(FrozenInput):
             data.pop("tournament_ranking_snapshot_authorities", None)
         if not self.season_closing_rankings:
             data.pop("season_closing_rankings", None)
+        if not self.world_tour_finals_race_snapshots:
+            data.pop("world_tour_finals_race_snapshots", None)
         if self.authoritative_transition_state is None:
             data.pop("authoritative_transition_state", None)
         return data
@@ -101,6 +106,7 @@ class RankingRevisionState(FrozenInput):
                 "ranking_revision_state.v5",
                 "ranking_revision_state.v6",
                 "ranking_revision_state.v7",
+                "ranking_revision_state.v8",
             }
             and self.tournament_ranking_snapshot_authorities
         ):
@@ -111,11 +117,19 @@ class RankingRevisionState(FrozenInput):
             self.schema_version not in {
                 "ranking_revision_state.v6",
                 "ranking_revision_state.v7",
+                "ranking_revision_state.v8",
             }
             and self.season_closing_rankings
         ):
             raise ValueError(
                 "Legacy ranking revision state cannot contain Season Closing Rankings"
+            )
+        if (
+            self.schema_version != "ranking_revision_state.v8"
+            and self.world_tour_finals_race_snapshots
+        ):
+            raise ValueError(
+                "Legacy ranking revision state cannot contain World Tour Finals Race snapshots"
             )
         if self.authoritative_transition_state is not None:
             state = self.authoritative_transition_state
@@ -171,7 +185,10 @@ class RankingRevisionState(FrozenInput):
                 raise ValueError(
                     "Season Transition World Event cannot reuse a Week Transition receipt"
                 )
-            if season_events and self.schema_version != "ranking_revision_state.v7":
+            if season_events and self.schema_version not in {
+                "ranking_revision_state.v7",
+                "ranking_revision_state.v8",
+            }:
                 raise ValueError(
                     "Legacy ranking revision state cannot contain Season Transition World Events"
                 )
@@ -343,6 +360,43 @@ class RankingRevisionState(FrozenInput):
             elif version.previous_fingerprint is not None:
                 raise ValueError("Ranking zero source predecessor is missing")
             latest_zeros[version.zero.zero_id] = version
+        race_seasons = [
+            snapshot.season_index
+            for snapshot in self.world_tour_finals_race_snapshots
+        ]
+        if race_seasons != sorted(set(race_seasons)):
+            raise ValueError("World Tour Finals Race snapshot order or uniqueness is invalid")
+        owned_by_event = {
+            source.binding.event_id: source
+            for source in self.tournament_sources
+        }
+        if len(owned_by_event) != len(self.tournament_sources):
+            raise ValueError("Owned tournament event identity is ambiguous")
+        publications_by_ordinal = {}
+        if self.authoritative_transition_state is not None:
+            publications_by_ordinal = {
+                row["week_ordinal"]: row
+                for row in self.authoritative_transition_state["publications"]
+            }
+        for race in self.world_tour_finals_race_snapshots:
+            if (race.run_id, race.branch_id) != (self.run_id, self.branch_id):
+                raise ValueError("World Tour Finals Race snapshot scope mismatch")
+            publication = publications_by_ordinal.get(race.cutoff_week.ordinal)
+            if (
+                publication is None
+                or publication["snapshot_fingerprint"]
+                != race.cutoff_ranking_fingerprint
+            ):
+                raise ValueError(
+                    "World Tour Finals Race cutoff publication is missing from ranking revision state"
+                )
+            for event_id, fingerprint in race.source_tournament_fingerprints:
+                source = owned_by_event.get(event_id)
+                if source is None or source.fingerprint != fingerprint:
+                    raise ValueError(
+                        "World Tour Finals Race source is missing from ranking revision state"
+                    )
+
         previous = None
         command_ids = set()
         for entry in self.entries:
@@ -394,7 +448,8 @@ def ranking_revision_states_equivalent(
     """Compare authoritative content without rewriting historical wire identity.
 
     V1-v4 predate Tournament Ranking Snapshot authority, v6 adds archived Season
-    Closing Rankings and v7 adds ordinary Season Transition World Events. Equivalent
+    Closing Rankings, v7 adds ordinary Season Transition World Events and v8 adds
+    canonical World Tour Finals Race snapshots. Equivalent
     historical states normalize only to the newest schema required by their actual
     content so recovery evidence cannot be silently erased.
     """
@@ -409,18 +464,25 @@ def ranking_revision_states_equivalent(
         )
 
     normalized_version = (
-        "ranking_revision_state.v7"
-        if has_season_transition_event(left) or has_season_transition_event(right)
+        "ranking_revision_state.v8"
+        if (
+            left.world_tour_finals_race_snapshots
+            or right.world_tour_finals_race_snapshots
+        )
         else (
-            "ranking_revision_state.v6"
-            if left.season_closing_rankings or right.season_closing_rankings
+            "ranking_revision_state.v7"
+            if has_season_transition_event(left) or has_season_transition_event(right)
             else (
-                "ranking_revision_state.v5"
-                if (
-                    left.tournament_ranking_snapshot_authorities
-                    or right.tournament_ranking_snapshot_authorities
+                "ranking_revision_state.v6"
+                if left.season_closing_rankings or right.season_closing_rankings
+                else (
+                    "ranking_revision_state.v5"
+                    if (
+                        left.tournament_ranking_snapshot_authorities
+                        or right.tournament_ranking_snapshot_authorities
+                    )
+                    else "ranking_revision_state.v4"
                 )
-                else "ranking_revision_state.v4"
             )
         )
     )

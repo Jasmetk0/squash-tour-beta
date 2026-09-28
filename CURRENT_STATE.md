@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Active implementation — canonical World Tour Finals Race authority foundation
+
+Master v67 now has a first Run/Branch-owned Race authority foundation without changing the
+legacy Finals consumer yet.
+
+- `FinalsRaceConfiguration` freezes one season's Best-N rule, eligible category selectors,
+  exact published Official Ranking cutoff fingerprint, exact Ranking Transition fingerprint
+  and frozen Run-owned Calendar content fingerprint;
+- `FinalsRaceTournamentSource` accepts only canonical Run/Branch tournament point-award
+  evidence and carries exact source/award fingerprints;
+- Race ordering is exactly Master v67: Best-N total, then highest individual result,
+  second-highest and onward, then the already-frozen canonical player tie-break token;
+- no previous-season order or Official Ranking position is used as a Race tie-break;
+- the immutable snapshot freezes the exact eligible event/source set and includes zero-point
+  cutoff-roster players rather than inventing a separate player universe;
+- DB persistence is one immutable configuration and one immutable snapshot per Run/Branch/Season,
+  with idempotent exact retries and fail-closed conflicts;
+- the existing legacy `SeasonState.race_snapshot` / Finals simulation path is intentionally
+  untouched in this slice.
+
+**Next after this PR:** add the explicit Admin command/service boundary that resolves the
+configuration only from validated published Official Ranking + Ranking Transition + Run-owned
+Calendar evidence, then build/persist the snapshot from OwnedTournamentRankingSource history.
+Only after that should Package-backed Finals qualification stop reading legacy RaceSnapshot.
+
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 
 The current Admin surface already has canonical authoritative Next Match / Next Round /
@@ -17,9 +42,10 @@ strictly historical compatibility for those actions.
 - canonical authoritative simulation remains the only new sporting execution path for
   Package-backed Branches.
 
-**Next after this PR:** remove or disable the corresponding current Admin compatibility
-controls for Package-backed Branches, while keeping historical/non-Package tooling where
-it is still intentionally supported.
+**Admin alignment completed in #1029:** Package-backed Branches now hide/block those five
+legacy non-Finals controls in current Admin UI, fail closed while Package ownership is
+unknown, and route to branch-safe canonical Simulation. Historical non-Package controls and
+World Tour Finals compatibility remain available.
 
 ## Active implementation — Package fence for legacy Entry/WC/pre-draw sidecars
 

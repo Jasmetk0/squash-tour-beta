@@ -10992,6 +10992,15 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=branch_id,
             )
         )
+        group_schedule_entries = self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        group_schedule_event_ids = tuple(
+            event.event_id for event, _ in group_schedule_entries
+        )
         schedule = self._schedule(session, run_id, branch_id, week)
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
@@ -11042,10 +11051,11 @@ class AuthoritativeRunSimulationDriver:
         )
         if (
             schedule is None
-            and packages
+            and (packages or group_schedule_entries)
             and not entry_slot_ordinals
             and (
-                bool(wc_slot_ordinals)
+                bool(group_schedule_entries)
+                or bool(wc_slot_ordinals)
                 or len(packages) > 1
                 or len(
                     self._topology_for_session(
@@ -11088,12 +11098,8 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
-        plans = (
-            self._topology_for_session(
-                session, run_id, branch_id, packages, week=week
-            )
-            if packages
-            else {}
+        plans = self._topology_for_session(
+            session, run_id, branch_id, packages, week=week
         )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
@@ -11182,6 +11188,7 @@ class AuthoritativeRunSimulationDriver:
             )
             if (
                 not packages
+                and not group_schedule_entries
                 and schedule is None
                 and not slots
                 and not groups
@@ -11198,7 +11205,8 @@ class AuthoritativeRunSimulationDriver:
         elif current_lock_conflicts and week_tournament_lock is not None:
             blockers.append("week_tournament_lock_conflict_after_lock")
         if explicit_empty_context is None and schedule is None and (
-            bool(entry_slot_ordinals)
+            bool(group_schedule_entries)
+            or bool(entry_slot_ordinals)
             or bool(wc_slot_ordinals)
             or len(packages) > 1
             or len(plans) != 3
@@ -11217,6 +11225,8 @@ class AuthoritativeRunSimulationDriver:
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
+        elif group_schedule_entries:
+            blockers.append("group_standings_authority_required")
         if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
         if terminal is None and explicit_empty_context is None:
@@ -11284,7 +11294,13 @@ class AuthoritativeRunSimulationDriver:
             "current_slot_ordinal": (
                 pending_entry_ordinal if entry_is_current else target_match_ordinal
             ),
-            "proposed_schedule_requirement": [p.event_id for p in packages],
+            "proposed_schedule_requirement": sorted(
+                {p.event_id for p in packages} | set(group_schedule_event_ids)
+            ),
+            "group_match_schedules": [
+                (event.event_id, authority.fingerprint)
+                for event, authority in group_schedule_entries
+            ],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
                 for s in slots

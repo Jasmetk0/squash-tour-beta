@@ -268,3 +268,96 @@ def test_v6_event_snapshot_corruption_fails_authority_replay(monkeypatch):
             week=week,
             row=row,
         )
+
+
+class _FakeGroupScheduleStore:
+    authority = None
+
+    def __init__(self, session):
+        self.session = session
+
+    def get(self, **kwargs):
+        return self.authority
+
+
+@pytest.mark.pr_critical
+def test_v7_group_schedule_adoption_replays_without_matchpackage(monkeypatch):
+    group_fp = "7" * 64
+    _FakeGroupScheduleStore.authority = SimpleNamespace(fingerprint=group_fp)
+    monkeypatch.setattr(
+        driver_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        _FakeGroupScheduleStore,
+    )
+    driver = AuthoritativeRunSimulationDriver(None, None, None)
+    week = RankingWeek(season_index=0, week=1)
+    evidence = (
+        _AdoptedTournamentEvidence(
+            event_id="event",
+            calendar_event=_event(),
+            point_award_authority=_points(),
+            group_match_schedule_fingerprint=group_fp,
+        ),
+    )
+
+    payload_json = driver._encode_adopted_authority(evidence)
+    payload = json.loads(payload_json)
+    assert payload["schema_version"] == "adopted_tournament_authority.v7"
+    assert "package" not in payload["tournaments"][0]
+    assert "draw_authority_fingerprint" not in payload["tournaments"][0]
+    assert payload["tournaments"][0]["group_match_schedule_fingerprint"] == group_fp
+
+    authority_fp = driver._tournament_authority_fingerprint(
+        "run", "branch", week, evidence
+    )
+    row = SimpleNamespace(
+        package_json=payload_json,
+        authority_fingerprint=authority_fp,
+    )
+    packages, replay_fp = driver._replay_adopted_authority(
+        _FakeSession(row),
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        row=row,
+    )
+
+    assert packages == ()
+    assert replay_fp == authority_fp
+    assert driver._decode_adopted_authority(payload_json) == evidence
+
+
+@pytest.mark.pr_critical
+def test_v7_group_schedule_replay_rejects_changed_schedule(monkeypatch):
+    group_fp = "7" * 64
+    _FakeGroupScheduleStore.authority = SimpleNamespace(fingerprint="8" * 64)
+    monkeypatch.setattr(
+        driver_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        _FakeGroupScheduleStore,
+    )
+    driver = AuthoritativeRunSimulationDriver(None, None, None)
+    week = RankingWeek(season_index=0, week=1)
+    evidence = (
+        _AdoptedTournamentEvidence(
+            event_id="event",
+            calendar_event=_event(),
+            point_award_authority=_points(),
+            group_match_schedule_fingerprint=group_fp,
+        ),
+    )
+    row = SimpleNamespace(
+        package_json=driver._encode_adopted_authority(evidence),
+        authority_fingerprint=driver._tournament_authority_fingerprint(
+            "run", "branch", week, evidence
+        ),
+    )
+
+    with pytest.raises(ValueError, match="Group Match Schedule binding changed"):
+        driver._replay_adopted_authority(
+            _FakeSession(row),
+            run_id="run",
+            branch_id="branch",
+            week=week,
+            row=row,
+        )

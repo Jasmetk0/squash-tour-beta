@@ -1,5 +1,30 @@
 # Current implementation and next action
 
+## Active implementation — canonical World Tour Finals Race calculation foundation
+
+Master v67's World Tour Finals Race ordering now has an independent immutable domain
+contract instead of inheriting the legacy `RankingRaceEngine` race ordering.
+
+- the kernel consumes only already-selected Run/Branch-owned eligible result evidence;
+- tournament/category eligibility remains an upstream frozen configuration decision and
+  is bound by an explicit eligibility fingerprint rather than guessed here;
+- the selected published Official Ranking cutoff is bound by week + publication fingerprint;
+- configured Best-N is applied per player;
+- ties use total Race points, then the complete descending individual-result point
+  profile, then the stored deterministic tie-break token;
+- previous Official Ranking order and player-id ordering are never sporting tie-breakers;
+- zero-point players remain rankable when supplied by the frozen player input;
+- the calculation input and output are independently fingerprinted and reject wrong
+  Run/Branch, wrong-season and post-cutoff evidence.
+
+This slice deliberately does not invent a seasonal Finals configuration store, does not
+persist a Race snapshot, and does not rewire legacy Finals/Viewer readers yet.
+
+**Next after this PR:** identify or implement the Master-backed seasonal Finals
+configuration authority that freezes eligible tournament scope, Best-N and cutoff
+publication selection; only then persist this snapshot and replace legacy Finals Race
+inputs.
+
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 
 The current Admin surface already has canonical authoritative Next Match / Next Round /

@@ -98,8 +98,13 @@
     simulation already owns Match/Round/Tournament/Week/Full Simulation for Package-backed Runs.
 31. ✅ Reject new legacy branch Match/Round/Week/Tournament/Full-Season commands for Package-backed
     Branches while preserving historical non-Package compatibility and completed journal replay.
-32. Next: remove or disable the corresponding current Admin compatibility controls when the
-    selected Branch is Package-backed; do not touch separate Finals mechanics.
+32. ✅ Remove/disable current Admin non-Finals compatibility controls for Package-backed
+    Branches while preserving historical non-Package tools and separate Finals behavior.
+33. ✅ Add a canonical World Tour Finals Race calculation contract implementing Master v67
+    Best-N + result-profile + stored-token ordering over explicitly frozen eligible evidence.
+34. Next: establish the seasonal Finals configuration authority (eligible tournament scope,
+    Best-N and selected published-ranking cutoff), then persist the canonical Race snapshot;
+    do not wire Viewer or Finals execution to an unfrozen/ad-hoc configuration.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

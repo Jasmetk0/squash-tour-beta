@@ -1,5 +1,21 @@
 # Current implementation and next action
 
+## Active implementation — Package fence for legacy Entry/WC/pre-draw sidecars
+
+The legacy Branch simulation wrapper remains available as compatibility, but Package-backed
+Run/Branches no longer inject repository sidecar history into its sporting orchestrator.
+
+- Package ownership is detected from canonical RunPackageState for the exact Product Run/Branch;
+- when Package-backed, legacy wildcard assignment, pre-draw withdrawal replacement and late
+  replacement sidecars are not read and empty compatibility inputs are supplied;
+- historical Branches with no Package state retain the previous sidecar reads unchanged;
+- direct legacy simulation-run calls retain historical compatibility because they do not carry
+  Product Run/Branch Package ownership context;
+- canonical WC/RWC, Entry Field, Draw and Draw Revision authorities remain untouched.
+
+**Next after this PR:** audit the remaining current legacy branch-wrapper sporting inputs beyond
+Entry/WC/pre-draw sidecars and fence only those that can still override Package-owned truth.
+
 ## Active implementation — canonical valid-submission readiness
 
 Tournament Preparation now exposes the already-persisted valid application evidence that

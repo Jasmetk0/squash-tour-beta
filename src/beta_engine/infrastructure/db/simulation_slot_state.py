@@ -2422,6 +2422,55 @@ def restore_saved_simulation_slots(
         store = TournamentEntryFieldStore(session)
         for event_id in sorted({row.event_id for row in live_entry_fields}):
             store.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_group_rules_policies = session.scalars(
+        select(TournamentGroupRulesPolicyModel)
+        .where(
+            TournamentGroupRulesPolicyModel.run_id == run_id,
+            TournamentGroupRulesPolicyModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupRulesPolicyModel.effective_from_season_index)
+    ).all()
+    if live_group_rules_policies:
+        from beta_engine.infrastructure.db.tournament_group_rules_policy import (
+            TournamentGroupRulesPolicyStore,
+        )
+
+        TournamentGroupRulesPolicyStore(session).list_versions(
+            run_id=run_id,
+            branch_id=branch_id,
+        )
+    live_format_authorities = session.scalars(
+        select(TournamentFormatAuthorityModel)
+        .where(
+            TournamentFormatAuthorityModel.run_id == run_id,
+            TournamentFormatAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentFormatAuthorityModel.event_id)
+    ).all()
+    if live_format_authorities:
+        from beta_engine.infrastructure.db.tournament_format_authority import (
+            TournamentFormatAuthorityStore,
+        )
+
+        format_store = TournamentFormatAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_format_authorities}):
+            format_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_topology_authorities = session.scalars(
+        select(TournamentTopologyAuthorityModel)
+        .where(
+            TournamentTopologyAuthorityModel.run_id == run_id,
+            TournamentTopologyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentTopologyAuthorityModel.event_id)
+    ).all()
+    if live_topology_authorities:
+        from beta_engine.infrastructure.db.tournament_topology_authority import (
+            TournamentTopologyAuthorityStore,
+        )
+
+        topology_store = TournamentTopologyAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_topology_authorities}):
+            topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2558,6 +2607,21 @@ def restore_saved_simulation_slots(
                 bool(live_entry_fields)
                 or bool(expected is not None and "entry_fields" in expected)
             ),
+            group_rules_policies=live_group_rules_policies,
+            include_group_rules_policies=(
+                bool(live_group_rules_policies)
+                or bool(expected is not None and "group_rules_policies" in expected)
+            ),
+            format_authorities=live_format_authorities,
+            include_format_authorities=(
+                bool(live_format_authorities)
+                or bool(expected is not None and "format_authorities" in expected)
+            ),
+            topology_authorities=live_topology_authorities,
+            include_topology_authorities=(
+                bool(live_topology_authorities)
+                or bool(expected is not None and "topology_authorities" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -2595,6 +2659,9 @@ def restore_saved_simulation_slots(
         or live_finals_participant_snapshots
         or live_week_tournament_locks
         or live_entry_fields
+        or live_group_rules_policies
+        or live_format_authorities
+        or live_topology_authorities
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities

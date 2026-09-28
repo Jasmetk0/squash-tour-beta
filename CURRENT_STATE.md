@@ -12,9 +12,15 @@ feeds initial Entry Field construction.
   automatic Entry Field mutation is introduced;
 - the existing `from-valid-submissions` command remains the sole field-construction mutation.
 
-**Next after this PR:** audit whether the preparation page can link directly to the existing
-Entry validation/review workflow when valid submissions are absent, without duplicating the
-Simulation Slot authority or inventing application eligibility policy.
+**Branch-safe zero-submission handoff implemented:** Planned Event now links a zero-valid-submission
+state to the existing authoritative Simulation / Entry-validation surface with an explicit
+`?branch=<activeBranchId>` target. Run Simulation resolves that Branch through the existing
+AdminBranchContext before exposing execution controls and fails closed when the requested Branch
+is not part of the Product Run. The handoff does not create applications, validation results,
+Simulation Slots or Entry Field state.
+
+**Next after this PR:** continue the canonical pre-alpha ownership audit from ROADMAP rather than
+adding another preparation shortcut.
 
 ## Active implementation — published Official Ranking selection for tournament authority
 

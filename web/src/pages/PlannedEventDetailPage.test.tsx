@@ -1055,4 +1055,21 @@ describe('PlannedEventDetailPage', () => {
     ))
   })
 
+  it('links zero valid submissions to authoritative Simulation on the exact active Branch', async () => {
+    adminTime.viewed.mockImplementation(presentBranchView)
+    api.getCanonicalTournamentPreparation.mockResolvedValueOnce({
+      schema_version: 'canonical_tournament_preparation_state.v1',
+      run_id: 'run-a', branch_id: 'branch-a', event_id: 'E1',
+      phase: 'entry_field_required', next_required_action: 'build_entry_field',
+      blockers: ['tournament_entry_field_required'],
+      valid_submission_count: 0, valid_main_submission_count: 0, valid_qualification_submission_count: 0,
+      entry_capacity_suggestion: null,
+      ready_for_match_schedule: false, effective_draw_fingerprint: null,
+      authority_source: 'run_owned_db_authorities.v1'
+    })
+    renderAt('/runs/run-a/calendar/E1')
+    const link = await screen.findByRole('link', { name: /Open this Branch in authoritative Simulation/i })
+    expect(link).toHaveAttribute('href', '/admin/runs/run-a/simulate?branch=branch-a')
+  })
+
 })

@@ -17,16 +17,31 @@ const branch = (id: string, head: string, readOnly = false) => ({ branch_id: id,
 const state = (id: string, head: string) => ({ branch_id: id, run_id: 'run-a', head_checkpoint_id: head, current_season: id === 'branch-a' ? 2004 : 2005, current_week: id === 'branch-a' ? 17 : 18, current_event_id: `event-${id}`, current_event_sequence: 2, state_schema_version: '1', status: 'active', metadata_json: {} })
 const checkpoint = (id: string, branchId: string) => ({ checkpoint_id: id, run_id: 'run-a', branch_id: branchId, kind: 'initial' })
 const response = (branchId = 'branch-a', previous = 'cp-a') => ({ product_run_id: 'run-a', branch_id: branchId, legacy_simulation_run_id: `legacy-${branchId}`, previous_head_checkpoint_id: previous, new_head_checkpoint_id: `${previous}-next`, official_branch_changed: false, simulation_result: { mode: 'simulate_next_match' } })
-function select(id: string, head: string, viewerBranchId = 'branch-a', readOnly = false) { context.value = { selectedBranchId: id, selectedBranch: branch(id, head, readOnly), viewerBranchId, branches: [branch('branch-a', 'cp-a'), branch('branch-b', 'cp-b')], runId: 'run-a' } }
-function renderHarness() {
+function select(id: string, head: string, viewerBranchId = 'branch-a', readOnly = false) { context.value = { selectedBranchId: id, selectedBranch: branch(id, head, readOnly), viewerBranchId, branches: [branch('branch-a', 'cp-a'), branch('branch-b', 'cp-b')], runId: 'run-a', isLoading: false, selectBranch: vi.fn((branchId: string) => { if (branchId === 'branch-a') select('branch-a', 'cp-a', viewerBranchId); if (branchId === 'branch-b') select('branch-b', 'cp-b', viewerBranchId) }) } }
+function renderHarness(initialEntry = '/admin/runs/run-a/simulate') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   function Harness() { const [, refresh] = useState(0); return <><button onClick={() => { select('branch-b', 'cp-b'); refresh(value => value + 1) }}>Switch to B</button><button onClick={() => { select('branch-a', 'cp-b'); client.setQueryData(adminBranchStateQueryKey('run-a', 'branch-a'), state('branch-a', 'cp-b')); refresh(value => value + 1) }}>Advance head</button><RunSimulationPage /></> }
-  return { client, ...render(<QueryClientProvider client={client}><MemoryRouter initialEntries={['/admin/runs/run-a/simulate']}><Routes><Route path="/admin/runs/:runId/simulate" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>) }
+  return { client, ...render(<QueryClientProvider client={client}><MemoryRouter initialEntries={[initialEntry]}><Routes><Route path="/admin/runs/:runId/simulate" element={<Harness />} /></Routes></MemoryRouter></QueryClientProvider>) }
 }
 async function submitNextMatch() { await userEvent.click(await screen.findByRole('button', { name: 'Next Match' })); const command = screen.getByLabelText('Simulation command ID').textContent; await userEvent.type(screen.getByLabelText('Simulation audit reason'), ' reviewed reason '); await userEvent.click(screen.getByLabelText('Confirm simulation')); await userEvent.click(screen.getByRole('button', { name: 'Confirm Simulate Next Match' })); return command }
 beforeEach(() => { vi.clearAllMocks(); context.time = { mode: 'present' }; select('branch-a', 'cp-a'); api.getRunContainer.mockResolvedValue({ run_id: 'run-a', display_name: 'Run A', status: 'active', read_only: false, storage_kind: 'custom_local' }); api.getBranchState.mockImplementation((id: string) => Promise.resolve(state(id, id === 'branch-a' ? context.value.selectedBranch.head_checkpoint_id : 'cp-b'))); api.getBranchCheckpoint.mockImplementation((id: string) => Promise.resolve(checkpoint(id, id === 'cp-a' ? 'branch-a' : id === 'cp-b' && context.value.selectedBranchId === 'branch-a' ? 'branch-a' : 'branch-b'))); api.simulateNextMatchOnBranch.mockResolvedValue(response()) })
 
 describe('RunSimulationPage', () => {
+  it('honors an explicit branch deep link before exposing simulation controls', async () => {
+    select('branch-a', 'cp-a')
+    const requestedSelection = context.value.selectBranch
+    renderHarness('/admin/runs/run-a/simulate?branch=branch-b')
+    await waitFor(() => expect(requestedSelection).toHaveBeenCalledWith('branch-b'))
+    expect(await screen.findByText('Branch B (branch-b)')).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Next Match' }))
+    expect(screen.getByText('Review Next Match')).toBeInTheDocument()
+    expect(screen.getByText('branch-b', { selector: 'dd' })).toBeInTheDocument()
+  })
+  it('fails closed for a branch deep link that is not part of the run', async () => {
+    renderHarness('/admin/runs/run-a/simulate?branch=missing-branch')
+    expect(await screen.findByText(/Requested Branch missing-branch does not exist/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Next Match' })).toBeDisabled()
+  })
   it('shows the coherent Active Admin Branch target', async () => { renderHarness(); expect(await screen.findByText('Run: Run A')).toBeInTheDocument(); expect(await screen.findByText('cp-a')).toBeInTheDocument(); for (const text of ['Branch A (branch-a)', '2004', 'W17', 'event-branch-a']) expect(screen.getByText(text)).toBeInTheDocument() })
   it('submits the exact reviewed Next Match snapshot', async () => { renderHarness(); const command = await submitNextMatch(); await waitFor(() => expect(api.simulateNextMatchOnBranch).toHaveBeenCalledWith('run-a', 'branch-a', { expected_head_checkpoint_id: 'cp-a', command_id: command, audit_reason: 'reviewed reason', explicit_confirmation: true })) })
   it('keeps a historical View checkpoint separate from the mutation target', async () => { context.time = { mode: 'checkpoint', viewSeason: 2003, viewWeek: 9, viewCheckpointId: 'cp-old' }; renderHarness(); const command = await submitNextMatch(); expect(screen.getByText(/Past · S2003 · W9 · cp-old/)).toBeInTheDocument(); await waitFor(() => expect(api.simulateNextMatchOnBranch).toHaveBeenCalledWith('run-a', 'branch-a', { expected_head_checkpoint_id: 'cp-a', command_id: command, audit_reason: 'reviewed reason', explicit_confirmation: true })); expect(api.simulateNextMatchOnBranch).not.toHaveBeenCalledWith('run-a', 'branch-a', expect.objectContaining({ expected_head_checkpoint_id: 'cp-old' })) })

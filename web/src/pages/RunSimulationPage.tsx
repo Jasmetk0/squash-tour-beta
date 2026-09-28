@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useRef, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { getBranchCheckpoint, getBranchState, getRunContainer } from '../api/client'
 import type { AdminBranchExecutionResponse, BranchState } from '../api/types'
@@ -17,8 +17,15 @@ type ExecutionSnapshot = Review & { auditReason: string; commandId: string; view
 
 export function RunSimulationPage(): JSX.Element {
   const { runId = '' } = useParams()
+  const [searchParams] = useSearchParams()
   const queryClient = useQueryClient()
-  const { selectedBranchId, selectedBranch, viewerBranchId } = useAdminBranch()
+  const { selectedBranchId, selectedBranch, viewerBranchId, branches, isLoading: branchesLoading, selectBranch } = useAdminBranch()
+  const requestedBranchId = searchParams.get('branch')?.trim() ?? ''
+  const requestedBranch = requestedBranchId ? branches.find(branch => branch.branch_id === requestedBranchId) ?? null : null
+  const requestedBranchInvalid = Boolean(requestedBranchId && !branchesLoading && !requestedBranch)
+  const requestedBranchPending = Boolean(requestedBranch && selectedBranchId !== requestedBranch.branch_id)
+  const executionBranchId = requestedBranchId ? (requestedBranchPending || requestedBranchInvalid ? null : selectedBranchId) : selectedBranchId
+  const executionBranch = executionBranchId ? selectedBranch : null
   const time = useAdminTime()
   const [review, setReview] = useState<Review | null>(null)
   const [reason, setReason] = useState('')
@@ -26,20 +33,24 @@ export function RunSimulationPage(): JSX.Element {
   const [confirmed, setConfirmed] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [result, setResult] = useState<AdminBranchExecutionResponse | null>(null)
-  const currentContextRef = useRef({ runId, branchId: selectedBranchId })
-  currentContextRef.current = { runId, branchId: selectedBranchId }
+  const currentContextRef = useRef({ runId, branchId: executionBranchId })
+  currentContextRef.current = { runId, branchId: executionBranchId }
+
+  useEffect(() => {
+    if (requestedBranch && selectedBranchId !== requestedBranch.branch_id) selectBranch(requestedBranch.branch_id)
+  }, [requestedBranch, selectedBranchId, selectBranch])
 
   const runQuery = useQuery({ queryKey: ['admin-run-container', runId], queryFn: () => getRunContainer(runId), enabled: Boolean(runId), retry: false })
-  const stateQuery = useQuery({ queryKey: adminBranchStateQueryKey(runId, selectedBranchId), queryFn: () => getBranchState(selectedBranchId!), enabled: Boolean(runId && selectedBranchId), retry: false })
-  const state = stateQuery.data?.run_id === runId && stateQuery.data.branch_id === selectedBranchId ? stateQuery.data : undefined
-  const headId = selectedBranch?.head_checkpoint_id && state?.head_checkpoint_id === selectedBranch.head_checkpoint_id ? selectedBranch.head_checkpoint_id : null
-  const checkpointQuery = useQuery({ queryKey: adminBranchHeadQueryKey(runId, selectedBranchId, headId), queryFn: () => getBranchCheckpoint(headId!), enabled: Boolean(headId), retry: false })
-  const checkpoint = checkpointQuery.data?.checkpoint_id === headId && checkpointQuery.data.run_id === runId && checkpointQuery.data.branch_id === selectedBranchId ? checkpointQuery.data : undefined
-  const eligibility = selectedBranch ? simulationEligibility(runQuery.data, selectedBranch, state, checkpoint ? [checkpoint] : []) : 'Select an Active Admin Branch in the header.'
+  const stateQuery = useQuery({ queryKey: adminBranchStateQueryKey(runId, executionBranchId), queryFn: () => getBranchState(executionBranchId!), enabled: Boolean(runId && executionBranchId), retry: false })
+  const state = stateQuery.data?.run_id === runId && stateQuery.data.branch_id === executionBranchId ? stateQuery.data : undefined
+  const headId = executionBranch?.head_checkpoint_id && state?.head_checkpoint_id === executionBranch.head_checkpoint_id ? executionBranch.head_checkpoint_id : null
+  const checkpointQuery = useQuery({ queryKey: adminBranchHeadQueryKey(runId, executionBranchId, headId), queryFn: () => getBranchCheckpoint(headId!), enabled: Boolean(headId), retry: false })
+  const checkpoint = checkpointQuery.data?.checkpoint_id === headId && checkpointQuery.data.run_id === runId && checkpointQuery.data.branch_id === executionBranchId ? checkpointQuery.data : undefined
+  const eligibility = executionBranch ? simulationEligibility(runQuery.data, executionBranch, state, checkpoint ? [checkpoint] : []) : requestedBranchInvalid ? 'Requested Branch does not exist in this Product Run.' : requestedBranchPending ? 'Selecting requested Branch…' : 'Select an Active Admin Branch in the header.'
   const currentHead = !eligibility ? headId : null
-  const canonicalEligibility = !selectedBranch
+  const canonicalEligibility = !executionBranch
     ? 'Select an Active Admin Branch in the header.'
-    : selectedBranch.run_id !== runId
+    : executionBranch.run_id !== runId
       ? 'Branch belongs to another Product Run.'
       : runQuery.isLoading
         ? 'Product Run is still loading.'
@@ -49,17 +60,17 @@ export function RunSimulationPage(): JSX.Element {
             ? 'Product Run must be active.'
             : runQuery.data.read_only
               ? 'Product Run is read-only.'
-              : selectedBranch.status !== 'active'
+              : executionBranch.status !== 'active'
                 ? 'Branch must be active.'
-                : selectedBranch.read_only
+                : executionBranch.read_only
                   ? 'Branch is read-only.'
-                  : !selectedBranch.saved_head_revision_id
+                  : !executionBranch.saved_head_revision_id
                     ? 'Branch has no Saved Revision head.'
                     : null
 
   useEffect(() => {
     setReview(null); setReason(''); setConfirmed(false); setNotice(null); setResult(null); setCommandId(newCommandId())
-  }, [runId, selectedBranchId])
+  }, [runId, executionBranchId])
 
   async function refreshTarget(targetRunId: string, targetBranchId: string): Promise<void> {
     await Promise.all([
@@ -100,29 +111,30 @@ export function RunSimulationPage(): JSX.Element {
   })
 
   function choose(action: BranchSimulationAction): void {
-    if (!selectedBranchId || !state || !checkpoint || !currentHead) return
-    setReview({ action, runId, branchId: selectedBranchId, head: currentHead, state, checkpointKind: checkpoint.kind })
+    if (!executionBranchId || !state || !checkpoint || !currentHead) return
+    setReview({ action, runId, branchId: executionBranchId, head: currentHead, state, checkpointKind: checkpoint.kind })
     setConfirmed(false); setReason(''); setNotice(null); setResult(null); setCommandId(newCommandId())
   }
-  const stale = Boolean(review && (review.runId !== runId || review.branchId !== selectedBranchId || review.head !== currentHead))
+  const stale = Boolean(review && (review.runId !== runId || review.branchId !== executionBranchId || review.head !== currentHead))
   const canSubmit = Boolean(review && !stale && !eligibility && reason.trim() && commandId.trim() && confirmed && !mutation.isPending)
-  const mutationBelongsToCurrentContext = mutation.variables?.runId === runId && mutation.variables.branchId === selectedBranchId
+  const mutationBelongsToCurrentContext = mutation.variables?.runId === runId && mutation.variables.branchId === executionBranchId
 
   return <section className="panel">
     <PageIntro title="Simulation" subtitle="Advance the Active Admin Branch at its reviewed deterministic head." meta={`Run: ${runQuery.data?.display_name ?? runId}`} />
     <CurrentContextStrip items={[
-      { label: 'Run', value: runId || '—' }, { label: 'Branch', value: selectedBranch ? `${selectedBranch.display_name} (${selectedBranch.branch_id})` : '—' },
+      { label: 'Run', value: runId || '—' }, { label: 'Branch', value: executionBranch ? `${executionBranch.display_name} (${executionBranch.branch_id})` : requestedBranchInvalid ? `Invalid requested Branch: ${requestedBranchId}` : requestedBranchPending ? `Selecting ${requestedBranchId}…` : '—' },
       { label: 'View context', value: time.mode === 'present' ? 'Present' : `Past · S${time.viewSeason ?? '—'} · ${time.viewWeek == null ? '—' : `W${time.viewWeek}`} · ${time.viewCheckpointId ?? 'unavailable'}` },
       { label: 'Execution target', value: 'Branch HEAD' },
       { label: 'Season', value: state?.current_season ?? '—' }, { label: 'Week', value: state?.current_week != null ? `W${state.current_week}` : '—' },
       { label: 'Event', value: state?.current_event_id ?? '—' }, { label: 'Head', value: currentHead ?? '—' },
     ]} />
-    {(runQuery.isLoading || stateQuery.isLoading || checkpointQuery.isLoading) && <p className="status">Loading Active Admin Branch execution state…</p>}
+    {(runQuery.isLoading || branchesLoading || requestedBranchPending || stateQuery.isLoading || checkpointQuery.isLoading) && <p className="status">Loading Active Admin Branch execution state…</p>}
+    {requestedBranchInvalid ? <p className="error">Requested Branch {requestedBranchId} does not exist in this Product Run. Choose a valid Admin Branch before simulation.</p> : null}
     {(runQuery.error || stateQuery.error || checkpointQuery.error) && <p role="alert" className="error">Simulation context unavailable: {formatApiError(runQuery.error || stateQuery.error || checkpointQuery.error)}</p>}
     <AuthoritativeSimulationPanel
       runId={runId}
-      branchId={selectedBranchId ?? ''}
-      savedRevisionId={selectedBranch?.saved_head_revision_id ?? null}
+      branchId={executionBranchId ?? ''}
+      savedRevisionId={executionBranch?.saved_head_revision_id ?? null}
       blockedReason={canonicalEligibility}
     />
 

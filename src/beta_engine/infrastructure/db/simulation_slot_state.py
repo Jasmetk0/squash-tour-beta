@@ -20,6 +20,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentEntryFieldVersionModel,
     TournamentFormatAuthorityModel,
     TournamentGroupRulesPolicyModel,
+    TournamentGroupMatchScheduleAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -874,6 +875,7 @@ def _validate_format_topology_rows_shape(
     group_rules_policies,
     format_authorities,
     topology_authorities,
+    group_match_schedules,
     entry_fields,
 ):
     """Validate immutable Format/Topology dependency rows inside one checkpoint."""
@@ -885,6 +887,10 @@ def _validate_format_topology_rows_shape(
     )
     from beta_engine.domain.tournaments.topology_authority import (
         TournamentTopologyAuthority,
+    )
+    from beta_engine.domain.tournaments.group_match_schedule_authority import (
+        TournamentGroupMatchScheduleAuthority,
+        TournamentGroupMatchScheduleBuilder,
     )
 
     policies_by_fingerprint = {}
@@ -1002,6 +1008,55 @@ def _validate_format_topology_rows_shape(
         if field is None or field.fingerprint != topology.entry_field_fingerprint:
             raise ValueError(
                 "Saved Tournament Topology references missing/stale Entry Field"
+            )
+
+    topologies_by_event = {
+        row.event_id: TournamentTopologyAuthority.model_validate_json(row.payload_json)
+        for row in topology_authorities
+    }
+    for row in group_match_schedules:
+        authority = TournamentGroupMatchScheduleAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.format_authority_fingerprint,
+            authority.topology_authority_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.format_authority_fingerprint,
+            row.topology_authority_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Group Match Schedule row is corrupt")
+        format_authority = formats_by_event.get(row.event_id)
+        topology = topologies_by_event.get(row.event_id)
+        if format_authority is None or topology is None:
+            raise ValueError(
+                "Saved Tournament Group Match Schedule lacks Format/Topology dependency"
+            )
+        if (
+            format_authority.fingerprint != authority.format_authority_fingerprint
+            or topology.fingerprint != authority.topology_authority_fingerprint
+        ):
+            raise ValueError(
+                "Saved Tournament Group Match Schedule dependency fingerprint is stale"
+            )
+        rebuilt = TournamentGroupMatchScheduleBuilder.build(
+            format_authority=format_authority,
+            topology_authority=topology,
+            command_id=row.command_id,
+        )
+        if rebuilt != authority:
+            raise ValueError(
+                "Saved Tournament Group Match Schedule does not replay from frozen dependencies"
             )
 
 

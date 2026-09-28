@@ -22,7 +22,7 @@ def fp(char: str) -> str:
 def calendar_projection() -> RunCalendarProjection:
     events = [
         CalendarEvent(
-            event_id="E1",
+            event_id="EVT-1",
             season="2000/2001",
             season_week=4,
             template_id="TPL-1",
@@ -34,7 +34,7 @@ def calendar_projection() -> RunCalendarProjection:
             main_draw_size=4,
         ),
         CalendarEvent(
-            event_id="E2",
+            event_id="EVT-2",
             season="2000/2001",
             season_week=7,
             template_id="TPL-2",
@@ -199,7 +199,7 @@ def test_projection_uses_canonical_race_points_and_never_official_ranking_order(
         tournament_sources=(
             source(
                 edition_id="edition-1",
-                event_id="E1",
+                event_id="EVT-1",
                 completed_week=4,
                 publication_week=5,
                 points={"p1": 500, "p2": 500},
@@ -207,7 +207,7 @@ def test_projection_uses_canonical_race_points_and_never_official_ranking_order(
             ),
             source(
                 edition_id="edition-2",
-                event_id="E2",
+                event_id="EVT-2",
                 completed_week=7,
                 publication_week=8,
                 points={"p1": 300, "p2": 300},
@@ -225,7 +225,7 @@ def test_projection_uses_canonical_race_points_and_never_official_ranking_order(
             # Eligible category published after cutoff is ignored.
             source(
                 edition_id="late-edition",
-                event_id="E2",
+                event_id="EVT-2",
                 completed_week=7,
                 publication_week=11,
                 points={"p1": 9000},
@@ -267,7 +267,7 @@ def test_projection_fails_closed_for_legacy_only_eligible_source():
             tournament_sources=(
                 source(
                     edition_id="edition-1",
-                    event_id="E1",
+                    event_id="EVT-1",
                     completed_week=4,
                     publication_week=5,
                     points={"p1": 500},

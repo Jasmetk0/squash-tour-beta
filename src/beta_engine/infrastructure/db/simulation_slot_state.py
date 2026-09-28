@@ -1188,6 +1188,8 @@ def _component(
     include_format_authorities=False,
     topology_authorities=(),
     include_topology_authorities=False,
+    group_match_schedules=(),
+    include_group_match_schedules=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1216,6 +1218,7 @@ def _component(
         group_rules_policies,
         format_authorities,
         topology_authorities,
+        group_match_schedules,
         entry_fields,
     )
     _validate_finals_authority_rows_shape(
@@ -1346,6 +1349,21 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in topology_authorities
+        ]
+    if include_group_match_schedules:
+        body["group_match_schedules"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "format_authority_fingerprint": row.format_authority_fingerprint,
+                "topology_authority_fingerprint": row.topology_authority_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in group_match_schedules
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [

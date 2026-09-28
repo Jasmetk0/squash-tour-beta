@@ -22,6 +22,7 @@ from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldEventModel,
     TournamentRankingSnapshotAuthorityModel,
     SeasonClosingRankingModel,
+    WorldTourFinalsRaceSnapshotModel,
     RunBranchModel,
     RunContainerModel,
 )
@@ -119,6 +120,7 @@ def restore_ranking_revision_state(
         for model in (
             AuthoritativeWeekTransitionReceiptModel,
             AuthoritativeWorldEventModel,
+            WorldTourFinalsRaceSnapshotModel,
             SeasonClosingRankingModel,
             TournamentRankingSnapshotAuthorityModel,
             PublishedOfficialRankingModel,

@@ -102,9 +102,13 @@
     Branches while preserving historical non-Package tools and separate Finals behavior.
 33. ✅ Add a canonical World Tour Finals Race calculation contract implementing Master v67
     Best-N + result-profile + stored-token ordering over explicitly frozen eligible evidence.
-34. Next: establish the seasonal Finals configuration authority (eligible tournament scope,
-    Best-N and selected published-ranking cutoff), then persist the canonical Race snapshot;
-    do not wire Viewer or Finals execution to an unfrozen/ad-hoc configuration.
+34. ✅ Establish immutable per-Run/Branch/season Finals Race configuration, bind it to the
+    Run-owned Calendar plus an explicit published Official Ranking/Ranking Transition cutoff,
+    project canonical tournament race-point awards into the single Race kernel, persist the
+    snapshot and expose scoped Admin configure/build/inspect commands.
+35. Next: migrate Finals participant selection and seeding to the persisted canonical Race
+    snapshot together with the decided capacity/direct-entry authority; preserve legacy
+    historical compatibility without using legacy Race ordering as a new fallback.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

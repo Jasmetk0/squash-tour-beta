@@ -1526,6 +1526,10 @@ def _load(payload, *, run_id, branch_id):
         "authorities",
         "schedules",
         "entry_fields",
+        "finals_race_configurations",
+        "finals_race_snapshots",
+        "finals_participant_configurations",
+        "finals_participant_snapshots",
         "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",
@@ -1558,6 +1562,30 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("entry_fields", [])
         ],
         include_entry_fields="entry_fields" in component,
+        finals_race_configurations=[
+            WorldTourFinalsRaceConfigurationModel(**value)
+            for value in component.get("finals_race_configurations", [])
+        ],
+        include_finals_race_configurations="finals_race_configurations" in component,
+        finals_race_snapshots=[
+            WorldTourFinalsRaceSnapshotModel(**value)
+            for value in component.get("finals_race_snapshots", [])
+        ],
+        include_finals_race_snapshots="finals_race_snapshots" in component,
+        finals_participant_configurations=[
+            WorldTourFinalsParticipantSelectionConfigurationModel(**value)
+            for value in component.get("finals_participant_configurations", [])
+        ],
+        include_finals_participant_configurations=(
+            "finals_participant_configurations" in component
+        ),
+        finals_participant_snapshots=[
+            WorldTourFinalsParticipantSelectionSnapshotModel(**value)
+            for value in component.get("finals_participant_snapshots", [])
+        ],
+        include_finals_participant_snapshots=(
+            "finals_participant_snapshots" in component
+        ),
         wild_card_authorities=[
             TournamentWildCardAuthorityModel(**value)
             for value in component.get("wild_card_authorities", [])
@@ -1603,6 +1631,10 @@ def _load(payload, *, run_id, branch_id):
                 "authorities",
                 "schedules",
                 "entry_fields",
+                "finals_race_configurations",
+                "finals_race_snapshots",
+                "finals_participant_configurations",
+                "finals_participant_snapshots",
                 "wild_card_authorities",
                 "draw_inputs",
                 "draw_authorities",

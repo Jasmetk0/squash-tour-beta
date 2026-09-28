@@ -165,6 +165,10 @@ class FinalsRaceAuthorityService:
                 branch_id=command.branch_id,
                 week=command.cutoff_ranking_week,
             )
+            if publication.policy != transition.policy:
+                raise ValueError(
+                    "Finals Race cutoff publication policy differs from Ranking Transition"
+                )
             configuration = FinalsRaceConfiguration(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
@@ -234,6 +238,10 @@ class FinalsRaceAuthorityService:
             if transition.fingerprint != configuration.cutoff_transition_fingerprint:
                 raise ValueError(
                     "Finals Race cutoff transition changed after configuration"
+                )
+            if publication.policy != transition.policy:
+                raise ValueError(
+                    "Finals Race cutoff publication policy differs from Ranking Transition"
                 )
             sources = OwnedTournamentRankingSourceStore(session).history(
                 run_id=run_id,

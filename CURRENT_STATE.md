@@ -11,6 +11,9 @@ requires before a snapshot can become product history.
   Ranking cutoff;
 - the cutoff is accepted only when the persisted Official Ranking and the exact Ranking
   Transition authority agree on scope, week, fingerprint and policy;
+- the Official Ranking rows are not reused as Race eligibility or order: the frozen
+  Ranking Transition roster supplies player identities/tie tokens and the publication
+  remains only the configured time boundary;
 - canonical Run-owned tournament sources are filtered by season, Calendar category and
   first publication at/before the cutoff; an eligible source must carry canonical
   Tournament Result and Point Award authorities;

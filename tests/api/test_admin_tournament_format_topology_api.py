@@ -152,7 +152,7 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
         assert preparation["topology_ready"] is True
         assert preparation["topology_group_match_count"] == 6
         assert preparation["group_match_schedule_ready"] is False
-        assert preparation["ready_for_match_schedule"] is True
+        assert preparation["ready_for_match_schedule"] is False
 
         status, schedule = _request(
             "POST",
@@ -198,7 +198,7 @@ def test_admin_configures_finals_groups_and_generates_canonical_topology(tmp_pat
             preparation["group_match_schedule_fingerprint"]
             == schedule["authority_fingerprint"]
         )
-        assert preparation["ready_for_match_schedule"] is False
+        assert preparation["ready_for_match_schedule"] is True
 
         status, effective = _request(
             "GET",

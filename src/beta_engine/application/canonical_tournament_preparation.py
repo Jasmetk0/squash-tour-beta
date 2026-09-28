@@ -34,6 +34,9 @@ from beta_engine.infrastructure.db.tournament_draw_revision import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
+from beta_engine.infrastructure.db.finals_participant_selection import (
+    WorldTourFinalsParticipantSelectionStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -51,6 +54,7 @@ TournamentPreparationPhase = Literal[
     "entry_field_required",
     "wild_card_review_required",
     "draw_input_ready",
+    "tournament_format_required",
     "draw_generation_ready",
     "draw_ready",
 ]
@@ -60,6 +64,7 @@ TournamentPreparationNextAction = Literal[
     "build_entry_field",
     "review_wild_cards",
     "review_pre_draw_or_commit_draw_input",
+    "configure_tournament_format",
     "generate_draw",
     "none",
 ]
@@ -122,6 +127,14 @@ class CanonicalTournamentPreparationState(BaseModel):
     ranking_week_ordinal: int | None = Field(default=None, ge=0)
 
     entry_field_ready: bool
+    entry_source_kind: Literal[
+        "ranking_applications",
+        "finals_participant_selection",
+    ] | None = None
+    entry_source_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    entry_seed_order_player_ids: tuple[str, ...] = ()
     valid_submission_count: int = Field(ge=0)
     valid_main_submission_count: int = Field(ge=0)
     valid_qualification_submission_count: int = Field(ge=0)
@@ -266,13 +279,14 @@ class CanonicalTournamentPreparationService:
             branch_id=branch_id,
             event_id=event_id,
         )
-        capacity_suggestion = CanonicalTournamentPreparationService._entry_capacity_suggestion(
-            session,
+        ranking = TournamentRankingSnapshotAuthorityStore(session).get(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
         )
-        ranking = TournamentRankingSnapshotAuthorityStore(session).get(
+        finals_selection = WorldTourFinalsParticipantSelectionStore(
+            session
+        ).find_snapshot_for_event(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
@@ -283,6 +297,16 @@ class CanonicalTournamentPreparationService:
             event_id=event_id,
         )
         field = history[-1] if history else None
+        capacity_suggestion = (
+            None
+            if finals_selection is not None
+            else CanonicalTournamentPreparationService._entry_capacity_suggestion(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
 
         wc = None
         if field is not None and field.capacity.wild_card_slots:
@@ -323,6 +347,11 @@ class CanonicalTournamentPreparationService:
 
         ranking_ready = ranking is not None
         field_ready = field is not None
+        finals_field = bool(
+            field is not None
+            and field.source_kind == "finals_participant_selection"
+        )
+        entry_source_ready = ranking_ready or finals_selection is not None or finals_field
         wc_required = bool(
             field is not None and field.capacity.wild_card_slots > 0
         )
@@ -331,7 +360,7 @@ class CanonicalTournamentPreparationService:
         draw_ready = effective_draw is not None
 
         blockers: list[str] = []
-        if not ranking_ready:
+        if not entry_source_ready:
             phase: TournamentPreparationPhase = "ranking_snapshot_required"
             next_action: TournamentPreparationNextAction = "adopt_ranking_snapshot"
             blockers.append("tournament_ranking_snapshot_required")
@@ -339,6 +368,10 @@ class CanonicalTournamentPreparationService:
             phase = "entry_field_required"
             next_action = "build_entry_field"
             blockers.append("tournament_entry_field_required")
+        elif finals_field and not draw_input_ready:
+            phase = "tournament_format_required"
+            next_action = "configure_tournament_format"
+            blockers.append("tournament_format_authority_required")
         elif wc_required and not wc_ready:
             phase = "wild_card_review_required"
             next_action = "review_wild_cards"
@@ -376,6 +409,27 @@ class CanonicalTournamentPreparationService:
                 ranking.ranking_week.ordinal if ranking is not None else None
             ),
             entry_field_ready=field_ready,
+            entry_source_kind=(
+                field.source_kind
+                if field is not None
+                else (
+                    "finals_participant_selection"
+                    if finals_selection is not None
+                    else ("ranking_applications" if ranking is not None else None)
+                )
+            ),
+            entry_source_authority_fingerprint=(
+                field.source_authority_fingerprint
+                if field is not None
+                else (
+                    finals_selection.fingerprint
+                    if finals_selection is not None
+                    else (ranking.fingerprint if ranking is not None else None)
+                )
+            ),
+            entry_seed_order_player_ids=(
+                field.seed_order_player_ids if field is not None else ()
+            ),
             valid_submission_count=len(submissions),
             valid_main_submission_count=sum(sub.entry_window == "main" for sub in submissions),
             valid_qualification_submission_count=sum(
@@ -438,9 +492,15 @@ class CanonicalTournamentPreparationService:
             can_review_wild_cards=(
                 field_ready and wc_required and not wc_ready and not draw_input_ready
             ),
-            can_apply_pre_draw_withdrawal=field_ready and not draw_input_ready,
+            can_apply_pre_draw_withdrawal=(
+                field_ready and not finals_field and not draw_input_ready
+            ),
             can_commit_draw_input=(
-                ranking_ready and field_ready and wc_ready and not draw_input_ready
+                ranking_ready
+                and field_ready
+                and not finals_field
+                and wc_ready
+                and not draw_input_ready
             ),
             can_generate_draw=draw_input_ready and not draw_ready,
             ready_for_match_schedule=draw_ready,

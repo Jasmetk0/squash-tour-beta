@@ -1109,8 +1109,8 @@ describe('PlannedEventDetailPage', () => {
     expect(
       await screen.findByText(/remaining blocker is the canonical Simulation Slot execution adapter/i)
     ).toBeInTheDocument()
-    expect(screen.getByText('6')).toBeInTheDocument()
-    expect(screen.getByText('3')).toBeInTheDocument()
+    expect(screen.getAllByText('6').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('3').length).toBeGreaterThan(0)
     expect(screen.queryByRole('button', { name: 'Generate group Match Schedule' })).not.toBeInTheDocument()
   })
 

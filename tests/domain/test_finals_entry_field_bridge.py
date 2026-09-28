@@ -1,5 +1,8 @@
 """Finals participant selection -> shared Tournament Entry Field bridge."""
 
+import hashlib
+import json
+
 import pytest
 
 from beta_engine.domain.finals import (
@@ -7,6 +10,7 @@ from beta_engine.domain.finals import (
     WorldTourFinalsSelectedPlayer,
 )
 from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
     TournamentEntryFieldCapacity,
     TournamentEntryFieldResolver,
 )
@@ -73,3 +77,37 @@ def test_fixed_participant_field_cannot_smuggle_reserved_slots():
             main_draw_size=6,
             wild_card_slots=1,
         )
+
+
+@pytest.mark.pr_critical
+def test_historical_v1_entry_field_json_keeps_identical_fingerprint():
+    payload = {
+        "schema_version": "tournament_entry_field.v1",
+        "run_id": "run",
+        "branch_id": "branch",
+        "event_id": "EVENT",
+        "mode": "initial",
+        "capacity": {
+            "main_draw_size": 4,
+            "qualification_draw_size": 0,
+            "qualifier_spots": 0,
+            "wild_card_slots": 0,
+            "bye_slots": 0,
+        },
+        "tournament_ranking_authority_fingerprint": fp("a"),
+        "ranking_snapshot_fingerprint": fp("b"),
+        "applications_fingerprint": fp("c"),
+        "direct_main_player_ids": ["p1", "p2", "p3", "p4"],
+        "qualification_player_ids": [],
+        "below_qualification_cut_player_ids": [],
+        "withdrawn_player_ids": [],
+        "base_field_fingerprint": None,
+    }
+    expected = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+    reopened = TournamentEntryField.model_validate(payload)
+
+    assert reopened.model_dump(mode="json") == payload
+    assert reopened.fingerprint == expected

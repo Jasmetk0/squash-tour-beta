@@ -23,6 +23,7 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
 )
+from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldConflict,
     TournamentEntryFieldStore,
@@ -186,9 +187,6 @@ def test_finals_selection_blocks_generic_ranking_application_entry_creation(data
                 run_id="run",
                 branch_id="branch",
                 event_id="FINALS",
-                capacity=__import__(
-                    "beta_engine.domain.tournaments.entry_field",
-                    fromlist=["TournamentEntryFieldCapacity"],
-                ).TournamentEntryFieldCapacity(main_draw_size=8),
+                capacity=TournamentEntryFieldCapacity(main_draw_size=8),
                 command_id="wrong-ranking-entry-field",
             )

@@ -1,6 +1,7 @@
 """World Tour Finals bounded-context exports."""
 
 from beta_engine.domain.finals.engine import FinalsEngine
+from beta_engine.domain.finals.race_configuration import WorldTourFinalsRaceConfiguration
 from beta_engine.domain.finals.race import (
     WorldTourFinalsRaceCountedResult,
     WorldTourFinalsRaceInput,
@@ -33,6 +34,7 @@ __all__ = [
     "FinalsQualificationResult",
     "FinalsQualifiedPlayer",
     "FinalsResult",
+    "WorldTourFinalsRaceConfiguration",
     "WorldTourFinalsRaceCountedResult",
     "WorldTourFinalsRaceInput",
     "WorldTourFinalsRacePlayer",

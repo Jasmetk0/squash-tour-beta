@@ -9750,7 +9750,7 @@ class AuthoritativeRunSimulationDriver:
             schedule = self._schedule(session, run_id, branch_id, week)
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
-            ) if packages else {}
+            )
             entry_slot_ordinals = self._entry_slot_ordinals(
                 session, run_id, branch_id, week
             )

@@ -11,6 +11,11 @@ from beta_engine.application.ranking_tournament_ingestion import (
     prepare_canonical_tournament_ranking_sources,
 )
 from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
+from beta_engine.infrastructure.db.ranking_fork_remap import (
+    RankingForkRemapUnsupportedError,
+    _remap_tournament_sources,
+)
 from beta_engine.domain.tournaments.group_standings_authority import (
     TournamentGroupResultReceipt,
     TournamentGroupStanding,
@@ -305,3 +310,44 @@ def test_group_walkover_ranking_reward_remains_explicitly_unresolved():
         bracket=two_player_bracket(),
         policy=policy(group_win=0),
     ) == ()
+
+
+
+@pytest.mark.pr_critical
+def test_hybrid_owned_ranking_source_fork_remap_fails_closed_until_full_chain_exists():
+    result = hybrid_result()
+    awards = build_hybrid_tournament_point_award_authority(
+        result=result,
+        policy=policy(),
+    )
+    binding = TournamentRankingBinding(
+        run_id="run",
+        branch_id="branch",
+        edition_id="event",
+        event_id="event",
+        completed_week=result.completed_week,
+        first_publication_week=RankingWeek(season_index=0, week=11),
+        validity_weeks=61,
+        ranking_status="ranked",
+        expected_result_fingerprint=result.fingerprint,
+        expected_award_fingerprint=awards.fingerprint,
+    )
+    source = OwnedTournamentRankingSource(
+        schema_version="owned_tournament_ranking_source.v4",
+        binding=binding,
+        canonical_result=result,
+        canonical_awards=awards,
+        adopted_by_command_id="close-hybrid",
+        provenance_kind="canonical_run_owned_tournament_authorities",
+    )
+
+    with pytest.raises(
+        RankingForkRemapUnsupportedError,
+        match="Hybrid tournament ranking source fork remap is not defined",
+    ):
+        _remap_tournament_sources(
+            (source,),
+            run_id="run",
+            source_branch_id="branch",
+            target_branch_id="fork",
+        )

@@ -5303,12 +5303,6 @@ export type SeasonEventDrawPackage = {
   validation_errors: DrawValidationIssue[]
 }
 
-export type DrawGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
 export type SeasonEventDrawPackageResult = {
   draw_package: SeasonEventDrawPackage | null
   summary: DrawPackageSummary
@@ -6223,20 +6217,6 @@ export type SeasonEventMatchPackage = {
   validation_errors: MatchValidationIssue[]
 }
 
-export type MatchGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  tournament_edition_match_format?: MatchFormat | null
-  phase_match_formats?: Record<string, MatchFormat>
-  round_match_formats?: Record<string, MatchFormat>
-}
-
-export type MatchSimulatePayload = {
-  seed: number
-  timing_override?: MatchTimingOverride | null
-}
-
 export type TournamentProgressionStatus = {
   event_id: string
   season: string
@@ -6255,33 +6235,6 @@ export type TournamentProgressionStatus = {
   finalist_name: string | null
   warnings: MatchValidationIssue[]
   errors: MatchValidationIssue[]
-}
-
-export type ProgressionCommandPayload = {
-  seed: number
-}
-
-export type SimulateRoundPayload = {
-  seed: number
-  draw_type: 'qualification' | 'main'
-  round_number: number
-}
-
-export type SimulateDrawPayload = {
-  seed: number
-  draw_type: 'qualification' | 'main'
-}
-
-export type ProgressionCommandResult = {
-  event_id: string
-  action: 'process_byes' | 'refresh_status' | 'simulate_round' | 'simulate_draw' | 'promote_qualifiers' | 'advance_completed'
-  match_package: SeasonEventMatchPackage
-  progression_status: TournamentProgressionStatus
-  changed_match_ids: string[]
-  promoted_player_ids: string[]
-  validation_warnings: MatchValidationIssue[]
-  validation_errors: MatchValidationIssue[]
-  metadata: Record<string, unknown>
 }
 
 export type SeasonEventMatchPackageResult = {
@@ -6403,12 +6356,6 @@ export type SeasonEventResultPackage = {
   validation_errors: EventResultValidationIssue[]
 }
 
-export type EventResultExtractPayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
 export type SeasonEventResultPackageResult = {
   result_package: SeasonEventResultPackage | null
   summary: EventResultSummary | null
@@ -6416,14 +6363,6 @@ export type SeasonEventResultPackageResult = {
   validation_warnings: EventResultValidationIssue[]
   validation_errors: EventResultValidationIssue[]
   result_package_exists: boolean
-}
-
-export type EntryListGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  max_alternates: number
-  include_not_entered: boolean
 }
 
 export type SeasonEventEntryListResult = {
@@ -6505,17 +6444,6 @@ export type EventPointAwardPackage = {
   validation_errors: PointAwardValidationIssue[]
 }
 
-export type PointAwardGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
-export type PointAwardApplyPayload = {
-  seed: number
-  allow_reapply: boolean
-}
-
 export type EventPointAwardPackageResult = {
   award_package: EventPointAwardPackage | null
   summary: PointAwardSummary | null
@@ -6525,28 +6453,6 @@ export type EventPointAwardPackageResult = {
   award_package_exists: boolean
   applied: boolean
 }
-
-export type UpdatedPlayerPoints = {
-  player_id: string
-  player_name: string | null
-  previous_ranking_points: number
-  previous_race_points: number
-  new_ranking_points: number
-  new_race_points: number
-  delta_ranking_points: number
-  delta_race_points: number
-}
-
-export type PointAwardApplyResult = {
-  event_id: string
-  applied: boolean
-  award_package: EventPointAwardPackage | null
-  updated_players: UpdatedPlayerPoints[]
-  validation_warnings: PointAwardValidationIssue[]
-  validation_errors: PointAwardValidationIssue[]
-  metadata: PointAwardMetadata | null
-}
-
 
 export type SeasonWeekRecoveryRequest = {
   season: string

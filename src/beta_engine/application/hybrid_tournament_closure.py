@@ -526,6 +526,64 @@ class TournamentHybridClosureService:
     def __init__(self, session: Session):
         self.session = session
 
+    def close_from_current_receipts(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+    ) -> OwnedTournamentRankingSource:
+        """Derive the exact completion week from the frozen terminal bracket receipts."""
+
+        bracket = TournamentHybridKnockoutBracketAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if bracket is None:
+            raise ValueError(
+                "Hybrid Tournament closure requires frozen Knockout Bracket"
+            )
+        match_ids = tuple(match.match_id for match in bracket.matches)
+        rows = self.session.scalars(
+            select(SimulationEventGroupModel).where(
+                SimulationEventGroupModel.run_id == run_id,
+                SimulationEventGroupModel.branch_id == branch_id,
+                SimulationEventGroupModel.match_id.in_(match_ids),
+            )
+        ).all()
+        by_match = {row.match_id: row for row in rows}
+        if len(by_match) != len(rows):
+            raise ValueError(
+                "Hybrid Tournament closure found duplicate knockout match receipts"
+            )
+        if set(by_match) != set(match_ids):
+            missing = sorted(set(match_ids) - set(by_match))
+            raise ValueError(
+                "Hybrid Tournament closure requires completed knockout receipts for: "
+                + ", ".join(missing)
+            )
+        week_ordinals = {row.week_ordinal for row in rows}
+        if len(week_ordinals) != 1:
+            raise ValueError(
+                "Hybrid Tournament knockout receipts span multiple RankingWeeks"
+            )
+        ordinal = next(iter(week_ordinals))
+        if ordinal < 1 or ordinal > 50 * 61:
+            raise ValueError("Hybrid Tournament completion week is outside Run range")
+        completed_week = RankingWeek(
+            season_index=(ordinal - 1) // 61,
+            week=(ordinal - 1) % 61 + 1,
+        )
+        return self.close(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            completed_week=completed_week,
+            command_id=command_id,
+        )
+
     def close(
         self,
         *,

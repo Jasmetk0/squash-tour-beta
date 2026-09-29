@@ -452,9 +452,25 @@ pipeline from the current Admin Seasons surface.
 
 This closes the next dead compatibility entrypoint without deleting historical evidence.
 
-**Next after this PR:** audit the remaining high-level legacy Admin Seasons mutation
-entrypoints (especially one-event orchestration) against their actual historical use, and
-retire only current-product shortcuts that duplicate canonical Run/Branch execution.
+The follow-up audit also retires the direct `Simulate One Event` mutation from the
+current Admin Seasons web surface.
+
+- the browser client no longer exposes `POST /admin/events/{event_id}/simulate`;
+- the direct Preview/Run One Event panel and its mutation state are removed;
+- mutation-only `SimulateOneEventRequest` / `SimulateOneEventResult` web wrappers are
+  removed;
+- the backend `SeasonEventSimulationService` is intentionally retained because legacy
+  week preflight still composes its dry-run report as diagnostic evidence;
+- `SimulateOneEventReport` and its step/report types therefore remain in the frontend
+  read model for the read-only week-preflight viewer;
+- no server historical endpoint or compatibility service is deleted in this slice.
+
+This preserves legacy diagnostic reconstruction while removing another current-product
+shortcut capable of mutating the old file-backed tournament pipeline.
+
+**Next after this PR:** audit the remaining Admin Seasons mutation surfaces at the
+season/calendar level separately. Keep historical diagnostics available and do not remove
+a legacy server service merely because its direct current-web mutation entrypoint is gone.
 
 
 ## Active implementation — canonical result/ranking source fence

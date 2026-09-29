@@ -1,9 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { buildSeasonCalendar, getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, SeasonActivePlayer, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardValidationIssue, PlayerPointAward, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
+import { getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, SeasonActivePlayer, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardValidationIssue, PlayerPointAward, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -12,18 +12,9 @@ import { SeasonEditionRankingConfiguration } from './SeasonEditionRankingConfigu
 import { SeasonCategoryPoints } from './SeasonCategoryPoints'
 
 export function AdminSeasonsPage(): JSX.Element {
-  const queryClient = useQueryClient()
   const [searchParams] = useSearchParams()
   const selectedRegistrySeason = searchParams.get('season')?.trim() || null
   const [season, setSeason] = useState('2000/2001')
-  const [calendarSeed, setCalendarSeed] = useState(12345)
-  const [seasonStartCalendarYear, setSeasonStartCalendarYear] = useState(2000)
-  const [seasonStartYearWeek, setSeasonStartYearWeek] = useState(37)
-  const [calendarDryRun, setCalendarDryRun] = useState(true)
-  const [calendarOverwriteExisting, setCalendarOverwriteExisting] = useState(false)
-  const [includeInactiveTemplates, setIncludeInactiveTemplates] = useState(false)
-  const [maxEvents, setMaxEvents] = useState('')
-  const [calendarBuildResult, setCalendarBuildResult] = useState<SeasonCalendarBuildResponse | null>(null)
   const [selectedEventId, setSelectedEventId] = useState('')
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const [replayRallyIndex, setReplayRallyIndex] = useState(1)
@@ -66,24 +57,6 @@ export function AdminSeasonsPage(): JSX.Element {
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
 
-  const calendarMutation = useMutation({
-    mutationFn: (persist: boolean) => buildSeasonCalendar(season, {
-      seed: calendarSeed,
-      dry_run: !persist,
-      overwrite_existing: calendarOverwriteExisting,
-      season_start_calendar_year: seasonStartCalendarYear,
-      season_start_year_week: seasonStartYearWeek,
-      include_inactive_templates: includeInactiveTemplates,
-      max_events: maxEvents.trim() ? Number(maxEvents) : null
-    }),
-    onSuccess: (result) => {
-      setCalendarBuildResult(result)
-      if (!result.metadata?.dry_run) {
-        void queryClient.invalidateQueries({ queryKey: ['season-calendar', season] })
-      }
-    }
-  })
-
   const displayedPlayers = playersQuery.data?.players ?? []
   const displayedSummary = playersQuery.data?.summary
   const displayedWarnings = playersQuery.data?.warnings ?? []
@@ -91,10 +64,10 @@ export function AdminSeasonsPage(): JSX.Element {
   const activeCount = playersQuery.data?.summary.total_active_players ?? 0
   const hasActivePlayers = activeCount > 0
   const tierCounts = useMemo(() => displayedSummary?.by_potential_tier ?? {}, [displayedSummary])
-  const displayedCalendar = calendarBuildResult?.calendar ?? calendarQuery.data?.calendar ?? null
-  const displayedCalendarSummary = calendarBuildResult?.summary ?? calendarQuery.data?.summary
-  const validationWarnings = calendarBuildResult?.validation_warnings ?? displayedCalendar?.validation_warnings ?? []
-  const validationErrors = calendarBuildResult?.validation_errors ?? displayedCalendar?.validation_errors ?? []
+  const displayedCalendar = calendarQuery.data?.calendar ?? null
+  const displayedCalendarSummary = calendarQuery.data?.summary
+  const validationWarnings = calendarQuery.data?.validation_warnings ?? displayedCalendar?.validation_warnings ?? []
+  const validationErrors = calendarQuery.data?.validation_errors ?? displayedCalendar?.validation_errors ?? []
   const eventOptions = displayedCalendar?.events ?? []
   const lifecycleEvents = lifecycleQuery.data?.events ?? []
   const displayedLifecycleEvents = lifecycleEvents.filter((event) => {
@@ -225,7 +198,7 @@ export function AdminSeasonsPage(): JSX.Element {
     <section className="panel">
       <PageIntro title="Seasons / Legacy state" subtitle="Inspect historical global season artifacts and author source calendars; canonical Product Run player truth is Run-owned." />
       <p className="status">Legacy active-player files remain readable for old saves and diagnostics. Current Product Runs use InitialWorld + lifecycle + sporting state instead.</p>
-      <p className="status"><Link to="/admin/seasons/build">Open Season Builder</Link> for read-only preflight foundation and planned workflow overview.</p>
+      <p className="status"><Link to="/admin/seasons/build">Open Season Builder</Link> for reviewed source-calendar preflight and guarded create-only authoring.</p>
       <SelectedSeasonWorkspace selectedSeasonRaw={selectedRegistrySeason} />
       <SeasonCategoryPoints seasonLabelRaw={selectedRegistrySeason} />
       <SeasonEditionRankingConfiguration seasonLabelRaw={selectedRegistrySeason} />
@@ -290,23 +263,10 @@ export function AdminSeasonsPage(): JSX.Element {
       </AdminSection>
 
       <AdminSection title="Primary Workflow" subtitle="Main season-level controls for calendar setup, readiness inspection, range preview, and guarded range execution." defaultOpen variant="primary">
-      <SectionCard title="Season Calendar Builder">
-        <p className="status">Calendar builder creates planned season events from editable tournament templates. It does not generate entries, draws, matches, or ranking changes yet.</p>
-        <div className="grid">
-          <label>Target season<input value={season} onChange={(event) => setSeason(event.target.value)} /></label>
-          <label>Seed<input type="number" value={calendarSeed} onChange={(event) => setCalendarSeed(Number(event.target.value))} /></label>
-          <label>Season start calendar year<input type="number" value={seasonStartCalendarYear} onChange={(event) => setSeasonStartCalendarYear(Number(event.target.value))} /></label>
-          <label>Season start year week<input type="number" value={seasonStartYearWeek} onChange={(event) => setSeasonStartYearWeek(Number(event.target.value))} /></label>
-          <label>Max events<input type="number" value={maxEvents} onChange={(event) => setMaxEvents(event.target.value)} placeholder="all templates" /></label>
-          <label><input type="checkbox" checked={calendarDryRun} onChange={(event) => setCalendarDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={calendarOverwriteExisting} onChange={(event) => setCalendarOverwriteExisting(event.target.checked)} /> Overwrite existing calendar</label>
-          <label><input type="checkbox" checked={includeInactiveTemplates} onChange={(event) => setIncludeInactiveTemplates(event.target.checked)} /> Include inactive templates</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setCalendarDryRun(true); calendarMutation.mutate(false) }} disabled={calendarMutation.isPending}>Preview calendar</button>
-          <button type="button" onClick={() => { setCalendarDryRun(false); calendarMutation.mutate(true) }} disabled={calendarMutation.isPending}>Persist calendar</button>
-        </div>
-        {calendarMutation.isError ? <p role="alert" className="error">{formatApiError(calendarMutation.error)}</p> : null}
+      <SectionCard title="Legacy source calendar — read-only here">
+        <p className="status"><StatusBadge label="SOURCE / READ-ONLY" /> Admin Seasons no longer builds or overwrites the global source calendar directly. Persisted source Calendar evidence stays visible here because Calendar Package adaptation and historical tooling still read it.</p>
+        <p className="status">Use the guarded Season Builder for reviewed preflight, dry-run identity and create-only source-calendar authoring. Existing calendars are not silently overwritten from this page.</p>
+        <p><Link to="/admin/seasons/build">Open guarded Season Builder</Link></p>
       </SectionCard>
 
       <SectionCard title="Calendar status">
@@ -314,7 +274,7 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'Persisted calendar exists', value: calendarQuery.data?.summary.calendar_exists ? 'Yes' : 'No' },
           { label: 'Persisted event count', value: calendarQuery.data?.summary.event_count ?? 0 },
           { label: 'Displayed event count', value: displayedCalendarSummary?.event_count ?? 0 },
-          { label: 'Last build result', value: calendarBuildResult ? (calendarBuildResult.metadata?.dry_run ? 'Preview' : 'Persisted calendar') : 'Persisted state' }
+          { label: 'Role', value: 'Legacy source authoring evidence' }
         ]} />
       </SectionCard>
 
@@ -344,7 +304,7 @@ export function AdminSeasonsPage(): JSX.Element {
             <tbody>{displayedCalendar?.events.map((event) => <CalendarEventRow key={event.event_id} event={event} />)}</tbody>
           </table>
         </div>
-        {!displayedCalendar?.events.length ? <p className="status">No season calendar exists yet. Preview or persist a first-season calendar.</p> : null}
+        {!displayedCalendar?.events.length ? <p className="status">No persisted source calendar exists yet. Use the guarded Season Builder to author one.</p> : null}
       </SectionCard>
 
 

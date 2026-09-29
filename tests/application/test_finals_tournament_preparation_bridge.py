@@ -8,7 +8,9 @@ from beta_engine.application.canonical_tournament_preparation import (
 from beta_engine.domain.finals import (
     WorldTourFinalsParticipantSelectionConfiguration,
     WorldTourFinalsParticipantSelectionSnapshot,
+    WorldTourFinalsReplacementAuthority,
     WorldTourFinalsSelectedPlayer,
+    initial_effective_participant_state,
 )
 from beta_engine.infrastructure.db.engine import (
     DatabaseSettings,
@@ -17,6 +19,9 @@ from beta_engine.infrastructure.db.engine import (
 )
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
+)
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
 )
 from beta_engine.infrastructure.db.models import (
     Base,
@@ -150,6 +155,80 @@ def test_preparation_stops_finals_at_format_authority_after_shared_entry_field(p
     assert state.entry_seed_order_player_ids == field.direct_main_player_ids
     assert state.main_draw_size == 6
     assert state.can_apply_pre_draw_withdrawal is False
+    assert state.can_commit_draw_input is False
+    assert state.can_generate_draw is False
+    assert state.ready_for_match_schedule is False
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize(
+    ("status", "expected_blocker"),
+    [
+        ("awaiting_decision", "finals_replacement_candidate_decision_required"),
+        ("exhausted", "finals_replacement_reserve_exhausted"),
+    ],
+)
+def test_preparation_blocks_open_finals_replacement_vacancy(
+    prepared, status, expected_blocker
+):
+    factory, selected = prepared
+    with factory.begin() as session:
+        TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+        TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+        replacement_store = WorldTourFinalsReplacementStore(session)
+        effective = replacement_store.put_state(
+            initial_effective_participant_state(
+                selected,
+                command_id=f"initial:{selected.fingerprint}",
+            )
+        )
+        replacement_store.put_authority(
+            WorldTourFinalsReplacementAuthority(
+                run_id="run",
+                branch_id="branch",
+                target_season_index=0,
+                finals_event_id="FINALS",
+                vacancy_id="vacancy-p3",
+                race_snapshot_fingerprint=selected.race_snapshot_fingerprint,
+                initial_selection_fingerprint=selected.fingerprint,
+                source_effective_state_fingerprint=effective.fingerprint,
+                withdrawn_player_id="p3",
+                withdrawal_reason="injury",
+                status=status,
+                offered_candidate_player_id=(
+                    "p7" if status == "awaiting_decision" else None
+                ),
+                offered_candidate_race_rank=(
+                    7 if status == "awaiting_decision" else None
+                ),
+                command_id=f"{status}-p3",
+            )
+        )
+
+    state = CanonicalTournamentPreparationService(factory).inspect(
+        run_id="run",
+        branch_id="branch",
+        event_id="FINALS",
+    )
+
+    assert state.phase == "finals_replacement_required"
+    assert state.next_required_action == "review_finals_replacement"
+    assert state.blockers == (expected_blocker,)
+    assert state.entry_source_target_season_index == 0
     assert state.can_commit_draw_input is False
     assert state.can_generate_draw is False
     assert state.ready_for_match_schedule is False

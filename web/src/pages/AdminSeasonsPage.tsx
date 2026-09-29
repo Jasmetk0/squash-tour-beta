@@ -547,7 +547,7 @@ export function AdminSeasonsPage(): JSX.Element {
 
       </AdminSection>
 
-      <AdminSection title="Manual Artifact Tools / Advanced" subtitle="Low-level artifact generation and manual progression controls remain available for focused debugging." variant="advanced" badges={["ADVANCED"]}>
+      <AdminSection title="Legacy Artifact Inspection / Advanced" subtitle="Read-only inspection of persisted legacy Entry, Draw, Match, Result and Point Award artifacts for old saves and diagnostics." variant="readonly" badges={["LEGACY", "READ-ONLY"]}>
       <SectionCard title="Legacy Event Entries — read-only">
         <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Persisted legacy EntryList artifacts remain inspectable for old saves and diagnostics. Current tournament preparation must use the Run/Branch canonical Entry authority instead.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}

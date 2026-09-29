@@ -306,12 +306,15 @@ def _remap_tournament_sources(
             )
         if (
             source.canonical_result.schema_version
-            == "tournament_result_authority.v2"
+            in {"tournament_result_authority.v2", "tournament_result_authority.v3"}
             or source.canonical_awards.schema_version
-            == "tournament_point_award_authority.v4"
+            in {
+                "tournament_point_award_authority.v4",
+                "tournament_point_award_authority.v5",
+            }
         ):
             raise RankingForkRemapUnsupportedError(
-                "Hybrid tournament ranking source fork remap is not defined; "
+                "Group-format tournament ranking source fork remap is not defined; "
                 "standings/bracket/policy provenance cannot be retargeted generically"
             )
 

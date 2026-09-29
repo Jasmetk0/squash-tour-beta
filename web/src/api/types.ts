@@ -1268,6 +1268,7 @@ export type CanonicalTournamentPreparationState = {
   phase:
     | 'ranking_snapshot_required'
     | 'entry_field_required'
+    | 'finals_replacement_required'
     | 'wild_card_review_required'
     | 'draw_input_ready'
     | 'tournament_format_required'
@@ -1280,6 +1281,7 @@ export type CanonicalTournamentPreparationState = {
   next_required_action:
     | 'adopt_ranking_snapshot'
     | 'build_entry_field'
+    | 'review_finals_replacement'
     | 'review_wild_cards'
     | 'review_pre_draw_or_commit_draw_input'
     | 'configure_tournament_format'

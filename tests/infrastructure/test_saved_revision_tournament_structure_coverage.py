@@ -15,6 +15,8 @@ from beta_engine.infrastructure.db.models import (
     TournamentTopologyAuthorityModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
     WorldTourFinalsParticipantSelectionSnapshotModel,
+    WorldTourFinalsEffectiveParticipantStateModel,
+    WorldTourFinalsReplacementAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
 )
@@ -40,6 +42,8 @@ def test_simulation_slot_restore_preflight_covers_all_tournament_structure_autho
         WorldTourFinalsRaceSnapshotModel,
         WorldTourFinalsParticipantSelectionConfigurationModel,
         WorldTourFinalsParticipantSelectionSnapshotModel,
+        WorldTourFinalsEffectiveParticipantStateModel,
+        WorldTourFinalsReplacementAuthorityModel,
         TournamentGroupRulesPolicyModel,
         TournamentFormatAuthorityModel,
         TournamentTopologyAuthorityModel,

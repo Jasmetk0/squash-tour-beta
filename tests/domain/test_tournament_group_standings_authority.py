@@ -140,10 +140,17 @@ def played(
     termination: MatchTerminationReason = MatchTerminationReason.COMPLETED,
 ) -> MatchResult:
     loser = player_b if winner == player_a else player_a
-    winner_sets, loser_sets = score
+    player_a_sets, player_b_sets = score
+    winner_sets = player_a_sets if winner == player_a else player_b_sets
+    loser_sets = player_b_sets if winner == player_a else player_a_sets
+    if winner_sets <= loser_sets:
+        raise ValueError("winner must own the decisive set count")
     if set_points is None:
         set_points = tuple((11, 5) for _ in range(winner_sets + loser_sets))
-    set_winners = [winner] * winner_sets + [loser] * loser_sets
+    set_winners = []
+    for _ in range(loser_sets):
+        set_winners.extend((winner, loser))
+    set_winners.extend([winner] * (winner_sets - loser_sets))
     sets = []
     for index, (set_winner, points) in enumerate(
         zip(set_winners, set_points, strict=True), start=1

@@ -11054,20 +11054,11 @@ class AuthoritativeRunSimulationDriver:
             for event, _ in group_schedule_entries
         )
         group_tie_resolution_store = TournamentGroupTieResolutionAuthorityStore(session)
+        # Unresolved standings cases are meaningful only after every currently
+        # planned group match has a canonical result receipt. Populate them
+        # later, once the authoritative group ledger is known complete.
         group_unresolved_cases = tuple(
-            (
-                event,
-                (
-                    group_tie_resolution_store.current_unresolved_case(
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event.event_id,
-                    )
-                    if standings is None
-                    else None
-                ),
-            )
-            for event, standings in group_standings_entries
+            (event, None) for event, _ in group_standings_entries
         )
         topology_store = TournamentTopologyAuthorityStore(session)
         hybrid_entrants_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
@@ -11192,6 +11183,22 @@ class AuthoritativeRunSimulationDriver:
         plans = self._topology_for_session(
             session, run_id, branch_id, packages, week=week
         )
+        if group_schedule_entries and set(done) == set(plans):
+            group_unresolved_cases = tuple(
+                (
+                    event,
+                    (
+                        group_tie_resolution_store.current_unresolved_case(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            event_id=event.event_id,
+                        )
+                        if standings is None
+                        else None
+                    ),
+                )
+                for event, standings in group_standings_entries
+            )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
         if (

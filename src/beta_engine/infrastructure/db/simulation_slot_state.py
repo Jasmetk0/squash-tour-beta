@@ -536,7 +536,7 @@ def _validate_draw_input_rows_shape(rows):
             committed.committed_by_command_id,
             committed.field_sequence,
             committed.entry_field_fingerprint,
-            committed.tournament_ranking_authority_fingerprint,
+            committed.source_authority_fingerprint,
             committed.fingerprint,
         ) != (
             row.run_id,
@@ -2726,6 +2726,18 @@ def _validate_saved_draw_inputs_against_live_dependencies(
             "Saved Tournament Draw Input requires saved Tournament Entry Field history"
         )
 
+    from beta_engine.domain.finals import (
+        WorldTourFinalsParticipantSelectionSnapshot,
+    )
+    from beta_engine.domain.tournaments.draw_input_authority import (
+        TournamentDrawInputAuthority,
+    )
+    from beta_engine.domain.tournaments.format_authority import (
+        TournamentFormatAuthority,
+    )
+    from beta_engine.domain.tournaments.wild_card_authority import (
+        TournamentWildCardAuthority,
+    )
     from beta_engine.infrastructure.db.tournament_draw_input_authority import (
         TournamentDrawInputAuthorityStore,
     )
@@ -2741,10 +2753,6 @@ def _validate_saved_draw_inputs_against_live_dependencies(
     for row in entry_rows:
         entry_by_event.setdefault(row.event_id, []).append(row)
 
-    from beta_engine.domain.tournaments.wild_card_authority import (
-        TournamentWildCardAuthority,
-    )
-
     saved_wc_by_event = {
         value["event_id"]: TournamentWildCardAuthority.model_validate_json(
             value["payload_json"]
@@ -2752,9 +2760,28 @@ def _validate_saved_draw_inputs_against_live_dependencies(
         for value in (component or {}).get("wild_card_authorities", [])
     }
 
+    saved_finals_by_event: dict[str, WorldTourFinalsParticipantSelectionSnapshot] = {}
+    for value in (component or {}).get("finals_participant_snapshots", []):
+        snapshot = WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
+            value["payload_json"]
+        )
+        if snapshot.finals_event_id in saved_finals_by_event:
+            raise ValueError(
+                "Saved Finals participant selection contains duplicate event authority"
+            )
+        saved_finals_by_event[snapshot.finals_event_id] = snapshot
+
+    saved_formats_by_event = {
+        value["event_id"]: TournamentFormatAuthority.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("format_authorities", [])
+    }
+
     ranking_store = TournamentRankingSnapshotAuthorityStore(session)
     for value in draw_values:
         row = TournamentDrawInputAuthorityModel(**value)
+        committed = TournamentDrawInputAuthority.model_validate_json(row.payload_json)
         event_rows = sorted(
             entry_by_event.get(row.event_id, []),
             key=lambda item: item.sequence,
@@ -2763,6 +2790,31 @@ def _validate_saved_draw_inputs_against_live_dependencies(
             raise ValueError(
                 "Saved Tournament Draw Input references missing Entry Field history"
             )
+
+        if committed.source_kind == "finals_participant_selection":
+            selection = saved_finals_by_event.get(row.event_id)
+            if selection is None:
+                raise ValueError(
+                    "Saved Finals Draw Input references missing participant-selection authority"
+                )
+            format_authority = saved_formats_by_event.get(row.event_id)
+            if format_authority is None:
+                raise ValueError(
+                    "Saved Finals Draw Input references missing Tournament Format authority"
+                )
+            fields = TournamentEntryFieldStore.validate_rows(
+                event_rows,
+                finals_selection=selection,
+            )
+            TournamentDrawInputAuthorityStore.validate_row(
+                row,
+                field=fields[-1],
+                field_sequence=len(fields),
+                finals_selection=selection,
+                format_authority=format_authority,
+            )
+            continue
+
         authority = ranking_store.get(
             run_id=run_id,
             branch_id=branch_id,

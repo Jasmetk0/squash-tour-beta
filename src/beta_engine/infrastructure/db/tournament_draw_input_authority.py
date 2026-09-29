@@ -17,7 +17,13 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     TournamentDrawInputAuthorityModel,
 )
+from beta_engine.infrastructure.db.finals_participant_selection import (
+    WorldTourFinalsParticipantSelectionStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -64,10 +70,12 @@ class TournamentDrawInputAuthorityStore:
         cls,
         row: TournamentDrawInputAuthorityModel,
         *,
-        ranking_authority,
         field,
         field_sequence: int,
+        ranking_authority=None,
         wild_card_authority=None,
+        finals_selection=None,
+        format_authority=None,
     ) -> TournamentDrawInputAuthority:
         """Validate one frozen row against already-resolved target dependencies."""
 
@@ -79,7 +87,7 @@ class TournamentDrawInputAuthorityStore:
             committed.committed_by_command_id,
             committed.field_sequence,
             committed.entry_field_fingerprint,
-            committed.tournament_ranking_authority_fingerprint,
+            committed.source_authority_fingerprint,
             committed.fingerprint,
         ) != (
             row.run_id,
@@ -100,35 +108,75 @@ class TournamentDrawInputAuthorityStore:
             raise ValueError(
                 "Tournament Draw Input authority Entry Field fingerprint is stale"
             )
-        if ranking_authority.fingerprint != row.ranking_authority_fingerprint:
-            raise ValueError(
-                "Tournament Draw Input authority ranking fingerprint is stale"
+
+        if committed.source_kind == "finals_participant_selection":
+            if finals_selection is None or format_authority is None:
+                raise ValueError(
+                    "Finals Draw Input authority references missing Finals/Format authority"
+                )
+            if (
+                finals_selection.fingerprint
+                != committed.finals_participant_selection_fingerprint
+                or finals_selection.race_snapshot_fingerprint
+                != committed.finals_race_snapshot_fingerprint
+                or format_authority.fingerprint
+                != committed.tournament_format_authority_fingerprint
+            ):
+                raise ValueError(
+                    "Finals Draw Input source authority fingerprint is stale"
+                )
+            rebuilt = TournamentDrawInputAuthorityBuilder.build_finals_knockout(
+                selection=finals_selection,
+                field=field,
+                field_sequence=field_sequence,
+                format_authority=format_authority,
+                command_id=row.command_id,
+                draw_seed=committed.draw_seed,
+            )
+            expected_request = cls._finals_request(
+                finals_participant_selection_fingerprint=finals_selection.fingerprint,
+                finals_race_snapshot_fingerprint=finals_selection.race_snapshot_fingerprint,
+                tournament_format_authority_fingerprint=format_authority.fingerprint,
+                entry_field_fingerprint=field.fingerprint,
+                field_sequence=field_sequence,
+                draw_seed=committed.draw_seed,
+                main_seed_count=committed.main_seed_count,
+                bye_slots=committed.capacity.bye_slots,
+            )
+        else:
+            if ranking_authority is None:
+                raise ValueError(
+                    "Tournament Draw Input authority references missing ranking authority"
+                )
+            if ranking_authority.fingerprint != row.ranking_authority_fingerprint:
+                raise ValueError(
+                    "Tournament Draw Input authority ranking fingerprint is stale"
+                )
+            rebuilt = TournamentDrawInputAuthorityBuilder.build(
+                authority=ranking_authority,
+                field=field,
+                field_sequence=field_sequence,
+                command_id=row.command_id,
+                draw_seed=committed.draw_seed,
+                main_seed_count=committed.main_seed_count,
+                qualification_seed_count=committed.qualification_seed_count,
+                schema_version=committed.schema_version,
+                wild_card_authority=wild_card_authority,
+            )
+            expected_request = cls._request(
+                ranking_authority_fingerprint=ranking_authority.fingerprint,
+                entry_field_fingerprint=field.fingerprint,
+                field_sequence=field_sequence,
+                draw_seed=committed.draw_seed,
+                main_seed_count=committed.main_seed_count,
+                qualification_seed_count=committed.qualification_seed_count,
+                wild_card_authority_fingerprint=committed.wild_card_authority_fingerprint,
             )
 
-        rebuilt = TournamentDrawInputAuthorityBuilder.build(
-            authority=ranking_authority,
-            field=field,
-            field_sequence=field_sequence,
-            command_id=row.command_id,
-            draw_seed=committed.draw_seed,
-            main_seed_count=committed.main_seed_count,
-            qualification_seed_count=committed.qualification_seed_count,
-            schema_version=committed.schema_version,
-            wild_card_authority=wild_card_authority,
-        )
         if rebuilt != committed:
             raise ValueError(
                 "Tournament Draw Input authority does not replay from frozen inputs"
             )
-        expected_request = cls._request(
-            ranking_authority_fingerprint=ranking_authority.fingerprint,
-            entry_field_fingerprint=field.fingerprint,
-            field_sequence=field_sequence,
-            draw_seed=committed.draw_seed,
-            main_seed_count=committed.main_seed_count,
-            qualification_seed_count=committed.qualification_seed_count,
-            wild_card_authority_fingerprint=committed.wild_card_authority_fingerprint,
-        )
         if row.request_fingerprint != _request_fingerprint(expected_request):
             raise ValueError(
                 "Tournament Draw Input authority request fingerprint is corrupt"
@@ -138,15 +186,6 @@ class TournamentDrawInputAuthorityStore:
     def _load_row(
         self, row: TournamentDrawInputAuthorityModel
     ) -> TournamentDrawInputAuthority:
-        ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
-            run_id=row.run_id,
-            branch_id=row.branch_id,
-            event_id=row.event_id,
-        )
-        if ranking_authority is None:
-            raise ValueError(
-                "Tournament Draw Input authority references missing ranking authority"
-            )
         history = TournamentEntryFieldStore(self.session).history(
             run_id=row.run_id,
             branch_id=row.branch_id,
@@ -156,20 +195,52 @@ class TournamentDrawInputAuthorityStore:
             raise ValueError(
                 "Tournament Draw Input authority references missing Entry Field history"
             )
+        field = history[-1]
+        committed = TournamentDrawInputAuthority.model_validate_json(row.payload_json)
+        if committed.source_kind == "finals_participant_selection":
+            finals_selection = WorldTourFinalsParticipantSelectionStore(
+                self.session
+            ).find_snapshot_for_event(
+                run_id=row.run_id,
+                branch_id=row.branch_id,
+                event_id=row.event_id,
+            )
+            format_authority = TournamentFormatAuthorityStore(self.session).get(
+                run_id=row.run_id,
+                branch_id=row.branch_id,
+                event_id=row.event_id,
+            )
+            return self.validate_row(
+                row,
+                field=field,
+                field_sequence=len(history),
+                finals_selection=finals_selection,
+                format_authority=format_authority,
+            )
+
+        ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+            run_id=row.run_id,
+            branch_id=row.branch_id,
+            event_id=row.event_id,
+        )
+        if ranking_authority is None:
+            raise ValueError(
+                "Tournament Draw Input authority references missing ranking authority"
+            )
         wild_card_authority = (
             TournamentWildCardAuthorityStore(self.session).get(
                 run_id=row.run_id,
                 branch_id=row.branch_id,
                 event_id=row.event_id,
             )
-            if history[-1].capacity.wild_card_slots
+            if field.capacity.wild_card_slots
             else None
         )
         return self.validate_row(
             row,
-            ranking_authority=ranking_authority,
-            field=history[-1],
+            field=field,
             field_sequence=len(history),
+            ranking_authority=ranking_authority,
             wild_card_authority=wild_card_authority,
         )
 
@@ -192,6 +263,35 @@ class TournamentDrawInputAuthorityStore:
             "main_seed_count": main_seed_count,
             "qualification_seed_count": qualification_seed_count,
             "wild_card_authority_fingerprint": wild_card_authority_fingerprint,
+        }
+
+    @staticmethod
+    def _finals_request(
+        *,
+        finals_participant_selection_fingerprint: str,
+        finals_race_snapshot_fingerprint: str,
+        tournament_format_authority_fingerprint: str,
+        entry_field_fingerprint: str,
+        field_sequence: int,
+        draw_seed: int,
+        main_seed_count: int,
+        bye_slots: int,
+    ) -> dict:
+        return {
+            "source_kind": "finals_participant_selection",
+            "finals_participant_selection_fingerprint": (
+                finals_participant_selection_fingerprint
+            ),
+            "finals_race_snapshot_fingerprint": finals_race_snapshot_fingerprint,
+            "tournament_format_authority_fingerprint": (
+                tournament_format_authority_fingerprint
+            ),
+            "entry_field_fingerprint": entry_field_fingerprint,
+            "field_sequence": field_sequence,
+            "draw_seed": draw_seed,
+            "main_seed_count": main_seed_count,
+            "qualification_seed_count": 0,
+            "bye_slots": bye_slots,
         }
 
     def get(
@@ -229,71 +329,106 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament Draw Input requires a persisted Tournament Entry Field"
             )
         field = history[-1]
-        if field.source_kind == "finals_participant_selection":
-            raise ValueError(
-                "Finals Draw Input requires configured tournament-format authority"
-            )
-
-        ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
-            run_id=run_id,
-            branch_id=branch_id,
-            event_id=event_id,
-        )
-        if ranking_authority is None:
-            raise ValueError(
-                "Tournament Draw Input requires Tournament Ranking Snapshot authority"
-            )
         field_sequence = len(history)
-        wild_card_authority = (
-            TournamentWildCardAuthorityStore(self.session).get(
+
+        if field.source_kind == "finals_participant_selection":
+            if main_seed_count is not None or qualification_seed_count is not None:
+                raise ValueError(
+                    "Finals Draw Input derives seed counts from canonical bracket policy"
+                )
+            finals_selection = WorldTourFinalsParticipantSelectionStore(
+                self.session
+            ).find_snapshot_for_event(
                 run_id=run_id,
                 branch_id=branch_id,
                 event_id=event_id,
             )
-            if field.capacity.wild_card_slots
-            else None
-        )
-
-        # New commitments use v3 when canonical WC authority is required,
-        # otherwise they retain the Master-aligned v2 contract.
-        # counts are accepted only as a validation assertion; the canonical counts
-        # are derived from bracket capacity and actual player count.
-        proposed = TournamentDrawInputAuthorityBuilder.build(
-            authority=ranking_authority,
-            field=field,
-            field_sequence=field_sequence,
-            command_id=command_id,
-            draw_seed=draw_seed,
-            main_seed_count=main_seed_count,
-            qualification_seed_count=qualification_seed_count,
-            schema_version=(
-                "tournament_draw_input_authority.v3"
+            if finals_selection is None:
+                raise ValueError(
+                    "Finals Draw Input requires frozen participant-selection authority"
+                )
+            format_authority = TournamentFormatAuthorityStore(self.session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if format_authority is None:
+                raise ValueError(
+                    "Finals Draw Input requires configured tournament-format authority"
+                )
+            proposed = TournamentDrawInputAuthorityBuilder.build_finals_knockout(
+                selection=finals_selection,
+                field=field,
+                field_sequence=field_sequence,
+                format_authority=format_authority,
+                command_id=command_id,
+                draw_seed=draw_seed,
+            )
+            request = self._finals_request(
+                finals_participant_selection_fingerprint=finals_selection.fingerprint,
+                finals_race_snapshot_fingerprint=finals_selection.race_snapshot_fingerprint,
+                tournament_format_authority_fingerprint=format_authority.fingerprint,
+                entry_field_fingerprint=field.fingerprint,
+                field_sequence=field_sequence,
+                draw_seed=draw_seed,
+                main_seed_count=proposed.main_seed_count,
+                bye_slots=proposed.capacity.bye_slots,
+            )
+        else:
+            ranking_authority = TournamentRankingSnapshotAuthorityStore(self.session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if ranking_authority is None:
+                raise ValueError(
+                    "Tournament Draw Input requires Tournament Ranking Snapshot authority"
+                )
+            wild_card_authority = (
+                TournamentWildCardAuthorityStore(self.session).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                )
                 if field.capacity.wild_card_slots
-                else "tournament_draw_input_authority.v2"
-            ),
-            wild_card_authority=wild_card_authority,
-        )
-        request = self._request(
-            ranking_authority_fingerprint=ranking_authority.fingerprint,
-            entry_field_fingerprint=field.fingerprint,
-            field_sequence=field_sequence,
-            draw_seed=draw_seed,
-            main_seed_count=proposed.main_seed_count,
-            qualification_seed_count=proposed.qualification_seed_count,
-            wild_card_authority_fingerprint=proposed.wild_card_authority_fingerprint,
-        )
-        request_fp = _request_fingerprint(request)
+                else None
+            )
 
+            # New ranking-sourced commitments use v3 when canonical WC authority is
+            # required, otherwise they retain the Master-aligned v2 contract.
+            proposed = TournamentDrawInputAuthorityBuilder.build(
+                authority=ranking_authority,
+                field=field,
+                field_sequence=field_sequence,
+                command_id=command_id,
+                draw_seed=draw_seed,
+                main_seed_count=main_seed_count,
+                qualification_seed_count=qualification_seed_count,
+                schema_version=(
+                    "tournament_draw_input_authority.v3"
+                    if field.capacity.wild_card_slots
+                    else "tournament_draw_input_authority.v2"
+                ),
+                wild_card_authority=wild_card_authority,
+            )
+            request = self._request(
+                ranking_authority_fingerprint=ranking_authority.fingerprint,
+                entry_field_fingerprint=field.fingerprint,
+                field_sequence=field_sequence,
+                draw_seed=draw_seed,
+                main_seed_count=proposed.main_seed_count,
+                qualification_seed_count=proposed.qualification_seed_count,
+                wild_card_authority_fingerprint=proposed.wild_card_authority_fingerprint,
+            )
+
+        request_fp = _request_fingerprint(request)
         retry = self._command_row(
             run_id=run_id,
             branch_id=branch_id,
             command_id=command_id,
         )
         if retry is not None:
-            if (
-                retry.event_id != event_id
-                or retry.request_fingerprint != request_fp
-            ):
+            if retry.event_id != event_id or retry.request_fingerprint != request_fp:
                 raise TournamentDrawInputAuthorityConflict(
                     "Tournament Draw Input command ID already has a different request"
                 )
@@ -308,7 +443,6 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament event already has committed Draw Input authority"
             )
 
-        committed = proposed
         self.session.add(
             TournamentDrawInputAuthorityModel(
                 run_id=run_id,
@@ -316,12 +450,15 @@ class TournamentDrawInputAuthorityStore:
                 event_id=event_id,
                 command_id=command_id,
                 request_fingerprint=request_fp,
-                authority_fingerprint=committed.fingerprint,
-                ranking_authority_fingerprint=ranking_authority.fingerprint,
+                authority_fingerprint=proposed.fingerprint,
+                # Compatibility storage column: old rows carry Ranking authority;
+                # Finals v10 rows carry participant-selection source authority.
+                ranking_authority_fingerprint=proposed.source_authority_fingerprint,
                 entry_field_fingerprint=field.fingerprint,
                 field_sequence=field_sequence,
-                payload_json=committed.model_dump_json(),
+                payload_json=proposed.model_dump_json(),
             )
         )
         self.session.flush()
-        return committed
+        return proposed
+

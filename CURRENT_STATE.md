@@ -1,52 +1,51 @@
 # Current implementation and next action
 
-## Active implementation — bounded pure-groups closure and group-position payouts
+## Active implementation — World Tour Finals pure-knockout Draw adapter
 
-The canonical group-format chain now closes both decided forms without inventing a
-cross-group outcome rule.
+Pure-knockout World Tour Finals now enter the ordinary canonical Draw/Topology pipeline without
+inventing Official Ranking or application evidence.
 
-- `groups_knockout` keeps the existing two-phase Result v2 / Point Award v4 path;
-- hybrid players eliminated before the knockout now carry their actual finishing stage as
-  `group_position_N` instead of a generic `group_stage`;
-- the existing Edition `prize_money_table` supports explicit `group_position_N` keys.
-  Canonical Prize Money authority derives required group-format payout stages from the exact
-  Tournament Result, so partial/unknown/not-configured semantics stay in one financial model;
-- pure `groups` Tournament Editions may close only when the authoritative topology contains
-  exactly one group. Master v68 leaves a unique winner across multiple independent groups OPEN,
-  so multi-group pure events stop on `groups_only_unique_outcome_required`;
-- `TournamentResultAuthority v3` freezes the one-group final positions plus exact group-match
-  receipt provenance. Position 1 is the sporting champion and position 2 the finalist only
-  because the one final table itself is the complete competition outcome;
-- `TournamentPureGroupsRankingPolicyAuthority` is immutable and intentionally contains only an
-  explicit reward for **actually played group wins**. It does not invent ranking points for final
-  group positions;
-- `TournamentPointAwardAuthority v5` freezes exactly one
-  `group_played_wins` component/player, and canonical ranking ingestion revalidates its units
-  against Result v3 before emitting one Best-N tournament result/player;
-- group-table W/O remains separate from an actually played win. A nonzero played-win ranking
-  reward therefore blocks on `pure_groups_group_walkover_ranking_unresolved` when W/O evidence
-  exists; zero played-win reward remains representable without turning W/O into a match win;
-- the authoritative driver exposes exact pure-groups closure blockers and can close a ready
-  single-group Edition into the ordinary `OwnedTournamentRankingSource v5`/v6 bundle;
-- Admin can inspect/configure the immutable pure-groups ranking policy and explicitly retry the
-  idempotent close after sporting results already exist;
-- Saved Revision capture/restore carries the pure-groups ranking policy. Historical Simulation
-  fork and ranking-source fork remaps remain fail-closed until the complete group provenance chain
-  has a dedicated retargeting contract;
-- pure multi-group winner selection, cross-group comparison, the OPEN group RET table policy and
-  group-W/O Official Ranking reward semantics remain unresolved and are not filled by defaults;
-- canonical unranked pure-group completion still needs a non-ranking completion-source contract;
-  the current canonical Owned Tournament Ranking binding is intentionally ranked-only;
+- the frozen Finals participant-selection snapshot and its Race snapshot remain the sole source
+  for participant identity and initial seeding order;
+- `TournamentDrawInputAuthority v10` introduces an explicit
+  `finals_participant_selection` source contract with participant-selection, Race, Tournament
+  Format and Entry Field fingerprints. Its Official Ranking fingerprints are absent rather than
+  populated with synthetic values;
+- pure-knockout Finals require the immutable Tournament Format authority to be configured as
+  `knockout`; group and hybrid Finals continue through their already-separate topology path;
+- the fixed Finals participant field is adapted to the ordinary Master §15.2 classic bracket:
+  the smallest supported power-of-two capacity is derived from the actual participant count and
+  the difference is frozen as explicit BYEs;
+- the classic protected-seed count remains the ordinary Master §15.2 formula. The protected
+  players are selected only from the frozen Finals Race order; no current/later Official Ranking
+  is consulted and no Race reseeding occurs after a group stage;
+- the existing canonical Draw builder, bracket diagnostics and knockout Topology authority are
+  reused unchanged after the adapter boundary;
+- canonical Tournament Preparation now exposes the normal `draw_input_ready` ->
+  `draw_generation_ready` -> `draw_ready` sequence for pure-knockout Finals instead of the
+  former `knockout_draw_adapter_required` blocker;
+- Draw state reports the adapted classic bracket capacity/BYE geometry after Draw Input
+  commitment, while the Entry Field itself remains the original fixed Finals participant field;
+- persistence and Saved Revision row validation replay Draw Input from its real source authority.
+  The existing database column named `ranking_authority_fingerprint` is retained as a
+  compatibility storage slot, but Finals payload/domain authority does not claim that source is
+  an Official Ranking;
+- generic pre-draw withdrawal remains disabled for Finals. Historical fork remap already fails
+  closed at the Finals Entry Field boundary until dedicated Finals identity/remap support exists;
+- focused PR-critical coverage proves a six-player Finals produces an eight-slot bracket with two
+  BYEs, two protected seeds from Race order, ordinary Draw generation and ordinary knockout
+  Topology generation;
+- unresolved group-format policies, pure multi-group outcomes, RET/W/O ranking semantics and
+  unranked pure-group completion are unchanged;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice establishes **canonical single-group sporting/result/ranking closure and explicit
-group-position prize-money stages** while preserving every unresolved multi-group or abnormal-result
-boundary.
+This slice removes the last explicit pure-knockout Finals preparation adapter blocker while
+preserving the distinction between **Race authority** and **Official Ranking authority**.
 
-**Next after this PR:** implement the already-exposed `knockout_draw_adapter_required` dependency
-for World Tour Finals using the frozen Race-seeded participant/Entry Field authority to create the
-ordinary canonical Draw Input/Draw without fabricating an Official Ranking snapshot or reseeding.
-Keep unranked pure-group completion and the unresolved multi-group/RET/W/O policies separate.
+**Next after this PR:** implement the decided World Tour Finals withdrawal/replacement dependency
+from the frozen Race reserve order as its own authority, without reopening generic ranking-based
+Entry repair or inventing the still-undefined reserve-notification workflow. Preserve pre/post-draw
+history and fail closed wherever an exact replacement timing/repair rule is not already decided.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

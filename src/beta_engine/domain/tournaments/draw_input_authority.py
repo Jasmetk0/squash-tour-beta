@@ -31,6 +31,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v7",
     "tournament_draw_input_authority.v8",
     "tournament_draw_input_authority.v9",
+    "tournament_draw_input_authority.v10",
 ]
 
 
@@ -79,12 +80,14 @@ def canonical_qualification_seed_count(
 
 
 class TournamentDrawInputAuthority(FrozenInput):
-    """Frozen canonical field/ranking inputs at the pre-draw commitment boundary.
+    """Frozen canonical field/source inputs at the pre-draw commitment boundary.
 
-    This object deliberately does not invent bracket placement, Wild Card selection,
-    Lucky Loser, Final Commitment or Week Tournament Lock policy.  It freezes only
-    inputs already resolved by earlier authoritative stages so a later bracket
-    generator cannot fall back to mutable legacy Entry/Draw files.
+    The source is either the ordinary Tournament Ranking Snapshot authority or the
+    dedicated Finals participant/Race authority. This object deliberately does not
+    invent bracket placement, Wild Card selection, Lucky Loser, Final Commitment or
+    Week Tournament Lock policy. It freezes only inputs already resolved by earlier
+    authoritative stages so a later bracket generator cannot fall back to mutable
+    legacy Entry/Draw files.
     """
 
     schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1"
@@ -97,10 +100,44 @@ class TournamentDrawInputAuthority(FrozenInput):
     qualification_seed_count: int = Field(ge=0)
     field_sequence: int = Field(ge=1)
     capacity: TournamentEntryFieldCapacity
-    tournament_ranking_authority_fingerprint: str = Field(
-        pattern=r"^[0-9a-f]{64}$"
+    source_kind: Literal[
+        "ranking_snapshot",
+        "finals_participant_selection",
+    ] = Field(
+        default="ranking_snapshot",
+        exclude_if=lambda value: value == "ranking_snapshot",
     )
-    ranking_snapshot_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    tournament_ranking_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    ranking_snapshot_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_participant_selection_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_race_snapshot_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    tournament_format_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_target_season_index: int | None = Field(
+        default=None,
+        ge=0,
+        le=49,
+        exclude_if=lambda value: value is None,
+    )
     entry_field_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     wild_card_authority_fingerprint: str | None = Field(
         default=None,
@@ -157,6 +194,69 @@ class TournamentDrawInputAuthority(FrozenInput):
 
     @model_validator(mode="after")
     def validate_structure(self) -> "TournamentDrawInputAuthority":
+        if self.source_kind == "ranking_snapshot":
+            if (
+                self.tournament_ranking_authority_fingerprint is None
+                or self.ranking_snapshot_fingerprint is None
+            ):
+                raise ValueError(
+                    "Ranking-sourced Draw Input requires frozen ranking authority"
+                )
+            if self.schema_version == "tournament_draw_input_authority.v10":
+                raise ValueError("Finals Draw Input v10 requires Finals source authority")
+            if (
+                self.finals_participant_selection_fingerprint is not None
+                or self.finals_race_snapshot_fingerprint is not None
+                or self.tournament_format_authority_fingerprint is not None
+                or self.finals_target_season_index is not None
+            ):
+                raise ValueError(
+                    "Ranking-sourced Draw Input cannot carry Finals source authority"
+                )
+        else:
+            if self.schema_version != "tournament_draw_input_authority.v10":
+                raise ValueError(
+                    "Finals-sourced Draw Input requires tournament_draw_input_authority.v10"
+                )
+            if (
+                self.tournament_ranking_authority_fingerprint is not None
+                or self.ranking_snapshot_fingerprint is not None
+            ):
+                raise ValueError(
+                    "Finals Draw Input cannot fabricate Official Ranking authority"
+                )
+            if (
+                self.finals_participant_selection_fingerprint is None
+                or self.finals_race_snapshot_fingerprint is None
+                or self.tournament_format_authority_fingerprint is None
+                or self.finals_target_season_index is None
+            ):
+                raise ValueError(
+                    "Finals Draw Input requires participant, Race and Format provenance"
+                )
+            if self.capacity.geometry_kind != "classic_bracket":
+                raise ValueError(
+                    "Finals knockout Draw Input requires classic bracket geometry"
+                )
+            if (
+                self.capacity.qualification_draw_size
+                or self.capacity.qualifier_spots
+                or self.capacity.wild_card_slots
+                or self.qualification_player_ids
+                or self.qualifier_placeholder_ids
+                or self.wild_card_player_ids
+            ):
+                raise ValueError(
+                    "World Tour Finals has no separate Qualification or Wild Card draw"
+                )
+            if (
+                len(self.direct_main_player_ids) + self.capacity.bye_slots
+                != self.capacity.main_draw_size
+            ):
+                raise ValueError(
+                    "Finals knockout Draw Input must fill bracket capacity with participants and BYEs"
+                )
+
         if len(set(self.direct_main_player_ids)) != len(self.direct_main_player_ids):
             raise ValueError("Canonical Main field contains duplicate players")
         if len(set(self.qualification_player_ids)) != len(
@@ -387,6 +487,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v7",
             "tournament_draw_input_authority.v8",
             "tournament_draw_input_authority.v9",
+            "tournament_draw_input_authority.v10",
         }:
             expected_main_seeds = canonical_classic_seed_count(
                 bracket_capacity=self.capacity.main_draw_size,
@@ -456,6 +557,14 @@ class TournamentDrawInputAuthority(FrozenInput):
         ):
             raise ValueError("Historical Draw Input cannot carry canonical WC authority")
         return self
+
+    @property
+    def source_authority_fingerprint(self) -> str:
+        if self.source_kind == "finals_participant_selection":
+            assert self.finals_participant_selection_fingerprint is not None
+            return self.finals_participant_selection_fingerprint
+        assert self.tournament_ranking_authority_fingerprint is not None
+        return self.tournament_ranking_authority_fingerprint
 
     @property
     def fingerprint(self) -> str:
@@ -1243,6 +1352,94 @@ class TournamentDrawInputAuthorityBuilder:
             qualification_seed_vacancy_numbers=tuple(
                 sorted(qualification_seed_vacancies)
             ),
+        )
+
+    @staticmethod
+    def build_finals_knockout(
+        *,
+        selection,
+        field: TournamentEntryField,
+        field_sequence: int,
+        format_authority,
+        command_id: str,
+        draw_seed: int,
+    ) -> TournamentDrawInputAuthority:
+        """Adapt frozen Finals Race seeding into the ordinary classic Draw contract."""
+
+        if field.source_kind != "finals_participant_selection":
+            raise ValueError("Finals knockout Draw Input requires Finals Entry Field")
+        if (
+            selection.run_id,
+            selection.branch_id,
+            selection.finals_event_id,
+        ) != (field.run_id, field.branch_id, field.event_id):
+            raise ValueError("Finals participant selection scope differs from Entry Field")
+        if (
+            field.finals_participant_selection_fingerprint != selection.fingerprint
+            or field.finals_race_snapshot_fingerprint
+            != selection.race_snapshot_fingerprint
+            or field.finals_target_season_index != selection.target_season_index
+        ):
+            raise ValueError(
+                "Finals Entry Field is not bound to supplied participant/Race authority"
+            )
+        race_order = tuple(player.player_id for player in selection.participants)
+        if (
+            field.seed_order_player_ids != race_order
+            or field.direct_main_player_ids != race_order
+        ):
+            raise ValueError(
+                "Finals Entry Field no longer preserves frozen Race seed order"
+            )
+        if (
+            format_authority.run_id,
+            format_authority.branch_id,
+            format_authority.event_id,
+            format_authority.entry_field_fingerprint,
+            format_authority.target_season_index,
+        ) != (
+            field.run_id,
+            field.branch_id,
+            field.event_id,
+            field.fingerprint,
+            selection.target_season_index,
+        ):
+            raise ValueError("Finals Tournament Format authority is stale for Entry Field")
+        if format_authority.format_kind != "knockout":
+            raise ValueError(
+                "Finals classic Draw Input requires pure knockout Tournament Format"
+            )
+
+        capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+            main_entrant_count=len(race_order)
+        )
+        main_seed_count = canonical_classic_seed_count(
+            bracket_capacity=capacity.main_draw_size,
+            actual_player_count=len(race_order),
+        )
+        return TournamentDrawInputAuthority(
+            schema_version="tournament_draw_input_authority.v10",
+            run_id=field.run_id,
+            branch_id=field.branch_id,
+            event_id=field.event_id,
+            committed_by_command_id=command_id,
+            draw_seed=draw_seed,
+            main_seed_count=main_seed_count,
+            qualification_seed_count=0,
+            field_sequence=field_sequence,
+            capacity=capacity,
+            source_kind="finals_participant_selection",
+            finals_participant_selection_fingerprint=selection.fingerprint,
+            finals_race_snapshot_fingerprint=selection.race_snapshot_fingerprint,
+            tournament_format_authority_fingerprint=format_authority.fingerprint,
+            finals_target_season_index=selection.target_season_index,
+            entry_field_fingerprint=field.fingerprint,
+            direct_main_player_ids=race_order,
+            qualification_player_ids=(),
+            qualifier_placeholder_ids=(),
+            withdrawn_player_ids=(),
+            main_seed_player_ids=race_order[:main_seed_count],
+            qualification_seed_player_ids=(),
         )
 
     @staticmethod

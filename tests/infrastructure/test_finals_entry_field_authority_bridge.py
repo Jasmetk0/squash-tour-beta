@@ -27,7 +27,11 @@ from beta_engine.infrastructure.db.models import (
     Base,
     RunBranchModel,
     RunContainerModel,
+    TournamentDrawAuthorityModel,
+    TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
+    TournamentFormatAuthorityModel,
+    TournamentTopologyAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
@@ -37,8 +41,17 @@ from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
     restore_saved_simulation_slots,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_topology_authority import (
+    TournamentTopologyAuthorityStore,
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.infrastructure.db.tournament_entry_field import (
@@ -213,6 +226,85 @@ def test_finals_entry_field_rejects_generic_withdrawal_and_classic_draw_input(da
             )
 
 @pytest.mark.pr_critical
+def test_finals_pure_knockout_adapts_race_seeding_into_ordinary_draw_pipeline(database):
+    selected = install_selection(database, capacity=6)
+
+    with database.begin() as session:
+        field = TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-draw-input",
+            draw_seed=123,
+        )
+
+        race_order = tuple(player.player_id for player in selected.participants)
+        assert draw_input.schema_version == "tournament_draw_input_authority.v10"
+        assert draw_input.source_kind == "finals_participant_selection"
+        assert draw_input.tournament_ranking_authority_fingerprint is None
+        assert draw_input.ranking_snapshot_fingerprint is None
+        assert draw_input.finals_participant_selection_fingerprint == selected.fingerprint
+        assert draw_input.finals_race_snapshot_fingerprint == selected.race_snapshot_fingerprint
+        assert (
+            draw_input.tournament_format_authority_fingerprint
+            == format_authority.fingerprint
+        )
+        assert draw_input.entry_field_fingerprint == field.fingerprint
+        assert draw_input.direct_main_player_ids == race_order
+        assert draw_input.capacity.geometry_kind == "classic_bracket"
+        assert draw_input.capacity.main_draw_size == 8
+        assert draw_input.capacity.bye_slots == 2
+        assert draw_input.main_seed_count == 2
+        assert draw_input.main_seed_player_ids == race_order[:2]
+        assert draw_input.qualification_seed_count == 0
+
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw_input
+
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-draw",
+        )
+        assert draw.main.bracket_size == 8
+        assert len(draw.main.bye_slot_indexes) == 2
+        assert {
+            slot.seed_number: slot.player_id
+            for slot in draw.main.slots
+            if slot.seed_number is not None
+        } == {1: race_order[0], 2: race_order[1]}
+
+        topology = TournamentTopologyAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-topology",
+        )
+        assert topology.knockout_draw_fingerprint == draw.fingerprint
+
+
+@pytest.mark.pr_critical
 def test_finals_selection_blocks_generic_ranking_application_entry_creation(database):
     install_selection(database, capacity=6)
 
@@ -244,6 +336,32 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             target_season_index=0,
             command_id="build-finals-entry-field",
         )
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-draw-input",
+            draw_seed=123,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-draw",
+        )
+        topology = TournamentTopologyAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-topology",
+        )
         target_payload = {"content": {}}
         capture_saved_simulation_slots(
             session,
@@ -252,6 +370,30 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             branch_id="branch",
         )
 
+        session.execute(
+            delete(TournamentTopologyAuthorityModel).where(
+                TournamentTopologyAuthorityModel.run_id == "run",
+                TournamentTopologyAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentDrawAuthorityModel).where(
+                TournamentDrawAuthorityModel.run_id == "run",
+                TournamentDrawAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentDrawInputAuthorityModel).where(
+                TournamentDrawInputAuthorityModel.run_id == "run",
+                TournamentDrawInputAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentFormatAuthorityModel).where(
+                TournamentFormatAuthorityModel.run_id == "run",
+                TournamentFormatAuthorityModel.branch_id == "branch",
+            )
+        )
         session.execute(
             delete(TournamentEntryFieldVersionModel).where(
                 TournamentEntryFieldVersionModel.run_id == "run",
@@ -319,3 +461,23 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             branch_id="branch",
             event_id="FINALS",
         ) == (field,)
+        assert TournamentFormatAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == format_authority
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw_input
+        assert TournamentDrawAuthorityStore(session).get_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw
+        assert TournamentTopologyAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == topology

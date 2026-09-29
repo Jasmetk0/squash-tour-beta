@@ -23,8 +23,17 @@ from beta_engine.infrastructure.db.models import (
     RunBranchModel,
     RunContainerModel,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_input_authority import (
+    TournamentDrawInputAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
+)
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
 )
 
 
@@ -144,3 +153,80 @@ def test_preparation_stops_finals_at_format_authority_after_shared_entry_field(p
     assert state.can_commit_draw_input is False
     assert state.can_generate_draw is False
     assert state.ready_for_match_schedule is False
+
+
+@pytest.mark.pr_critical
+def test_preparation_routes_pure_knockout_finals_through_ordinary_draw_actions(prepared):
+    factory, selected = prepared
+    with factory.begin() as session:
+        field = TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+        TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+
+    service = CanonicalTournamentPreparationService(factory)
+    state = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        event_id="FINALS",
+    )
+    assert state.phase == "draw_input_ready"
+    assert state.next_required_action == "review_pre_draw_or_commit_draw_input"
+    assert state.blockers == ()
+    assert state.ranking_snapshot_ready is False
+    assert state.entry_source_authority_fingerprint == selected.fingerprint
+    assert state.entry_seed_order_player_ids == field.direct_main_player_ids
+    assert state.can_apply_pre_draw_withdrawal is False
+    assert state.can_commit_draw_input is True
+    assert state.can_generate_draw is False
+
+    with factory.begin() as session:
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-draw-input",
+            draw_seed=123,
+        )
+    assert draw_input.capacity.main_draw_size == 8
+    assert draw_input.capacity.bye_slots == 2
+
+    state = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        event_id="FINALS",
+    )
+    assert state.phase == "draw_generation_ready"
+    assert state.next_required_action == "generate_draw"
+    assert state.can_commit_draw_input is False
+    assert state.can_generate_draw is True
+
+    with factory.begin() as session:
+        TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-draw",
+        )
+
+    state = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        event_id="FINALS",
+    )
+    assert state.phase == "draw_ready"
+    assert state.next_required_action == "none"
+    assert state.can_generate_draw is False
+    assert state.ready_for_match_schedule is True

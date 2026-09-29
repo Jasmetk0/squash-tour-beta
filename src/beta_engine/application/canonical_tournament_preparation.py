@@ -467,15 +467,6 @@ class CanonicalTournamentPreparationService:
         ):
             phase = "group_match_execution_ready"
             next_action = "none"
-        elif (
-            finals_field
-            and format_authority is not None
-            and format_authority.format_kind == "knockout"
-            and not draw_input_ready
-        ):
-            phase = "knockout_draw_adapter_required"
-            next_action = "none"
-            blockers.append("finals_knockout_draw_adapter_required")
         elif wc_required and not wc_ready:
             phase = "wild_card_review_required"
             next_action = "review_wild_cards"
@@ -600,6 +591,7 @@ class CanonicalTournamentPreparationService:
             active_wild_card_player_ids=active_wc_ids,
             pre_draw_repair_open=(
                 field_ready
+                and not finals_field
                 and format_authority is None
                 and not draw_input_ready
             ),
@@ -666,15 +658,24 @@ class CanonicalTournamentPreparationService:
                 and not draw_input_ready
             ),
             can_commit_draw_input=(
-                ranking_ready
-                and field_ready
-                and not finals_field
+                field_ready
                 and wc_ready
-                and (
-                    format_authority is None
-                    or format_authority.format_kind == "knockout"
-                )
                 and not draw_input_ready
+                and (
+                    (
+                        not finals_field
+                        and ranking_ready
+                        and (
+                            format_authority is None
+                            or format_authority.format_kind == "knockout"
+                        )
+                    )
+                    or (
+                        finals_field
+                        and format_authority is not None
+                        and format_authority.format_kind == "knockout"
+                    )
+                )
             ),
             can_generate_draw=draw_input_ready and not draw_ready,
             ready_for_match_schedule=(

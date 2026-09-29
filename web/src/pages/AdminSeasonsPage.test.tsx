@@ -15,7 +15,6 @@ const api = vi.hoisted(() => ({
   getViewerPointBreakdown: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonLifecycle: vi.fn(),
-  buildSeasonCalendar: vi.fn(),
   getEventEntryList: vi.fn(),
   generateEventEntryList: vi.fn(),
   getEventDrawPackage: vi.fn(),
@@ -574,7 +573,6 @@ describe('AdminSeasonsPage', () => {
     api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: false, summary: { ranking: { table_type: 'ranking', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' }, race: { table_type: 'race', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' } }, metadata: null, validation_warnings: [], validation_errors: [] })
     api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [{ player_id: 'P-1' }], metadata: { season: '2000/01' }, validation_warnings: [], validation_errors: [] })
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
-    api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getSeasonLifecycle.mockResolvedValue(lifecycleResponse)
     api.getEventEntryList.mockResolvedValue(emptyEntryResult)
     api.generateEventEntryList.mockResolvedValue(entryResult)
@@ -712,26 +710,25 @@ describe('AdminSeasonsPage', () => {
   })
 
 
-  it('renders calendar builder controls and previews calendar', async () => {
+  it('keeps legacy source calendar read-only and routes authoring to Season Builder', async () => {
+    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Preview calendar' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Legacy source calendar — read-only here' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Preview calendar' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Persist calendar' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Overwrite existing calendar')).not.toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Preview calendar' }))
-    expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: true, seed: 12345 }))
+    const authoringLink = screen.getByRole('link', { name: 'Open guarded Season Builder' })
+    expect(authoringLink).toHaveAttribute('href', '/admin/seasons/build')
+
     const table = await screen.findByRole('table', { name: 'Season calendar events table' })
     expect(within(table).getByText('World A')).toBeInTheDocument()
     expect(screen.getByText('ranking_race_not_integrated: ranking/race integration not implemented yet')).toBeInTheDocument()
     expect(screen.getByText('example_error: example error')).toBeInTheDocument()
+    expect(api.getSeasonCalendar).toHaveBeenCalledWith('2000/2001')
   })
 
-  it('persists calendar with dry_run false', async () => {
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist calendar' }))
-    expect(api.buildSeasonCalendar).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
-  })
 
   it('renders Event Lifecycle section and loads read-only lifecycle status', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)

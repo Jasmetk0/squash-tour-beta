@@ -1413,6 +1413,10 @@ def _component(
     include_group_match_schedules=False,
     group_standings=(),
     include_group_standings=False,
+    group_tie_resolutions=(),
+    include_group_tie_resolutions=False,
+    hybrid_knockout_entrants=(),
+    include_hybrid_knockout_entrants=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1446,8 +1450,14 @@ def _component(
     )
     _validate_group_standings_rows_shape(
         group_standings,
+        group_tie_resolutions,
         group_match_schedules,
         groups,
+    )
+    _validate_hybrid_knockout_entrants_rows_shape(
+        hybrid_knockout_entrants,
+        topology_authorities,
+        group_standings,
     )
     _validate_finals_authority_rows_shape(
         finals_race_configurations,
@@ -1611,6 +1621,40 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in group_standings
+        ]
+    if include_group_tie_resolutions:
+        body["group_tie_resolutions"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "case_fingerprint": row.case_fingerprint,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "group_match_schedule_fingerprint": (
+                    row.group_match_schedule_fingerprint
+                ),
+                "payload_json": row.payload_json,
+            }
+            for row in group_tie_resolutions
+        ]
+    if include_hybrid_knockout_entrants:
+        body["hybrid_knockout_entrants"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "topology_authority_fingerprint": row.topology_authority_fingerprint,
+                "group_standings_authority_fingerprint": (
+                    row.group_standings_authority_fingerprint
+                ),
+                "payload_json": row.payload_json,
+            }
+            for row in hybrid_knockout_entrants
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [
@@ -2139,6 +2183,8 @@ def _load(payload, *, run_id, branch_id):
         "topology_authorities",
         "group_match_schedules",
         "group_standings",
+        "group_tie_resolutions",
+        "hybrid_knockout_entrants",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -2200,6 +2246,16 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("group_standings", [])
         ],
         include_group_standings="group_standings" in component,
+        group_tie_resolutions=[
+            TournamentGroupTieResolutionAuthorityModel(**value)
+            for value in component.get("group_tie_resolutions", [])
+        ],
+        include_group_tie_resolutions="group_tie_resolutions" in component,
+        hybrid_knockout_entrants=[
+            TournamentHybridKnockoutEntrantsAuthorityModel(**value)
+            for value in component.get("hybrid_knockout_entrants", [])
+        ],
+        include_hybrid_knockout_entrants="hybrid_knockout_entrants" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])
@@ -2272,6 +2328,10 @@ def _load(payload, *, run_id, branch_id):
                 "group_rules_policies",
                 "format_authorities",
                 "topology_authorities",
+                "group_match_schedules",
+                "group_standings",
+                "group_tie_resolutions",
+                "hybrid_knockout_entrants",
                 "finals_race_configurations",
                 "finals_race_snapshots",
                 "finals_participant_configurations",

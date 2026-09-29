@@ -80,12 +80,14 @@ def canonical_qualification_seed_count(
 
 
 class TournamentDrawInputAuthority(FrozenInput):
-    """Frozen canonical field/ranking inputs at the pre-draw commitment boundary.
+    """Frozen canonical field/source inputs at the pre-draw commitment boundary.
 
-    This object deliberately does not invent bracket placement, Wild Card selection,
-    Lucky Loser, Final Commitment or Week Tournament Lock policy.  It freezes only
-    inputs already resolved by earlier authoritative stages so a later bracket
-    generator cannot fall back to mutable legacy Entry/Draw files.
+    The source is either the ordinary Tournament Ranking Snapshot authority or the
+    dedicated Finals participant/Race authority. This object deliberately does not
+    invent bracket placement, Wild Card selection, Lucky Loser, Final Commitment or
+    Week Tournament Lock policy. It freezes only inputs already resolved by earlier
+    authoritative stages so a later bracket generator cannot fall back to mutable
+    legacy Entry/Draw files.
     """
 
     schema_version: DrawInputSchemaVersion = "tournament_draw_input_authority.v1"

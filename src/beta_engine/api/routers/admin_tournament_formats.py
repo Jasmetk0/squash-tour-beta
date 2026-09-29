@@ -292,6 +292,8 @@ class TournamentHybridClosureResponse(BaseModel):
     source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    prize_award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    prize_configuration_status: str
     total_ranking_points: int = Field(ge=0)
 
 
@@ -914,7 +916,11 @@ def close_hybrid_tournament_ranking_source(
                 event_id=event_id,
                 command_id=payload.command_id,
             )
-            if source.canonical_result is None or source.canonical_awards is None:
+            if (
+                source.canonical_result is None
+                or source.canonical_awards is None
+                or source.canonical_prize_awards is None
+            ):
                 raise ValueError("Hybrid Tournament closure produced incomplete source")
             return TournamentHybridClosureResponse(
                 run_id=run_id,
@@ -923,6 +929,10 @@ def close_hybrid_tournament_ranking_source(
                 source_fingerprint=source.fingerprint,
                 result_fingerprint=source.canonical_result.fingerprint,
                 award_fingerprint=source.canonical_awards.fingerprint,
+                prize_award_fingerprint=source.canonical_prize_awards.fingerprint,
+                prize_configuration_status=(
+                    source.canonical_prize_awards.configuration_status
+                ),
                 total_ranking_points=source.canonical_awards.total_ranking_points,
             )
     except (TournamentHybridClosureConflict, ValueError) as exc:

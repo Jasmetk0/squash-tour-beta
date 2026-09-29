@@ -3164,6 +3164,43 @@ def restore_saved_simulation_slots(
         standings_store = TournamentGroupStandingsAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_group_standings}):
             standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_group_tie_resolutions = session.scalars(
+        select(TournamentGroupTieResolutionAuthorityModel)
+        .where(
+            TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+            TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentGroupTieResolutionAuthorityModel.event_id,
+            TournamentGroupTieResolutionAuthorityModel.case_fingerprint,
+        )
+    ).all()
+    if live_group_tie_resolutions:
+        from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
+            TournamentGroupTieResolutionAuthorityStore,
+        )
+
+        resolution_store = TournamentGroupTieResolutionAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_group_tie_resolutions}):
+            resolution_store.list_authorities(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
+    live_hybrid_knockout_entrants = session.scalars(
+        select(TournamentHybridKnockoutEntrantsAuthorityModel)
+        .where(
+            TournamentHybridKnockoutEntrantsAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutEntrantsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridKnockoutEntrantsAuthorityModel.event_id)
+    ).all()
+    if live_hybrid_knockout_entrants:
+        from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
+            TournamentHybridKnockoutEntrantsAuthorityStore,
+        )
+
+        hybrid_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_hybrid_knockout_entrants}):
+            hybrid_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -3325,6 +3362,16 @@ def restore_saved_simulation_slots(
                 bool(live_group_standings)
                 or bool(expected is not None and "group_standings" in expected)
             ),
+            group_tie_resolutions=live_group_tie_resolutions,
+            include_group_tie_resolutions=(
+                bool(live_group_tie_resolutions)
+                or bool(expected is not None and "group_tie_resolutions" in expected)
+            ),
+            hybrid_knockout_entrants=live_hybrid_knockout_entrants,
+            include_hybrid_knockout_entrants=(
+                bool(live_hybrid_knockout_entrants)
+                or bool(expected is not None and "hybrid_knockout_entrants" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -3367,6 +3414,8 @@ def restore_saved_simulation_slots(
         or live_topology_authorities
         or live_group_match_schedules
         or live_group_standings
+        or live_group_tie_resolutions
+        or live_hybrid_knockout_entrants
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities
@@ -3377,9 +3426,21 @@ def restore_saved_simulation_slots(
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
     session.execute(
+        delete(TournamentHybridKnockoutEntrantsAuthorityModel).where(
+            TournamentHybridKnockoutEntrantsAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutEntrantsAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
         delete(TournamentGroupStandingsAuthorityModel).where(
             TournamentGroupStandingsAuthorityModel.run_id == run_id,
             TournamentGroupStandingsAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(TournamentGroupTieResolutionAuthorityModel).where(
+            TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+            TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
         )
     )
     session.execute(
@@ -3532,8 +3593,12 @@ def restore_saved_simulation_slots(
         session.add(TournamentTopologyAuthorityModel(**value))
     for value in (target or {}).get("group_match_schedules", []):
         session.add(TournamentGroupMatchScheduleAuthorityModel(**value))
+    for value in (target or {}).get("group_tie_resolutions", []):
+        session.add(TournamentGroupTieResolutionAuthorityModel(**value))
     for value in (target or {}).get("group_standings", []):
         session.add(TournamentGroupStandingsAuthorityModel(**value))
+    for value in (target or {}).get("hybrid_knockout_entrants", []):
+        session.add(TournamentHybridKnockoutEntrantsAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -3608,6 +3673,21 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_group_match_schedules}
         ):
             schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_group_tie_resolutions = (target or {}).get(
+        "group_tie_resolutions", []
+    )
+    if target_group_tie_resolutions:
+        from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
+            TournamentGroupTieResolutionAuthorityStore,
+        )
+
+        resolution_store = TournamentGroupTieResolutionAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_group_tie_resolutions}
+        ):
+            resolution_store.list_authorities(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
     target_group_standings = (target or {}).get("group_standings", [])
     if target_group_standings:
         from beta_engine.infrastructure.db.tournament_group_standings_authority import (
@@ -3619,6 +3699,19 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_group_standings}
         ):
             standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_hybrid_knockout_entrants = (target or {}).get(
+        "hybrid_knockout_entrants", []
+    )
+    if target_hybrid_knockout_entrants:
+        from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
+            TournamentHybridKnockoutEntrantsAuthorityStore,
+        )
+
+        hybrid_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_hybrid_knockout_entrants}
+        ):
+            hybrid_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

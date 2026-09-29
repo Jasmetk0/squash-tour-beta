@@ -58,6 +58,8 @@ class FinalsReplacementDecisionRequest(BaseModel):
     expected_preview_fingerprint: str
     expected_effective_state_fingerprint: str
     decision: Literal["decline", "accept"]
+    main_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
     command_id: str
 
 

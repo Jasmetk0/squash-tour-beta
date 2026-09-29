@@ -4888,21 +4888,6 @@ export type SimulateOneEventStepStatusValue = 'skipped' | 'planned' | 'succeeded
 
 export type SimulateOneEventDrawType = 'qualification_then_main' | 'qualification' | 'main'
 
-export type SimulateOneEventRequest = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  max_steps: number
-  stop_after_stage?: EventLifecycleStage | null
-  apply_points: boolean
-  publish_snapshot: boolean
-  allow_incomplete_results?: boolean
-  allow_blocked?: boolean
-  include_not_entered: boolean
-  max_alternates: number
-  simulate_draw_type: SimulateOneEventDrawType
-}
-
 export type SimulateOneEventStepStatus = {
   step: SimulateOneEventStepName
   status: SimulateOneEventStepStatusValue
@@ -4990,13 +4975,6 @@ export type SimulateOneEventReport = {
     final_lifecycle_fingerprint: string | null
   }
 }
-
-export type SimulateOneEventResult = {
-  report: SimulateOneEventReport | null
-  validation_warnings: string[]
-  validation_errors: string[]
-}
-
 
 export type SimulateSeasonWeekPreflightRequest = {
   season: string

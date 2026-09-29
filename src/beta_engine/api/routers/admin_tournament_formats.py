@@ -35,6 +35,13 @@ from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
 from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketAuthority,
 )
+from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
+    TournamentHybridRankingPolicyAuthority,
+)
+from beta_engine.application.hybrid_tournament_closure import (
+    TournamentHybridClosureConflict,
+    TournamentHybridClosureService,
+)
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityConflict,
     TournamentFormatAuthorityStore,
@@ -66,6 +73,10 @@ from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority
 from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketAuthorityConflict,
     TournamentHybridKnockoutBracketAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
+    TournamentHybridRankingPolicyAuthorityConflict,
+    TournamentHybridRankingPolicyAuthorityStore,
 )
 
 
@@ -143,6 +154,16 @@ class TournamentHybridKnockoutEntrantsGenerateRequest(BaseModel):
 
 
 class TournamentHybridKnockoutBracketGenerateRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+class TournamentHybridRankingPolicyConfigureRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+    played_group_win_points: int = Field(ge=0)
+    knockout_stage_points: tuple[tuple[str, int], ...] = Field(min_length=2)
+
+
+class TournamentHybridCloseRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
@@ -242,6 +263,36 @@ class TournamentHybridKnockoutBracketResponse(
                 "authority_fingerprint": authority.fingerprint,
             }
         )
+
+
+class TournamentHybridRankingPolicyResponse(
+    TournamentHybridRankingPolicyAuthority
+):
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentHybridRankingPolicyAuthority
+    ) -> "TournamentHybridRankingPolicyResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
+class TournamentHybridClosureResponse(BaseModel):
+    schema_version: Literal["tournament_hybrid_closure_response.v1"] = (
+        "tournament_hybrid_closure_response.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    source_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    total_ranking_points: int = Field(ge=0)
 
 
 @router.get(
@@ -770,6 +821,115 @@ def generate_hybrid_knockout_bracket(
             status_code=409,
             detail={
                 "code": "tournament_hybrid_knockout_bracket_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-ranking-policy",
+    response_model=TournamentHybridRankingPolicyResponse,
+)
+def inspect_hybrid_ranking_policy(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridRankingPolicyResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentHybridRankingPolicyAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Hybrid Ranking Policy authority not found",
+                )
+            return TournamentHybridRankingPolicyResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_ranking_policy_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-ranking-policy/configure",
+    response_model=TournamentHybridRankingPolicyResponse,
+    status_code=201,
+)
+def configure_hybrid_ranking_policy(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentHybridRankingPolicyConfigureRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridRankingPolicyResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            value = TournamentHybridRankingPolicyAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+                played_group_win_points=payload.played_group_win_points,
+                knockout_stage_points=payload.knockout_stage_points,
+            )
+            return TournamentHybridRankingPolicyResponse.from_authority(value)
+    except (TournamentHybridRankingPolicyAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_ranking_policy_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-ranking-close",
+    response_model=TournamentHybridClosureResponse,
+    status_code=201,
+)
+def close_hybrid_tournament_ranking_source(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentHybridCloseRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridClosureResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            source = TournamentHybridClosureService(session).close_from_current_receipts(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            if source.canonical_result is None or source.canonical_awards is None:
+                raise ValueError("Hybrid Tournament closure produced incomplete source")
+            return TournamentHybridClosureResponse(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                source_fingerprint=source.fingerprint,
+                result_fingerprint=source.canonical_result.fingerprint,
+                award_fingerprint=source.canonical_awards.fingerprint,
+                total_ranking_points=source.canonical_awards.total_ranking_points,
+            )
+    except (TournamentHybridClosureConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_closure_conflict",
                 "message": str(exc),
             },
         ) from exc

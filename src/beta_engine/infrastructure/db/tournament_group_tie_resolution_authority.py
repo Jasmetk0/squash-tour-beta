@@ -188,14 +188,6 @@ class TournamentGroupTieResolutionAuthorityStore:
         normalized_reason = admin_reason.strip()
         if not normalized_reason:
             raise ValueError("Group Tie Resolution requires an Admin reason")
-        if self.session.get(
-            TournamentGroupStandingsAuthorityModel,
-            (run_id, branch_id, event_id),
-        ) is not None:
-            raise TournamentGroupTieResolutionAuthorityConflict(
-                "Final Group Standings already exist and cannot be re-ordered"
-            )
-
         schedule = TournamentGroupMatchScheduleAuthorityStore(self.session).get(
             run_id=run_id,
             branch_id=branch_id,
@@ -203,6 +195,58 @@ class TournamentGroupTieResolutionAuthorityStore:
         )
         if schedule is None:
             raise ValueError("Group Tie Resolution requires frozen Group Match Schedule")
+
+        # Completed command replay must remain idempotent even after this decision
+        # moved the standings pipeline forward or final standings were frozen.
+        retry = self.session.scalar(
+            select(TournamentGroupTieResolutionAuthorityModel).where(
+                TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+                TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
+                TournamentGroupTieResolutionAuthorityModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            values = self.list_authorities(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            value = next(
+                (
+                    item
+                    for item in values
+                    if item.resolved_by_command_id == command_id
+                ),
+                None,
+            )
+            if value is None:
+                raise ValueError("Stored Group Tie Resolution command is corrupt")
+            request = self._request(
+                schedule_fingerprint=schedule.fingerprint,
+                case=value.case,
+                ordered_player_ids=value.decision.ordered_player_ids,
+                admin_reason=value.decision.admin_reason,
+            )
+            if (
+                retry.event_id != event_id
+                or retry.case_fingerprint != case_fingerprint
+                or value.case.fingerprint != case_fingerprint
+                or value.decision.ordered_player_ids != ordered_player_ids
+                or value.decision.admin_reason != normalized_reason
+                or retry.request_fingerprint != _request_fingerprint(request)
+            ):
+                raise TournamentGroupTieResolutionAuthorityConflict(
+                    "Group Tie Resolution command ID already has a different request"
+                )
+            return value
+
+        if self.session.get(
+            TournamentGroupStandingsAuthorityModel,
+            (run_id, branch_id, event_id),
+        ) is not None:
+            raise TournamentGroupTieResolutionAuthorityConflict(
+                "Final Group Standings already exist and cannot be re-ordered"
+            )
 
         case = self.current_unresolved_case(
             run_id=run_id,
@@ -238,31 +282,6 @@ class TournamentGroupTieResolutionAuthorityStore:
             admin_reason=decision.admin_reason,
         )
         request_fp = _request_fingerprint(request)
-
-        retry = self.session.scalar(
-            select(TournamentGroupTieResolutionAuthorityModel).where(
-                TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
-                TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
-                TournamentGroupTieResolutionAuthorityModel.command_id == command_id,
-            )
-        )
-        if retry is not None:
-            if (
-                retry.event_id != event_id
-                or retry.case_fingerprint != case.fingerprint
-                or retry.request_fingerprint != request_fp
-            ):
-                raise TournamentGroupTieResolutionAuthorityConflict(
-                    "Group Tie Resolution command ID already has a different request"
-                )
-            values = self.list_authorities(
-                run_id=run_id,
-                branch_id=branch_id,
-                event_id=event_id,
-            )
-            return next(
-                value for value in values if value.case.fingerprint == case.fingerprint
-            )
 
         existing = self.session.get(
             TournamentGroupTieResolutionAuthorityModel,

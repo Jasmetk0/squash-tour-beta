@@ -1998,6 +1998,43 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         standings_store = TournamentGroupStandingsAuthorityStore(session)
         for event_id in sorted({row.event_id for row in group_standings}):
             standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    group_tie_resolutions = session.scalars(
+        select(TournamentGroupTieResolutionAuthorityModel)
+        .where(
+            TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+            TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentGroupTieResolutionAuthorityModel.event_id,
+            TournamentGroupTieResolutionAuthorityModel.case_fingerprint,
+        )
+    ).all()
+    if group_tie_resolutions:
+        from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
+            TournamentGroupTieResolutionAuthorityStore,
+        )
+
+        resolution_store = TournamentGroupTieResolutionAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in group_tie_resolutions}):
+            resolution_store.list_authorities(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
+    hybrid_knockout_entrants = session.scalars(
+        select(TournamentHybridKnockoutEntrantsAuthorityModel)
+        .where(
+            TournamentHybridKnockoutEntrantsAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutEntrantsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridKnockoutEntrantsAuthorityModel.event_id)
+    ).all()
+    if hybrid_knockout_entrants:
+        from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
+            TournamentHybridKnockoutEntrantsAuthorityStore,
+        )
+
+        hybrid_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in hybrid_knockout_entrants}):
+            hybrid_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2118,6 +2155,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or topology_authorities
         or group_match_schedules
         or group_standings
+        or group_tie_resolutions
+        or hybrid_knockout_entrants
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -2153,6 +2192,10 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_group_match_schedules=bool(group_match_schedules),
             group_standings=group_standings,
             include_group_standings=bool(group_standings),
+            group_tie_resolutions=group_tie_resolutions,
+            include_group_tie_resolutions=bool(group_tie_resolutions),
+            hybrid_knockout_entrants=hybrid_knockout_entrants,
+            include_hybrid_knockout_entrants=bool(hybrid_knockout_entrants),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -2756,6 +2799,25 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentGroupStandingsAuthorityModel.event_id)
     ).all()
+    group_tie_resolutions = session.scalars(
+        select(TournamentGroupTieResolutionAuthorityModel)
+        .where(
+            TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+            TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            TournamentGroupTieResolutionAuthorityModel.event_id,
+            TournamentGroupTieResolutionAuthorityModel.case_fingerprint,
+        )
+    ).all()
+    hybrid_knockout_entrants = session.scalars(
+        select(TournamentHybridKnockoutEntrantsAuthorityModel)
+        .where(
+            TournamentHybridKnockoutEntrantsAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutEntrantsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridKnockoutEntrantsAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2818,6 +2880,8 @@ def _live_component_with_saved_shape(
             topology_authorities,
             group_match_schedules,
             group_standings,
+            group_tie_resolutions,
+            hybrid_knockout_entrants,
             wild_cards,
             draw_inputs,
             draws,
@@ -2863,6 +2927,10 @@ def _live_component_with_saved_shape(
         include_group_match_schedules="group_match_schedules" in shape_hint,
         group_standings=group_standings,
         include_group_standings="group_standings" in shape_hint,
+        group_tie_resolutions=group_tie_resolutions,
+        include_group_tie_resolutions="group_tie_resolutions" in shape_hint,
+        hybrid_knockout_entrants=hybrid_knockout_entrants,
+        include_hybrid_knockout_entrants="hybrid_knockout_entrants" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

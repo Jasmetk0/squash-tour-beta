@@ -71,6 +71,7 @@ class TournamentPointAwardAuthority(FrozenInput):
         "tournament_point_award_authority.v2",
         "tournament_point_award_authority.v3",
         "tournament_point_award_authority.v4",
+        "tournament_point_award_authority.v5",
     ] = "tournament_point_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -135,7 +136,7 @@ class TournamentPointAwardAuthority(FrozenInput):
                 raise ValueError(
                     "Point Award v3 requires at least one additive Qualification component"
                 )
-        else:
+        elif self.schema_version == "tournament_point_award_authority.v4":
             if has_point_override or has_qualification_component:
                 raise ValueError(
                     "Hybrid Point Award v4 cannot mix Draw/Qualification component metadata"
@@ -143,6 +144,19 @@ class TournamentPointAwardAuthority(FrozenInput):
             if not all(award.phase_components for award in self.awards):
                 raise ValueError(
                     "Hybrid Point Award v4 requires explicit phase components for every player"
+                )
+        else:
+            if has_point_override or has_qualification_component:
+                raise ValueError(
+                    "Pure-groups Point Award v5 cannot mix Draw/Qualification metadata"
+                )
+            if not all(
+                len(award.phase_components) == 1
+                and award.phase_components[0].component_id == "group_played_wins"
+                for award in self.awards
+            ):
+                raise ValueError(
+                    "Pure-groups Point Award v5 requires exactly one group-win component/player"
                 )
 
         distribution = dict(self.point_distribution)
@@ -155,6 +169,47 @@ class TournamentPointAwardAuthority(FrozenInput):
         ):
             raise ValueError("Tournament Point Award distribution snapshot mismatch")
         for award in self.awards:
+            if self.schema_version == "tournament_point_award_authority.v5":
+                component = award.phase_components[0]
+                configured = distribution.get("group:played_win")
+                if (
+                    component.distribution_key != "group:played_win"
+                    or configured is None
+                    or component.points_per_unit != configured
+                ):
+                    raise ValueError(
+                        "Pure-groups group-win component differs from frozen distribution"
+                    )
+                expected_points = component.points_awarded
+                if (
+                    award.ranking_points_awarded != expected_points
+                    or award.race_points_awarded != expected_points
+                ):
+                    raise ValueError(
+                        "Pure-groups Tournament Point Award total differs from group-win component"
+                    )
+                award_fingerprint_payload = {
+                    "schema_version": "tournament_player_point_award_authority.v5",
+                    "event_id": self.event_id,
+                    "seed": self.seed,
+                    "player_id": award.player_id,
+                    "reached_stage": award.reached_stage,
+                    "qualifier": award.qualifier,
+                    "seed_number": award.seed_number,
+                    "ranking_points_awarded": award.ranking_points_awarded,
+                    "race_points_awarded": award.race_points_awarded,
+                    "phase_components": [
+                        component.model_dump(mode="json")
+                    ],
+                    "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
+                    "source_player_result_fingerprint": award.source_player_result_fingerprint,
+                }
+                if award.award_fingerprint != _hash(award_fingerprint_payload):
+                    raise ValueError(
+                        "Pure-groups Tournament Point Award fingerprint mismatch"
+                    )
+                continue
+
             if self.schema_version == "tournament_point_award_authority.v4":
                 component_ids = tuple(
                     component.component_id for component in award.phase_components

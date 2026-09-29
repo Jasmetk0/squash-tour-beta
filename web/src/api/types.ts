@@ -1182,16 +1182,17 @@ export type CreateFinalsTournamentEntryFieldPayload = {
 }
 
 export type TournamentEntryField = {
-  schema_version: 'tournament_entry_field.v1' | 'tournament_entry_field.v2'
+  schema_version: 'tournament_entry_field.v1' | 'tournament_entry_field.v2' | 'tournament_entry_field.v3'
   run_id: string
   branch_id: string
   event_id: string
   mode: 'initial' | 'pre_draw_repair'
   capacity: TournamentEntryFieldCapacity
-  source_kind?: 'ranking_applications' | 'finals_participant_selection'
+  source_kind?: 'ranking_applications' | 'finals_participant_selection' | 'finals_effective_participant_state'
   tournament_ranking_authority_fingerprint: string | null
   ranking_snapshot_fingerprint: string | null
   finals_participant_selection_fingerprint?: string | null
+  finals_effective_participant_state_fingerprint?: string | null
   finals_race_snapshot_fingerprint?: string | null
   finals_target_season_index?: number | null
   seed_order_player_ids?: string[]
@@ -1260,7 +1261,7 @@ export type CanonicalTournamentPreparationState = {
   valid_submission_count?: number
   valid_main_submission_count?: number
   valid_qualification_submission_count?: number
-  entry_source_kind?: 'ranking_applications' | 'finals_participant_selection' | null
+  entry_source_kind?: 'ranking_applications' | 'finals_participant_selection' | 'finals_effective_participant_state' | null
   entry_source_authority_fingerprint?: string | null
   entry_source_target_season_index?: number | null
   entry_seed_order_player_ids?: string[]
@@ -3375,6 +3376,85 @@ export type RaceSnapshot = SnapshotRecordBase & {
 
 export type RankingSnapshotListResponse = { run_id: string; snapshots: RankingSnapshot[] }
 export type RaceSnapshotListResponse = { run_id: string; snapshots: RaceSnapshot[] }
+
+export type FinalsSelectedParticipant = {
+  player_id: string
+  race_rank: number
+  race_points: number
+  seed: number
+  qualification_source: 'direct_entry' | 'race'
+  direct_entry_event_ids: string[]
+}
+
+export type FinalsEffectiveParticipantState = {
+  schema_version: 'world_tour_finals_effective_participant_state.v1'
+  run_id: string
+  branch_id: string
+  target_season_index: number
+  finals_event_id: string
+  initial_selection_fingerprint: string
+  race_snapshot_fingerprint: string
+  predecessor_fingerprint: string | null
+  participants: FinalsSelectedParticipant[]
+  participant_capacity: number
+  withdrawn_player_ids: string[]
+  created_by_command_id: string
+}
+
+export type FinalsEffectiveParticipantStateResponse = {
+  state: FinalsEffectiveParticipantState | null
+  fingerprint: string | null
+}
+
+export type FinalsReplacementCandidateDecision = {
+  decision_id: string
+  player_id: string
+  race_rank: number
+  decision: 'declined' | 'accepted'
+}
+
+export type FinalsReplacementAuthority = {
+  schema_version: 'world_tour_finals_race_replacement_authority.v1'
+  run_id: string
+  branch_id: string
+  target_season_index: number
+  finals_event_id: string
+  vacancy_id: string
+  race_snapshot_fingerprint: string
+  initial_selection_fingerprint: string
+  source_effective_state_fingerprint: string
+  predecessor_authority_fingerprint: string | null
+  withdrawn_player_id: string
+  withdrawal_reason: string
+  decisions: FinalsReplacementCandidateDecision[]
+  status: 'awaiting_decision' | 'accepted' | 'exhausted'
+  offered_candidate_player_id: string | null
+  offered_candidate_race_rank: number | null
+  resulting_effective_state_fingerprint: string | null
+  command_id: string
+}
+
+export type FinalsReplacementAuthorityResponse = {
+  authority: FinalsReplacementAuthority
+  fingerprint: string
+}
+
+export type FinalsReplacementPreviewPayload = {
+  withdrawn_player_id: string
+  withdrawal_reason: string
+  vacancy_id: string
+  expected_effective_state_fingerprint: string | null
+  command_id: string
+}
+
+export type FinalsReplacementDecisionPayload = {
+  expected_preview_fingerprint: string
+  expected_effective_state_fingerprint: string
+  decision: 'decline' | 'accept'
+  main_process_window_ordinal: number | null
+  repair_draw_seed: number | null
+  command_id: string
+}
 
 export type FinalsQualificationResponse = {
   run_id: string

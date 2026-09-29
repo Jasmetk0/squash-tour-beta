@@ -9557,6 +9557,43 @@ class AuthoritativeRunSimulationDriver:
                 "Next Week requires Week Simulation Schedule v2 when one exists"
             )
 
+        if "pending_authoritative_groups" in position.transition_blockers:
+            topology_store = TournamentTopologyAuthorityStore(session)
+            bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+            unresolved_post_group_topology = []
+            for event, _ in self._group_match_schedules_for_week(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                week=week,
+            ):
+                topology = topology_store.get(
+                    run_id=request.run_id,
+                    branch_id=request.branch_id,
+                    event_id=event.event_id,
+                )
+                if topology is None:
+                    unresolved_post_group_topology.append(event.event_id)
+                elif topology.format_kind == "groups":
+                    unresolved_post_group_topology.append(event.event_id)
+                elif (
+                    topology.format_kind == "groups_knockout"
+                    and bracket_store.get(
+                        run_id=request.run_id,
+                        branch_id=request.branch_id,
+                        event_id=event.event_id,
+                    )
+                    is None
+                ):
+                    unresolved_post_group_topology.append(event.event_id)
+            if unresolved_post_group_topology:
+                raise ValueError(
+                    "Next Week cannot freeze across an unresolved group post-phase "
+                    "topology boundary; finish the group phase and freeze its required "
+                    "post-group authority first: "
+                    + ", ".join(sorted(unresolved_post_group_topology))
+                )
+
         allowed_in_progress = {
             "pending_authoritative_groups",
             "tournament_source_missing",

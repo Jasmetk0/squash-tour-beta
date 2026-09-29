@@ -24,6 +24,13 @@ from beta_engine.domain.tournaments.group_match_schedule_authority import (
 )
 from beta_engine.domain.tournaments.group_standings_authority import (
     TournamentGroupStandingsAuthority,
+    TournamentGroupStandingsTieCase,
+)
+from beta_engine.domain.tournaments.group_tie_resolution_authority import (
+    TournamentGroupTieResolutionAuthority,
+)
+from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
+    TournamentHybridKnockoutEntrantsAuthority,
 )
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityConflict,
@@ -44,6 +51,14 @@ from beta_engine.infrastructure.db.tournament_group_match_schedule_authority imp
 from beta_engine.infrastructure.db.tournament_group_standings_authority import (
     TournamentGroupStandingsAuthorityConflict,
     TournamentGroupStandingsAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
+    TournamentGroupTieResolutionAuthorityConflict,
+    TournamentGroupTieResolutionAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
+    TournamentHybridKnockoutEntrantsAuthorityConflict,
+    TournamentHybridKnockoutEntrantsAuthorityStore,
 )
 
 
@@ -109,6 +124,17 @@ class TournamentGroupStandingsGenerateRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
+class TournamentGroupTieResolveRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+    case_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    ordered_player_ids: tuple[str, ...] = Field(min_length=2)
+    admin_reason: str = Field(min_length=1, max_length=1000)
+
+
+class TournamentHybridKnockoutEntrantsGenerateRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
 class TournamentGroupMatchScheduleResponse(
     TournamentGroupMatchScheduleAuthority
 ):
@@ -137,6 +163,51 @@ class TournamentGroupStandingsResponse(TournamentGroupStandingsAuthority):
     def from_authority(
         cls, authority: TournamentGroupStandingsAuthority
     ) -> "TournamentGroupStandingsResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
+class TournamentGroupTieResolutionResponse(
+    TournamentGroupTieResolutionAuthority
+):
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentGroupTieResolutionAuthority
+    ) -> "TournamentGroupTieResolutionResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
+class TournamentGroupTieResolutionState(BaseModel):
+    schema_version: Literal["tournament_group_tie_resolution_state.v1"] = (
+        "tournament_group_tie_resolution_state.v1"
+    )
+    run_id: str
+    branch_id: str
+    event_id: str
+    unresolved_case: TournamentGroupStandingsTieCase | None
+    resolutions: tuple[TournamentGroupTieResolutionResponse, ...]
+
+
+class TournamentHybridKnockoutEntrantsResponse(
+    TournamentHybridKnockoutEntrantsAuthority
+):
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentHybridKnockoutEntrantsAuthority
+    ) -> "TournamentHybridKnockoutEntrantsResponse":
         return cls.model_validate(
             {
                 **authority.model_dump(mode="python"),
@@ -462,6 +533,149 @@ def generate_group_standings(
             status_code=409,
             detail={
                 "code": "tournament_group_standings_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/group-standings/tie-resolution",
+    response_model=TournamentGroupTieResolutionState,
+)
+def inspect_group_tie_resolution(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupTieResolutionState:
+    try:
+        with runtime.repository._session_factory() as session:
+            store = TournamentGroupTieResolutionAuthorityStore(session)
+            resolutions = store.list_authorities(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            unresolved = store.current_unresolved_case(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            return TournamentGroupTieResolutionState(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                unresolved_case=unresolved,
+                resolutions=tuple(
+                    TournamentGroupTieResolutionResponse.from_authority(value)
+                    for value in resolutions
+                ),
+            )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_tie_resolution_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/group-standings/tie-resolution",
+    response_model=TournamentGroupTieResolutionResponse,
+    status_code=201,
+)
+def resolve_group_standings_tie(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentGroupTieResolveRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupTieResolutionResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            value = TournamentGroupTieResolutionAuthorityStore(session).resolve(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+                case_fingerprint=payload.case_fingerprint,
+                ordered_player_ids=payload.ordered_player_ids,
+                admin_reason=payload.admin_reason,
+            )
+            return TournamentGroupTieResolutionResponse.from_authority(value)
+    except (TournamentGroupTieResolutionAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_tie_resolution_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-knockout-entrants",
+    response_model=TournamentHybridKnockoutEntrantsResponse,
+)
+def inspect_hybrid_knockout_entrants(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridKnockoutEntrantsResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentHybridKnockoutEntrantsAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Hybrid Knockout Entrants authority not found",
+                )
+            return TournamentHybridKnockoutEntrantsResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_knockout_entrants_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-knockout-entrants/generate",
+    response_model=TournamentHybridKnockoutEntrantsResponse,
+    status_code=201,
+)
+def generate_hybrid_knockout_entrants(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentHybridKnockoutEntrantsGenerateRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridKnockoutEntrantsResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            value = TournamentHybridKnockoutEntrantsAuthorityStore(session).generate(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            return TournamentHybridKnockoutEntrantsResponse.from_authority(value)
+    except (TournamentHybridKnockoutEntrantsAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_knockout_entrants_conflict",
                 "message": str(exc),
             },
         ) from exc

@@ -16,6 +16,7 @@ from beta_engine.domain.tournaments.group_standings_authority import (
     TournamentGroupStandingsBuilder,
     TournamentGroupStandingsUnresolvedTie,
     TournamentGroupStandingsUnsupportedResult,
+    TournamentGroupTieResolutionDecision,
 )
 from beta_engine.domain.tournaments.walkover_authority import TournamentWalkoverResult
 
@@ -356,3 +357,105 @@ def test_group_retirement_table_effect_fails_closed_until_master_decides_it():
         match="RET table points",
     ):
         receipt(schedule, retired, "1")
+
+
+
+@pytest.mark.pr_critical
+def test_unresolved_tie_accepts_only_explicit_resolution_for_exact_case_evidence():
+    schedule = schedule_three()
+    results = (
+        played(
+            "A-B",
+            "A",
+            "B",
+            "A",
+            (2, 1),
+            set_points=((11, 9), (11, 9), (11, 9)),
+        ),
+        played(
+            "A-C",
+            "A",
+            "C",
+            "C",
+            (1, 2),
+            set_points=((11, 9), (11, 9), (11, 9)),
+        ),
+        played(
+            "B-C",
+            "B",
+            "C",
+            "B",
+            (2, 1),
+            set_points=((11, 9), (11, 9), (11, 9)),
+        ),
+    )
+    receipts = tuple(
+        receipt(schedule, result, str(index))
+        for index, result in enumerate(results, start=1)
+    )
+
+    with pytest.raises(TournamentGroupStandingsUnresolvedTie) as unresolved:
+        TournamentGroupStandingsBuilder.build(
+            schedule=schedule, receipts=receipts, command_id="standings"
+        )
+    case = unresolved.value.case
+    assert case.group_index == 1
+    assert case.player_ids == ("A", "B", "C")
+    assert case.reason == "automatic_tie_breaks_exhausted"
+
+    decision = TournamentGroupTieResolutionDecision(
+        case=case,
+        ordered_player_ids=("C", "A", "B"),
+        admin_reason="Reviewed exact unresolved table evidence.",
+    )
+    authority = TournamentGroupStandingsBuilder.build(
+        schedule=schedule,
+        receipts=receipts,
+        command_id="standings-after-admin",
+        admin_tie_resolutions=(decision,),
+    )
+    assert authority.schema_version == "tournament_group_standings_authority.v2"
+    assert authority.admin_tie_resolutions == (decision,)
+    assert tuple(row.player_id for row in authority.groups[0].rows) == (
+        "C",
+        "A",
+        "B",
+    )
+
+    stale_receipts = (
+        receipts[0].model_copy(update={"result_fingerprint": fp("9")}),
+        *receipts[1:],
+    )
+    with pytest.raises(TournamentGroupStandingsUnresolvedTie) as stale:
+        TournamentGroupStandingsBuilder.build(
+            schedule=schedule,
+            receipts=stale_receipts,
+            command_id="stale-resolution",
+            admin_tie_resolutions=(decision,),
+        )
+    assert stale.value.case.fingerprint != case.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_admin_resolution_must_order_exactly_the_players_in_the_case():
+    schedule = schedule_three()
+    results = (
+        played("A-B", "A", "B", "A", (2, 1)),
+        played("A-C", "A", "C", "C", (1, 2)),
+        played("B-C", "B", "C", "B", (2, 1)),
+    )
+    receipts = tuple(
+        receipt(schedule, result, str(index))
+        for index, result in enumerate(results, start=1)
+    )
+    with pytest.raises(TournamentGroupStandingsUnresolvedTie) as unresolved:
+        TournamentGroupStandingsBuilder.build(
+            schedule=schedule, receipts=receipts, command_id="standings"
+        )
+
+    with pytest.raises(ValueError, match="exactly the unresolved players"):
+        TournamentGroupTieResolutionDecision(
+            case=unresolved.value.case,
+            ordered_player_ids=("A", "B", "X"),
+            admin_reason="invalid",
+        )

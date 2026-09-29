@@ -164,6 +164,15 @@ from beta_engine.infrastructure.db.tournament_group_match_schedule_authority imp
 from beta_engine.infrastructure.db.tournament_group_standings_authority import (
     TournamentGroupStandingsAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
+    TournamentGroupTieResolutionAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
+    TournamentHybridKnockoutEntrantsAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_topology_authority import (
+    TournamentTopologyAuthorityStore,
+)
 from beta_engine.infrastructure.db.week_tournament_lock import (
     WeekTournamentLockStore,
     derive_week_tournament_lock_authority,
@@ -11044,6 +11053,36 @@ class AuthoritativeRunSimulationDriver:
             )
             for event, _ in group_schedule_entries
         )
+        group_tie_resolution_store = TournamentGroupTieResolutionAuthorityStore(session)
+        # Unresolved standings cases are meaningful only after every currently
+        # planned group match has a canonical result receipt. Populate them
+        # later, once the authoritative group ledger is known complete.
+        group_unresolved_cases = tuple(
+            (event, None) for event, _ in group_standings_entries
+        )
+        topology_store = TournamentTopologyAuthorityStore(session)
+        hybrid_entrants_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
+        group_post_standings_entries = tuple(
+            (
+                event,
+                standings,
+                topology_store.get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event.event_id,
+                ),
+                (
+                    hybrid_entrants_store.get(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event.event_id,
+                    )
+                    if standings is not None
+                    else None
+                ),
+            )
+            for event, standings in group_standings_entries
+        )
         schedule = self._schedule(session, run_id, branch_id, week)
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
@@ -11144,6 +11183,22 @@ class AuthoritativeRunSimulationDriver:
         plans = self._topology_for_session(
             session, run_id, branch_id, packages, week=week
         )
+        if group_schedule_entries and set(done) == set(plans):
+            group_unresolved_cases = tuple(
+                (
+                    event,
+                    (
+                        group_tie_resolution_store.current_unresolved_case(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            event_id=event.event_id,
+                        )
+                        if standings is None
+                        else None
+                    ),
+                )
+                for event, standings in group_standings_entries
+            )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
         if (
@@ -11269,10 +11324,41 @@ class AuthoritativeRunSimulationDriver:
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
         elif group_schedule_entries:
-            if any(authority is None for _, authority in group_standings_entries):
-                blockers.append("group_standings_authority_required")
-            else:
-                blockers.append("group_post_standings_progression_required")
+            for event, standings in group_standings_entries:
+                if standings is not None:
+                    continue
+                unresolved = next(
+                    case
+                    for unresolved_event, case in group_unresolved_cases
+                    if unresolved_event.event_id == event.event_id
+                )
+                blocker = (
+                    "group_standings_admin_resolution_required"
+                    if unresolved is not None
+                    else "group_standings_authority_required"
+                )
+                if blocker not in blockers:
+                    blockers.append(blocker)
+
+            if all(
+                standings is not None
+                for _, standings in group_standings_entries
+            ):
+                for event, standings, topology, entrants in group_post_standings_entries:
+                    if topology is None:
+                        if "tournament_topology_missing" not in blockers:
+                            blockers.append("tournament_topology_missing")
+                        continue
+                    if topology.format_kind == "groups_knockout":
+                        blocker = (
+                            "hybrid_knockout_entrants_authority_required"
+                            if entrants is None
+                            else "hybrid_knockout_execution_required"
+                        )
+                    else:
+                        blocker = "groups_only_closure_required"
+                    if blocker not in blockers:
+                        blockers.append(blocker)
         if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
         if terminal is None and explicit_empty_context is None:
@@ -11353,6 +11439,21 @@ class AuthoritativeRunSimulationDriver:
                     authority.fingerprint if authority is not None else None,
                 )
                 for event, authority in group_standings_entries
+            ],
+            "group_unresolved_ties": [
+                (
+                    event.event_id,
+                    case.fingerprint if case is not None else None,
+                )
+                for event, case in group_unresolved_cases
+            ],
+            "group_post_standings": [
+                (
+                    event.event_id,
+                    topology.format_kind if topology is not None else None,
+                    entrants.fingerprint if entrants is not None else None,
+                )
+                for event, _, topology, entrants in group_post_standings_entries
             ],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)

@@ -141,10 +141,15 @@
     to exact result fingerprints, carry it through Saved Revision, fail historical fork remap
     closed and stop explicitly when RET policy or the exhausted automatic tie-break case remains
     unresolved instead of inventing a fallback.
-41. Next: add audited explicit Admin resolution for standings ties that survive every automatic
-    criterion, then materialize groups+knockout entrants from frozen final group positions
-    without Race reseeding. Keep pure-groups tournament closure and the pure-knockout Finals
-    Draw adapter as separate explicit dependencies rather than fabricating Official Ranking.
+41. ✅ Add audited explicit Admin resolution for standings ties that survive every automatic
+    criterion, bind each decision to the exact current result evidence, freeze used resolution
+    provenance into final standings, and materialize groups+knockout first-round entrants only
+    from final group positions plus the preconfigured crossings; preserve exact retries, Saved
+    Revision replay and fail-closed historical fork behavior with no Race/Ranking reseeding.
+42. Next: materialize and execute the configured hybrid knockout bracket from the frozen entrant
+    authority through canonical Simulation Slots / Match Engine, preserving the predefined
+    crossings. Keep pure-groups tournament closure, the OPEN group RET policy and the
+    pure-knockout Finals Draw adapter as separate explicit dependencies.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

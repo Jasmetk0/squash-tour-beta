@@ -37,16 +37,71 @@ class TournamentGroupStandingsUnsupportedResult(ValueError):
     """Completed group evidence exists but Master does not define its table effect."""
 
 
+class TournamentGroupStandingsTieCase(FrozenInput):
+    """Exact unresolved tie evidence that requires an explicit Admin decision."""
+
+    schema_version: Literal["tournament_group_standings_tie_case.v1"] = (
+        "tournament_group_standings_tie_case.v1"
+    )
+    group_index: int = Field(ge=1, le=64)
+    player_ids: tuple[str, ...] = Field(min_length=2)
+    reason: str = Field(min_length=1, max_length=128)
+    source_match_results: tuple[tuple[str, str], ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_case(self) -> "TournamentGroupStandingsTieCase":
+        if self.player_ids != tuple(sorted(self.player_ids)):
+            raise ValueError("Unresolved tie player IDs must use canonical sorted order")
+        if len(self.player_ids) != len(set(self.player_ids)):
+            raise ValueError("Unresolved tie cannot contain duplicate players")
+        if len(self.source_match_results) != len(
+            {match_id for match_id, _ in self.source_match_results}
+        ):
+            raise ValueError("Unresolved tie evidence contains duplicate match identity")
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(self.model_dump(mode="json"))
+
+
+class TournamentGroupTieResolutionDecision(FrozenInput):
+    """One audited Admin ordering for one exact unresolved tie case."""
+
+    schema_version: Literal["tournament_group_tie_resolution_decision.v1"] = (
+        "tournament_group_tie_resolution_decision.v1"
+    )
+    case: TournamentGroupStandingsTieCase
+    ordered_player_ids: tuple[str, ...] = Field(min_length=2)
+    admin_reason: str = Field(min_length=1, max_length=1000)
+
+    @model_validator(mode="after")
+    def validate_order(self) -> "TournamentGroupTieResolutionDecision":
+        if len(self.ordered_player_ids) != len(set(self.ordered_player_ids)):
+            raise ValueError("Admin tie resolution cannot contain duplicate players")
+        if set(self.ordered_player_ids) != set(self.case.player_ids):
+            raise ValueError(
+                "Admin tie resolution must order exactly the unresolved players"
+            )
+        return self
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(self.model_dump(mode="json"))
+
+
 class TournamentGroupStandingsUnresolvedTie(ValueError):
     """The decided automatic criteria cannot produce one unique group order."""
 
-    def __init__(self, group_index: int, player_ids: tuple[str, ...], reason: str):
-        self.group_index = group_index
-        self.player_ids = player_ids
-        self.reason = reason
+    def __init__(self, case: TournamentGroupStandingsTieCase):
+        self.case = case
+        self.group_index = case.group_index
+        self.player_ids = case.player_ids
+        self.reason = case.reason
         super().__init__(
             "group standings require explicit Admin resolution: "
-            f"group={group_index}, players={','.join(player_ids)}, reason={reason}"
+            f"group={case.group_index}, players={','.join(case.player_ids)}, "
+            f"reason={case.reason}, case={case.fingerprint}"
         )
 
 
@@ -121,9 +176,10 @@ class TournamentGroupStanding(FrozenInput):
 class TournamentGroupStandingsAuthority(FrozenInput):
     """Immutable final table order for one fully completed group stage."""
 
-    schema_version: Literal["tournament_group_standings_authority.v1"] = (
-        "tournament_group_standings_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_group_standings_authority.v1",
+        "tournament_group_standings_authority.v2",
+    ] = "tournament_group_standings_authority.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
@@ -140,6 +196,7 @@ class TournamentGroupStandingsAuthority(FrozenInput):
         "group_wo_win_max_points_no_fabricated_ratios.v1"
     ] = "group_wo_win_max_points_no_fabricated_ratios.v1"
     source_results: tuple[TournamentGroupResultReceipt, ...] = Field(min_length=1)
+    admin_tie_resolutions: tuple[TournamentGroupTieResolutionDecision, ...] = ()
     groups: tuple[TournamentGroupStanding, ...] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -151,11 +208,19 @@ class TournamentGroupStandingsAuthority(FrozenInput):
         result_ids = tuple(receipt.match_id for receipt in self.source_results)
         if len(result_ids) != len(set(result_ids)):
             raise ValueError("Group standings contains duplicate source match identity")
+        resolution_cases = tuple(
+            decision.case.fingerprint for decision in self.admin_tie_resolutions
+        )
+        if len(resolution_cases) != len(set(resolution_cases)):
+            raise ValueError("Group standings contains duplicate Admin tie resolution")
         return self
 
     @property
     def fingerprint(self) -> str:
-        return _fingerprint(self.model_dump(mode="json"))
+        payload = self.model_dump(mode="json")
+        if self.schema_version == "tournament_group_standings_authority.v1":
+            payload.pop("admin_tie_resolutions", None)
+        return _fingerprint(payload)
 
 
 @dataclass
@@ -235,6 +300,11 @@ class TournamentGroupStandingsBuilder:
         schedule: TournamentGroupMatchScheduleAuthority,
         receipts: tuple[TournamentGroupResultReceipt, ...],
         command_id: str,
+        admin_tie_resolutions: tuple[TournamentGroupTieResolutionDecision, ...] = (),
+        schema_version: Literal[
+            "tournament_group_standings_authority.v1",
+            "tournament_group_standings_authority.v2",
+        ] = "tournament_group_standings_authority.v2",
     ) -> TournamentGroupStandingsAuthority:
         if not command_id.strip() or len(command_id) > 128:
             raise ValueError("Group Standings requires a valid command ID")
@@ -261,6 +331,14 @@ class TournamentGroupStandingsBuilder:
             }:
                 raise ValueError("Group result receipt participants differ from schedule")
             ordered_receipts.append(receipt)
+
+        resolution_by_case = {
+            decision.case.fingerprint: decision
+            for decision in admin_tie_resolutions
+        }
+        if len(resolution_by_case) != len(admin_tie_resolutions):
+            raise ValueError("Duplicate Admin tie resolution case")
+        used_resolution_cases: set[str] = set()
 
         groups: list[TournamentGroupStanding] = []
         for group_index in range(1, schedule.group_count + 1):
@@ -295,6 +373,8 @@ class TournamentGroupStandingsBuilder:
                 group_index=group_index,
                 stats=stats,
                 receipts=group_receipts,
+                admin_tie_resolutions=resolution_by_case,
+                used_resolution_cases=used_resolution_cases,
             )
             rows = tuple(
                 TournamentGroupStandingRow(
@@ -323,7 +403,13 @@ class TournamentGroupStandingsBuilder:
             if receipt.match_id not in scheduled_by_id:
                 raise ValueError("Unknown group result receipt")
 
+        if set(resolution_by_case) != used_resolution_cases:
+            raise ValueError(
+                "Admin tie resolution does not match any current unresolved tie case"
+            )
+
         return TournamentGroupStandingsAuthority(
+            schema_version=schema_version,
             run_id=schedule.run_id,
             branch_id=schedule.branch_id,
             event_id=schedule.event_id,
@@ -331,6 +417,10 @@ class TournamentGroupStandingsBuilder:
             group_match_schedule_fingerprint=schedule.fingerprint,
             group_rules_policy_fingerprint=schedule.group_rules_policy_fingerprint,
             source_results=tuple(ordered_receipts),
+            admin_tie_resolutions=tuple(
+                resolution_by_case[case_fingerprint]
+                for case_fingerprint in sorted(used_resolution_cases)
+            ),
             groups=tuple(groups),
         )
 
@@ -388,6 +478,8 @@ class TournamentGroupStandingsBuilder:
         group_index: int,
         stats: dict[str, _MutableStanding],
         receipts: tuple[TournamentGroupResultReceipt, ...],
+        admin_tie_resolutions: dict[str, TournamentGroupTieResolutionDecision],
+        used_resolution_cases: set[str],
     ) -> tuple[str, ...]:
         primary: dict[tuple[int, int], list[str]] = {}
         for player_id, row in stats.items():
@@ -403,6 +495,8 @@ class TournamentGroupStandingsBuilder:
                     stats=stats,
                     receipts=receipts,
                     metric="games",
+                    admin_tie_resolutions=admin_tie_resolutions,
+                    used_resolution_cases=used_resolution_cases,
                 )
             )
         return tuple(ordered)
@@ -415,6 +509,8 @@ class TournamentGroupStandingsBuilder:
         stats: dict[str, _MutableStanding],
         receipts: tuple[TournamentGroupResultReceipt, ...],
         metric: Literal["games", "points"],
+        admin_tie_resolutions: dict[str, TournamentGroupTieResolutionDecision],
+        used_resolution_cases: set[str],
     ) -> tuple[str, ...]:
         if len(player_ids) == 1:
             return player_ids
@@ -423,6 +519,8 @@ class TournamentGroupStandingsBuilder:
                 group_index=group_index,
                 player_ids=player_ids,
                 receipts=receipts,
+                admin_tie_resolutions=admin_tie_resolutions,
+                used_resolution_cases=used_resolution_cases,
             )
 
         ratio_pairs = {
@@ -434,10 +532,13 @@ class TournamentGroupStandingsBuilder:
             for player_id in player_ids
         }
         if any(won == 0 and lost == 0 for won, lost in ratio_pairs.values()):
-            raise TournamentGroupStandingsUnresolvedTie(
-                group_index,
-                tuple(sorted(player_ids)),
-                f"{metric}_ratio_has_insufficient_played_data",
+            return TournamentGroupStandingsBuilder._admin_resolution_or_raise(
+                group_index=group_index,
+                player_ids=player_ids,
+                receipts=receipts,
+                reason=f"{metric}_ratio_has_insufficient_played_data",
+                admin_tie_resolutions=admin_tie_resolutions,
+                used_resolution_cases=used_resolution_cases,
             )
 
         def compare(left: str, right: str) -> int:
@@ -476,6 +577,8 @@ class TournamentGroupStandingsBuilder:
                         group_index=group_index,
                         player_ids=subgroup,
                         receipts=receipts,
+                        admin_tie_resolutions=admin_tie_resolutions,
+                        used_resolution_cases=used_resolution_cases,
                     )
                 )
             elif metric == "games":
@@ -486,13 +589,20 @@ class TournamentGroupStandingsBuilder:
                         stats=stats,
                         receipts=receipts,
                         metric="points",
+                        admin_tie_resolutions=admin_tie_resolutions,
+                        used_resolution_cases=used_resolution_cases,
                     )
                 )
             else:
-                raise TournamentGroupStandingsUnresolvedTie(
-                    group_index,
-                    tuple(sorted(subgroup)),
-                    "automatic_tie_breaks_exhausted",
+                resolved.extend(
+                    TournamentGroupStandingsBuilder._admin_resolution_or_raise(
+                        group_index=group_index,
+                        player_ids=subgroup,
+                        receipts=receipts,
+                        reason="automatic_tie_breaks_exhausted",
+                        admin_tie_resolutions=admin_tie_resolutions,
+                        used_resolution_cases=used_resolution_cases,
+                    )
                 )
         return tuple(resolved)
 
@@ -502,6 +612,8 @@ class TournamentGroupStandingsBuilder:
         group_index: int,
         player_ids: tuple[str, str],
         receipts: tuple[TournamentGroupResultReceipt, ...],
+        admin_tie_resolutions: dict[str, TournamentGroupTieResolutionDecision],
+        used_resolution_cases: set[str],
     ) -> tuple[str, str]:
         target = set(player_ids)
         matches = tuple(
@@ -513,12 +625,60 @@ class TournamentGroupStandingsBuilder:
             raise ValueError("Group head-to-head evidence is missing or duplicated")
         result = matches[0]
         if result.result_kind != "played":
-            raise TournamentGroupStandingsUnresolvedTie(
-                group_index,
-                tuple(sorted(player_ids)),
-                "head_to_head_is_walkover_not_played_match",
+            resolved = TournamentGroupStandingsBuilder._admin_resolution_or_raise(
+                group_index=group_index,
+                player_ids=player_ids,
+                receipts=receipts,
+                reason="head_to_head_is_walkover_not_played_match",
+                admin_tie_resolutions=admin_tie_resolutions,
+                used_resolution_cases=used_resolution_cases,
             )
+            return (resolved[0], resolved[1])
         return (result.winner_player_id, result.loser_player_id)
+
+    @staticmethod
+    def _tie_case(
+        *,
+        group_index: int,
+        player_ids: tuple[str, ...],
+        receipts: tuple[TournamentGroupResultReceipt, ...],
+        reason: str,
+    ) -> TournamentGroupStandingsTieCase:
+        return TournamentGroupStandingsTieCase(
+            group_index=group_index,
+            player_ids=tuple(sorted(player_ids)),
+            reason=reason,
+            source_match_results=tuple(
+                sorted(
+                    (receipt.match_id, receipt.result_fingerprint)
+                    for receipt in receipts
+                )
+            ),
+        )
+
+    @staticmethod
+    def _admin_resolution_or_raise(
+        *,
+        group_index: int,
+        player_ids: tuple[str, ...],
+        receipts: tuple[TournamentGroupResultReceipt, ...],
+        reason: str,
+        admin_tie_resolutions: dict[str, TournamentGroupTieResolutionDecision],
+        used_resolution_cases: set[str],
+    ) -> tuple[str, ...]:
+        case = TournamentGroupStandingsBuilder._tie_case(
+            group_index=group_index,
+            player_ids=player_ids,
+            receipts=receipts,
+            reason=reason,
+        )
+        decision = admin_tie_resolutions.get(case.fingerprint)
+        if decision is None:
+            raise TournamentGroupStandingsUnresolvedTie(case)
+        if decision.case != case:
+            raise ValueError("Admin tie resolution evidence does not match current case")
+        used_resolution_cases.add(case.fingerprint)
+        return decision.ordered_player_ids
 
     @staticmethod
     def _compare_ratio(left: tuple[int, int], right: tuple[int, int]) -> int:

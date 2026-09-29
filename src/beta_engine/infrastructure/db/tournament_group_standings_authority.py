@@ -12,6 +12,10 @@ from beta_engine.domain.tournaments.group_standings_authority import (
     TournamentGroupResultReceipt,
     TournamentGroupStandingsAuthority,
     TournamentGroupStandingsBuilder,
+    TournamentGroupTieResolutionDecision,
+)
+from beta_engine.domain.tournaments.group_tie_resolution_authority import (
+    TournamentGroupTieResolutionAuthority,
 )
 from beta_engine.infrastructure.db.authoritative_group_state import (
     load_authoritative_group,
@@ -21,6 +25,7 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     SimulationEventGroupModel,
     TournamentGroupStandingsAuthorityModel,
+    TournamentGroupTieResolutionAuthorityModel,
 )
 from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
     TournamentGroupMatchScheduleAuthorityStore,
@@ -56,8 +61,10 @@ class TournamentGroupStandingsAuthorityStore:
         *,
         schedule_fingerprint: str,
         receipts: tuple[TournamentGroupResultReceipt, ...],
+        resolutions: tuple[TournamentGroupTieResolutionDecision, ...] = (),
+        include_resolutions: bool = True,
     ) -> dict:
-        return {
+        payload = {
             "group_match_schedule_fingerprint": schedule_fingerprint,
             "source_results": [
                 [receipt.match_id, receipt.result_fingerprint]
@@ -67,6 +74,11 @@ class TournamentGroupStandingsAuthorityStore:
             "tie_break_policy_id": "wins_points_h2h_ratios_admin_unresolved.v1",
             "walkover_policy_id": "group_wo_win_max_points_no_fabricated_ratios.v1",
         }
+        if include_resolutions:
+            payload["admin_tie_resolution_fingerprints"] = [
+                decision.fingerprint for decision in resolutions
+            ]
+        return payload
 
     def _result_receipts(
         self,
@@ -115,6 +127,51 @@ class TournamentGroupStandingsAuthorityStore:
             )
         return tuple(by_match[match.match_id] for match in schedule.matches)
 
+    def _tie_resolution_decisions(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        schedule,
+    ) -> tuple[TournamentGroupTieResolutionDecision, ...]:
+        rows = self.session.scalars(
+            select(TournamentGroupTieResolutionAuthorityModel)
+            .where(
+                TournamentGroupTieResolutionAuthorityModel.run_id == run_id,
+                TournamentGroupTieResolutionAuthorityModel.branch_id == branch_id,
+                TournamentGroupTieResolutionAuthorityModel.event_id == event_id,
+            )
+            .order_by(TournamentGroupTieResolutionAuthorityModel.case_fingerprint)
+        ).all()
+        decisions = []
+        for row in rows:
+            authority = TournamentGroupTieResolutionAuthority.model_validate_json(
+                row.payload_json
+            )
+            if (
+                authority.run_id,
+                authority.branch_id,
+                authority.event_id,
+                authority.resolved_by_command_id,
+                authority.case.fingerprint,
+                authority.group_match_schedule_fingerprint,
+                authority.fingerprint,
+            ) != (
+                row.run_id,
+                row.branch_id,
+                row.event_id,
+                row.command_id,
+                row.case_fingerprint,
+                row.group_match_schedule_fingerprint,
+                row.authority_fingerprint,
+            ):
+                raise ValueError("Stored Group Tie Resolution authority is corrupt")
+            if authority.group_match_schedule_fingerprint != schedule.fingerprint:
+                raise ValueError("Group Tie Resolution references stale Match Schedule")
+            decisions.append(authority.decision)
+        return tuple(decisions)
+
     def validate_row(
         self,
         row: TournamentGroupStandingsAuthorityModel,
@@ -156,10 +213,22 @@ class TournamentGroupStandingsAuthorityStore:
             event_id=row.event_id,
             schedule=schedule,
         )
+        resolutions = (
+            ()
+            if authority.schema_version == "tournament_group_standings_authority.v1"
+            else self._tie_resolution_decisions(
+                run_id=row.run_id,
+                branch_id=row.branch_id,
+                event_id=row.event_id,
+                schedule=schedule,
+            )
+        )
         rebuilt = TournamentGroupStandingsBuilder.build(
             schedule=schedule,
             receipts=receipts,
             command_id=row.command_id,
+            admin_tie_resolutions=resolutions,
+            schema_version=authority.schema_version,
         )
         if rebuilt != authority:
             raise ValueError(
@@ -168,6 +237,11 @@ class TournamentGroupStandingsAuthorityStore:
         request = self._request(
             schedule_fingerprint=schedule.fingerprint,
             receipts=receipts,
+            resolutions=resolutions,
+            include_resolutions=(
+                authority.schema_version
+                == "tournament_group_standings_authority.v2"
+            ),
         )
         if row.request_fingerprint != _request_fingerprint(request):
             raise ValueError("Group Standings request fingerprint is corrupt")
@@ -217,14 +291,22 @@ class TournamentGroupStandingsAuthorityStore:
             event_id=event_id,
             schedule=schedule,
         )
+        resolutions = self._tie_resolution_decisions(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            schedule=schedule,
+        )
         proposed = TournamentGroupStandingsBuilder.build(
             schedule=schedule,
             receipts=receipts,
             command_id=command_id,
+            admin_tie_resolutions=resolutions,
         )
         request = self._request(
             schedule_fingerprint=schedule.fingerprint,
             receipts=receipts,
+            resolutions=resolutions,
         )
         request_fp = _request_fingerprint(request)
 

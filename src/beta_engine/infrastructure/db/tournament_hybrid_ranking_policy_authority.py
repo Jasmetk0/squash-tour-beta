@@ -19,6 +19,9 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
+from beta_engine.infrastructure.db.tournament_topology_authority import (
+    TournamentTopologyAuthorityStore,
+)
 
 
 class TournamentHybridRankingPolicyAuthorityConflict(ValueError):
@@ -106,6 +109,16 @@ class TournamentHybridRankingPolicyAuthorityStore:
         self._scope(run_id, branch_id, writing=True)
         if not command_id.strip() or len(command_id) > 128:
             raise ValueError("Hybrid Ranking Policy requires a valid command ID")
+        topology = TournamentTopologyAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if topology is None or topology.format_kind != "groups_knockout":
+            raise ValueError(
+                "Hybrid Ranking Policy requires frozen groups+knockout Tournament Topology"
+            )
+
         canonical_stage_points = tuple(sorted(knockout_stage_points))
         proposed = TournamentHybridRankingPolicyAuthority(
             run_id=run_id,

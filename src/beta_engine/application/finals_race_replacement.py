@@ -21,6 +21,9 @@ from beta_engine.infrastructure.db.finals_race_authority import (
 from beta_engine.infrastructure.db.finals_race_replacement import (
     WorldTourFinalsReplacementStore,
 )
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
 
 
 class FinalsReplacementPreviewCommand(FrozenInput):
@@ -120,6 +123,18 @@ class WorldTourFinalsReplacementService:
                     None,
                 )
                 if retry is not None:
+                    if (
+                        retry.withdrawn_player_id != command.withdrawn_player_id
+                        or retry.withdrawal_reason != command.withdrawal_reason.strip()
+                        or (
+                            command.expected_effective_state_fingerprint is not None
+                            and retry.source_effective_state_fingerprint
+                            != command.expected_effective_state_fingerprint
+                        )
+                    ):
+                        raise ValueError(
+                            "Finals replacement command ID already has a different preview request"
+                        )
                     return store.put_authority(retry)
                 raise ValueError(
                     "Finals replacement vacancy already exists; decide its current candidate"
@@ -153,6 +168,26 @@ class WorldTourFinalsReplacementService:
                 None,
             )
             if retry is not None:
+                matching_decision = next(
+                    (
+                        item
+                        for item in retry.decisions
+                        if item.decision_id == command.command_id
+                    ),
+                    None,
+                )
+                if (
+                    matching_decision is None
+                    or matching_decision.decision
+                    != ("accepted" if command.decision == "accept" else "declined")
+                    or retry.source_effective_state_fingerprint
+                    != command.expected_effective_state_fingerprint
+                    or retry.predecessor_authority_fingerprint
+                    != command.expected_preview_fingerprint
+                ):
+                    raise ValueError(
+                        "Finals replacement command ID already has a different decision request"
+                    )
                 return store.put_authority(retry)
             if (
                 not history
@@ -182,4 +217,14 @@ class WorldTourFinalsReplacementService:
             store.put_authority(authority)
             if successor is not None:
                 store.put_state(successor)
+                TournamentEntryFieldStore(
+                    session
+                ).stage_from_finals_effective_participant_state(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_id=selection.finals_event_id,
+                    target_season_index=command.target_season_index,
+                    expected_effective_state_fingerprint=successor.fingerprint,
+                    command_id=f"finals-replacement-entry:{successor.fingerprint[:64]}",
+                )
             return authority

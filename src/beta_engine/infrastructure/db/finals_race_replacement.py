@@ -188,6 +188,43 @@ class WorldTourFinalsReplacementStore:
             previous = value.fingerprint
         return values
 
+    def latest_authorities_for_event(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_season_index: int,
+        finals_event_id: str,
+    ) -> tuple[WorldTourFinalsReplacementAuthority, ...]:
+        """Return the terminal authority of every vacancy in deterministic ID order."""
+
+        self._scope(run_id, branch_id)
+        vacancy_ids = tuple(
+            self.session.scalars(
+                select(WorldTourFinalsReplacementAuthorityModel.vacancy_id)
+                .where(
+                    WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+                    WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+                    WorldTourFinalsReplacementAuthorityModel.target_season_index
+                    == target_season_index,
+                    WorldTourFinalsReplacementAuthorityModel.finals_event_id
+                    == finals_event_id,
+                )
+                .distinct()
+                .order_by(WorldTourFinalsReplacementAuthorityModel.vacancy_id)
+            ).all()
+        )
+        return tuple(
+            self.authority_history(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=target_season_index,
+                finals_event_id=finals_event_id,
+                vacancy_id=vacancy_id,
+            )[-1]
+            for vacancy_id in vacancy_ids
+        )
+
     def put_authority(
         self, value: WorldTourFinalsReplacementAuthority
     ) -> WorldTourFinalsReplacementAuthority:

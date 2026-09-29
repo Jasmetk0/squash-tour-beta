@@ -26,6 +26,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentHybridKnockoutEntrantsAuthorityModel,
     TournamentHybridKnockoutBracketAuthorityModel,
     TournamentHybridRankingPolicyAuthorityModel,
+    TournamentPureGroupsRankingPolicyAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -1028,6 +1029,31 @@ def _validate_hybrid_ranking_policy_rows_shape(policy_rows):
             raise ValueError("Saved Hybrid Ranking Policy row is corrupt")
 
 
+def _validate_pure_groups_ranking_policy_rows_shape(policy_rows):
+    from beta_engine.domain.tournaments.pure_groups_ranking_policy_authority import (
+        TournamentPureGroupsRankingPolicyAuthority,
+    )
+
+    for row in policy_rows:
+        authority = TournamentPureGroupsRankingPolicyAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.configured_by_command_id,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Pure Groups Ranking Policy row is corrupt")
+
+
 def _validate_finals_authority_rows_shape(
     race_configurations,
     race_snapshots,
@@ -1507,6 +1533,8 @@ def _component(
     include_hybrid_knockout_brackets=False,
     hybrid_ranking_policies=(),
     include_hybrid_ranking_policies=False,
+    pure_groups_ranking_policies=(),
+    include_pure_groups_ranking_policies=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1554,6 +1582,7 @@ def _component(
         hybrid_knockout_entrants,
     )
     _validate_hybrid_ranking_policy_rows_shape(hybrid_ranking_policies)
+    _validate_pure_groups_ranking_policy_rows_shape(pure_groups_ranking_policies)
     _validate_finals_authority_rows_shape(
         finals_race_configurations,
         finals_race_snapshots,
@@ -1778,6 +1807,19 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in hybrid_ranking_policies
+        ]
+    if include_pure_groups_ranking_policies:
+        body["pure_groups_ranking_policies"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "payload_json": row.payload_json,
+            }
+            for row in pure_groups_ranking_policies
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [
@@ -2391,6 +2433,7 @@ def _load(payload, *, run_id, branch_id):
         "hybrid_knockout_entrants",
         "hybrid_knockout_brackets",
         "hybrid_ranking_policies",
+        "pure_groups_ranking_policies",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -2472,6 +2515,13 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("hybrid_ranking_policies", [])
         ],
         include_hybrid_ranking_policies="hybrid_ranking_policies" in component,
+        pure_groups_ranking_policies=[
+            TournamentPureGroupsRankingPolicyAuthorityModel(**value)
+            for value in component.get("pure_groups_ranking_policies", [])
+        ],
+        include_pure_groups_ranking_policies=(
+            "pure_groups_ranking_policies" in component
+        ),
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])

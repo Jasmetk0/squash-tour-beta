@@ -12318,6 +12318,53 @@ class AuthoritativeRunSimulationDriver:
                 )
             store.append(source)
 
+        # Group/hybrid Tournament Editions do not own a classic MatchPackage.
+        # Once their frozen knockout tree is complete, close through the same
+        # canonical OwnedTournamentRankingSource boundary. Missing/unsupported
+        # ranking-phase policy never rolls back sporting match receipts: Position
+        # exposes the precise blocker and an explicit later retry can close it.
+        for event_id, evidence in evidence_by_event.items():
+            if event_id in package_event_ids:
+                continue
+            bracket = TournamentHybridKnockoutBracketAuthorityStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event_id,
+            )
+            if bracket is None or bracket.terminal_match_id not in loaded:
+                continue
+            standings = TournamentGroupStandingsAuthorityStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event_id,
+            )
+            if standings is None:
+                raise ValueError(
+                    "completed hybrid knockout lacks final Group Standings authority"
+                )
+            policy = TournamentHybridRankingPolicyAuthorityStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event_id,
+            )
+            if hybrid_ranking_policy_blockers(
+                standings=standings,
+                bracket=bracket,
+                policy=policy,
+            ):
+                continue
+            if fault_at == "after_final_before_source":
+                raise RuntimeError(
+                    "fault after tournament final before ranking source persistence"
+                )
+            TournamentHybridClosureService(session).close(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event_id,
+                completed_week=command.expected_week,
+                command_id=command.command_id,
+            )
+
     @staticmethod
     def _ranking_source_boundary(
         completed_week: RankingWeek,

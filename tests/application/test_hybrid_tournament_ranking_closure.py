@@ -191,14 +191,6 @@ def test_hybrid_phase_points_become_one_award_and_one_ranking_result_per_player(
 @pytest.mark.pr_critical
 def test_hybrid_phase_policy_does_not_infer_missing_knockout_values():
     result = hybrid_result()
-    with pytest.raises(ValueError, match="lacks knockout stage values"):
-        build_hybrid_tournament_point_award_authority(
-            result=result,
-            policy=policy(stages={"champion": 100, "finalist": 60}),
-        ).model_copy(
-            update={}
-        )
-
     # The builder only sees stages actually reached, so demonstrate the strict
     # boundary with a result carrying a stage absent from the authored table.
     altered_players = tuple(

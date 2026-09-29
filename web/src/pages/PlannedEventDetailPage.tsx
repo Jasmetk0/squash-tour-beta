@@ -19,6 +19,9 @@ import {
   configureCanonicalTournamentDrawProcess,
   commitCanonicalTournamentDrawInput,
   generateCanonicalTournamentDraw,
+  getFinalsEffectiveParticipantState,
+  previewFinalsRaceReplacement,
+  decideFinalsRaceReplacement,
   previewCanonicalFrozenMainReplacement,
   commitCanonicalFrozenMainReplacement,
   getCanonicalWildCardState,
@@ -41,7 +44,8 @@ import { getPlannedEventStatus } from './plannedEventUtils'
 import { useAdminViewedSeasonState } from '../admin/useAdminViewedSeasonState'
 import type {
   CanonicalFrozenMainReplacementPreview,
-  CanonicalWildCardPreview
+  CanonicalWildCardPreview,
+  FinalsReplacementAuthorityResponse
 } from '../api/types'
 
 export function PlannedEventDetailPage(): JSX.Element {
@@ -71,6 +75,12 @@ export function PlannedEventDetailPage(): JSX.Element {
   const [frozenReplacementRepairSeed, setFrozenReplacementRepairSeed] = useState('')
   const [frozenReplacementPreview, setFrozenReplacementPreview] =
     useState<CanonicalFrozenMainReplacementPreview | null>(null)
+  const [finalsReplacementWithdrawnPlayerId, setFinalsReplacementWithdrawnPlayerId] = useState('')
+  const [finalsReplacementReason, setFinalsReplacementReason] = useState('')
+  const [finalsReplacementMainWindow, setFinalsReplacementMainWindow] = useState('')
+  const [finalsReplacementRepairSeed, setFinalsReplacementRepairSeed] = useState('')
+  const [finalsReplacementPreview, setFinalsReplacementPreview] =
+    useState<FinalsReplacementAuthorityResponse | null>(null)
   const runQuery = useQuery({
     queryKey: ['run', runId],
     queryFn: () => getRun(runId),
@@ -261,6 +271,164 @@ export function PlannedEventDetailPage(): JSX.Element {
       canonicalDrawStateQuery.data?.initial_draw_generated === true,
     retry: false
   })
+  const finalsTargetSeasonIndex =
+    canonicalPreparationQuery.data?.entry_source_target_season_index ?? null
+  const finalsEntrySource = canonicalPreparationQuery.data?.entry_source_kind ?? null
+  const finalsReplacementVisible =
+    finalsTargetSeasonIndex !== null &&
+    (finalsEntrySource === 'finals_participant_selection' ||
+      finalsEntrySource === 'finals_effective_participant_state')
+  const finalsEffectiveStateQuery = useQuery({
+    queryKey: [
+      'finals-effective-participant-state',
+      runId,
+      activeBranchId,
+      finalsTargetSeasonIndex
+    ],
+    queryFn: () =>
+      getFinalsEffectiveParticipantState(
+        runId,
+        activeBranchId,
+        finalsTargetSeasonIndex as number
+      ),
+    enabled:
+      Boolean(runId && activeBranchId) &&
+      !viewed.historical &&
+      finalsReplacementVisible,
+    retry: false
+  })
+
+  const finalsReplacementPlayerIds =
+    finalsEffectiveStateQuery.data?.state?.participants.map((player) => player.player_id) ??
+    canonicalPreparationQuery.data?.entry_seed_order_player_ids ??
+    []
+
+  async function invalidateFinalsReplacementQueries(): Promise<void> {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: [
+          'finals-effective-participant-state',
+          runId,
+          activeBranchId,
+          finalsTargetSeasonIndex
+        ]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['canonical-entry-field', runId, activeBranchId, eventId]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-preparation', runId, activeBranchId, eventId]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-draw-state', runId, activeBranchId, eventId]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-effective-draw-authority', runId, activeBranchId, eventId]
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ['canonical-tournament-draw-revisions', runId, activeBranchId, eventId]
+      })
+    ])
+  }
+
+  const finalsReplacementPreviewMutation = useMutation({
+    mutationFn: () => {
+      if (finalsTargetSeasonIndex === null) {
+        throw new Error('Finals target season is not available for this Tournament Edition.')
+      }
+      const withdrawn = finalsReplacementWithdrawnPlayerId.trim()
+      const reason = finalsReplacementReason.trim()
+      if (!withdrawn || !finalsReplacementPlayerIds.includes(withdrawn)) {
+        throw new Error('Select one currently confirmed Finals participant.')
+      }
+      if (!reason) {
+        throw new Error('Finals withdrawal requires an explicit reason.')
+      }
+      const vacancyId = `finals-${eventId}-${withdrawn}`.slice(0, 128)
+      const effectiveFingerprint = finalsEffectiveStateQuery.data?.fingerprint ?? null
+      return previewFinalsRaceReplacement(
+        runId,
+        activeBranchId,
+        finalsTargetSeasonIndex,
+        {
+          withdrawn_player_id: withdrawn,
+          withdrawal_reason: reason,
+          vacancy_id: vacancyId,
+          expected_effective_state_fingerprint: effectiveFingerprint,
+          command_id: `admin-ui-finals-preview-${eventId}-${withdrawn}`.slice(0, 128)
+        }
+      )
+    },
+    onSuccess: async (preview) => {
+      setFinalsReplacementPreview(preview)
+      await invalidateFinalsReplacementQueries()
+    },
+    onError: () => setFinalsReplacementPreview(null)
+  })
+
+  const finalsReplacementDecisionMutation = useMutation({
+    mutationFn: (decision: 'decline' | 'accept') => {
+      if (finalsTargetSeasonIndex === null || !finalsReplacementPreview) {
+        throw new Error('Review a current Finals replacement candidate first.')
+      }
+      const authority = finalsReplacementPreview.authority
+      if (authority.status !== 'awaiting_decision' || !authority.offered_candidate_player_id) {
+        throw new Error('Current Finals replacement authority has no candidate awaiting decision.')
+      }
+
+      let mainProcessWindowOrdinal: number | null = null
+      let repairDrawSeed: number | null = null
+      if (decision === 'accept' && canonicalDrawStateQuery.data?.initial_draw_generated) {
+        if (!canonicalDrawProcessQuery.data?.configured || !canonicalDrawProcessQuery.data.main) {
+          throw new Error('Post-draw Finals replacement requires configured Draw Process authority.')
+        }
+        mainProcessWindowOrdinal = Number(finalsReplacementMainWindow)
+        if (
+          !Number.isSafeInteger(mainProcessWindowOrdinal) ||
+          mainProcessWindowOrdinal < 1 ||
+          mainProcessWindowOrdinal > canonicalDrawProcessQuery.data.main.process_window_count
+        ) {
+          throw new Error('Main process window must be inside the configured Draw Process range.')
+        }
+        if (finalsReplacementRepairSeed.trim()) {
+          repairDrawSeed = Number(finalsReplacementRepairSeed)
+          if (!Number.isSafeInteger(repairDrawSeed)) {
+            throw new Error('Repair Draw seed must be an integer when provided.')
+          }
+        }
+      }
+
+      const candidate = authority.offered_candidate_player_id
+      return decideFinalsRaceReplacement(
+        runId,
+        activeBranchId,
+        finalsTargetSeasonIndex,
+        authority.vacancy_id,
+        {
+          expected_preview_fingerprint: finalsReplacementPreview.fingerprint,
+          expected_effective_state_fingerprint: authority.source_effective_state_fingerprint,
+          decision,
+          main_process_window_ordinal: mainProcessWindowOrdinal,
+          repair_draw_seed: repairDrawSeed,
+          command_id: [
+            'admin-ui-finals',
+            decision,
+            candidate,
+            finalsReplacementPreview.fingerprint.slice(0, 12)
+          ].join('-').slice(0, 128)
+        }
+      )
+    },
+    onSuccess: async (result) => {
+      setFinalsReplacementPreview(result)
+      if (result.authority.status === 'accepted') {
+        setFinalsReplacementWithdrawnPlayerId('')
+        setFinalsReplacementReason('')
+      }
+      await invalidateFinalsReplacementQueries()
+    }
+  })
+
   function parseOrderedPlayerIds(value: string): string[] {
     return value
       .split(',')
@@ -615,6 +783,11 @@ export function PlannedEventDetailPage(): JSX.Element {
     setFrozenReplacementQualificationWindow('')
     setFrozenReplacementRepairSeed('')
     setFrozenReplacementPreview(null)
+    setFinalsReplacementWithdrawnPlayerId('')
+    setFinalsReplacementReason('')
+    setFinalsReplacementMainWindow('')
+    setFinalsReplacementRepairSeed('')
+    setFinalsReplacementPreview(null)
   }, [runId, activeBranchId, eventId])
 
   useEffect(() => {
@@ -653,6 +826,25 @@ export function PlannedEventDetailPage(): JSX.Element {
     setEntryWildCardSlots(String(suggestion.wild_card_slots))
     setEntryByeSlots(String(suggestion.bye_slots))
   }, [canonicalPreparationQuery.data, entryMainDrawSize])
+
+  useEffect(() => {
+    if (
+      finalsReplacementWithdrawnPlayerId &&
+      finalsReplacementPlayerIds.includes(finalsReplacementWithdrawnPlayerId)
+    ) {
+      return
+    }
+    setFinalsReplacementWithdrawnPlayerId(finalsReplacementPlayerIds[0] ?? '')
+    setFinalsReplacementPreview(null)
+  }, [
+    finalsEffectiveStateQuery.data?.fingerprint,
+    canonicalPreparationQuery.data?.entry_source_authority_fingerprint,
+    finalsReplacementWithdrawnPlayerId
+  ])
+
+  useEffect(() => {
+    setFinalsReplacementPreview(null)
+  }, [finalsReplacementWithdrawnPlayerId, finalsReplacementReason])
 
   useEffect(() => {
     setFrozenReplacementPreview(null)
@@ -959,6 +1151,226 @@ export function PlannedEventDetailPage(): JSX.Element {
             </>
           ) : null}
         </SectionCard>
+      ) : null}
+
+      {plannedEvent && !viewed.historical && activeBranchId && finalsReplacementVisible ? (
+        <div id="finals-race-replacement">
+          <SectionCard title="World Tour Finals Race replacement">
+            <p className="status">
+              A confirmed Finals withdrawal is filled only from the frozen Race order.
+              Direct-entry status never transfers, and every Decline / Accept decision is append-only.
+            </p>
+            {finalsEffectiveStateQuery.isLoading ? (
+              <p className="status">Loading effective Finals participant field...</p>
+            ) : null}
+            {finalsEffectiveStateQuery.error ? (
+              <p className="error">
+                Effective Finals participant state could not be loaded: {formatApiError(finalsEffectiveStateQuery.error)}
+              </p>
+            ) : null}
+            {finalsEffectiveStateQuery.data?.state ? (
+              <>
+                <SummaryPills
+                  items={[
+                    { label: 'Confirmed', value: finalsEffectiveStateQuery.data.state.participants.length },
+                    { label: 'Withdrawn lineage', value: finalsEffectiveStateQuery.data.state.withdrawn_player_ids.length },
+                    { label: 'Season index', value: finalsEffectiveStateQuery.data.state.target_season_index }
+                  ]}
+                />
+                <div className="table-wrap">
+                  <table aria-label="Effective World Tour Finals participants">
+                    <thead>
+                      <tr><th>Seed</th><th>Player</th><th>Race</th><th>Race points</th><th>Entry source</th></tr>
+                    </thead>
+                    <tbody>
+                      {finalsEffectiveStateQuery.data.state.participants.map((player) => (
+                        <tr key={player.player_id}>
+                          <td>{player.seed}</td>
+                          <td>{player.player_id}</td>
+                          <td>#{player.race_rank}</td>
+                          <td>{player.race_points}</td>
+                          <td>
+                            {player.qualification_source}
+                            {player.direct_entry_event_ids.length
+                              ? ` · ${player.direct_entry_event_ids.join(', ')}`
+                              : ''}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <p className="status">
+                The immutable initial Finals selection is still current. A replacement preview will
+                materialize the first effective-state version without editing that initial snapshot.
+              </p>
+            )}
+
+            <div className="grid">
+              <label>
+                Confirmed Finals participant to withdraw
+                <select
+                  aria-label="Finals participant to withdraw"
+                  value={finalsReplacementWithdrawnPlayerId}
+                  onChange={(event) => setFinalsReplacementWithdrawnPlayerId(event.target.value)}
+                >
+                  <option value="">Select player</option>
+                  {finalsReplacementPlayerIds.map((playerId) => (
+                    <option key={playerId} value={playerId}>{playerId}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Withdrawal reason
+                <textarea
+                  aria-label="Finals withdrawal reason"
+                  value={finalsReplacementReason}
+                  onChange={(event) => setFinalsReplacementReason(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => finalsReplacementPreviewMutation.mutate()}
+                disabled={
+                  finalsReplacementPreviewMutation.isPending ||
+                  !finalsReplacementWithdrawnPlayerId ||
+                  !finalsReplacementReason.trim()
+                }
+              >
+                Offer next frozen-Race candidate
+              </button>
+              {finalsReplacementPreviewMutation.error ? (
+                <p className="error">
+                  Finals replacement preview failed: {formatApiError(finalsReplacementPreviewMutation.error)}
+                </p>
+              ) : null}
+            </div>
+
+            {finalsReplacementPreview ? (
+              <div className="grid">
+                <SummaryPills
+                  items={[
+                    { label: 'Vacancy', value: finalsReplacementPreview.authority.withdrawn_player_id },
+                    { label: 'Status', value: finalsReplacementPreview.authority.status },
+                    {
+                      label: 'Offered candidate',
+                      value: finalsReplacementPreview.authority.offered_candidate_player_id ?? 'None'
+                    },
+                    {
+                      label: 'Race rank',
+                      value: finalsReplacementPreview.authority.offered_candidate_race_rank ?? '—'
+                    }
+                  ]}
+                />
+                {finalsReplacementPreview.authority.decisions.length ? (
+                  <ul aria-label="Finals replacement decisions">
+                    {finalsReplacementPreview.authority.decisions.map((decision) => (
+                      <li key={decision.decision_id}>
+                        Race #{decision.race_rank} · {decision.player_id} · {decision.decision}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'exhausted' ? (
+                  <p className="status">
+                    Frozen Race reserve order is exhausted. The vacancy remains an explicit blocker.
+                  </p>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'awaiting_decision' ? (
+                  <>
+                    {canonicalDrawStateQuery.data?.initial_draw_generated ? (
+                      <>
+                        <p className="status">
+                          The Draw already exists. Acceptance must identify the current Main process
+                          window so the server chooses full redraw, seed cascade or Draw-Freeze exact-slot repair.
+                        </p>
+                        <label>
+                          Main process window ordinal
+                          <input
+                            aria-label="Finals replacement Main process window"
+                            type="number"
+                            min={1}
+                            max={canonicalDrawProcessQuery.data?.main?.process_window_count ?? undefined}
+                            value={finalsReplacementMainWindow}
+                            onChange={(event) => setFinalsReplacementMainWindow(event.target.value)}
+                          />
+                        </label>
+                        <label>
+                          Repair Draw seed (required only for full-redraw phase)
+                          <input
+                            aria-label="Finals replacement repair Draw seed"
+                            type="number"
+                            value={finalsReplacementRepairSeed}
+                            onChange={(event) => setFinalsReplacementRepairSeed(event.target.value)}
+                          />
+                        </label>
+                      </>
+                    ) : null}
+                    <p>
+                      <button
+                        type="button"
+                        onClick={() => finalsReplacementDecisionMutation.mutate('decline')}
+                        disabled={finalsReplacementDecisionMutation.isPending}
+                      >
+                        Decline candidate
+                      </button>{' '}
+                      <button
+                        type="button"
+                        onClick={() => finalsReplacementDecisionMutation.mutate('accept')}
+                        disabled={finalsReplacementDecisionMutation.isPending}
+                      >
+                        Accept candidate
+                      </button>
+                    </p>
+                  </>
+                ) : null}
+                {finalsReplacementPreview.authority.status === 'accepted' ? (
+                  <>
+                    <p className="status">
+                      Replacement accepted. Effective participant state, Entry Field and any required
+                      canonical Draw revision are now bound to this decision.
+                    </p>
+                    {canonicalDrawRevisionHistoryQuery.data?.revisions.length ? (
+                      <MetadataList
+                        items={[
+                          {
+                            label: 'Latest Draw revision',
+                            value: canonicalDrawRevisionHistoryQuery.data.revisions[
+                              canonicalDrawRevisionHistoryQuery.data.revisions.length - 1
+                            ].sequence
+                          },
+                          {
+                            label: 'Repair kind',
+                            value: canonicalDrawRevisionHistoryQuery.data.revisions[
+                              canonicalDrawRevisionHistoryQuery.data.revisions.length - 1
+                            ].repair_kind
+                          },
+                          {
+                            label: 'Effective Draw',
+                            value: canonicalDrawRevisionHistoryQuery.data.effective_draw_fingerprint
+                          }
+                        ]}
+                      />
+                    ) : null}
+                  </>
+                ) : null}
+                {finalsReplacementDecisionMutation.error ? (
+                  <p className="error">
+                    Finals replacement decision failed: {formatApiError(finalsReplacementDecisionMutation.error)}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+
+            <p className="status">
+              If the player has already started the first REAL match, reserve replacement is blocked.
+              The existing canonical W/O workflow in authoritative Simulation owns the progression instead;
+              BYEs do not close this cutoff.
+            </p>
+          </SectionCard>
+        </div>
       ) : null}
 
       {plannedEvent && !viewed.historical && activeBranchId ? (

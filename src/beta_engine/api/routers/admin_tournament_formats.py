@@ -22,6 +22,9 @@ from beta_engine.domain.tournaments.topology_authority import (
 from beta_engine.domain.tournaments.group_match_schedule_authority import (
     TournamentGroupMatchScheduleAuthority,
 )
+from beta_engine.domain.tournaments.group_standings_authority import (
+    TournamentGroupStandingsAuthority,
+)
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityConflict,
     TournamentFormatAuthorityStore,
@@ -37,6 +40,10 @@ from beta_engine.infrastructure.db.tournament_topology_authority import (
 from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
     TournamentGroupMatchScheduleAuthorityConflict,
     TournamentGroupMatchScheduleAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+    TournamentGroupStandingsAuthorityConflict,
+    TournamentGroupStandingsAuthorityStore,
 )
 
 
@@ -98,6 +105,10 @@ class TournamentGroupMatchScheduleGenerateRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
+class TournamentGroupStandingsGenerateRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
 class TournamentGroupMatchScheduleResponse(
     TournamentGroupMatchScheduleAuthority
 ):
@@ -109,6 +120,23 @@ class TournamentGroupMatchScheduleResponse(
     def from_authority(
         cls, authority: TournamentGroupMatchScheduleAuthority
     ) -> "TournamentGroupMatchScheduleResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
+class TournamentGroupStandingsResponse(TournamentGroupStandingsAuthority):
+    """Admin projection exposing immutable final group-table identity."""
+
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentGroupStandingsAuthority
+    ) -> "TournamentGroupStandingsResponse":
         return cls.model_validate(
             {
                 **authority.model_dump(mode="python"),
@@ -367,6 +395,73 @@ def generate_group_match_schedule(
             status_code=409,
             detail={
                 "code": "tournament_group_match_schedule_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/group-standings",
+    response_model=TournamentGroupStandingsResponse,
+)
+def inspect_group_standings(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupStandingsResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentGroupStandingsAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Group Standings authority not found",
+                )
+            return TournamentGroupStandingsResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_standings_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/group-standings/generate",
+    response_model=TournamentGroupStandingsResponse,
+    status_code=201,
+)
+def generate_group_standings(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentGroupStandingsGenerateRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentGroupStandingsResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            authority = TournamentGroupStandingsAuthorityStore(session).generate(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            return TournamentGroupStandingsResponse.from_authority(authority)
+    except (TournamentGroupStandingsAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_group_standings_conflict",
                 "message": str(exc),
             },
         ) from exc

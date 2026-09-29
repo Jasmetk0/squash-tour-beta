@@ -135,11 +135,16 @@
     results/sporting effects/checkpoints, freeze group execution evidence in adopted tournament
     authority v7, and stop after the final group match on an explicit standings-authority blocker
     instead of inventing tournament closure.
-40. Next: build immutable group standings/result authority over completed group-match receipts,
-    including the already-decided W/O table semantics and tie-break order, then resolve
-    groups+knockout entrants from final group positions without Race reseeding. Keep the
-    pure-knockout Finals Draw adapter as a separate explicit dependency rather than fabricating
-    Official Ranking.
+40. ✅ Freeze immutable group standings authority over completed canonical group-match
+    receipts: implement decided BO3/BO5 table points, wins-first ordering, played H2H,
+    all-group game/point ratios and W/O max-points-without-fake-score semantics; bind the table
+    to exact result fingerprints, carry it through Saved Revision, fail historical fork remap
+    closed and stop explicitly when RET policy or the exhausted automatic tie-break case remains
+    unresolved instead of inventing a fallback.
+41. Next: add audited explicit Admin resolution for standings ties that survive every automatic
+    criterion, then materialize groups+knockout entrants from frozen final group positions
+    without Race reseeding. Keep pure-groups tournament closure and the pure-knockout Finals
+    Draw adapter as separate explicit dependencies rather than fabricating Official Ranking.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

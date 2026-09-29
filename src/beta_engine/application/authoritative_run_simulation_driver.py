@@ -161,6 +161,9 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
     TournamentGroupMatchScheduleAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+    TournamentGroupStandingsAuthorityStore,
+)
 from beta_engine.infrastructure.db.week_tournament_lock import (
     WeekTournamentLockStore,
     derive_week_tournament_lock_authority,
@@ -11029,6 +11032,18 @@ class AuthoritativeRunSimulationDriver:
         group_schedule_event_ids = tuple(
             event.event_id for event, _ in group_schedule_entries
         )
+        group_standings_store = TournamentGroupStandingsAuthorityStore(session)
+        group_standings_entries = tuple(
+            (
+                event,
+                group_standings_store.get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event.event_id,
+                ),
+            )
+            for event, _ in group_schedule_entries
+        )
         schedule = self._schedule(session, run_id, branch_id, week)
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
@@ -11254,7 +11269,10 @@ class AuthoritativeRunSimulationDriver:
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
         elif group_schedule_entries:
-            blockers.append("group_standings_authority_required")
+            if any(authority is None for _, authority in group_standings_entries):
+                blockers.append("group_standings_authority_required")
+            else:
+                blockers.append("group_post_standings_progression_required")
         if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
         if terminal is None and explicit_empty_context is None:
@@ -11328,6 +11346,13 @@ class AuthoritativeRunSimulationDriver:
             "group_match_schedules": [
                 (event.event_id, authority.fingerprint)
                 for event, authority in group_schedule_entries
+            ],
+            "group_standings": [
+                (
+                    event.event_id,
+                    authority.fingerprint if authority is not None else None,
+                )
+                for event, authority in group_standings_entries
             ],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)

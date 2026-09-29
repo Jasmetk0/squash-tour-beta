@@ -5,6 +5,7 @@ import pytest
 from beta_engine.infrastructure.db.models import (
     TournamentFormatAuthorityModel,
     TournamentGroupMatchScheduleAuthorityModel,
+    TournamentGroupStandingsAuthorityModel,
     TournamentGroupRulesPolicyModel,
     TournamentTopologyAuthorityModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
@@ -38,4 +39,5 @@ def test_simulation_slot_restore_preflight_covers_all_tournament_structure_autho
         TournamentFormatAuthorityModel,
         TournamentTopologyAuthorityModel,
         TournamentGroupMatchScheduleAuthorityModel,
+        TournamentGroupStandingsAuthorityModel,
     } <= covered

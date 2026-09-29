@@ -296,6 +296,33 @@ class TournamentGroupMatchScheduleAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentGroupStandingsAuthorityModel(Base):
+    """Immutable final group-table order derived from canonical match receipts."""
+
+    __tablename__ = "tournament_group_standings_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_group_standings_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    group_match_schedule_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    group_rules_policy_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

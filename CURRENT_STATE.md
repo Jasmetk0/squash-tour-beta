@@ -468,9 +468,31 @@ current Admin Seasons web surface.
 This preserves legacy diagnostic reconstruction while removing another current-product
 shortcut capable of mutating the old file-backed tournament pipeline.
 
-**Next after this PR:** audit the remaining Admin Seasons mutation surfaces at the
-season/calendar level separately. Keep historical diagnostics available and do not remove
-a legacy server service merely because its direct current-web mutation entrypoint is gone.
+The season-level follow-up retires direct browser bootstrap of the legacy global
+`season_active_players.json` registry.
+
+- Admin Seasons no longer exposes Preview/Persist bootstrap controls;
+- the browser client no longer exports the legacy
+  `bootstrap-from-initial-pool` POST helper;
+- mutation-only `SeasonBootstrapPayload` / `SeasonBootstrapResponse` web wrappers are
+  removed;
+- the historical active-player registry stays readable through
+  `getSeasonActivePlayers` for old saves, legacy ranking tables and diagnostics;
+- the page labels that state explicitly as `LEGACY / READ-ONLY`;
+- canonical Product Run roster truth remains InitialWorld + lifecycle + sporting state,
+  and this cleanup does not touch those Run-owned authorities;
+- the backend historical bootstrap service/endpoint remains available outside the current
+  browser client.
+
+The direct Season Calendar Builder is intentionally retained in this slice because
+`SeasonCalendarService` is still a source-authoring/compatibility dependency for Calendar
+Package and Season Builder workflows. Removing it requires a separate source-authoring
+migration, not a UI cleanup guess.
+
+**Next after this PR:** audit the remaining global season/calendar authoring mutations by
+their source-authoring role. Retire only those current-web shortcuts whose canonical source
+has already moved elsewhere; keep Calendar authoring until its Package source path is
+explicitly replaced.
 
 
 ## Active implementation — canonical result/ranking source fence

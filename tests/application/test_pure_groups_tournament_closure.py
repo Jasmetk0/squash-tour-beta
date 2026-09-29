@@ -17,6 +17,7 @@ from beta_engine.application.ranking_tournament_ingestion import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.tournaments.group_standings_authority import (
+    TournamentGroupPlayedGame,
     TournamentGroupResultReceipt,
     TournamentGroupStanding,
     TournamentGroupStandingRow,
@@ -317,6 +318,24 @@ def standings(*, group_count: int = 1, walkover: bool = False):
                 loser_player_id="B",
                 best_of=3,
                 termination_reason="W/O" if walkover else "COMPLETED",
+                games=(
+                    ()
+                    if walkover
+                    else (
+                        TournamentGroupPlayedGame(
+                            winner_player_id="A",
+                            loser_player_id="B",
+                            winner_points=11,
+                            loser_points=6,
+                        ),
+                        TournamentGroupPlayedGame(
+                            winner_player_id="A",
+                            loser_player_id="B",
+                            winner_points=11,
+                            loser_points=8,
+                        ),
+                    )
+                ),
             ),
         ),
         groups=tuple(groups),

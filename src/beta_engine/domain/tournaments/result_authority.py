@@ -29,7 +29,7 @@ from beta_engine.domain.tournaments.models import CalendarEvent
 
 class TournamentMatchResultAuthority(FrozenInput):
     match_id: str = Field(min_length=1)
-    draw_type: Literal["qualification", "main"]
+    draw_type: Literal["qualification", "main", "group", "knockout"]
     round_number: int = Field(ge=1)
     bracket_position: int = Field(ge=1)
     winner_player_id: str = Field(min_length=1)
@@ -40,7 +40,7 @@ class TournamentMatchResultAuthority(FrozenInput):
 
 class TournamentPlayerResultAuthority(FrozenInput):
     player_id: str = Field(min_length=1)
-    draw_type: Literal["qualification", "main", "both"]
+    draw_type: Literal["qualification", "main", "both", "hybrid"]
     seed_number: int | None = Field(default=None, ge=1)
     qualifier: bool = False
     main_entry_status: Literal["direct", "wild_card", "lucky_loser"] | None = Field(
@@ -60,18 +60,52 @@ class TournamentPlayerResultAuthority(FrozenInput):
     retired_or_walkover_loss: bool = Field(
         default=False, exclude_if=lambda value: not value
     )
+    group_index: int | None = Field(
+        default=None, ge=1, exclude_if=lambda value: value is None
+    )
+    group_position: int | None = Field(
+        default=None, ge=1, exclude_if=lambda value: value is None
+    )
+    played_group_wins: int | None = Field(
+        default=None, ge=0, exclude_if=lambda value: value is None
+    )
+    group_walkovers_received: int | None = Field(
+        default=None, ge=0, exclude_if=lambda value: value is None
+    )
+    knockout_reached_stage: str | None = Field(
+        default=None, min_length=1, exclude_if=lambda value: value is None
+    )
 
 
 class TournamentResultAuthority(FrozenInput):
-    schema_version: Literal["tournament_result_authority.v1"] = (
-        "tournament_result_authority.v1"
-    )
+    schema_version: Literal[
+        "tournament_result_authority.v1",
+        "tournament_result_authority.v2",
+    ] = "tournament_result_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     event_id: str = Field(min_length=1)
     completed_week: RankingWeek
-    draw_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
-    match_package_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    draw_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    match_package_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    group_standings_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    hybrid_knockout_bracket_authority_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     champion_player_id: str = Field(min_length=1)
     finalist_player_id: str = Field(min_length=1)
     qualification_winner_ids: tuple[str, ...] = ()
@@ -94,6 +128,68 @@ class TournamentResultAuthority(FrozenInput):
             winner not in player_ids for winner in self.qualification_winner_ids
         ):
             raise ValueError("Qualification winner is absent from player results")
+
+        hybrid_player_metadata = any(
+            player.draw_type == "hybrid"
+            or player.group_index is not None
+            or player.group_position is not None
+            or player.played_group_wins is not None
+            or player.group_walkovers_received is not None
+            or player.knockout_reached_stage is not None
+            for player in self.players
+        )
+        hybrid_match_metadata = any(
+            match.draw_type in {"group", "knockout"} for match in self.matches
+        )
+        if self.schema_version == "tournament_result_authority.v1":
+            if (
+                self.draw_authority_fingerprint is None
+                or self.match_package_fingerprint is None
+            ):
+                raise ValueError(
+                    "Historical Tournament Result v1 requires Draw and MatchPackage provenance"
+                )
+            if (
+                self.group_standings_authority_fingerprint is not None
+                or self.hybrid_knockout_bracket_authority_fingerprint is not None
+                or hybrid_player_metadata
+                or hybrid_match_metadata
+            ):
+                raise ValueError(
+                    "Historical Tournament Result v1 cannot carry hybrid phase evidence"
+                )
+        else:
+            if (
+                self.draw_authority_fingerprint is not None
+                or self.match_package_fingerprint is not None
+                or self.group_standings_authority_fingerprint is None
+                or self.hybrid_knockout_bracket_authority_fingerprint is None
+            ):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 requires standings/bracket provenance only"
+                )
+            if self.qualification_winner_ids:
+                raise ValueError(
+                    "Hybrid Tournament Result v2 cannot contain Qualification winners"
+                )
+            if not self.players or any(
+                player.draw_type != "hybrid"
+                or player.group_index is None
+                or player.group_position is None
+                or player.played_group_wins is None
+                or player.group_walkovers_received is None
+                for player in self.players
+            ):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 requires complete group player metadata"
+                )
+            if not self.matches or any(
+                match.draw_type not in {"group", "knockout"}
+                for match in self.matches
+            ):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 requires group/knockout match evidence"
+                )
         return self
 
     @property

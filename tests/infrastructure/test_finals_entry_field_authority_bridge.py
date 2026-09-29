@@ -27,7 +27,11 @@ from beta_engine.infrastructure.db.models import (
     Base,
     RunBranchModel,
     RunContainerModel,
+    TournamentDrawAuthorityModel,
+    TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
+    TournamentFormatAuthorityModel,
+    TournamentTopologyAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
@@ -332,6 +336,32 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             target_season_index=0,
             command_id="build-finals-entry-field",
         )
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-draw-input",
+            draw_seed=123,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-draw",
+        )
+        topology = TournamentTopologyAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-topology",
+        )
         target_payload = {"content": {}}
         capture_saved_simulation_slots(
             session,
@@ -340,6 +370,30 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             branch_id="branch",
         )
 
+        session.execute(
+            delete(TournamentTopologyAuthorityModel).where(
+                TournamentTopologyAuthorityModel.run_id == "run",
+                TournamentTopologyAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentDrawAuthorityModel).where(
+                TournamentDrawAuthorityModel.run_id == "run",
+                TournamentDrawAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentDrawInputAuthorityModel).where(
+                TournamentDrawInputAuthorityModel.run_id == "run",
+                TournamentDrawInputAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentFormatAuthorityModel).where(
+                TournamentFormatAuthorityModel.run_id == "run",
+                TournamentFormatAuthorityModel.branch_id == "branch",
+            )
+        )
         session.execute(
             delete(TournamentEntryFieldVersionModel).where(
                 TournamentEntryFieldVersionModel.run_id == "run",
@@ -407,3 +461,23 @@ def test_saved_revision_restores_complete_finals_authority_chain_and_entry_field
             branch_id="branch",
             event_id="FINALS",
         ) == (field,)
+        assert TournamentFormatAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == format_authority
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw_input
+        assert TournamentDrawAuthorityStore(session).get_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw
+        assert TournamentTopologyAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == topology

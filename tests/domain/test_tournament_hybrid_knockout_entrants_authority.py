@@ -95,6 +95,8 @@ def standing_row(group: int, position: int, player: str) -> TournamentGroupStand
         losses=0 if position == 1 else 1,
         group_points=4 if position == 1 else 0,
         played_matches=1,
+        walkovers_received=0,
+        walkovers_conceded=0,
         games_won=2 if position == 1 else 0,
         games_lost=0 if position == 1 else 2,
         points_won=22 if position == 1 else 10,

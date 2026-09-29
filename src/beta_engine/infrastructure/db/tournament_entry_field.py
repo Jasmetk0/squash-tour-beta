@@ -23,6 +23,9 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
 )
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
 from beta_engine.infrastructure.db.tournament_application_submissions import (
     TournamentApplicationSubmissionStore,
 )
@@ -160,6 +163,7 @@ class TournamentEntryFieldStore:
         *,
         authority=None,
         finals_selection=None,
+        finals_effective_states=(),
     ) -> tuple[TournamentEntryField, ...]:
         ordered = tuple(sorted(rows, key=lambda row: row.sequence))
         if not ordered:
@@ -167,12 +171,19 @@ class TournamentEntryFieldStore:
         if [row.sequence for row in ordered] != list(range(1, len(ordered) + 1)):
             raise ValueError("Tournament entry field version sequence has a gap")
 
+        effective_by_fingerprint = {
+            state.fingerprint: state for state in finals_effective_states
+        }
         result: list[TournamentEntryField] = []
         previous: TournamentEntryField | None = None
         for row in ordered:
             field, applications = cls._load_row(row)
             if field.source_kind == "ranking_applications":
-                if authority is None or finals_selection is not None:
+                if (
+                    authority is None
+                    or finals_selection is not None
+                    or finals_effective_states
+                ):
                     raise ValueError(
                         "Tournament Entry Field ranking source authority is missing"
                     )
@@ -242,14 +253,14 @@ class TournamentEntryFieldStore:
                             "withdrawn_player_ids": newly_withdrawn,
                         }
                     )
-            else:
+            elif field.source_kind == "finals_participant_selection":
                 if authority is not None or finals_selection is None:
                     raise ValueError(
                         "Finals Tournament Entry Field selection authority is missing"
                     )
-                if row.sequence != 1 or previous is not None or len(ordered) != 1:
+                if row.sequence != 1 or previous is not None:
                     raise ValueError(
-                        "Finals participant Entry Field cannot use generic pre-draw repair history"
+                        "Initial Finals participant Entry Field must be the first version"
                     )
                 if applications:
                     raise ValueError(
@@ -278,6 +289,70 @@ class TournamentEntryFieldStore:
                         "event_id": finals_selection.finals_event_id,
                         "target_season_index": finals_selection.target_season_index,
                         "selection_fingerprint": finals_selection.fingerprint,
+                    }
+                )
+            else:
+                if authority is not None or finals_selection is None:
+                    raise ValueError(
+                        "Effective Finals Entry Field source authority is missing"
+                    )
+                if applications:
+                    raise ValueError(
+                        "Effective Finals Entry Field cannot contain application evidence"
+                    )
+                state = effective_by_fingerprint.get(
+                    field.finals_effective_participant_state_fingerprint
+                )
+                if state is None:
+                    raise ValueError(
+                        "Effective Finals Entry Field references missing participant state"
+                    )
+                if (
+                    state.initial_selection_fingerprint != finals_selection.fingerprint
+                    or state.race_snapshot_fingerprint
+                    != finals_selection.race_snapshot_fingerprint
+                    or (
+                        state.run_id,
+                        state.branch_id,
+                        state.finals_event_id,
+                        state.target_season_index,
+                    )
+                    != (
+                        finals_selection.run_id,
+                        finals_selection.branch_id,
+                        finals_selection.finals_event_id,
+                        finals_selection.target_season_index,
+                    )
+                ):
+                    raise ValueError(
+                        "Effective Finals Entry Field source scope/provenance is stale"
+                    )
+                if row.sequence == 1:
+                    if previous is not None or field.mode != "initial":
+                        raise ValueError(
+                            "First effective Finals Entry Field version must be initial"
+                        )
+                elif previous is None or field.mode != "pre_draw_repair":
+                    raise ValueError(
+                        "Later effective Finals Entry Field versions require predecessor"
+                    )
+                rebuilt = (
+                    TournamentEntryFieldResolver.build_from_finals_effective_participant_state(
+                        state=state,
+                        previous=previous,
+                    )
+                )
+                expected_request_fingerprint = _request_fingerprint(
+                    {
+                        "mode": "finals_effective_participant_state",
+                        "run_id": state.run_id,
+                        "branch_id": state.branch_id,
+                        "event_id": state.finals_event_id,
+                        "target_season_index": state.target_season_index,
+                        "effective_state_fingerprint": state.fingerprint,
+                        "predecessor_fingerprint": (
+                            previous.fingerprint if previous is not None else None
+                        ),
                     }
                 )
             if rebuilt != field:
@@ -323,7 +398,20 @@ class TournamentEntryFieldStore:
             raise ValueError(
                 "Finals Tournament Entry Field references missing participant-selection snapshot"
             )
-        return self.validate_rows(rows, finals_selection=selection)
+        effective_states = tuple(
+            state
+            for state in WorldTourFinalsReplacementStore(self.session).state_history(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=first.finals_target_season_index,
+            )
+            if state.finals_event_id == event_id
+        )
+        return self.validate_rows(
+            rows,
+            finals_selection=selection,
+            finals_effective_states=effective_states,
+        )
 
     def latest(
         self, *, run_id: str, branch_id: str, event_id: str
@@ -435,6 +523,112 @@ class TournamentEntryFieldStore:
         )
         return field
 
+    def stage_from_finals_effective_participant_state(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        target_season_index: int,
+        expected_effective_state_fingerprint: str,
+        command_id: str,
+    ) -> TournamentEntryField:
+        """Append the latest accepted Finals replacement field before Draw Input."""
+
+        self._scope(run_id, branch_id, writing=True)
+        selection = WorldTourFinalsParticipantSelectionStore(self.session).get_snapshot(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_season_index=target_season_index,
+        )
+        if selection is None or selection.finals_event_id != event_id:
+            raise ValueError(
+                "Effective Finals Entry Field requires matching participant selection"
+            )
+        state = WorldTourFinalsReplacementStore(self.session).latest_state(
+            run_id=run_id,
+            branch_id=branch_id,
+            target_season_index=target_season_index,
+        )
+        if state is None or state.finals_event_id != event_id:
+            raise ValueError(
+                "Effective Finals Entry Field requires persisted replacement state"
+            )
+        if state.fingerprint != expected_effective_state_fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Effective Finals participant state changed before Entry Field update"
+            )
+        if state.predecessor_fingerprint is None:
+            raise TournamentEntryFieldConflict(
+                "Initial Finals effective state does not represent an accepted replacement"
+            )
+
+        retry = self._command_row(
+            run_id=run_id,
+            branch_id=branch_id,
+            command_id=command_id,
+        )
+        rows = self._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        previous = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )[-1] if rows else None
+        request_fp = _request_fingerprint(
+            {
+                "mode": "finals_effective_participant_state",
+                "run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": event_id,
+                "target_season_index": target_season_index,
+                "effective_state_fingerprint": state.fingerprint,
+                "predecessor_fingerprint": (
+                    previous.fingerprint if previous is not None else None
+                ),
+            }
+        )
+        if retry is not None:
+            stored, frozen_apps = self._load_row(retry)
+            if (
+                retry.event_id != event_id
+                or retry.request_fingerprint != request_fp
+                or frozen_apps
+                or stored.source_kind != "finals_effective_participant_state"
+                or stored.finals_effective_participant_state_fingerprint
+                != state.fingerprint
+            ):
+                raise TournamentEntryFieldConflict(
+                    "Tournament entry field command ID already has a different request"
+                )
+            return stored
+
+        if self.session.get(
+            TournamentDrawInputAuthorityModel,
+            (run_id, branch_id, event_id),
+        ) is not None:
+            raise TournamentEntryFieldConflict(
+                "Finals Entry Field replacement is locked after Draw Input commitment"
+            )
+        if previous is not None and previous.source_authority_fingerprint == state.fingerprint:
+            raise TournamentEntryFieldConflict(
+                "Latest Finals Entry Field already reflects this effective participant state"
+            )
+
+        field = (
+            TournamentEntryFieldResolver.build_from_finals_effective_participant_state(
+                state=state,
+                previous=previous,
+            )
+        )
+        self._append(
+            field=field,
+            applications=(),
+            command_id=command_id,
+            request_fingerprint=request_fp,
+            sequence=len(rows) + 1,
+        )
+        return field
+
     def stage_initial(
         self,
         *,
@@ -536,7 +730,10 @@ class TournamentEntryFieldStore:
             )
 
         latest_source, _ = self._load_row(rows[-1])
-        if latest_source.source_kind == "finals_participant_selection":
+        if latest_source.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             raise TournamentEntryFieldConflict(
                 "Finals withdrawal/replacement must use the separate Finals replacement authority"
             )
@@ -583,7 +780,10 @@ class TournamentEntryFieldStore:
         )
         if existing_rows:
             latest_source, _ = self._load_row(existing_rows[-1])
-            if latest_source.source_kind == "finals_participant_selection":
+            if latest_source.source_kind in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }:
                 raise TournamentEntryFieldConflict(
                     "Finals withdrawal/replacement must use the separate Finals replacement authority"
                 )

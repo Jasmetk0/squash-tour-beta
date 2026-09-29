@@ -400,6 +400,27 @@ class TournamentHybridKnockoutBracketAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentHybridRankingPolicyAuthorityModel(Base):
+    """Immutable explicit phase-ranking configuration for one hybrid event."""
+
+    __tablename__ = "tournament_hybrid_ranking_policy_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_ranking_policy_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

@@ -20,6 +20,9 @@ from beta_engine.infrastructure.db.models import (
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
 )
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
 from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityStore,
@@ -75,6 +78,7 @@ class TournamentDrawInputAuthorityStore:
         ranking_authority=None,
         wild_card_authority=None,
         finals_selection=None,
+        finals_effective_state=None,
         format_authority=None,
     ) -> TournamentDrawInputAuthority:
         """Validate one frozen row against already-resolved target dependencies."""
@@ -109,7 +113,10 @@ class TournamentDrawInputAuthorityStore:
                 "Tournament Draw Input authority Entry Field fingerprint is stale"
             )
 
-        if committed.source_kind == "finals_participant_selection":
+        if committed.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             if finals_selection is None or format_authority is None:
                 raise ValueError(
                     "Finals Draw Input authority references missing Finals/Format authority"
@@ -125,6 +132,19 @@ class TournamentDrawInputAuthorityStore:
                 raise ValueError(
                     "Finals Draw Input source authority fingerprint is stale"
                 )
+            if committed.source_kind == "finals_effective_participant_state":
+                if (
+                    finals_effective_state is None
+                    or finals_effective_state.fingerprint
+                    != committed.finals_effective_participant_state_fingerprint
+                ):
+                    raise ValueError(
+                        "Effective Finals Draw Input references missing/stale participant state"
+                    )
+            elif finals_effective_state is not None:
+                raise ValueError(
+                    "Initial Finals Draw Input cannot carry effective participant state"
+                )
             rebuilt = TournamentDrawInputAuthorityBuilder.build_finals_knockout(
                 selection=finals_selection,
                 field=field,
@@ -132,9 +152,16 @@ class TournamentDrawInputAuthorityStore:
                 format_authority=format_authority,
                 command_id=row.command_id,
                 draw_seed=committed.draw_seed,
+                effective_state=finals_effective_state,
             )
             expected_request = cls._finals_request(
+                source_kind=committed.source_kind,
                 finals_participant_selection_fingerprint=finals_selection.fingerprint,
+                finals_effective_participant_state_fingerprint=(
+                    finals_effective_state.fingerprint
+                    if finals_effective_state is not None
+                    else None
+                ),
                 finals_race_snapshot_fingerprint=finals_selection.race_snapshot_fingerprint,
                 tournament_format_authority_fingerprint=format_authority.fingerprint,
                 entry_field_fingerprint=field.fingerprint,
@@ -197,7 +224,10 @@ class TournamentDrawInputAuthorityStore:
             )
         field = history[-1]
         committed = TournamentDrawInputAuthority.model_validate_json(row.payload_json)
-        if committed.source_kind == "finals_participant_selection":
+        if committed.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             finals_selection = WorldTourFinalsParticipantSelectionStore(
                 self.session
             ).find_snapshot_for_event(
@@ -205,6 +235,26 @@ class TournamentDrawInputAuthorityStore:
                 branch_id=row.branch_id,
                 event_id=row.event_id,
             )
+            finals_effective_state = None
+            if (
+                committed.source_kind == "finals_effective_participant_state"
+                and finals_selection is not None
+            ):
+                finals_effective_state = next(
+                    (
+                        state
+                        for state in WorldTourFinalsReplacementStore(
+                            self.session
+                        ).state_history(
+                            run_id=row.run_id,
+                            branch_id=row.branch_id,
+                            target_season_index=finals_selection.target_season_index,
+                        )
+                        if state.fingerprint
+                        == committed.finals_effective_participant_state_fingerprint
+                    ),
+                    None,
+                )
             format_authority = TournamentFormatAuthorityStore(self.session).get(
                 run_id=row.run_id,
                 branch_id=row.branch_id,
@@ -215,6 +265,7 @@ class TournamentDrawInputAuthorityStore:
                 field=field,
                 field_sequence=len(history),
                 finals_selection=finals_selection,
+                finals_effective_state=finals_effective_state,
                 format_authority=format_authority,
             )
 
@@ -268,7 +319,9 @@ class TournamentDrawInputAuthorityStore:
     @staticmethod
     def _finals_request(
         *,
+        source_kind: str,
         finals_participant_selection_fingerprint: str,
+        finals_effective_participant_state_fingerprint: str | None,
         finals_race_snapshot_fingerprint: str,
         tournament_format_authority_fingerprint: str,
         entry_field_fingerprint: str,
@@ -277,8 +330,8 @@ class TournamentDrawInputAuthorityStore:
         main_seed_count: int,
         bye_slots: int,
     ) -> dict:
-        return {
-            "source_kind": "finals_participant_selection",
+        value = {
+            "source_kind": source_kind,
             "finals_participant_selection_fingerprint": (
                 finals_participant_selection_fingerprint
             ),
@@ -293,6 +346,11 @@ class TournamentDrawInputAuthorityStore:
             "qualification_seed_count": 0,
             "bye_slots": bye_slots,
         }
+        if finals_effective_participant_state_fingerprint is not None:
+            value["finals_effective_participant_state_fingerprint"] = (
+                finals_effective_participant_state_fingerprint
+            )
+        return value
 
     def get(
         self, *, run_id: str, branch_id: str, event_id: str
@@ -331,7 +389,10 @@ class TournamentDrawInputAuthorityStore:
         field = history[-1]
         field_sequence = len(history)
 
-        if field.source_kind == "finals_participant_selection":
+        if field.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             if main_seed_count is not None or qualification_seed_count is not None:
                 raise ValueError(
                     "Finals Draw Input derives seed counts from canonical bracket policy"
@@ -347,6 +408,23 @@ class TournamentDrawInputAuthorityStore:
                 raise ValueError(
                     "Finals Draw Input requires frozen participant-selection authority"
                 )
+            finals_effective_state = None
+            if field.source_kind == "finals_effective_participant_state":
+                finals_effective_state = WorldTourFinalsReplacementStore(
+                    self.session
+                ).latest_state(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    target_season_index=finals_selection.target_season_index,
+                )
+                if (
+                    finals_effective_state is None
+                    or finals_effective_state.fingerprint
+                    != field.finals_effective_participant_state_fingerprint
+                ):
+                    raise ValueError(
+                        "Finals Draw Input requires latest effective replacement state"
+                    )
             format_authority = TournamentFormatAuthorityStore(self.session).get(
                 run_id=run_id,
                 branch_id=branch_id,
@@ -363,9 +441,16 @@ class TournamentDrawInputAuthorityStore:
                 format_authority=format_authority,
                 command_id=command_id,
                 draw_seed=draw_seed,
+                effective_state=finals_effective_state,
             )
             request = self._finals_request(
+                source_kind=proposed.source_kind,
                 finals_participant_selection_fingerprint=finals_selection.fingerprint,
+                finals_effective_participant_state_fingerprint=(
+                    finals_effective_state.fingerprint
+                    if finals_effective_state is not None
+                    else None
+                ),
                 finals_race_snapshot_fingerprint=finals_selection.race_snapshot_fingerprint,
                 tournament_format_authority_fingerprint=format_authority.fingerprint,
                 entry_field_fingerprint=field.fingerprint,

@@ -61,7 +61,10 @@ class TournamentFormatAuthorityStore:
     def _target_season_index(
         self, *, run_id: str, branch_id: str, event_id: str, field
     ) -> int:
-        if field.source_kind == "finals_participant_selection":
+        if field.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             if field.finals_target_season_index is None:
                 raise ValueError("Finals Entry Field is missing target season identity")
             return field.finals_target_season_index

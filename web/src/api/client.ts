@@ -22,6 +22,10 @@ import type {
   FinalsResultResponse,
   FinalsSimulationResponse,
   FinalsSummaryResponse,
+  FinalsEffectiveParticipantStateResponse,
+  FinalsReplacementAuthorityResponse,
+  FinalsReplacementPreviewPayload,
+  FinalsReplacementDecisionPayload,
   HealthResponse,
   InitialPoolGeneratePayload,
   InitialPoolRegeneratePayload,
@@ -3075,6 +3079,87 @@ export async function commitCanonicalFrozenMainReplacement(
     )
   ) {
     throw new Error('Frozen Main replacement commit response is invalid.')
+  }
+  return data
+}
+
+function finalsReplacementRoot(
+  runId: string,
+  branchId: string,
+  targetSeasonIndex: number
+): string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/finals-participants/${targetSeasonIndex}/replacements`
+}
+
+export async function getFinalsEffectiveParticipantState(
+  runId: string,
+  branchId: string,
+  targetSeasonIndex: number
+): Promise<FinalsEffectiveParticipantStateResponse> {
+  const data = await request<FinalsEffectiveParticipantStateResponse>(
+    finalsReplacementRoot(runId, branchId, targetSeasonIndex) + '/effective'
+  )
+  if (
+    data.state !== null &&
+    (
+      data.state.run_id !== runId ||
+      data.state.branch_id !== branchId ||
+      data.state.target_season_index !== targetSeasonIndex ||
+      data.fingerprint === null ||
+      !/^[0-9a-f]{64}$/.test(data.fingerprint)
+    )
+  ) {
+    throw new Error('Finals effective participant state response does not match the requested scope.')
+  }
+  if (data.state === null && data.fingerprint !== null) {
+    throw new Error('Empty Finals effective participant state cannot carry a fingerprint.')
+  }
+  return data
+}
+
+export async function previewFinalsRaceReplacement(
+  runId: string,
+  branchId: string,
+  targetSeasonIndex: number,
+  payload: FinalsReplacementPreviewPayload
+): Promise<FinalsReplacementAuthorityResponse> {
+  const data = await request<FinalsReplacementAuthorityResponse>(
+    finalsReplacementRoot(runId, branchId, targetSeasonIndex) + '/preview',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.authority.run_id !== runId ||
+    data.authority.branch_id !== branchId ||
+    data.authority.target_season_index !== targetSeasonIndex ||
+    data.authority.vacancy_id !== payload.vacancy_id ||
+    data.authority.withdrawn_player_id !== payload.withdrawn_player_id ||
+    !/^[0-9a-f]{64}$/.test(data.fingerprint)
+  ) {
+    throw new Error('Finals replacement preview response does not match the requested command.')
+  }
+  return data
+}
+
+export async function decideFinalsRaceReplacement(
+  runId: string,
+  branchId: string,
+  targetSeasonIndex: number,
+  vacancyId: string,
+  payload: FinalsReplacementDecisionPayload
+): Promise<FinalsReplacementAuthorityResponse> {
+  const data = await request<FinalsReplacementAuthorityResponse>(
+    finalsReplacementRoot(runId, branchId, targetSeasonIndex) +
+      `/${encodeURIComponent(vacancyId)}/decision`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+  if (
+    data.authority.run_id !== runId ||
+    data.authority.branch_id !== branchId ||
+    data.authority.target_season_index !== targetSeasonIndex ||
+    data.authority.vacancy_id !== vacancyId ||
+    !/^[0-9a-f]{64}$/.test(data.fingerprint)
+  ) {
+    throw new Error('Finals replacement decision response does not match the requested command.')
   }
   return data
 }

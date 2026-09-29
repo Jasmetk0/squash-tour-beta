@@ -1165,7 +1165,10 @@ def remap_coupled_player_slot_history(
         first_field = TournamentEntryField.model_validate_json(
             ordered[0].payload_json
         )
-        if first_field.source_kind == "finals_participant_selection":
+        if first_field.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             raise SimulationSlotForkRemapUnsupportedError(
                 "Finals participant Entry Field fork remap requires Finals authority remap support"
             )

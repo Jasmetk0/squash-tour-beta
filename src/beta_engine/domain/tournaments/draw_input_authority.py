@@ -32,6 +32,7 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v8",
     "tournament_draw_input_authority.v9",
     "tournament_draw_input_authority.v10",
+    "tournament_draw_input_authority.v11",
 ]
 
 
@@ -103,6 +104,7 @@ class TournamentDrawInputAuthority(FrozenInput):
     source_kind: Literal[
         "ranking_snapshot",
         "finals_participant_selection",
+        "finals_effective_participant_state",
     ] = Field(
         default="ranking_snapshot",
         exclude_if=lambda value: value == "ranking_snapshot",
@@ -118,6 +120,11 @@ class TournamentDrawInputAuthority(FrozenInput):
         exclude_if=lambda value: value is None,
     )
     finals_participant_selection_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_effective_participant_state_fingerprint: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
@@ -202,10 +209,14 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Ranking-sourced Draw Input requires frozen ranking authority"
                 )
-            if self.schema_version == "tournament_draw_input_authority.v10":
-                raise ValueError("Finals Draw Input v10 requires Finals source authority")
+            if self.schema_version in {
+                "tournament_draw_input_authority.v10",
+                "tournament_draw_input_authority.v11",
+            }:
+                raise ValueError("Finals Draw Input schema requires Finals source authority")
             if (
                 self.finals_participant_selection_fingerprint is not None
+                or self.finals_effective_participant_state_fingerprint is not None
                 or self.finals_race_snapshot_fingerprint is not None
                 or self.tournament_format_authority_fingerprint is not None
                 or self.finals_target_season_index is not None
@@ -214,10 +225,24 @@ class TournamentDrawInputAuthority(FrozenInput):
                     "Ranking-sourced Draw Input cannot carry Finals source authority"
                 )
         else:
-            if self.schema_version != "tournament_draw_input_authority.v10":
-                raise ValueError(
-                    "Finals-sourced Draw Input requires tournament_draw_input_authority.v10"
-                )
+            if self.source_kind == "finals_participant_selection":
+                if self.schema_version != "tournament_draw_input_authority.v10":
+                    raise ValueError(
+                        "Initial Finals Draw Input requires tournament_draw_input_authority.v10"
+                    )
+                if self.finals_effective_participant_state_fingerprint is not None:
+                    raise ValueError(
+                        "Initial Finals Draw Input cannot carry effective-state authority"
+                    )
+            else:
+                if self.schema_version != "tournament_draw_input_authority.v11":
+                    raise ValueError(
+                        "Effective Finals Draw Input requires tournament_draw_input_authority.v11"
+                    )
+                if self.finals_effective_participant_state_fingerprint is None:
+                    raise ValueError(
+                        "Effective Finals Draw Input requires effective participant-state authority"
+                    )
             if (
                 self.tournament_ranking_authority_fingerprint is not None
                 or self.ranking_snapshot_fingerprint is not None
@@ -560,6 +585,9 @@ class TournamentDrawInputAuthority(FrozenInput):
 
     @property
     def source_authority_fingerprint(self) -> str:
+        if self.source_kind == "finals_effective_participant_state":
+            assert self.finals_effective_participant_state_fingerprint is not None
+            return self.finals_effective_participant_state_fingerprint
         if self.source_kind == "finals_participant_selection":
             assert self.finals_participant_selection_fingerprint is not None
             return self.finals_participant_selection_fingerprint
@@ -1363,10 +1391,14 @@ class TournamentDrawInputAuthorityBuilder:
         format_authority,
         command_id: str,
         draw_seed: int,
+        effective_state=None,
     ) -> TournamentDrawInputAuthority:
         """Adapt frozen Finals Race seeding into the ordinary classic Draw contract."""
 
-        if field.source_kind != "finals_participant_selection":
+        if field.source_kind not in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             raise ValueError("Finals knockout Draw Input requires Finals Entry Field")
         if (
             selection.run_id,
@@ -1383,7 +1415,43 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError(
                 "Finals Entry Field is not bound to supplied participant/Race authority"
             )
-        race_order = tuple(player.player_id for player in selection.participants)
+        if field.source_kind == "finals_effective_participant_state":
+            if effective_state is None:
+                raise ValueError(
+                    "Effective Finals Draw Input requires effective participant state"
+                )
+            if (
+                effective_state.fingerprint
+                != field.finals_effective_participant_state_fingerprint
+                or effective_state.initial_selection_fingerprint
+                != selection.fingerprint
+                or effective_state.race_snapshot_fingerprint
+                != selection.race_snapshot_fingerprint
+                or (
+                    effective_state.run_id,
+                    effective_state.branch_id,
+                    effective_state.finals_event_id,
+                    effective_state.target_season_index,
+                )
+                != (
+                    selection.run_id,
+                    selection.branch_id,
+                    selection.finals_event_id,
+                    selection.target_season_index,
+                )
+            ):
+                raise ValueError(
+                    "Effective Finals Draw Input source provenance is stale"
+                )
+            source_participants = effective_state.participants
+        else:
+            if effective_state is not None:
+                raise ValueError(
+                    "Initial Finals Draw Input cannot use effective participant state"
+                )
+            source_participants = selection.participants
+
+        race_order = tuple(player.player_id for player in source_participants)
         if (
             field.seed_order_player_ids != race_order
             or field.direct_main_player_ids != race_order
@@ -1395,16 +1463,21 @@ class TournamentDrawInputAuthorityBuilder:
             format_authority.run_id,
             format_authority.branch_id,
             format_authority.event_id,
-            format_authority.entry_field_fingerprint,
             format_authority.target_season_index,
         ) != (
             field.run_id,
             field.branch_id,
             field.event_id,
-            field.fingerprint,
             selection.target_season_index,
         ):
-            raise ValueError("Finals Tournament Format authority is stale for Entry Field")
+            raise ValueError("Finals Tournament Format authority scope is stale")
+        if (
+            field.source_kind == "finals_participant_selection"
+            and format_authority.entry_field_fingerprint != field.fingerprint
+        ):
+            raise ValueError(
+                "Initial Finals Tournament Format authority is stale for Entry Field"
+            )
         if format_authority.format_kind != "knockout":
             raise ValueError(
                 "Finals classic Draw Input requires pure knockout Tournament Format"
@@ -1418,7 +1491,11 @@ class TournamentDrawInputAuthorityBuilder:
             actual_player_count=len(race_order),
         )
         return TournamentDrawInputAuthority(
-            schema_version="tournament_draw_input_authority.v10",
+            schema_version=(
+                "tournament_draw_input_authority.v11"
+                if effective_state is not None
+                else "tournament_draw_input_authority.v10"
+            ),
             run_id=field.run_id,
             branch_id=field.branch_id,
             event_id=field.event_id,
@@ -1428,8 +1505,15 @@ class TournamentDrawInputAuthorityBuilder:
             qualification_seed_count=0,
             field_sequence=field_sequence,
             capacity=capacity,
-            source_kind="finals_participant_selection",
+            source_kind=(
+                "finals_effective_participant_state"
+                if effective_state is not None
+                else "finals_participant_selection"
+            ),
             finals_participant_selection_fingerprint=selection.fingerprint,
+            finals_effective_participant_state_fingerprint=(
+                effective_state.fingerprint if effective_state is not None else None
+            ),
             finals_race_snapshot_fingerprint=selection.race_snapshot_fingerprint,
             tournament_format_authority_fingerprint=format_authority.fingerprint,
             finals_target_season_index=selection.target_season_index,
@@ -1437,7 +1521,171 @@ class TournamentDrawInputAuthorityBuilder:
             direct_main_player_ids=race_order,
             qualification_player_ids=(),
             qualifier_placeholder_ids=(),
-            withdrawn_player_ids=(),
+            withdrawn_player_ids=(
+                effective_state.withdrawn_player_ids
+                if effective_state is not None
+                else ()
+            ),
+            main_seed_player_ids=race_order[:main_seed_count],
+            qualification_seed_player_ids=(),
+        )
+
+    @staticmethod
+    def build_finals_replacement_revision(
+        *,
+        previous: TournamentDrawInputAuthority,
+        selection,
+        effective_state,
+        field: TournamentEntryField,
+        format_authority,
+        command_id: str,
+        draw_seed: int,
+    ) -> TournamentDrawInputAuthority:
+        """Build a successor Finals Draw Input for an append-only Draw revision.
+
+        Tournament Format is immutable and remains bound to the original pre-draw
+        Entry Field.  A replacement revision therefore preserves that frozen Format
+        fingerprint while binding the successor Draw Input to the latest effective
+        Finals participant state and successor Entry Field.
+        """
+
+        if previous.source_kind not in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
+            raise ValueError(
+                "Finals replacement Draw Input requires a Finals predecessor"
+            )
+        if field.source_kind != "finals_effective_participant_state":
+            raise ValueError(
+                "Finals replacement Draw Input requires effective Finals Entry Field"
+            )
+        scope = (
+            selection.run_id,
+            selection.branch_id,
+            selection.finals_event_id,
+            selection.target_season_index,
+        )
+        if (
+            previous.run_id,
+            previous.branch_id,
+            previous.event_id,
+            previous.finals_target_season_index,
+        ) != scope:
+            raise ValueError("Finals replacement predecessor scope mismatch")
+        if (
+            field.run_id,
+            field.branch_id,
+            field.event_id,
+            field.finals_target_season_index,
+        ) != scope:
+            raise ValueError("Finals replacement Entry Field scope mismatch")
+        if (
+            effective_state.run_id,
+            effective_state.branch_id,
+            effective_state.finals_event_id,
+            effective_state.target_season_index,
+        ) != scope:
+            raise ValueError("Finals replacement effective-state scope mismatch")
+        if (
+            previous.finals_participant_selection_fingerprint
+            != selection.fingerprint
+            or field.finals_participant_selection_fingerprint
+            != selection.fingerprint
+            or effective_state.initial_selection_fingerprint
+            != selection.fingerprint
+        ):
+            raise ValueError(
+                "Finals replacement Draw Input participant-selection binding is stale"
+            )
+        if (
+            previous.finals_race_snapshot_fingerprint
+            != selection.race_snapshot_fingerprint
+            or field.finals_race_snapshot_fingerprint
+            != selection.race_snapshot_fingerprint
+            or effective_state.race_snapshot_fingerprint
+            != selection.race_snapshot_fingerprint
+        ):
+            raise ValueError(
+                "Finals replacement Draw Input frozen Race binding is stale"
+            )
+        if (
+            field.finals_effective_participant_state_fingerprint
+            != effective_state.fingerprint
+        ):
+            raise ValueError(
+                "Finals replacement Entry Field does not bind effective state"
+            )
+        if (
+            format_authority.run_id,
+            format_authority.branch_id,
+            format_authority.event_id,
+            format_authority.target_season_index,
+            format_authority.fingerprint,
+        ) != (
+            selection.run_id,
+            selection.branch_id,
+            selection.finals_event_id,
+            selection.target_season_index,
+            previous.tournament_format_authority_fingerprint,
+        ):
+            raise ValueError(
+                "Finals replacement Draw Input Format authority is stale"
+            )
+        if format_authority.format_kind != "knockout":
+            raise ValueError(
+                "Finals replacement Draw revision currently supports pure knockout only"
+            )
+
+        race_order = tuple(player.player_id for player in effective_state.participants)
+        if (
+            field.seed_order_player_ids != race_order
+            or field.direct_main_player_ids != race_order
+        ):
+            raise ValueError(
+                "Finals replacement Entry Field no longer preserves frozen Race order"
+            )
+        if (
+            field.capacity.geometry_kind != "fixed_participant_field"
+            or field.capacity.main_draw_size != effective_state.participant_capacity
+        ):
+            raise ValueError(
+                "Finals replacement Entry Field capacity differs from effective state"
+            )
+
+        capacity = TournamentEntryFieldCapacity.for_main_entrant_count(
+            main_entrant_count=len(race_order)
+        )
+        if capacity != previous.capacity:
+            raise ValueError(
+                "Finals replacement cannot change frozen knockout bracket capacity"
+            )
+        main_seed_count = canonical_classic_seed_count(
+            bracket_capacity=capacity.main_draw_size,
+            actual_player_count=len(race_order),
+        )
+        return TournamentDrawInputAuthority(
+            schema_version="tournament_draw_input_authority.v11",
+            run_id=field.run_id,
+            branch_id=field.branch_id,
+            event_id=field.event_id,
+            committed_by_command_id=command_id,
+            draw_seed=draw_seed,
+            main_seed_count=main_seed_count,
+            qualification_seed_count=0,
+            field_sequence=previous.field_sequence + 1,
+            capacity=capacity,
+            source_kind="finals_effective_participant_state",
+            finals_participant_selection_fingerprint=selection.fingerprint,
+            finals_effective_participant_state_fingerprint=effective_state.fingerprint,
+            finals_race_snapshot_fingerprint=selection.race_snapshot_fingerprint,
+            tournament_format_authority_fingerprint=format_authority.fingerprint,
+            finals_target_season_index=selection.target_season_index,
+            entry_field_fingerprint=field.fingerprint,
+            direct_main_player_ids=race_order,
+            qualification_player_ids=(),
+            qualifier_placeholder_ids=(),
+            withdrawn_player_ids=effective_state.withdrawn_player_ids,
             main_seed_player_ids=race_order[:main_seed_count],
             qualification_seed_player_ids=(),
         )

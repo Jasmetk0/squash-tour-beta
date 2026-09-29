@@ -1,5 +1,55 @@
 # Current implementation and next action
 
+## Active implementation — World Tour Finals frozen-Race replacement vertical slice
+
+ROADMAP item 46 is now implemented for the decided pure-knockout production path.
+
+- the immutable initial Finals participant-selection snapshot is never rewritten; an append-only
+  effective participant state records each accepted successor field in frozen Race order with
+  contiguous field seeds and permanent Edition-local withdrawn-player evidence;
+- every vacancy records a mandatory free-text withdrawal reason, source Race/selection/effective
+  fingerprints, the exact Race-ranked candidate offered, explicit Decline/Accept decisions and an
+  explicit exhausted terminal state. Declines never auto-accept another player and direct-entry
+  status/source does not transfer to a replacement;
+- preview/decision persistence is command-idempotent and fingerprint-guarded. Conflicting retries,
+  stale effective fields, broken predecessor lineages and candidate decisions that do not follow the
+  frozen Race fail closed;
+- accepted pre-draw replacement materializes a new shared Entry Field v3 from the effective state;
+  Draw Input v11 binds that effective-state fingerprint while retaining the initial selection and
+  frozen Race provenance. No Official Ranking/application authority is synthesized;
+- accepted post-draw pure-knockout replacement reuses the existing canonical Draw Process and Draw
+  Revision phases: full redraw before Redraw Cutoff, seed cascade between Cutoff and Freeze, and
+  exact physical-slot replacement from Draw Freeze. Frozen-slot replacement does not inherit the
+  withdrawn player's seed number, seed protection or entry status;
+- TournamentPlayerReplacementCutoffAuthority remains the timing authority. BYEs and W/O are not
+  REAL matches; after the first REAL match starts reserve replacement is blocked, with the existing
+  canonical W/O workflow owning progression where required and already-eliminated players receiving
+  no retrospective replacement;
+- Tournament Preparation now exposes finals_replacement_required and blocks Draw commitment,
+  generation and Week Schedule readiness while any vacancy is awaiting_decision or exhausted;
+- Saved Revision capture/validation/restore carries Race, selection, replacement authority,
+  effective participant state, Entry Field, Draw Input and Draw revision lineage. Historical fork
+  remap remains deliberately fail-closed where a safe Finals identity remap is not defined;
+- the Admin replacement API now returns explicit authority/effective-state fingerprints needed for
+  reviewed decisions. Planned Event shows the effective Finals field with Race rank/source, requires
+  a withdrawal reason, exposes the next Race candidate, Decline/Accept, exhausted state, post-draw
+  process-window/repair context and the resulting Draw revision;
+- canonical closure is driven from the successor Draw. PR-critical regression coverage proves a
+  player actually replaced before their first REAL match is absent from Tournament Result, Point
+  Award and Prize Money authority, while the accepted replacement participates normally;
+- focused PR-critical coverage includes P3 withdrawal → P7 decline → P8 accept, persistence/reload,
+  effective Entry/Draw adaptation, 6-player → 8-slot/2-BYE/2-seed geometry, full-redraw,
+  seed-cascade and Draw-Freeze exact-slot phases, Saved Revision roundtrip and unresolved/exhausted
+  Preparation blockers;
+- concurrent ambiguous post-draw vacancies and replacement after started group play remain
+  fail-closed. The still-deferred preliminary reserve-notification workflow, offer expiry, formal
+  reserve roster and sanctions were not invented;
+- SQUASH_ENGINE_MASTER_VISION.md remains untouched.
+
+**Next after this PR:** merge only after required latest-head CI is green, then continue the next
+decided pre-alpha dependency from ROADMAP. Do not expand the deferred Finals reserve-notification or
+started-group replacement rules without an explicit product decision.
+
 ## Active implementation — World Tour Finals pure-knockout Draw adapter
 
 Pure-knockout World Tour Finals now enter the ordinary canonical Draw/Topology pipeline without

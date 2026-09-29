@@ -39,6 +39,15 @@ from beta_engine.infrastructure.db.tournament_draw_process_authority import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
+from beta_engine.infrastructure.db.finals_participant_selection import (
+    WorldTourFinalsParticipantSelectionStore,
+)
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -330,13 +339,35 @@ class TournamentDrawRevisionStore:
         field_rows = field_store._rows(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
-        if (
-            process is None
-            or ranking is None
-            or previous_draw_input is None
-            or not field_rows
-        ):
+        if process is None or previous_draw_input is None or not field_rows:
             raise ValueError("Draw revision history has missing frozen dependencies")
+        finals_source = previous_draw_input.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }
+        finals_selection = None
+        finals_format = None
+        if finals_source:
+            finals_selection = WorldTourFinalsParticipantSelectionStore(
+                self.session
+            ).find_snapshot_for_event(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            finals_format = TournamentFormatAuthorityStore(self.session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if finals_selection is None or finals_format is None:
+                raise ValueError(
+                    "Finals Draw revision history has missing participant/Format authority"
+                )
+        elif ranking is None:
+            raise ValueError(
+                "Ranking-sourced Draw revision history has missing ranking authority"
+            )
         previous_field, applications = field_store._load_row(field_rows[-1])
 
         for expected, row in enumerate(rows, start=1):
@@ -804,6 +835,155 @@ class TournamentDrawRevisionStore:
                 predecessor = revision.successor_draw
                 continue
 
+            if (
+                revision.successor_draw_input.source_kind
+                == "finals_effective_participant_state"
+            ):
+                if finals_selection is None or finals_format is None:
+                    raise ValueError(
+                        "Finals Draw revision cannot replay without frozen authorities"
+                    )
+                effective_state = next(
+                    (
+                        state
+                        for state in WorldTourFinalsReplacementStore(
+                            self.session
+                        ).state_history(
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            target_season_index=(
+                                finals_selection.target_season_index
+                            ),
+                            finals_event_id=event_id,
+                        )
+                        if state.fingerprint
+                        == revision.successor_draw_input.finals_effective_participant_state_fingerprint
+                    ),
+                    None,
+                )
+                if effective_state is None:
+                    raise ValueError(
+                        "Finals Draw revision references missing effective participant state"
+                    )
+                rebuilt_field = (
+                    TournamentEntryFieldResolver
+                    .build_from_finals_effective_participant_state(
+                        state=effective_state,
+                        previous=previous_field,
+                    )
+                )
+                if rebuilt_field != revision.successor_field:
+                    raise ValueError(
+                        "Finals Draw revision field does not replay from effective state"
+                    )
+                if revision.repair_kind == "full_redraw":
+                    if revision.repair_draw_seed is None:
+                        raise ValueError(
+                            "Stored Finals full redraw lacks repair draw seed"
+                        )
+                    replay_draw_seed = revision.repair_draw_seed
+                else:
+                    if (
+                        revision.successor_draw_input.draw_seed
+                        != previous_draw_input.draw_seed
+                    ):
+                        raise ValueError(
+                            "Finals phase-aware repair unexpectedly changed Draw seed"
+                        )
+                    replay_draw_seed = previous_draw_input.draw_seed
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder
+                    .build_finals_replacement_revision(
+                        previous=previous_draw_input,
+                        selection=finals_selection,
+                        effective_state=effective_state,
+                        field=rebuilt_field,
+                        format_authority=finals_format,
+                        command_id=revision.command_id,
+                        draw_seed=replay_draw_seed,
+                    )
+                )
+                if rebuilt_input != revision.successor_draw_input:
+                    raise ValueError(
+                        "Finals Draw revision input does not replay from effective state"
+                    )
+                if revision.repair_kind == "full_redraw":
+                    rebuilt_revision = TournamentDrawRevisionBuilder.build_full_redraw(
+                        predecessor=predecessor,
+                        successor_field=rebuilt_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        affected_draw_types=revision.affected_draw_types,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        qualification_process_window_ordinal=(
+                            revision.qualification_process_window_ordinal
+                        ),
+                        repair_draw_seed=revision.repair_draw_seed,
+                        withdrawn_player_ids=revision.withdrawn_player_ids,
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        replacement_cutoff_authorities=(
+                            revision.replacement_cutoff_authorities
+                        ),
+                    )
+                elif revision.repair_kind == "seed_cascade_phase":
+                    rebuilt_revision = (
+                        TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+                            predecessor=predecessor,
+                            successor_field=rebuilt_field,
+                            successor_draw_input=rebuilt_input,
+                            process_authority=process,
+                            affected_draw_types=revision.affected_draw_types,
+                            main_process_window_ordinal=(
+                                revision.main_process_window_ordinal
+                            ),
+                            qualification_process_window_ordinal=None,
+                            withdrawn_player_ids=revision.withdrawn_player_ids,
+                            sequence=revision.sequence,
+                            command_id=revision.command_id,
+                            repair_draw_seed=None,
+                            replacement_cutoff_authorities=(
+                                revision.replacement_cutoff_authorities
+                            ),
+                        )
+                    )
+                elif revision.repair_kind == "draw_frozen_phase":
+                    rebuilt_revision = (
+                        TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+                            predecessor=predecessor,
+                            successor_field=rebuilt_field,
+                            successor_draw_input=rebuilt_input,
+                            process_authority=process,
+                            affected_draw_types=revision.affected_draw_types,
+                            main_process_window_ordinal=(
+                                revision.main_process_window_ordinal
+                            ),
+                            qualification_process_window_ordinal=None,
+                            withdrawn_player_ids=revision.withdrawn_player_ids,
+                            sequence=revision.sequence,
+                            command_id=revision.command_id,
+                            repair_draw_seed=None,
+                            replacement_cutoff_authorities=(
+                                revision.replacement_cutoff_authorities
+                            ),
+                        )
+                    )
+                else:
+                    raise ValueError(
+                        "Finals replacement uses unsupported Draw revision kind"
+                    )
+                if rebuilt_revision != revision:
+                    raise ValueError(
+                        "Finals Draw revision does not replay from frozen dependencies"
+                    )
+                out.append(revision)
+                previous_field = revision.successor_field
+                previous_draw_input = revision.successor_draw_input
+                predecessor = revision.successor_draw
+                continue
+
             rebuilt_field = TournamentEntryFieldResolver.repair_pre_draw(
                 authority=ranking,
                 applications=applications,
@@ -928,6 +1108,272 @@ class TournamentDrawRevisionStore:
         return TournamentDrawAuthorityStore(self.session).get_initial(
             run_id=run_id, branch_id=branch_id, event_id=event_id
         )
+
+    def apply_finals_race_replacement(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        withdrawn_player_id: str,
+        effective_state_fingerprint: str,
+        main_process_window_ordinal: int,
+        repair_draw_seed: int | None = None,
+    ) -> TournamentDrawRevision:
+        """Apply one accepted Finals Race replacement to the active knockout Draw."""
+
+        draw_store = TournamentDrawAuthorityStore(self.session)
+        draw_store._scope(run_id, branch_id, writing=True)
+        history = self.history(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            revision = next(
+                (item for item in history if item.command_id == command_id),
+                None,
+            )
+            if (
+                revision is None
+                or retry.event_id != event_id
+                or revision.withdrawn_player_ids != (withdrawn_player_id,)
+                or revision.successor_draw_input.finals_effective_participant_state_fingerprint
+                != effective_state_fingerprint
+                or revision.main_process_window_ordinal
+                != main_process_window_ordinal
+                or revision.repair_draw_seed != repair_draw_seed
+            ):
+                raise TournamentDrawRevisionConflict(
+                    "Finals replacement Draw revision command already has a different request"
+                )
+            return revision
+
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else draw_store.get_initial(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+        )
+        if predecessor is None:
+            raise TournamentDrawRevisionConflict(
+                "Finals post-draw replacement requires canonical Draw authority"
+            )
+
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        previous_input = (
+            history[-1].successor_draw_input if history else original_input
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        selection = WorldTourFinalsParticipantSelectionStore(
+            self.session
+        ).find_snapshot_for_event(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        format_authority = TournamentFormatAuthorityStore(self.session).get(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if (
+            previous_input is None
+            or process is None
+            or selection is None
+            or format_authority is None
+        ):
+            raise TournamentDrawRevisionConflict(
+                "Finals replacement requires Draw Input, process, selection and Format authority"
+            )
+        if previous_input.source_kind not in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
+            raise TournamentDrawRevisionConflict(
+                "Finals replacement cannot repair a ranking-sourced Draw"
+            )
+        if format_authority.format_kind != "knockout":
+            raise TournamentDrawRevisionConflict(
+                "Finals post-draw replacement currently supports pure knockout only"
+            )
+
+        effective_state = next(
+            (
+                state
+                for state in WorldTourFinalsReplacementStore(
+                    self.session
+                ).state_history(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    target_season_index=selection.target_season_index,
+                    finals_event_id=event_id,
+                )
+                if state.fingerprint == effective_state_fingerprint
+            ),
+            None,
+        )
+        if effective_state is None:
+            raise TournamentDrawRevisionConflict(
+                "Finals replacement effective participant state is missing"
+            )
+
+        field_rows = TournamentEntryFieldStore(self.session)._rows(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+        )
+        if not field_rows:
+            raise TournamentDrawRevisionConflict(
+                "Finals replacement requires canonical Entry Field"
+            )
+        persisted_field, _ = TournamentEntryFieldStore(self.session)._load_row(
+            field_rows[-1]
+        )
+        previous_field = (
+            history[-1].successor_field if history else persisted_field
+        )
+        successor_field = (
+            TournamentEntryFieldResolver
+            .build_from_finals_effective_participant_state(
+                state=effective_state,
+                previous=previous_field,
+            )
+        )
+
+        previous_ids = set(previous_input.direct_main_player_ids)
+        successor_ids = set(successor_field.direct_main_player_ids)
+        if (
+            previous_ids - successor_ids != {withdrawn_player_id}
+            or len(successor_ids - previous_ids) != 1
+        ):
+            raise TournamentDrawRevisionConflict(
+                "Finals replacement must exchange exactly one active Main participant"
+            )
+
+        cutoff_authorities = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=(withdrawn_player_id,),
+        )
+        phase = process.phase_for(
+            draw_type="main",
+            process_window_ordinal=main_process_window_ordinal,
+        )
+        if phase == "full_redraw":
+            if repair_draw_seed is None:
+                raise TournamentDrawRevisionConflict(
+                    "Finals full redraw replacement requires repair draw seed"
+                )
+            successor_draw_seed = repair_draw_seed
+        else:
+            if repair_draw_seed is not None:
+                raise TournamentDrawRevisionConflict(
+                    "Finals seed-cascade/frozen replacement cannot introduce draw seed"
+                )
+            successor_draw_seed = previous_input.draw_seed
+
+        successor_input = (
+            TournamentDrawInputAuthorityBuilder.build_finals_replacement_revision(
+                previous=previous_input,
+                selection=selection,
+                effective_state=effective_state,
+                field=successor_field,
+                format_authority=format_authority,
+                command_id=command_id,
+                draw_seed=successor_draw_seed,
+            )
+        )
+        sequence = len(history) + 1
+        if phase == "full_redraw":
+            revision = TournamentDrawRevisionBuilder.build_full_redraw(
+                predecessor=predecessor,
+                successor_field=successor_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                affected_draw_types=("main",),
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=None,
+                repair_draw_seed=repair_draw_seed,
+                withdrawn_player_ids=(withdrawn_player_id,),
+                sequence=sequence,
+                command_id=command_id,
+                replacement_cutoff_authorities=cutoff_authorities,
+            )
+        elif phase == "seed_cascade":
+            revision = TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+                predecessor=predecessor,
+                successor_field=successor_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                affected_draw_types=("main",),
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=None,
+                withdrawn_player_ids=(withdrawn_player_id,),
+                sequence=sequence,
+                command_id=command_id,
+                repair_draw_seed=None,
+                replacement_cutoff_authorities=cutoff_authorities,
+            )
+        else:
+            revision = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+                predecessor=predecessor,
+                successor_field=successor_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                affected_draw_types=("main",),
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=None,
+                withdrawn_player_ids=(withdrawn_player_id,),
+                sequence=sequence,
+                command_id=command_id,
+                repair_draw_seed=None,
+                replacement_cutoff_authorities=cutoff_authorities,
+            )
+
+        request_fp = _fp(
+            _request_payload_for_revision(
+                revision,
+                previous_draw_input=previous_input,
+            )
+        )
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=request_fp,
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=revision.predecessor_draw_fingerprint,
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
 
     def full_redraw_withdrawal(
         self,

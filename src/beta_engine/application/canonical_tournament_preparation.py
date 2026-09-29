@@ -37,6 +37,9 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
 )
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -61,6 +64,7 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
 TournamentPreparationPhase = Literal[
     "ranking_snapshot_required",
     "entry_field_required",
+    "finals_replacement_required",
     "wild_card_review_required",
     "draw_input_ready",
     "tournament_format_required",
@@ -75,6 +79,7 @@ TournamentPreparationPhase = Literal[
 TournamentPreparationNextAction = Literal[
     "adopt_ranking_snapshot",
     "build_entry_field",
+    "review_finals_replacement",
     "review_wild_cards",
     "review_pre_draw_or_commit_draw_input",
     "configure_tournament_format",
@@ -145,6 +150,7 @@ class CanonicalTournamentPreparationState(BaseModel):
     entry_source_kind: Literal[
         "ranking_applications",
         "finals_participant_selection",
+        "finals_effective_participant_state",
     ] | None = None
     entry_source_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
@@ -327,6 +333,21 @@ class CanonicalTournamentPreparationService:
             branch_id=branch_id,
             event_id=event_id,
         )
+        finals_replacements = ()
+        if finals_selection is not None:
+            finals_replacements = WorldTourFinalsReplacementStore(
+                session
+            ).latest_authorities_for_event(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=finals_selection.target_season_index,
+                finals_event_id=event_id,
+            )
+        unresolved_finals_replacements = tuple(
+            authority
+            for authority in finals_replacements
+            if authority.status in {"awaiting_decision", "exhausted"}
+        )
         history = TournamentEntryFieldStore(session).history(
             run_id=run_id,
             branch_id=branch_id,
@@ -336,7 +357,10 @@ class CanonicalTournamentPreparationService:
         if (
             finals_selection is not None
             and field is not None
-            and field.source_kind != "finals_participant_selection"
+            and field.source_kind not in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }
         ):
             raise ValueError(
                 "Finals participant selection conflicts with existing Ranking/Application Entry Field"
@@ -420,7 +444,10 @@ class CanonicalTournamentPreparationService:
         field_ready = field is not None
         finals_field = bool(
             field is not None
-            and field.source_kind == "finals_participant_selection"
+            and field.source_kind in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }
         )
         entry_source_ready = ranking_ready or finals_selection is not None or finals_field
         wc_required = bool(
@@ -439,6 +466,19 @@ class CanonicalTournamentPreparationService:
             phase = "entry_field_required"
             next_action = "build_entry_field"
             blockers.append("tournament_entry_field_required")
+        elif unresolved_finals_replacements:
+            phase = "finals_replacement_required"
+            next_action = "review_finals_replacement"
+            if any(
+                authority.status == "awaiting_decision"
+                for authority in unresolved_finals_replacements
+            ):
+                blockers.append("finals_replacement_candidate_decision_required")
+            if any(
+                authority.status == "exhausted"
+                for authority in unresolved_finals_replacements
+            ):
+                blockers.append("finals_replacement_reserve_exhausted")
         elif finals_field and format_authority is None:
             phase = "tournament_format_required"
             next_action = "configure_tournament_format"
@@ -525,7 +565,10 @@ class CanonicalTournamentPreparationService:
             entry_source_target_season_index=(
                 field.finals_target_season_index
                 if field is not None
-                and field.source_kind == "finals_participant_selection"
+                and field.source_kind in {
+                    "finals_participant_selection",
+                    "finals_effective_participant_state",
+                }
                 else (
                     finals_selection.target_season_index
                     if finals_selection is not None
@@ -660,6 +703,7 @@ class CanonicalTournamentPreparationService:
             can_commit_draw_input=(
                 field_ready
                 and wc_ready
+                and not unresolved_finals_replacements
                 and not draw_input_ready
                 and (
                     (
@@ -677,13 +721,20 @@ class CanonicalTournamentPreparationService:
                     )
                 )
             ),
-            can_generate_draw=draw_input_ready and not draw_ready,
+            can_generate_draw=(
+                draw_input_ready
+                and not unresolved_finals_replacements
+                and not draw_ready
+            ),
             ready_for_match_schedule=(
-                draw_ready
-                or (
+                not unresolved_finals_replacements
+                and (
+                    draw_ready
+                    or (
                     format_authority is not None
                     and format_authority.format_kind in {"groups", "groups_knockout"}
                     and group_match_schedule is not None
+                    )
                 )
             ),
         )

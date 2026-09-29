@@ -70,6 +70,8 @@ from beta_engine.infrastructure.db.models import (
     WeekTournamentLockAuthorityModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
     WorldTourFinalsParticipantSelectionSnapshotModel,
+    WorldTourFinalsEffectiveParticipantStateModel,
+    WorldTourFinalsReplacementAuthorityModel,
     WorldTourFinalsRaceConfigurationModel,
     WorldTourFinalsRaceSnapshotModel,
 )
@@ -201,6 +203,8 @@ COMPONENT_COVERAGE: tuple[SavedRevisionComponentCoverage, ...] = (
             WorldTourFinalsRaceSnapshotModel,
             WorldTourFinalsParticipantSelectionConfigurationModel,
             WorldTourFinalsParticipantSelectionSnapshotModel,
+            WorldTourFinalsEffectiveParticipantStateModel,
+            WorldTourFinalsReplacementAuthorityModel,
             TournamentEntryFieldVersionModel,
             TournamentGroupRulesPolicyModel,
             TournamentFormatAuthorityModel,

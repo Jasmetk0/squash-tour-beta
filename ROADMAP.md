@@ -172,11 +172,21 @@
     bracket/BYE geometry, freeze Draw Input v10 without synthesizing Official Ranking/application
     evidence, preserve Race-derived seed order and reuse the ordinary Draw/knockout Topology path.
     Keep unresolved group-format policies separate.
-46. Next: implement the decided World Tour Finals withdrawal/replacement dependency from the
-    frozen Race reserve order as a dedicated authority. Do not re-enable generic ranking-based
-    Entry repair or invent the still-undefined reserve-notification workflow; preserve exact
-    pre/post-draw historical boundaries and fail closed where replacement timing/repair semantics
-    are not already decided.
+46. ✅ Implement the decided World Tour Finals frozen-Race withdrawal/replacement dependency as a
+    dedicated production authority: preserve the immutable initial participant selection, record
+    mandatory withdrawal reasons plus explicit Race-order decline/accept decisions, keep append-only
+    effective participant states and fail exhausted reserve order closed. Accepted replacements feed
+    canonical Entry Field v3 / Draw Input v11 without synthetic Official Ranking; pure-knockout
+    post-draw acceptance reuses the ordinary Redraw Cutoff → seed-cascade → Draw Freeze revision
+    phases, player-specific first-REAL-match cutoff and canonical W/O handoff. Saved Revision
+    captures/restores the full replacement/effective/Entry/Draw lineage, historical fork remap fails
+    closed where identity remap is unsafe, Preparation blocks awaiting/exhausted vacancies, and
+    Planned Event exposes effective Race-ranked participants plus explicit preview/Decline/Accept and
+    Draw-repair context. Closure remains result-driven from the successor Draw, so a player actually
+    replaced before their first REAL match is absent from Result/Point Award/Prize Money authority.
+    Concurrent ambiguous post-draw vacancies and started-group replacement remain fail-closed; no
+    reserve notification cadence, offer expiry, global reserve roster or new sanction policy is
+    invented.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

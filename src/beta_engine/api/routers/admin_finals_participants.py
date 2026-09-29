@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field, ValidationError
@@ -12,9 +12,16 @@ from beta_engine.application.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionAuthorityService,
     WorldTourFinalsParticipantSelectionConfigurationCommand,
 )
+from beta_engine.application.finals_race_replacement import (
+    FinalsReplacementDecisionCommand,
+    FinalsReplacementPreviewCommand,
+    WorldTourFinalsReplacementService,
+)
 from beta_engine.domain.finals import (
+    WorldTourFinalsEffectiveParticipantState,
     WorldTourFinalsParticipantSelectionConfiguration,
     WorldTourFinalsParticipantSelectionSnapshot,
+    WorldTourFinalsReplacementAuthority,
 )
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionConflict,
@@ -40,12 +47,135 @@ class WorldTourFinalsParticipantSelectionAuthorityResponse(BaseModel):
     snapshot: WorldTourFinalsParticipantSelectionSnapshot | None
 
 
+class FinalsReplacementPreviewRequest(BaseModel):
+    withdrawn_player_id: str
+    withdrawal_reason: str
+    vacancy_id: str
+    expected_effective_state_fingerprint: str | None = None
+    command_id: str
+
+
+class FinalsReplacementDecisionRequest(BaseModel):
+    expected_preview_fingerprint: str
+    expected_effective_state_fingerprint: str
+    decision: Literal["decline", "accept"]
+    main_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
+    command_id: str
+
+
+class FinalsEffectiveParticipantStateResponse(BaseModel):
+    state: WorldTourFinalsEffectiveParticipantState | None
+    fingerprint: str | None
+
+
+class FinalsReplacementAuthorityResponse(BaseModel):
+    authority: WorldTourFinalsReplacementAuthority
+    fingerprint: str
+
+
 def _service(
     runtime: ApiRuntime,
 ) -> WorldTourFinalsParticipantSelectionAuthorityService:
     return WorldTourFinalsParticipantSelectionAuthorityService(
         runtime.repository._session_factory
     )
+
+
+def _replacement_service(runtime: ApiRuntime) -> WorldTourFinalsReplacementService:
+    return WorldTourFinalsReplacementService(runtime.repository._session_factory)
+
+
+@router.get(
+    "/{target_season_index}/replacements/effective",
+    response_model=FinalsEffectiveParticipantStateResponse,
+)
+def inspect_effective_finals_field(
+    run_id: str,
+    branch_id: str,
+    target_season_index: int,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        state = _replacement_service(runtime).inspect(
+            run_id=run_id, branch_id=branch_id, target_season_index=target_season_index
+        )
+        return FinalsEffectiveParticipantStateResponse(
+            state=state,
+            fingerprint=state.fingerprint if state is not None else None,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "finals_replacement_inspection_blocked",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/{target_season_index}/replacements/preview",
+    response_model=FinalsReplacementAuthorityResponse,
+)
+def preview_finals_replacement(
+    run_id: str,
+    branch_id: str,
+    target_season_index: int,
+    payload: FinalsReplacementPreviewRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        authority = _replacement_service(runtime).preview(
+            FinalsReplacementPreviewCommand(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=target_season_index,
+                **payload.model_dump(),
+            )
+        )
+        return FinalsReplacementAuthorityResponse(
+            authority=authority,
+            fingerprint=authority.fingerprint,
+        )
+    except (ValueError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "finals_replacement_preview_blocked", "message": str(exc)},
+        ) from exc
+
+
+@router.post(
+    "/{target_season_index}/replacements/{vacancy_id}/decision",
+    response_model=FinalsReplacementAuthorityResponse,
+)
+def decide_finals_replacement(
+    run_id: str,
+    branch_id: str,
+    target_season_index: int,
+    vacancy_id: str,
+    payload: FinalsReplacementDecisionRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        authority = _replacement_service(runtime).decide(
+            FinalsReplacementDecisionCommand(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=target_season_index,
+                vacancy_id=vacancy_id,
+                **payload.model_dump(),
+            )
+        )
+        return FinalsReplacementAuthorityResponse(
+            authority=authority,
+            fingerprint=authority.fingerprint,
+        )
+    except (ValueError, ValidationError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "finals_replacement_decision_blocked", "message": str(exc)},
+        ) from exc
 
 
 @router.get(

@@ -3413,6 +3413,22 @@ def restore_saved_simulation_slots(
         bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_hybrid_knockout_brackets}):
             bracket_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_hybrid_ranking_policies = session.scalars(
+        select(TournamentHybridRankingPolicyAuthorityModel)
+        .where(
+            TournamentHybridRankingPolicyAuthorityModel.run_id == run_id,
+            TournamentHybridRankingPolicyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridRankingPolicyAuthorityModel.event_id)
+    ).all()
+    if live_hybrid_ranking_policies:
+        from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
+            TournamentHybridRankingPolicyAuthorityStore,
+        )
+
+        policy_store = TournamentHybridRankingPolicyAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_hybrid_ranking_policies}):
+            policy_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -3589,6 +3605,11 @@ def restore_saved_simulation_slots(
                 bool(live_hybrid_knockout_brackets)
                 or bool(expected is not None and "hybrid_knockout_brackets" in expected)
             ),
+            hybrid_ranking_policies=live_hybrid_ranking_policies,
+            include_hybrid_ranking_policies=(
+                bool(live_hybrid_ranking_policies)
+                or bool(expected is not None and "hybrid_ranking_policies" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -3634,6 +3655,7 @@ def restore_saved_simulation_slots(
         or live_group_tie_resolutions
         or live_hybrid_knockout_entrants
         or live_hybrid_knockout_brackets
+        or live_hybrid_ranking_policies
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities
@@ -3643,6 +3665,12 @@ def restore_saved_simulation_slots(
     )
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
+    session.execute(
+        delete(TournamentHybridRankingPolicyAuthorityModel).where(
+            TournamentHybridRankingPolicyAuthorityModel.run_id == run_id,
+            TournamentHybridRankingPolicyAuthorityModel.branch_id == branch_id,
+        )
+    )
     session.execute(
         delete(TournamentHybridKnockoutBracketAuthorityModel).where(
             TournamentHybridKnockoutBracketAuthorityModel.run_id == run_id,
@@ -3825,6 +3853,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentHybridKnockoutEntrantsAuthorityModel(**value))
     for value in (target or {}).get("hybrid_knockout_brackets", []):
         session.add(TournamentHybridKnockoutBracketAuthorityModel(**value))
+    for value in (target or {}).get("hybrid_ranking_policies", []):
+        session.add(TournamentHybridRankingPolicyAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -3951,6 +3981,19 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_hybrid_knockout_brackets}
         ):
             bracket_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_hybrid_ranking_policies = (target or {}).get(
+        "hybrid_ranking_policies", []
+    )
+    if target_hybrid_ranking_policies:
+        from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
+            TournamentHybridRankingPolicyAuthorityStore,
+        )
+
+        policy_store = TournamentHybridRankingPolicyAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_hybrid_ranking_policies}
+        ):
+            policy_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

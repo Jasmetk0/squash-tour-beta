@@ -34,19 +34,36 @@ class WorldTourFinalsReplacementStore:
             raise ValueError("Finals replacement scope is not writable")
 
     def state_history(
-        self, *, run_id: str, branch_id: str, target_season_index: int
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_season_index: int,
+        finals_event_id: str | None = None,
     ) -> tuple[WorldTourFinalsEffectiveParticipantState, ...]:
         self._scope(run_id, branch_id)
-        rows = self.session.scalars(
-            select(WorldTourFinalsEffectiveParticipantStateModel)
-            .where(
-                WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
-                WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
-                WorldTourFinalsEffectiveParticipantStateModel.target_season_index
-                == target_season_index,
+        statement = select(WorldTourFinalsEffectiveParticipantStateModel).where(
+            WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
+            WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
+            WorldTourFinalsEffectiveParticipantStateModel.target_season_index
+            == target_season_index,
+        )
+        if finals_event_id is not None:
+            statement = statement.where(
+                WorldTourFinalsEffectiveParticipantStateModel.finals_event_id
+                == finals_event_id
             )
-            .order_by(WorldTourFinalsEffectiveParticipantStateModel.sequence)
+        rows = self.session.scalars(
+            statement.order_by(
+                WorldTourFinalsEffectiveParticipantStateModel.finals_event_id,
+                WorldTourFinalsEffectiveParticipantStateModel.sequence,
+            )
         ).all()
+        event_ids = {row.finals_event_id for row in rows}
+        if finals_event_id is None and len(event_ids) > 1:
+            raise ValueError(
+                "Finals effective participant state scope is ambiguous without event ID"
+            )
         states = tuple(
             WorldTourFinalsEffectiveParticipantState.model_validate_json(
                 row.payload_json
@@ -86,6 +103,7 @@ class WorldTourFinalsReplacementStore:
             run_id=state.run_id,
             branch_id=state.branch_id,
             target_season_index=state.target_season_index,
+            finals_event_id=state.finals_event_id,
         )
         by_command = next(
             (

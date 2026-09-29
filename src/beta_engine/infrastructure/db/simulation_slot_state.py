@@ -536,7 +536,7 @@ def _validate_draw_input_rows_shape(rows):
             committed.committed_by_command_id,
             committed.field_sequence,
             committed.entry_field_fingerprint,
-            committed.tournament_ranking_authority_fingerprint,
+            committed.source_authority_fingerprint,
             committed.fingerprint,
         ) != (
             row.run_id,

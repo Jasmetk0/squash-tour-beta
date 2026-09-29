@@ -227,7 +227,9 @@ class TournamentPointAwardAuthority(FrozenInput):
                     for component in award.phase_components
                     if component.component_id == "knockout_finish"
                 )
-                if award.reached_stage == "group_stage":
+                if award.reached_stage == "group_stage" or award.reached_stage.startswith(
+                    "group_position_"
+                ):
                     if knockout_components:
                         raise ValueError(
                             "Group-only hybrid award cannot carry knockout finish points"

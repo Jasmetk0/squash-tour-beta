@@ -32,6 +32,9 @@ from beta_engine.domain.tournaments.group_tie_resolution_authority import (
 from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
     TournamentHybridKnockoutEntrantsAuthority,
 )
+from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
+    TournamentHybridKnockoutBracketAuthority,
+)
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityConflict,
     TournamentFormatAuthorityStore,
@@ -59,6 +62,10 @@ from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority imp
 from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
     TournamentHybridKnockoutEntrantsAuthorityConflict,
     TournamentHybridKnockoutEntrantsAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
+    TournamentHybridKnockoutBracketAuthorityConflict,
+    TournamentHybridKnockoutBracketAuthorityStore,
 )
 
 
@@ -135,6 +142,10 @@ class TournamentHybridKnockoutEntrantsGenerateRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
+class TournamentHybridKnockoutBracketGenerateRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
 class TournamentGroupMatchScheduleResponse(
     TournamentGroupMatchScheduleAuthority
 ):
@@ -208,6 +219,23 @@ class TournamentHybridKnockoutEntrantsResponse(
     def from_authority(
         cls, authority: TournamentHybridKnockoutEntrantsAuthority
     ) -> "TournamentHybridKnockoutEntrantsResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
+
+
+class TournamentHybridKnockoutBracketResponse(
+    TournamentHybridKnockoutBracketAuthority
+):
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentHybridKnockoutBracketAuthority
+    ) -> "TournamentHybridKnockoutBracketResponse":
         return cls.model_validate(
             {
                 **authority.model_dump(mode="python"),
@@ -676,6 +704,72 @@ def generate_hybrid_knockout_entrants(
             status_code=409,
             detail={
                 "code": "tournament_hybrid_knockout_entrants_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-knockout-bracket",
+    response_model=TournamentHybridKnockoutBracketResponse,
+)
+def inspect_hybrid_knockout_bracket(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridKnockoutBracketResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentHybridKnockoutBracketAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Hybrid Knockout Bracket authority not found",
+                )
+            return TournamentHybridKnockoutBracketResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_knockout_bracket_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/hybrid-knockout-bracket/generate",
+    response_model=TournamentHybridKnockoutBracketResponse,
+    status_code=201,
+)
+def generate_hybrid_knockout_bracket(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentHybridKnockoutBracketGenerateRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridKnockoutBracketResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            value = TournamentHybridKnockoutBracketAuthorityStore(session).generate(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            return TournamentHybridKnockoutBracketResponse.from_authority(value)
+    except (TournamentHybridKnockoutBracketAuthorityConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_hybrid_knockout_bracket_conflict",
                 "message": str(exc),
             },
         ) from exc

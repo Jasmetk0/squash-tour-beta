@@ -762,45 +762,16 @@ describe('AdminSeasonsPage', () => {
 
 
 
-  it('renders Simulate One Event panel and previews through API', async () => {
+  it('does not expose direct legacy one-event mutation in Admin Seasons', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Event-Level Tools/i)
 
-    expect(await screen.findByRole('heading', { name: 'Simulate One Event' })).toBeInTheDocument()
-    expect(screen.getByText('This command orchestrates existing backend services for one event. It does not simulate a full week or full season. Applying points and publishing snapshots are opt-in.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Preview event simulation' }))
-    expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, apply_points: false, publish_snapshot: false, simulate_draw_type: 'qualification_then_main' }))
-    expect(screen.getByText('Point application mutates active season players. Snapshot publication mutates weekly ranking snapshot registry. Dry-run is plan-only.')).toBeInTheDocument()
-    expect(screen.getAllByText('Stop reason').length).toBeGreaterThan(0)
-    expect(screen.getByText('dry_run_plan_only')).toBeInTheDocument()
-    expect(screen.getByText('Safe to rerun')).toBeInTheDocument()
-    const artifactTable = await screen.findByRole('table', { name: 'Simulate one event artifact state table' })
-    expect(within(artifactTable).getByText('Point awards')).toBeInTheDocument()
-    const table = await screen.findByRole('table', { name: 'Simulate one event steps table' })
-    expect(within(table).getByText('generate_entries')).toBeInTheDocument()
-    expect(within(table).getByText('planned')).toBeInTheDocument()
-    expect(within(table).getByText('SeasonPointAwardsService.generate_event_point_awards')).toBeInTheDocument()
-    expect(within(table).getByText('777')).toBeInTheDocument()
-    expect(screen.getByText('report warning')).toBeInTheDocument()
-    expect(screen.getByText('report error')).toBeInTheDocument()
-    expect(within(table).getByText('sim warning')).toBeInTheDocument()
-    expect(within(table).getByText('sim error')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Simulate One Event' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Preview event simulation' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Run event simulation' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy Simulate One Season Week — Preflight' })).toBeInTheDocument()
   })
-
-  it('runs Simulate One Event with dry_run false and opt-in flags', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Event-Level Tools/i)
-
-    await userEvent.click(await screen.findByLabelText('Apply points'))
-    await userEvent.click(screen.getByLabelText('Publish ranking snapshot'))
-    await userEvent.selectOptions(screen.getByLabelText('Simulate draw type'), 'main')
-    await userEvent.click(screen.getByRole('button', { name: 'Run event simulation' }))
-    expect(api.simulateOneEvent).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false, apply_points: true, publish_snapshot: true, simulate_draw_type: 'main' }))
-    expect(await screen.findByText('points_generated')).toBeInTheDocument()
-  })
-
 
 
   it('renders Season Simulation Readiness, calls API, displays summary and table, and sends filters', async () => {

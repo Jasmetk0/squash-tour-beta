@@ -24,6 +24,15 @@ from beta_engine.infrastructure.db.finals_race_replacement import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
+from beta_engine.infrastructure.db.tournament_draw_authority import (
+    TournamentDrawAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
+from beta_engine.infrastructure.db.tournament_replacement_cutoff_authority import (
+    TournamentPlayerReplacementCutoffAuthorityStore,
+)
 
 
 class FinalsReplacementPreviewCommand(FrozenInput):
@@ -47,6 +56,8 @@ class FinalsReplacementDecisionCommand(FrozenInput):
     expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     expected_effective_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     decision: Literal["decline", "accept"]
+    main_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
     command_id: str = Field(min_length=1, max_length=128)
 
 
@@ -106,6 +117,30 @@ class WorldTourFinalsReplacementService:
                 raise ValueError(
                     "Effective Finals participant state changed since preview was prepared"
                 )
+            draw = TournamentDrawAuthorityStore(session).get_initial(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=selection.finals_event_id,
+            )
+            if draw is not None:
+                cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
+                    session
+                ).resolve(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_id=selection.finals_event_id,
+                    player_id=command.withdrawn_player_id,
+                    draw_type="main",
+                )
+                if cutoff.status == "walkover_required":
+                    raise ValueError(
+                        "Finals replacement cutoff has passed; canonical W/O is required"
+                    )
+                if cutoff.status == "already_eliminated":
+                    raise ValueError(
+                        "Finals withdrawal cannot replace an already eliminated player"
+                    )
+
             existing = store.authority_history(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
@@ -188,6 +223,43 @@ class WorldTourFinalsReplacementService:
                     raise ValueError(
                         "Finals replacement command ID already has a different decision request"
                     )
+                if command.decision == "accept":
+                    draw = TournamentDrawAuthorityStore(session).get_initial(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=selection.finals_event_id,
+                    )
+                    if draw is not None:
+                        revision = next(
+                            (
+                                item
+                                for item in TournamentDrawRevisionStore(
+                                    session
+                                ).history(
+                                    run_id=command.run_id,
+                                    branch_id=command.branch_id,
+                                    event_id=selection.finals_event_id,
+                                )
+                                if item.command_id == command.command_id
+                            ),
+                            None,
+                        )
+                        if (
+                            revision is None
+                            or revision.main_process_window_ordinal
+                            != command.main_process_window_ordinal
+                            or revision.repair_draw_seed != command.repair_draw_seed
+                        ):
+                            raise ValueError(
+                                "Finals replacement command ID has different Draw repair context"
+                            )
+                    elif (
+                        command.main_process_window_ordinal is not None
+                        or command.repair_draw_seed is not None
+                    ):
+                        raise ValueError(
+                            "Pre-draw Finals replacement cannot carry Draw repair context"
+                        )
                 return store.put_authority(retry)
             if (
                 not history
@@ -217,14 +289,48 @@ class WorldTourFinalsReplacementService:
             store.put_authority(authority)
             if successor is not None:
                 store.put_state(successor)
-                TournamentEntryFieldStore(
-                    session
-                ).stage_from_finals_effective_participant_state(
+                draw = TournamentDrawAuthorityStore(session).get_initial(
                     run_id=command.run_id,
                     branch_id=command.branch_id,
                     event_id=selection.finals_event_id,
-                    target_season_index=command.target_season_index,
-                    expected_effective_state_fingerprint=successor.fingerprint,
-                    command_id=f"finals-replacement-entry:{successor.fingerprint[:64]}",
                 )
+                if draw is None:
+                    if (
+                        command.main_process_window_ordinal is not None
+                        or command.repair_draw_seed is not None
+                    ):
+                        raise ValueError(
+                            "Pre-draw Finals replacement cannot carry Draw repair context"
+                        )
+                    TournamentEntryFieldStore(
+                        session
+                    ).stage_from_finals_effective_participant_state(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=selection.finals_event_id,
+                        target_season_index=command.target_season_index,
+                        expected_effective_state_fingerprint=successor.fingerprint,
+                        command_id=(
+                            f"finals-replacement-entry:{successor.fingerprint[:64]}"
+                        ),
+                    )
+                else:
+                    if command.main_process_window_ordinal is None:
+                        raise ValueError(
+                            "Post-draw Finals replacement requires Main process-window ordinal"
+                        )
+                    TournamentDrawRevisionStore(
+                        session
+                    ).apply_finals_race_replacement(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=selection.finals_event_id,
+                        command_id=command.command_id,
+                        withdrawn_player_id=authority.withdrawn_player_id,
+                        effective_state_fingerprint=successor.fingerprint,
+                        main_process_window_ordinal=(
+                            command.main_process_window_ordinal
+                        ),
+                        repair_draw_seed=command.repair_draw_seed,
+                    )
             return authority

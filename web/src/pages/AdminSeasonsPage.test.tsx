@@ -573,7 +573,6 @@ describe('AdminSeasonsPage', () => {
     api.getViewerRankingTable.mockResolvedValue(rankingTableResponse)
     api.getAdminRankingSnapshot.mockResolvedValue({ snapshot: null, snapshot_exists: false, summary: { ranking: { table_type: 'ranking', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' }, race: { table_type: 'race', row_count: 0, include_zero_points: true, generated_at: '2000-01-01T00:00:00Z' } }, metadata: null, validation_warnings: [], validation_errors: [] })
     api.getAdminPointBreakdown.mockResolvedValue({ breakdown: null, summary_rows: [{ player_id: 'P-1' }], metadata: { season: '2000/01' }, validation_warnings: [], validation_errors: [] })
-    api.bootstrapSeasonFromInitialPool.mockResolvedValue(response)
     api.getSeasonCalendar.mockResolvedValue(emptyCalendar)
     api.buildSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getSeasonLifecycle.mockResolvedValue(lifecycleResponse)
@@ -696,6 +695,7 @@ describe('AdminSeasonsPage', () => {
   })
 
   it('keeps legacy active-player bootstrap state read-only', async () => {
+    api.getSeasonActivePlayers.mockResolvedValue(response)
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findByRole('heading', { name: 'Seasons / Legacy state' })).toBeInTheDocument()

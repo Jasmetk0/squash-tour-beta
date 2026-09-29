@@ -19,7 +19,9 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 
 
 EntryWindow = Literal["main", "qualification"]
-FieldResolutionMode = Literal["initial", "pre_draw_repair"]
+FieldResolutionMode = Literal[
+    "initial", "pre_draw_repair", "finals_effective_replacement"
+]
 EntryFieldGeometry = Literal["classic_bracket", "fixed_participant_field"]
 EntryFieldSourceKind = Literal["ranking_applications", "finals_participant_selection"]
 
@@ -93,7 +95,9 @@ class TournamentEntryFieldCapacity(FrozenInput):
         if reserved > self.main_draw_size:
             raise ValueError("Reserved Main Draw slots exceed Main Draw capacity")
         if self.geometry_kind == "classic_bracket":
-            if self.main_draw_size < 2 or self.main_draw_size & (self.main_draw_size - 1):
+            if self.main_draw_size < 2 or self.main_draw_size & (
+                self.main_draw_size - 1
+            ):
                 raise ValueError(
                     "Classic Main Draw capacity must be one of 2, 4, 8, 16, 32, 64, 128"
                 )
@@ -136,6 +140,7 @@ class TournamentEntryField(FrozenInput):
     schema_version: Literal[
         "tournament_entry_field.v1",
         "tournament_entry_field.v2",
+        "tournament_entry_field.v3",
     ] = "tournament_entry_field.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -162,6 +167,11 @@ class TournamentEntryField(FrozenInput):
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
     )
+    finals_effective_participant_state_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
     finals_target_season_index: int | None = Field(
         default=None,
         ge=0,
@@ -177,9 +187,7 @@ class TournamentEntryField(FrozenInput):
     qualification_player_ids: tuple[str, ...] = ()
     below_qualification_cut_player_ids: tuple[str, ...] = ()
     withdrawn_player_ids: tuple[str, ...] = ()
-    base_field_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
-    )
+    base_field_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
 
     @model_validator(mode="after")
     def validate_partition(self) -> "TournamentEntryField":
@@ -217,12 +225,16 @@ class TournamentEntryField(FrozenInput):
                 or self.finals_race_snapshot_fingerprint is not None
                 or self.finals_target_season_index is not None
                 or self.seed_order_player_ids
+                or self.finals_effective_participant_state_fingerprint is not None
             ):
                 raise ValueError(
                     "Ranking/Application Entry Field cannot carry Finals selection authority"
                 )
         else:
-            if self.schema_version != "tournament_entry_field.v2":
+            if self.schema_version not in {
+                "tournament_entry_field.v2",
+                "tournament_entry_field.v3",
+            }:
                 raise ValueError(
                     "Finals participant Entry Field requires tournament_entry_field.v2"
                 )
@@ -245,7 +257,7 @@ class TournamentEntryField(FrozenInput):
                 raise ValueError(
                     "Finals participant Entry Field requires fixed participant geometry"
                 )
-            if self.mode != "initial":
+            if self.mode not in {"initial", "finals_effective_replacement"}:
                 raise ValueError(
                     "Finals participant Entry Field repairs use the separate replacement authority"
                 )
@@ -269,6 +281,25 @@ class TournamentEntryField(FrozenInput):
                 raise ValueError(
                     "Finals participant Entry Field cannot fabricate application evidence"
                 )
+            if (
+                self.mode == "initial"
+                and self.finals_effective_participant_state_fingerprint is not None
+            ):
+                raise ValueError(
+                    "Initial Finals Entry Field cannot carry effective replacement state"
+                )
+            if self.mode == "finals_effective_replacement":
+                if (
+                    self.schema_version != "tournament_entry_field.v3"
+                    or self.finals_effective_participant_state_fingerprint is None
+                ):
+                    raise ValueError(
+                        "Effective Finals Entry Field requires v3 effective-state provenance"
+                    )
+                if self.base_field_fingerprint is None:
+                    raise ValueError(
+                        "Effective Finals Entry Field requires predecessor field"
+                    )
         return self
 
     @property
@@ -277,7 +308,10 @@ class TournamentEntryField(FrozenInput):
             assert self.tournament_ranking_authority_fingerprint is not None
             return self.tournament_ranking_authority_fingerprint
         assert self.finals_participant_selection_fingerprint is not None
-        return self.finals_participant_selection_fingerprint
+        return (
+            self.finals_effective_participant_state_fingerprint
+            or self.finals_participant_selection_fingerprint
+        )
 
     @property
     def active_main_entrant_count(self) -> int:
@@ -338,9 +372,7 @@ class TournamentEntryFieldResolver:
         eligible = tuple(app for app in apps if app.eligible)
         cls._validate_nr_tokens(authority, eligible)
 
-        main_window = tuple(
-            app for app in eligible if app.entry_window == "main"
-        )
+        main_window = tuple(app for app in eligible if app.entry_window == "main")
         qualification_window = tuple(
             app for app in eligible if app.entry_window == "qualification"
         )
@@ -364,9 +396,7 @@ class TournamentEntryFieldResolver:
             ranking_snapshot_fingerprint=authority.ranking_snapshot_fingerprint,
             applications_fingerprint=applications_fp,
             direct_main_player_ids=tuple(app.player_id for app in direct),
-            qualification_player_ids=tuple(
-                app.player_id for app in qualification
-            ),
+            qualification_player_ids=tuple(app.player_id for app in qualification),
             below_qualification_cut_player_ids=tuple(
                 app.player_id for app in below_qualification_cut
             ),
@@ -412,6 +442,52 @@ class TournamentEntryFieldResolver:
             seed_order_player_ids=player_ids,
             applications_fingerprint=_fingerprint([]),
             direct_main_player_ids=player_ids,
+        )
+
+    @classmethod
+    def build_from_finals_effective_participant_state(
+        cls, *, selection, effective, previous: TournamentEntryField
+    ) -> TournamentEntryField:
+        """Append the accepted frozen-Race field without rewriting initial selection."""
+        if (
+            effective.run_id,
+            effective.branch_id,
+            effective.target_season_index,
+            effective.finals_event_id,
+            effective.initial_selection_fingerprint,
+            effective.race_snapshot_fingerprint,
+            effective.participant_capacity,
+        ) != (
+            selection.run_id,
+            selection.branch_id,
+            selection.target_season_index,
+            selection.finals_event_id,
+            selection.fingerprint,
+            selection.race_snapshot_fingerprint,
+            selection.participant_capacity,
+        ):
+            raise ValueError("Effective Finals state does not bind initial selection")
+        if previous.source_kind != "finals_participant_selection":
+            raise ValueError(
+                "Effective Finals state requires Finals Entry Field predecessor"
+            )
+        player_ids = tuple(player.player_id for player in effective.participants)
+        return TournamentEntryField(
+            schema_version="tournament_entry_field.v3",
+            run_id=effective.run_id,
+            branch_id=effective.branch_id,
+            event_id=effective.finals_event_id,
+            mode="finals_effective_replacement",
+            capacity=previous.capacity,
+            source_kind="finals_participant_selection",
+            finals_participant_selection_fingerprint=selection.fingerprint,
+            finals_race_snapshot_fingerprint=effective.race_snapshot_fingerprint,
+            finals_effective_participant_state_fingerprint=effective.fingerprint,
+            finals_target_season_index=effective.target_season_index,
+            seed_order_player_ids=player_ids,
+            applications_fingerprint=_fingerprint([]),
+            direct_main_player_ids=player_ids,
+            base_field_fingerprint=previous.fingerprint,
         )
 
     @classmethod
@@ -496,9 +572,7 @@ class TournamentEntryFieldResolver:
             ranking_snapshot_fingerprint=authority.ranking_snapshot_fingerprint,
             applications_fingerprint=applications_fp,
             direct_main_player_ids=tuple(app.player_id for app in direct),
-            qualification_player_ids=tuple(
-                app.player_id for app in qualification
-            ),
+            qualification_player_ids=tuple(app.player_id for app in qualification),
             below_qualification_cut_player_ids=tuple(
                 app.player_id for app in below_qualification_cut
             ),
@@ -527,7 +601,9 @@ class TournamentEntryFieldResolver:
                 authority.branch_id,
                 authority.event_id,
             ):
-                raise ValueError("Tournament application scope differs from ranking authority")
+                raise ValueError(
+                    "Tournament application scope differs from ranking authority"
+                )
         return tuple(sorted(apps, key=lambda app: app.application_id))
 
     @classmethod
@@ -537,8 +613,7 @@ class TournamentEntryFieldResolver:
         applications: Iterable[TournamentEntryApplication],
     ) -> tuple[TournamentEntryApplication, ...]:
         rank_by_player = {
-            row.player_id: row.rank
-            for row in authority.ranking_snapshot.rows
+            row.player_id: row.rank for row in authority.ranking_snapshot.rows
         }
 
         def key(app: TournamentEntryApplication):
@@ -559,9 +634,7 @@ class TournamentEntryFieldResolver:
         authority: TournamentRankingSnapshotAuthority,
         applications: Iterable[TournamentEntryApplication],
     ) -> None:
-        ranked = {
-            row.player_id for row in authority.ranking_snapshot.rows
-        }
+        ranked = {row.player_id for row in authority.ranking_snapshot.rows}
         nr_tokens = [
             app.nr_tie_break_token
             for app in applications
@@ -576,9 +649,7 @@ class TournamentEntryFieldResolver:
     def _applications_fingerprint(
         applications: tuple[TournamentEntryApplication, ...],
     ) -> str:
-        return _fingerprint(
-            [app.model_dump(mode="json") for app in applications]
-        )
+        return _fingerprint([app.model_dump(mode="json") for app in applications])
 
     @staticmethod
     def _validate_previous(
@@ -594,8 +665,7 @@ class TournamentEntryFieldResolver:
         ):
             raise ValueError("Predecessor tournament field scope differs")
         if (
-            previous.tournament_ranking_authority_fingerprint
-            != authority.fingerprint
+            previous.tournament_ranking_authority_fingerprint != authority.fingerprint
             or previous.ranking_snapshot_fingerprint
             != authority.ranking_snapshot_fingerprint
         ):

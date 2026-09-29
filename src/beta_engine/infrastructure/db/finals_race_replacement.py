@@ -170,6 +170,43 @@ class WorldTourFinalsReplacementStore:
             previous = value.fingerprint
         return values
 
+    def event_authority_history(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_season_index: int,
+        finals_event_id: str,
+    ) -> tuple[WorldTourFinalsReplacementAuthority, ...]:
+        self._scope(run_id, branch_id)
+        rows = self.session.scalars(
+            select(WorldTourFinalsReplacementAuthorityModel)
+            .where(
+                WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+                WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+                WorldTourFinalsReplacementAuthorityModel.target_season_index
+                == target_season_index,
+                WorldTourFinalsReplacementAuthorityModel.finals_event_id
+                == finals_event_id,
+            )
+            .order_by(
+                WorldTourFinalsReplacementAuthorityModel.vacancy_id,
+                WorldTourFinalsReplacementAuthorityModel.sequence,
+            )
+        ).all()
+        result = []
+        for vacancy_id in sorted({row.vacancy_id for row in rows}):
+            result.extend(
+                self.authority_history(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    target_season_index=target_season_index,
+                    finals_event_id=finals_event_id,
+                    vacancy_id=vacancy_id,
+                )
+            )
+        return tuple(result)
+
     def put_authority(
         self, value: WorldTourFinalsReplacementAuthority
     ) -> WorldTourFinalsReplacementAuthority:

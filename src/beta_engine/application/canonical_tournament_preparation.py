@@ -37,6 +37,9 @@ from beta_engine.infrastructure.db.tournament_entry_field import (
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
 )
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
 from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import (
     TournamentRankingSnapshotAuthorityStore,
 )
@@ -70,6 +73,8 @@ TournamentPreparationPhase = Literal[
     "knockout_draw_adapter_required",
     "draw_generation_ready",
     "draw_ready",
+    "finals_replacement_required",
+    "finals_draw_repair_required",
 ]
 
 TournamentPreparationNextAction = Literal[
@@ -82,6 +87,7 @@ TournamentPreparationNextAction = Literal[
     "prepare_group_match_schedule",
     "generate_draw",
     "none",
+    "review_finals_replacement",
 ]
 
 
@@ -142,10 +148,13 @@ class CanonicalTournamentPreparationState(BaseModel):
     ranking_week_ordinal: int | None = Field(default=None, ge=0)
 
     entry_field_ready: bool
-    entry_source_kind: Literal[
-        "ranking_applications",
-        "finals_participant_selection",
-    ] | None = None
+    entry_source_kind: (
+        Literal[
+            "ranking_applications",
+            "finals_participant_selection",
+        ]
+        | None
+    ) = None
     entry_source_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
@@ -156,9 +165,7 @@ class CanonicalTournamentPreparationState(BaseModel):
     valid_qualification_submission_count: int = Field(ge=0)
     entry_capacity_suggestion: CanonicalEntryCapacitySuggestion | None = None
     field_sequence: int = Field(ge=0)
-    entry_field_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
-    )
+    entry_field_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     entry_field_mode: str | None = None
     main_draw_size: int | None = Field(default=None, ge=2, le=128)
     qualification_draw_size: int | None = Field(default=None, ge=0, le=128)
@@ -178,9 +185,7 @@ class CanonicalTournamentPreparationState(BaseModel):
 
     pre_draw_repair_open: bool
     draw_input_ready: bool
-    draw_input_fingerprint: str | None = Field(
-        default=None, pattern=r"^[0-9a-f]{64}$"
-    )
+    draw_input_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     draw_seed: int | None = None
 
     format_authority_ready: bool = False
@@ -289,10 +294,7 @@ class CanonicalTournamentPreparationService:
             "run_id": run_id,
             "branch_id": branch_id,
             "event_ids": canonical_event_ids,
-            "tournaments": [
-                state.model_dump(mode="json")
-                for state in states
-            ],
+            "tournaments": [state.model_dump(mode="json") for state in states],
             "ready_for_week_schedule": not blockers,
             "blockers": blockers,
             "authority_source": "run_owned_db_authorities.v1",
@@ -333,6 +335,21 @@ class CanonicalTournamentPreparationService:
             event_id=event_id,
         )
         field = history[-1] if history else None
+        finals_effective = None
+        finals_replacements = ()
+        if finals_selection is not None:
+            replacement_store = WorldTourFinalsReplacementStore(session)
+            finals_effective = replacement_store.latest_state(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=finals_selection.target_season_index,
+            )
+            finals_replacements = replacement_store.event_authority_history(
+                run_id=run_id,
+                branch_id=branch_id,
+                target_season_index=finals_selection.target_season_index,
+                finals_event_id=event_id,
+            )
         if (
             finals_selection is not None
             and field is not None
@@ -375,16 +392,16 @@ class CanonicalTournamentPreparationService:
                     branch_id=branch_id,
                     event_id=event_id,
                 )
-                if (
-                    topology is not None
-                    and format_authority.format_kind in {"groups", "groups_knockout"}
-                ):
-                    group_match_schedule = (
-                        TournamentGroupMatchScheduleAuthorityStore(session).get(
-                            run_id=run_id,
-                            branch_id=branch_id,
-                            event_id=event_id,
-                        )
+                if topology is not None and format_authority.format_kind in {
+                    "groups",
+                    "groups_knockout",
+                }:
+                    group_match_schedule = TournamentGroupMatchScheduleAuthorityStore(
+                        session
+                    ).get(
+                        run_id=run_id,
+                        branch_id=branch_id,
+                        event_id=event_id,
                     )
 
         draw_input = None
@@ -419,19 +436,62 @@ class CanonicalTournamentPreparationService:
         ranking_ready = ranking is not None
         field_ready = field is not None
         finals_field = bool(
-            field is not None
-            and field.source_kind == "finals_participant_selection"
+            field is not None and field.source_kind == "finals_participant_selection"
         )
-        entry_source_ready = ranking_ready or finals_selection is not None or finals_field
-        wc_required = bool(
-            field is not None and field.capacity.wild_card_slots > 0
+        entry_source_ready = (
+            ranking_ready or finals_selection is not None or finals_field
         )
+        wc_required = bool(field is not None and field.capacity.wild_card_slots > 0)
         wc_ready = not wc_required or wc is not None
         draw_input_ready = draw_input is not None
         draw_ready = effective_draw is not None
 
         blockers: list[str] = []
-        if not entry_source_ready:
+        latest_by_vacancy = {}
+        for replacement in finals_replacements:
+            latest_by_vacancy[replacement.vacancy_id] = replacement
+        unresolved_replacement = next(
+            (
+                item
+                for item in latest_by_vacancy.values()
+                if item.status in {"awaiting_decision", "exhausted"}
+            ),
+            None,
+        )
+        revision_effective_fingerprint = (
+            revisions[-1].successor_field.finals_effective_participant_state_fingerprint
+            if revisions
+            else None
+        )
+        effective_field_stale = bool(
+            finals_effective is not None
+            and finals_effective.predecessor_fingerprint is not None
+            and (
+                field is None
+                or (
+                    field.finals_effective_participant_state_fingerprint
+                    != finals_effective.fingerprint
+                    and revision_effective_fingerprint != finals_effective.fingerprint
+                )
+            )
+        )
+        if unresolved_replacement is not None:
+            phase = "finals_replacement_required"
+            next_action = "review_finals_replacement"
+            blockers.append(
+                "finals_replacement_awaiting_decision"
+                if unresolved_replacement.status == "awaiting_decision"
+                else "finals_replacement_race_exhausted"
+            )
+        elif effective_field_stale and draw_input is not None:
+            phase = "finals_draw_repair_required"
+            next_action = "review_finals_replacement"
+            blockers.append("finals_accepted_replacement_draw_repair_required")
+        elif effective_field_stale:
+            phase = "entry_field_required"
+            next_action = "build_entry_field"
+            blockers.append("finals_accepted_replacement_entry_field_stale")
+        elif not entry_source_ready:
             phase: TournamentPreparationPhase = "ranking_snapshot_required"
             next_action: TournamentPreparationNextAction = "adopt_ranking_snapshot"
             blockers.append("tournament_ranking_snapshot_required")
@@ -545,23 +605,21 @@ class CanonicalTournamentPreparationService:
                 )
             ),
             valid_submission_count=len(submissions),
-            valid_main_submission_count=sum(sub.entry_window == "main" for sub in submissions),
+            valid_main_submission_count=sum(
+                sub.entry_window == "main" for sub in submissions
+            ),
             valid_qualification_submission_count=sum(
                 sub.entry_window == "qualification" for sub in submissions
             ),
             entry_capacity_suggestion=capacity_suggestion,
             field_sequence=len(history),
-            entry_field_fingerprint=(
-                field.fingerprint if field is not None else None
-            ),
+            entry_field_fingerprint=(field.fingerprint if field is not None else None),
             entry_field_mode=field.mode if field is not None else None,
             main_draw_size=(
                 field.capacity.main_draw_size if field is not None else None
             ),
             qualification_draw_size=(
-                field.capacity.qualification_draw_size
-                if field is not None
-                else None
+                field.capacity.qualification_draw_size if field is not None else None
             ),
             qualifier_spots=(
                 field.capacity.qualifier_spots if field is not None else None
@@ -602,14 +660,10 @@ class CanonicalTournamentPreparationService:
             draw_seed=draw_input.draw_seed if draw_input is not None else None,
             format_authority_ready=format_authority is not None,
             format_kind=(
-                format_authority.format_kind
-                if format_authority is not None
-                else None
+                format_authority.format_kind if format_authority is not None else None
             ),
             format_authority_fingerprint=(
-                format_authority.fingerprint
-                if format_authority is not None
-                else None
+                format_authority.fingerprint if format_authority is not None else None
             ),
             format_group_rules_policy_fingerprint=(
                 format_authority.group_configuration.group_rules_policy_fingerprint
@@ -688,7 +742,6 @@ class CanonicalTournamentPreparationService:
             ),
         )
 
-
     @staticmethod
     def _entry_capacity_suggestion(
         session: Session,
@@ -743,4 +796,3 @@ class CanonicalTournamentPreparationService:
             source_package_fingerprint=entity.source_package_fingerprint,
             source_event_fingerprint=entity.content_fingerprint,
         )
-

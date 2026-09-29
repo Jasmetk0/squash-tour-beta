@@ -34,9 +34,82 @@ from beta_engine.infrastructure.db.models import (
     WorldTourFinalsRaceSnapshotModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
     WorldTourFinalsParticipantSelectionSnapshotModel,
+    WorldTourFinalsEffectiveParticipantStateModel,
+    WorldTourFinalsReplacementAuthorityModel,
 )
 
 COMPONENT_KEY = "simulation_slot_match_state"
+
+
+def _validate_finals_replacement_rows_shape(states, authorities):
+    from beta_engine.domain.finals import (
+        WorldTourFinalsEffectiveParticipantState,
+        WorldTourFinalsReplacementAuthority,
+    )
+
+    by_scope = {}
+    for row in states:
+        state = WorldTourFinalsEffectiveParticipantState.model_validate_json(
+            row.payload_json
+        )
+        if (
+            row.run_id,
+            row.branch_id,
+            row.target_season_index,
+            row.finals_event_id,
+            row.state_fingerprint,
+        ) != (
+            state.run_id,
+            state.branch_id,
+            state.target_season_index,
+            state.finals_event_id,
+            state.fingerprint,
+        ):
+            raise ValueError(
+                "Saved effective Finals participant state identity mismatch"
+            )
+        by_scope.setdefault(
+            (row.run_id, row.branch_id, row.target_season_index, row.finals_event_id),
+            [],
+        ).append((row, state))
+    for values in by_scope.values():
+        values.sort(key=lambda item: item[0].sequence)
+        predecessor = None
+        for sequence, (row, state) in enumerate(values, 1):
+            if row.sequence != sequence or state.predecessor_fingerprint != predecessor:
+                raise ValueError(
+                    "Saved effective Finals participant lineage is corrupt"
+                )
+            predecessor = state.fingerprint
+    vacancy_scopes = {}
+    for row in authorities:
+        authority = WorldTourFinalsReplacementAuthority.model_validate_json(
+            row.payload_json
+        )
+        if row.authority_fingerprint != authority.fingerprint:
+            raise ValueError("Saved Finals replacement authority fingerprint mismatch")
+        vacancy_scopes.setdefault(
+            (
+                row.run_id,
+                row.branch_id,
+                row.target_season_index,
+                row.finals_event_id,
+                row.vacancy_id,
+            ),
+            [],
+        ).append((row, authority))
+    for values in vacancy_scopes.values():
+        values.sort(key=lambda item: item[0].sequence)
+        predecessor = None
+        for sequence, (row, authority) in enumerate(values, 1):
+            if (
+                row.sequence != sequence
+                or authority.predecessor_authority_fingerprint != predecessor
+            ):
+                raise ValueError(
+                    "Saved Finals replacement authority lineage is corrupt"
+                )
+            predecessor = authority.fingerprint
 
 
 def _validate_command_rows_shape(rows):
@@ -464,7 +537,11 @@ def _validate_entry_field_rows(rows):
                         "First Tournament Entry Field version must be initial"
                     )
             else:
-                if field.mode != "pre_draw_repair" or previous is None:
+                if (
+                    field.mode
+                    not in {"pre_draw_repair", "finals_effective_replacement"}
+                    or previous is None
+                ):
                     raise ValueError(
                         "Later Tournament Entry Field versions must be pre-draw repairs"
                     )
@@ -928,8 +1005,7 @@ def _validate_hybrid_knockout_entrants_rows_shape(
             )
         if (
             topology.fingerprint != authority.topology_authority_fingerprint
-            or standing.fingerprint
-            != authority.group_standings_authority_fingerprint
+            or standing.fingerprint != authority.group_standings_authority_fingerprint
         ):
             raise ValueError(
                 "Saved Hybrid Knockout Entrants dependency fingerprint is stale"
@@ -987,9 +1063,7 @@ def _validate_hybrid_knockout_bracket_rows_shape(
             raise ValueError("Saved Hybrid Knockout Bracket row is corrupt")
         entrant_authority = entrants.get(row.event_id)
         if entrant_authority is None:
-            raise ValueError(
-                "Saved Hybrid Knockout Bracket lacks Entrants dependency"
-            )
+            raise ValueError("Saved Hybrid Knockout Bracket lacks Entrants dependency")
         if entrant_authority.fingerprint != authority.entrants_authority_fingerprint:
             raise ValueError(
                 "Saved Hybrid Knockout Bracket Entrants fingerprint is stale"
@@ -1246,13 +1320,14 @@ def _validate_format_topology_rows_shape(
         policies_by_fingerprint[policy.fingerprint] = policy
 
     latest_fields = {}
+    fields_by_fingerprint = {}
     for row in sorted(
         entry_fields,
         key=lambda value: (value.event_id, value.sequence),
     ):
-        latest_fields[row.event_id] = TournamentEntryField.model_validate_json(
-            row.payload_json
-        )
+        parsed_field = TournamentEntryField.model_validate_json(row.payload_json)
+        latest_fields[row.event_id] = parsed_field
+        fields_by_fingerprint[parsed_field.fingerprint] = parsed_field
 
     formats_by_event = {}
     for row in format_authorities:
@@ -1273,8 +1348,8 @@ def _validate_format_topology_rows_shape(
             row.authority_fingerprint,
         ):
             raise ValueError("Saved Tournament Format authority row is corrupt")
-        field = latest_fields.get(row.event_id)
-        if field is None or field.fingerprint != authority.entry_field_fingerprint:
+        field = fields_by_fingerprint.get(authority.entry_field_fingerprint)
+        if field is None or field.event_id != row.event_id:
             raise ValueError(
                 "Saved Tournament Format authority references missing/stale Entry Field"
             )
@@ -1332,8 +1407,7 @@ def _validate_format_topology_rows_shape(
         field = latest_fields.get(row.event_id)
         if (
             format_authority is None
-            or format_authority.fingerprint
-            != topology.format_authority_fingerprint
+            or format_authority.fingerprint != topology.format_authority_fingerprint
         ):
             raise ValueError(
                 "Saved Tournament Topology references missing/stale Format authority"
@@ -1543,6 +1617,10 @@ def _component(
     include_finals_participant_configurations=False,
     finals_participant_snapshots=(),
     include_finals_participant_snapshots=False,
+    finals_effective_states=(),
+    include_finals_effective_states=False,
+    finals_replacement_authorities=(),
+    include_finals_replacement_authorities=False,
     wild_card_authorities=(),
     include_wild_card_authorities=False,
     draw_inputs=(),
@@ -1588,6 +1666,9 @@ def _component(
         finals_race_snapshots,
         finals_participant_configurations,
         finals_participant_snapshots,
+    )
+    _validate_finals_replacement_rows_shape(
+        finals_effective_states, finals_replacement_authorities
     )
     _validate_wild_card_rows_shape(wild_card_authorities)
     _validate_draw_input_rows_shape(draw_inputs)
@@ -1739,9 +1820,7 @@ def _component(
                 "group_match_schedule_fingerprint": (
                     row.group_match_schedule_fingerprint
                 ),
-                "group_rules_policy_fingerprint": (
-                    row.group_rules_policy_fingerprint
-                ),
+                "group_rules_policy_fingerprint": (row.group_rules_policy_fingerprint),
                 "payload_json": row.payload_json,
             }
             for row in group_standings
@@ -1872,6 +1951,37 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in finals_participant_snapshots
+        ]
+    if include_finals_effective_states:
+        body["finals_effective_states"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "finals_event_id": row.finals_event_id,
+                "sequence": row.sequence,
+                "state_fingerprint": row.state_fingerprint,
+                "predecessor_fingerprint": row.predecessor_fingerprint,
+                "command_id": row.command_id,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_effective_states
+        ]
+    if include_finals_replacement_authorities:
+        body["finals_replacement_authorities"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "target_season_index": row.target_season_index,
+                "finals_event_id": row.finals_event_id,
+                "vacancy_id": row.vacancy_id,
+                "sequence": row.sequence,
+                "authority_fingerprint": row.authority_fingerprint,
+                "predecessor_fingerprint": row.predecessor_fingerprint,
+                "command_id": row.command_id,
+                "payload_json": row.payload_json,
+            }
+            for row in finals_replacement_authorities
         ]
     if include_wild_card_authorities:
         body["wild_card_authorities"] = [
@@ -2047,7 +2157,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         select(WorldTourFinalsParticipantSelectionConfigurationModel)
         .where(
             WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
-            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id
+            == branch_id,
         )
         .order_by(
             WorldTourFinalsParticipantSelectionConfigurationModel.target_season_index
@@ -2059,8 +2170,30 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             WorldTourFinalsParticipantSelectionSnapshotModel.run_id == run_id,
             WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == branch_id,
         )
+        .order_by(WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index)
+    ).all()
+    finals_effective_states = session.scalars(
+        select(WorldTourFinalsEffectiveParticipantStateModel)
+        .where(
+            WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
+            WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
+        )
         .order_by(
-            WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index
+            WorldTourFinalsEffectiveParticipantStateModel.target_season_index,
+            WorldTourFinalsEffectiveParticipantStateModel.sequence,
+        )
+    ).all()
+    finals_replacement_authorities = session.scalars(
+        select(WorldTourFinalsReplacementAuthorityModel)
+        .where(
+            WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+            WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsReplacementAuthorityModel.target_season_index,
+            WorldTourFinalsReplacementAuthorityModel.finals_event_id,
+            WorldTourFinalsReplacementAuthorityModel.vacancy_id,
+            WorldTourFinalsReplacementAuthorityModel.sequence,
         )
     ).all()
     entry_fields = session.scalars(
@@ -2362,6 +2495,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or finals_race_snapshots
         or finals_participant_configurations
         or finals_participant_snapshots
+        or finals_effective_states
+        or finals_replacement_authorities
         or entry_fields
         or group_rules_policies
         or format_authorities
@@ -2396,6 +2531,10 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             ),
             finals_participant_snapshots=finals_participant_snapshots,
             include_finals_participant_snapshots=bool(finals_participant_snapshots),
+            finals_effective_states=finals_effective_states,
+            include_finals_effective_states=bool(finals_effective_states),
+            finals_replacement_authorities=finals_replacement_authorities,
+            include_finals_replacement_authorities=bool(finals_replacement_authorities),
             entry_fields=entry_fields,
             include_entry_fields=bool(entry_fields),
             group_rules_policies=group_rules_policies,
@@ -2417,9 +2556,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             hybrid_ranking_policies=hybrid_ranking_policies,
             include_hybrid_ranking_policies=bool(hybrid_ranking_policies),
             pure_groups_ranking_policies=pure_groups_ranking_policies,
-            include_pure_groups_ranking_policies=bool(
-                pure_groups_ranking_policies
-            ),
+            include_pure_groups_ranking_policies=bool(pure_groups_ranking_policies),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -2459,6 +2596,8 @@ def _load(payload, *, run_id, branch_id):
         "finals_race_snapshots",
         "finals_participant_configurations",
         "finals_participant_snapshots",
+        "finals_effective_states",
+        "finals_replacement_authorities",
         "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",
@@ -2567,6 +2706,17 @@ def _load(payload, *, run_id, branch_id):
         include_finals_participant_snapshots=(
             "finals_participant_snapshots" in component
         ),
+        finals_effective_states=[
+            WorldTourFinalsEffectiveParticipantStateModel(**value)
+            for value in component.get("finals_effective_states", [])
+        ],
+        include_finals_effective_states="finals_effective_states" in component,
+        finals_replacement_authorities=[
+            WorldTourFinalsReplacementAuthorityModel(**value)
+            for value in component.get("finals_replacement_authorities", [])
+        ],
+        include_finals_replacement_authorities="finals_replacement_authorities"
+        in component,
         wild_card_authorities=[
             TournamentWildCardAuthorityModel(**value)
             for value in component.get("wild_card_authorities", [])
@@ -2624,6 +2774,8 @@ def _load(payload, *, run_id, branch_id):
                 "finals_race_snapshots",
                 "finals_participant_configurations",
                 "finals_participant_snapshots",
+                "finals_effective_states",
+                "finals_replacement_authorities",
                 "wild_card_authorities",
                 "draw_inputs",
                 "draw_authorities",
@@ -2655,6 +2807,7 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
 
     from beta_engine.domain.finals import (
         WorldTourFinalsParticipantSelectionSnapshot,
+        WorldTourFinalsEffectiveParticipantState,
     )
     from beta_engine.domain.tournaments.entry_field import TournamentEntryField
     from beta_engine.infrastructure.db.tournament_entry_field import (
@@ -2665,12 +2818,19 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
     )
 
     participant_snapshots = {
-        value["target_season_index"]:
-        WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
+        value[
+            "target_season_index"
+        ]: WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
             value["payload_json"]
         )
         for value in (component or {}).get("finals_participant_snapshots", [])
     }
+    effective_states = [
+        WorldTourFinalsEffectiveParticipantState.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("finals_effective_states", [])
+    ]
 
     rows = [TournamentEntryFieldVersionModel(**value) for value in values]
     by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
@@ -2694,6 +2854,11 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
             TournamentEntryFieldStore.validate_rows(
                 event_rows,
                 finals_selection=selection,
+                finals_effective_states=tuple(
+                    state
+                    for state in effective_states
+                    if state.target_season_index == first.finals_target_season_index
+                ),
             )
             continue
 
@@ -2728,6 +2893,7 @@ def _validate_saved_draw_inputs_against_live_dependencies(
 
     from beta_engine.domain.finals import (
         WorldTourFinalsParticipantSelectionSnapshot,
+        WorldTourFinalsEffectiveParticipantState,
     )
     from beta_engine.domain.tournaments.draw_input_authority import (
         TournamentDrawInputAuthority,
@@ -2777,6 +2943,15 @@ def _validate_saved_draw_inputs_against_live_dependencies(
         )
         for value in (component or {}).get("format_authorities", [])
     }
+    saved_effective_by_fingerprint = {
+        state.fingerprint: state
+        for state in (
+            WorldTourFinalsEffectiveParticipantState.model_validate_json(
+                value["payload_json"]
+            )
+            for value in (component or {}).get("finals_effective_states", [])
+        )
+    }
 
     ranking_store = TournamentRankingSnapshotAuthorityStore(session)
     for value in draw_values:
@@ -2791,7 +2966,10 @@ def _validate_saved_draw_inputs_against_live_dependencies(
                 "Saved Tournament Draw Input references missing Entry Field history"
             )
 
-        if committed.source_kind == "finals_participant_selection":
+        if committed.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             selection = saved_finals_by_event.get(row.event_id)
             if selection is None:
                 raise ValueError(
@@ -2805,6 +2983,14 @@ def _validate_saved_draw_inputs_against_live_dependencies(
             fields = TournamentEntryFieldStore.validate_rows(
                 event_rows,
                 finals_selection=selection,
+                finals_effective_states=tuple(
+                    state
+                    for state in saved_effective_by_fingerprint.values()
+                    if state.target_season_index == selection.target_season_index
+                ),
+            )
+            effective = saved_effective_by_fingerprint.get(
+                committed.finals_effective_participant_state_fingerprint
             )
             TournamentDrawInputAuthorityStore.validate_row(
                 row,
@@ -2812,6 +2998,7 @@ def _validate_saved_draw_inputs_against_live_dependencies(
                 field_sequence=len(fields),
                 finals_selection=selection,
                 format_authority=format_authority,
+                finals_effective_state=effective,
             )
             continue
 
@@ -3021,7 +3208,8 @@ def _live_component_with_saved_shape(
         select(WorldTourFinalsParticipantSelectionConfigurationModel)
         .where(
             WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
-            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id
+            == branch_id,
         )
         .order_by(
             WorldTourFinalsParticipantSelectionConfigurationModel.target_season_index
@@ -3033,8 +3221,30 @@ def _live_component_with_saved_shape(
             WorldTourFinalsParticipantSelectionSnapshotModel.run_id == run_id,
             WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == branch_id,
         )
+        .order_by(WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index)
+    ).all()
+    finals_effective_states = session.scalars(
+        select(WorldTourFinalsEffectiveParticipantStateModel)
+        .where(
+            WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
+            WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
+        )
         .order_by(
-            WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index
+            WorldTourFinalsEffectiveParticipantStateModel.target_season_index,
+            WorldTourFinalsEffectiveParticipantStateModel.sequence,
+        )
+    ).all()
+    finals_replacement_authorities = session.scalars(
+        select(WorldTourFinalsReplacementAuthorityModel)
+        .where(
+            WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+            WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsReplacementAuthorityModel.target_season_index,
+            WorldTourFinalsReplacementAuthorityModel.finals_event_id,
+            WorldTourFinalsReplacementAuthorityModel.vacancy_id,
+            WorldTourFinalsReplacementAuthorityModel.sequence,
         )
     ).all()
     week_tournament_locks = session.scalars(
@@ -3194,6 +3404,8 @@ def _live_component_with_saved_shape(
             finals_race_snapshots,
             finals_participant_configurations,
             finals_participant_snapshots,
+            finals_effective_states,
+            finals_replacement_authorities,
             week_tournament_locks,
             entry_fields,
             group_rules_policies,
@@ -3237,6 +3449,11 @@ def _live_component_with_saved_shape(
         include_finals_participant_snapshots=(
             "finals_participant_snapshots" in shape_hint
         ),
+        finals_effective_states=finals_effective_states,
+        include_finals_effective_states="finals_effective_states" in shape_hint,
+        finals_replacement_authorities=finals_replacement_authorities,
+        include_finals_replacement_authorities="finals_replacement_authorities"
+        in shape_hint,
         week_tournament_locks=week_tournament_locks,
         include_week_tournament_locks="week_tournament_locks" in shape_hint,
         entry_fields=entry_fields,
@@ -3360,7 +3577,8 @@ def restore_saved_simulation_slots(
         select(WorldTourFinalsParticipantSelectionConfigurationModel)
         .where(
             WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
-            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id
+            == branch_id,
         )
         .order_by(
             WorldTourFinalsParticipantSelectionConfigurationModel.target_season_index
@@ -3372,8 +3590,30 @@ def restore_saved_simulation_slots(
             WorldTourFinalsParticipantSelectionSnapshotModel.run_id == run_id,
             WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == branch_id,
         )
+        .order_by(WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index)
+    ).all()
+    live_finals_effective_states = session.scalars(
+        select(WorldTourFinalsEffectiveParticipantStateModel)
+        .where(
+            WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
+            WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
+        )
         .order_by(
-            WorldTourFinalsParticipantSelectionSnapshotModel.target_season_index
+            WorldTourFinalsEffectiveParticipantStateModel.target_season_index,
+            WorldTourFinalsEffectiveParticipantStateModel.sequence,
+        )
+    ).all()
+    live_finals_replacement_authorities = session.scalars(
+        select(WorldTourFinalsReplacementAuthorityModel)
+        .where(
+            WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+            WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(
+            WorldTourFinalsReplacementAuthorityModel.target_season_index,
+            WorldTourFinalsReplacementAuthorityModel.finals_event_id,
+            WorldTourFinalsReplacementAuthorityModel.vacancy_id,
+            WorldTourFinalsReplacementAuthorityModel.sequence,
         )
     ).all()
     live_week_tournament_locks = session.scalars(
@@ -3689,7 +3929,9 @@ def restore_saved_simulation_slots(
             finals_race_configurations=live_finals_race_configurations,
             include_finals_race_configurations=(
                 bool(live_finals_race_configurations)
-                or bool(expected is not None and "finals_race_configurations" in expected)
+                or bool(
+                    expected is not None and "finals_race_configurations" in expected
+                )
             ),
             finals_race_snapshots=live_finals_race_snapshots,
             include_finals_race_snapshots=(
@@ -3707,7 +3949,22 @@ def restore_saved_simulation_slots(
             finals_participant_snapshots=live_finals_participant_snapshots,
             include_finals_participant_snapshots=(
                 bool(live_finals_participant_snapshots)
-                or bool(expected is not None and "finals_participant_snapshots" in expected)
+                or bool(
+                    expected is not None and "finals_participant_snapshots" in expected
+                )
+            ),
+            finals_effective_states=live_finals_effective_states,
+            include_finals_effective_states=(
+                bool(live_finals_effective_states)
+                or bool(expected is not None and "finals_effective_states" in expected)
+            ),
+            finals_replacement_authorities=live_finals_replacement_authorities,
+            include_finals_replacement_authorities=(
+                bool(live_finals_replacement_authorities)
+                or bool(
+                    expected is not None
+                    and "finals_replacement_authorities" in expected
+                )
             ),
             week_tournament_locks=live_week_tournament_locks,
             include_week_tournament_locks=(
@@ -3768,8 +4025,7 @@ def restore_saved_simulation_slots(
             include_pure_groups_ranking_policies=(
                 bool(live_pure_groups_ranking_policies)
                 or bool(
-                    expected is not None
-                    and "pure_groups_ranking_policies" in expected
+                    expected is not None and "pure_groups_ranking_policies" in expected
                 )
             ),
             wild_card_authorities=live_wild_card_authorities,
@@ -3807,6 +4063,8 @@ def restore_saved_simulation_slots(
         or live_finals_race_snapshots
         or live_finals_participant_configurations
         or live_finals_participant_snapshots
+        or live_finals_effective_states
+        or live_finals_replacement_authorities
         or live_week_tournament_locks
         or live_entry_fields
         or live_group_rules_policies
@@ -3931,9 +4189,22 @@ def restore_saved_simulation_slots(
         )
     )
     session.execute(
+        delete(WorldTourFinalsReplacementAuthorityModel).where(
+            WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
+            WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
+        delete(WorldTourFinalsEffectiveParticipantStateModel).where(
+            WorldTourFinalsEffectiveParticipantStateModel.run_id == run_id,
+            WorldTourFinalsEffectiveParticipantStateModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
         delete(WorldTourFinalsParticipantSelectionConfigurationModel).where(
             WorldTourFinalsParticipantSelectionConfigurationModel.run_id == run_id,
-            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == branch_id,
+            WorldTourFinalsParticipantSelectionConfigurationModel.branch_id
+            == branch_id,
         )
     )
     session.execute(
@@ -4004,6 +4275,10 @@ def restore_saved_simulation_slots(
         session.add(WorldTourFinalsParticipantSelectionConfigurationModel(**value))
     for value in (target or {}).get("finals_participant_snapshots", []):
         session.add(WorldTourFinalsParticipantSelectionSnapshotModel(**value))
+    for value in (target or {}).get("finals_effective_states", []):
+        session.add(WorldTourFinalsEffectiveParticipantStateModel(**value))
+    for value in (target or {}).get("finals_replacement_authorities", []):
+        session.add(WorldTourFinalsReplacementAuthorityModel(**value))
     for value in (target or {}).get("group_rules_policies", []):
         session.add(TournamentGroupRulesPolicyModel(**value))
     for value in (target or {}).get("entry_fields", []):
@@ -4087,9 +4362,7 @@ def restore_saved_simulation_slots(
         topology_store = TournamentTopologyAuthorityStore(session)
         for event_id in sorted({value["event_id"] for value in target_topologies}):
             topology_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_group_match_schedules = (target or {}).get(
-        "group_match_schedules", []
-    )
+    target_group_match_schedules = (target or {}).get("group_match_schedules", [])
     if target_group_match_schedules:
         from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
             TournamentGroupMatchScheduleAuthorityStore,
@@ -4100,9 +4373,7 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_group_match_schedules}
         ):
             schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_group_tie_resolutions = (target or {}).get(
-        "group_tie_resolutions", []
-    )
+    target_group_tie_resolutions = (target or {}).get("group_tie_resolutions", [])
     if target_group_tie_resolutions:
         from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority import (
             TournamentGroupTieResolutionAuthorityStore,
@@ -4122,13 +4393,9 @@ def restore_saved_simulation_slots(
         )
 
         standings_store = TournamentGroupStandingsAuthorityStore(session)
-        for event_id in sorted(
-            {value["event_id"] for value in target_group_standings}
-        ):
+        for event_id in sorted({value["event_id"] for value in target_group_standings}):
             standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_hybrid_knockout_entrants = (target or {}).get(
-        "hybrid_knockout_entrants", []
-    )
+    target_hybrid_knockout_entrants = (target or {}).get("hybrid_knockout_entrants", [])
     if target_hybrid_knockout_entrants:
         from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
             TournamentHybridKnockoutEntrantsAuthorityStore,
@@ -4139,9 +4406,7 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_hybrid_knockout_entrants}
         ):
             hybrid_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_hybrid_knockout_brackets = (target or {}).get(
-        "hybrid_knockout_brackets", []
-    )
+    target_hybrid_knockout_brackets = (target or {}).get("hybrid_knockout_brackets", [])
     if target_hybrid_knockout_brackets:
         from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
             TournamentHybridKnockoutBracketAuthorityStore,
@@ -4152,9 +4417,7 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_hybrid_knockout_brackets}
         ):
             bracket_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
-    target_hybrid_ranking_policies = (target or {}).get(
-        "hybrid_ranking_policies", []
-    )
+    target_hybrid_ranking_policies = (target or {}).get("hybrid_ranking_policies", [])
     if target_hybrid_ranking_policies:
         from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
             TournamentHybridRankingPolicyAuthorityStore,

@@ -172,14 +172,12 @@
     bracket/BYE geometry, freeze Draw Input v10 without synthesizing Official Ranking/application
     evidence, preserve Race-derived seed order and reuse the ordinary Draw/knockout Topology path.
     Keep unresolved group-format policies separate.
-46. 🚧 In progress: the immutable authority plus guarded persistence/API kernel now provides vacancy-scoped frozen-Race
-    preview, explicit decline/accept audit, exhausted-state blocking and append-only effective
-    participant fields without mutating initial selection or synthesizing Official Ranking.
-    Complete the production slice by adding Saved Revision, Planned Event Admin UI,
-    preparation, pre-draw Entry/Draw Input adaptation, and pure-knockout post-draw Draw Revision,
-    cutoff/W/O and closure integration. Concurrent post-draw vacancies and started-group cases
-    remain fail-closed unless an existing decided rule supplies an unambiguous mapping; do not
-    invent reserve notifications, offer expiry or a global reserve roster.
+46. 🚧 In progress: the frozen-Race replacement authority now drives pure-knockout Entry Field,
+    Finals Draw Input, ordinary Draw and phase-aware Draw Revision authority, with Preparation and
+    Saved Revision support. Complete the Planned Event controls and explicit closure regression
+    for zero award/prize to a pre-match replaced player before marking this item done. Concurrent
+    post-draw vacancies, started-group replacement and fork remap remain fail-closed; do not invent
+    reserve notifications, offer expiry or a global reserve roster.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

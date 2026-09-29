@@ -47,6 +47,7 @@ TournamentDrawRevisionRepairKind = Literal[
     "lucky_loser_fill",
     "frozen_ordinary_fallback",
     "source_bound_pre_q_promotion",
+    "finals_race_replacement",
 ]
 TournamentDrawComponentRepairAction = Literal[
     "full_redraw",
@@ -77,6 +78,7 @@ class TournamentDrawRevision(FrozenInput):
         "tournament_draw_revision.v12",
         "tournament_draw_revision.v13",
         "tournament_draw_revision.v14",
+        "tournament_draw_revision.v15",
     ] = "tournament_draw_revision.v2"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -100,9 +102,11 @@ class TournamentDrawRevision(FrozenInput):
     replacement_cutoff_authorities: tuple[
         TournamentPlayerReplacementCutoffAuthority, ...
     ] = Field(default=(), exclude_if=lambda value: not value)
-    wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority | None = Field(
-        default=None,
-        exclude_if=lambda value: value is None,
+    wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority | None = (
+        Field(
+            default=None,
+            exclude_if=lambda value: value is None,
+        )
     )
     lucky_loser_vacancy_authority: TournamentLuckyLoserVacancyAuthority | None = Field(
         default=None,
@@ -115,6 +119,15 @@ class TournamentDrawRevision(FrozenInput):
     replacement_source_authority: TournamentReplacementSourceAuthority | None = Field(
         default=None,
         exclude_if=lambda value: value is None,
+    )
+    finals_race_snapshot_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    finals_effective_participant_state_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    finals_replacement_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
     )
     predecessor_draw_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     process_authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -137,7 +150,10 @@ class TournamentDrawRevision(FrozenInput):
             self.successor_draw_input.event_id,
         ) != scope:
             raise ValueError("Draw revision successor input scope mismatch")
-        if self.successor_draw_input.entry_field_fingerprint != self.successor_field.fingerprint:
+        if (
+            self.successor_draw_input.entry_field_fingerprint
+            != self.successor_field.fingerprint
+        ):
             raise ValueError("Draw revision successor Input/Field binding mismatch")
         if (
             self.successor_draw.draw_input_fingerprint
@@ -150,7 +166,10 @@ class TournamentDrawRevision(FrozenInput):
             raise ValueError("Draw revision must affect at least one draw component")
         if len(set(self.affected_draw_types)) != len(self.affected_draw_types):
             raise ValueError("Draw revision affected draw types must be unique")
-        if "main" in self.affected_draw_types and self.main_process_window_ordinal is None:
+        if (
+            "main" in self.affected_draw_types
+            and self.main_process_window_ordinal is None
+        ):
             raise ValueError("Main redraw requires Main process-window evidence")
         if (
             "qualification" in self.affected_draw_types
@@ -174,6 +193,7 @@ class TournamentDrawRevision(FrozenInput):
             "tournament_draw_revision.v12",
             "tournament_draw_revision.v13",
             "tournament_draw_revision.v14",
+            "tournament_draw_revision.v15",
         }:
             if cutoff_ids != tuple(sorted(self.withdrawn_player_ids)):
                 raise ValueError(
@@ -200,6 +220,20 @@ class TournamentDrawRevision(FrozenInput):
             raise ValueError(
                 "Historical Draw revision schema cannot carry replacement cutoff authority"
             )
+        finals_values = (
+            self.finals_race_snapshot_fingerprint,
+            self.finals_effective_participant_state_fingerprint,
+            self.finals_replacement_authority_fingerprint,
+        )
+        if self.repair_kind == "finals_race_replacement":
+            if self.schema_version != "tournament_draw_revision.v15" or any(
+                value is None for value in finals_values
+            ):
+                raise ValueError(
+                    "Finals Race replacement revision requires v15 source provenance"
+                )
+        elif any(value is not None for value in finals_values):
+            raise ValueError("Non-Finals revision cannot carry Finals Race provenance")
 
         if (
             self.repair_kind != "lucky_loser_vacancy"
@@ -217,7 +251,8 @@ class TournamentDrawRevision(FrozenInput):
             )
 
         if (
-            self.repair_kind not in {
+            self.repair_kind
+            not in {
                 "frozen_ordinary_fallback",
                 "lucky_loser_vacancy",
                 "source_bound_pre_q_promotion",
@@ -228,12 +263,26 @@ class TournamentDrawRevision(FrozenInput):
                 "Draw revision kind cannot carry replacement-source authority"
             )
 
+        if self.repair_kind == "finals_race_replacement":
+            if self.affected_draw_types != ("main",) or self.main_repair_action not in {
+                "full_redraw",
+                "seed_cascade",
+                "direct_slot_fill",
+                "frozen_slot_fill",
+            }:
+                raise ValueError(
+                    "Finals Race replacement requires one canonical Main repair action"
+                )
+            return self
+
         if self.repair_kind == "full_redraw":
             if self.schema_version not in {
                 "tournament_draw_revision.v2",
                 "tournament_draw_revision.v5",
             }:
-                raise ValueError("Full redraw uses revision schema v2 or cutoff-aware v5")
+                raise ValueError(
+                    "Full redraw uses revision schema v2 or cutoff-aware v5"
+                )
             if self.repair_draw_seed is None:
                 raise ValueError("Full redraw requires a repair draw seed")
             if (
@@ -362,9 +411,9 @@ class TournamentDrawRevision(FrozenInput):
                         raise ValueError(
                             "Pre-freeze Q RWC repair requires redraw or direct fill"
                         )
-                    if (
-                        self.qualification_repair_action == "full_redraw"
-                    ) != (self.repair_draw_seed is not None):
+                    if (self.qualification_repair_action == "full_redraw") != (
+                        self.repair_draw_seed is not None
+                    ):
                         raise ValueError(
                             "Q full redraw requires exactly one repair draw seed"
                         )
@@ -441,9 +490,9 @@ class TournamentDrawRevision(FrozenInput):
                     raise ValueError(
                         "Source-bound pre-Q promotion has invalid Q repair action"
                     )
-                if (
-                    self.qualification_repair_action == "full_redraw"
-                ) != (self.repair_draw_seed is not None):
+                if (self.qualification_repair_action == "full_redraw") != (
+                    self.repair_draw_seed is not None
+                ):
                     raise ValueError(
                         "Q full redraw requires exactly one repair draw seed"
                     )
@@ -471,9 +520,7 @@ class TournamentDrawRevision(FrozenInput):
                 else None,
                 self.predecessor_draw_fingerprint,
             ):
-                raise ValueError(
-                    "Source-bound pre-Q promotion source scope mismatch"
-                )
+                raise ValueError("Source-bound pre-Q promotion source scope mismatch")
             if self.withdrawn_player_ids != (source.withdrawn_player_id,):
                 raise ValueError(
                     "Source-bound pre-Q promotion withdrawal identity mismatch"
@@ -485,9 +532,7 @@ class TournamentDrawRevision(FrozenInput):
                     "Source-bound pre-Q promotion cutoff evidence mismatch"
                 )
             if source.selected_player_id is None:
-                raise ValueError(
-                    "Source-bound pre-Q promotion lacks selected player"
-                )
+                raise ValueError("Source-bound pre-Q promotion lacks selected player")
             if source.selected_player_id not in set(
                 self.successor_draw_input.direct_main_player_ids
             ):
@@ -502,27 +547,23 @@ class TournamentDrawRevision(FrozenInput):
                 )
             if (
                 not self.successor_draw_input.replacement_source_authority_fingerprints
-                or self.successor_draw_input.replacement_source_authority_fingerprints[-1]
+                or self.successor_draw_input.replacement_source_authority_fingerprints[
+                    -1
+                ]
                 != source.fingerprint
             ):
-                raise ValueError(
-                    "Source-bound pre-Q promotion lacks source lineage"
-                )
+                raise ValueError("Source-bound pre-Q promotion lacks source lineage")
         elif self.repair_kind == "lucky_loser_vacancy":
             authority = self.lucky_loser_vacancy_authority
             if self.schema_version not in {
                 "tournament_draw_revision.v9",
                 "tournament_draw_revision.v13",
             }:
-                raise ValueError(
-                    "Lucky Loser vacancy requires revision schema v9/v13"
-                )
+                raise ValueError("Lucky Loser vacancy requires revision schema v9/v13")
             if authority is None:
                 raise ValueError("Lucky Loser vacancy lacks dedicated authority")
             if self.wild_card_repair_authority is not None:
-                raise ValueError(
-                    "Lucky Loser vacancy cannot carry WC repair authority"
-                )
+                raise ValueError("Lucky Loser vacancy cannot carry WC repair authority")
             if self.affected_draw_types != ("main",):
                 raise ValueError("Lucky Loser vacancy may affect Main Draw only")
             if self.main_repair_action != "frozen_lucky_loser_slot":
@@ -530,9 +571,7 @@ class TournamentDrawRevision(FrozenInput):
                     "Lucky Loser vacancy requires exact frozen Main-slot action"
                 )
             if self.qualification_repair_action is not None:
-                raise ValueError(
-                    "Lucky Loser vacancy cannot mutate Qualification Draw"
-                )
+                raise ValueError("Lucky Loser vacancy cannot mutate Qualification Draw")
             if self.repair_draw_seed is not None:
                 raise ValueError("Lucky Loser vacancy cannot introduce draw seed")
             if (
@@ -562,9 +601,7 @@ class TournamentDrawRevision(FrozenInput):
                         "WC Lucky Loser vacancy lacks replacement-source authority"
                     )
                 if source.source not in {"lucky_loser_pending", "lucky_loser"}:
-                    raise ValueError(
-                        "WC Lucky Loser revision carries a non-LL source"
-                    )
+                    raise ValueError("WC Lucky Loser revision carries a non-LL source")
                 if (
                     source.run_id,
                     source.branch_id,
@@ -578,15 +615,15 @@ class TournamentDrawRevision(FrozenInput):
                     authority.withdrawn_player_id,
                     self.predecessor_draw_fingerprint,
                 ):
-                    raise ValueError(
-                        "WC Lucky Loser source authority scope mismatch"
-                    )
+                    raise ValueError("WC Lucky Loser source authority scope mismatch")
                 if (
                     self.successor_draw_input.schema_version
                     != "tournament_draw_input_authority.v9"
                     or not self.successor_draw_input.released_wild_card_slot_ordinals
                     or not self.successor_draw_input.replacement_source_authority_fingerprints
-                    or self.successor_draw_input.replacement_source_authority_fingerprints[-1]
+                    or self.successor_draw_input.replacement_source_authority_fingerprints[
+                        -1
+                    ]
                     != source.fingerprint
                 ):
                     raise ValueError(
@@ -639,13 +676,10 @@ class TournamentDrawRevision(FrozenInput):
                 raise ValueError(
                     "Frozen ordinary fallback requires revision schema v11/v12"
                 )
-            if (
-                self.schema_version == "tournament_draw_revision.v12"
-                and (
-                    self.successor_draw_input.schema_version
-                    != "tournament_draw_input_authority.v9"
-                    or not self.successor_draw_input.released_wild_card_slot_ordinals
-                )
+            if self.schema_version == "tournament_draw_revision.v12" and (
+                self.successor_draw_input.schema_version
+                != "tournament_draw_input_authority.v9"
+                or not self.successor_draw_input.released_wild_card_slot_ordinals
             ):
                 raise ValueError(
                     "WC-release fallback revision requires Draw Input v9 lineage"
@@ -702,6 +736,73 @@ class TournamentDrawRevision(FrozenInput):
 
 class TournamentDrawRevisionBuilder:
     @staticmethod
+    def build_finals_race_replacement(
+        *,
+        predecessor,
+        successor_field,
+        successor_draw_input,
+        process_authority,
+        main_process_window_ordinal: int,
+        withdrawn_player_id: str,
+        sequence: int,
+        command_id: str,
+        repair_draw_seed: int | None,
+        replacement_cutoff_authority,
+        race_snapshot_fingerprint: str,
+        effective_state_fingerprint: str,
+        replacement_authority_fingerprint: str,
+    ) -> TournamentDrawRevision:
+        """Reuse canonical phase mutation while preserving a typed Finals source."""
+        phase = process_authority.phase_for(
+            draw_type="main", process_window_ordinal=main_process_window_ordinal
+        )
+        common = dict(
+            predecessor=predecessor,
+            successor_field=successor_field,
+            successor_draw_input=successor_draw_input,
+            process_authority=process_authority,
+            affected_draw_types=("main",),
+            main_process_window_ordinal=main_process_window_ordinal,
+            qualification_process_window_ordinal=None,
+            withdrawn_player_ids=(withdrawn_player_id,),
+            sequence=sequence,
+            command_id=command_id,
+            replacement_cutoff_authorities=(replacement_cutoff_authority,),
+        )
+        if phase == "full_redraw":
+            if repair_draw_seed is None:
+                raise ValueError("Finals full redraw requires repair draw seed")
+            base = TournamentDrawRevisionBuilder.build_full_redraw(
+                repair_draw_seed=repair_draw_seed, **common
+            )
+        elif phase == "seed_cascade":
+            if repair_draw_seed is not None:
+                raise ValueError("Finals seed cascade cannot introduce redraw seed")
+            base = TournamentDrawRevisionBuilder.build_seed_cascade_phase(
+                repair_draw_seed=None, **common
+            )
+        else:
+            if repair_draw_seed is not None:
+                raise ValueError(
+                    "Frozen Finals replacement cannot introduce redraw seed"
+                )
+            base = TournamentDrawRevisionBuilder.build_draw_frozen_phase(
+                repair_draw_seed=None, **common
+            )
+        return base.model_copy(
+            update={
+                "schema_version": "tournament_draw_revision.v15",
+                "repair_kind": "finals_race_replacement",
+                "finals_race_snapshot_fingerprint": race_snapshot_fingerprint,
+                "finals_effective_participant_state_fingerprint": effective_state_fingerprint,
+                "finals_replacement_authority_fingerprint": replacement_authority_fingerprint,
+                "main_repair_action": (
+                    "full_redraw" if phase == "full_redraw" else base.main_repair_action
+                ),
+            }
+        )
+
+    @staticmethod
     def build_full_redraw(
         *,
         predecessor: TournamentDrawAuthority,
@@ -720,24 +821,32 @@ class TournamentDrawRevisionBuilder:
         ] = (),
     ) -> TournamentDrawRevision:
         if not affected_draw_types:
-            raise ValueError("Full redraw requires at least one affected draw component")
+            raise ValueError(
+                "Full redraw requires at least one affected draw component"
+            )
         if "main" in affected_draw_types:
             if main_process_window_ordinal is None:
                 raise ValueError("Main redraw requires Main process-window evidence")
-            if process_authority.phase_for(
-                draw_type="main",
-                process_window_ordinal=main_process_window_ordinal,
-            ) != "full_redraw":
+            if (
+                process_authority.phase_for(
+                    draw_type="main",
+                    process_window_ordinal=main_process_window_ordinal,
+                )
+                != "full_redraw"
+            ):
                 raise ValueError("Main full redraw is only legal before Redraw Cutoff")
         if "qualification" in affected_draw_types:
             if qualification_process_window_ordinal is None:
                 raise ValueError(
                     "Qualification redraw requires Qualification process-window evidence"
                 )
-            if process_authority.phase_for(
-                draw_type="qualification",
-                process_window_ordinal=qualification_process_window_ordinal,
-            ) != "full_redraw":
+            if (
+                process_authority.phase_for(
+                    draw_type="qualification",
+                    process_window_ordinal=qualification_process_window_ordinal,
+                )
+                != "full_redraw"
+            ):
                 raise ValueError(
                     "Qualification full redraw is only legal before Redraw Cutoff"
                 )
@@ -768,7 +877,9 @@ class TournamentDrawRevisionBuilder:
                 bracket.section_id for bracket in successor.qualification_brackets
             )
             if before_ids != after_ids:
-                raise ValueError("Qualification redraw changed Q1..Qn linkage identities")
+                raise ValueError(
+                    "Qualification redraw changed Q1..Qn linkage identities"
+                )
         if "main" in affected_draw_types:
             before_q_ids = {
                 placeholder_id
@@ -848,9 +959,7 @@ class TournamentDrawRevisionBuilder:
             )
 
         if "draw_frozen" in phases.values():
-            raise ValueError(
-                "Seed-cascade phase repair is not legal after Draw Freeze"
-            )
+            raise ValueError("Seed-cascade phase repair is not legal after Draw Freeze")
         if "seed_cascade" not in phases.values():
             raise ValueError(
                 "This repair path requires at least one affected component "
@@ -950,9 +1059,7 @@ class TournamentDrawRevisionBuilder:
             )
         if tuple(
             bracket.section_id for bracket in predecessor.qualification_brackets
-        ) != tuple(
-            bracket.section_id for bracket in successor.qualification_brackets
-        ):
+        ) != tuple(bracket.section_id for bracket in successor.qualification_brackets):
             raise ValueError(
                 "Seed-cascade phase repair changed Q1..Qn linkage identities"
             )
@@ -971,9 +1078,7 @@ class TournamentDrawRevisionBuilder:
             repair_kind="seed_cascade_phase",
             affected_draw_types=affected_draw_types,
             main_process_window_ordinal=main_process_window_ordinal,
-            qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-            ),
+            qualification_process_window_ordinal=(qualification_process_window_ordinal),
             repair_draw_seed=repair_draw_seed,
             main_repair_action=main_action,
             qualification_repair_action=qualification_action,
@@ -1144,9 +1249,7 @@ class TournamentDrawRevisionBuilder:
             )
         if tuple(
             bracket.section_id for bracket in predecessor.qualification_brackets
-        ) != tuple(
-            bracket.section_id for bracket in successor.qualification_brackets
-        ):
+        ) != tuple(bracket.section_id for bracket in successor.qualification_brackets):
             raise ValueError(
                 "Draw-Freeze phase repair changed Q1..Qn linkage identities"
             )
@@ -1165,9 +1268,7 @@ class TournamentDrawRevisionBuilder:
             repair_kind="draw_frozen_phase",
             affected_draw_types=affected_draw_types,
             main_process_window_ordinal=main_process_window_ordinal,
-            qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-            ),
+            qualification_process_window_ordinal=(qualification_process_window_ordinal),
             repair_draw_seed=repair_draw_seed,
             main_repair_action=main_action,
             qualification_repair_action=qualification_action,
@@ -1179,7 +1280,6 @@ class TournamentDrawRevisionBuilder:
             successor_draw_input=successor_draw_input,
             successor_draw=successor,
         )
-
 
     @staticmethod
     def build_source_bound_pre_q_promotion(
@@ -1197,9 +1297,7 @@ class TournamentDrawRevisionBuilder:
     ) -> TournamentDrawRevision:
         source = replacement_source_authority
         if source.source != "qualification_promotion":
-            raise ValueError(
-                "Source-bound pre-Q repair requires Q-promotion source"
-            )
+            raise ValueError("Source-bound pre-Q repair requires Q-promotion source")
         if source.selected_player_id is None:
             raise ValueError("Q-promotion source lacks selected player")
         if (
@@ -1212,9 +1310,7 @@ class TournamentDrawRevisionBuilder:
             )
         target = predecessor.main.slots[source.physical_slot_index - 1]
         if target.player_id != source.withdrawn_player_id:
-            raise ValueError(
-                "Source-bound pre-Q promotion physical Main slot mismatch"
-            )
+            raise ValueError("Source-bound pre-Q promotion physical Main slot mismatch")
 
         selected_from_q = any(
             slot.player_id == source.selected_player_id
@@ -1241,21 +1337,15 @@ class TournamentDrawRevisionBuilder:
             affected_draw_types=affected_draw_types,
             main_process_window_ordinal=main_process_window_ordinal,
             qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-                if selected_from_q
-                else None
+                qualification_process_window_ordinal if selected_from_q else None
             ),
             withdrawn_player_ids=(source.withdrawn_player_id,),
             sequence=sequence,
             command_id=command_id,
             repair_draw_seed=repair_draw_seed,
-            replacement_cutoff_authorities=(
-                source.replacement_cutoff_authority,
-            ),
+            replacement_cutoff_authorities=(source.replacement_cutoff_authority,),
         )
-        promoted_slot = base.successor_draw.main.slots[
-            source.physical_slot_index - 1
-        ]
+        promoted_slot = base.successor_draw.main.slots[source.physical_slot_index - 1]
         if (
             promoted_slot.player_id != source.selected_player_id
             or promoted_slot.entry_status is not None
@@ -1305,10 +1395,13 @@ class TournamentDrawRevisionBuilder:
         command_id: str,
         wild_card_repair_authority: TournamentPostDrawWildCardRepairAuthority,
     ) -> TournamentDrawRevision:
-        if process_authority.phase_for(
-            draw_type="main",
-            process_window_ordinal=main_process_window_ordinal,
-        ) != "draw_frozen":
+        if (
+            process_authority.phase_for(
+                draw_type="main",
+                process_window_ordinal=main_process_window_ordinal,
+            )
+            != "draw_frozen"
+        ):
             raise ValueError("Dedicated RWC physical-slot repair requires Draw Freeze")
         qualification_phase = None
         if wild_card_repair_authority.replacement_source == "qualification":
@@ -1341,10 +1434,7 @@ class TournamentDrawRevisionBuilder:
             != predecessor.draw_input_fingerprint
         ):
             raise ValueError("RWC repair authority Draw Input mismatch")
-        if (
-            successor_draw_input.entry_field_fingerprint
-            != successor_field.fingerprint
-        ):
+        if successor_draw_input.entry_field_fingerprint != successor_field.fingerprint:
             raise ValueError("RWC successor Draw Input/Field binding mismatch")
         if (
             successor_draw_input.post_draw_wild_card_repair_fingerprints[-1]
@@ -1359,11 +1449,12 @@ class TournamentDrawRevisionBuilder:
         ):
             raise ValueError("RWC successor Draw Input lacks Main seed vacancy")
         if wild_card_repair_authority.vacated_qualification_seed_number is not None:
-            q_seed_number = (
-                wild_card_repair_authority.vacated_qualification_seed_number
-            )
+            q_seed_number = wild_card_repair_authority.vacated_qualification_seed_number
             if qualification_phase == "full_redraw":
-                if q_seed_number in successor_draw_input.qualification_seed_vacancy_numbers:
+                if (
+                    q_seed_number
+                    in successor_draw_input.qualification_seed_vacancy_numbers
+                ):
                     raise ValueError(
                         "Q full redraw cannot retain departed seed as a vacancy"
                     )
@@ -1387,15 +1478,11 @@ class TournamentDrawRevisionBuilder:
             raise ValueError("RWC physical slot is outside Main Draw")
         template = slots[index]
         if (
-            template.player_id
-            != wild_card_repair_authority.withdrawn_player_id
+            template.player_id != wild_card_repair_authority.withdrawn_player_id
             or template.entry_status != "wild_card"
         ):
             raise ValueError("RWC physical slot no longer matches repair authority")
-        if (
-            template.seed_number
-            != wild_card_repair_authority.vacated_main_seed_number
-        ):
+        if template.seed_number != wild_card_repair_authority.vacated_main_seed_number:
             raise ValueError("RWC Main seed-vacancy evidence no longer matches slot")
         slots[index] = TournamentDrawSlot(
             slot_index=template.slot_index,
@@ -1440,9 +1527,7 @@ class TournamentDrawRevisionBuilder:
                     brackets=predecessor.qualification_brackets,
                     target_player_ids=successor_draw_input.qualification_player_ids,
                     draw_type="qualification",
-                    qualification_section_count=len(
-                        predecessor.qualification_brackets
-                    ),
+                    qualification_section_count=len(predecessor.qualification_brackets),
                 )
                 expected_q_action = (
                     "seed_cascade"
@@ -1582,9 +1667,7 @@ class TournamentDrawRevisionBuilder:
             repair_draw_seed=repair_draw_seed,
             main_repair_action="frozen_wild_card_fill",
             qualification_repair_action=qualification_action,
-            withdrawn_player_ids=(
-                wild_card_repair_authority.withdrawn_player_id,
-            ),
+            withdrawn_player_ids=(wild_card_repair_authority.withdrawn_player_id,),
             replacement_cutoff_authorities=(
                 wild_card_repair_authority.replacement_cutoff_authority,
             ),
@@ -1595,7 +1678,6 @@ class TournamentDrawRevisionBuilder:
             successor_draw_input=successor_draw_input,
             successor_draw=successor,
         )
-
 
     @staticmethod
     def build_frozen_lucky_loser_vacancy(
@@ -1608,12 +1690,16 @@ class TournamentDrawRevisionBuilder:
         sequence: int,
         command_id: str,
         lucky_loser_vacancy_authority: TournamentLuckyLoserVacancyAuthority,
-        replacement_source_authority: TournamentReplacementSourceAuthority | None = None,
+        replacement_source_authority: TournamentReplacementSourceAuthority
+        | None = None,
     ) -> TournamentDrawRevision:
-        if process_authority.phase_for(
-            draw_type="main",
-            process_window_ordinal=main_process_window_ordinal,
-        ) != "draw_frozen":
+        if (
+            process_authority.phase_for(
+                draw_type="main",
+                process_window_ordinal=main_process_window_ordinal,
+            )
+            != "draw_frozen"
+        ):
             raise ValueError(
                 "Lucky Loser vacancy first slice requires Main Draw Freeze"
             )
@@ -1625,10 +1711,7 @@ class TournamentDrawRevisionBuilder:
             != predecessor.draw_input_fingerprint
         ):
             raise ValueError("Lucky Loser vacancy Draw Input mismatch")
-        if (
-            successor_draw_input.entry_field_fingerprint
-            != successor_field.fingerprint
-        ):
+        if successor_draw_input.entry_field_fingerprint != successor_field.fingerprint:
             raise ValueError("Lucky Loser successor Draw Input/Field mismatch")
         if not successor_draw_input.lucky_loser_placeholder_ids:
             raise ValueError("Lucky Loser successor Draw Input lacks LL placeholder")
@@ -1644,9 +1727,7 @@ class TournamentDrawRevisionBuilder:
             and authority.vacated_main_seed_number
             not in successor_draw_input.main_seed_vacancy_numbers
         ):
-            raise ValueError(
-                "Lucky Loser successor Draw Input lacks vacated Main seed"
-            )
+            raise ValueError("Lucky Loser successor Draw Input lacks vacated Main seed")
 
         slots = list(predecessor.main.slots)
         index = authority.physical_slot_index - 1
@@ -1663,7 +1744,9 @@ class TournamentDrawRevisionBuilder:
                     "Q-winner Lucky Loser vacancy no longer owns linked Main Q slot"
                 )
             if template.player_id is not None or template.seed_number is not None:
-                raise ValueError("Q-winner Main placeholder cannot carry player or seed")
+                raise ValueError(
+                    "Q-winner Main placeholder cannot carry player or seed"
+                )
             released_wild_card_slot = False
         else:
             if template.player_id != authority.withdrawn_player_id:
@@ -1787,7 +1870,6 @@ class TournamentDrawRevisionBuilder:
             successor_draw=successor,
         )
 
-
     @staticmethod
     def build_frozen_lucky_loser_fill(
         *,
@@ -1800,10 +1882,13 @@ class TournamentDrawRevisionBuilder:
         command_id: str,
         lucky_loser_fill_authority: TournamentLuckyLoserFillAuthority,
     ) -> TournamentDrawRevision:
-        if process_authority.phase_for(
-            draw_type="main",
-            process_window_ordinal=main_process_window_ordinal,
-        ) != "draw_frozen":
+        if (
+            process_authority.phase_for(
+                draw_type="main",
+                process_window_ordinal=main_process_window_ordinal,
+            )
+            != "draw_frozen"
+        ):
             raise ValueError("Lucky Loser fill requires Main Draw Freeze")
         authority = lucky_loser_fill_authority
         if authority.predecessor_draw_fingerprint != predecessor.fingerprint:
@@ -1892,7 +1977,6 @@ class TournamentDrawRevisionBuilder:
             successor_draw=successor,
         )
 
-
     @staticmethod
     def build_frozen_ordinary_fallback(
         *,
@@ -1905,10 +1989,13 @@ class TournamentDrawRevisionBuilder:
         command_id: str,
         replacement_source_authority: TournamentReplacementSourceAuthority,
     ) -> TournamentDrawRevision:
-        if process_authority.phase_for(
-            draw_type="main",
-            process_window_ordinal=main_process_window_ordinal,
-        ) != "draw_frozen":
+        if (
+            process_authority.phase_for(
+                draw_type="main",
+                process_window_ordinal=main_process_window_ordinal,
+            )
+            != "draw_frozen"
+        ):
             raise ValueError("Frozen ordinary fallback requires Main Draw Freeze")
         authority = replacement_source_authority
         if authority.source not in {"external_reserve", "bye"}:
@@ -1928,9 +2015,7 @@ class TournamentDrawRevisionBuilder:
             successor_draw_input.replacement_source_authority_fingerprints[-1]
             != authority.fingerprint
         ):
-            raise ValueError(
-                "Frozen ordinary fallback Draw Input lacks source lineage"
-            )
+            raise ValueError("Frozen ordinary fallback Draw Input lacks source lineage")
 
         slots = list(predecessor.main.slots)
         index = authority.physical_slot_index - 1
@@ -1951,7 +2036,9 @@ class TournamentDrawRevisionBuilder:
             released_wild_card_slot = False
         else:
             if template.player_id != authority.withdrawn_player_id:
-                raise ValueError("Frozen ordinary fallback slot no longer matches withdrawal")
+                raise ValueError(
+                    "Frozen ordinary fallback slot no longer matches withdrawal"
+                )
             if template.entry_status not in {None, "wild_card"}:
                 raise ValueError(
                     "Frozen ordinary fallback supports Direct Main or exhausted WC slots only"
@@ -2038,9 +2125,7 @@ class TournamentDrawRevisionBuilder:
             main_process_window_ordinal=main_process_window_ordinal,
             main_repair_action=action,
             withdrawn_player_ids=(authority.withdrawn_player_id,),
-            replacement_cutoff_authorities=(
-                authority.replacement_cutoff_authority,
-            ),
+            replacement_cutoff_authorities=(authority.replacement_cutoff_authority,),
             replacement_source_authority=authority,
             predecessor_draw_fingerprint=predecessor.fingerprint,
             process_authority_fingerprint=process_authority.fingerprint,
@@ -2132,28 +2217,21 @@ def _repair_bracket_family(
                         templates[ref].slot_index,
                     ),
                 )
-                own_vacancies = [
-                    ref for ref in refs if ref in seeded_removed_refs
-                ]
+                own_vacancies = [ref for ref in refs if ref in seeded_removed_refs]
                 candidates = [
                     ref
                     for ref in refs
-                    if ref not in seeded_removed_refs
-                    and mutable[ref] is not None
+                    if ref not in seeded_removed_refs and mutable[ref] is not None
                 ]
                 destinations = sorted(
                     carry,
                     key=lambda ref: _vacancy_priority(ref, templates),
                 )
                 movers = candidates[: len(destinations)]
-                for destination, source in zip(
-                    destinations, movers, strict=True
-                ):
+                for destination, source in zip(destinations, movers, strict=True):
                     source_slot = mutable[source]
                     if source_slot is None:
-                        raise ValueError(
-                            "Seed cascade source unexpectedly vacant"
-                        )
+                        raise ValueError("Seed cascade source unexpectedly vacant")
                     mutable[destination] = _move_slot(
                         source_slot=source_slot,
                         destination=templates[destination],
@@ -2190,9 +2268,7 @@ def _repair_bracket_family(
             source = player_ref[player_id]
             source_slot = mutable[source]
             if source_slot is None:
-                raise ValueError(
-                    "Seed cascade unseeded source unexpectedly vacant"
-                )
+                raise ValueError("Seed cascade unseeded source unexpectedly vacant")
             mutable[destination] = _move_slot(
                 source_slot=source_slot,
                 destination=templates[destination],
@@ -2235,11 +2311,7 @@ def _repair_bracket_family(
         if any(slot is None for slot in slots):
             raise ValueError("Draw repair left an unresolved physical slot")
         typed_slots = tuple(slot for slot in slots if slot is not None)
-        players = {
-            slot.player_id
-            for slot in typed_slots
-            if slot.player_id is not None
-        }
+        players = {slot.player_id for slot in typed_slots if slot.player_id is not None}
         rebuilt.append(
             TournamentDrawBracket(
                 draw_type=bracket.draw_type,
@@ -2268,9 +2340,7 @@ def _repair_bracket_family(
             )
         )
         if not players <= target_set:
-            raise ValueError(
-                "Draw repair retained a player outside successor field"
-            )
+            raise ValueError("Draw repair retained a player outside successor field")
 
     actual_players = {
         slot.player_id
@@ -2279,9 +2349,7 @@ def _repair_bracket_family(
         if slot.player_id is not None
     }
     if actual_players != target_set:
-        raise ValueError(
-            "Draw repair physical player set differs from successor field"
-        )
+        raise ValueError("Draw repair physical player set differs from successor field")
 
     return tuple(rebuilt), (
         "seed_cascade" if seeded_removed_refs else "direct_slot_fill"
@@ -2360,11 +2428,7 @@ def _repair_frozen_bracket_family(
             mutable[(bracket_index, index)]
             for index in range(1, bracket.bracket_size + 1)
         )
-        players = {
-            slot.player_id
-            for slot in slots
-            if slot.player_id is not None
-        }
+        players = {slot.player_id for slot in slots if slot.player_id is not None}
         rebuilt.append(
             TournamentDrawBracket(
                 draw_type=bracket.draw_type,
@@ -2380,9 +2444,7 @@ def _repair_frozen_bracket_family(
                 slots=slots,
                 nodes=bracket.nodes,
                 bye_slot_indexes=tuple(
-                    slot.slot_index
-                    for slot in slots
-                    if slot.entrant_kind == "bye"
+                    slot.slot_index for slot in slots if slot.entrant_kind == "bye"
                 ),
                 qualifier_placeholder_slots=tuple(
                     (slot.placeholder_id, slot.slot_index)
@@ -2462,4 +2524,3 @@ def _ordinary_vacancy_priority(
         slot.idealized_slot_number or 10**9,
         slot_index,
     )
-

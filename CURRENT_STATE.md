@@ -2,8 +2,7 @@
 
 ## Active implementation — Finals Race replacement domain authority foundation
 
-ROADMAP item 46 now has a hardened domain and persistence/application boundary, but is not yet a
-complete sporting vertical slice.
+ROADMAP item 46 now reaches the canonical pure-knockout sporting chain for accepted replacements.
 
 - an append-only effective Finals participant state preserves the original participant-selection
   snapshot and keeps every resulting field in frozen Race order with contiguous field seeds;
@@ -19,15 +18,23 @@ complete sporting vertical slice.
   predecessors, corrupt lineage, duplicate candidate decisions and conflicting command retries;
 - already-withdrawn players remain unavailable for the Edition instead of being silently offered
   again; the Admin HTTP boundary exposes effective-field inspection, preview and explicit decision.
+- accepted pre-draw replacements append a Finals Entry Field v3 and commit Draw Input v11 from the
+  effective state; the existing classic builder still derives an 8-slot/two-BYE/two-seed Draw for
+  a six-player field without Official Ranking evidence;
+- accepted post-draw replacements create Draw Revision v15 with explicit Race/effective-state/
+  replacement provenance and reuse canonical full-redraw, seed-cascade and frozen-slot semantics;
+- player-specific replacement-cutoff authority remains mandatory for successful revisions, so a
+  BYE does not close replacement while a started real match blocks replacement and hands control
+  to the existing canonical W/O workflow;
+- Preparation blocks unresolved/exhausted offers and stale accepted fields/Draws, then returns to
+  `draw_ready` after the matching Entry Field or Draw Revision exists;
+- Saved Revision capture, validation and restore now include both effective-state and vacancy
+  histories together with their Entry Field/Draw Input/Draw dependencies.
 
-This is deliberately **not** the complete item 46 vertical slice yet. Saved Revision
-capture/restore, Planned Event UI, Entry Field/Draw Input adaptation, post-draw Draw
-Revision/cutoff/W/O integration, preparation blockers, and closure provenance remain to be wired.
-Until those boundaries exist, the new kernel is not a production mutation path.
-
-**Next:** adapt the persisted accepted effective field into the existing pre-draw and pure-knockout post-draw canonical
-chains. Keep concurrent post-draw vacancies and started-group replacement fail-closed unless the
-existing authorities provide an unambiguous atomic mapping.
+Remaining bounded work is the Planned Event control surface and an explicit end-to-end closure
+regression proving zero awards for the replaced pre-match player. Started-group replacements and
+ambiguous concurrent post-draw vacancies remain fail-closed; historical fork remap continues to
+reject this auxiliary authority family rather than partially retargeting it.
 
 ## Active implementation — World Tour Finals pure-knockout Draw adapter
 

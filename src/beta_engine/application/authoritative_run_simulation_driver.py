@@ -11573,14 +11573,14 @@ class AuthoritativeRunSimulationDriver:
             for event, standings in group_standings_entries:
                 if standings is not None:
                     continue
-                unresolved = next(
+                unresolved_case = next(
                     case
                     for unresolved_event, case in group_unresolved_cases
                     if unresolved_event.event_id == event.event_id
                 )
                 blocker = (
                     "group_standings_admin_resolution_required"
-                    if unresolved is not None
+                    if unresolved_case is not None
                     else "group_standings_authority_required"
                 )
                 if blocker not in blockers:

@@ -21,6 +21,13 @@ from beta_engine.infrastructure.db.finals_race_authority import (
 from beta_engine.infrastructure.db.finals_race_replacement import (
     WorldTourFinalsReplacementStore,
 )
+from beta_engine.infrastructure.db.models import TournamentDrawInputAuthorityModel
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
 
 
 class FinalsReplacementPreviewCommand(FrozenInput):
@@ -45,6 +52,8 @@ class FinalsReplacementDecisionCommand(FrozenInput):
     expected_effective_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     decision: Literal["decline", "accept"]
     command_id: str = Field(min_length=1, max_length=128)
+    main_process_window_ordinal: int | None = Field(default=None, ge=1)
+    repair_draw_seed: int | None = None
 
 
 @dataclass(slots=True)
@@ -76,7 +85,26 @@ class WorldTourFinalsReplacementService:
                 branch_id=branch_id,
                 target_season_index=target_season_index,
             )
-            return state
+            selection = WorldTourFinalsParticipantSelectionStore(session).get_snapshot(
+                run_id=run_id, branch_id=branch_id,
+                target_season_index=target_season_index,
+            )
+            if selection is None:
+                return {"effective_state": None, "replacement_history": (), "draw_revision": None}
+            history = store.event_authority_history(
+                run_id=run_id, branch_id=branch_id,
+                target_season_index=target_season_index,
+                finals_event_id=selection.finals_event_id,
+            )
+            revisions = TournamentDrawRevisionStore(session).history(
+                run_id=run_id, branch_id=branch_id,
+                event_id=selection.finals_event_id,
+            ) if session.get(TournamentDrawInputAuthorityModel, (run_id, branch_id, selection.finals_event_id)) is not None else ()
+            return {
+                "effective_state": state,
+                "replacement_history": history,
+                "draw_revision": revisions[-1] if revisions else None,
+            }
 
     def preview(
         self, command: FinalsReplacementPreviewCommand
@@ -182,4 +210,36 @@ class WorldTourFinalsReplacementService:
             store.put_authority(authority)
             if successor is not None:
                 store.put_state(successor)
+                if (
+                    session.get(
+                        TournamentDrawInputAuthorityModel,
+                        (command.run_id, command.branch_id, selection.finals_event_id),
+                    )
+                    is None
+                ):
+                    TournamentEntryFieldStore(
+                        session
+                    ).stage_from_finals_effective_state(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=selection.finals_event_id,
+                        target_season_index=command.target_season_index,
+                        effective_state_fingerprint=successor.fingerprint,
+                        command_id=f"{command.command_id}:entry-field"[:128],
+                    )
+                else:
+                    if command.main_process_window_ordinal is None:
+                        raise ValueError(
+                            "Post-draw Finals replacement requires Main process-window ordinal"
+                        )
+                    TournamentDrawRevisionStore(session).finals_race_replacement(
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        event_id=selection.finals_event_id,
+                        command_id=f"{command.command_id}:draw-revision"[:128],
+                        replacement_authority=authority,
+                        effective_state=successor,
+                        main_process_window_ordinal=command.main_process_window_ordinal,
+                        repair_draw_seed=command.repair_draw_seed,
+                    )
             return authority

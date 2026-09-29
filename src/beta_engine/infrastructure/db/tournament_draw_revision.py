@@ -51,6 +51,15 @@ from beta_engine.infrastructure.db.tournament_wild_card_authority import (
 from beta_engine.infrastructure.db.tournament_lucky_loser_authority import (
     TournamentLuckyLoserOrderAuthorityStore,
 )
+from beta_engine.infrastructure.db.finals_participant_selection import (
+    WorldTourFinalsParticipantSelectionStore,
+)
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
+from beta_engine.infrastructure.db.tournament_format_authority import (
+    TournamentFormatAuthorityStore,
+)
 
 
 class TournamentDrawRevisionConflict(ValueError):
@@ -93,6 +102,22 @@ def _request_payload_for_revision(
     previous_draw_input,
 ) -> dict:
     kind = revision.repair_kind
+    if kind == "finals_race_replacement":
+        return {
+            "repair_kind": kind,
+            "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
+            "process_authority_fingerprint": revision.process_authority_fingerprint,
+            "withdrawn_player_ids": list(revision.withdrawn_player_ids),
+            "repair_draw_seed": revision.repair_draw_seed,
+            "main_process_window_ordinal": revision.main_process_window_ordinal,
+            "successor_field_fingerprint": revision.successor_field.fingerprint,
+            "replacement_cutoff_authority_fingerprints": [
+                item.fingerprint for item in revision.replacement_cutoff_authorities
+            ],
+            "finals_race_snapshot_fingerprint": revision.finals_race_snapshot_fingerprint,
+            "finals_effective_participant_state_fingerprint": revision.finals_effective_participant_state_fingerprint,
+            "finals_replacement_authority_fingerprint": revision.finals_replacement_authority_fingerprint,
+        }
     if kind in {"full_redraw", "seed_cascade_phase", "draw_frozen_phase"}:
         request = {
             "predecessor_draw_fingerprint": revision.predecessor_draw_fingerprint,
@@ -127,9 +152,7 @@ def _request_payload_for_revision(
                 revision.qualification_process_window_ordinal
             ),
             "repair_draw_seed": revision.repair_draw_seed,
-            "unavailable_reserve_player_ids": list(
-                authority.unavailable_player_ids
-            ),
+            "unavailable_reserve_player_ids": list(authority.unavailable_player_ids),
             "wild_card_repair_authority_fingerprint": authority.fingerprint,
         }
 
@@ -201,8 +224,6 @@ def _request_payload_for_revision(
         }
 
     raise ValueError("Unsupported Tournament Draw revision request identity")
-
-
 
 
 class TournamentDrawRevisionStore:
@@ -332,9 +353,12 @@ class TournamentDrawRevisionStore:
         )
         if (
             process is None
-            or ranking is None
             or previous_draw_input is None
             or not field_rows
+            or (
+                previous_draw_input.source_kind == "ranking_snapshot"
+                and ranking is None
+            )
         ):
             raise ValueError("Draw revision history has missing frozen dependencies")
         previous_field, applications = field_store._load_row(field_rows[-1])
@@ -381,6 +405,98 @@ class TournamentDrawRevisionStore:
                     "Stored Tournament Draw revision request identity is corrupt"
                 )
 
+            if revision.repair_kind == "finals_race_replacement":
+                selection = WorldTourFinalsParticipantSelectionStore(
+                    self.session
+                ).find_snapshot_for_event(
+                    run_id=run_id, branch_id=branch_id, event_id=event_id
+                )
+                states = WorldTourFinalsReplacementStore(self.session).state_history(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    target_season_index=revision.successor_field.finals_target_season_index,
+                )
+                effective = next(
+                    (
+                        state
+                        for state in states
+                        if state.fingerprint
+                        == revision.finals_effective_participant_state_fingerprint
+                    ),
+                    None,
+                )
+                authorities = WorldTourFinalsReplacementStore(
+                    self.session
+                ).event_authority_history(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    target_season_index=revision.successor_field.finals_target_season_index,
+                    finals_event_id=event_id,
+                )
+                source = next(
+                    (
+                        item
+                        for item in authorities
+                        if item.fingerprint
+                        == revision.finals_replacement_authority_fingerprint
+                    ),
+                    None,
+                )
+                if (
+                    selection is None
+                    or effective is None
+                    or source is None
+                    or source.status != "accepted"
+                    or source.resulting_effective_state_fingerprint
+                    != effective.fingerprint
+                ):
+                    raise ValueError(
+                        "Finals Race Draw revision source authority is missing or stale"
+                    )
+                rebuilt_field = TournamentEntryFieldResolver.build_from_finals_effective_participant_state(
+                    selection=selection, effective=effective, previous=previous_field
+                )
+                format_authority = TournamentFormatAuthorityStore(self.session).get(
+                    run_id=run_id, branch_id=branch_id, event_id=event_id
+                )
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder.build_finals_knockout(
+                        selection=selection,
+                        effective_state=effective,
+                        field=rebuilt_field,
+                        field_sequence=previous_draw_input.field_sequence + 1,
+                        format_authority=format_authority,
+                        command_id=revision.command_id,
+                        draw_seed=previous_draw_input.draw_seed,
+                    )
+                )
+                rebuilt = TournamentDrawRevisionBuilder.build_finals_race_replacement(
+                    predecessor=predecessor,
+                    successor_field=rebuilt_field,
+                    successor_draw_input=rebuilt_input,
+                    process_authority=process,
+                    main_process_window_ordinal=revision.main_process_window_ordinal,
+                    withdrawn_player_id=source.withdrawn_player_id,
+                    sequence=revision.sequence,
+                    command_id=revision.command_id,
+                    repair_draw_seed=revision.repair_draw_seed,
+                    replacement_cutoff_authority=revision.replacement_cutoff_authorities[
+                        0
+                    ],
+                    race_snapshot_fingerprint=effective.race_snapshot_fingerprint,
+                    effective_state_fingerprint=effective.fingerprint,
+                    replacement_authority_fingerprint=source.fingerprint,
+                )
+                if rebuilt != revision:
+                    raise ValueError("Finals Race Draw revision does not replay")
+                out.append(revision)
+                previous_field, previous_draw_input, predecessor = (
+                    rebuilt_field,
+                    rebuilt_input,
+                    revision.successor_draw,
+                )
+                continue
+
             if revision.repair_kind == "source_bound_pre_q_promotion":
                 source = revision.replacement_source_authority
                 if source is None or source.source != "qualification_promotion":
@@ -422,31 +538,25 @@ class TournamentDrawRevisionStore:
                     previous_draw_input=previous_draw_input,
                     replacement_source_authority=source,
                 )
-                rebuilt_input = (
-                    TournamentDrawInputAuthorityBuilder
-                    .build_source_bound_pre_q_promotion(
-                        previous=previous_draw_input,
-                        command_id=revision.command_id,
-                        withdrawn_player_id=source.withdrawn_player_id,
-                        promoted_player_id=selected,
-                        replacement_source_authority_fingerprint=source.fingerprint,
-                        qualification_backfill_player_id=q_backfill,
-                        main_vacated_seed_number=target.seed_number,
-                        qualification_vacated_seed_number=(
-                            q_slot.seed_number if q_slot is not None else None
-                        ),
-                        qualification_full_redraw_reseed=(
-                            revision.qualification_repair_action == "full_redraw"
-                        ),
-                    )
+                rebuilt_input = TournamentDrawInputAuthorityBuilder.build_source_bound_pre_q_promotion(
+                    previous=previous_draw_input,
+                    command_id=revision.command_id,
+                    withdrawn_player_id=source.withdrawn_player_id,
+                    promoted_player_id=selected,
+                    replacement_source_authority_fingerprint=source.fingerprint,
+                    qualification_backfill_player_id=q_backfill,
+                    main_vacated_seed_number=target.seed_number,
+                    qualification_vacated_seed_number=(
+                        q_slot.seed_number if q_slot is not None else None
+                    ),
+                    qualification_full_redraw_reseed=(
+                        revision.qualification_repair_action == "full_redraw"
+                    ),
                 )
                 if rebuilt_input != revision.successor_draw_input:
-                    raise ValueError(
-                        "Source-bound pre-Q Draw Input does not replay"
-                    )
+                    raise ValueError("Source-bound pre-Q Draw Input does not replay")
                 rebuilt_revision = (
-                    TournamentDrawRevisionBuilder
-                    .build_source_bound_pre_q_promotion(
+                    TournamentDrawRevisionBuilder.build_source_bound_pre_q_promotion(
                         predecessor=predecessor,
                         successor_field=previous_field,
                         successor_draw_input=rebuilt_input,
@@ -464,9 +574,7 @@ class TournamentDrawRevisionStore:
                     )
                 )
                 if rebuilt_revision != revision:
-                    raise ValueError(
-                        "Source-bound pre-Q Draw revision does not replay"
-                    )
+                    raise ValueError("Source-bound pre-Q Draw revision does not replay")
                 out.append(revision)
                 previous_draw_input = revision.successor_draw_input
                 predecessor = revision.successor_draw
@@ -592,25 +700,29 @@ class TournamentDrawRevisionStore:
                 )
                 if rebuilt_authority != authority:
                     raise ValueError("Lucky Loser fill authority does not replay")
-                rebuilt_input = TournamentDrawInputAuthorityBuilder.build_lucky_loser_fill(
-                    previous=previous_draw_input,
-                    command_id=revision.command_id,
-                    placeholder_id=authority.placeholder_id,
-                    player_id=authority.selected_candidate.player_id,
+                rebuilt_input = (
+                    TournamentDrawInputAuthorityBuilder.build_lucky_loser_fill(
+                        previous=previous_draw_input,
+                        command_id=revision.command_id,
+                        placeholder_id=authority.placeholder_id,
+                        player_id=authority.selected_candidate.player_id,
+                    )
                 )
                 if rebuilt_input != revision.successor_draw_input:
                     raise ValueError("Lucky Loser fill Draw Input does not replay")
-                rebuilt_revision = TournamentDrawRevisionBuilder.build_frozen_lucky_loser_fill(
-                    predecessor=predecessor,
-                    successor_field=previous_field,
-                    successor_draw_input=rebuilt_input,
-                    process_authority=process,
-                    main_process_window_ordinal=(
-                        revision.main_process_window_ordinal
-                    ),
-                    sequence=revision.sequence,
-                    command_id=revision.command_id,
-                    lucky_loser_fill_authority=rebuilt_authority,
+                rebuilt_revision = (
+                    TournamentDrawRevisionBuilder.build_frozen_lucky_loser_fill(
+                        predecessor=predecessor,
+                        successor_field=previous_field,
+                        successor_draw_input=rebuilt_input,
+                        process_authority=process,
+                        main_process_window_ordinal=(
+                            revision.main_process_window_ordinal
+                        ),
+                        sequence=revision.sequence,
+                        command_id=revision.command_id,
+                        lucky_loser_fill_authority=rebuilt_authority,
+                    )
                 )
                 if rebuilt_revision != revision:
                     raise ValueError("Lucky Loser fill Draw revision does not replay")
@@ -636,36 +748,30 @@ class TournamentDrawRevisionStore:
                     ),
                 )
                 ordinal = 1 + sum(
-                    1
-                    for prior in out
-                    if prior.repair_kind == "lucky_loser_vacancy"
+                    1 for prior in out if prior.repair_kind == "lucky_loser_vacancy"
                 )
-                rebuilt_authority = (
-                    TournamentLuckyLoserVacancyAuthorityBuilder.build(
-                        predecessor=predecessor,
-                        predecessor_draw_input=previous_draw_input,
-                        command_id=revision.command_id,
-                        withdrawn_player_id=authority.withdrawn_player_id,
-                        lucky_loser_ordinal=ordinal,
-                        withdrawn_player_cutoff_authority=(
-                            authority.withdrawn_player_cutoff_authority
-                        ),
-                        qualification_start_authority=q_start,
-                        qualification_origin_player_ids=(
-                            initial_draw_input.qualification_player_ids
-                        ),
-                        replacement_source_authority=(
-                            revision.replacement_source_authority
-                        ),
-                        qualification_winner_evidence=(
-                            authority.qualification_winner_evidence
-                        ),
-                    )
+                rebuilt_authority = TournamentLuckyLoserVacancyAuthorityBuilder.build(
+                    predecessor=predecessor,
+                    predecessor_draw_input=previous_draw_input,
+                    command_id=revision.command_id,
+                    withdrawn_player_id=authority.withdrawn_player_id,
+                    lucky_loser_ordinal=ordinal,
+                    withdrawn_player_cutoff_authority=(
+                        authority.withdrawn_player_cutoff_authority
+                    ),
+                    qualification_start_authority=q_start,
+                    qualification_origin_player_ids=(
+                        initial_draw_input.qualification_player_ids
+                    ),
+                    replacement_source_authority=(
+                        revision.replacement_source_authority
+                    ),
+                    qualification_winner_evidence=(
+                        authority.qualification_winner_evidence
+                    ),
                 )
                 if rebuilt_authority != authority:
-                    raise ValueError(
-                        "Lucky Loser vacancy authority does not replay"
-                    )
+                    raise ValueError("Lucky Loser vacancy authority does not replay")
                 rebuilt_input = (
                     TournamentDrawInputAuthorityBuilder.build_lucky_loser_vacancy(
                         previous=previous_draw_input,
@@ -686,9 +792,7 @@ class TournamentDrawRevisionStore:
                     )
                 )
                 if rebuilt_input != revision.successor_draw_input:
-                    raise ValueError(
-                        "Lucky Loser successor Draw Input does not replay"
-                    )
+                    raise ValueError("Lucky Loser successor Draw Input does not replay")
                 rebuilt_revision = (
                     TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
                         predecessor=predecessor,
@@ -707,9 +811,7 @@ class TournamentDrawRevisionStore:
                     )
                 )
                 if rebuilt_revision != revision:
-                    raise ValueError(
-                        "Lucky Loser Draw revision does not replay"
-                    )
+                    raise ValueError("Lucky Loser Draw revision does not replay")
                 out.append(revision)
                 previous_draw_input = revision.successor_draw_input
                 predecessor = revision.successor_draw
@@ -747,36 +849,32 @@ class TournamentDrawRevisionStore:
                     raise ValueError(
                         "Frozen WC repair authority does not replay from frozen evidence"
                     )
-                rebuilt_input = (
-                    TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
-                        previous=previous_draw_input,
-                        command_id=revision.command_id,
-                        withdrawn_player_id=authority.withdrawn_player_id,
-                        replacement_player_id=authority.replacement_player_id,
-                        repair_authority_fingerprint=authority.fingerprint,
-                        qualification_replacement_player_id=(
-                            authority.replacement_player_id
-                            if authority.replacement_source == "qualification"
-                            else None
-                        ),
-                        qualification_backfill_player_id=(
-                            authority.qualification_backfill_player_id
-                            if authority.replacement_source == "qualification"
-                            else None
-                        ),
-                        main_vacated_seed_number=authority.vacated_main_seed_number,
-                        qualification_vacated_seed_number=(
-                            authority.vacated_qualification_seed_number
-                        ),
-                        qualification_full_redraw_reseed=(
-                            revision.qualification_repair_action == "full_redraw"
-                        ),
-                    )
+                rebuilt_input = TournamentDrawInputAuthorityBuilder.build_post_draw_wild_card_repair(
+                    previous=previous_draw_input,
+                    command_id=revision.command_id,
+                    withdrawn_player_id=authority.withdrawn_player_id,
+                    replacement_player_id=authority.replacement_player_id,
+                    repair_authority_fingerprint=authority.fingerprint,
+                    qualification_replacement_player_id=(
+                        authority.replacement_player_id
+                        if authority.replacement_source == "qualification"
+                        else None
+                    ),
+                    qualification_backfill_player_id=(
+                        authority.qualification_backfill_player_id
+                        if authority.replacement_source == "qualification"
+                        else None
+                    ),
+                    main_vacated_seed_number=authority.vacated_main_seed_number,
+                    qualification_vacated_seed_number=(
+                        authority.vacated_qualification_seed_number
+                    ),
+                    qualification_full_redraw_reseed=(
+                        revision.qualification_repair_action == "full_redraw"
+                    ),
                 )
                 if rebuilt_input != revision.successor_draw_input:
-                    raise ValueError(
-                        "Frozen WC successor Draw Input does not replay"
-                    )
+                    raise ValueError("Frozen WC successor Draw Input does not replay")
                 rebuilt_revision = (
                     TournamentDrawRevisionBuilder.build_frozen_wild_card_repair(
                         predecessor=predecessor,
@@ -851,9 +949,7 @@ class TournamentDrawRevisionStore:
                     successor_draw_input=rebuilt_input,
                     process_authority=process,
                     affected_draw_types=revision.affected_draw_types,
-                    main_process_window_ordinal=(
-                        revision.main_process_window_ordinal
-                    ),
+                    main_process_window_ordinal=(revision.main_process_window_ordinal),
                     qualification_process_window_ordinal=(
                         revision.qualification_process_window_ordinal
                     ),
@@ -958,11 +1054,7 @@ class TournamentDrawRevisionStore:
         history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if retry is not None:
             revision = next(
-                (
-                    item
-                    for item in history
-                    if item.command_id == command_id
-                ),
+                (item for item in history if item.command_id == command_id),
                 None,
             )
             if revision is None:
@@ -1011,15 +1103,11 @@ class TournamentDrawRevisionStore:
             )
 
         field_store = TournamentEntryFieldStore(self.session)
-        rows = field_store._rows(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
+        rows = field_store._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if not rows:
             raise ValueError("Full redraw requires canonical Tournament Entry Field")
         persisted_field, applications = field_store._load_row(rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
         cutoff_authorities = self._replacement_cutoff_authorities(
             run_id=run_id,
             branch_id=branch_id,
@@ -1049,11 +1137,12 @@ class TournamentDrawRevisionStore:
             schema_version="tournament_draw_input_authority.v2",
         )
 
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
         affected = []
-        if previous_input.direct_main_player_ids != successor_input.direct_main_player_ids:
+        if (
+            previous_input.direct_main_player_ids
+            != successor_input.direct_main_player_ids
+        ):
             affected.append("main")
         if (
             previous_input.qualification_player_ids
@@ -1111,6 +1200,136 @@ class TournamentDrawRevisionStore:
         self.session.flush()
         return revision
 
+    def finals_race_replacement(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        event_id: str,
+        command_id: str,
+        replacement_authority,
+        effective_state,
+        main_process_window_ordinal: int,
+        repair_draw_seed: int | None = None,
+    ) -> TournamentDrawRevision:
+        """Apply one accepted Finals Race candidate through canonical phase semantics."""
+        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        predecessor = (
+            history[-1].successor_draw
+            if history
+            else TournamentDrawAuthorityStore(self.session).get_initial(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
+        )
+        original_input = TournamentDrawInputAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        process = TournamentDrawProcessAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        selection = WorldTourFinalsParticipantSelectionStore(
+            self.session
+        ).find_snapshot_for_event(run_id=run_id, branch_id=branch_id, event_id=event_id)
+        format_authority = TournamentFormatAuthorityStore(self.session).get(
+            run_id=run_id, branch_id=branch_id, event_id=event_id
+        )
+        if (
+            predecessor is None
+            or original_input is None
+            or process is None
+            or selection is None
+            or format_authority is None
+        ):
+            raise ValueError(
+                "Finals Race Draw repair requires Draw, process, selection and format authorities"
+            )
+        if (
+            replacement_authority.status != "accepted"
+            or replacement_authority.resulting_effective_state_fingerprint
+            != effective_state.fingerprint
+        ):
+            raise ValueError(
+                "Finals Race Draw repair requires matching accepted replacement authority"
+            )
+        previous_field = (
+            history[-1].successor_field
+            if history
+            else TournamentEntryFieldStore(self.session).latest(
+                run_id=run_id, branch_id=branch_id, event_id=event_id
+            )
+        )
+        previous_input = history[-1].successor_draw_input if history else original_input
+        successor_field = (
+            TournamentEntryFieldResolver.build_from_finals_effective_participant_state(
+                selection=selection, effective=effective_state, previous=previous_field
+            )
+        )
+        successor_input = TournamentDrawInputAuthorityBuilder.build_finals_knockout(
+            selection=selection,
+            effective_state=effective_state,
+            field=successor_field,
+            field_sequence=previous_input.field_sequence + 1,
+            format_authority=format_authority,
+            command_id=command_id,
+            draw_seed=previous_input.draw_seed,
+        )
+        cutoff = self._replacement_cutoff_authorities(
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            withdrawn_player_ids=(replacement_authority.withdrawn_player_id,),
+        )[0]
+        revision = TournamentDrawRevisionBuilder.build_finals_race_replacement(
+            predecessor=predecessor,
+            successor_field=successor_field,
+            successor_draw_input=successor_input,
+            process_authority=process,
+            main_process_window_ordinal=main_process_window_ordinal,
+            withdrawn_player_id=replacement_authority.withdrawn_player_id,
+            sequence=len(history) + 1,
+            command_id=command_id,
+            repair_draw_seed=repair_draw_seed,
+            replacement_cutoff_authority=cutoff,
+            race_snapshot_fingerprint=effective_state.race_snapshot_fingerprint,
+            effective_state_fingerprint=effective_state.fingerprint,
+            replacement_authority_fingerprint=replacement_authority.fingerprint,
+        )
+        request_fp = _fp(
+            _request_payload_for_revision(revision, previous_draw_input=previous_input)
+        )
+        retry = self.session.scalar(
+            select(TournamentDrawRevisionModel).where(
+                TournamentDrawRevisionModel.run_id == run_id,
+                TournamentDrawRevisionModel.branch_id == branch_id,
+                TournamentDrawRevisionModel.command_id == command_id,
+            )
+        )
+        if retry is not None:
+            matched = next(
+                (item for item in history if item.command_id == command_id), None
+            )
+            if matched is None or retry.request_fingerprint != request_fp:
+                raise TournamentDrawRevisionConflict(
+                    "Finals Race Draw repair command conflicts"
+                )
+            return matched
+        self.session.add(
+            TournamentDrawRevisionModel(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                sequence=revision.sequence,
+                command_id=command_id,
+                request_fingerprint=request_fp,
+                revision_fingerprint=revision.fingerprint,
+                predecessor_draw_fingerprint=revision.predecessor_draw_fingerprint,
+                successor_draw_fingerprint=revision.successor_draw.fingerprint,
+                payload_json=revision.model_dump_json(),
+            )
+        )
+        self.session.flush()
+        return revision
+
     def seed_cascade_phase_withdrawal(
         self,
         *,
@@ -1139,16 +1358,10 @@ class TournamentDrawRevisionStore:
                 TournamentDrawRevisionModel.command_id == command_id,
             )
         )
-        history = self.history(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
+        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if retry is not None:
             revision = next(
-                (
-                    item
-                    for item in history
-                    if item.command_id == command_id
-                ),
+                (item for item in history if item.command_id == command_id),
                 None,
             )
             if revision is None:
@@ -1159,8 +1372,7 @@ class TournamentDrawRevisionStore:
                 retry.event_id != event_id
                 or revision.repair_kind != "seed_cascade_phase"
                 or revision.withdrawn_player_ids != requested
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
                 or revision.repair_draw_seed != repair_draw_seed
@@ -1205,18 +1417,13 @@ class TournamentDrawRevisionStore:
             )
 
         field_store = TournamentEntryFieldStore(self.session)
-        rows = field_store._rows(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
+        rows = field_store._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if not rows:
             raise ValueError(
-                "Seed-cascade phase repair requires canonical "
-                "Tournament Entry Field"
+                "Seed-cascade phase repair requires canonical Tournament Entry Field"
             )
         persisted_field, applications = field_store._load_row(rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
         cutoff_authorities = self._replacement_cutoff_authorities(
             run_id=run_id,
             branch_id=branch_id,
@@ -1234,9 +1441,7 @@ class TournamentDrawRevisionStore:
                 "Seed-cascade phase withdrawal contains no new active-field change"
             )
 
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
         sequence = len(history) + 1
         successor_input = TournamentDrawInputAuthorityBuilder.build(
             authority=ranking,
@@ -1290,9 +1495,7 @@ class TournamentDrawRevisionStore:
             process_authority=process,
             affected_draw_types=affected_draw_types,
             main_process_window_ordinal=main_process_window_ordinal,
-            qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-            ),
+            qualification_process_window_ordinal=(qualification_process_window_ordinal),
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
@@ -1308,17 +1511,13 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
         )
         self.session.flush()
         return revision
-
-
 
     def apply_frozen_ordinary_fallback(
         self,
@@ -1357,10 +1556,8 @@ class TournamentDrawRevisionStore:
             if (
                 retry.event_id != event_id
                 or revision.repair_kind != "frozen_ordinary_fallback"
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
-                or revision.replacement_source_authority
-                != replacement_source_authority
+                or revision.main_process_window_ordinal != main_process_window_ordinal
+                or revision.replacement_source_authority != replacement_source_authority
             ):
                 raise TournamentDrawRevisionConflict(
                     "Frozen ordinary fallback command already has a different request"
@@ -1394,9 +1591,7 @@ class TournamentDrawRevisionStore:
             raise ValueError(
                 "Frozen ordinary fallback requires Draw Input and process authority"
             )
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
 
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
@@ -1405,13 +1600,9 @@ class TournamentDrawRevisionStore:
             event_id=event_id,
         )
         if not field_rows:
-            raise ValueError(
-                "Frozen ordinary fallback requires Tournament Entry Field"
-            )
+            raise ValueError("Frozen ordinary fallback requires Tournament Entry Field")
         persisted_field, _ = field_store._load_row(field_rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
 
         authority = replacement_source_authority
         if authority.source not in {"external_reserve", "bye"}:
@@ -1471,17 +1662,15 @@ class TournamentDrawRevisionStore:
                     ),
                 )
             )
-            revision = (
-                TournamentDrawRevisionBuilder.build_frozen_ordinary_fallback(
-                    predecessor=predecessor,
-                    successor_field=previous_field,
-                    successor_draw_input=successor_input,
-                    process_authority=process,
-                    main_process_window_ordinal=main_process_window_ordinal,
-                    sequence=len(history) + 1,
-                    command_id=command_id,
-                    replacement_source_authority=authority,
-                )
+            revision = TournamentDrawRevisionBuilder.build_frozen_ordinary_fallback(
+                predecessor=predecessor,
+                successor_field=previous_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                main_process_window_ordinal=main_process_window_ordinal,
+                sequence=len(history) + 1,
+                command_id=command_id,
+                replacement_source_authority=authority,
             )
         except ValueError as exc:
             raise TournamentDrawRevisionConflict(str(exc)) from exc
@@ -1501,9 +1690,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
@@ -1550,13 +1737,11 @@ class TournamentDrawRevisionStore:
             if (
                 retry.event_id != event_id
                 or revision.repair_kind != "source_bound_pre_q_promotion"
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
                 or revision.repair_draw_seed != repair_draw_seed
-                or revision.replacement_source_authority
-                != replacement_source_authority
+                or revision.replacement_source_authority != replacement_source_authority
             ):
                 raise TournamentDrawRevisionConflict(
                     "Source-bound pre-Q command already has a different request"
@@ -1591,9 +1776,7 @@ class TournamentDrawRevisionStore:
             raise ValueError(
                 "Source-bound pre-Q promotion requires Draw Input and process authority"
             )
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
 
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
@@ -1606,9 +1789,7 @@ class TournamentDrawRevisionStore:
                 "Source-bound pre-Q promotion requires Tournament Entry Field"
             )
         persisted_field, _ = field_store._load_row(field_rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
 
         source = replacement_source_authority
         if source.source != "qualification_promotion":
@@ -1643,9 +1824,7 @@ class TournamentDrawRevisionStore:
             )
 
         selected = source.selected_player_id
-        selected_from_q = selected in set(
-            previous_input.qualification_player_ids
-        )
+        selected_from_q = selected in set(previous_input.qualification_player_ids)
         q_slot = None
         if selected_from_q:
             if qualification_process_window_ordinal is None:
@@ -1689,8 +1868,7 @@ class TournamentDrawRevisionStore:
         )
         try:
             successor_input = (
-                TournamentDrawInputAuthorityBuilder
-                .build_source_bound_pre_q_promotion(
+                TournamentDrawInputAuthorityBuilder.build_source_bound_pre_q_promotion(
                     previous=previous_input,
                     command_id=command_id,
                     withdrawn_player_id=source.withdrawn_player_id,
@@ -1713,24 +1891,19 @@ class TournamentDrawRevisionStore:
                     ),
                 )
             )
-            revision = (
-                TournamentDrawRevisionBuilder
-                .build_source_bound_pre_q_promotion(
-                    predecessor=predecessor,
-                    successor_field=previous_field,
-                    successor_draw_input=successor_input,
-                    process_authority=process,
-                    main_process_window_ordinal=main_process_window_ordinal,
-                    qualification_process_window_ordinal=(
-                        qualification_process_window_ordinal
-                        if selected_from_q
-                        else None
-                    ),
-                    sequence=len(history) + 1,
-                    command_id=command_id,
-                    repair_draw_seed=repair_draw_seed,
-                    replacement_source_authority=source,
-                )
+            revision = TournamentDrawRevisionBuilder.build_source_bound_pre_q_promotion(
+                predecessor=predecessor,
+                successor_field=previous_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                main_process_window_ordinal=main_process_window_ordinal,
+                qualification_process_window_ordinal=(
+                    qualification_process_window_ordinal if selected_from_q else None
+                ),
+                sequence=len(history) + 1,
+                command_id=command_id,
+                repair_draw_seed=repair_draw_seed,
+                replacement_source_authority=source,
             )
         except ValueError as exc:
             raise TournamentDrawRevisionConflict(str(exc)) from exc
@@ -1741,9 +1914,7 @@ class TournamentDrawRevisionStore:
             "replacement_source_authority_fingerprint": source.fingerprint,
             "main_process_window_ordinal": main_process_window_ordinal,
             "qualification_process_window_ordinal": (
-                qualification_process_window_ordinal
-                if selected_from_q
-                else None
+                qualification_process_window_ordinal if selected_from_q else None
             ),
             "repair_draw_seed": repair_draw_seed,
             "qualification_backfill_player_id": q_backfill,
@@ -1757,9 +1928,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
@@ -1799,19 +1968,15 @@ class TournamentDrawRevisionStore:
                 None,
             )
             if revision is None:
-                raise ValueError(
-                    "Lucky Loser command exists outside validated history"
-                )
+                raise ValueError("Lucky Loser command exists outside validated history")
             authority = revision.lucky_loser_vacancy_authority
             if (
                 retry.event_id != event_id
                 or revision.repair_kind != "lucky_loser_vacancy"
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or authority is None
                 or authority.withdrawn_player_id != withdrawn_player_id
-                or revision.replacement_source_authority
-                != replacement_source_authority
+                or revision.replacement_source_authority != replacement_source_authority
             ):
                 raise TournamentDrawRevisionConflict(
                     "Lucky Loser command already has a different request"
@@ -1844,9 +2009,7 @@ class TournamentDrawRevisionStore:
             raise ValueError(
                 "Lucky Loser vacancy requires Draw Input and Draw process authority"
             )
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
 
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
@@ -1857,32 +2020,28 @@ class TournamentDrawRevisionStore:
         if not field_rows:
             raise ValueError("Lucky Loser vacancy requires Tournament Entry Field")
         persisted_field, _ = field_store._load_row(field_rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
 
         qualification_winner_evidence = None
         if withdrawn_player_id in set(original_input.qualification_player_ids):
             try:
-                qualification_winner_evidence = (
-                    TournamentLuckyLoserOrderAuthorityStore(self.session)
-                    .resolve_qualification_winner_evidence(
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event_id,
-                        draw=predecessor,
-                        player_id=withdrawn_player_id,
-                    )
+                qualification_winner_evidence = TournamentLuckyLoserOrderAuthorityStore(
+                    self.session
+                ).resolve_qualification_winner_evidence(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                    draw=predecessor,
+                    player_id=withdrawn_player_id,
                 )
-                withdrawn_cutoff = (
-                    TournamentPlayerReplacementCutoffAuthorityStore(self.session)
-                    .resolve(
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event_id,
-                        player_id=withdrawn_player_id,
-                        draw_type="main",
-                    )
+                withdrawn_cutoff = TournamentPlayerReplacementCutoffAuthorityStore(
+                    self.session
+                ).resolve(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event_id,
+                    player_id=withdrawn_player_id,
+                    draw_type="main",
                 )
             except ValueError as exc:
                 raise TournamentDrawRevisionConflict(str(exc)) from exc
@@ -1900,9 +2059,7 @@ class TournamentDrawRevisionStore:
             qualification_player_ids=original_input.qualification_player_ids,
         )
         ordinal = 1 + sum(
-            1
-            for prior in history
-            if prior.repair_kind == "lucky_loser_vacancy"
+            1 for prior in history if prior.repair_kind == "lucky_loser_vacancy"
         )
         try:
             authority = TournamentLuckyLoserVacancyAuthorityBuilder.build(
@@ -1938,18 +2095,16 @@ class TournamentDrawRevisionStore:
                     ),
                 )
             )
-            revision = (
-                TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
-                    predecessor=predecessor,
-                    successor_field=previous_field,
-                    successor_draw_input=successor_input,
-                    process_authority=process,
-                    main_process_window_ordinal=main_process_window_ordinal,
-                    sequence=len(history) + 1,
-                    command_id=command_id,
-                    lucky_loser_vacancy_authority=authority,
-                    replacement_source_authority=replacement_source_authority,
-                )
+            revision = TournamentDrawRevisionBuilder.build_frozen_lucky_loser_vacancy(
+                predecessor=predecessor,
+                successor_field=previous_field,
+                successor_draw_input=successor_input,
+                process_authority=process,
+                main_process_window_ordinal=main_process_window_ordinal,
+                sequence=len(history) + 1,
+                command_id=command_id,
+                lucky_loser_vacancy_authority=authority,
+                replacement_source_authority=replacement_source_authority,
             )
         except ValueError as exc:
             raise TournamentDrawRevisionConflict(str(exc)) from exc
@@ -1983,9 +2138,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
@@ -2032,8 +2185,7 @@ class TournamentDrawRevisionStore:
             if (
                 retry.event_id != event_id
                 or revision.repair_kind != "lucky_loser_fill"
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or authority is None
                 or authority.unavailable_player_ids != expected_unavailable
             ):
@@ -2068,9 +2220,7 @@ class TournamentDrawRevisionStore:
             raise ValueError(
                 "Lucky Loser fill requires Draw Input and Draw process authority"
             )
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
 
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
@@ -2081,9 +2231,7 @@ class TournamentDrawRevisionStore:
         if not field_rows:
             raise ValueError("Lucky Loser fill requires Tournament Entry Field")
         persisted_field, _ = field_store._load_row(field_rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
 
         prior_fill = next(
             (
@@ -2114,11 +2262,13 @@ class TournamentDrawRevisionStore:
                 order_authority=order_authority,
                 unavailable_player_ids=expected_unavailable,
             )
-            successor_input = TournamentDrawInputAuthorityBuilder.build_lucky_loser_fill(
-                previous=previous_input,
-                command_id=command_id,
-                placeholder_id=authority.placeholder_id,
-                player_id=authority.selected_candidate.player_id,
+            successor_input = (
+                TournamentDrawInputAuthorityBuilder.build_lucky_loser_fill(
+                    previous=previous_input,
+                    command_id=command_id,
+                    placeholder_id=authority.placeholder_id,
+                    player_id=authority.selected_candidate.player_id,
+                )
             )
             revision = TournamentDrawRevisionBuilder.build_frozen_lucky_loser_fill(
                 predecessor=predecessor,
@@ -2151,9 +2301,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
@@ -2199,14 +2347,11 @@ class TournamentDrawRevisionStore:
                     "Frozen WC repair command exists outside validated history"
                 )
             authority = revision.wild_card_repair_authority
-            expected_unavailable = tuple(
-                sorted(set(unavailable_reserve_player_ids))
-            )
+            expected_unavailable = tuple(sorted(set(unavailable_reserve_player_ids)))
             if (
                 retry.event_id != event_id
                 or revision.repair_kind != "frozen_wild_card_repair"
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
                 or revision.repair_draw_seed != repair_draw_seed
@@ -2250,9 +2395,7 @@ class TournamentDrawRevisionStore:
             raise ValueError(
                 "Frozen WC repair requires Draw Input, Draw process and WC authority"
             )
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
 
         field_store = TournamentEntryFieldStore(self.session)
         field_rows = field_store._rows(
@@ -2263,9 +2406,7 @@ class TournamentDrawRevisionStore:
         if not field_rows:
             raise ValueError("Frozen WC repair requires Tournament Entry Field")
         persisted_field, _ = field_store._load_row(field_rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
 
         cutoff = self._replacement_cutoff_authorities(
             run_id=run_id,
@@ -2337,9 +2478,7 @@ class TournamentDrawRevisionStore:
                 qualification_vacated_seed_number=(
                     wc_repair.vacated_qualification_seed_number
                 ),
-                qualification_full_redraw_reseed=(
-                    qualification_phase == "full_redraw"
-                ),
+                qualification_full_redraw_reseed=(qualification_phase == "full_redraw"),
             )
         )
         sequence = len(history) + 1
@@ -2349,9 +2488,7 @@ class TournamentDrawRevisionStore:
             successor_draw_input=successor_input,
             process_authority=process,
             main_process_window_ordinal=main_process_window_ordinal,
-            qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-            ),
+            qualification_process_window_ordinal=(qualification_process_window_ordinal),
             repair_draw_seed=repair_draw_seed,
             sequence=sequence,
             command_id=command_id,
@@ -2378,9 +2515,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )
@@ -2416,16 +2551,10 @@ class TournamentDrawRevisionStore:
                 TournamentDrawRevisionModel.command_id == command_id,
             )
         )
-        history = self.history(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
+        history = self.history(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if retry is not None:
             revision = next(
-                (
-                    item
-                    for item in history
-                    if item.command_id == command_id
-                ),
+                (item for item in history if item.command_id == command_id),
                 None,
             )
             if revision is None:
@@ -2436,8 +2565,7 @@ class TournamentDrawRevisionStore:
                 retry.event_id != event_id
                 or revision.repair_kind != "draw_frozen_phase"
                 or revision.withdrawn_player_ids != requested
-                or revision.main_process_window_ordinal
-                != main_process_window_ordinal
+                or revision.main_process_window_ordinal != main_process_window_ordinal
                 or revision.qualification_process_window_ordinal
                 != qualification_process_window_ordinal
                 or revision.repair_draw_seed != repair_draw_seed
@@ -2482,17 +2610,13 @@ class TournamentDrawRevisionStore:
             )
 
         field_store = TournamentEntryFieldStore(self.session)
-        rows = field_store._rows(
-            run_id=run_id, branch_id=branch_id, event_id=event_id
-        )
+        rows = field_store._rows(run_id=run_id, branch_id=branch_id, event_id=event_id)
         if not rows:
             raise ValueError(
                 "Draw-Freeze phase repair requires canonical Tournament Entry Field"
             )
         persisted_field, applications = field_store._load_row(rows[-1])
-        previous_field = (
-            history[-1].successor_field if history else persisted_field
-        )
+        previous_field = history[-1].successor_field if history else persisted_field
         cutoff_authorities = self._replacement_cutoff_authorities(
             run_id=run_id,
             branch_id=branch_id,
@@ -2510,9 +2634,7 @@ class TournamentDrawRevisionStore:
                 "Draw-Freeze phase withdrawal contains no new active-field change"
             )
 
-        previous_input = (
-            history[-1].successor_draw_input if history else original_input
-        )
+        previous_input = history[-1].successor_draw_input if history else original_input
         sequence = len(history) + 1
         successor_input = TournamentDrawInputAuthorityBuilder.build(
             authority=ranking,
@@ -2567,9 +2689,7 @@ class TournamentDrawRevisionStore:
             process_authority=process,
             affected_draw_types=affected_draw_types,
             main_process_window_ordinal=main_process_window_ordinal,
-            qualification_process_window_ordinal=(
-                qualification_process_window_ordinal
-            ),
+            qualification_process_window_ordinal=(qualification_process_window_ordinal),
             withdrawn_player_ids=requested,
             sequence=sequence,
             command_id=command_id,
@@ -2585,9 +2705,7 @@ class TournamentDrawRevisionStore:
                 command_id=command_id,
                 request_fingerprint=_fp(request),
                 revision_fingerprint=revision.fingerprint,
-                predecessor_draw_fingerprint=(
-                    revision.predecessor_draw_fingerprint
-                ),
+                predecessor_draw_fingerprint=(revision.predecessor_draw_fingerprint),
                 successor_draw_fingerprint=revision.successor_draw.fingerprint,
                 payload_json=revision.model_dump_json(),
             )

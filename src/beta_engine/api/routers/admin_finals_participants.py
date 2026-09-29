@@ -59,6 +59,8 @@ class FinalsReplacementDecisionRequest(BaseModel):
     expected_effective_state_fingerprint: str
     decision: Literal["decline", "accept"]
     command_id: str
+    main_process_window_ordinal: int | None = None
+    repair_draw_seed: int | None = None
 
 
 def _service(

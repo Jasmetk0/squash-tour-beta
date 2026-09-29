@@ -32,10 +32,13 @@ DrawInputSchemaVersion = Literal[
     "tournament_draw_input_authority.v8",
     "tournament_draw_input_authority.v9",
     "tournament_draw_input_authority.v10",
+    "tournament_draw_input_authority.v11",
 ]
 
 
-def canonical_classic_seed_count(*, bracket_capacity: int, actual_player_count: int) -> int:
+def canonical_classic_seed_count(
+    *, bracket_capacity: int, actual_player_count: int
+) -> int:
     """Master §15.2 seed-count rule for one classic elimination bracket."""
 
     if bracket_capacity < 2 or bracket_capacity & (bracket_capacity - 1):
@@ -68,9 +71,7 @@ def canonical_qualification_seed_count(
         raise ValueError(
             "Qualification capacity must divide evenly across qualifier sections"
         )
-    section_capacity = (
-        capacity.qualification_draw_size // capacity.qualifier_spots
-    )
+    section_capacity = capacity.qualification_draw_size // capacity.qualifier_spots
     if section_capacity < 2 or section_capacity & (section_capacity - 1):
         raise ValueError(
             "Each classic Qualification section must have power-of-two capacity"
@@ -103,6 +104,7 @@ class TournamentDrawInputAuthority(FrozenInput):
     source_kind: Literal[
         "ranking_snapshot",
         "finals_participant_selection",
+        "finals_effective_participant_state",
     ] = Field(
         default="ranking_snapshot",
         exclude_if=lambda value: value == "ranking_snapshot",
@@ -123,6 +125,11 @@ class TournamentDrawInputAuthority(FrozenInput):
         exclude_if=lambda value: value is None,
     )
     finals_race_snapshot_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_effective_participant_state_fingerprint: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
@@ -202,21 +209,32 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Ranking-sourced Draw Input requires frozen ranking authority"
                 )
-            if self.schema_version == "tournament_draw_input_authority.v10":
-                raise ValueError("Finals Draw Input v10 requires Finals source authority")
+            if self.schema_version in {
+                "tournament_draw_input_authority.v10",
+                "tournament_draw_input_authority.v11",
+            }:
+                raise ValueError(
+                    "Finals Draw Input v10/v11 requires Finals source authority"
+                )
             if (
                 self.finals_participant_selection_fingerprint is not None
                 or self.finals_race_snapshot_fingerprint is not None
                 or self.tournament_format_authority_fingerprint is not None
                 or self.finals_target_season_index is not None
+                or self.finals_effective_participant_state_fingerprint is not None
             ):
                 raise ValueError(
                     "Ranking-sourced Draw Input cannot carry Finals source authority"
                 )
         else:
-            if self.schema_version != "tournament_draw_input_authority.v10":
+            expected_schema = (
+                "tournament_draw_input_authority.v11"
+                if self.source_kind == "finals_effective_participant_state"
+                else "tournament_draw_input_authority.v10"
+            )
+            if self.schema_version != expected_schema:
                 raise ValueError(
-                    "Finals-sourced Draw Input requires tournament_draw_input_authority.v10"
+                    "Finals-sourced Draw Input schema does not match its source authority"
                 )
             if (
                 self.tournament_ranking_authority_fingerprint is not None
@@ -233,6 +251,20 @@ class TournamentDrawInputAuthority(FrozenInput):
             ):
                 raise ValueError(
                     "Finals Draw Input requires participant, Race and Format provenance"
+                )
+            if (
+                self.source_kind == "finals_effective_participant_state"
+                and self.finals_effective_participant_state_fingerprint is None
+            ):
+                raise ValueError(
+                    "Effective Finals Draw Input requires effective-state provenance"
+                )
+            if (
+                self.source_kind == "finals_participant_selection"
+                and self.finals_effective_participant_state_fingerprint is not None
+            ):
+                raise ValueError(
+                    "Initial Finals Draw Input cannot carry effective-state provenance"
                 )
             if self.capacity.geometry_kind != "classic_bracket":
                 raise ValueError(
@@ -267,8 +299,12 @@ class TournamentDrawInputAuthority(FrozenInput):
             raise ValueError("Canonical WC field contains duplicate players")
         if len(set(self.lucky_loser_player_ids)) != len(self.lucky_loser_player_ids):
             raise ValueError("Canonical LL field contains duplicate players")
-        ordinary_main = set(self.direct_main_player_ids) | set(self.wild_card_player_ids)
-        if len(ordinary_main) != len(self.direct_main_player_ids) + len(self.wild_card_player_ids):
+        ordinary_main = set(self.direct_main_player_ids) | set(
+            self.wild_card_player_ids
+        )
+        if len(ordinary_main) != len(self.direct_main_player_ids) + len(
+            self.wild_card_player_ids
+        ):
             raise ValueError("Player appears in both Direct Main and WC field")
         if ordinary_main & set(self.qualification_player_ids):
             raise ValueError("Ordinary Main player also remains in Qualification field")
@@ -277,7 +313,9 @@ class TournamentDrawInputAuthority(FrozenInput):
         if not set(self.lucky_loser_player_ids).issubset(
             set(self.qualification_player_ids)
         ):
-            raise ValueError("Lucky Loser player must originate from Qualification field")
+            raise ValueError(
+                "Lucky Loser player must originate from Qualification field"
+            )
         main_players = ordinary_main | set(self.lucky_loser_player_ids)
         active = main_players | set(self.qualification_player_ids)
         if active & set(self.withdrawn_player_ids):
@@ -290,8 +328,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             "tournament_draw_input_authority.v9",
         }:
             if (
-                len(self.main_seed_player_ids)
-                + len(self.main_seed_vacancy_numbers)
+                len(self.main_seed_player_ids) + len(self.main_seed_vacancy_numbers)
                 != self.main_seed_count
             ):
                 raise ValueError(
@@ -327,17 +364,16 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Qualification frozen seed vacancy number is outside seed pool"
                 )
-            if (
-                self.schema_version == "tournament_draw_input_authority.v5"
-                and not (
-                    self.main_seed_vacancy_numbers
-                    or self.qualification_seed_vacancy_numbers
-                )
+            if self.schema_version == "tournament_draw_input_authority.v5" and not (
+                self.main_seed_vacancy_numbers
+                or self.qualification_seed_vacancy_numbers
             ):
                 raise ValueError("Draw Input v5 requires frozen seed-vacancy evidence")
         else:
             if len(self.main_seed_player_ids) != self.main_seed_count:
-                raise ValueError("Main seed payload does not match requested seed count")
+                raise ValueError(
+                    "Main seed payload does not match requested seed count"
+                )
             if len(self.qualification_seed_player_ids) != self.qualification_seed_count:
                 raise ValueError(
                     "Qualification seed payload does not match requested seed count"
@@ -369,23 +405,23 @@ class TournamentDrawInputAuthority(FrozenInput):
             for index in range(1, len(self.lucky_loser_placeholder_ids) + 1)
         )
         if self.lucky_loser_placeholder_ids != expected_ll:
-            raise ValueError(
-                "Lucky Loser placeholders must be chronological LL1..LLn"
-            )
+            raise ValueError("Lucky Loser placeholders must be chronological LL1..LLn")
         if self.schema_version in {
             "tournament_draw_input_authority.v6",
             "tournament_draw_input_authority.v7",
             "tournament_draw_input_authority.v8",
             "tournament_draw_input_authority.v9",
         }:
-            if len(self.lucky_loser_player_ids) > len(
-                self.lucky_loser_placeholder_ids
-            ):
+            if len(self.lucky_loser_player_ids) > len(self.lucky_loser_placeholder_ids):
                 raise ValueError("More Lucky Loser players than LL vacancies")
-            if self.schema_version in {
-                "tournament_draw_input_authority.v6",
-                "tournament_draw_input_authority.v7",
-            } and not self.lucky_loser_placeholder_ids:
+            if (
+                self.schema_version
+                in {
+                    "tournament_draw_input_authority.v6",
+                    "tournament_draw_input_authority.v7",
+                }
+                and not self.lucky_loser_placeholder_ids
+            ):
                 raise ValueError("Lucky Loser Draw Input requires vacancy lineage")
             if (
                 self.schema_version == "tournament_draw_input_authority.v7"
@@ -397,15 +433,10 @@ class TournamentDrawInputAuthority(FrozenInput):
                 and self.lucky_loser_player_ids
             ):
                 raise ValueError("Draw Input v6 cannot carry filled LL players")
-            if (
-                self.lucky_loser_player_ids
-                and not self.lucky_loser_placeholder_ids
-            ):
+            if self.lucky_loser_player_ids and not self.lucky_loser_placeholder_ids:
                 raise ValueError("Filled Lucky Losers require LL vacancy lineage")
         elif self.lucky_loser_placeholder_ids or self.lucky_loser_player_ids:
-            raise ValueError(
-                "Historical Draw Input cannot carry Lucky Loser lineage"
-            )
+            raise ValueError("Historical Draw Input cannot carry Lucky Loser lineage")
 
         if self.schema_version in {
             "tournament_draw_input_authority.v8",
@@ -432,9 +463,10 @@ class TournamentDrawInputAuthority(FrozenInput):
             ):
                 raise ValueError("Draw Input v9 requires released WC-slot lineage")
             if self.schema_version == "tournament_draw_input_authority.v9":
-                if tuple(
-                    sorted(set(self.released_wild_card_slot_ordinals))
-                ) != self.released_wild_card_slot_ordinals:
+                if (
+                    tuple(sorted(set(self.released_wild_card_slot_ordinals)))
+                    != self.released_wild_card_slot_ordinals
+                ):
                     raise ValueError(
                         "Released WC-slot ordinals must be sorted and unique"
                     )
@@ -448,9 +480,7 @@ class TournamentDrawInputAuthority(FrozenInput):
             if len(set(self.released_qualifier_placeholder_ids)) != len(
                 self.released_qualifier_placeholder_ids
             ):
-                raise ValueError(
-                    "Released Q-placeholder identities must be unique"
-                )
+                raise ValueError("Released Q-placeholder identities must be unique")
             if not set(self.released_qualifier_placeholder_ids).issubset(
                 set(self.qualifier_placeholder_ids)
             ):
@@ -532,16 +562,17 @@ class TournamentDrawInputAuthority(FrozenInput):
                 raise ValueError(
                     "Canonical WC Draw Input requires every WC slot to be resolved"
                 )
-            if self.capacity.wild_card_slots and self.wild_card_authority_fingerprint is None:
+            if (
+                self.capacity.wild_card_slots
+                and self.wild_card_authority_fingerprint is None
+            ):
                 raise ValueError("Canonical WC field lacks WC authority fingerprint")
             if self.schema_version in {
                 "tournament_draw_input_authority.v4",
                 "tournament_draw_input_authority.v5",
             }:
                 if not self.post_draw_wild_card_repair_fingerprints:
-                    raise ValueError(
-                        "Post-draw WC Draw Input requires repair evidence"
-                    )
+                    raise ValueError("Post-draw WC Draw Input requires repair evidence")
             elif (
                 self.schema_version == "tournament_draw_input_authority.v3"
                 and self.post_draw_wild_card_repair_fingerprints
@@ -555,14 +586,21 @@ class TournamentDrawInputAuthority(FrozenInput):
             or self.post_draw_wild_card_repair_fingerprints
             or self.released_wild_card_slot_ordinals
         ):
-            raise ValueError("Historical Draw Input cannot carry canonical WC authority")
+            raise ValueError(
+                "Historical Draw Input cannot carry canonical WC authority"
+            )
         return self
 
     @property
     def source_authority_fingerprint(self) -> str:
-        if self.source_kind == "finals_participant_selection":
-            assert self.finals_participant_selection_fingerprint is not None
-            return self.finals_participant_selection_fingerprint
+        if self.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
+            return (
+                self.finals_effective_participant_state_fingerprint
+                or self.finals_participant_selection_fingerprint
+            )  # type: ignore[return-value]
         assert self.tournament_ranking_authority_fingerprint is not None
         return self.tournament_ranking_authority_fingerprint
 
@@ -608,9 +646,7 @@ class TournamentDrawInputAuthorityBuilder:
         q_winner_vacancy = vacated_qualifier_placeholder_id is not None
         if q_winner_vacancy:
             if direct_count or wild_card_count:
-                raise ValueError(
-                    "Q-winner fallback cannot also be Direct Main or WC"
-                )
+                raise ValueError("Q-winner fallback cannot also be Direct Main or WC")
             if withdrawn_player_id not in set(previous.qualification_player_ids):
                 raise ValueError("Q-winner fallback player is outside frozen Q field")
             if vacated_qualifier_placeholder_id not in set(
@@ -649,9 +685,7 @@ class TournamentDrawInputAuthorityBuilder:
         if q_winner_vacancy:
             if vacated_qualifier_placeholder_id in released_qualifier_placeholder_ids:
                 raise ValueError("Q placeholder was already released from active Main")
-            released_qualifier_placeholder_ids.append(
-                vacated_qualifier_placeholder_id
-            )
+            released_qualifier_placeholder_ids.append(vacated_qualifier_placeholder_id)
         if released_wild_card_slot:
             compact_index = wild_cards.index(withdrawn_player_id)
             already_released = set(released_wild_card_slot_ordinals)
@@ -662,9 +696,7 @@ class TournamentDrawInputAuthorityBuilder:
             )
             if len(active_wc_ordinals) != len(wild_cards):
                 raise ValueError("Active WC identities do not map to WC-slot ordinals")
-            released_wild_card_slot_ordinals.append(
-                active_wc_ordinals[compact_index]
-            )
+            released_wild_card_slot_ordinals.append(active_wc_ordinals[compact_index])
             released_wild_card_slot_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
         else:
@@ -692,9 +724,7 @@ class TournamentDrawInputAuthorityBuilder:
             *previous.replacement_source_authority_fingerprints,
             replacement_source_authority_fingerprint,
         )
-        released_wild_card_slot_ordinals = tuple(
-            released_wild_card_slot_ordinals
-        )
+        released_wild_card_slot_ordinals = tuple(released_wild_card_slot_ordinals)
         return TournamentDrawInputAuthority(
             schema_version=(
                 "tournament_draw_input_authority.v9"
@@ -787,9 +817,7 @@ class TournamentDrawInputAuthorityBuilder:
         if promoted_player_id in active_main:
             raise ValueError("Pre-Q promoted player is already active in Main")
 
-        promoted_from_q = promoted_player_id in set(
-            previous.qualification_player_ids
-        )
+        promoted_from_q = promoted_player_id in set(previous.qualification_player_ids)
         if not promoted_from_q and qualification_backfill_player_id is not None:
             raise ValueError(
                 "External pre-Q Main promotion cannot carry Q backfill identity"
@@ -809,9 +837,7 @@ class TournamentDrawInputAuthorityBuilder:
                 if ordinal not in already_released
             )
             if len(active_wc_ordinals) != len(wild_cards):
-                raise ValueError(
-                    "Active WC identities do not map to WC-slot ordinals"
-                )
+                raise ValueError("Active WC identities do not map to WC-slot ordinals")
             released_ordinals.append(active_wc_ordinals[compact_index])
             released_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
@@ -830,25 +856,16 @@ class TournamentDrawInputAuthorityBuilder:
 
         qualification_players = list(previous.qualification_player_ids)
         qualification_seed_players = list(previous.qualification_seed_player_ids)
-        qualification_seed_vacancies = set(
-            previous.qualification_seed_vacancy_numbers
-        )
+        qualification_seed_vacancies = set(previous.qualification_seed_vacancy_numbers)
         if promoted_from_q:
             promoted_was_seeded = (
                 promoted_player_id in previous.qualification_seed_player_ids
             )
-            if promoted_was_seeded != (
-                qualification_vacated_seed_number is not None
-            ):
-                raise ValueError(
-                    "Pre-Q Qualification seed-vacancy evidence mismatch"
-                )
+            if promoted_was_seeded != (qualification_vacated_seed_number is not None):
+                raise ValueError("Pre-Q Qualification seed-vacancy evidence mismatch")
             qualification_players.remove(promoted_player_id)
             if qualification_backfill_player_id is not None:
-                active = (
-                    active_main
-                    | set(previous.qualification_player_ids)
-                )
+                active = active_main | set(previous.qualification_player_ids)
                 if qualification_backfill_player_id in active:
                     raise ValueError(
                         "Pre-Q Qualification backfill player is already active"
@@ -866,13 +883,9 @@ class TournamentDrawInputAuthorityBuilder:
                 qualification_seed_vacancies.clear()
             elif promoted_was_seeded:
                 qualification_seed_players.remove(promoted_player_id)
-                qualification_seed_vacancies.add(
-                    qualification_vacated_seed_number
-                )
+                qualification_seed_vacancies.add(qualification_vacated_seed_number)
         elif qualification_vacated_seed_number is not None:
-            raise ValueError(
-                "External pre-Q Main promotion cannot vacate Q seed"
-            )
+            raise ValueError("External pre-Q Main promotion cannot vacate Q seed")
         elif qualification_full_redraw_reseed:
             raise ValueError(
                 "Q full redraw reseed requires promotion from Qualification"
@@ -952,12 +965,8 @@ class TournamentDrawInputAuthorityBuilder:
             "tournament_draw_input_authority.v9",
         }:
             raise ValueError("Lucky Loser vacancy requires canonical Draw Input")
-        direct_count = previous.direct_main_player_ids.count(
-            withdrawn_player_id
-        )
-        wild_card_count = previous.wild_card_player_ids.count(
-            withdrawn_player_id
-        )
+        direct_count = previous.direct_main_player_ids.count(withdrawn_player_id)
+        wild_card_count = previous.wild_card_player_ids.count(withdrawn_player_id)
         q_winner_vacancy = vacated_qualifier_placeholder_id is not None
         if q_winner_vacancy:
             if direct_count or wild_card_count:
@@ -986,7 +995,9 @@ class TournamentDrawInputAuthorityBuilder:
             )
         expected_placeholder = f"LL{len(previous.lucky_loser_placeholder_ids) + 1}"
         if placeholder_id != expected_placeholder:
-            raise ValueError("Lucky Loser vacancy is not the next chronological LL slot")
+            raise ValueError(
+                "Lucky Loser vacancy is not the next chronological LL slot"
+            )
 
         direct = list(previous.direct_main_player_ids)
         wild_cards = list(previous.wild_card_player_ids)
@@ -1005,9 +1016,7 @@ class TournamentDrawInputAuthorityBuilder:
                 if ordinal not in already_released
             )
             if len(active_wc_ordinals) != len(wild_cards):
-                raise ValueError(
-                    "Active WC identities do not map to WC-slot ordinals"
-                )
+                raise ValueError("Active WC identities do not map to WC-slot ordinals")
             released_ordinals.append(active_wc_ordinals[compact_index])
             released_ordinals.sort()
             wild_cards.remove(withdrawn_player_id)
@@ -1025,7 +1034,9 @@ class TournamentDrawInputAuthorityBuilder:
         withdrawn_was_seeded = withdrawn_player_id in main_seed_players
         if q_winner_vacancy:
             if withdrawn_was_seeded:
-                raise ValueError("Qualification winner cannot own Direct Main seed identity")
+                raise ValueError(
+                    "Qualification winner cannot own Direct Main seed identity"
+                )
         else:
             if withdrawn_was_seeded != (vacated_main_seed_number is not None):
                 raise ValueError("Lucky Loser seed-vacancy evidence mismatch")
@@ -1208,15 +1219,16 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError(
                 "Main frozen seed-vacancy evidence does not match withdrawn WC seed status"
             )
-        active_main = (
-            set(previous.direct_main_player_ids)
-            | set(previous.wild_card_player_ids)
+        active_main = set(previous.direct_main_player_ids) | set(
+            previous.wild_card_player_ids
         )
         replacement_in_q = replacement_player_id in set(
             previous.qualification_player_ids
         )
         if replacement_player_id in active_main:
-            raise ValueError("Post-draw WC replacement player is already active in Main")
+            raise ValueError(
+                "Post-draw WC replacement player is already active in Main"
+            )
         if replacement_in_q:
             if qualification_replacement_player_id != replacement_player_id:
                 raise ValueError(
@@ -1246,9 +1258,7 @@ class TournamentDrawInputAuthorityBuilder:
         main_seed_players = list(previous.main_seed_player_ids)
         qualification_seed_players = list(previous.qualification_seed_player_ids)
         main_seed_vacancies = set(previous.main_seed_vacancy_numbers)
-        qualification_seed_vacancies = set(
-            previous.qualification_seed_vacancy_numbers
-        )
+        qualification_seed_vacancies = set(previous.qualification_seed_vacancy_numbers)
         if withdrawn_was_seeded:
             main_seed_players.remove(withdrawn_player_id)
             main_seed_vacancies.add(main_vacated_seed_number)
@@ -1275,9 +1285,7 @@ class TournamentDrawInputAuthorityBuilder:
                     qualification_seed_vacancies.clear()
                 else:
                     qualification_seed_players.remove(replacement_player_id)
-                    qualification_seed_vacancies.add(
-                        qualification_vacated_seed_number
-                    )
+                    qualification_seed_vacancies.add(qualification_vacated_seed_number)
             elif qualification_full_redraw_reseed:
                 qualification_seed_players = list(
                     qualification_players[: previous.qualification_seed_count]
@@ -1297,13 +1305,12 @@ class TournamentDrawInputAuthorityBuilder:
         withdrawn = tuple(
             sorted(set((*previous.withdrawn_player_ids, withdrawn_player_id)))
         )
-        has_seed_vacancy = bool(
-            main_seed_vacancies or qualification_seed_vacancies
-        )
+        has_seed_vacancy = bool(main_seed_vacancies or qualification_seed_vacancies)
         return TournamentDrawInputAuthority(
             schema_version=(
                 previous.schema_version
-                if previous.schema_version in {
+                if previous.schema_version
+                in {
                     "tournament_draw_input_authority.v6",
                     "tournament_draw_input_authority.v7",
                     "tournament_draw_input_authority.v8",
@@ -1363,6 +1370,7 @@ class TournamentDrawInputAuthorityBuilder:
         format_authority,
         command_id: str,
         draw_seed: int,
+        effective_state=None,
     ) -> TournamentDrawInputAuthority:
         """Adapt frozen Finals Race seeding into the ordinary classic Draw contract."""
 
@@ -1373,7 +1381,9 @@ class TournamentDrawInputAuthorityBuilder:
             selection.branch_id,
             selection.finals_event_id,
         ) != (field.run_id, field.branch_id, field.event_id):
-            raise ValueError("Finals participant selection scope differs from Entry Field")
+            raise ValueError(
+                "Finals participant selection scope differs from Entry Field"
+            )
         if (
             field.finals_participant_selection_fingerprint != selection.fingerprint
             or field.finals_race_snapshot_fingerprint
@@ -1383,7 +1393,18 @@ class TournamentDrawInputAuthorityBuilder:
             raise ValueError(
                 "Finals Entry Field is not bound to supplied participant/Race authority"
             )
-        race_order = tuple(player.player_id for player in selection.participants)
+        participant_source = effective_state or selection
+        if effective_state is not None and (
+            effective_state.initial_selection_fingerprint != selection.fingerprint
+            or effective_state.race_snapshot_fingerprint
+            != selection.race_snapshot_fingerprint
+            or field.finals_effective_participant_state_fingerprint
+            != effective_state.fingerprint
+        ):
+            raise ValueError("Effective Finals Draw Input source binding mismatch")
+        race_order = tuple(
+            player.player_id for player in participant_source.participants
+        )
         if (
             field.seed_order_player_ids != race_order
             or field.direct_main_player_ids != race_order
@@ -1395,16 +1416,16 @@ class TournamentDrawInputAuthorityBuilder:
             format_authority.run_id,
             format_authority.branch_id,
             format_authority.event_id,
-            format_authority.entry_field_fingerprint,
             format_authority.target_season_index,
         ) != (
             field.run_id,
             field.branch_id,
             field.event_id,
-            field.fingerprint,
             selection.target_season_index,
         ):
-            raise ValueError("Finals Tournament Format authority is stale for Entry Field")
+            raise ValueError(
+                "Finals Tournament Format authority is stale for Entry Field"
+            )
         if format_authority.format_kind != "knockout":
             raise ValueError(
                 "Finals classic Draw Input requires pure knockout Tournament Format"
@@ -1418,7 +1439,11 @@ class TournamentDrawInputAuthorityBuilder:
             actual_player_count=len(race_order),
         )
         return TournamentDrawInputAuthority(
-            schema_version="tournament_draw_input_authority.v10",
+            schema_version=(
+                "tournament_draw_input_authority.v11"
+                if effective_state is not None
+                else "tournament_draw_input_authority.v10"
+            ),
             run_id=field.run_id,
             branch_id=field.branch_id,
             event_id=field.event_id,
@@ -1428,16 +1453,25 @@ class TournamentDrawInputAuthorityBuilder:
             qualification_seed_count=0,
             field_sequence=field_sequence,
             capacity=capacity,
-            source_kind="finals_participant_selection",
+            source_kind=(
+                "finals_effective_participant_state"
+                if effective_state is not None
+                else "finals_participant_selection"
+            ),
             finals_participant_selection_fingerprint=selection.fingerprint,
             finals_race_snapshot_fingerprint=selection.race_snapshot_fingerprint,
+            finals_effective_participant_state_fingerprint=(
+                effective_state.fingerprint if effective_state is not None else None
+            ),
             tournament_format_authority_fingerprint=format_authority.fingerprint,
             finals_target_season_index=selection.target_season_index,
             entry_field_fingerprint=field.fingerprint,
             direct_main_player_ids=race_order,
             qualification_player_ids=(),
             qualifier_placeholder_ids=(),
-            withdrawn_player_ids=(),
+            withdrawn_player_ids=(
+                effective_state.withdrawn_player_ids if effective_state is not None else ()
+            ),
             main_seed_player_ids=race_order[:main_seed_count],
             qualification_seed_player_ids=(),
         )
@@ -1489,11 +1523,20 @@ class TournamentDrawInputAuthorityBuilder:
                 field.fingerprint,
                 field_sequence,
             ):
-                raise ValueError("Wild Card authority is stale for committed Entry Field")
-            if len(wild_card_authority.active_wild_card_player_ids) != field.capacity.wild_card_slots:
-                raise ValueError("All reserved Wild Card slots must be resolved before Draw Input")
+                raise ValueError(
+                    "Wild Card authority is stale for committed Entry Field"
+                )
+            if (
+                len(wild_card_authority.active_wild_card_player_ids)
+                != field.capacity.wild_card_slots
+            ):
+                raise ValueError(
+                    "All reserved Wild Card slots must be resolved before Draw Input"
+                )
         elif wild_card_authority is not None:
-            raise ValueError("Wild Card authority supplied for event without WC capacity")
+            raise ValueError(
+                "Wild Card authority supplied for event without WC capacity"
+            )
 
         wc_players = (
             wild_card_authority.active_wild_card_player_ids
@@ -1519,9 +1562,7 @@ class TournamentDrawInputAuthorityBuilder:
                 actual_player_count=len(qualification_players),
             )
             if main_seed_count is not None and main_seed_count != canonical_main:
-                raise ValueError(
-                    "Requested Main seed count differs from Master §15.2"
-                )
+                raise ValueError("Requested Main seed count differs from Master §15.2")
             if (
                 qualification_seed_count is not None
                 and qualification_seed_count != canonical_qualification
@@ -1561,12 +1602,9 @@ class TournamentDrawInputAuthorityBuilder:
             )
         )
         main_seed_player_ids = main_players[:main_seed_count]
-        qualification_seed_player_ids = qualification_players[
-            :qualification_seed_count
-        ]
+        qualification_seed_player_ids = qualification_players[:qualification_seed_count]
         qualifier_placeholder_ids = tuple(
-            f"Q{index}"
-            for index in range(1, field.capacity.qualifier_spots + 1)
+            f"Q{index}" for index in range(1, field.capacity.qualifier_spots + 1)
         )
         return TournamentDrawInputAuthority(
             schema_version=schema_version,

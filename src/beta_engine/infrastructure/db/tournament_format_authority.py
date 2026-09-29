@@ -30,7 +30,9 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     TournamentFormatAuthorityModel,
 )
-from beta_engine.infrastructure.db.tournament_entry_field import TournamentEntryFieldStore
+from beta_engine.infrastructure.db.tournament_entry_field import (
+    TournamentEntryFieldStore,
+)
 from beta_engine.infrastructure.db.tournament_group_rules_policy import (
     TournamentGroupRulesPolicyStore,
 )
@@ -55,7 +57,9 @@ class TournamentFormatAuthorityStore:
         branch = self.session.get(RunBranchModel, branch_id)
         if run is None or branch is None or branch.run_id != run_id:
             raise ValueError("Tournament Format Run/Branch scope does not exist")
-        if writing and (run.read_only or branch.read_only or branch.status == "archived"):
+        if writing and (
+            run.read_only or branch.read_only or branch.status == "archived"
+        ):
             raise ValueError("Tournament Format scope is not writable")
 
     def _target_season_index(
@@ -233,8 +237,19 @@ class TournamentFormatAuthorityStore:
             raise ValueError(
                 "Tournament Format authority references missing Entry Field history"
             )
-        field = history[-1]
         raw = TournamentFormatAuthority.model_validate_json(row.payload_json)
+        field = next(
+            (
+                item
+                for item in history
+                if item.fingerprint == raw.entry_field_fingerprint
+            ),
+            None,
+        )
+        if field is None:
+            raise ValueError(
+                "Tournament Format authority references missing Entry Field version"
+            )
         policy = None
         if raw.group_configuration is not None:
             policy = TournamentGroupRulesPolicyStore(self.session).get_by_fingerprint(
@@ -287,7 +302,9 @@ class TournamentFormatAuthorityStore:
         group_configuration = None
         if format_kind in {"groups", "groups_knockout"}:
             if group_count is None or group_size is None:
-                raise ValueError("Group-based Tournament Format requires group count and size")
+                raise ValueError(
+                    "Group-based Tournament Format requires group count and size"
+                )
             if group_count * group_size != len(field.direct_main_player_ids):
                 raise ValueError(
                     "Group configuration must exactly partition the current participant field into equal groups"
@@ -384,10 +401,7 @@ class TournamentFormatAuthorityStore:
             )
         )
         if retry is not None:
-            if (
-                retry.event_id != event_id
-                or retry.request_fingerprint != request_fp
-            ):
+            if retry.event_id != event_id or retry.request_fingerprint != request_fp:
                 raise TournamentFormatAuthorityConflict(
                     "Tournament Format command ID already has a different request"
                 )

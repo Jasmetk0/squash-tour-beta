@@ -32,9 +32,9 @@ def schedule() -> TournamentGroupMatchScheduleAuthority:
         source_key="tie-resolution-test",
     )
     pairs = (
-        ("A-B", 1, "A", "B"),
-        ("A-C", 2, "A", "C"),
-        ("B-C", 3, "B", "C"),
+        ("A-B", 1, 1, 2, "A", "B"),
+        ("A-C", 2, 1, 3, "A", "C"),
+        ("B-C", 3, 2, 3, "B", "C"),
     )
     return TournamentGroupMatchScheduleAuthority(
         run_id="run",
@@ -54,13 +54,13 @@ def schedule() -> TournamentGroupMatchScheduleAuthority:
                 topology_match_index=index,
                 match_day_ordinal=index,
                 match_order=1,
-                top_slot_index=1,
-                bottom_slot_index=2,
+                top_slot_index=top_slot,
+                bottom_slot_index=bottom_slot,
                 top_player_id=top,
                 bottom_player_id=bottom,
                 effective_match_format=fmt,
             )
-            for match_id, index, top, bottom in pairs
+            for match_id, index, top_slot, bottom_slot, top, bottom in pairs
         ),
     )
 

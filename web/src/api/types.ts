@@ -5048,16 +5048,6 @@ export type SimulateSeasonWeekPreflightResult = {
   validation_errors: string[]
 }
 
-export type SeasonCalendarBuildPayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  season_start_calendar_year: number
-  season_start_year_week: number
-  include_inactive_templates: boolean
-  max_events?: number | null
-}
-
 export type SeasonCalendarBuildResponse = {
   calendar: SeasonCalendar | null
   summary: SeasonCalendarBuildSummary

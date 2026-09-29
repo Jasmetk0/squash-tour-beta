@@ -432,9 +432,29 @@ The frontend API surface now matches that ownership boundary as well.
 This prevents a future current UI from accidentally reintroducing the retired sidecar
 histories simply by importing an old convenience client.
 
-**Next after this PR:** audit the remaining current frontend/API compatibility surface
-around tournament preparation and remove the next dead legacy entrypoint without
-touching historical server readers.
+The next frontend/API compatibility audit retired the manual per-event legacy mutation
+pipeline from the current Admin Seasons surface.
+
+- persisted legacy EntryList, DrawPackage, MatchPackage, Result and Point Award artifacts
+  remain readable for old saves, replay and diagnostics;
+- their current panels are explicitly labeled `LEGACY / READ-ONLY`;
+- the web client no longer exports the low-level legacy POST helpers for generating Entry,
+  Draw and Match packages, simulating/progressing legacy matches, extracting legacy
+  Results, or generating/applying legacy Point Awards;
+- mutation-only web DTOs were removed with those helpers;
+- the Admin Seasons component no longer keeps preview/mutation state for those artifacts:
+  the inspection panels are projections of persisted GET evidence only;
+- historical backend endpoints are unchanged, and the higher-level explicitly legacy
+  season diagnostic/orchestration tools remain separate from canonical Run/Branch
+  tournament preparation;
+- current canonical tournament preparation continues through Planned Event / authoritative
+  Simulation and cannot be recreated by clicking the old stage-by-stage web controls.
+
+This closes the next dead compatibility entrypoint without deleting historical evidence.
+
+**Next after this PR:** audit the remaining high-level legacy Admin Seasons mutation
+entrypoints (especially one-event orchestration) against their actual historical use, and
+retire only current-product shortcuts that duplicate canonical Run/Branch execution.
 
 
 ## Active implementation — canonical result/ranking source fence

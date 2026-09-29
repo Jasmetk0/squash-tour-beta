@@ -304,6 +304,82 @@ def _walkover_authorities():
 
 
 @pytest.mark.pr_critical
+def test_pre_match_replaced_player_gets_no_result_points_or_prize_money():
+    week = RankingWeek(season_index=0, week=1)
+    draw_input = TournamentDrawInputAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        committed_by_command_id="replacement-input",
+        draw_seed=987,
+        main_seed_count=1,
+        qualification_seed_count=0,
+        field_sequence=2,
+        capacity=TournamentEntryFieldCapacity(main_draw_size=4),
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint="3" * 64,
+        direct_main_player_ids=("A", "B", "C", "R"),
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=("D",),
+        main_seed_player_ids=("A",),
+        qualification_seed_player_ids=(),
+    )
+    draw = TournamentDrawAuthorityBuilder.build(
+        draw_input=draw_input,
+        command_id="replacement-draw",
+    )
+    event = _event().model_copy(
+        update={
+            "prize_money_table": {
+                "champion": 1000,
+                "finalist": 500,
+                "semifinal": 250,
+            }
+        }
+    )
+    package = build_run_owned_match_package(
+        draw=draw,
+        event=event,
+        week=week,
+    )
+    package = _complete(draw, package)
+    result = build_tournament_result_authority(
+        run_id="run",
+        branch_id="branch",
+        week=week,
+        draw=draw,
+        package=package,
+    )
+    points = build_tournament_point_award_authority(
+        result=result,
+        point_authority=FrozenPointAwardAuthority(
+            ranking_status="ranked",
+            point_distribution={
+                "champion": 100,
+                "finalist": 60,
+                "semifinal": 30,
+                "main_draw_participant": 0,
+            },
+            point_distribution_source="calendar_event.ranking_points_table",
+        ),
+        seed=988,
+    )
+    prize = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
+    )
+
+    assert "D" not in {player.player_id for player in result.players}
+    assert "D" not in {award.player_id for award in points.awards}
+    assert "D" not in {award.player_id for award in prize.awards}
+    assert "R" in {player.player_id for player in result.players}
+    assert "R" in {award.player_id for award in points.awards}
+    assert "R" in {award.player_id for award in prize.awards}
+
+
+@pytest.mark.pr_critical
 def test_withdrawn_q_winner_and_lucky_loser_survive_canonical_points_and_ranking(database):
     result = TournamentResultAuthority(
         run_id="run",

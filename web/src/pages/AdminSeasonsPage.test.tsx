@@ -687,12 +687,12 @@ describe('AdminSeasonsPage', () => {
     expect(screen.queryByRole('button', { name: 'Persist entries' })).not.toBeInTheDocument()
   })
 
-  it('shows read-only and mutating badges on workflow warnings', async () => {
+  it('shows read-only legacy workflow warnings', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
     expect(await screen.findAllByText('READ-ONLY')).not.toHaveLength(0)
     expect(screen.getByText(/Range preflight is global legacy season tooling/)).toBeInTheDocument()
-    expect(screen.getAllByText('MUTATING').length).toBeGreaterThan(0)
+    expect(screen.queryByText('MUTATING')).not.toBeInTheDocument()
     expect(screen.getAllByText(/No rollback is implemented/).length).toBeGreaterThan(0)
   })
 

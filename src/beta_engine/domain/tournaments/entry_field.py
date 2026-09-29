@@ -21,7 +21,11 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 EntryWindow = Literal["main", "qualification"]
 FieldResolutionMode = Literal["initial", "pre_draw_repair"]
 EntryFieldGeometry = Literal["classic_bracket", "fixed_participant_field"]
-EntryFieldSourceKind = Literal["ranking_applications", "finals_participant_selection"]
+EntryFieldSourceKind = Literal[
+    "ranking_applications",
+    "finals_participant_selection",
+    "finals_effective_participant_state",
+]
 
 
 class TournamentEntryApplication(FrozenInput):
@@ -136,6 +140,7 @@ class TournamentEntryField(FrozenInput):
     schema_version: Literal[
         "tournament_entry_field.v1",
         "tournament_entry_field.v2",
+        "tournament_entry_field.v3",
     ] = "tournament_entry_field.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -153,6 +158,11 @@ class TournamentEntryField(FrozenInput):
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     finals_participant_selection_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    finals_effective_participant_state_fingerprint: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
@@ -214,6 +224,7 @@ class TournamentEntryField(FrozenInput):
                 )
             if (
                 self.finals_participant_selection_fingerprint is not None
+                or self.finals_effective_participant_state_fingerprint is not None
                 or self.finals_race_snapshot_fingerprint is not None
                 or self.finals_target_season_index is not None
                 or self.seed_order_player_ids
@@ -222,10 +233,6 @@ class TournamentEntryField(FrozenInput):
                     "Ranking/Application Entry Field cannot carry Finals selection authority"
                 )
         else:
-            if self.schema_version != "tournament_entry_field.v2":
-                raise ValueError(
-                    "Finals participant Entry Field requires tournament_entry_field.v2"
-                )
             if (
                 self.tournament_ranking_authority_fingerprint is not None
                 or self.ranking_snapshot_fingerprint is not None
@@ -245,17 +252,35 @@ class TournamentEntryField(FrozenInput):
                 raise ValueError(
                     "Finals participant Entry Field requires fixed participant geometry"
                 )
-            if self.mode != "initial":
+            if self.source_kind == "finals_participant_selection":
+                if self.schema_version != "tournament_entry_field.v2":
+                    raise ValueError(
+                        "Initial Finals participant Entry Field requires tournament_entry_field.v2"
+                    )
+                if self.finals_effective_participant_state_fingerprint is not None:
+                    raise ValueError(
+                        "Initial Finals participant Entry Field cannot carry effective-state authority"
+                    )
+                if self.mode != "initial":
+                    raise ValueError(
+                        "Initial Finals participant Entry Field cannot be a repair version"
+                    )
+                if self.withdrawn_player_ids:
+                    raise ValueError(
+                        "Initial Finals participant Entry Field contains no withdrawn players"
+                    )
+            else:
+                if self.schema_version != "tournament_entry_field.v3":
+                    raise ValueError(
+                        "Effective Finals participant Entry Field requires tournament_entry_field.v3"
+                    )
+                if self.finals_effective_participant_state_fingerprint is None:
+                    raise ValueError(
+                        "Effective Finals Entry Field requires effective participant-state authority"
+                    )
+            if self.qualification_player_ids or self.below_qualification_cut_player_ids:
                 raise ValueError(
-                    "Finals participant Entry Field repairs use the separate replacement authority"
-                )
-            if (
-                self.qualification_player_ids
-                or self.below_qualification_cut_player_ids
-                or self.withdrawn_player_ids
-            ):
-                raise ValueError(
-                    "Initial Finals participant Entry Field contains only selected participants"
+                    "Finals participant Entry Field contains only confirmed participants"
                 )
             if self.seed_order_player_ids != self.direct_main_player_ids:
                 raise ValueError(
@@ -276,6 +301,9 @@ class TournamentEntryField(FrozenInput):
         if self.source_kind == "ranking_applications":
             assert self.tournament_ranking_authority_fingerprint is not None
             return self.tournament_ranking_authority_fingerprint
+        if self.source_kind == "finals_effective_participant_state":
+            assert self.finals_effective_participant_state_fingerprint is not None
+            return self.finals_effective_participant_state_fingerprint
         assert self.finals_participant_selection_fingerprint is not None
         return self.finals_participant_selection_fingerprint
 
@@ -412,6 +440,68 @@ class TournamentEntryFieldResolver:
             seed_order_player_ids=player_ids,
             applications_fingerprint=_fingerprint([]),
             direct_main_player_ids=player_ids,
+        )
+
+    @classmethod
+    def build_from_finals_effective_participant_state(
+        cls,
+        *,
+        state,
+        previous: TournamentEntryField | None = None,
+    ) -> TournamentEntryField:
+        """Materialize one accepted Finals replacement state into shared Entry authority."""
+
+        player_ids = tuple(player.player_id for player in state.participants)
+        if len(player_ids) != state.participant_capacity:
+            raise ValueError(
+                "Effective Finals participant state does not preserve configured capacity"
+            )
+        if tuple(player.seed for player in state.participants) != tuple(
+            range(1, len(state.participants) + 1)
+        ):
+            raise ValueError("Effective Finals participant seed order is not canonical")
+        if previous is not None:
+            if previous.source_kind not in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }:
+                raise ValueError(
+                    "Effective Finals Entry Field predecessor is not Finals authority"
+                )
+            if (previous.run_id, previous.branch_id, previous.event_id) != (
+                state.run_id,
+                state.branch_id,
+                state.finals_event_id,
+            ):
+                raise ValueError(
+                    "Effective Finals Entry Field predecessor scope mismatch"
+                )
+            if previous.finals_target_season_index != state.target_season_index:
+                raise ValueError(
+                    "Effective Finals Entry Field predecessor season mismatch"
+                )
+        return TournamentEntryField(
+            schema_version="tournament_entry_field.v3",
+            run_id=state.run_id,
+            branch_id=state.branch_id,
+            event_id=state.finals_event_id,
+            mode="initial" if previous is None else "pre_draw_repair",
+            capacity=TournamentEntryFieldCapacity(
+                geometry_kind="fixed_participant_field",
+                main_draw_size=state.participant_capacity,
+            ),
+            source_kind="finals_effective_participant_state",
+            finals_participant_selection_fingerprint=(
+                state.initial_selection_fingerprint
+            ),
+            finals_effective_participant_state_fingerprint=state.fingerprint,
+            finals_race_snapshot_fingerprint=state.race_snapshot_fingerprint,
+            finals_target_season_index=state.target_season_index,
+            seed_order_player_ids=player_ids,
+            applications_fingerprint=_fingerprint([]),
+            direct_main_player_ids=player_ids,
+            withdrawn_player_ids=state.withdrawn_player_ids,
+            base_field_fingerprint=previous.fingerprint if previous is not None else None,
         )
 
     @classmethod

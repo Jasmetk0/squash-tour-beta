@@ -167,6 +167,24 @@ class TournamentPointAwardAuthority(FrozenInput):
                     raise ValueError(
                         "Hybrid Point Award requires an explicit group phase component"
                     )
+                knockout_components = tuple(
+                    component
+                    for component in award.phase_components
+                    if component.component_id == "knockout_finish"
+                )
+                if award.reached_stage == "group_stage":
+                    if knockout_components:
+                        raise ValueError(
+                            "Group-only hybrid award cannot carry knockout finish points"
+                        )
+                elif (
+                    len(knockout_components) != 1
+                    or knockout_components[0].distribution_key
+                    != f"knockout:{award.reached_stage}"
+                ):
+                    raise ValueError(
+                        "Hybrid knockout award stage differs from reached stage"
+                    )
                 expected_points = 0
                 for component in award.phase_components:
                     configured = distribution.get(component.distribution_key)

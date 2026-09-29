@@ -484,15 +484,31 @@ The season-level follow-up retires direct browser bootstrap of the legacy global
 - the backend historical bootstrap service/endpoint remains available outside the current
   browser client.
 
-The direct Season Calendar Builder is intentionally retained in this slice because
-`SeasonCalendarService` is still a source-authoring/compatibility dependency for Calendar
-Package and Season Builder workflows. Removing it requires a separate source-authoring
-migration, not a UI cleanup guess.
+The Calendar source-authoring audit then removes the weaker direct Calendar Builder
+shortcut from Admin Seasons while preserving the actual source-authoring chain.
 
-**Next after this PR:** audit the remaining global season/calendar authoring mutations by
-their source-authoring role. Retire only those current-web shortcuts whose canonical source
-has already moved elsewhere; keep Calendar authoring until its Package source path is
-explicitly replaced.
+- Admin Seasons no longer exposes direct Preview/Persist/Overwrite Calendar controls;
+- the browser client no longer exports the direct `buildSeasonCalendar` POST helper and
+  its mutation-only `SeasonCalendarBuildPayload`;
+- `SeasonCalendarBuildResponse` stays because persisted source Calendar inspection is
+  still a read model;
+- the Admin Seasons Calendar panels now project only persisted source Calendar evidence and
+  explicitly label it as source/read-only on that page;
+- authoring is handed off to the dedicated Season Builder, whose reviewed preflight,
+  dry-run identity and guarded create-only command write the same source Calendar service;
+- `CalendarPackageRunAdapter` is unchanged and still packages the persisted source
+  Calendar into immutable Run-owned Calendar authority;
+- the backend direct Calendar build endpoint remains historical/compatibility support in
+  this slice; only its current-browser shortcut is retired.
+
+This removes the unguarded overwrite-capable UI path without pretending the persisted
+source Calendar registry itself is obsolete. Product Runs continue to consume the applied
+Calendar Package, not the mutable source registry.
+
+**Next after this PR:** audit source-calendar ranking/category editing surfaces against
+Season Builder/Calendar Package ownership. Keep source-authoring controls that are still
+required to author Package content; retire only duplicate shortcuts that bypass the reviewed
+authoring workflow.
 
 
 ## Active implementation — canonical result/ranking source fence

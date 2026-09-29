@@ -9189,3 +9189,9 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
             adopted_payload["tournaments"][0]["group_match_schedule_fingerprint"]
             == group_schedule.fingerprint
         )
+        assert (
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == []
+        )

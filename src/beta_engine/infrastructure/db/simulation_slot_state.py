@@ -22,6 +22,8 @@ from beta_engine.infrastructure.db.models import (
     TournamentGroupRulesPolicyModel,
     TournamentGroupMatchScheduleAuthorityModel,
     TournamentGroupStandingsAuthorityModel,
+    TournamentGroupTieResolutionAuthorityModel,
+    TournamentHybridKnockoutEntrantsAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -724,6 +726,7 @@ def _validate_week_tournament_lock_rows_shape(rows):
 
 def _validate_group_standings_rows_shape(
     standings_rows,
+    tie_resolution_rows,
     group_match_schedules,
     result_groups,
 ):
@@ -735,6 +738,9 @@ def _validate_group_standings_rows_shape(
     from beta_engine.domain.tournaments.group_standings_authority import (
         TournamentGroupStandingsAuthority,
         TournamentGroupStandingsBuilder,
+    )
+    from beta_engine.domain.tournaments.group_tie_resolution_authority import (
+        TournamentGroupTieResolutionAuthority,
     )
     from beta_engine.infrastructure.db.authoritative_group_state import (
         load_authoritative_group,
@@ -749,6 +755,39 @@ def _validate_group_standings_rows_shape(
     groups_by_match = {}
     for group_row in result_groups:
         groups_by_match.setdefault(group_row.match_id, []).append(group_row)
+
+    resolutions_by_event = {}
+    for row in tie_resolution_rows:
+        authority = TournamentGroupTieResolutionAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.resolved_by_command_id,
+            authority.case.fingerprint,
+            authority.group_match_schedule_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.case_fingerprint,
+            row.group_match_schedule_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Group Tie Resolution row is corrupt")
+        schedule = schedules_by_event.get(row.event_id)
+        if (
+            schedule is None
+            or schedule.fingerprint != authority.group_match_schedule_fingerprint
+        ):
+            raise ValueError(
+                "Saved Tournament Group Tie Resolution lacks current Match Schedule"
+            )
+        resolutions_by_event.setdefault(row.event_id, []).append(authority.decision)
 
     for row in standings_rows:
         authority = TournamentGroupStandingsAuthority.model_validate_json(
@@ -812,14 +851,94 @@ def _validate_group_standings_rows_shape(
                 )
             )
 
+        resolutions = (
+            ()
+            if authority.schema_version == "tournament_group_standings_authority.v1"
+            else tuple(resolutions_by_event.get(row.event_id, ()))
+        )
         rebuilt = TournamentGroupStandingsBuilder.build(
             schedule=schedule,
             receipts=tuple(receipts),
             command_id=row.command_id,
+            admin_tie_resolutions=resolutions,
+            schema_version=authority.schema_version,
         )
         if rebuilt != authority:
             raise ValueError(
                 "Saved Tournament Group Standings does not replay from result receipts"
+            )
+
+
+def _validate_hybrid_knockout_entrants_rows_shape(
+    hybrid_rows,
+    topology_rows,
+    standings_rows,
+):
+    from beta_engine.domain.tournaments.group_standings_authority import (
+        TournamentGroupStandingsAuthority,
+    )
+    from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
+        TournamentHybridKnockoutEntrantsAuthority,
+        TournamentHybridKnockoutEntrantsBuilder,
+    )
+    from beta_engine.domain.tournaments.topology_authority import (
+        TournamentTopologyAuthority,
+    )
+
+    topologies = {
+        row.event_id: TournamentTopologyAuthority.model_validate_json(row.payload_json)
+        for row in topology_rows
+    }
+    standings = {
+        row.event_id: TournamentGroupStandingsAuthority.model_validate_json(
+            row.payload_json
+        )
+        for row in standings_rows
+    }
+    for row in hybrid_rows:
+        authority = TournamentHybridKnockoutEntrantsAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.topology_authority_fingerprint,
+            authority.group_standings_authority_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.topology_authority_fingerprint,
+            row.group_standings_authority_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Hybrid Knockout Entrants row is corrupt")
+        topology = topologies.get(row.event_id)
+        standing = standings.get(row.event_id)
+        if topology is None or standing is None:
+            raise ValueError(
+                "Saved Hybrid Knockout Entrants lacks Topology/Standings dependency"
+            )
+        if (
+            topology.fingerprint != authority.topology_authority_fingerprint
+            or standing.fingerprint
+            != authority.group_standings_authority_fingerprint
+        ):
+            raise ValueError(
+                "Saved Hybrid Knockout Entrants dependency fingerprint is stale"
+            )
+        rebuilt = TournamentHybridKnockoutEntrantsBuilder.build(
+            topology=topology,
+            standings=standing,
+            command_id=row.command_id,
+        )
+        if rebuilt != authority:
+            raise ValueError(
+                "Saved Hybrid Knockout Entrants does not replay from dependencies"
             )
 
 

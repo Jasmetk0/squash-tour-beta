@@ -28,6 +28,9 @@ from beta_engine.infrastructure.db.finals_participant_selection import (
 from beta_engine.infrastructure.db.finals_race_authority import (
     WorldTourFinalsRaceAuthorityStore,
 )
+from beta_engine.infrastructure.db.finals_race_replacement import (
+    WorldTourFinalsReplacementStore,
+)
 from beta_engine.infrastructure.db.models import (
     Base,
     RunBranchModel,
@@ -41,6 +44,8 @@ from beta_engine.infrastructure.db.models import (
     WorldTourFinalsRaceSnapshotModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
     WorldTourFinalsParticipantSelectionSnapshotModel,
+    WorldTourFinalsEffectiveParticipantStateModel,
+    WorldTourFinalsReplacementAuthorityModel,
 )
 from beta_engine.infrastructure.db.simulation_slot_state import (
     capture_saved_simulation_slots,
@@ -469,6 +474,228 @@ def test_accepted_finals_race_replacement_updates_entry_field_and_knockout_draw(
             for slot in draw.main.slots
             if slot.seed_number is not None
         } == {1: "p1", 2: "p2"}
+
+
+@pytest.mark.pr_critical
+def test_saved_revision_roundtrip_preserves_finals_replacement_draw_chain(database):
+    selected = install_selection(database, capacity=6, race_population=9)
+
+    with database.begin() as session:
+        TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+
+    service = WorldTourFinalsReplacementService(database)
+    preview = service.preview(
+        FinalsReplacementPreviewCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            withdrawn_player_id="p3",
+            withdrawal_reason="injury",
+            vacancy_id="vacancy-p3-save",
+            command_id="preview-p3-save",
+        )
+    )
+    initial = service.inspect(
+        run_id="run", branch_id="branch", target_season_index=0
+    )
+    assert initial is not None
+    declined = service.decide(
+        FinalsReplacementDecisionCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            vacancy_id="vacancy-p3-save",
+            expected_preview_fingerprint=preview.fingerprint,
+            expected_effective_state_fingerprint=initial.fingerprint,
+            decision="decline",
+            command_id="decline-p7-save",
+        )
+    )
+    service.decide(
+        FinalsReplacementDecisionCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            vacancy_id="vacancy-p3-save",
+            expected_preview_fingerprint=declined.fingerprint,
+            expected_effective_state_fingerprint=initial.fingerprint,
+            decision="accept",
+            command_id="accept-p8-save",
+        )
+    )
+    effective = service.inspect(
+        run_id="run", branch_id="branch", target_season_index=0
+    )
+    assert effective is not None
+
+    with database.begin() as session:
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-save",
+            format_kind="knockout",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-save",
+            draw_seed=789,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-save",
+        )
+        field_history = TournamentEntryFieldStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        )
+        replacement_history = WorldTourFinalsReplacementStore(
+            session
+        ).authority_history(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            finals_event_id="FINALS",
+            vacancy_id="vacancy-p3-save",
+        )
+
+        target_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        session.execute(
+            delete(TournamentDrawAuthorityModel).where(
+                TournamentDrawAuthorityModel.run_id == "run",
+                TournamentDrawAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentDrawInputAuthorityModel).where(
+                TournamentDrawInputAuthorityModel.run_id == "run",
+                TournamentDrawInputAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentFormatAuthorityModel).where(
+                TournamentFormatAuthorityModel.run_id == "run",
+                TournamentFormatAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(TournamentEntryFieldVersionModel).where(
+                TournamentEntryFieldVersionModel.run_id == "run",
+                TournamentEntryFieldVersionModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsReplacementAuthorityModel).where(
+                WorldTourFinalsReplacementAuthorityModel.run_id == "run",
+                WorldTourFinalsReplacementAuthorityModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsEffectiveParticipantStateModel).where(
+                WorldTourFinalsEffectiveParticipantStateModel.run_id == "run",
+                WorldTourFinalsEffectiveParticipantStateModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsParticipantSelectionSnapshotModel).where(
+                WorldTourFinalsParticipantSelectionSnapshotModel.run_id == "run",
+                WorldTourFinalsParticipantSelectionSnapshotModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsParticipantSelectionConfigurationModel).where(
+                WorldTourFinalsParticipantSelectionConfigurationModel.run_id == "run",
+                WorldTourFinalsParticipantSelectionConfigurationModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsRaceSnapshotModel).where(
+                WorldTourFinalsRaceSnapshotModel.run_id == "run",
+                WorldTourFinalsRaceSnapshotModel.branch_id == "branch",
+            )
+        )
+        session.execute(
+            delete(WorldTourFinalsRaceConfigurationModel).where(
+                WorldTourFinalsRaceConfigurationModel.run_id == "run",
+                WorldTourFinalsRaceConfigurationModel.branch_id == "branch",
+            )
+        )
+        session.flush()
+
+        current_payload = {"content": {}}
+        capture_saved_simulation_slots(
+            session,
+            current_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+        restore_saved_simulation_slots(
+            session,
+            current_payload=current_payload,
+            target_payload=target_payload,
+            run_id="run",
+            branch_id="branch",
+        )
+
+        restored_store = WorldTourFinalsReplacementStore(session)
+        assert restored_store.latest_state(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+        ) == effective
+        assert restored_store.authority_history(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            finals_event_id="FINALS",
+            vacancy_id="vacancy-p3-save",
+        ) == replacement_history
+        assert TournamentEntryFieldStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == field_history
+        assert TournamentFormatAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == format_authority
+        assert TournamentDrawInputAuthorityStore(session).get(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw_input
+        assert TournamentDrawAuthorityStore(session).get_initial(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        ) == draw
+        assert (
+            TournamentDrawInputAuthorityStore(session)
+            .get(run_id="run", branch_id="branch", event_id="FINALS")
+            .finals_participant_selection_fingerprint
+            == selected.fingerprint
+        )
 
 
 @pytest.mark.pr_critical

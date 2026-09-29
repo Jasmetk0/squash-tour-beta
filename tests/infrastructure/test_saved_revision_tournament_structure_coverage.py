@@ -9,6 +9,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentGroupTieResolutionAuthorityModel,
     TournamentHybridKnockoutEntrantsAuthorityModel,
     TournamentHybridKnockoutBracketAuthorityModel,
+    TournamentHybridRankingPolicyAuthorityModel,
     TournamentGroupRulesPolicyModel,
     TournamentTopologyAuthorityModel,
     WorldTourFinalsParticipantSelectionConfigurationModel,
@@ -46,4 +47,5 @@ def test_simulation_slot_restore_preflight_covers_all_tournament_structure_autho
         TournamentGroupStandingsAuthorityModel,
         TournamentHybridKnockoutEntrantsAuthorityModel,
         TournamentHybridKnockoutBracketAuthorityModel,
+        TournamentHybridRankingPolicyAuthorityModel,
     } <= covered

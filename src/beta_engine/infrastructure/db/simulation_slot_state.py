@@ -722,6 +722,107 @@ def _validate_week_tournament_lock_rows_shape(rows):
             raise ValueError("Saved Week Tournament Lock authority row is corrupt")
 
 
+def _validate_group_standings_rows_shape(
+    standings_rows,
+    group_match_schedules,
+    result_groups,
+):
+    """Validate frozen group tables against their exact saved result receipts."""
+
+    from beta_engine.domain.tournaments.group_match_schedule_authority import (
+        TournamentGroupMatchScheduleAuthority,
+    )
+    from beta_engine.domain.tournaments.group_standings_authority import (
+        TournamentGroupStandingsAuthority,
+        TournamentGroupStandingsBuilder,
+    )
+    from beta_engine.infrastructure.db.authoritative_group_state import (
+        load_authoritative_group,
+    )
+
+    schedules_by_event = {
+        row.event_id: TournamentGroupMatchScheduleAuthority.model_validate_json(
+            row.payload_json
+        )
+        for row in group_match_schedules
+    }
+    groups_by_match = {}
+    for group_row in result_groups:
+        groups_by_match.setdefault(group_row.match_id, []).append(group_row)
+
+    for row in standings_rows:
+        authority = TournamentGroupStandingsAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.group_match_schedule_fingerprint,
+            authority.group_rules_policy_fingerprint,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.group_match_schedule_fingerprint,
+            row.group_rules_policy_fingerprint,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Tournament Group Standings row is corrupt")
+
+        schedule = schedules_by_event.get(row.event_id)
+        if schedule is None:
+            raise ValueError(
+                "Saved Tournament Group Standings lacks Match Schedule dependency"
+            )
+        if (
+            schedule.fingerprint != authority.group_match_schedule_fingerprint
+            or schedule.group_rules_policy_fingerprint
+            != authority.group_rules_policy_fingerprint
+        ):
+            raise ValueError(
+                "Saved Tournament Group Standings dependency fingerprint is stale"
+            )
+
+        receipts = []
+        for scheduled in schedule.matches:
+            candidates = groups_by_match.get(scheduled.match_id, [])
+            decoded_matches = []
+            for group_row in candidates:
+                decoded = load_authoritative_group(group_row)
+                if (
+                    decoded.authoritative_input.run_id == row.run_id
+                    and decoded.authoritative_input.branch_id == row.branch_id
+                    and decoded.authoritative_input.event_id == row.event_id
+                ):
+                    decoded_matches.append(decoded)
+            if len(decoded_matches) != 1:
+                raise ValueError(
+                    "Saved Tournament Group Standings result receipt is missing or ambiguous"
+                )
+            decoded = decoded_matches[0]
+            receipts.append(
+                TournamentGroupStandingsBuilder.receipt_from_result(
+                    scheduled_match=scheduled,
+                    result=decoded.result,
+                    result_fingerprint=decoded.result_fingerprint,
+                )
+            )
+
+        rebuilt = TournamentGroupStandingsBuilder.build(
+            schedule=schedule,
+            receipts=tuple(receipts),
+            command_id=row.command_id,
+        )
+        if rebuilt != authority:
+            raise ValueError(
+                "Saved Tournament Group Standings does not replay from result receipts"
+            )
+
+
 def _validate_finals_authority_rows_shape(
     race_configurations,
     race_snapshots,
@@ -1223,6 +1324,11 @@ def _component(
         topology_authorities,
         group_match_schedules,
         entry_fields,
+    )
+    _validate_group_standings_rows_shape(
+        group_standings,
+        group_match_schedules,
+        groups,
     )
     _validate_finals_authority_rows_shape(
         finals_race_configurations,

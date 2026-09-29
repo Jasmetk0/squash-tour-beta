@@ -254,14 +254,6 @@ import type {
   SeasonCalendarBuildResponse,
   SeasonCalendarEvent,
   SeasonBootstrapResponse,
-  EntryListGeneratePayload,
-  DrawGeneratePayload,
-  MatchGeneratePayload,
-  MatchSimulatePayload,
-  ProgressionCommandPayload,
-  ProgressionCommandResult,
-  SimulateDrawPayload,
-  SimulateRoundPayload,
   TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
@@ -269,16 +261,12 @@ import type {
   MatchReplayResponse,
   SeasonEventResultPackageResult,
   EventPointAwardPackageResult,
-  PointAwardGeneratePayload,
-  PointAwardApplyPayload,
-  PointAwardApplyResult,
   PlayerPointBreakdownQueryParams,
   PlayerPointBreakdownResponse,
   RankingTableQueryParams,
   RankingTableResponse,
   WeeklyRankingSnapshotGeneratePayload,
   WeeklyRankingSnapshotResult,
-  EventResultExtractPayload,
   SeasonEventEntryListResult,
   SeasonLifecycleResponse,
   SimulateOneEventRequest,
@@ -621,33 +609,18 @@ export function getEventEntryList(eventId: string): Promise<SeasonEventEntryList
   return request(`/admin/entries/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventEntryList(eventId: string, payload: EntryListGeneratePayload): Promise<SeasonEventEntryListResult> {
-  return request(`/admin/entries/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventDrawPackage(eventId: string): Promise<SeasonEventDrawPackageResult> {
   return request(`/admin/draws/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventDrawPackage(eventId: string, payload: DrawGeneratePayload): Promise<SeasonEventDrawPackageResult> {
-  return request(`/admin/draws/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventMatchPackage(eventId: string): Promise<SeasonEventMatchPackageResult> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventMatchPackage(eventId: string, payload: MatchGeneratePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateNextEventMatch(eventId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-next`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventMatch(eventId: string, matchId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate/${encodeURIComponent(matchId)}`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventMatchReplay(eventId: string, matchId: string): Promise<MatchReplayResponse> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}/replay/${encodeURIComponent(matchId)}`)
@@ -662,45 +635,21 @@ export function getEventProgressionStatus(eventId: string): Promise<TournamentPr
   return request(`/admin/matches/${encodeURIComponent(eventId)}/progression`)
 }
 
-export function processEventByes(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/process-byes`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function refreshEventProgression(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/refresh-progression`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function promoteEventQualifiers(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/promote-qualifiers`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventRound(eventId: string, payload: SimulateRoundPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-round`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventDraw(eventId: string, payload: SimulateDrawPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-draw`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventResultPackage(eventId: string): Promise<SeasonEventResultPackageResult> {
   return request(`/admin/results/${encodeURIComponent(eventId)}`)
 }
 
-export function extractEventResultPackage(eventId: string, payload: EventResultExtractPayload): Promise<SeasonEventResultPackageResult> {
-  return request(`/admin/results/${encodeURIComponent(eventId)}/extract`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventPointAwards(eventId: string): Promise<EventPointAwardPackageResult> {
   return request(`/admin/points/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventPointAwards(eventId: string, payload: PointAwardGeneratePayload): Promise<EventPointAwardPackageResult> {
-  return request(`/admin/points/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function applyEventPointAwards(eventId: string, payload: PointAwardApplyPayload): Promise<PointAwardApplyResult> {
-  return request(`/admin/points/${encodeURIComponent(eventId)}/apply`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {
   return request('/admin/players/initial-pool/generate', { method: 'POST', body: JSON.stringify(payload) })

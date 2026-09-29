@@ -9028,6 +9028,12 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         TournamentGroupMatchScheduleAuthority,
         TournamentGroupScheduledMatch,
     )
+    from beta_engine.infrastructure.db import (
+        tournament_group_standings_authority as standings_module,
+    )
+    from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+        TournamentGroupStandingsAuthorityStore,
+    )
 
     driver, factory, week = _driver_fixture(tmp_path / "group-slot-execution")
 
@@ -9112,6 +9118,11 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
         "TournamentGroupMatchScheduleAuthorityStore",
         FakeGroupScheduleStore,
     )
+    monkeypatch.setattr(
+        standings_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeGroupScheduleStore,
+    )
 
     proposal = driver.propose_topological_schedule(
         run_id="run", branch_id="branch"
@@ -9160,6 +9171,26 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
     assert final.week_ready_for_transition is False
     assert "group_standings_authority_required" in final.transition_blockers
     assert "pending_authoritative_groups" not in final.transition_blockers
+
+    with factory.begin() as session:
+        standings = TournamentGroupStandingsAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id=event_id,
+            command_id="freeze-group-standings",
+        )
+        assert len(standings.groups) == 1
+        assert len(standings.groups[0].rows) == 4
+        assert tuple(row.position for row in standings.groups[0].rows) == (1, 2, 3, 4)
+        assert len(standings.source_results) == 6
+        assert all(receipt.best_of == 3 for receipt in standings.source_results)
+
+    post_standings = driver.position(run_id="run", branch_id="branch")
+    assert "group_standings_authority_required" not in post_standings.transition_blockers
+    assert (
+        "group_post_standings_progression_required"
+        in post_standings.transition_blockers
+    )
 
     with factory() as session:
         rows = session.scalars(

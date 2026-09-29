@@ -2372,6 +2372,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or hybrid_knockout_entrants
         or hybrid_knockout_brackets
         or hybrid_ranking_policies
+        or pure_groups_ranking_policies
         or wild_card_authorities
         or draw_inputs
         or draw_authorities

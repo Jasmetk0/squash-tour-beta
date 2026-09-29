@@ -44,11 +44,13 @@ def policy(*, group_win: int = 10, stages=None):
         played_group_win_points=group_win,
         knockout_stage_points=tuple(
             sorted(
-                stages
-                or {
-                    "champion": 100,
-                    "finalist": 60,
-                }.items()
+                (
+                    stages
+                    or {
+                        "champion": 100,
+                        "finalist": 60,
+                    }
+                ).items()
             )
         ),
     )

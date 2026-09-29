@@ -348,6 +348,33 @@ class TournamentGroupStandingsAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentHybridKnockoutEntrantsAuthorityModel(Base):
+    """Immutable first-round hybrid knockout entrants from final group positions."""
+
+    __tablename__ = "tournament_hybrid_knockout_entrants_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_knockout_entrants_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    topology_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    group_standings_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

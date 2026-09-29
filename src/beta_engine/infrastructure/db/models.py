@@ -1430,6 +1430,85 @@ class WorldTourFinalsParticipantSelectionSnapshotModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class WorldTourFinalsEffectiveParticipantStateModel(Base):
+    """Append-only effective Finals field lineage."""
+
+    __tablename__ = "world_tour_finals_effective_participant_states"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "sequence",
+            name="uq_finals_effective_state_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "command_id",
+            name="uq_finals_effective_state_scope_command",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    state_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True
+    )
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class WorldTourFinalsReplacementAuthorityModel(Base):
+    """Append-only preview/decision history for Finals Race vacancies."""
+
+    __tablename__ = "world_tour_finals_replacement_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "sequence",
+            name="uq_finals_replacement_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "command_id",
+            name="uq_finals_replacement_scope_command",
+        ),
+    )
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    target_season_index: Mapped[int] = mapped_column(Integer, nullable=False)
+    finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    vacancy_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    sequence: Mapped[int] = mapped_column(Integer, nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True
+    )
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class FinalsQualificationModel(Base):
     __tablename__ = "finals_qualification"
     __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),)

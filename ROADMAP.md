@@ -159,12 +159,18 @@
     carry policy through Saved Revision, and fail historical fork remaps closed. Missing numeric
     award tables, the OPEN group RET policy and unresolved group-W/O ranking reward semantics are
     never inferred.
-44. Next: add the remaining bounded group-format closure adapters. Support pure-groups closure only
-    where authoritative configuration already determines a unique tournament outcome, and define a
-    dedicated group-stage prize-money finishing-stage configuration before configured hybrid payout
-    tables can close players eliminated in groups. Keep general cross-group comparison/outcome rules,
-    OPEN group RET scoring and the pure-knockout Finals Draw adapter separate until their own
-    product/authority prerequisites are satisfied.
+44. ✅ Add the bounded remaining group-format closure adapters: close pure `groups` only
+    for a single authoritative group, freeze Result v3 plus an explicit played-group-win-only
+    ranking policy/Point Award v5, add `group_position_N` finishing stages to the existing
+    prize-money table for both pure and hybrid group finishers, carry the new policy through Saved
+    Revision and fail historical fork remaps closed. Multi-group unique-winner selection,
+    cross-group comparison, OPEN group RET scoring, group-W/O ranking reward semantics and
+    unranked pure-group completion remain explicit blockers rather than inferred defaults.
+45. Next: implement the World Tour Finals pure-knockout Draw adapter behind the existing
+    `knockout_draw_adapter_required` preparation state: consume the frozen Race-seeded Finals
+    participant/Entry Field authority, create canonical Draw Input/Draw without synthesizing
+    Official Ranking/application evidence, preserve Race seed order, and reuse the ordinary
+    knockout topology/execution/closure pipeline. Keep unresolved group-format policies separate.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

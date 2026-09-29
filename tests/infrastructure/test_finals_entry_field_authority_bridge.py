@@ -57,6 +57,12 @@ from beta_engine.infrastructure.db.tournament_draw_authority import (
 from beta_engine.infrastructure.db.tournament_draw_input_authority import (
     TournamentDrawInputAuthorityStore,
 )
+from beta_engine.infrastructure.db.tournament_draw_process_authority import (
+    TournamentDrawProcessAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_draw_revision import (
+    TournamentDrawRevisionStore,
+)
 from beta_engine.infrastructure.db.tournament_format_authority import (
     TournamentFormatAuthorityStore,
 )
@@ -160,6 +166,93 @@ def install_selection(factory, *, capacity: int = 6, race_population: int | None
         participant_store.put_configuration(config)
         participant_store.put_snapshot(snapshot)
     return snapshot
+
+def install_finals_knockout_draw(factory):
+    selected = install_selection(factory, capacity=6, race_population=9)
+    with factory.begin() as session:
+        field = TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+        TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout",
+            format_kind="knockout",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-draw-input",
+            draw_seed=123,
+        )
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-draw",
+        )
+        process = TournamentDrawProcessAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-draw-process",
+            main_process_window_count=5,
+        )
+    return selected, field, draw_input, draw, process
+
+
+def preview_and_accept_post_draw_replacement(
+    factory,
+    *,
+    withdrawn_player_id: str,
+    main_process_window_ordinal: int,
+    repair_draw_seed: int | None,
+    command_suffix: str,
+):
+    service = WorldTourFinalsReplacementService(factory)
+    preview = service.preview(
+        FinalsReplacementPreviewCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            withdrawn_player_id=withdrawn_player_id,
+            withdrawal_reason="injury",
+            vacancy_id=f"vacancy-{command_suffix}",
+            expected_effective_state_fingerprint=None,
+            command_id=f"preview-{command_suffix}",
+        )
+    )
+    effective = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        target_season_index=0,
+    )
+    assert effective is not None
+    accepted = service.decide(
+        FinalsReplacementDecisionCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            vacancy_id=f"vacancy-{command_suffix}",
+            expected_preview_fingerprint=preview.fingerprint,
+            expected_effective_state_fingerprint=effective.fingerprint,
+            decision="accept",
+            main_process_window_ordinal=main_process_window_ordinal,
+            repair_draw_seed=repair_draw_seed,
+            command_id=f"accept-{command_suffix}",
+        )
+    )
+    assert accepted.status == "accepted"
+    return accepted
+
 
 @pytest.mark.pr_critical
 def test_store_materializes_and_replays_finals_selection_as_shared_entry_field(database):
@@ -696,6 +789,103 @@ def test_saved_revision_roundtrip_preserves_finals_replacement_draw_chain(databa
             .finals_participant_selection_fingerprint
             == selected.fingerprint
         )
+
+
+@pytest.mark.pr_critical
+def test_finals_post_draw_full_redraw_uses_effective_race_field(database):
+    _, _, original_input, original_draw, _ = install_finals_knockout_draw(database)
+
+    preview_and_accept_post_draw_replacement(
+        database,
+        withdrawn_player_id="p3",
+        main_process_window_ordinal=1,
+        repair_draw_seed=987654,
+        command_suffix="full-redraw",
+    )
+
+    with database.begin() as session:
+        revision = TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        )[-1]
+        assert revision.repair_kind == "full_redraw"
+        assert revision.predecessor_draw_fingerprint == original_draw.fingerprint
+        assert revision.successor_draw_input.source_kind == (
+            "finals_effective_participant_state"
+        )
+        assert revision.successor_draw_input.fingerprint != original_input.fingerprint
+        assert "p3" not in revision.successor_draw_input.direct_main_player_ids
+        assert "p7" in revision.successor_draw_input.direct_main_player_ids
+        assert revision.successor_draw.draw_input_fingerprint == (
+            revision.successor_draw_input.fingerprint
+        )
+        assert revision.replacement_cutoff_authorities[0].status == "replacement_open"
+
+
+@pytest.mark.pr_critical
+def test_finals_post_draw_seed_cascade_uses_canonical_phase(database):
+    install_finals_knockout_draw(database)
+
+    preview_and_accept_post_draw_replacement(
+        database,
+        withdrawn_player_id="p1",
+        main_process_window_ordinal=4,
+        repair_draw_seed=None,
+        command_suffix="seed-cascade",
+    )
+
+    with database.begin() as session:
+        revision = TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        )[-1]
+        assert revision.repair_kind == "seed_cascade_phase"
+        assert revision.main_repair_action is not None
+        assert "p1" not in revision.successor_draw_input.direct_main_player_ids
+        assert "p7" in revision.successor_draw_input.direct_main_player_ids
+        assert revision.repair_draw_seed is None
+        assert revision.replacement_cutoff_authorities[0].status == "replacement_open"
+
+
+@pytest.mark.pr_critical
+def test_finals_post_draw_freeze_fills_exact_slot_without_seed_inheritance(database):
+    _, _, _, original_draw, _ = install_finals_knockout_draw(database)
+    original_slot = next(
+        slot for slot in original_draw.main.slots if slot.player_id == "p1"
+    )
+    assert original_slot.seed_number == 1
+
+    preview_and_accept_post_draw_replacement(
+        database,
+        withdrawn_player_id="p1",
+        main_process_window_ordinal=5,
+        repair_draw_seed=None,
+        command_suffix="draw-freeze",
+    )
+
+    with database.begin() as session:
+        revision = TournamentDrawRevisionStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        )[-1]
+        assert revision.repair_kind == "draw_frozen_phase"
+        replacement_slot = next(
+            slot
+            for slot in revision.successor_draw.main.slots
+            if slot.player_id == "p7"
+        )
+        assert replacement_slot.slot_index == original_slot.slot_index
+        assert replacement_slot.idealized_slot_number == (
+            original_slot.idealized_slot_number
+        )
+        assert replacement_slot.seed_number is None
+        assert replacement_slot.is_seed_protected is False
+        assert replacement_slot.entry_status is None
+        assert revision.repair_draw_seed is None
+        assert revision.replacement_cutoff_authorities[0].status == "replacement_open"
 
 
 @pytest.mark.pr_critical

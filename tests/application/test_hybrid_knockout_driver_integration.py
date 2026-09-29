@@ -1,6 +1,6 @@
 """Focused driver integration for post-group hybrid knockout execution."""
 
-from types import MethodType, SimpleNamespace
+from types import SimpleNamespace
 
 import pytest
 
@@ -58,7 +58,9 @@ def frozen_bracket():
 
 
 @pytest.mark.pr_critical
-def test_driver_execution_schedule_appends_frozen_hybrid_bracket_without_rewriting_base():
+def test_driver_execution_schedule_appends_frozen_hybrid_bracket_without_rewriting_base(
+    monkeypatch,
+):
     driver = object.__new__(AuthoritativeRunSimulationDriver)
     week = RankingWeek(season_index=0, week=8)
     base = WeekSimulationSchedule(
@@ -80,17 +82,22 @@ def test_driver_execution_schedule_appends_frozen_hybrid_bracket_without_rewriti
     )
     bracket = frozen_bracket()
 
-    driver._hybrid_knockout_brackets_for_week = MethodType(
-        lambda self, session, **kwargs: ((SimpleNamespace(event_id="event"), bracket),),
-        driver,
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_hybrid_knockout_brackets_for_week",
+        lambda self, session, **kwargs: (
+            (SimpleNamespace(event_id="event"), bracket),
+        ),
     )
-    driver._entry_slot_ordinals = MethodType(
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_entry_slot_ordinals",
         lambda self, session, run_id, branch_id, week: (),
-        driver,
     )
-    driver._wc_slot_ordinals = MethodType(
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_wc_slot_ordinals",
         lambda self, session, run_id, branch_id, week: (),
-        driver,
     )
 
     effective = driver._execution_schedule(
@@ -136,11 +143,12 @@ def test_driver_hybrid_match_context_uses_bracket_source_and_shared_match_format
     slot = object()
     stored_plan = SimpleNamespace(match_events=(event,))
 
-    driver._position = MethodType(
+    monkeypatch.setattr(
+        AuthoritativeRunSimulationDriver,
+        "_position",
         lambda self, session, run_id, branch_id: SimpleNamespace(
             current_slot_id="slot-2"
         ),
-        driver,
     )
     monkeypatch.setattr(
         driver_module.AuthoritativeSlotMatchExecutor,

@@ -375,6 +375,31 @@ class TournamentHybridKnockoutEntrantsAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class TournamentHybridKnockoutBracketAuthorityModel(Base):
+    """Immutable complete elimination tree materialized from hybrid entrants."""
+
+    __tablename__ = "tournament_hybrid_knockout_bracket_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "command_id",
+            name="uq_tournament_hybrid_knockout_bracket_command",
+        ),
+    )
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    entrants_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    terminal_match_id: Mapped[str] = mapped_column(String(256), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class TournamentDrawInputAuthorityModel(Base):
     """Immutable Run/Branch/Event commitment of canonical pre-draw inputs."""
 

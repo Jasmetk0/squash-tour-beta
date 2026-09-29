@@ -1,45 +1,50 @@
 # Current implementation and next action
 
-## Active implementation — audited group tie resolution and hybrid entrants
+## Active implementation — executable hybrid knockout bracket
 
-Canonical group flow now continues from final group-match receipts through explicit unresolved
-tie handling and, for `groups_knockout`, into one immutable first-round entrant authority.
+Canonical group flow now continues from final group-match receipts through audited standings/tie
+resolution and, for `groups_knockout`, into one immutable executable elimination tree.
 
-- automatic standings still use only the decided Master v68 criteria: wins, group points,
-  played H2H for a two-player tie, then exact all-group game and point ratios;
-- when those criteria still cannot produce a unique order, the engine exposes an immutable
-  `TournamentGroupStandingsTieCase` bound to the exact group, players, reason and source
-  match-result fingerprints; no player-ID, Race, Ranking or random fallback is permitted;
-- Admin may resolve only that exact current case and must provide the complete order of the
-  affected players plus an audit reason. `TournamentGroupTieResolutionAuthority` is immutable,
-  request-fingerprinted and exact-retry safe even after the decision advances the pipeline;
-- stale case fingerprints, changed ordering under the same command ID, unrelated decisions and
-  attempts to reorder already-frozen final standings fail closed;
-- `TournamentGroupStandingsAuthority.v2` freezes any actually-used Admin resolution provenance
-  while historical v1 tables remain replayable;
-- `TournamentHybridKnockoutEntrantsAuthority` resolves the already-configured
-  `hybrid_first_round_crossings` strictly from final group positions. It never reseeds from
-  Official Ranking, Tournament Ranking Snapshot or Finals Race;
-- authoritative Position distinguishes the real boundaries:
-  `group_standings_admin_resolution_required`,
-  `group_standings_authority_required`,
+- automatic standings and explicit Admin tie resolution keep the Master v68 rules already frozen
+  by the previous slice; no player-ID, Race, Ranking or random fallback is introduced;
+- `TournamentHybridKnockoutEntrantsAuthority` still resolves the configured first-round
+  crossings strictly from final group positions;
+- new `TournamentHybridKnockoutBracketAuthority` materializes the complete elimination tree:
+  round one preserves those entrants/crossings byte-for-byte, while every later round is only
+  the adjacent winner feed of the already-frozen prior round. Ranking/Race reseeding is absent;
+- the bracket projects into the existing `SimulationMatchEventPlan` contract and an append-only
+  derived execution schedule after the immutable persisted Week Simulation Schedule. Historical
+  base slots are never rewritten; each knockout round receives a later Match Day;
+- knockout matches execute through the same authoritative Simulation Slot / Match Engine path as
+  other competitive matches. The driver revalidates participant sources against the frozen
+  bracket and does not leak the group BO3/BO5 Match Schedule snapshot into knockout matches;
+- Next Match, Next Slot, Match Day, Next Round and Next Tournament consume the same derived
+  execution chronology. Next Week fails closed if asked to freeze across a still-unresolved
+  group-to-post-group topology boundary, preventing a later bracket from changing a frozen parent
+  operation;
+- authoritative Position now distinguishes
   `hybrid_knockout_entrants_authority_required`,
-  `hybrid_knockout_execution_required`, and `groups_only_closure_required`;
-- Save/Restore carries and replays Match Schedule → tie resolutions → final standings → hybrid
-  entrants as one dependency chain. Central restore coverage includes both new row families;
-- historical Branch fork remap remains deliberately fail-closed for the complete group
-  authority chain until dedicated identity remapping exists;
-- group RET table scoring remains OPEN in Master and is still not inferred from W/O rules;
+  `hybrid_knockout_bracket_authority_required`,
+  `hybrid_knockout_closure_required`, and `groups_only_closure_required`;
+- Admin exposes immutable inspect/generate endpoints for the bracket authority;
+- Saved Revision capture/restore carries and replays Match Schedule → tie resolutions → final
+  standings → hybrid entrants → hybrid bracket. Central restore coverage includes the new row
+  family; historical Branch fork remap remains deliberately fail-closed until dedicated identity
+  remapping exists;
+- group RET table scoring, pure-groups closure, cross-group comparison rules and phase-specific
+  Official Ranking award/closure aggregation remain separate explicit boundaries;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice establishes **auditable final group order plus immutable groups+knockout entrants**.
-It does not yet materialize or execute the hybrid knockout bracket, close a pure-groups
-Tournament Edition, decide cross-group comparison rules, or decide the OPEN RET table policy.
+This slice establishes **a frozen, no-reseed hybrid knockout bracket that actually executes through
+canonical Simulation Slots and the Match Engine**. It deliberately stops after the knockout
+sporting result at an explicit closure boundary rather than inventing ranking-award composition or
+pure-groups tournament closure.
 
-**Next after this PR:** materialize the configured hybrid first knockout round from the frozen
-entrant authority and execute it through the existing canonical Simulation Slot / Match Engine
-path, preserving the predefined crossings and never reseeding from Race or Ranking. Pure-groups
-closure and the pure-knockout Finals Draw adapter remain separate explicit follow-on boundaries.
+**Next after this PR:** implement canonical hybrid Tournament Edition closure/ranking-source
+aggregation from the already-decided explicit phase award configuration: group-stage awards plus
+knockout finishing award must become one tournament ranking result without double counting. Missing
+required numeric/configuration inputs must fail closed rather than inventing defaults. Pure-groups
+closure and the OPEN group RET policy remain separate dependencies.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

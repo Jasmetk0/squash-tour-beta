@@ -32,6 +32,10 @@ from beta_engine.application.authoritative_slot_matches import (
 from beta_engine.application.canonical_tournament_topology import (
     project_canonical_draw_to_match_topology,
 )
+from beta_engine.application.hybrid_knockout_execution import (
+    extend_week_schedule_with_hybrid_knockout,
+    project_hybrid_knockout_bracket_to_plans,
+)
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
     FinalSeasonTransitionCommand,
@@ -169,6 +173,9 @@ from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority imp
 )
 from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
     TournamentHybridKnockoutEntrantsAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
+    TournamentHybridKnockoutBracketAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityStore,
@@ -4250,12 +4257,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4319,12 +4326,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError("Match Day schedule changed during orchestration")
             branch = session.get(RunBranchModel, command.branch_id)
@@ -4490,12 +4497,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4559,12 +4566,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError("Round schedule changed during orchestration")
             branch = session.get(RunBranchModel, command.branch_id)
@@ -4724,12 +4731,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4797,12 +4804,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError(
                     "Tournament schedule changed during orchestration"
@@ -5030,12 +5037,12 @@ class AuthoritativeRunSimulationDriver:
                     str(slot_ordinal)
                 )
                 if stored_child is None:
-                    schedule = self._schedule(
+                    schedule = self._execution_schedule(
                         session,
-                        command.run_id,
-                        command.branch_id,
-                        command.expected_week,
-                    )
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=command.expected_week,
+                        )
                     if (
                         schedule is None
                         or schedule.fingerprint
@@ -9128,7 +9135,12 @@ class AuthoritativeRunSimulationDriver:
         if position.current_slot_kind != "match" or position.slot_ordinal is None:
             raise ValueError("Next Match Day requires a current competitive match slot")
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Match Day requires an adopted Week Simulation Schedule v2"
@@ -9215,7 +9227,12 @@ class AuthoritativeRunSimulationDriver:
         if position.current_slot_kind != "match" or position.slot_ordinal is None:
             raise ValueError("Next Round requires a current competitive match slot")
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Round requires an adopted Week Simulation Schedule v2"
@@ -9342,7 +9359,12 @@ class AuthoritativeRunSimulationDriver:
                 "Next Tournament requires a current competitive match slot"
             )
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Tournament requires an adopted Week Simulation Schedule v2"
@@ -9481,8 +9503,11 @@ class AuthoritativeRunSimulationDriver:
         if draft.base_revision_id != branch.saved_head_revision_id:
             raise ValueError("Next Week Working Draft base is not the Saved head")
 
-        schedule = self._schedule(
-            session, request.run_id, request.branch_id, week
+        schedule = self._execution_schedule(
+            session,
+            run_id=request.run_id,
+            branch_id=request.branch_id,
+            week=week,
         )
         targets = ()
         if position.current_slot_kind == "match":
@@ -9531,6 +9556,43 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "Next Week requires Week Simulation Schedule v2 when one exists"
             )
+
+        if "pending_authoritative_groups" in position.transition_blockers:
+            topology_store = TournamentTopologyAuthorityStore(session)
+            bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+            unresolved_post_group_topology = []
+            for event, _ in self._group_match_schedules_for_week(
+                session,
+                run_id=request.run_id,
+                branch_id=request.branch_id,
+                week=week,
+            ):
+                topology = topology_store.get(
+                    run_id=request.run_id,
+                    branch_id=request.branch_id,
+                    event_id=event.event_id,
+                )
+                if topology is None:
+                    unresolved_post_group_topology.append(event.event_id)
+                elif topology.format_kind == "groups":
+                    unresolved_post_group_topology.append(event.event_id)
+                elif (
+                    topology.format_kind == "groups_knockout"
+                    and bracket_store.get(
+                        run_id=request.run_id,
+                        branch_id=request.branch_id,
+                        event_id=event.event_id,
+                    )
+                    is None
+                ):
+                    unresolved_post_group_topology.append(event.event_id)
+            if unresolved_post_group_topology:
+                raise ValueError(
+                    "Next Week cannot freeze across an unresolved group post-phase "
+                    "topology boundary; finish the group phase and freeze its required "
+                    "post-group authority first: "
+                    + ", ".join(sorted(unresolved_post_group_topology))
+                )
 
         allowed_in_progress = {
             "pending_authoritative_groups",
@@ -9785,7 +9847,14 @@ class AuthoritativeRunSimulationDriver:
                 week=week,
                 packages=packages,
             )
-            schedule = self._schedule(session, run_id, branch_id, week)
+            base_schedule = self._schedule(session, run_id, branch_id, week)
+            schedule = self._execution_schedule(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                base_schedule=base_schedule,
+            )
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
             )
@@ -9835,8 +9904,16 @@ class AuthoritativeRunSimulationDriver:
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
                 "event_ids": list(event_ids),
                 "group_ids": list(plans),
-                "schedule": schedule.canonical_payload() if schedule else None,
-                "schedule_fingerprint": schedule.fingerprint if schedule else None,
+                "schedule": base_schedule.canonical_payload() if base_schedule else None,
+                "schedule_fingerprint": (
+                    base_schedule.fingerprint if base_schedule else None
+                ),
+                "effective_execution_schedule": (
+                    schedule.canonical_payload() if schedule else None
+                ),
+                "effective_execution_schedule_fingerprint": (
+                    schedule.fingerprint if schedule else None
+                ),
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
                 "canonical_preparation": (
                     preparation.model_dump(mode="json")
@@ -10748,6 +10825,94 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
+    def _hybrid_knockout_brackets_for_week(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ):
+        """Resolve already-materialized hybrid brackets in the current Calendar week."""
+
+        bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+        values = []
+        for event, _ in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            authority = bracket_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            )
+            if authority is not None:
+                values.append((event, authority))
+        return tuple(sorted(values, key=lambda item: item[0].event_id))
+
+    def _hybrid_knockout_plans(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> dict[str, SimulationMatchEventPlan]:
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        for _, authority in self._hybrid_knockout_brackets_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for plan in project_hybrid_knockout_bracket_to_plans(authority):
+                if plan.group_id in plans:
+                    raise ValueError(
+                        "hybrid knockout contains duplicate week match identity"
+                    )
+                plans[plan.group_id] = plan
+        return plans
+
+    def _execution_schedule(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        base_schedule: WeekSimulationSchedule | None = None,
+    ) -> WeekSimulationSchedule | None:
+        """Return the immutable base Week Schedule plus derived post-group knockout slots."""
+
+        base = (
+            base_schedule
+            if base_schedule is not None
+            else self._schedule(session, run_id, branch_id, week)
+        )
+        if base is None:
+            return None
+        brackets = tuple(
+            authority
+            for _, authority in self._hybrid_knockout_brackets_for_week(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+        )
+        return extend_week_schedule_with_hybrid_knockout(
+            base_schedule=base,
+            brackets=brackets,
+            reserved_nonmatch_ordinals=tuple(
+                sorted(
+                    set(self._entry_slot_ordinals(session, run_id, branch_id, week))
+                    | set(self._wc_slot_ordinals(session, run_id, branch_id, week))
+                )
+            ),
+        )
+
     def _topology_for_session(
         self, session, run_id, branch_id, packages, *, week
     ):
@@ -10797,6 +10962,20 @@ class AuthoritativeRunSimulationDriver:
                 + ", ".join(sorted(overlap))
             )
         plans.update(group_plans)
+
+        hybrid_plans = self._hybrid_knockout_plans(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        overlap = set(plans) & set(hybrid_plans)
+        if overlap:
+            raise ValueError(
+                "week hybrid knockout topology shares match identity: "
+                + ", ".join(sorted(overlap))
+            )
+        plans.update(hybrid_plans)
         return plans
 
     def _validate_schedule(self, session, schedule, packages):
@@ -11062,28 +11241,44 @@ class AuthoritativeRunSimulationDriver:
         )
         topology_store = TournamentTopologyAuthorityStore(session)
         hybrid_entrants_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
-        group_post_standings_entries = tuple(
-            (
-                event,
-                standings,
-                topology_store.get(
+        hybrid_bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+        group_post_standings_entries = []
+        for event, standings in group_standings_entries:
+            topology = topology_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            )
+            entrants = (
+                hybrid_entrants_store.get(
                     run_id=run_id,
                     branch_id=branch_id,
                     event_id=event.event_id,
-                ),
-                (
-                    hybrid_entrants_store.get(
-                        run_id=run_id,
-                        branch_id=branch_id,
-                        event_id=event.event_id,
-                    )
-                    if standings is not None
-                    else None
-                ),
+                )
+                if standings is not None
+                else None
             )
-            for event, standings in group_standings_entries
+            bracket = (
+                hybrid_bracket_store.get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event.event_id,
+                )
+                if entrants is not None
+                else None
+            )
+            group_post_standings_entries.append(
+                (event, standings, topology, entrants, bracket)
+            )
+        group_post_standings_entries = tuple(group_post_standings_entries)
+        base_schedule = self._schedule(session, run_id, branch_id, week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+            base_schedule=base_schedule,
         )
-        schedule = self._schedule(session, run_id, branch_id, week)
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
         )
@@ -11132,7 +11327,7 @@ class AuthoritativeRunSimulationDriver:
             if ordinal not in resolved_entry_ordinals
         )
         if (
-            schedule is None
+            base_schedule is None
             and (packages or group_schedule_entries)
             and not entry_slot_ordinals
             and (
@@ -11287,7 +11482,7 @@ class AuthoritativeRunSimulationDriver:
             if (
                 not packages
                 and not group_schedule_entries
-                and schedule is None
+                and base_schedule is None
                 and not slots
                 and not groups
                 and not entry_slot_ordinals
@@ -11302,7 +11497,7 @@ class AuthoritativeRunSimulationDriver:
             blockers.append("week_tournament_lock_missing")
         elif current_lock_conflicts and week_tournament_lock is not None:
             blockers.append("week_tournament_lock_conflict_after_lock")
-        if explicit_empty_context is None and schedule is None and (
+        if explicit_empty_context is None and base_schedule is None and (
             bool(group_schedule_entries)
             or bool(entry_slot_ordinals)
             or bool(wc_slot_ordinals)
@@ -11344,17 +11539,24 @@ class AuthoritativeRunSimulationDriver:
                 standings is not None
                 for _, standings in group_standings_entries
             ):
-                for event, standings, topology, entrants in group_post_standings_entries:
+                for (
+                    event,
+                    standings,
+                    topology,
+                    entrants,
+                    bracket,
+                ) in group_post_standings_entries:
                     if topology is None:
                         if "tournament_topology_missing" not in blockers:
                             blockers.append("tournament_topology_missing")
                         continue
                     if topology.format_kind == "groups_knockout":
-                        blocker = (
-                            "hybrid_knockout_entrants_authority_required"
-                            if entrants is None
-                            else "hybrid_knockout_execution_required"
-                        )
+                        if entrants is None:
+                            blocker = "hybrid_knockout_entrants_authority_required"
+                        elif bracket is None:
+                            blocker = "hybrid_knockout_bracket_authority_required"
+                        else:
+                            blocker = "hybrid_knockout_closure_required"
                     else:
                         blocker = "groups_only_closure_required"
                     if blocker not in blockers:
@@ -11452,8 +11654,10 @@ class AuthoritativeRunSimulationDriver:
                     event.event_id,
                     topology.format_kind if topology is not None else None,
                     entrants.fingerprint if entrants is not None else None,
+                    bracket.fingerprint if bracket is not None else None,
                 )
-                for event, _, topology, entrants in group_post_standings_entries
+                for event, _, topology, entrants, bracket
+                in group_post_standings_entries
             ],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
@@ -11591,8 +11795,11 @@ class AuthoritativeRunSimulationDriver:
             ).all()
         ):
             return
-        schedule = self._schedule(
-            session, command.run_id, command.branch_id, command.expected_week
+        schedule = self._execution_schedule(
+            session,
+            run_id=command.run_id,
+            branch_id=command.branch_id,
+            week=command.expected_week,
         )
         plans = self._topology_for_session(
             session,
@@ -11680,27 +11887,41 @@ class AuthoritativeRunSimulationDriver:
             None,
         )
         group_match = None
+        hybrid_match = None
         if package is None:
             group_schedule = TournamentGroupMatchScheduleAuthorityStore(session).get(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
                 event_id=event.event_id,
             )
-            if group_schedule is None:
-                raise ValueError(
-                    "planned match has neither MatchPackage nor Group Match Schedule source"
+            if group_schedule is not None:
+                group_match = next(
+                    (
+                        match
+                        for match in group_schedule.matches
+                        if match.match_id == event.match_id
+                    ),
+                    None,
                 )
-            group_match = next(
-                (
-                    match
-                    for match in group_schedule.matches
-                    if match.match_id == event.match_id
-                ),
-                None,
-            )
             if group_match is None:
+                bracket = TournamentHybridKnockoutBracketAuthorityStore(session).get(
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    event_id=event.event_id,
+                )
+                if bracket is not None:
+                    hybrid_match = next(
+                        (
+                            match
+                            for match in bracket.matches
+                            if match.match_id == event.match_id
+                        ),
+                        None,
+                    )
+            if group_match is None and hybrid_match is None:
                 raise ValueError(
-                    "planned group match is absent from frozen Group Match Schedule"
+                    "planned match has neither MatchPackage, Group Match Schedule "
+                    "nor Hybrid Knockout Bracket source"
                 )
         if event.participant_sources:
             players = tuple(
@@ -11749,6 +11970,13 @@ class AuthoritativeRunSimulationDriver:
                     "planned group participants differ from frozen Group Match Schedule"
                 )
             effective_match_format = group_match.effective_match_format
+        elif hybrid_match is not None:
+            if event.participant_sources != hybrid_match.participant_sources:
+                raise ValueError(
+                    "planned hybrid participants differ from frozen Hybrid Knockout Bracket"
+                )
+            # Hybrid knockout uses the shared Match Format Contract. Group BO3/BO5
+            # provenance belongs only to group Match Schedule matches and must not leak.
         return (
             slot,
             plan,

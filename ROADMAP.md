@@ -146,10 +146,16 @@
     provenance into final standings, and materialize groups+knockout first-round entrants only
     from final group positions plus the preconfigured crossings; preserve exact retries, Saved
     Revision replay and fail-closed historical fork behavior with no Race/Ranking reseeding.
-42. Next: materialize and execute the configured hybrid knockout bracket from the frozen entrant
-    authority through canonical Simulation Slots / Match Engine, preserving the predefined
-    crossings. Keep pure-groups tournament closure, the OPEN group RET policy and the
-    pure-knockout Finals Draw adapter as separate explicit dependencies.
+42. ✅ Materialize and execute the configured hybrid knockout bracket from frozen final
+    group positions: freeze the complete no-reseed winner tree, project it into the existing
+    SimulationMatchEventPlan contract, append derived knockout Match Days without mutating the
+    persisted base Week Schedule, execute through the canonical Match Engine, bind wider
+    orchestration to the same effective chronology, and carry the bracket through Saved Revision
+    while historical fork remap remains fail-closed.
+43. Next: implement canonical hybrid Tournament Edition closure/ranking-source aggregation so
+    explicit group-phase awards plus knockout finishing award produce one tournament ranking
+    result without double counting. Do not invent missing numeric award tables or the OPEN group
+    RET policy; pure-groups closure and the pure-knockout Finals Draw adapter remain separate.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

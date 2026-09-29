@@ -249,7 +249,6 @@ import type {
   TournamentTemplateRecord,
   TournamentTemplateUpsertPayload,
   SeasonActivePlayersResponse,
-  SeasonCalendarBuildPayload,
   SeasonCalendarBuildResponse,
   SeasonCalendarEvent,
   TournamentProgressionStatus,
@@ -588,10 +587,6 @@ export async function preflightSeasonRange(payload: SeasonRangePreflightRequest)
   return data
 }
 
-
-export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {
-  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/build`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventEntryList(eventId: string): Promise<SeasonEventEntryListResult> {
   return request(`/admin/entries/${encodeURIComponent(eventId)}`)

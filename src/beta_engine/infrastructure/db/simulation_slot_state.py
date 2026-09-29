@@ -2765,6 +2765,22 @@ def restore_saved_simulation_slots(
         schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
         for event_id in sorted({row.event_id for row in live_group_match_schedules}):
             schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    live_group_standings = session.scalars(
+        select(TournamentGroupStandingsAuthorityModel)
+        .where(
+            TournamentGroupStandingsAuthorityModel.run_id == run_id,
+            TournamentGroupStandingsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupStandingsAuthorityModel.event_id)
+    ).all()
+    if live_group_standings:
+        from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+            TournamentGroupStandingsAuthorityStore,
+        )
+
+        standings_store = TournamentGroupStandingsAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in live_group_standings}):
+            standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     live_wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2921,6 +2937,11 @@ def restore_saved_simulation_slots(
                 bool(live_group_match_schedules)
                 or bool(expected is not None and "group_match_schedules" in expected)
             ),
+            group_standings=live_group_standings,
+            include_group_standings=(
+                bool(live_group_standings)
+                or bool(expected is not None and "group_standings" in expected)
+            ),
             wild_card_authorities=live_wild_card_authorities,
             include_wild_card_authorities=(
                 bool(live_wild_card_authorities)
@@ -2962,6 +2983,7 @@ def restore_saved_simulation_slots(
         or live_format_authorities
         or live_topology_authorities
         or live_group_match_schedules
+        or live_group_standings
         or live_wild_card_authorities
         or live_draw_inputs
         or live_draw_authorities

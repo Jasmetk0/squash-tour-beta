@@ -231,7 +231,9 @@ def test_two_player_primary_tie_is_resolved_by_head_to_head():
         "A-C": played("A-C", "A", "C", "C", (0, 2)),
         "B-D": played("B-D", "B", "D", "D", (0, 2)),
         "A-B": played("A-B", "A", "B", "A", (2, 0)),
-        "C-D": played("C-D", "C", "D", "D", (0, 2)),
+        # C takes one losing group point here, so only A/B remain tied on
+        # both wins and group points; their direct A-B result must decide them.
+        "C-D": played("C-D", "C", "D", "D", (1, 2)),
     }
     receipts = tuple(
         receipt(schedule, results[match.match_id], str(index))

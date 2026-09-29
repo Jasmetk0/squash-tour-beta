@@ -17,6 +17,14 @@ from beta_engine.domain.finals.race import (
     WorldTourFinalsRaceSnapshot,
     calculate_world_tour_finals_race,
 )
+from beta_engine.domain.finals.race_replacement import (
+    FinalsReplacementCandidateDecision,
+    WorldTourFinalsEffectiveParticipantState,
+    WorldTourFinalsReplacementAuthority,
+    decide_race_replacement,
+    initial_effective_participant_state,
+    preview_race_replacement,
+)
 from beta_engine.domain.finals.models import (
     FinalsGroup,
     FinalsGroupMatch,
@@ -52,4 +60,10 @@ __all__ = [
     "WorldTourFinalsRaceRow",
     "WorldTourFinalsRaceSnapshot",
     "calculate_world_tour_finals_race",
+    "FinalsReplacementCandidateDecision",
+    "WorldTourFinalsEffectiveParticipantState",
+    "WorldTourFinalsReplacementAuthority",
+    "decide_race_replacement",
+    "initial_effective_participant_state",
+    "preview_race_replacement",
 ]

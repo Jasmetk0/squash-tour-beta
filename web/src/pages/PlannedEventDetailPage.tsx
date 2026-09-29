@@ -863,6 +863,9 @@ export function PlannedEventDetailPage(): JSX.Element {
   function preparationActionHandoff(): JSX.Element | null {
     const action = canonicalPreparationQuery.data?.next_required_action
     if (!action || action === 'none') return null
+    if (action === 'review_finals_replacement') {
+      return <p><a href="#finals-race-replacement">Resolve the open World Tour Finals Race vacancy</a></p>
+    }
     if (action === 'review_wild_cards') {
       return <p><a href="#canonical-wc-review">Open canonical WC/RWC review</a></p>
     }

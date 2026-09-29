@@ -2913,6 +2913,7 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
         return
 
     from beta_engine.domain.finals import (
+        WorldTourFinalsEffectiveParticipantState,
         WorldTourFinalsParticipantSelectionSnapshot,
     )
     from beta_engine.domain.tournaments.entry_field import TournamentEntryField
@@ -2930,6 +2931,12 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
         )
         for value in (component or {}).get("finals_participant_snapshots", [])
     }
+    effective_states = tuple(
+        WorldTourFinalsEffectiveParticipantState.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("finals_effective_states", [])
+    )
 
     rows = [TournamentEntryFieldVersionModel(**value) for value in values]
     by_event: dict[str, list[TournamentEntryFieldVersionModel]] = {}
@@ -2940,7 +2947,10 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
     for event_id, event_rows in sorted(by_event.items()):
         ordered = sorted(event_rows, key=lambda row: row.sequence)
         first = TournamentEntryField.model_validate_json(ordered[0].payload_json)
-        if first.source_kind == "finals_participant_selection":
+        if first.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             if first.finals_target_season_index is None:
                 raise ValueError(
                     "Saved Finals Entry Field has no target season identity"
@@ -2953,6 +2963,15 @@ def _validate_saved_entry_fields_against_live_ranking_authority(
             TournamentEntryFieldStore.validate_rows(
                 event_rows,
                 finals_selection=selection,
+                finals_effective_states=tuple(
+                    state
+                    for state in effective_states
+                    if (
+                        state.target_season_index
+                        == first.finals_target_season_index
+                        and state.finals_event_id == event_id
+                    )
+                ),
             )
             continue
 
@@ -2986,6 +3005,7 @@ def _validate_saved_draw_inputs_against_live_dependencies(
         )
 
     from beta_engine.domain.finals import (
+        WorldTourFinalsEffectiveParticipantState,
         WorldTourFinalsParticipantSelectionSnapshot,
     )
     from beta_engine.domain.tournaments.draw_input_authority import (
@@ -3036,6 +3056,15 @@ def _validate_saved_draw_inputs_against_live_dependencies(
         )
         for value in (component or {}).get("format_authorities", [])
     }
+    saved_effective_states = tuple(
+        WorldTourFinalsEffectiveParticipantState.model_validate_json(
+            value["payload_json"]
+        )
+        for value in (component or {}).get("finals_effective_states", [])
+    )
+    saved_effective_by_fingerprint = {
+        state.fingerprint: state for state in saved_effective_states
+    }
 
     ranking_store = TournamentRankingSnapshotAuthorityStore(session)
     for value in draw_values:
@@ -3050,7 +3079,10 @@ def _validate_saved_draw_inputs_against_live_dependencies(
                 "Saved Tournament Draw Input references missing Entry Field history"
             )
 
-        if committed.source_kind == "finals_participant_selection":
+        if committed.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             selection = saved_finals_by_event.get(row.event_id)
             if selection is None:
                 raise ValueError(
@@ -3061,15 +3093,32 @@ def _validate_saved_draw_inputs_against_live_dependencies(
                 raise ValueError(
                     "Saved Finals Draw Input references missing Tournament Format authority"
                 )
+            event_effective_states = tuple(
+                state
+                for state in saved_effective_states
+                if (
+                    state.target_season_index == selection.target_season_index
+                    and state.finals_event_id == row.event_id
+                )
+            )
             fields = TournamentEntryFieldStore.validate_rows(
                 event_rows,
                 finals_selection=selection,
+                finals_effective_states=event_effective_states,
+            )
+            effective_state = (
+                saved_effective_by_fingerprint.get(
+                    committed.finals_effective_participant_state_fingerprint
+                )
+                if committed.source_kind == "finals_effective_participant_state"
+                else None
             )
             TournamentDrawInputAuthorityStore.validate_row(
                 row,
                 field=fields[-1],
                 field_sequence=len(fields),
                 finals_selection=selection,
+                finals_effective_state=effective_state,
                 format_authority=format_authority,
             )
             continue

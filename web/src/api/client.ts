@@ -249,11 +249,9 @@ import type {
   TournamentTemplateRecord,
   TournamentTemplateUpsertPayload,
   SeasonActivePlayersResponse,
-  SeasonBootstrapPayload,
   SeasonCalendarBuildPayload,
   SeasonCalendarBuildResponse,
   SeasonCalendarEvent,
-  SeasonBootstrapResponse,
   TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
@@ -510,10 +508,6 @@ export function getAdminPointBreakdown(season = '2000/2001', params: PlayerPoint
 
 export function getViewerPointBreakdown(season = '2000/2001', params: PlayerPointBreakdownQueryParams = {}): Promise<PlayerPointBreakdownResponse> {
   return request(`/viewer/point-breakdowns/${encodeURIComponent(season)}${pointBreakdownQuery(params)}`)
-}
-
-export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBootstrapPayload): Promise<SeasonBootstrapResponse> {
-  return request(`/admin/seasons/${encodeURIComponent(season)}/bootstrap-from-initial-pool`, { method: 'POST', body: JSON.stringify(payload) })
 }
 
 export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {

@@ -36,6 +36,10 @@ from beta_engine.application.hybrid_knockout_execution import (
     extend_week_schedule_with_hybrid_knockout,
     project_hybrid_knockout_bracket_to_plans,
 )
+from beta_engine.application.hybrid_tournament_closure import (
+    TournamentHybridClosureService,
+    hybrid_ranking_policy_blockers,
+)
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
     FinalSeasonTransitionCommand,
@@ -176,6 +180,9 @@ from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority
 )
 from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
+    TournamentHybridRankingPolicyAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityStore,
@@ -11242,6 +11249,7 @@ class AuthoritativeRunSimulationDriver:
         topology_store = TournamentTopologyAuthorityStore(session)
         hybrid_entrants_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
         hybrid_bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+        hybrid_ranking_policy_store = TournamentHybridRankingPolicyAuthorityStore(session)
         group_post_standings_entries = []
         for event, standings in group_standings_entries:
             topology = topology_store.get(
@@ -11267,8 +11275,17 @@ class AuthoritativeRunSimulationDriver:
                 if entrants is not None
                 else None
             )
+            ranking_policy = (
+                hybrid_ranking_policy_store.get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=event.event_id,
+                )
+                if bracket is not None
+                else None
+            )
             group_post_standings_entries.append(
-                (event, standings, topology, entrants, bracket)
+                (event, standings, topology, entrants, bracket, ranking_policy)
             )
         group_post_standings_entries = tuple(group_post_standings_entries)
         base_schedule = self._schedule(session, run_id, branch_id, week)
@@ -11453,11 +11470,14 @@ class AuthoritativeRunSimulationDriver:
             g for g in plans if g not in done and g not in eligible_groups
         )
         owned_store = OwnedTournamentRankingSourceStore(session)
+        tournament_event_ids = tuple(
+            sorted({p.event_id for p in packages} | set(group_schedule_event_ids))
+        )
         owned = {
-            p.event_id: owned_store.get(
-                run_id=run_id, branch_id=branch_id, edition_id=p.event_id
+            event_id: owned_store.get(
+                run_id=run_id, branch_id=branch_id, edition_id=event_id
             )
-            for p in packages
+            for event_id in tournament_event_ids
         }
         executor = AuthoritativeSlotMatchExecutor(session)
         terminal = (
@@ -11545,6 +11565,7 @@ class AuthoritativeRunSimulationDriver:
                     topology,
                     entrants,
                     bracket,
+                    ranking_policy,
                 ) in group_post_standings_entries:
                     if topology is None:
                         if "tournament_topology_missing" not in blockers:
@@ -11552,16 +11573,33 @@ class AuthoritativeRunSimulationDriver:
                         continue
                     if topology.format_kind == "groups_knockout":
                         if entrants is None:
-                            blocker = "hybrid_knockout_entrants_authority_required"
+                            phase_blockers = (
+                                "hybrid_knockout_entrants_authority_required",
+                            )
                         elif bracket is None:
-                            blocker = "hybrid_knockout_bracket_authority_required"
+                            phase_blockers = (
+                                "hybrid_knockout_bracket_authority_required",
+                            )
+                        elif owned.get(event.event_id) is not None:
+                            phase_blockers = ()
                         else:
-                            blocker = "hybrid_knockout_closure_required"
+                            phase_blockers = hybrid_ranking_policy_blockers(
+                                standings=standings,
+                                bracket=bracket,
+                                policy=ranking_policy,
+                            )
+                            if not phase_blockers:
+                                phase_blockers = ("hybrid_knockout_closure_required",)
                     else:
-                        blocker = "groups_only_closure_required"
-                    if blocker not in blockers:
-                        blockers.append(blocker)
-        if any(v is None for v in owned.values()):
+                        phase_blockers = (
+                            ()
+                            if owned.get(event.event_id) is not None
+                            else ("groups_only_closure_required",)
+                        )
+                    for blocker in phase_blockers:
+                        if blocker not in blockers:
+                            blockers.append(blocker)
+        if any(owned.get(p.event_id) is None for p in packages):
             blockers.append("tournament_source_missing")
         if terminal is None and explicit_empty_context is None:
             blockers.append("terminal_sporting_checkpoint_missing")
@@ -11655,8 +11693,9 @@ class AuthoritativeRunSimulationDriver:
                     topology.format_kind if topology is not None else None,
                     entrants.fingerprint if entrants is not None else None,
                     bracket.fingerprint if bracket is not None else None,
+                    ranking_policy.fingerprint if ranking_policy is not None else None,
                 )
-                for event, _, topology, entrants, bracket
+                for event, _, topology, entrants, bracket, ranking_policy
                 in group_post_standings_entries
             ],
             "slots": [
@@ -11769,7 +11808,7 @@ class AuthoritativeRunSimulationDriver:
             eligible_match_ids=tuple(plans[g].match_id for g in eligible_groups),
             blocked_match_ids=tuple(plans[g].match_id for g in blocked_groups),
             current_slot_complete=(False if entry_is_current else not unresolved),
-            supported_tournament_complete=bool(packages) and all(owned.values()),
+            supported_tournament_complete=bool(owned) and all(owned.values()),
             week_ready_for_transition=ready,
             transition_blockers=tuple(blockers),
             terminal_sporting_fingerprint=terminal.fingerprint if terminal else None,

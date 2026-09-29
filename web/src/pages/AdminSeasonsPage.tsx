@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, generateEventDrawPackage, generateEventEntryList, extractEventResultPackage, generateEventPointAwards, applyEventPointAwards, getEventPointAwards, getSeasonLifecycle, generateEventMatchPackage, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, processEventByes, promoteEventQualifiers, refreshEventProgression, simulateEventDraw, simulateEventMatch, simulateEventRound, simulateNextEventMatch, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
+import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
 import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
@@ -137,66 +137,6 @@ export function AdminSeasonsPage(): JSX.Element {
     }
   })
 
-  const entryMutation = useMutation({
-    mutationFn: (persist: boolean) => generateEventEntryList(effectiveEventId, {
-      seed: entrySeed,
-      dry_run: !persist,
-      overwrite_existing: entryOverwriteExisting,
-      max_alternates: maxAlternates,
-      include_not_entered: includeNotEntered
-    }),
-    onSuccess: (result) => {
-      setEntryResult(result)
-      if (!result.metadata?.dry_run && effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-entry-list', effectiveEventId] })
-      }
-    }
-  })
-
-  const drawMutation = useMutation({
-    mutationFn: (persist: boolean) => generateEventDrawPackage(effectiveEventId, {
-      seed: drawSeed,
-      dry_run: !persist,
-      overwrite_existing: drawOverwriteExisting
-    }),
-    onSuccess: (result) => {
-      setDrawResult(result)
-      if (!result.metadata?.dry_run && effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-draw-package', effectiveEventId] })
-      }
-    }
-  })
-
-  const matchMutation = useMutation({
-    mutationFn: (persist: boolean) => generateEventMatchPackage(effectiveEventId, {
-      seed: matchSeed,
-      dry_run: !persist,
-      overwrite_existing: matchOverwriteExisting
-    }),
-    onSuccess: (result) => {
-      setMatchResult(result)
-      if (!result.metadata?.dry_run && effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
-      }
-    }
-  })
-
-  const simulateNextMutation = useMutation({
-    mutationFn: () => simulateNextEventMatch(effectiveEventId, { seed: matchSeed }),
-    onSuccess: (result) => {
-      setMatchResult(result)
-      if (effectiveEventId) void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
-    }
-  })
-
-  const simulateSelectedMutation = useMutation({
-    mutationFn: () => simulateEventMatch(effectiveEventId, selectedMatchId, { seed: matchSeed }),
-    onSuccess: (result) => {
-      setMatchResult(result)
-      if (effectiveEventId) void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
-    }
-  })
-
   const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
   const displayedSummary = preview?.summary ?? playersQuery.data?.summary
   const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
@@ -268,78 +208,6 @@ export function AdminSeasonsPage(): JSX.Element {
   const pointWarnings = displayedPointAwardsResult?.validation_warnings ?? displayedPointAwardPackage?.validation_warnings ?? []
   const pointErrors = displayedPointAwardsResult?.validation_errors ?? displayedPointAwardPackage?.validation_errors ?? []
 
-
-  const resultMutation = useMutation({
-    mutationFn: (persist: boolean) => extractEventResultPackage(effectiveEventId, {
-      seed: resultSeed,
-      dry_run: !persist,
-      overwrite_existing: resultOverwriteExisting
-    }),
-    onSuccess: (result) => {
-      setEventResult(result)
-      if (!result.metadata?.dry_run && effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-result-package', effectiveEventId] })
-        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
-      }
-    }
-  })
-
-  const pointGenerateMutation = useMutation({
-    mutationFn: (persist: boolean) => generateEventPointAwards(effectiveEventId, {
-      seed: pointSeed,
-      dry_run: !persist,
-      overwrite_existing: pointOverwriteExisting
-    }),
-    onSuccess: (result) => {
-      setPointAwardsResult(result)
-      if (!result.metadata?.dry_run && effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
-      }
-    }
-  })
-
-  const pointApplyMutation = useMutation({
-    mutationFn: () => applyEventPointAwards(effectiveEventId, { seed: pointSeed, allow_reapply: false }),
-    onSuccess: (result) => {
-      setPointApplyResult(result)
-      setPointAwardsResult({
-        award_package: result.award_package,
-        summary: result.award_package?.summary ?? null,
-        metadata: result.metadata,
-        validation_warnings: result.validation_warnings,
-        validation_errors: result.validation_errors,
-        award_package_exists: Boolean(result.award_package),
-        applied: result.applied
-      })
-      if (effectiveEventId) {
-        void queryClient.invalidateQueries({ queryKey: ['event-point-awards', effectiveEventId] })
-        void queryClient.invalidateQueries({ queryKey: ['season-active-players', season] })
-      }
-    }
-  })
-
-  const onProgressionSuccess = (result: ProgressionCommandResult) => {
-    setProgressionResult(result)
-    setMatchResult({
-      match_package: result.match_package,
-      summary: result.match_package.summary,
-      metadata: result.match_package.metadata,
-      validation_warnings: result.match_package.validation_warnings,
-      validation_errors: result.match_package.validation_errors,
-      match_package_exists: true
-    })
-    if (effectiveEventId) {
-      void queryClient.invalidateQueries({ queryKey: ['event-match-package', effectiveEventId] })
-      void queryClient.invalidateQueries({ queryKey: ['event-progression-status', effectiveEventId] })
-      void queryClient.invalidateQueries({ queryKey: ['event-result-package', effectiveEventId] })
-    }
-  }
-
-  const refreshProgressionMutation = useMutation({ mutationFn: () => refreshEventProgression(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
-  const processByesMutation = useMutation({ mutationFn: () => processEventByes(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
-  const promoteQualifiersMutation = useMutation({ mutationFn: () => promoteEventQualifiers(effectiveEventId, { seed: progressionSeed }), onSuccess: onProgressionSuccess })
-  const simulateRoundMutation = useMutation({ mutationFn: () => simulateEventRound(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType, round_number: progressionRoundNumber }), onSuccess: onProgressionSuccess })
-  const simulateDrawMutation = useMutation({ mutationFn: () => simulateEventDraw(effectiveEventId, { seed: progressionSeed, draw_type: progressionDrawType }), onSuccess: onProgressionSuccess })
 
   const seasonReadinessMutation = useMutation({
     mutationFn: () => getSeasonReadiness({
@@ -711,22 +579,10 @@ export function AdminSeasonsPage(): JSX.Element {
       </AdminSection>
 
       <AdminSection title="Manual Artifact Tools / Advanced" subtitle="Low-level artifact generation and manual progression controls remain available for focused debugging." variant="advanced" badges={["ADVANCED"]}>
-      <SectionCard title="Event Entries">
-        <p className="status">Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.</p>
+      <SectionCard title="Legacy Event Entries — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Persisted legacy EntryList artifacts remain inspectable for old saves and diagnostics. Current tournament preparation must use the Run/Branch canonical Entry authority instead.</p>
         {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
-        <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
-          <label>Entry seed<input type="number" value={entrySeed} onChange={(event) => setEntrySeed(Number(event.target.value))} /></label>
-          <label>Max alternates<input type="number" value={maxAlternates} onChange={(event) => setMaxAlternates(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={entryDryRun} onChange={(event) => setEntryDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={entryOverwriteExisting} onChange={(event) => setEntryOverwriteExisting(event.target.checked)} /> Overwrite existing entry list</label>
-          <label><input type="checkbox" checked={includeNotEntered} onChange={(event) => setIncludeNotEntered(event.target.checked)} /> Include not-entered/rejected players</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setEntryDryRun(true); entryMutation.mutate(false) }} disabled={!effectiveEventId || entryMutation.isPending}>Preview entries</button>
-          <button type="button" onClick={() => { setEntryDryRun(false); entryMutation.mutate(true) }} disabled={!effectiveEventId || entryMutation.isPending}>Persist entries</button>
-        </div>
-        {entryMutation.isError ? <p role="alert" className="error">{formatApiError(entryMutation.error)}</p> : null}
+        <div className="grid"><label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setSelectedMatchId(''); setReplayRallyIndex(1) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label></div>
         {persistedEntryQuery.isError ? <p role="alert" className="error">{formatApiError(persistedEntryQuery.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Total active players', value: displayedEntrySummary?.total_active_players ?? 0 },
@@ -746,29 +602,17 @@ export function AdminSeasonsPage(): JSX.Element {
         ]} /> : null}
         <EntryValidationPanel warnings={entryWarnings} errors={entryErrors} />
         <div className="table-wrap">
-          <table aria-label="Event entries table">
+          <table aria-label="Legacy persisted event entries table">
             <thead><tr><th>Decision/status</th><th>Rank priority</th><th>player_id</th><th>Name</th><th>Country</th><th>Current</th><th>Ranking points</th><th>Entry probability</th><th>Entry score</th><th>Quality score</th><th>Travel score</th><th>Notes</th></tr></thead>
             <tbody>{displayedEntryList?.entries.map((entry) => <EntryRow key={entry.entry_id} entry={entry} />)}</tbody>
           </table>
         </div>
-        {!displayedEntryList?.entries.length ? <p className="status">No entry list is displayed yet. Preview or persist entries for a persisted event.</p> : null}
+        {!displayedEntryList?.entries.length ? <p className="status">No persisted legacy EntryList exists for this event.</p> : null}
       </SectionCard>
 
-      <SectionCard title="Event Draws">
-        <p className="status">Draw generation creates bracket slots from persisted entry lists. It does not simulate matches or update rankings yet.</p>
-        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
-        {eventOptions.length && !selectedEventHasPersistedEntryList ? <p className="status">Persist an entry list first.</p> : null}
-        <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
-          <label>Draw seed<input type="number" value={drawSeed} onChange={(event) => setDrawSeed(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={drawDryRun} onChange={(event) => setDrawDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={drawOverwriteExisting} onChange={(event) => setDrawOverwriteExisting(event.target.checked)} /> Overwrite existing draw package</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setDrawDryRun(true); drawMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedEntryList || drawMutation.isPending}>Preview draw</button>
-          <button type="button" onClick={() => { setDrawDryRun(false); drawMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedEntryList || drawMutation.isPending}>Persist draw</button>
-        </div>
-        {drawMutation.isError ? <p role="alert" className="error">{formatApiError(drawMutation.error)}</p> : null}
+      <SectionCard title="Legacy Event Draws — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Persisted DrawPackage artifacts are historical compatibility only. Current draws are owned by the canonical Run/Branch Draw authority.</p>
+        <div className="grid"><label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setSelectedMatchId(''); setReplayRallyIndex(1) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label></div>
         {persistedDrawQuery.isError ? <p role="alert" className="error">{formatApiError(persistedDrawQuery.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Main draw size', value: displayedDrawSummary?.main_draw_size ?? 0 },
@@ -793,46 +637,17 @@ export function AdminSeasonsPage(): JSX.Element {
           {displayedDrawPackage.qualification_draw ? <DrawSlotsTable title="Qualification draw table" bracket={displayedDrawPackage.qualification_draw} /> : <p className="status">No qualification draw for this event.</p>}
           <DrawMatchesTable title="Main draw match preview" bracket={displayedDrawPackage.main_draw} />
           {displayedDrawPackage.qualification_draw ? <DrawMatchesTable title="Qualification draw match preview" bracket={displayedDrawPackage.qualification_draw} /> : null}
-        </> : <p className="status">No draw package is displayed yet. Preview or persist a draw for a persisted event entry list.</p>}
+        </> : <p className="status">No persisted legacy DrawPackage exists for this event.</p>}
       </SectionCard>
 
-
-      <SectionCard title="Event Matches">
-        <p className="status">Match generation creates match records from persisted draw packages. Simulation stores results but does not update rankings/race yet.</p>
-        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
-        {eventOptions.length && !selectedEventHasPersistedDrawPackage ? <p className="status">Persist a draw package first.</p> : null}
+      <SectionCard title="Legacy Event Matches — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Stored legacy MatchPackage and replay evidence remain available for diagnostics. Match generation, progression and simulation mutations are retired from this current UI.</p>
         <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
-          <label>Match seed<input type="number" value={matchSeed} onChange={(event) => setMatchSeed(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={matchDryRun} onChange={(event) => setMatchDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={matchOverwriteExisting} onChange={(event) => setMatchOverwriteExisting(event.target.checked)} /> Overwrite existing match package</label>
+          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setSelectedMatchId(''); setReplayRallyIndex(1) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
           <label>Selected match<select value={selectedMatchId} onChange={(event) => { setSelectedMatchId(event.target.value); setReplayRallyIndex(1) }} disabled={!displayedMatches.length}><option value="">Choose a match</option>{displayedMatches.map((match) => <option key={match.match_id} value={match.match_id}>{match.status}: {match.match_id}</option>)}</select></label>
-          <label>Progression seed<input type="number" value={progressionSeed} onChange={(event) => setProgressionSeed(Number(event.target.value))} /></label>
-          <label>Progression draw<select value={progressionDrawType} onChange={(event) => setProgressionDrawType(event.target.value as 'qualification' | 'main')}><option value="qualification">Qualification</option><option value="main">Main draw</option></select></label>
-          <label>Round number<input type="number" min={1} value={progressionRoundNumber} onChange={(event) => setProgressionRoundNumber(Number(event.target.value))} /></label>
         </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setMatchDryRun(true); matchMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Preview match package</button>
-          <button type="button" onClick={() => { setMatchDryRun(false); matchMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedDrawPackage || matchMutation.isPending}>Persist match package</button>
-          <button type="button" onClick={() => simulateNextMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateNextMutation.isPending}>Simulate next pending match</button>
-          <button type="button" onClick={() => simulateSelectedMutation.mutate()} disabled={!effectiveEventId || !selectedMatchId || !displayedMatchResult?.match_package_exists || simulateSelectedMutation.isPending}>Simulate selected match</button>
-          <button type="button" onClick={() => refreshProgressionMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || refreshProgressionMutation.isPending}>Refresh progression</button>
-          <button type="button" onClick={() => processByesMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || processByesMutation.isPending}>Process BYEs</button>
-          <button type="button" onClick={() => promoteQualifiersMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || promoteQualifiersMutation.isPending}>Promote qualifiers</button>
-          <button type="button" onClick={() => simulateRoundMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateRoundMutation.isPending}>Simulate round</button>
-          <button type="button" onClick={() => simulateDrawMutation.mutate()} disabled={!effectiveEventId || !displayedMatchResult?.match_package_exists || simulateDrawMutation.isPending}>Simulate draw</button>
-        </div>
-        <p className="status">Progression commands update match states and propagate winners. They do not update ranking/race yet.</p>
-        {matchMutation.isError ? <p role="alert" className="error">{formatApiError(matchMutation.error)}</p> : null}
-        {simulateNextMutation.isError ? <p role="alert" className="error">{formatApiError(simulateNextMutation.error)}</p> : null}
-        {simulateSelectedMutation.isError ? <p role="alert" className="error">{formatApiError(simulateSelectedMutation.error)}</p> : null}
         {persistedMatchQuery.isError ? <p role="alert" className="error">{formatApiError(persistedMatchQuery.error)}</p> : null}
         {progressionStatusQuery.isError ? <p role="alert" className="error">{formatApiError(progressionStatusQuery.error)}</p> : null}
-        {refreshProgressionMutation.isError ? <p role="alert" className="error">{formatApiError(refreshProgressionMutation.error)}</p> : null}
-        {processByesMutation.isError ? <p role="alert" className="error">{formatApiError(processByesMutation.error)}</p> : null}
-        {promoteQualifiersMutation.isError ? <p role="alert" className="error">{formatApiError(promoteQualifiersMutation.error)}</p> : null}
-        {simulateRoundMutation.isError ? <p role="alert" className="error">{formatApiError(simulateRoundMutation.error)}</p> : null}
-        {simulateDrawMutation.isError ? <p role="alert" className="error">{formatApiError(simulateDrawMutation.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Total matches', value: displayedMatchSummary?.total_matches ?? 0 },
           { label: 'Qualification matches', value: displayedMatchSummary?.qualification_matches ?? 0 },
@@ -843,8 +658,7 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'BYE auto-advances', value: displayedMatchSummary?.bye_auto_advances ?? 0 },
           { label: 'Validation warnings/errors', value: `${displayedMatchSummary?.validation_warning_count ?? matchWarnings.length}/${displayedMatchSummary?.validation_error_count ?? matchErrors.length}` }
         ]} />
-        {displayedProgressionStatus ? <ProgressionStatusPanel status={displayedProgressionStatus} warnings={progressionWarnings} errors={progressionErrors} /> : <p className="status">No persisted progression status yet. Persist a match package to enable progression commands.</p>}
-        {progressionResult ? <p className="status">Last progression action: {progressionResult.action}; changed matches: {progressionResult.changed_match_ids.length}; promoted players: {progressionResult.promoted_player_ids.join(', ') || '—'}.</p> : null}
+        {displayedProgressionStatus ? <ProgressionStatusPanel status={displayedProgressionStatus} warnings={progressionWarnings} errors={progressionErrors} /> : <p className="status">No persisted legacy progression status.</p>}
         {displayedMatchResult?.metadata ? <MetadataList items={[
           { label: 'Build fingerprint', value: displayedMatchResult.metadata.build_fingerprint },
           { label: 'Draw package fingerprint', value: displayedMatchResult.metadata.draw_package_fingerprint },
@@ -853,32 +667,19 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'Ranking updates', value: displayedMatchResult.metadata.ranking_updates_implemented ? 'Implemented' : 'Not implemented yet' }
         ]} /> : null}
         <MatchValidationPanel warnings={matchWarnings} errors={matchErrors} />
-        {displayedMatchPackage ? <MatchRecordsTable matches={displayedMatches} /> : <p className="status">No match package is displayed yet. Preview or persist matches for a persisted draw package.</p>}
+        {displayedMatchPackage ? <MatchRecordsTable matches={displayedMatches} /> : <p className="status">No persisted legacy MatchPackage exists for this event.</p>}
         {selectedMatchId ? <div>
           <h4>Read-only Match Replay</h4>
-          <p className="status">Step Back / Step Forward reads stored authoritative rally snapshots only. It never reruns RNG or changes the match.</p>
+          <p className="status">Replay reads stored rally snapshots only. It never reruns RNG or changes the match.</p>
           {!replayAvailable ? <p className="status">Select a completed simulated match with an authoritative rally log to navigate replay.</p> : null}
           {matchReplayQuery.isError ? <p role="alert" className="error">{formatApiError(matchReplayQuery.error)}</p> : null}
           {matchReplayQuery.data ? <MatchReplayCursorPanel result={matchReplayQuery.data} onSelectRally={setReplayRallyIndex} /> : null}
         </div> : null}
       </SectionCard>
 
-
-      <SectionCard title="Event Results">
-        <p className="status">Result extraction summarizes completed tournament outcomes. Point awards are generated and applied explicitly in the Ranking / Race Points section.</p>
-        {!eventOptions.length ? <p className="status">Persist a season calendar first.</p> : null}
-        {eventOptions.length && !selectedEventHasPersistedMatchPackage ? <p className="status">Persist and progress a match package first.</p> : null}
-        <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setEntryResult(null); setDrawResult(null); setMatchResult(null); setProgressionResult(null); setEventResult(null); setPointAwardsResult(null); setPointApplyResult(null); setSelectedMatchId('') }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
-          <label>Result seed<input type="number" value={resultSeed} onChange={(event) => setResultSeed(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={resultDryRun} onChange={(event) => setResultDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={resultOverwriteExisting} onChange={(event) => setResultOverwriteExisting(event.target.checked)} /> Overwrite existing result package</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setResultDryRun(true); resultMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedMatchPackage || resultMutation.isPending}>Preview results</button>
-          <button type="button" onClick={() => { setResultDryRun(false); resultMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedMatchPackage || resultMutation.isPending}>Persist results</button>
-        </div>
-        {resultMutation.isError ? <p role="alert" className="error">{formatApiError(resultMutation.error)}</p> : null}
+      <SectionCard title="Legacy Event Results — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Stored legacy result packages remain inspectable. Current Package-backed tournament close uses canonical Tournament Result authority instead of this extractor.</p>
+        <div className="grid"><label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setSelectedMatchId(''); setReplayRallyIndex(1) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label></div>
         {persistedResultQuery.isError ? <p role="alert" className="error">{formatApiError(persistedResultQuery.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Completion status', value: displayedResultSummary?.completion_status ?? '—' },
@@ -895,35 +696,19 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'Build fingerprint', value: displayedEventResult.metadata.build_fingerprint },
           { label: 'Match package fingerprint', value: displayedEventResult.metadata.match_package_fingerprint ?? '—' },
           { label: 'Draw package fingerprint', value: displayedEventResult.metadata.draw_package_fingerprint ?? '—' },
-          { label: 'Calendar event fingerprint', value: displayedEventResult.metadata.calendar_event_fingerprint ?? '—' },
-          { label: 'Ranking updates', value: displayedEventResult.metadata.ranking_updates_implemented ? 'Implemented' : 'Not implemented yet' },
-          { label: 'Points awarding', value: displayedEventResult.metadata.points_awarding_implemented ? 'Implemented' : 'Not implemented yet' }
+          { label: 'Calendar event fingerprint', value: displayedEventResult.metadata.calendar_event_fingerprint ?? '—' }
         ]} /> : null}
         <ResultValidationPanel warnings={resultWarnings} errors={resultErrors} />
         {displayedResultPackage ? <>
           <TopFinishersTable champion={displayedResultPackage.champion} finalist={displayedResultPackage.finalist} semifinalists={displayedResultPackage.semifinalists} quarterfinalists={displayedResultPackage.quarterfinalists} />
           <QualificationWinnersTable winners={displayedResultPackage.qualification_winners} playerResults={displayedResultPackage.player_results} />
           <PlayerResultsTable results={displayedResultPackage.player_results} />
-        </> : <p className="status">No result package is displayed yet. Preview or persist results after progressing matches.</p>}
+        </> : <p className="status">No persisted legacy result package exists for this event.</p>}
       </SectionCard>
 
-
-      <SectionCard title="Ranking / Race Points">
-        <p className="status"><StatusBadge label="MUTATING" variant="danger" /> Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.</p>
-        {!selectedEventHasPersistedResultPackage ? <p className="status">Persist event results first.</p> : null}
-        <div className="grid">
-          <label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setPointAwardsResult(null); setPointApplyResult(null) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label>
-          <label>Point seed<input type="number" value={pointSeed} onChange={(event) => setPointSeed(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={pointDryRun} onChange={(event) => setPointDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={pointOverwriteExisting} onChange={(event) => setPointOverwriteExisting(event.target.checked)} /> Overwrite existing point awards</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setPointDryRun(true); pointGenerateMutation.mutate(false) }} disabled={!effectiveEventId || !selectedEventHasPersistedResultPackage || pointGenerateMutation.isPending}>Preview point awards</button>
-          <button type="button" onClick={() => { setPointDryRun(false); pointGenerateMutation.mutate(true) }} disabled={!effectiveEventId || !selectedEventHasPersistedResultPackage || pointGenerateMutation.isPending}>Persist point awards</button>
-          <button type="button" onClick={() => pointApplyMutation.mutate()} disabled={!effectiveEventId || !displayedPointAwardPackage?.persisted || displayedPointAwardPackage.applied || pointApplyMutation.isPending}>Apply points to active players</button>
-        </div>
-        {pointGenerateMutation.isError ? <p role="alert" className="error">{formatApiError(pointGenerateMutation.error)}</p> : null}
-        {pointApplyMutation.isError ? <p role="alert" className="error">{formatApiError(pointApplyMutation.error)}</p> : null}
+      <SectionCard title="Legacy Ranking / Race Point Awards — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> Persisted legacy point-award packages remain visible for old saves. Generating or applying legacy points is retired from the current UI; canonical ranking consumes Run-owned tournament sources.</p>
+        <div className="grid"><label>Selected event<select value={effectiveEventId} onChange={(event) => { setSelectedEventId(event.target.value); setSelectedMatchId(''); setReplayRallyIndex(1) }} disabled={!eventOptions.length}>{eventOptions.map((event) => <option key={event.event_id} value={event.event_id}>{event.season_week}: {event.event_name} ({event.event_id})</option>)}</select></label></div>
         {persistedPointAwardsQuery.isError ? <p role="alert" className="error">{formatApiError(persistedPointAwardsQuery.error)}</p> : null}
         <SummaryPills items={[
           { label: 'Players', value: displayedPointSummary?.player_count ?? 0 },
@@ -939,13 +724,10 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'Build fingerprint', value: displayedPointAwardsResult.metadata.build_fingerprint },
           { label: 'Result package fingerprint', value: displayedPointAwardsResult.metadata.result_package_fingerprint },
           { label: 'Distribution fingerprint', value: displayedPointAwardsResult.metadata.point_distribution_fingerprint },
-          { label: 'Distribution source', value: displayedPointAwardsResult.metadata.point_distribution_source },
-          { label: 'Rolling ranking', value: displayedPointAwardsResult.metadata.rolling_ranking_implemented ? 'Implemented' : 'Not implemented yet' },
-          { label: 'Best-N', value: displayedPointAwardsResult.metadata.best_n_implemented ? 'Implemented' : 'Not implemented yet' }
+          { label: 'Distribution source', value: displayedPointAwardsResult.metadata.point_distribution_source }
         ]} /> : null}
         <PointValidationPanel warnings={pointWarnings} errors={pointErrors} />
-        {displayedPointAwardPackage ? <PointAwardsTable awards={displayedPointAwardPackage.awards} /> : <p className="status">No point award package is displayed yet. Preview or persist awards after event results are persisted.</p>}
-        {pointApplyResult ? <UpdatedPointsTable updates={pointApplyResult.updated_players} /> : null}
+        {displayedPointAwardPackage ? <PointAwardsTable awards={displayedPointAwardPackage.awards} /> : <p className="status">No persisted legacy point-award package exists for this event.</p>}
       </SectionCard>
 
       </AdminSection>
@@ -953,6 +735,8 @@ export function AdminSeasonsPage(): JSX.Element {
       <AdminSection title="Rankings / Snapshots" subtitle="Read ranking and race tables, point breakdowns, weekly snapshots, and active player point state." variant="readonly" badges={["READ-ONLY"]}>
       <AdminRankingTablesSection />
 
+
+      
 
       <SectionCard title="Active season players">
         {playersQuery.isError ? <p role="alert" className="error">{formatApiError(playersQuery.error)}</p> : null}

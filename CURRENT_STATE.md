@@ -1,5 +1,34 @@
 # Current implementation and next action
 
+## Active implementation — Finals Race replacement domain authority foundation
+
+ROADMAP item 46 now has a hardened domain and persistence/application boundary, but is not yet a
+complete sporting vertical slice.
+
+- an append-only effective Finals participant state preserves the original participant-selection
+  snapshot and keeps every resulting field in frozen Race order with contiguous field seeds;
+- a vacancy-scoped replacement authority records the withdrawing player, mandatory free-text
+  reason, initial selection/Race/effective-field fingerprints, explicit decline/accept decisions,
+  candidate Race ranks and the accepted successor-field fingerprint;
+- preview scans only the frozen Race, excludes the currently confirmed field, and exposes an
+  explicit exhausted state rather than falling back to Official Ranking or player-ID ordering;
+- declines remain local to one vacancy lineage; acceptance is explicit and creates the successor
+  effective state; an accepted replacement may itself enter a later withdrawal lineage;
+- no notification, expiry, reserve-roster or disciplinary semantics were introduced.
+- preview/decision commands are fingerprint-guarded and append-only persistence rejects stale
+  predecessors, corrupt lineage, duplicate candidate decisions and conflicting command retries;
+- already-withdrawn players remain unavailable for the Edition instead of being silently offered
+  again; the Admin HTTP boundary exposes effective-field inspection, preview and explicit decision.
+
+This is deliberately **not** the complete item 46 vertical slice yet. Saved Revision
+capture/restore, Planned Event UI, Entry Field/Draw Input adaptation, post-draw Draw
+Revision/cutoff/W/O integration, preparation blockers, and closure provenance remain to be wired.
+Until those boundaries exist, the new kernel is not a production mutation path.
+
+**Next:** adapt the persisted accepted effective field into the existing pre-draw and pure-knockout post-draw canonical
+chains. Keep concurrent post-draw vacancies and started-group replacement fail-closed unless the
+existing authorities provide an unambiguous atomic mapping.
+
 ## Active implementation — World Tour Finals pure-knockout Draw adapter
 
 Pure-knockout World Tour Finals now enter the ordinary canonical Draw/Topology pipeline without

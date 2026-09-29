@@ -359,6 +359,10 @@ def _validated_canonical_awards(
         result.schema_version == "tournament_result_authority.v2"
         or awards.schema_version == "tournament_point_award_authority.v4"
     )
+    pure_groups_mode = (
+        result.schema_version == "tournament_result_authority.v3"
+        or awards.schema_version == "tournament_point_award_authority.v5"
+    )
     if hybrid_mode:
         if (
             result.schema_version != "tournament_result_authority.v2"
@@ -369,6 +373,17 @@ def _validated_canonical_awards(
         ):
             raise ValueError(
                 "Hybrid tournament Result/Point Award schema provenance mismatch"
+            )
+    if pure_groups_mode:
+        if (
+            result.schema_version != "tournament_result_authority.v3"
+            or awards.schema_version != "tournament_point_award_authority.v5"
+            or not awards.point_distribution_source.startswith(
+                "pure_groups_ranking_policy:"
+            )
+        ):
+            raise ValueError(
+                "Pure-groups tournament Result/Point Award schema provenance mismatch"
             )
 
     pairs = []
@@ -387,7 +402,7 @@ def _validated_canonical_awards(
             _hash(player.model_dump(mode="json")),
         ):
             raise ValueError("Canonical player award provenance mismatch")
-        if hybrid_mode:
+        if hybrid_mode or pure_groups_mode:
             components = {
                 component.component_id: component
                 for component in award.phase_components
@@ -402,7 +417,12 @@ def _validated_canonical_awards(
                     "Hybrid group ranking component differs from played group wins"
                 )
             knockout_component = components.get("knockout_finish")
-            if player.knockout_reached_stage is None:
+            if pure_groups_mode:
+                if knockout_component is not None:
+                    raise ValueError(
+                        "Pure-groups player cannot carry knockout ranking component"
+                    )
+            elif player.knockout_reached_stage is None:
                 if knockout_component is not None:
                     raise ValueError(
                         "Group-only hybrid player cannot carry knockout ranking component"

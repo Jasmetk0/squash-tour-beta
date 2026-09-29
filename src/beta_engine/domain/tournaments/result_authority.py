@@ -40,7 +40,7 @@ class TournamentMatchResultAuthority(FrozenInput):
 
 class TournamentPlayerResultAuthority(FrozenInput):
     player_id: str = Field(min_length=1)
-    draw_type: Literal["qualification", "main", "both", "hybrid"]
+    draw_type: Literal["qualification", "main", "both", "hybrid", "group"]
     seed_number: int | None = Field(default=None, ge=1)
     qualifier: bool = False
     main_entry_status: Literal["direct", "wild_card", "lucky_loser"] | None = Field(
@@ -81,6 +81,7 @@ class TournamentResultAuthority(FrozenInput):
     schema_version: Literal[
         "tournament_result_authority.v1",
         "tournament_result_authority.v2",
+        "tournament_result_authority.v3",
     ] = "tournament_result_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -158,7 +159,7 @@ class TournamentResultAuthority(FrozenInput):
                 raise ValueError(
                     "Historical Tournament Result v1 cannot carry hybrid phase evidence"
                 )
-        else:
+        elif self.schema_version == "tournament_result_authority.v2":
             if (
                 self.draw_authority_fingerprint is not None
                 or self.match_package_fingerprint is not None
@@ -221,6 +222,63 @@ class TournamentResultAuthority(FrozenInput):
             if not match_players <= set(by_id):
                 raise ValueError(
                     "Hybrid Tournament Result v2 match references unknown player"
+                )
+        else:
+            if (
+                self.draw_authority_fingerprint is not None
+                or self.match_package_fingerprint is not None
+                or self.group_standings_authority_fingerprint is None
+                or self.hybrid_knockout_bracket_authority_fingerprint is not None
+            ):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 requires standings provenance only"
+                )
+            if self.qualification_winner_ids:
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 cannot contain Qualification winners"
+                )
+            if not self.players or any(
+                player.draw_type != "group"
+                or player.group_index != 1
+                or player.group_position is None
+                or player.played_group_wins is None
+                or player.group_walkovers_received is None
+                or player.knockout_reached_stage is not None
+                or player.reached_stage != f"group_position_{player.group_position}"
+                for player in self.players
+            ):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 requires one complete group outcome"
+                )
+            if not self.matches or any(match.draw_type != "group" for match in self.matches):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 requires group match evidence only"
+                )
+            positions = tuple(player.group_position for player in self.players)
+            if tuple(sorted(positions)) != tuple(range(1, len(self.players) + 1)):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 positions must be contiguous from one"
+                )
+            by_id = {player.player_id: player for player in self.players}
+            if (
+                by_id[self.champion_player_id].group_position != 1
+                or by_id[self.finalist_player_id].group_position != 2
+            ):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 champion/finalist must be positions 1/2"
+                )
+            match_players = {
+                player_id
+                for match in self.matches
+                for player_id in (
+                    match.winner_player_id,
+                    match.loser_player_id,
+                )
+                if player_id is not None
+            }
+            if not match_players <= set(by_id):
+                raise ValueError(
+                    "Pure-groups Tournament Result v3 match references unknown player"
                 )
         return self
 

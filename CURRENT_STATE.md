@@ -1,52 +1,52 @@
 # Current implementation and next action
 
-## Active implementation — canonical hybrid Tournament Edition closure
+## Active implementation — bounded pure-groups closure and group-position payouts
 
-The general group flow now closes `groups_knockout` Editions from exact frozen sporting evidence
-into the same canonical tournament-result/ranking-source pipeline used by ordinary draws.
+The canonical group-format chain now closes both decided forms without inventing a
+cross-group outcome rule.
 
-- `TournamentResultAuthority v2` freezes one hybrid Edition result across both phases and binds
-  the final Group Standings authority plus the executable Hybrid Knockout Bracket authority;
-- every player carries final group position, actually played group wins, group W/O provenance and
-  final knockout finishing stage where applicable. Group W/O does not become a fabricated played
-  win, match result or H2H;
-- `TournamentHybridRankingPolicyAuthority` is an explicit immutable per-Edition policy. The
-  engine never invents numeric group-win or knockout-stage ranking values;
-- `TournamentPointAwardAuthority v4` composes explicit additive phase components into exactly
-  one player award: actually played group wins × authored group-win value, plus at most one authored
-  knockout finishing-stage value. Group table points are never reused as Official Ranking points;
-- canonical ranking ingestion revalidates every v4 phase component against the exact Result v2
-  provenance and still emits exactly one `RankingResultVersion` per player/Edition, so Best-N
-  cannot double count the phases as separate tournaments;
-- missing policy, missing knockout stage values, the still-open ranking treatment of a group W/O,
-  or another unsupported phase dependency fails closed at Tournament Edition closure. Sporting
-  knockout receipts remain committed and can be closed later without replaying a match;
-- the driver auto-closes a completed hybrid tree only when the closure inputs are complete. Admin
-  can separately inspect/configure the immutable Hybrid Ranking Policy and explicitly retry the
-  idempotent hybrid ranking close;
-- prize-money history is not silently dropped. With no configured payout table the close freezes an
-  explicit `not_configured` Prize Money authority. If prize money are configured while players can
-  finish only in the group phase, closure currently blocks on
-  `hybrid_prize_money_group_stage_policy_required`: the existing payout model has only
-  Qualification/Main Draw finishing-stage keys and the implementation does not invent a mapping;
-- successful hybrid close is stored through the ordinary `OwnedTournamentRankingSource v5`
-  bundle (or v6 at final Closing), including Result, Point Award and Prize Money fingerprints;
-- Saved Revision capture/restore now also carries Hybrid Ranking Policy. Historical Simulation fork
-  and Ranking-source fork remaps deliberately fail closed until the complete
-  Standings → Bracket → Policy → Result/Award provenance chain has a dedicated branch remapper;
-- pure-groups tournament closure, group RET table scoring, a configurable group-stage prize-money
-  finishing stage and the pure-knockout Finals Draw adapter remain separate explicit boundaries;
+- `groups_knockout` keeps the existing two-phase Result v2 / Point Award v4 path;
+- hybrid players eliminated before the knockout now carry their actual finishing stage as
+  `group_position_N` instead of a generic `group_stage`;
+- the existing Edition `prize_money_table` supports explicit `group_position_N` keys.
+  Canonical Prize Money authority derives required group-format payout stages from the exact
+  Tournament Result, so partial/unknown/not-configured semantics stay in one financial model;
+- pure `groups` Tournament Editions may close only when the authoritative topology contains
+  exactly one group. Master v68 leaves a unique winner across multiple independent groups OPEN,
+  so multi-group pure events stop on `groups_only_unique_outcome_required`;
+- `TournamentResultAuthority v3` freezes the one-group final positions plus exact group-match
+  receipt provenance. Position 1 is the sporting champion and position 2 the finalist only
+  because the one final table itself is the complete competition outcome;
+- `TournamentPureGroupsRankingPolicyAuthority` is immutable and intentionally contains only an
+  explicit reward for **actually played group wins**. It does not invent ranking points for final
+  group positions;
+- `TournamentPointAwardAuthority v5` freezes exactly one
+  `group_played_wins` component/player, and canonical ranking ingestion revalidates its units
+  against Result v3 before emitting one Best-N tournament result/player;
+- group-table W/O remains separate from an actually played win. A nonzero played-win ranking
+  reward therefore blocks on `pure_groups_group_walkover_ranking_unresolved` when W/O evidence
+  exists; zero played-win reward remains representable without turning W/O into a match win;
+- the authoritative driver exposes exact pure-groups closure blockers and can close a ready
+  single-group Edition into the ordinary `OwnedTournamentRankingSource v5`/v6 bundle;
+- Admin can inspect/configure the immutable pure-groups ranking policy and explicitly retry the
+  idempotent close after sporting results already exist;
+- Saved Revision capture/restore carries the pure-groups ranking policy. Historical Simulation
+  fork and ranking-source fork remaps remain fail-closed until the complete group provenance chain
+  has a dedicated retargeting contract;
+- pure multi-group winner selection, cross-group comparison, the OPEN group RET table policy and
+  group-W/O Official Ranking reward semantics remain unresolved and are not filled by defaults;
+- canonical unranked pure-group completion still needs a non-ranking completion-source contract;
+  the current canonical Owned Tournament Ranking binding is intentionally ranked-only;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice establishes **one canonical hybrid Tournament Edition result and one canonical ranking
-result per player without phase double counting**, while preserving explicit product/configuration
-gaps instead of filling them with hidden defaults.
+This slice establishes **canonical single-group sporting/result/ranking closure and explicit
+group-position prize-money stages** while preserving every unresolved multi-group or abnormal-result
+boundary.
 
-**Next after this PR:** implement the next bounded post-group closure dependency: define/support
-canonical pure-groups closure only where a unique tournament outcome is already determined by
-authoritative configuration, and add a dedicated hybrid group-stage prize-money payout model before
-configured prize tables can close Editions with group-only finishers. Keep the OPEN group RET
-scoring question and general cross-group comparison/outcome rules fail-closed.
+**Next after this PR:** implement the already-exposed `knockout_draw_adapter_required` dependency
+for World Tour Finals using the frozen Race-seeded participant/Entry Field authority to create the
+ordinary canonical Draw Input/Draw without fabricating an Official Ranking snapshot or reseeding.
+Keep unranked pure-group completion and the unresolved multi-group/RET/W/O policies separate.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

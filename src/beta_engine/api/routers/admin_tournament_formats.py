@@ -38,6 +38,13 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
 from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
 )
+from beta_engine.domain.tournaments.pure_groups_ranking_policy_authority import (
+    TournamentPureGroupsRankingPolicyAuthority,
+)
+from beta_engine.application.pure_groups_tournament_closure import (
+    TournamentPureGroupsClosureConflict,
+    TournamentPureGroupsClosureService,
+)
 from beta_engine.application.hybrid_tournament_closure import (
     TournamentHybridClosureConflict,
     TournamentHybridClosureService,
@@ -77,6 +84,10 @@ from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority 
 from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthorityConflict,
     TournamentHybridRankingPolicyAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_pure_groups_ranking_policy_authority import (
+    TournamentPureGroupsRankingPolicyAuthorityConflict,
+    TournamentPureGroupsRankingPolicyAuthorityStore,
 )
 
 
@@ -164,6 +175,15 @@ class TournamentHybridRankingPolicyConfigureRequest(BaseModel):
 
 
 class TournamentHybridCloseRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+
+
+class TournamentPureGroupsRankingPolicyConfigureRequest(BaseModel):
+    command_id: str = Field(min_length=1, max_length=128)
+    played_group_win_points: int = Field(ge=0)
+
+
+class TournamentPureGroupsCloseRequest(BaseModel):
     command_id: str = Field(min_length=1, max_length=128)
 
 
@@ -295,6 +315,23 @@ class TournamentHybridClosureResponse(BaseModel):
     prize_award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     prize_configuration_status: str
     total_ranking_points: int = Field(ge=0)
+
+
+class TournamentPureGroupsRankingPolicyResponse(
+    TournamentPureGroupsRankingPolicyAuthority
+):
+    authority_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @classmethod
+    def from_authority(
+        cls, authority: TournamentPureGroupsRankingPolicyAuthority
+    ) -> "TournamentPureGroupsRankingPolicyResponse":
+        return cls.model_validate(
+            {
+                **authority.model_dump(mode="python"),
+                "authority_fingerprint": authority.fingerprint,
+            }
+        )
 
 
 @router.get(
@@ -940,6 +977,125 @@ def close_hybrid_tournament_ranking_source(
             status_code=409,
             detail={
                 "code": "tournament_hybrid_closure_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/pure-groups-ranking-policy",
+    response_model=TournamentPureGroupsRankingPolicyResponse,
+)
+def inspect_pure_groups_ranking_policy(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentPureGroupsRankingPolicyResponse:
+    try:
+        with runtime.repository._session_factory() as session:
+            value = TournamentPureGroupsRankingPolicyAuthorityStore(session).get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+            )
+            if value is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Tournament Pure Groups Ranking Policy authority not found",
+                )
+            return TournamentPureGroupsRankingPolicyResponse.from_authority(value)
+    except HTTPException:
+        raise
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_pure_groups_ranking_policy_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/pure-groups-ranking-policy/configure",
+    response_model=TournamentPureGroupsRankingPolicyResponse,
+    status_code=201,
+)
+def configure_pure_groups_ranking_policy(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentPureGroupsRankingPolicyConfigureRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentPureGroupsRankingPolicyResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            value = TournamentPureGroupsRankingPolicyAuthorityStore(session).configure(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+                played_group_win_points=payload.played_group_win_points,
+            )
+            return TournamentPureGroupsRankingPolicyResponse.from_authority(value)
+    except (
+        TournamentPureGroupsRankingPolicyAuthorityConflict,
+        ValueError,
+    ) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_pure_groups_ranking_policy_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/pure-groups-ranking-close",
+    response_model=TournamentHybridClosureResponse,
+    status_code=201,
+)
+def close_pure_groups_tournament_ranking_source(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    payload: TournamentPureGroupsCloseRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> TournamentHybridClosureResponse:
+    try:
+        with runtime.repository._session_factory.begin() as session:
+            source = TournamentPureGroupsClosureService(session).close_from_current_receipts(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                command_id=payload.command_id,
+            )
+            if (
+                source.canonical_result is None
+                or source.canonical_awards is None
+                or source.canonical_prize_awards is None
+            ):
+                raise ValueError("Pure-groups Tournament closure produced incomplete source")
+            return TournamentHybridClosureResponse(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                source_fingerprint=source.fingerprint,
+                result_fingerprint=source.canonical_result.fingerprint,
+                award_fingerprint=source.canonical_awards.fingerprint,
+                prize_award_fingerprint=source.canonical_prize_awards.fingerprint,
+                prize_configuration_status=(
+                    source.canonical_prize_awards.configuration_status
+                ),
+                total_ranking_points=source.canonical_awards.total_ranking_points,
+            )
+    except (TournamentPureGroupsClosureConflict, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "tournament_pure_groups_closure_conflict",
                 "message": str(exc),
             },
         ) from exc

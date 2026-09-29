@@ -214,7 +214,7 @@ def build_tournament_prize_money_award_authority(
             key=lambda stage: stage_order[stage],
         )
     )
-    required_stage_ids = _required_prize_money_stages(event)
+    required_stage_ids = _required_prize_money_stages(event, result=result)
     config_payload = {
         "event_id": event.event_id,
         "original_currency": event.prize_money_currency,
@@ -297,8 +297,27 @@ def build_tournament_prize_money_award_authority(
     )
 
 
-def _required_prize_money_stages(event: CalendarEvent) -> tuple[str, ...]:
-    """Return physical finishing stages for the Edition's actual draw geometry."""
+def _required_prize_money_stages(
+    event: CalendarEvent,
+    *,
+    result: TournamentResultAuthority | None = None,
+) -> tuple[str, ...]:
+    """Return physical finishing stages for the Edition's actual format geometry."""
+
+    if (
+        result is not None
+        and result.schema_version
+        in {"tournament_result_authority.v2", "tournament_result_authority.v3"}
+    ):
+        order = {stage: index for index, stage in enumerate(PRIZE_MONEY_STAGE_ORDER)}
+        stages = {player.reached_stage for player in result.players}
+        unknown = sorted(stage for stage in stages if stage not in order)
+        if unknown:
+            raise ValueError(
+                "Group-format prize-money result contains unsupported stage(s): "
+                + ", ".join(unknown)
+            )
+        return tuple(sorted(stages, key=lambda stage: order[stage]))
 
     main: list[str] = ["champion"]
     if event.main_draw_size >= 2:

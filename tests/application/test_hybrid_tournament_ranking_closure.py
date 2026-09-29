@@ -43,6 +43,9 @@ from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
 )
 from beta_engine.domain.tournaments.walkover_authority import TournamentWalkoverResult
+from beta_engine.domain.tournaments.prize_money_award_authority import (
+    build_tournament_prize_money_award_authority,
+)
 from beta_engine.domain.tournaments.result_authority import (
     TournamentMatchResultAuthority,
     TournamentPlayerResultAuthority,
@@ -137,7 +140,7 @@ def hybrid_result() -> TournamentResultAuthority:
         TournamentPlayerResultAuthority(
             player_id="C",
             draw_type="hybrid",
-            reached_stage="group_stage",
+            reached_stage="group_position_2",
             last_match_id="g-c",
             wins=0,
             losses=2,
@@ -385,7 +388,7 @@ def test_hybrid_owned_ranking_source_fork_remap_fails_closed_until_full_chain_ex
 
     with pytest.raises(
         RankingForkRemapUnsupportedError,
-        match="Hybrid tournament ranking source fork remap is not defined",
+        match="Group-format tournament ranking source fork remap is not defined",
     ):
         _remap_tournament_sources(
             (source,),
@@ -569,43 +572,25 @@ def test_missing_hybrid_ranking_policy_is_an_explicit_closure_blocker():
 
 
 @pytest.mark.pr_critical
-def test_configured_hybrid_prize_money_fails_closed_when_group_only_payout_stage_is_undefined():
-    base = standings_with_walkover()
-    group = base.groups[0]
-    extended_rows = group.rows + (
-        TournamentGroupStandingRow(
-            group_index=1,
-            position=3,
-            player_id="C",
-            wins=0,
-            losses=1,
-            group_points=0,
-            played_matches=1,
-            walkovers_received=0,
-            walkovers_conceded=0,
-            games_won=0,
-            games_lost=2,
-            points_won=10,
-            points_lost=22,
-        ),
+def test_hybrid_group_finisher_uses_explicit_group_position_prize_money_stage():
+    result = hybrid_result()
+    event = calendar_event(
+        prize_money_table={
+            "group_position_2": 250,
+            "finalist": 500,
+            "champion": 1000,
+        }
     )
-    standings = base.model_copy(
-        update={"groups": (group.model_copy(update={"rows": extended_rows}),)}
+    authority = build_tournament_prize_money_award_authority(
+        result=result,
+        event=event,
     )
+    by_id = {award.player_id: award for award in authority.awards}
 
-    blockers = hybrid_tournament_closure_blockers(
-        standings=standings,
-        bracket=two_player_bracket(),
-        policy=policy(group_win=0),
-        calendar_event=calendar_event(
-            prize_money_table={"finalist": 500, "champion": 1000}
-        ),
-    )
-    assert "hybrid_prize_money_group_stage_policy_required" in blockers
-
-    assert hybrid_tournament_closure_blockers(
-        standings=standings,
-        bracket=two_player_bracket(),
-        policy=policy(group_win=0),
-        calendar_event=calendar_event(),
-    ) == ()
+    assert authority.configuration_status == "complete"
+    assert by_id["C"].reached_stage == "group_position_2"
+    assert by_id["C"].payout_status == "known"
+    assert by_id["C"].amount == 250
+    assert by_id["B"].amount == 500
+    assert by_id["A"].amount == 1000
+    assert authority.total_prize_pool_amount == 1750

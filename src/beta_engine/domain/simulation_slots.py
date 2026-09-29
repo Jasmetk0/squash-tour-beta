@@ -30,7 +30,7 @@ class WeekSimulationScheduleSlot(FrozenInput):
     match_day_ordinal: int | None = Field(default=None, ge=1)
     match_order: int | None = Field(default=None, ge=1)
     event_id: str | None = Field(default=None, min_length=1)
-    draw_phase: Literal["qualification", "main"] | None = None
+    draw_phase: Literal["qualification", "main", "group"] | None = None
     round_number: int | None = Field(default=None, ge=1)
 
 

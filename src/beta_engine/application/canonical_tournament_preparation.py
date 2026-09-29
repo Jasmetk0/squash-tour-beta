@@ -66,7 +66,7 @@ TournamentPreparationPhase = Literal[
     "tournament_format_required",
     "tournament_topology_required",
     "group_match_schedule_required",
-    "group_match_execution_adapter_required",
+    "group_match_execution_ready",
     "knockout_draw_adapter_required",
     "draw_generation_ready",
     "draw_ready",
@@ -465,9 +465,8 @@ class CanonicalTournamentPreparationService:
             and format_authority.format_kind in {"groups", "groups_knockout"}
             and group_match_schedule is not None
         ):
-            phase = "group_match_execution_adapter_required"
+            phase = "group_match_execution_ready"
             next_action = "none"
-            blockers.append("group_match_execution_adapter_required")
         elif (
             finals_field
             and format_authority is not None
@@ -678,7 +677,14 @@ class CanonicalTournamentPreparationService:
                 and not draw_input_ready
             ),
             can_generate_draw=draw_input_ready and not draw_ready,
-            ready_for_match_schedule=draw_ready,
+            ready_for_match_schedule=(
+                draw_ready
+                or (
+                    format_authority is not None
+                    and format_authority.format_kind in {"groups", "groups_knockout"}
+                    and group_match_schedule is not None
+                )
+            ),
         )
 
 

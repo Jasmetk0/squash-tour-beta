@@ -129,10 +129,17 @@
     effective BO3/BO5 provenance, use minimal conflict-free circle-method chronology, expose
     Admin/Planned Event controls, recover the full chain through Saved Revision and fail fork
     remap closed; do not mark the event globally schedule-ready before Simulation consumes it.
-39. Next: adapt canonical Simulation Slot execution to consume the frozen group Match Schedule
-    and persist group results, then implement the decided standings / W/O / tie-break authority
-    and resolve hybrid knockout entrants from final group positions. Keep the pure-knockout
-    Finals Draw adapter as a separate explicit dependency rather than fabricating Official Ranking.
+39. ✅ Adapt canonical Simulation Slot execution to consume the frozen group Match Schedule:
+    project group matches into the existing global Week Simulation Schedule, execute them through
+    the shared authoritative Match Engine ledger with their frozen BO3/BO5 snapshots, persist
+    results/sporting effects/checkpoints, freeze group execution evidence in adopted tournament
+    authority v7, and stop after the final group match on an explicit standings-authority blocker
+    instead of inventing tournament closure.
+40. Next: build immutable group standings/result authority over completed group-match receipts,
+    including the already-decided W/O table semantics and tie-break order, then resolve
+    groups+knockout entrants from final group positions without Race reseeding. Keep the
+    pure-knockout Finals Draw adapter as a separate explicit dependency rather than fabricating
+    Official Ranking.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

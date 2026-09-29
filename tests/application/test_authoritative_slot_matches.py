@@ -9013,3 +9013,185 @@ def test_authoritative_replay_frame_composes_rally_timeline_stamina_and_context(
         after = session.scalars(select(SimulationEventGroupModel)).one()
         assert after.result_fingerprint == result_fp
         assert after.match_input_fingerprint == input_fp
+
+
+
+@pytest.mark.pr_critical
+def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_standings(
+    tmp_path, monkeypatch
+):
+    from beta_engine.application import (
+        authoritative_run_simulation_driver as driver_module,
+    )
+    from beta_engine.domain.matches import EffectiveMatchFormatSnapshot, MatchFormat
+    from beta_engine.domain.tournaments.group_match_schedule_authority import (
+        TournamentGroupMatchScheduleAuthority,
+        TournamentGroupScheduledMatch,
+    )
+
+    driver, factory, week = _driver_fixture(tmp_path / "group-slot-execution")
+
+    registry = driver.match_service._load_registry()
+    event_id = next(iter(registry.matches_by_event_id))
+    registry.matches_by_event_id = {}
+    driver.match_service._save_registry(registry)
+
+    with factory() as session:
+        sporting = get_sporting(
+            session, run_id="run", branch_id="branch", week=week
+        )
+        assert sporting is not None
+        player_ids = tuple(player.player_id for player in sporting.players)
+    assert len(player_ids) == 4
+    a, b, c_player, d = player_ids
+
+    effective_format = EffectiveMatchFormatSnapshot.create(
+        format=MatchFormat(best_of=3, games_to=11, win_by=2),
+        source_scope="tournament_group_edition_override",
+        source_key="test-group-bo3",
+    )
+    pairings = (
+        (1, 1, 1, 4, a, d),
+        (1, 2, 2, 3, b, c_player),
+        (2, 1, 1, 3, a, c_player),
+        (2, 2, 2, 4, b, d),
+        (3, 1, 1, 2, a, b),
+        (3, 2, 3, 4, c_player, d),
+    )
+    scheduled_matches = tuple(
+        TournamentGroupScheduledMatch(
+            match_id=f"{event_id}:group:1:M{index}",
+            group_index=1,
+            topology_match_index=index,
+            match_day_ordinal=day,
+            match_order=order,
+            top_slot_index=top_slot,
+            bottom_slot_index=bottom_slot,
+            top_player_id=top_player,
+            bottom_player_id=bottom_player,
+            effective_match_format=effective_format,
+        )
+        for index, (
+            day,
+            order,
+            top_slot,
+            bottom_slot,
+            top_player,
+            bottom_player,
+        ) in enumerate(pairings, start=1)
+    )
+    group_schedule = TournamentGroupMatchScheduleAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id=event_id,
+        generated_by_command_id="group-schedule",
+        format_authority_fingerprint="a" * 64,
+        topology_authority_fingerprint="b" * 64,
+        group_rules_policy_fingerprint="c" * 64,
+        group_count=1,
+        group_size=4,
+        match_day_count=3,
+        matches=scheduled_matches,
+    )
+
+    class FakeGroupScheduleStore:
+        def __init__(self, session):
+            self.session = session
+
+        def get(self, *, run_id, branch_id, event_id: str):
+            if (run_id, branch_id, event_id) == (
+                "run",
+                "branch",
+                group_schedule.event_id,
+            ):
+                return group_schedule
+            return None
+
+    monkeypatch.setattr(
+        driver_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeGroupScheduleStore,
+    )
+
+    proposal = driver.propose_topological_schedule(
+        run_id="run", branch_id="branch"
+    )
+    schedule = WeekSimulationSchedule.model_validate_json(
+        json.dumps(proposal["schedule"], sort_keys=True, separators=(",", ":"))
+    )
+    assert len(schedule.slots) == 6
+    local_day = {
+        match.match_id: match.match_day_ordinal
+        for match in group_schedule.matches
+    }
+    assert all(
+        slot.draw_phase == "group"
+        and slot.round_number == local_day[slot.group_ids[0]]
+        and slot.match_day_ordinal == local_day[slot.group_ids[0]]
+        for slot in schedule.slots
+    )
+
+    driver.adopt_schedule(
+        schedule,
+        request_id="adopt-group-week",
+        expected_position_fingerprint=proposal["position_fingerprint"],
+    )
+
+    for index in range(6):
+        opening = driver.position(run_id="run", branch_id="branch")
+        assert opening.current_slot_kind == "match"
+        assert len(opening.unresolved_group_ids) == 1
+        group_id = opening.unresolved_group_ids[0]
+        driver.simulate_next_match(
+            AuthoritativeSimulationCommand(
+                command_id=f"group-match-{index + 1}",
+                run_id="run",
+                branch_id="branch",
+                expected_week=week,
+                expected_position_fingerprint=opening.position_fingerprint,
+                expected_revision_id="revision",
+                group_id=group_id,
+            )
+        )
+
+    final = driver.position(run_id="run", branch_id="branch")
+    assert final.current_slot_kind is None
+    assert final.unresolved_group_ids == ()
+    assert final.week_ready_for_transition is False
+    assert "group_standings_authority_required" in final.transition_blockers
+    assert "pending_authoritative_groups" not in final.transition_blockers
+
+    with factory() as session:
+        rows = session.scalars(
+            select(SimulationEventGroupModel).order_by(
+                SimulationEventGroupModel.group_id
+            )
+        ).all()
+        assert len(rows) == 6
+        for row in rows:
+            loaded = AuthoritativeSlotMatchExecutor._load_group(row)
+            assert (
+                loaded.authoritative_input.engine_input.effective_match_format.format.best_of
+                == 3
+            )
+            assert (
+                loaded.authoritative_input.engine_input.effective_match_format.source_scope
+                == "tournament_group_edition_override"
+            )
+        adopted = session.get(
+            AdoptedTournamentAuthorityModel,
+            ("run", "branch", week.ordinal),
+        )
+        assert adopted is not None
+        adopted_payload = json.loads(adopted.package_json)
+        assert adopted_payload["schema_version"] == "adopted_tournament_authority.v7"
+        assert (
+            adopted_payload["tournaments"][0]["group_match_schedule_fingerprint"]
+            == group_schedule.fingerprint
+        )
+        assert (
+            OwnedTournamentRankingSourceStore(session).history(
+                run_id="run", branch_id="branch"
+            )
+            == ()
+        )

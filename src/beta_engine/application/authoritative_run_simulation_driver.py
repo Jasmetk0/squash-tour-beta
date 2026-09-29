@@ -158,6 +158,9 @@ from beta_engine.infrastructure.db.tournament_draw_authority import (
 from beta_engine.infrastructure.db.tournament_entry_field import (
     TournamentEntryFieldStore,
 )
+from beta_engine.infrastructure.db.tournament_group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthorityStore,
+)
 from beta_engine.infrastructure.db.week_tournament_lock import (
     WeekTournamentLockStore,
     derive_week_tournament_lock_authority,
@@ -815,6 +818,28 @@ class _AdoptedTournamentEvidence(FrozenInput):
     draw_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
+    group_match_schedule_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+
+    @model_validator(mode="after")
+    def canonical_source_kind(self):
+        if self.package is not None:
+            return self
+        if self.calendar_event is None or self.point_award_authority is None:
+            raise ValueError("canonical adopted tournament evidence is incomplete")
+        source_count = sum(
+            value is not None
+            for value in (
+                self.draw_authority_fingerprint,
+                self.group_match_schedule_fingerprint,
+            )
+        )
+        if source_count != 1:
+            raise ValueError(
+                "canonical tournament evidence requires exactly one execution source"
+            )
+        return self
 
 
 class AuthoritativeSeasonTransitionPreflight(FrozenInput):
@@ -2627,7 +2652,14 @@ class AuthoritativeRunSimulationDriver:
             raise ValueError(
                 "reconstruction target is completed, blocked, or outside the current slot"
             )
-        slot, plan, event, package, players = self._group_execution_context(
+        (
+            slot,
+            plan,
+            event,
+            event_id,
+            players,
+            effective_match_format,
+        ) = self._group_execution_context(
             session, request, packages, request.group_id
         )
         if (
@@ -2638,7 +2670,11 @@ class AuthoritativeRunSimulationDriver:
                 "reconstruction winner constraint is not one of the frozen match participants"
             )
 
-        max_sets = 5
+        max_sets = (
+            effective_match_format.format.best_of
+            if effective_match_format is not None
+            else 5
+        )
         needed_sets = max_sets // 2 + 1
         if request.constraints.player_a_sets_won is not None:
             a_sets = request.constraints.player_a_sets_won
@@ -2649,7 +2685,7 @@ class AuthoritativeRunSimulationDriver:
                 or a_sets + b_sets > max_sets
             ):
                 raise ValueError(
-                    "reconstruction exact match score is not a completed best-of-five result"
+                    "reconstruction exact match score is not a completed match result"
                 )
 
         attempt_budget = min(400, max(40, request.candidate_count * 20))
@@ -2740,7 +2776,7 @@ class AuthoritativeRunSimulationDriver:
             "slot_id": slot.slot_id,
             "slot_start_fingerprint": plan.slot_start_fingerprint,
             "group_id": request.group_id,
-            "event_id": package.event_id,
+            "event_id": event_id,
             "match_id": event.match_id,
             "player_a_id": players[0],
             "player_b_id": players[1],
@@ -2791,7 +2827,14 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "reconstruction target is completed, blocked, or outside the current slot"
                 )
-            slot, plan, event, package, players = self._group_execution_context(
+            (
+                slot,
+                plan,
+                event,
+                event_id,
+                players,
+                _,
+            ) = self._group_execution_context(
                 session, command, packages, group_id
             )
             payload = {
@@ -2803,7 +2846,7 @@ class AuthoritativeRunSimulationDriver:
                 "slot_id": slot.slot_id,
                 "slot_start_fingerprint": plan.slot_start_fingerprint,
                 "group_id": group_id,
-                "event_id": package.event_id,
+                "event_id": event_id,
                 "match_id": event.match_id,
                 "player_a_id": players[0],
                 "player_b_id": players[1],
@@ -3624,7 +3667,14 @@ class AuthoritativeRunSimulationDriver:
                     "live rally target is completed, blocked, or outside the current slot"
                 )
 
-            slot, plan, event, package, players = self._group_execution_context(
+            (
+                slot,
+                plan,
+                event,
+                event_id,
+                players,
+                effective_match_format,
+            ) = self._group_execution_context(
                 session, command, packages, command.group_id
             )
             seed = int(
@@ -3640,12 +3690,13 @@ class AuthoritativeRunSimulationDriver:
                 week=command.expected_week,
                 slot_id=slot.slot_id,
                 group_id=command.group_id,
-                event_id=package.event_id,
+                event_id=event_id,
                 match_id=event.match_id,
                 player_a_id=players[0],
                 player_b_id=players[1],
                 seed=seed,
                 expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+                effective_match_format=effective_match_format,
             )
             current_state_fp = started["state_fingerprint"]
             if current_state_fp is None:
@@ -4022,7 +4073,7 @@ class AuthoritativeRunSimulationDriver:
                 adopt=True,
             )
             self._ensure_current_slot(session, command, packages)
-            slot, _, _, _, _ = self._group_execution_context(
+            slot, *_ = self._group_execution_context(
                 session, command, packages, command.group_id
             )
 
@@ -8086,7 +8137,10 @@ class AuthoritativeRunSimulationDriver:
             if (
                 item.calendar_event is None
                 or item.point_award_authority is None
-                or item.draw_authority_fingerprint is None
+                or (
+                    (item.draw_authority_fingerprint is None)
+                    == (item.group_match_schedule_fingerprint is None)
+                )
             ):
                 raise ValueError(
                     "canonical frozen tournament authority is incomplete"
@@ -8107,6 +8161,25 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError(
                     "canonical frozen tournament Calendar Event season changed"
                 )
+
+            if item.group_match_schedule_fingerprint is not None:
+                group_schedule = TournamentGroupMatchScheduleAuthorityStore(
+                    session
+                ).get(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id=item.event_id,
+                )
+                if (
+                    group_schedule is None
+                    or group_schedule.fingerprint
+                    != item.group_match_schedule_fingerprint
+                ):
+                    raise ValueError(
+                        "frozen tournament Group Match Schedule binding changed"
+                    )
+                continue
+
             draw = draw_store.get(
                 run_id=run_id,
                 branch_id=branch_id,
@@ -8530,6 +8603,30 @@ class AuthoritativeRunSimulationDriver:
         payload = json.loads(payload_json)
         version = payload.get("schema_version")
 
+        if version == "adopted_tournament_authority.v7":
+            items = []
+            for item in payload["tournaments"]:
+                event = CalendarEvent.model_validate(item["calendar_event"])
+                evidence = _AdoptedTournamentEvidence(
+                    event_id=item["event_id"],
+                    calendar_event=event,
+                    point_award_authority=FrozenPointAwardAuthority.model_validate(
+                        item["point_award_authority"]
+                    ),
+                    draw_authority_fingerprint=item.get(
+                        "draw_authority_fingerprint"
+                    ),
+                    group_match_schedule_fingerprint=item.get(
+                        "group_match_schedule_fingerprint"
+                    ),
+                )
+                if evidence.event_id != event.event_id:
+                    raise ValueError(
+                        "canonical adopted tournament event identity mismatch"
+                    )
+                items.append(evidence)
+            return tuple(sorted(items, key=lambda item: item.event_id))
+
         if version == "adopted_tournament_authority.v6":
             items = []
             for item in payload["tournaments"]:
@@ -8622,13 +8719,43 @@ class AuthoritativeRunSimulationDriver:
             item.package is None
             and item.calendar_event is not None
             and item.point_award_authority is not None
-            and item.draw_authority_fingerprint is not None
+            and (
+                (item.draw_authority_fingerprint is None)
+                != (item.group_match_schedule_fingerprint is None)
+            )
             for item in items
         )
         if canonical:
+            has_group_schedule = any(
+                item.group_match_schedule_fingerprint is not None for item in items
+            )
+            if not has_group_schedule:
+                return json.dumps(
+                    {
+                        "schema_version": "adopted_tournament_authority.v6",
+                        "tournaments": [
+                            {
+                                "event_id": item.event_id,
+                                "calendar_event": item.calendar_event.model_dump(
+                                    mode="json",
+                                    exclude_computed_fields=True,
+                                ),
+                                "point_award_authority": (
+                                    item.point_award_authority.model_dump(mode="json")
+                                ),
+                                "draw_authority_fingerprint": (
+                                    item.draw_authority_fingerprint
+                                ),
+                            }
+                            for item in items
+                        ],
+                    },
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
             return json.dumps(
                 {
-                    "schema_version": "adopted_tournament_authority.v6",
+                    "schema_version": "adopted_tournament_authority.v7",
                     "tournaments": [
                         {
                             "event_id": item.event_id,
@@ -8639,8 +8766,21 @@ class AuthoritativeRunSimulationDriver:
                             "point_award_authority": (
                                 item.point_award_authority.model_dump(mode="json")
                             ),
-                            "draw_authority_fingerprint": (
-                                item.draw_authority_fingerprint
+                            **(
+                                {
+                                    "draw_authority_fingerprint":
+                                    item.draw_authority_fingerprint
+                                }
+                                if item.draw_authority_fingerprint is not None
+                                else {}
+                            ),
+                            **(
+                                {
+                                    "group_match_schedule_fingerprint":
+                                    item.group_match_schedule_fingerprint
+                                }
+                                if item.group_match_schedule_fingerprint is not None
+                                else {}
                             ),
                         }
                         for item in items
@@ -8728,19 +8868,24 @@ class AuthoritativeRunSimulationDriver:
 
         packages = self._packages(
             week,
+            required=False,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
         )
-        if (
-            len(packages) > 1
-            or len(
-                self._topology_for_session(
-                    session, run_id, branch_id, packages, week=week
-                )
-            )
-            != 3
-        ) and self._schedule(
+        group_entries = self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        if not packages and not group_entries:
+            raise ValueError("supported tournament authority is missing")
+        plans = self._topology_for_session(
+            session, run_id, branch_id, packages, week=week
+        )
+        requires_schedule = bool(group_entries) or len(packages) > 1 or len(plans) != 3
+        if requires_schedule and self._schedule(
             session, run_id, branch_id, week
         ) is None:
             raise ValueError(
@@ -8805,7 +8950,23 @@ class AuthoritativeRunSimulationDriver:
                     draw_authority_fingerprint=draw.fingerprint,
                 )
             )
-        items = tuple(items)
+
+        package_event_ids = {package.event_id for package in packages}
+        for event, group_schedule in group_entries:
+            if event.event_id in package_event_ids:
+                raise ValueError(
+                    "Tournament Edition cannot use Draw and Group Match Schedule "
+                    "execution sources simultaneously"
+                )
+            items.append(
+                _AdoptedTournamentEvidence(
+                    event_id=event.event_id,
+                    calendar_event=event,
+                    point_award_authority=self._run_owned_point_award_authority(event),
+                    group_match_schedule_fingerprint=group_schedule.fingerprint,
+                )
+            )
+        items = tuple(sorted(items, key=lambda item: item.event_id))
 
         authority_fp = self._tournament_authority_fingerprint(
             run_id, branch_id, week, items
@@ -8816,8 +8977,8 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=branch_id,
                 week_ordinal=week.ordinal,
                 event_id=(
-                    packages[0].event_id
-                    if len(packages) == 1
+                    items[0].event_id
+                    if len(items) == 1
                     else "__week_tournament_authority_bundle_v1__"
                 ),
                 authority_fingerprint=authority_fp,
@@ -8865,7 +9026,10 @@ class AuthoritativeRunSimulationDriver:
                 if (
                     item.calendar_event is None
                     or item.point_award_authority is None
-                    or item.draw_authority_fingerprint is None
+                    or (
+                        (item.draw_authority_fingerprint is None)
+                        == (item.group_match_schedule_fingerprint is None)
+                    )
                 ):
                     raise ValueError(
                         "canonical adopted tournament evidence is incomplete"
@@ -8879,10 +9043,15 @@ class AuthoritativeRunSimulationDriver:
                     "point_award_authority": (
                         item.point_award_authority.model_dump(mode="json")
                     ),
-                    "draw_authority_fingerprint": (
-                        item.draw_authority_fingerprint
-                    ),
                 }
+                if item.draw_authority_fingerprint is not None:
+                    body["draw_authority_fingerprint"] = (
+                        item.draw_authority_fingerprint
+                    )
+                else:
+                    body["group_match_schedule_fingerprint"] = (
+                        item.group_match_schedule_fingerprint
+                    )
             bodies.append(body)
         return fingerprint(
             {"scope": [run_id, branch_id, week.ordinal], "tournaments": bodies}
@@ -9607,7 +9776,7 @@ class AuthoritativeRunSimulationDriver:
             schedule = self._schedule(session, run_id, branch_id, week)
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
-            ) if packages else {}
+            )
             entry_slot_ordinals = self._entry_slot_ordinals(
                 session, run_id, branch_id, week
             )
@@ -9868,6 +10037,7 @@ class AuthoritativeRunSimulationDriver:
             )
         packages = self._packages(
             week,
+            required=False,
             session=session,
             run_id=run_id,
             branch_id=branch_id,
@@ -9914,6 +10084,26 @@ class AuthoritativeRunSimulationDriver:
                     match.round_number,
                     match.bracket_position,
                 )
+
+        for event, group_schedule in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for match in group_schedule.matches:
+                if match.match_id not in plans:
+                    continue
+                if match.match_id in match_meta:
+                    raise ValueError(
+                        "Match Day schedule contains duplicate canonical match identity"
+                    )
+                match_meta[match.match_id] = (
+                    event.event_id,
+                    "group",
+                    match.match_day_ordinal,
+                    match.match_order,
+                )
         if set(match_meta) != set(plans):
             missing = sorted(set(plans) - set(match_meta))
             raise ValueError(
@@ -9927,7 +10117,7 @@ class AuthoritativeRunSimulationDriver:
             qualification_rounds = qualification_rounds_by_event.get(event_id, 0)
             day_by_group[group_id] = (
                 round_number
-                if draw_phase == "qualification"
+                if draw_phase in {"qualification", "group"}
                 else qualification_rounds + round_number
             )
 
@@ -10267,6 +10457,7 @@ class AuthoritativeRunSimulationDriver:
                 raise ValueError("schedule week is stale")
             packages = self._packages(
                 schedule.week,
+                required=False,
                 session=session,
                 run_id=schedule.run_id,
                 branch_id=schedule.branch_id,
@@ -10311,6 +10502,7 @@ class AuthoritativeRunSimulationDriver:
                 schedule,
                 self._packages(
                     schedule.week,
+                    required=False,
                     session=session,
                     run_id=schedule.run_id,
                     branch_id=schedule.branch_id,
@@ -10472,38 +10664,127 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
+    def _group_match_schedules_for_week(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ):
+        """Resolve frozen group Match Schedule authorities in the current Calendar week."""
+
+        season = f"{2000 + week.season_index}/{2001 + week.season_index}"
+        calendar, _, _ = self._calendar_authority(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            season=season,
+        )
+        if calendar is None:
+            return ()
+        store = TournamentGroupMatchScheduleAuthorityStore(session)
+        values = []
+        for event in calendar.events:
+            if event.season_week != week.week:
+                continue
+            authority = store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            )
+            if authority is None:
+                continue
+            if authority.event_id != event.event_id:
+                raise ValueError(
+                    "group Match Schedule event identity differs from Calendar"
+                )
+            frozen_event = CalendarEvent.model_validate(
+                event.model_dump(mode="json", exclude_computed_fields=True)
+            )
+            values.append((frozen_event, authority))
+        return tuple(sorted(values, key=lambda item: item[0].event_id))
+
+    def _group_match_schedule_plans(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> dict[str, SimulationMatchEventPlan]:
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        for event, authority in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for match in authority.matches:
+                if match.match_id in plans:
+                    raise ValueError(
+                        "group Match Schedule contains duplicate week match identity"
+                    )
+                plans[match.match_id] = SimulationMatchEventPlan(
+                    group_id=match.match_id,
+                    event_id=event.event_id,
+                    match_id=match.match_id,
+                    direct_player_ids=(
+                        match.top_player_id,
+                        match.bottom_player_id,
+                    ),
+                )
+        return plans
+
     def _topology_for_session(
         self, session, run_id, branch_id, packages, *, week
     ):
-        """Prefer the Draw source frozen for this tournament authority generation."""
-        if not packages:
-            return {}
-        canonical = []
-        for package in packages:
-            draw = self._canonical_draw_binding(
-                session,
-                run_id=run_id,
-                branch_id=branch_id,
-                week=week,
-                event_id=package.event_id,
-            )
-            canonical.append((package, draw))
-        if all(draw is None for _, draw in canonical):
-            return self._topology(packages)
-        if any(draw is None for _, draw in canonical):
+        """Combine bracket Draw topology and frozen group Match Schedule topology."""
+
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        if packages:
+            canonical = []
+            for package in packages:
+                draw = self._canonical_draw_binding(
+                    session,
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    week=week,
+                    event_id=package.event_id,
+                )
+                canonical.append((package, draw))
+            if all(draw is None for _, draw in canonical):
+                plans.update(self._topology(packages))
+            elif any(draw is None for _, draw in canonical):
+                raise ValueError(
+                    "week mixes canonical Draw authority with legacy-only tournament topology"
+                )
+            else:
+                for package, draw in canonical:
+                    projection = project_canonical_draw_to_match_topology(
+                        draw=draw,
+                        package=package,
+                    )
+                    for plan in projection.plans:
+                        if plan.group_id in plans:
+                            raise ValueError(
+                                "week topology contains duplicate group identity"
+                            )
+                        plans[plan.group_id] = plan
+
+        group_plans = self._group_match_schedule_plans(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        overlap = set(plans) & set(group_plans)
+        if overlap:
             raise ValueError(
-                "week mixes canonical Draw authority with legacy-only tournament topology"
+                "week bracket and group topology share match identity: "
+                + ", ".join(sorted(overlap))
             )
-        plans = {}
-        for package, draw in canonical:
-            projection = project_canonical_draw_to_match_topology(
-                draw=draw,
-                package=package,
-            )
-            for plan in projection.plans:
-                if plan.group_id in plans:
-                    raise ValueError("week topology contains duplicate group identity")
-                plans[plan.group_id] = plan
+        plans.update(group_plans)
         return plans
 
     def _validate_schedule(self, session, schedule, packages):
@@ -10596,6 +10877,31 @@ class AuthoritativeRunSimulationDriver:
                     )
                     target.setdefault(package.event_id, []).append(match.match_id)
 
+            fixed_group_day: dict[str, int] = {}
+            for event, group_schedule in self._group_match_schedules_for_week(
+                session,
+                run_id=schedule.run_id,
+                branch_id=schedule.branch_id,
+                week=schedule.week,
+            ):
+                for match in group_schedule.matches:
+                    if match.match_id not in plans:
+                        continue
+                    if match.match_id in match_meta:
+                        raise ValueError(
+                            "Match Day schedule metadata contains duplicate match identity"
+                        )
+                    match_meta[match.match_id] = (
+                        event.event_id,
+                        "group",
+                        match.match_day_ordinal,
+                    )
+                    known_players[match.match_id] = (
+                        match.top_player_id,
+                        match.bottom_player_id,
+                    )
+                    fixed_group_day[match.match_id] = match.match_day_ordinal
+
             if set(match_meta) != set(plans):
                 raise ValueError(
                     "Match Day schedule metadata does not cover canonical match topology"
@@ -10621,6 +10927,13 @@ class AuthoritativeRunSimulationDriver:
                     )
                 assert slot.match_day_ordinal is not None
                 assert slot.match_order is not None
+                if (
+                    group_id in fixed_group_day
+                    and slot.match_day_ordinal != fixed_group_day[group_id]
+                ):
+                    raise ValueError(
+                        "global Week Schedule changed frozen group Match Day chronology"
+                    )
                 day_of[group_id] = slot.match_day_ordinal
                 order_by_day.setdefault(slot.match_day_ordinal, []).append(
                     (slot.match_order, slot.ordinal, group_id)
@@ -10707,6 +11020,15 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=branch_id,
             )
         )
+        group_schedule_entries = self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        group_schedule_event_ids = tuple(
+            event.event_id for event, _ in group_schedule_entries
+        )
         schedule = self._schedule(session, run_id, branch_id, week)
         entry_slot_ordinals = self._entry_slot_ordinals(
             session, run_id, branch_id, week
@@ -10757,10 +11079,11 @@ class AuthoritativeRunSimulationDriver:
         )
         if (
             schedule is None
-            and packages
+            and (packages or group_schedule_entries)
             and not entry_slot_ordinals
             and (
-                bool(wc_slot_ordinals)
+                bool(group_schedule_entries)
+                or bool(wc_slot_ordinals)
                 or len(packages) > 1
                 or len(
                     self._topology_for_session(
@@ -10803,12 +11126,8 @@ class AuthoritativeRunSimulationDriver:
             )
         ).all()
         done = {g.group_id for g in groups}
-        plans = (
-            self._topology_for_session(
-                session, run_id, branch_id, packages, week=week
-            )
-            if packages
-            else {}
+        plans = self._topology_for_session(
+            session, run_id, branch_id, packages, week=week
         )
         current = next((s for s in slots if s.status != "complete"), None)
         authored_slots = schedule.slots if schedule else ()
@@ -10897,6 +11216,7 @@ class AuthoritativeRunSimulationDriver:
             )
             if (
                 not packages
+                and not group_schedule_entries
                 and schedule is None
                 and not slots
                 and not groups
@@ -10913,7 +11233,8 @@ class AuthoritativeRunSimulationDriver:
         elif current_lock_conflicts and week_tournament_lock is not None:
             blockers.append("week_tournament_lock_conflict_after_lock")
         if explicit_empty_context is None and schedule is None and (
-            bool(entry_slot_ordinals)
+            bool(group_schedule_entries)
+            or bool(entry_slot_ordinals)
             or bool(wc_slot_ordinals)
             or len(packages) > 1
             or len(plans) != 3
@@ -10932,6 +11253,8 @@ class AuthoritativeRunSimulationDriver:
             blockers.append("week_schedule_missing")
         if set(done) != set(plans):
             blockers.append("pending_authoritative_groups")
+        elif group_schedule_entries:
+            blockers.append("group_standings_authority_required")
         if any(v is None for v in owned.values()):
             blockers.append("tournament_source_missing")
         if terminal is None and explicit_empty_context is None:
@@ -10999,7 +11322,13 @@ class AuthoritativeRunSimulationDriver:
             "current_slot_ordinal": (
                 pending_entry_ordinal if entry_is_current else target_match_ordinal
             ),
-            "proposed_schedule_requirement": [p.event_id for p in packages],
+            "proposed_schedule_requirement": sorted(
+                {p.event_id for p in packages} | set(group_schedule_event_ids)
+            ),
+            "group_match_schedules": [
+                (event.event_id, authority.fingerprint)
+                for event, authority in group_schedule_entries
+            ],
             "slots": [
                 (s.slot_id, s.status, s.plan_fingerprint, s.terminal_checkpoint_json)
                 for s in slots
@@ -11220,7 +11549,33 @@ class AuthoritativeRunSimulationDriver:
             event = next(e for e in plan.match_events if e.group_id == group_id)
         except StopIteration as exc:
             raise ValueError("target match group is not planned in the current slot") from exc
-        package = next(p for p in packages if p.event_id == event.event_id)
+        package = next(
+            (p for p in packages if p.event_id == event.event_id),
+            None,
+        )
+        group_match = None
+        if package is None:
+            group_schedule = TournamentGroupMatchScheduleAuthorityStore(session).get(
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                event_id=event.event_id,
+            )
+            if group_schedule is None:
+                raise ValueError(
+                    "planned match has neither MatchPackage nor Group Match Schedule source"
+                )
+            group_match = next(
+                (
+                    match
+                    for match in group_schedule.matches
+                    if match.match_id == event.match_id
+                ),
+                None,
+            )
+            if group_match is None:
+                raise ValueError(
+                    "planned group match is absent from frozen Group Match Schedule"
+                )
         if event.participant_sources:
             players = tuple(
                 source.removeprefix("player:")
@@ -11258,12 +11613,36 @@ class AuthoritativeRunSimulationDriver:
             )
         if len(players) != 2:
             raise ValueError("supported reconstruction requires exactly two participants")
-        return slot, plan, event, package, players
+        effective_match_format = None
+        if group_match is not None:
+            if tuple(players) != (
+                group_match.top_player_id,
+                group_match.bottom_player_id,
+            ):
+                raise ValueError(
+                    "planned group participants differ from frozen Group Match Schedule"
+                )
+            effective_match_format = group_match.effective_match_format
+        return (
+            slot,
+            plan,
+            event,
+            event.event_id,
+            players,
+            effective_match_format,
+        )
 
     def _execute_group(
         self, session, command, packages, group_id, *, seed_override: int | None = None
     ):
-        slot, plan, event, package, players = self._group_execution_context(
+        (
+            slot,
+            plan,
+            event,
+            event_id,
+            players,
+            effective_match_format,
+        ) = self._group_execution_context(
             session, command, packages, group_id
         )
         authority_fp = self._authority_package(
@@ -11289,12 +11668,13 @@ class AuthoritativeRunSimulationDriver:
             week=command.expected_week,
             slot_id=slot.slot_id,
             group_id=group_id,
-            event_id=package.event_id,
+            event_id=event_id,
             match_id=event.match_id,
             player_a_id=players[0],
             player_b_id=players[1],
             seed=seed,
             expected_slot_start_fingerprint=plan.slot_start_fingerprint,
+            effective_match_format=effective_match_format,
         )
 
     def _advance_or_close(self, session, command, packages, *, fault_at=None):
@@ -11320,14 +11700,26 @@ class AuthoritativeRunSimulationDriver:
             ).package_json
         )
         evidence_by_event = {item.event_id: item for item in items}
-        if set(evidence_by_event) != {package.event_id for package in packages}:
+        package_event_ids = {package.event_id for package in packages}
+        if not package_event_ids <= set(evidence_by_event):
             raise ValueError(
                 "frozen tournament authority package universe changed"
             )
+        for event_id, evidence in evidence_by_event.items():
+            if event_id in package_event_ids:
+                continue
+            if evidence.group_match_schedule_fingerprint is None:
+                raise ValueError(
+                    "frozen non-package tournament lacks Group Match Schedule evidence"
+                )
         for package in packages:
             evidence = evidence_by_event[package.event_id]
             point_authority = evidence.point_award_authority
             draw_fp = evidence.draw_authority_fingerprint
+            if evidence.group_match_schedule_fingerprint is not None:
+                raise ValueError(
+                    "MatchPackage tournament cannot close from Group Match Schedule evidence"
+                )
             matches = tuple(
                 m
                 for m in package.qualification_matches + package.main_draw_matches

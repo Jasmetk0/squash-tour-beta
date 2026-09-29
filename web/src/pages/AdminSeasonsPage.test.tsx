@@ -677,11 +677,11 @@ describe('AdminSeasonsPage', () => {
   it('renders advanced sections collapsed and keeps manual controls accessible after expansion', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('button', { name: /Manual Artifact Tools \/ Advanced/i })).toHaveAttribute('aria-expanded', 'false')
+    expect(await screen.findByRole('button', { name: /Legacy Artifact Inspection \/ Advanced/i })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: /Event-Level Tools/i })).toHaveAttribute('aria-expanded', 'false')
     expect(screen.getByRole('button', { name: /Rankings \/ Snapshots/i })).toHaveAttribute('aria-expanded', 'false')
 
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    await expandAdminSection(/Legacy Artifact Inspection \/ Advanced/i)
     expect(screen.getByRole('heading', { name: 'Legacy Event Entries — read-only' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Preview entries' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Persist entries' })).not.toBeInTheDocument()
@@ -922,7 +922,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
 
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    await expandAdminSection(/Legacy Artifact Inspection \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Legacy Event Entries — read-only' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Legacy Event Draws — read-only' })).toBeInTheDocument()
@@ -1010,7 +1010,7 @@ describe('AdminSeasonsPage', () => {
     }))
 
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    await expandAdminSection(/Legacy Artifact Inspection \/ Advanced/i)
     await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
 
     expect(await screen.findByRole('heading', { name: 'Read-only Match Replay' })).toBeInTheDocument()
@@ -1034,7 +1034,7 @@ describe('AdminSeasonsPage', () => {
     api.getEventPointAwards.mockResolvedValue({ ...pointAwardsResult, award_package_exists: true, applied: false })
 
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    await expandAdminSection(/Legacy Artifact Inspection \/ Advanced/i)
 
     expect(await screen.findByRole('heading', { name: 'Legacy Event Results — read-only' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Legacy Ranking / Race Point Awards — read-only' })).toBeInTheDocument()

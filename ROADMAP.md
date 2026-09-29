@@ -172,14 +172,21 @@
     bracket/BYE geometry, freeze Draw Input v10 without synthesizing Official Ranking/application
     evidence, preserve Race-derived seed order and reuse the ordinary Draw/knockout Topology path.
     Keep unresolved group-format policies separate.
-46. 🚧 In progress: the immutable authority plus guarded persistence/API kernel now provides vacancy-scoped frozen-Race
-    preview, explicit decline/accept audit, exhausted-state blocking and append-only effective
-    participant fields without mutating initial selection or synthesizing Official Ranking.
-    Complete the production slice by adding Saved Revision, Planned Event Admin UI,
-    preparation, pre-draw Entry/Draw Input adaptation, and pure-knockout post-draw Draw Revision,
-    cutoff/W/O and closure integration. Concurrent post-draw vacancies and started-group cases
-    remain fail-closed unless an existing decided rule supplies an unambiguous mapping; do not
-    invent reserve notifications, offer expiry or a global reserve roster.
+46. ✅ Implement the decided World Tour Finals frozen-Race withdrawal/replacement dependency as a
+    dedicated production authority: preserve the immutable initial participant selection, record
+    mandatory withdrawal reasons plus explicit Race-order decline/accept decisions, keep append-only
+    effective participant states and fail exhausted reserve order closed. Accepted replacements feed
+    canonical Entry Field v3 / Draw Input v11 without synthetic Official Ranking; pure-knockout
+    post-draw acceptance reuses the ordinary Redraw Cutoff → seed-cascade → Draw Freeze revision
+    phases, player-specific first-REAL-match cutoff and canonical W/O handoff. Saved Revision
+    captures/restores the full replacement/effective/Entry/Draw lineage, historical fork remap fails
+    closed where identity remap is unsafe, Preparation blocks awaiting/exhausted vacancies, and
+    Planned Event exposes effective Race-ranked participants plus explicit preview/Decline/Accept and
+    Draw-repair context. Closure remains result-driven from the successor Draw, so a player actually
+    replaced before their first REAL match is absent from Result/Point Award/Prize Money authority.
+    Concurrent ambiguous post-draw vacancies and started-group replacement remain fail-closed; no
+    reserve notification cadence, offer expiry, global reserve roster or new sanction policy is
+    invented.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

@@ -336,7 +336,8 @@ def test_pre_match_replaced_player_gets_no_result_points_or_prize_money():
                 "champion": 1000,
                 "finalist": 500,
                 "semifinal": 250,
-            }
+            },
+            "prize_money_currency": "EUR",
         }
     )
     package = build_run_owned_match_package(

@@ -1,9 +1,14 @@
 """Pure single-group Tournament Edition closure and group-position prize payouts."""
 
+from types import SimpleNamespace
+
 import pytest
+
+import beta_engine.application.pure_groups_tournament_closure as closure_module
 
 from beta_engine.application.pure_groups_tournament_closure import (
     build_pure_groups_point_award_authority,
+    build_pure_groups_tournament_result_authority,
     pure_groups_closure_blockers,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
@@ -339,3 +344,53 @@ def test_pure_groups_walkover_ranking_reward_remains_explicitly_unresolved():
         policy=policy(0),
         ranking_status="ranked",
     ) == ()
+
+
+
+@pytest.mark.pr_critical
+def test_pure_groups_result_builder_uses_exact_final_standings_and_group_receipts(
+    monkeypatch,
+):
+    schedule = SimpleNamespace(
+        fingerprint=fp("b"),
+        matches=(
+            SimpleNamespace(
+                match_id="A-B",
+                match_day_ordinal=1,
+                topology_match_index=1,
+            ),
+        ),
+    )
+
+    class FakeScheduleStore:
+        def __init__(self, session):
+            pass
+
+        def get(self, **kwargs):
+            return schedule
+
+    monkeypatch.setattr(
+        closure_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeScheduleStore,
+    )
+    source = standings()
+
+    result = build_pure_groups_tournament_result_authority(
+        session=object(),
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=10),
+        standings=source,
+    )
+
+    assert result.schema_version == "tournament_result_authority.v3"
+    assert result.champion_player_id == "A"
+    assert result.finalist_player_id == "B"
+    by_id = {player.player_id: player for player in result.players}
+    assert by_id["A"].reached_stage == "group_position_1"
+    assert by_id["B"].reached_stage == "group_position_2"
+    assert by_id["A"].played_group_wins == 1
+    assert by_id["B"].played_group_wins == 0
+    assert tuple(match.draw_type for match in result.matches) == ("group",)

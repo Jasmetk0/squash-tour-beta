@@ -21,6 +21,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentFormatAuthorityModel,
     TournamentGroupRulesPolicyModel,
     TournamentGroupMatchScheduleAuthorityModel,
+    TournamentGroupStandingsAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -1190,6 +1191,8 @@ def _component(
     include_topology_authorities=False,
     group_match_schedules=(),
     include_group_match_schedules=False,
+    group_standings=(),
+    include_group_standings=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1364,6 +1367,25 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in group_match_schedules
+        ]
+    if include_group_standings:
+        body["group_standings"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "group_match_schedule_fingerprint": (
+                    row.group_match_schedule_fingerprint
+                ),
+                "group_rules_policy_fingerprint": (
+                    row.group_rules_policy_fingerprint
+                ),
+                "payload_json": row.payload_json,
+            }
+            for row in group_standings
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [
@@ -1872,6 +1894,7 @@ def _load(payload, *, run_id, branch_id):
         "format_authorities",
         "topology_authorities",
         "group_match_schedules",
+        "group_standings",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -1928,6 +1951,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("group_match_schedules", [])
         ],
         include_group_match_schedules="group_match_schedules" in component,
+        group_standings=[
+            TournamentGroupStandingsAuthorityModel(**value)
+            for value in component.get("group_standings", [])
+        ],
+        include_group_standings="group_standings" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])

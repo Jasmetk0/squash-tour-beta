@@ -2116,6 +2116,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         hybrid_store = TournamentHybridKnockoutEntrantsAuthorityStore(session)
         for event_id in sorted({row.event_id for row in hybrid_knockout_entrants}):
             hybrid_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    hybrid_knockout_brackets = session.scalars(
+        select(TournamentHybridKnockoutBracketAuthorityModel)
+        .where(
+            TournamentHybridKnockoutBracketAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutBracketAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridKnockoutBracketAuthorityModel.event_id)
+    ).all()
+    if hybrid_knockout_brackets:
+        from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
+            TournamentHybridKnockoutBracketAuthorityStore,
+        )
+
+        bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in hybrid_knockout_brackets}):
+            bracket_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2238,6 +2254,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or group_standings
         or group_tie_resolutions
         or hybrid_knockout_entrants
+        or hybrid_knockout_brackets
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -2277,6 +2294,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_group_tie_resolutions=bool(group_tie_resolutions),
             hybrid_knockout_entrants=hybrid_knockout_entrants,
             include_hybrid_knockout_entrants=bool(hybrid_knockout_entrants),
+            hybrid_knockout_brackets=hybrid_knockout_brackets,
+            include_hybrid_knockout_brackets=bool(hybrid_knockout_brackets),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -2906,6 +2925,14 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentHybridKnockoutEntrantsAuthorityModel.event_id)
     ).all()
+    hybrid_knockout_brackets = session.scalars(
+        select(TournamentHybridKnockoutBracketAuthorityModel)
+        .where(
+            TournamentHybridKnockoutBracketAuthorityModel.run_id == run_id,
+            TournamentHybridKnockoutBracketAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridKnockoutBracketAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2970,6 +2997,7 @@ def _live_component_with_saved_shape(
             group_standings,
             group_tie_resolutions,
             hybrid_knockout_entrants,
+            hybrid_knockout_brackets,
             wild_cards,
             draw_inputs,
             draws,
@@ -3019,6 +3047,8 @@ def _live_component_with_saved_shape(
         include_group_tie_resolutions="group_tie_resolutions" in shape_hint,
         hybrid_knockout_entrants=hybrid_knockout_entrants,
         include_hybrid_knockout_entrants="hybrid_knockout_entrants" in shape_hint,
+        hybrid_knockout_brackets=hybrid_knockout_brackets,
+        include_hybrid_knockout_brackets="hybrid_knockout_brackets" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

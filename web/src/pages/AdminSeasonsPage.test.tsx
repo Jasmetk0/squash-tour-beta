@@ -1038,7 +1038,7 @@ describe('AdminSeasonsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Legacy Event Results — read-only' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Legacy Ranking / Race Point Awards — read-only' })).toBeInTheDocument()
-    expect(await screen.findByRole('table', { name: 'Player event results table' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Event full player results table' })).toBeInTheDocument()
     expect(await screen.findByRole('table', { name: 'Event point awards table' })).toBeInTheDocument()
 
     for (const action of [

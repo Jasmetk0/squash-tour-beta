@@ -4654,20 +4654,6 @@ export type SeasonActivePlayersResponse = {
   warnings: string[]
 }
 
-export type SeasonBootstrapPayload = {
-  source_season?: string
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
-export type SeasonBootstrapResponse = {
-  players: SeasonActivePlayer[]
-  summary: SeasonBootstrapSummary
-  metadata: SeasonBootstrapMetadata
-  warnings: string[]
-}
-
 export type SeasonCalendarValidationIssue = {
   severity: 'error' | 'warning' | 'info'
   code: string

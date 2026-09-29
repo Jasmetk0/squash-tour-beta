@@ -41,6 +41,7 @@ PRIZE_MONEY_STAGE_ORDER: tuple[str, ...] = (
     "qualification_round",
     "qualification_semifinal",
     "qualification_final",
+    *tuple(f"group_position_{position}" for position in range(128, 0, -1)),
     "main_draw_participant",
     "round_of_128",
     "round_of_64",

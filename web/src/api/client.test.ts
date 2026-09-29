@@ -53,6 +53,9 @@ import {
   getWorldPackageValidation,
   updateCalendarTemplate,
   postSeasonBuilderApplyCreateOnlyCommand,
+  getFinalsEffectiveParticipantState,
+  previewFinalsRaceReplacement,
+  decideFinalsRaceReplacement,
   validateFutureApplyRequestPreview
 } from './client'
 import type {
@@ -1201,4 +1204,149 @@ describe('world package registry client', () => {
     expect(url).not.toContain('%252F'); expect(JSON.parse(init.body)).toEqual(payload); expect(JSON.parse(init.body)).not.toHaveProperty('product_run_id'); expect(JSON.parse(init.body)).not.toHaveProperty('branch_id')
   })
 
+})
+
+
+describe('Finals Race replacement client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  const authority = {
+    schema_version: 'world_tour_finals_race_replacement_authority.v1' as const,
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    target_season_index: 2,
+    finals_event_id: 'FINALS',
+    vacancy_id: 'vacancy-p3',
+    race_snapshot_fingerprint: '1'.repeat(64),
+    initial_selection_fingerprint: '2'.repeat(64),
+    source_effective_state_fingerprint: '3'.repeat(64),
+    predecessor_authority_fingerprint: null,
+    withdrawn_player_id: 'p3',
+    withdrawal_reason: 'injury',
+    decisions: [],
+    status: 'awaiting_decision' as const,
+    offered_candidate_player_id: 'p7',
+    offered_candidate_race_rank: 7,
+    resulting_effective_state_fingerprint: null,
+    command_id: 'preview-p3'
+  }
+
+  it('reads effective Finals participant state with explicit fingerprint', async () => {
+    const body = {
+      state: {
+        schema_version: 'world_tour_finals_effective_participant_state.v1',
+        run_id: 'run-a',
+        branch_id: 'branch-a',
+        target_season_index: 2,
+        finals_event_id: 'FINALS',
+        initial_selection_fingerprint: '2'.repeat(64),
+        race_snapshot_fingerprint: '1'.repeat(64),
+        predecessor_fingerprint: null,
+        participants: [{
+          player_id: 'p1',
+          race_rank: 1,
+          race_points: 1000,
+          seed: 1,
+          qualification_source: 'race',
+          direct_entry_event_ids: []
+        }],
+        participant_capacity: 1,
+        withdrawn_player_ids: [],
+        created_by_command_id: 'initial'
+      },
+      fingerprint: '3'.repeat(64)
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(
+      getFinalsEffectiveParticipantState('run-a', 'branch-a', 2)
+    ).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/runs/run-a/branches/branch-a/finals-participants/2/replacements/effective',
+      expect.anything()
+    )
+  })
+
+  it('posts a frozen-Race replacement preview and preserves authority fingerprint', async () => {
+    const body = { authority, fingerprint: '4'.repeat(64) }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+    const payload = {
+      withdrawn_player_id: 'p3',
+      withdrawal_reason: 'injury',
+      vacancy_id: 'vacancy-p3',
+      expected_effective_state_fingerprint: '3'.repeat(64),
+      command_id: 'preview-p3'
+    }
+
+    await expect(
+      previewFinalsRaceReplacement('run-a', 'branch-a', 2, payload)
+    ).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/runs/run-a/branches/branch-a/finals-participants/2/replacements/preview',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+    )
+  })
+
+  it('posts an explicit Finals candidate decision against reviewed fingerprints', async () => {
+    const accepted = {
+      ...authority,
+      status: 'accepted' as const,
+      offered_candidate_player_id: null,
+      offered_candidate_race_rank: null,
+      decisions: [{
+        decision_id: 'accept-p7',
+        player_id: 'p7',
+        race_rank: 7,
+        decision: 'accepted' as const
+      }],
+      resulting_effective_state_fingerprint: '5'.repeat(64),
+      predecessor_authority_fingerprint: '4'.repeat(64),
+      command_id: 'accept-p7'
+    }
+    const body = { authority: accepted, fingerprint: '6'.repeat(64) }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+    const payload = {
+      expected_preview_fingerprint: '4'.repeat(64),
+      expected_effective_state_fingerprint: '3'.repeat(64),
+      decision: 'accept' as const,
+      main_process_window_ordinal: null,
+      repair_draw_seed: null,
+      command_id: 'accept-p7'
+    }
+
+    await expect(
+      decideFinalsRaceReplacement(
+        'run-a',
+        'branch-a',
+        2,
+        'vacancy-p3',
+        payload
+      )
+    ).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/admin/runs/run-a/branches/branch-a/finals-participants/2/replacements/vacancy-p3/decision',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify(payload)
+      })
+    )
+  })
 })

@@ -3,7 +3,7 @@ import { type ReactNode, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, simulateOneEvent, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, ProgressionCommandResult, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardApplyResult, PointAwardValidationIssue, PlayerPointAward, UpdatedPlayerPoints, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardValidationIssue, PlayerPointAward, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -30,35 +30,8 @@ export function AdminSeasonsPage(): JSX.Element {
   const [maxEvents, setMaxEvents] = useState('')
   const [calendarBuildResult, setCalendarBuildResult] = useState<SeasonCalendarBuildResponse | null>(null)
   const [selectedEventId, setSelectedEventId] = useState('')
-  const [entrySeed, setEntrySeed] = useState(12345)
-  const [entryOverwriteExisting, setEntryOverwriteExisting] = useState(false)
-  const [entryDryRun, setEntryDryRun] = useState(true)
-  const [maxAlternates, setMaxAlternates] = useState(16)
-  const [includeNotEntered, setIncludeNotEntered] = useState(false)
-  const [entryResult, setEntryResult] = useState<SeasonEventEntryListResult | null>(null)
-  const [drawSeed, setDrawSeed] = useState(12345)
-  const [drawDryRun, setDrawDryRun] = useState(true)
-  const [drawOverwriteExisting, setDrawOverwriteExisting] = useState(false)
-  const [drawResult, setDrawResult] = useState<SeasonEventDrawPackageResult | null>(null)
-  const [matchSeed, setMatchSeed] = useState(12345)
-  const [matchDryRun, setMatchDryRun] = useState(true)
-  const [matchOverwriteExisting, setMatchOverwriteExisting] = useState(false)
   const [selectedMatchId, setSelectedMatchId] = useState('')
   const [replayRallyIndex, setReplayRallyIndex] = useState(1)
-  const [matchResult, setMatchResult] = useState<SeasonEventMatchPackageResult | null>(null)
-  const [progressionResult, setProgressionResult] = useState<ProgressionCommandResult | null>(null)
-  const [progressionSeed, setProgressionSeed] = useState(12345)
-  const [progressionDrawType, setProgressionDrawType] = useState<'qualification' | 'main'>('qualification')
-  const [progressionRoundNumber, setProgressionRoundNumber] = useState(1)
-  const [resultSeed, setResultSeed] = useState(12345)
-  const [resultDryRun, setResultDryRun] = useState(true)
-  const [resultOverwriteExisting, setResultOverwriteExisting] = useState(false)
-  const [eventResult, setEventResult] = useState<SeasonEventResultPackageResult | null>(null)
-  const [pointSeed, setPointSeed] = useState(12345)
-  const [pointDryRun, setPointDryRun] = useState(true)
-  const [pointOverwriteExisting, setPointOverwriteExisting] = useState(false)
-  const [pointAwardsResult, setPointAwardsResult] = useState<EventPointAwardPackageResult | null>(null)
-  const [pointApplyResult, setPointApplyResult] = useState<PointAwardApplyResult | null>(null)
   const [lifecycleEventFilter, setLifecycleEventFilter] = useState('')
   const [lifecycleStageFilter, setLifecycleStageFilter] = useState('')
   const [selectedLifecycleEventId, setSelectedLifecycleEventId] = useState('')
@@ -163,22 +136,20 @@ export function AdminSeasonsPage(): JSX.Element {
   const persistedEntryQuery = useQuery({ queryKey: ['event-entry-list', effectiveEventId], queryFn: () => getEventEntryList(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedDrawQuery = useQuery({ queryKey: ['event-draw-package', effectiveEventId], queryFn: () => getEventDrawPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
   const persistedMatchQuery = useQuery({ queryKey: ['event-match-package', effectiveEventId], queryFn: () => getEventMatchPackage(effectiveEventId), enabled: Boolean(effectiveEventId), retry: false })
-  const progressionStatusQuery = useQuery({ queryKey: ['event-progression-status', effectiveEventId], queryFn: () => getEventProgressionStatus(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
-  const persistedResultQuery = useQuery({ queryKey: ['event-result-package', effectiveEventId], queryFn: () => getEventResultPackage(effectiveEventId), enabled: Boolean(effectiveEventId && (matchResult?.match_package_exists || persistedMatchQuery.data?.match_package_exists)), retry: false })
-  const persistedPointAwardsQuery = useQuery({ queryKey: ['event-point-awards', effectiveEventId], queryFn: () => getEventPointAwards(effectiveEventId), enabled: Boolean(effectiveEventId && (eventResult?.result_package_exists || persistedResultQuery.data?.result_package_exists)), retry: false })
-  const displayedEntryResult = entryResult ?? persistedEntryQuery.data ?? null
+  const progressionStatusQuery = useQuery({ queryKey: ['event-progression-status', effectiveEventId], queryFn: () => getEventProgressionStatus(effectiveEventId), enabled: Boolean(effectiveEventId && persistedMatchQuery.data?.match_package_exists), retry: false })
+  const persistedResultQuery = useQuery({ queryKey: ['event-result-package', effectiveEventId], queryFn: () => getEventResultPackage(effectiveEventId), enabled: Boolean(effectiveEventId && persistedMatchQuery.data?.match_package_exists), retry: false })
+  const persistedPointAwardsQuery = useQuery({ queryKey: ['event-point-awards', effectiveEventId], queryFn: () => getEventPointAwards(effectiveEventId), enabled: Boolean(effectiveEventId && persistedResultQuery.data?.result_package_exists), retry: false })
+  const displayedEntryResult = persistedEntryQuery.data ?? null
   const displayedEntryList = displayedEntryResult?.entry_list ?? null
   const displayedEntrySummary = displayedEntryResult?.summary ?? displayedEntryList?.summary ?? null
   const entryWarnings = displayedEntryResult?.validation_warnings ?? displayedEntryList?.validation_warnings ?? []
   const entryErrors = displayedEntryResult?.validation_errors ?? displayedEntryList?.validation_errors ?? []
-  const displayedDrawResult = drawResult ?? persistedDrawQuery.data ?? null
+  const displayedDrawResult = persistedDrawQuery.data ?? null
   const displayedDrawPackage = displayedDrawResult?.draw_package ?? null
   const displayedDrawSummary = displayedDrawResult?.summary ?? displayedDrawPackage?.summary ?? null
   const drawWarnings = displayedDrawResult?.validation_warnings ?? displayedDrawPackage?.validation_warnings ?? []
   const drawErrors = displayedDrawResult?.validation_errors ?? displayedDrawPackage?.validation_errors ?? []
-  const selectedEventHasPersistedEntryList = Boolean(displayedEntryResult?.entry_list_exists || displayedEntryList)
-  const selectedEventHasPersistedDrawPackage = Boolean(displayedDrawResult?.draw_package_exists || displayedDrawPackage)
-  const displayedMatchResult = matchResult ?? persistedMatchQuery.data ?? null
+  const displayedMatchResult = persistedMatchQuery.data ?? null
   const displayedMatchPackage = displayedMatchResult?.match_package ?? null
   const displayedMatchSummary = displayedMatchResult?.summary ?? displayedMatchPackage?.summary ?? null
   const matchWarnings = displayedMatchResult?.validation_warnings ?? displayedMatchPackage?.validation_warnings ?? []
@@ -192,17 +163,15 @@ export function AdminSeasonsPage(): JSX.Element {
     enabled: Boolean(effectiveEventId && selectedMatchId && replayAvailable),
     retry: false
   })
-  const displayedProgressionStatus: TournamentProgressionStatus | null = progressionResult?.progression_status ?? progressionStatusQuery.data ?? null
-  const progressionWarnings = progressionResult?.validation_warnings ?? displayedProgressionStatus?.warnings ?? []
-  const progressionErrors = progressionResult?.validation_errors ?? displayedProgressionStatus?.errors ?? []
-  const selectedEventHasPersistedMatchPackage = Boolean(displayedMatchResult?.match_package_exists || displayedMatchPackage)
-  const displayedEventResult = eventResult ?? persistedResultQuery.data ?? null
+  const displayedProgressionStatus: TournamentProgressionStatus | null = progressionStatusQuery.data ?? null
+  const progressionWarnings = displayedProgressionStatus?.warnings ?? []
+  const progressionErrors = displayedProgressionStatus?.errors ?? []
+  const displayedEventResult = persistedResultQuery.data ?? null
   const displayedResultPackage = displayedEventResult?.result_package ?? null
   const displayedResultSummary = displayedEventResult?.summary ?? displayedResultPackage?.summary ?? null
   const resultWarnings = displayedEventResult?.validation_warnings ?? displayedResultPackage?.validation_warnings ?? []
   const resultErrors = displayedEventResult?.validation_errors ?? displayedResultPackage?.validation_errors ?? []
-  const selectedEventHasPersistedResultPackage = Boolean(displayedEventResult?.result_package_exists || displayedResultPackage?.persisted || persistedResultQuery.data?.result_package_exists)
-  const displayedPointAwardsResult = pointAwardsResult ?? persistedPointAwardsQuery.data ?? null
+  const displayedPointAwardsResult = persistedPointAwardsQuery.data ?? null
   const displayedPointAwardPackage = displayedPointAwardsResult?.award_package ?? null
   const displayedPointSummary = displayedPointAwardsResult?.summary ?? displayedPointAwardPackage?.summary ?? null
   const pointWarnings = displayedPointAwardsResult?.validation_warnings ?? displayedPointAwardPackage?.validation_warnings ?? []
@@ -1351,16 +1320,5 @@ function PointAwardsTable({ awards }: { awards: PlayerPointAward[] }): JSX.Eleme
       <tbody>{awards.map((award) => <tr key={award.player_id}><td>{award.player_name ?? award.player_id}</td><td>{award.country_code ?? '—'}</td><td>{award.reached_stage}</td><td>{award.qualifier ? 'yes' : 'no'}</td><td>{award.previous_ranking_points ?? '—'}</td><td>{award.ranking_points_awarded}</td><td>{award.projected_ranking_points ?? '—'}</td><td>{award.previous_race_points ?? '—'}</td><td>{award.race_points_awarded}</td><td>{award.projected_race_points ?? '—'}</td></tr>)}</tbody>
     </table>
     {!awards.length ? <p className="status">No player point awards in this package.</p> : null}
-  </div>
-}
-
-function UpdatedPointsTable({ updates }: { updates: UpdatedPlayerPoints[] }): JSX.Element {
-  return <div className="table-wrap">
-    <h4>Applied point updates</h4>
-    <table aria-label="Applied point updates table">
-      <thead><tr><th>Player</th><th>Previous ranking</th><th>Delta ranking</th><th>New ranking</th><th>Previous race</th><th>Delta race</th><th>New race</th></tr></thead>
-      <tbody>{updates.map((update) => <tr key={update.player_id}><td>{update.player_name ?? update.player_id}</td><td>{update.previous_ranking_points}</td><td>{update.delta_ranking_points}</td><td>{update.new_ranking_points}</td><td>{update.previous_race_points}</td><td>{update.delta_race_points}</td><td>{update.new_race_points}</td></tr>)}</tbody>
-    </table>
-    {!updates.length ? <p className="status">No active-player point updates were returned.</p> : null}
   </div>
 }

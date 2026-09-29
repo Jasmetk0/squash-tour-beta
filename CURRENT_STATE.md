@@ -1,46 +1,48 @@
 # Current implementation and next action
 
-## Active implementation — canonical group Simulation Slot execution
+## Active implementation — canonical group standings authority
 
-The canonical group path now continues beyond structural Match Schedule authority into the
-same authoritative Simulation Slot ledger already used by bracket matches.
+Canonical group execution now continues from the frozen Group Match Schedule through one
+immutable final-table authority instead of leaving raw Simulation Slot receipts as an
+interpretive boundary.
 
-- frozen `TournamentGroupMatchScheduleAuthority` matches are projected as direct-player
-  `SimulationMatchEventPlan` nodes and participate in the existing global
-  `WeekSimulationSchedule.v2` chronology rather than a parallel group simulator;
-- Week Simulation Schedule phase metadata now identifies `group` matches while retaining the
-  same global-slot collision, Match Day ordering and cross-event player-conflict rules;
-- adopted tournament authority v7 can freeze one group-based Tournament Edition from its exact
-  Run-owned Calendar Event, point-award authority and
-  `group_match_schedule_fingerprint`; historical v1-v6 readers remain supported and draw-only
-  canonical authority still emits v6;
-- replay fails closed if the stored Group Match Schedule fingerprint changes, and one Tournament
-  Edition cannot simultaneously use Draw and Group Match Schedule execution sources;
-- the existing `AuthoritativeSlotMatchExecutor` now accepts an explicit
-  `EffectiveMatchFormatSnapshot`; bracket callers retain the official BO5 default, while group
-  execution passes the exact frozen BO3/BO5 snapshot including its provenance;
-- group matches persist their real `MatchResult`, result fingerprint, sporting effects and
-  terminal player checkpoint through the existing `SimulationEventGroupModel` /
-  `SimulationSlotModel` ledger;
-- live / Next Rally execution resolves the same frozen group match format instead of silently
-  falling back to official BO5;
-- canonical Tournament Preparation now reports the frozen group Match Schedule as
-  `group_match_execution_ready` and allows the global Week Schedule to consume it;
-- after every frozen group match has completed, the Week is deliberately **not** treated as a
-  completed tournament: transition stops on `group_standings_authority_required`, so no
-  champion, ranking points, hybrid entrants or group order are fabricated from raw match results;
-- Race-derived Entry seed order remains only the initial group-assignment input. Race is not
-  reused after groups begin and is not a post-group reseeding source;
+- `TournamentGroupStandingsAuthority` freezes one Run/Branch/Event table from the exact
+  `TournamentGroupMatchScheduleAuthority` plus one canonical result fingerprint per scheduled
+  match; replay rejects stale schedules, changed result receipts or corrupted table payloads;
+- decided Master scoring is implemented for effective BO3 and BO5 group matches: wins are the
+  first ordering criterion, followed by group-table points using 4/3/1/0 for BO3 and
+  6/5/4/2/1/0 for BO5 outcomes;
+- two-player ties use the actually played head-to-head match; ties of three or more use the
+  exact all-group games-won/games-lost ratio and then points-won/points-lost ratio, with no
+  rounded-display comparison, player-id fallback, Race fallback or random draw;
+- whenever a multi-player tie narrows to exactly two, head-to-head takes over as required by
+  Master; if all decided automatic criteria are exhausted, the authority fails closed on an
+  explicit Admin-resolution requirement rather than inventing final positions;
+- W/O contributes one group win and the maximum points for the effective format (4 BO3 / 6
+  BO5) while contributing **no fabricated games or points** to ratio evidence; a W/O is not
+  silently converted into played H2H evidence;
+- group RET table scoring remains deliberately unsupported because Master still marks that
+  treatment OPEN; the generic W/O rule is not extended to RET/DQ/Default/ABN;
+- the authority is persisted with idempotent command/request fingerprints and exposed through
+  Admin inspect/generate endpoints;
+- Saved Revision capture/restore now carries and revalidates the table together with the exact
+  Match Schedule and Simulation Event Group receipts; historical Branch fork remap fails closed
+  until a dedicated Format/Topology/Schedule/Standings remap exists;
+- authoritative Position still blocks after the last group match while standings are absent.
+  Once standings exist, it advances to the explicit
+  `group_post_standings_progression_required` boundary instead of treating a group event as
+  closed or reseeding from Race;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice therefore establishes **real canonical execution and persisted group results**.
-It still does not calculate the group table, apply W/O table semantics, resolve ties or produce
-the entrant positions needed by a hybrid knockout stage.
+This slice establishes **canonical final group order whenever the already-decided automatic
+criteria can resolve it**. It intentionally does not decide the still-open RET policy or
+cross-group comparison rules, and it does not yet create hybrid-knockout entrants or close a
+pure-groups tournament.
 
-**Next after this PR:** build one immutable group standings/result authority over the completed
-group-match receipts, implementing only already-decided W/O and tie-break policy. Once final
-group positions are frozen, resolve `groups_knockout` crossing sources from those positions
-without Race reseeding. The pure-knockout Finals Draw adapter remains a separate dependency.
+**Next after this PR:** add the explicit audited Admin resolution authority for the rare case
+where all automatic tie-breaks are exhausted, then consume frozen final group positions to
+materialize `groups_knockout` crossing entrants without Race reseeding. Pure-groups closure
+and the pure-knockout Finals Draw adapter remain explicit follow-on boundaries.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

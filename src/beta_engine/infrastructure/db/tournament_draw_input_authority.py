@@ -330,13 +330,10 @@ class TournamentDrawInputAuthorityStore:
         main_seed_count: int,
         bye_slots: int,
     ) -> dict:
-        return {
+        value = {
             "source_kind": source_kind,
             "finals_participant_selection_fingerprint": (
                 finals_participant_selection_fingerprint
-            ),
-            "finals_effective_participant_state_fingerprint": (
-                finals_effective_participant_state_fingerprint
             ),
             "finals_race_snapshot_fingerprint": finals_race_snapshot_fingerprint,
             "tournament_format_authority_fingerprint": (
@@ -349,6 +346,11 @@ class TournamentDrawInputAuthorityStore:
             "qualification_seed_count": 0,
             "bye_slots": bye_slots,
         }
+        if finals_effective_participant_state_fingerprint is not None:
+            value["finals_effective_participant_state_fingerprint"] = (
+                finals_effective_participant_state_fingerprint
+            )
+        return value
 
     def get(
         self, *, run_id: str, branch_id: str, event_id: str

@@ -152,10 +152,19 @@
     persisted base Week Schedule, execute through the canonical Match Engine, bind wider
     orchestration to the same effective chronology, and carry the bracket through Saved Revision
     while historical fork remap remains fail-closed.
-43. Next: implement canonical hybrid Tournament Edition closure/ranking-source aggregation so
-    explicit group-phase awards plus knockout finishing award produce one tournament ranking
-    result without double counting. Do not invent missing numeric award tables or the OPEN group
-    RET policy; pure-groups closure and the pure-knockout Finals Draw adapter remain separate.
+43. ✅ Implement canonical hybrid Tournament Edition closure/ranking-source aggregation:
+    freeze one two-phase Tournament Result authority, compose explicit played-group-win and knockout
+    finishing-stage ranking components into one player award/one Best-N tournament result, preserve
+    exact prize-money provenance when representable, expose explicit Admin policy/close controls,
+    carry policy through Saved Revision, and fail historical fork remaps closed. Missing numeric
+    award tables, the OPEN group RET policy and unresolved group-W/O ranking reward semantics are
+    never inferred.
+44. Next: add the remaining bounded group-format closure adapters. Support pure-groups closure only
+    where authoritative configuration already determines a unique tournament outcome, and define a
+    dedicated group-stage prize-money finishing-stage configuration before configured hybrid payout
+    tables can close players eliminated in groups. Keep general cross-group comparison/outcome rules,
+    OPEN group RET scoring and the pure-knockout Finals Draw adapter separate until their own
+    product/authority prerequisites are satisfied.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

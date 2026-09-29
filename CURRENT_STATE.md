@@ -1,50 +1,52 @@
 # Current implementation and next action
 
-## Active implementation — executable hybrid knockout bracket
+## Active implementation — canonical hybrid Tournament Edition closure
 
-Canonical group flow now continues from final group-match receipts through audited standings/tie
-resolution and, for `groups_knockout`, into one immutable executable elimination tree.
+The general group flow now closes `groups_knockout` Editions from exact frozen sporting evidence
+into the same canonical tournament-result/ranking-source pipeline used by ordinary draws.
 
-- automatic standings and explicit Admin tie resolution keep the Master v68 rules already frozen
-  by the previous slice; no player-ID, Race, Ranking or random fallback is introduced;
-- `TournamentHybridKnockoutEntrantsAuthority` still resolves the configured first-round
-  crossings strictly from final group positions;
-- new `TournamentHybridKnockoutBracketAuthority` materializes the complete elimination tree:
-  round one preserves those entrants/crossings byte-for-byte, while every later round is only
-  the adjacent winner feed of the already-frozen prior round. Ranking/Race reseeding is absent;
-- the bracket projects into the existing `SimulationMatchEventPlan` contract and an append-only
-  derived execution schedule after the immutable persisted Week Simulation Schedule. Historical
-  base slots are never rewritten; each knockout round receives a later Match Day;
-- knockout matches execute through the same authoritative Simulation Slot / Match Engine path as
-  other competitive matches. The driver revalidates participant sources against the frozen
-  bracket and does not leak the group BO3/BO5 Match Schedule snapshot into knockout matches;
-- Next Match, Next Slot, Match Day, Next Round and Next Tournament consume the same derived
-  execution chronology. Next Week fails closed if asked to freeze across a still-unresolved
-  group-to-post-group topology boundary, preventing a later bracket from changing a frozen parent
-  operation;
-- authoritative Position now distinguishes
-  `hybrid_knockout_entrants_authority_required`,
-  `hybrid_knockout_bracket_authority_required`,
-  `hybrid_knockout_closure_required`, and `groups_only_closure_required`;
-- Admin exposes immutable inspect/generate endpoints for the bracket authority;
-- Saved Revision capture/restore carries and replays Match Schedule → tie resolutions → final
-  standings → hybrid entrants → hybrid bracket. Central restore coverage includes the new row
-  family; historical Branch fork remap remains deliberately fail-closed until dedicated identity
-  remapping exists;
-- group RET table scoring, pure-groups closure, cross-group comparison rules and phase-specific
-  Official Ranking award/closure aggregation remain separate explicit boundaries;
+- `TournamentResultAuthority v2` freezes one hybrid Edition result across both phases and binds
+  the final Group Standings authority plus the executable Hybrid Knockout Bracket authority;
+- every player carries final group position, actually played group wins, group W/O provenance and
+  final knockout finishing stage where applicable. Group W/O does not become a fabricated played
+  win, match result or H2H;
+- `TournamentHybridRankingPolicyAuthority` is an explicit immutable per-Edition policy. The
+  engine never invents numeric group-win or knockout-stage ranking values;
+- `TournamentPointAwardAuthority v4` composes explicit additive phase components into exactly
+  one player award: actually played group wins × authored group-win value, plus at most one authored
+  knockout finishing-stage value. Group table points are never reused as Official Ranking points;
+- canonical ranking ingestion revalidates every v4 phase component against the exact Result v2
+  provenance and still emits exactly one `RankingResultVersion` per player/Edition, so Best-N
+  cannot double count the phases as separate tournaments;
+- missing policy, missing knockout stage values, the still-open ranking treatment of a group W/O,
+  or another unsupported phase dependency fails closed at Tournament Edition closure. Sporting
+  knockout receipts remain committed and can be closed later without replaying a match;
+- the driver auto-closes a completed hybrid tree only when the closure inputs are complete. Admin
+  can separately inspect/configure the immutable Hybrid Ranking Policy and explicitly retry the
+  idempotent hybrid ranking close;
+- prize-money history is not silently dropped. With no configured payout table the close freezes an
+  explicit `not_configured` Prize Money authority. If prize money are configured while players can
+  finish only in the group phase, closure currently blocks on
+  `hybrid_prize_money_group_stage_policy_required`: the existing payout model has only
+  Qualification/Main Draw finishing-stage keys and the implementation does not invent a mapping;
+- successful hybrid close is stored through the ordinary `OwnedTournamentRankingSource v5`
+  bundle (or v6 at final Closing), including Result, Point Award and Prize Money fingerprints;
+- Saved Revision capture/restore now also carries Hybrid Ranking Policy. Historical Simulation fork
+  and Ranking-source fork remaps deliberately fail closed until the complete
+  Standings → Bracket → Policy → Result/Award provenance chain has a dedicated branch remapper;
+- pure-groups tournament closure, group RET table scoring, a configurable group-stage prize-money
+  finishing stage and the pure-knockout Finals Draw adapter remain separate explicit boundaries;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice establishes **a frozen, no-reseed hybrid knockout bracket that actually executes through
-canonical Simulation Slots and the Match Engine**. It deliberately stops after the knockout
-sporting result at an explicit closure boundary rather than inventing ranking-award composition or
-pure-groups tournament closure.
+This slice establishes **one canonical hybrid Tournament Edition result and one canonical ranking
+result per player without phase double counting**, while preserving explicit product/configuration
+gaps instead of filling them with hidden defaults.
 
-**Next after this PR:** implement canonical hybrid Tournament Edition closure/ranking-source
-aggregation from the already-decided explicit phase award configuration: group-stage awards plus
-knockout finishing award must become one tournament ranking result without double counting. Missing
-required numeric/configuration inputs must fail closed rather than inventing defaults. Pure-groups
-closure and the OPEN group RET policy remain separate dependencies.
+**Next after this PR:** implement the next bounded post-group closure dependency: define/support
+canonical pure-groups closure only where a unique tournament outcome is already determined by
+authoritative configuration, and add a dedicated hybrid group-stage prize-money payout model before
+configured prize tables can close Editions with group-only finishers. Keep the OPEN group RET
+scoring question and general cross-group comparison/outcome rules fail-closed.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

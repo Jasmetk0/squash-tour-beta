@@ -11,6 +11,28 @@ from pydantic import Field, model_validator
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
 
 
+class TournamentPhasePointComponent(FrozenInput):
+    """One explicitly configured additive phase component inside one player award."""
+
+    component_id: Literal["group_played_wins", "knockout_finish"]
+    distribution_key: str = Field(min_length=1)
+    units: int = Field(ge=0)
+    points_per_unit: int = Field(ge=0)
+    points_awarded: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_component(self) -> "TournamentPhasePointComponent":
+        if self.points_awarded != self.units * self.points_per_unit:
+            raise ValueError("Tournament phase point component multiplication mismatch")
+        if self.component_id == "group_played_wins":
+            if self.distribution_key != "group:played_win":
+                raise ValueError("Group phase component uses wrong distribution key")
+        else:
+            if self.units != 1 or not self.distribution_key.startswith("knockout:"):
+                raise ValueError("Knockout phase component requires one finishing-stage unit")
+        return self
+
+
 class TournamentPlayerPointAwardAuthority(FrozenInput):
     player_id: str = Field(min_length=1)
     reached_stage: str = Field(min_length=1)
@@ -33,6 +55,10 @@ class TournamentPlayerPointAwardAuthority(FrozenInput):
     seed_number: int | None = Field(default=None, ge=1)
     ranking_points_awarded: int = Field(ge=0)
     race_points_awarded: int = Field(ge=0)
+    phase_components: tuple[TournamentPhasePointComponent, ...] = Field(
+        default=(),
+        exclude_if=lambda value: not value,
+    )
     source_player_result_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     award_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
@@ -44,6 +70,7 @@ class TournamentPointAwardAuthority(FrozenInput):
         "tournament_point_award_authority.v1",
         "tournament_point_award_authority.v2",
         "tournament_point_award_authority.v3",
+        "tournament_point_award_authority.v4",
     ] = "tournament_point_award_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -82,24 +109,41 @@ class TournamentPointAwardAuthority(FrozenInput):
             or award.qualification_points_awarded is not None
             for award in self.awards
         )
+        has_phase_components = any(
+            bool(award.phase_components) for award in self.awards
+        )
         if self.schema_version == "tournament_point_award_authority.v1":
-            if has_point_override or has_qualification_component:
+            if has_point_override or has_qualification_component or has_phase_components:
                 raise ValueError(
-                    "Historical Point Award v1 cannot carry v2/v3 point metadata"
+                    "Historical Point Award v1 cannot carry later point metadata"
                 )
         elif self.schema_version == "tournament_point_award_authority.v2":
-            if has_qualification_component:
+            if has_qualification_component or has_phase_components:
                 raise ValueError(
-                    "Historical Point Award v2 cannot carry Qualification component metadata"
+                    "Historical Point Award v2 cannot carry later component metadata"
                 )
             if not has_point_override:
                 raise ValueError(
                     "Point Award v2 requires at least one point-stage override"
                 )
-        elif not has_qualification_component:
-            raise ValueError(
-                "Point Award v3 requires at least one additive Qualification component"
-            )
+        elif self.schema_version == "tournament_point_award_authority.v3":
+            if has_phase_components:
+                raise ValueError(
+                    "Historical Point Award v3 cannot carry hybrid phase components"
+                )
+            if not has_qualification_component:
+                raise ValueError(
+                    "Point Award v3 requires at least one additive Qualification component"
+                )
+        else:
+            if has_point_override or has_qualification_component:
+                raise ValueError(
+                    "Hybrid Point Award v4 cannot mix Draw/Qualification component metadata"
+                )
+            if not all(award.phase_components for award in self.awards):
+                raise ValueError(
+                    "Hybrid Point Award v4 requires explicit phase components for every player"
+                )
 
         distribution = dict(self.point_distribution)
         if (
@@ -111,6 +155,76 @@ class TournamentPointAwardAuthority(FrozenInput):
         ):
             raise ValueError("Tournament Point Award distribution snapshot mismatch")
         for award in self.awards:
+            if self.schema_version == "tournament_point_award_authority.v4":
+                component_ids = tuple(
+                    component.component_id for component in award.phase_components
+                )
+                if len(component_ids) != len(set(component_ids)):
+                    raise ValueError(
+                        "Hybrid Point Award cannot double count one phase component"
+                    )
+                if "group_played_wins" not in component_ids:
+                    raise ValueError(
+                        "Hybrid Point Award requires an explicit group phase component"
+                    )
+                knockout_components = tuple(
+                    component
+                    for component in award.phase_components
+                    if component.component_id == "knockout_finish"
+                )
+                if award.reached_stage == "group_stage":
+                    if knockout_components:
+                        raise ValueError(
+                            "Group-only hybrid award cannot carry knockout finish points"
+                        )
+                elif (
+                    len(knockout_components) != 1
+                    or knockout_components[0].distribution_key
+                    != f"knockout:{award.reached_stage}"
+                ):
+                    raise ValueError(
+                        "Hybrid knockout award stage differs from reached stage"
+                    )
+                expected_points = 0
+                for component in award.phase_components:
+                    configured = distribution.get(component.distribution_key)
+                    if configured is None:
+                        raise ValueError(
+                            "Hybrid phase component is absent from frozen distribution"
+                        )
+                    if component.points_per_unit != configured:
+                        raise ValueError(
+                            "Hybrid phase component amount differs from frozen distribution"
+                        )
+                    expected_points += component.points_awarded
+                if (
+                    award.ranking_points_awarded != expected_points
+                    or award.race_points_awarded != expected_points
+                ):
+                    raise ValueError(
+                        "Hybrid Tournament Point Award total differs from phase components"
+                    )
+                award_fingerprint_payload = {
+                    "schema_version": "tournament_player_point_award_authority.v4",
+                    "event_id": self.event_id,
+                    "seed": self.seed,
+                    "player_id": award.player_id,
+                    "reached_stage": award.reached_stage,
+                    "qualifier": award.qualifier,
+                    "seed_number": award.seed_number,
+                    "ranking_points_awarded": award.ranking_points_awarded,
+                    "race_points_awarded": award.race_points_awarded,
+                    "phase_components": [
+                        component.model_dump(mode="json")
+                        for component in award.phase_components
+                    ],
+                    "source_tournament_result_fingerprint": self.tournament_result_fingerprint,
+                    "source_player_result_fingerprint": award.source_player_result_fingerprint,
+                }
+                if award.award_fingerprint != _hash(award_fingerprint_payload):
+                    raise ValueError("Hybrid Tournament Point Award fingerprint mismatch")
+                continue
+
             has_q_stage = award.qualification_point_stage is not None
             has_q_points = award.qualification_points_awarded is not None
             if has_q_stage != has_q_points:

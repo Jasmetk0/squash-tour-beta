@@ -1059,6 +1059,7 @@ def remap_coupled_player_slot_history(
         "group_tie_resolutions",
         "hybrid_knockout_entrants",
         "hybrid_knockout_brackets",
+        "hybrid_ranking_policies",
         "wild_card_authorities",
         "draw_inputs",
         "draw_authorities",
@@ -1087,12 +1088,13 @@ def remap_coupled_player_slot_history(
             "group_tie_resolutions",
             "hybrid_knockout_entrants",
             "hybrid_knockout_brackets",
+            "hybrid_ranking_policies",
         )
         if source_slot_component.get(key)
     )
     if unsupported_tournament_structure_sections:
         raise SimulationSlotForkRemapUnsupportedError(
-            "Tournament Format/Topology/Group Match Schedule/Standings/Tie Resolution/Hybrid Entrants/Hybrid Bracket fork remap is not defined: "
+            "Tournament Format/Topology/Group Match Schedule/Standings/Tie Resolution/Hybrid Entrants/Hybrid Bracket/Hybrid Ranking Policy fork remap is not defined: "
             + ", ".join(unsupported_tournament_structure_sections)
         )
 

@@ -355,6 +355,22 @@ def _validated_canonical_awards(
         raise ValueError(
             "Canonical tournament awards must cover every result player exactly once"
         )
+    hybrid_mode = (
+        result.schema_version == "tournament_result_authority.v2"
+        or awards.schema_version == "tournament_point_award_authority.v4"
+    )
+    if hybrid_mode:
+        if (
+            result.schema_version != "tournament_result_authority.v2"
+            or awards.schema_version != "tournament_point_award_authority.v4"
+            or not awards.point_distribution_source.startswith(
+                "hybrid_ranking_policy:"
+            )
+        ):
+            raise ValueError(
+                "Hybrid tournament Result/Point Award schema provenance mismatch"
+            )
+
     pairs = []
     for player_id in sorted(award_by_id):
         player = result_by_id[player_id]
@@ -371,6 +387,35 @@ def _validated_canonical_awards(
             _hash(player.model_dump(mode="json")),
         ):
             raise ValueError("Canonical player award provenance mismatch")
+        if hybrid_mode:
+            components = {
+                component.component_id: component
+                for component in award.phase_components
+            }
+            group_component = components.get("group_played_wins")
+            if (
+                group_component is None
+                or player.played_group_wins is None
+                or group_component.units != player.played_group_wins
+            ):
+                raise ValueError(
+                    "Hybrid group ranking component differs from played group wins"
+                )
+            knockout_component = components.get("knockout_finish")
+            if player.knockout_reached_stage is None:
+                if knockout_component is not None:
+                    raise ValueError(
+                        "Group-only hybrid player cannot carry knockout ranking component"
+                    )
+            elif (
+                knockout_component is None
+                or knockout_component.units != 1
+                or knockout_component.distribution_key
+                != f"knockout:{player.knockout_reached_stage}"
+            ):
+                raise ValueError(
+                    "Hybrid knockout ranking component differs from reached knockout stage"
+                )
         pairs.append((player_id, award))
     return binding, result, tuple(pairs)
 

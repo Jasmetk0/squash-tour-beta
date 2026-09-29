@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { type ReactNode, useId, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { bootstrapSeasonFromInitialPool, buildSeasonCalendar, getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
-import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, SeasonActivePlayer, SeasonBootstrapResponse, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardValidationIssue, PlayerPointAward, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
+import { buildSeasonCalendar, getEventPointAwards, getSeasonLifecycle, getEventDrawPackage, getEventEntryList, getEventMatchPackage, getEventMatchReplayCursor, getEventProgressionStatus, getEventResultPackage, getSeasonActivePlayers, getSeasonCalendar, preflightSeasonWeek, recoverSeasonWeek, getSeasonReadiness, preflightSeasonRange } from '../api/client'
+import type { DrawBracket, DrawSlotRecord, DrawValidationIssue, EntryListValidationIssue, MatchReplayCursorResponse, MatchValidationIssue, SeasonActivePlayer, SeasonCalendarBuildResponse, SeasonCalendarEvent, SeasonEventDrawPackageResult, SeasonEventEntry, SeasonEventEntryListResult, SeasonEventMatchPackageResult, SeasonEventResultPackageResult, SeasonMatchRecord, TournamentProgressionStatus, PlayerEventResult, PlayerResultSummary, EventResultValidationIssue, EventPointAwardPackageResult, PointAwardValidationIssue, PlayerPointAward, SeasonLifecycleResponse, EventLifecycleStatus, SimulateOneEventReport, SimulateOneEventDrawType, SimulateSeasonWeekPreflightResult, SeasonWeekEventPreflight, SeasonWeekRecoveryResult, SeasonWeekRecoveryEvent, SeasonWeekRecoveryRerunFlags, SeasonReadinessResult, SeasonWeekReadinessRow, SeasonRangePreflightResult, SeasonRangePreflightWeek } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills, MetadataList } from '../components/RunScopedUi'
 import { AdminRankingTablesSection } from './RankingTables'
 import { formatApiError } from '../utils/apiErrors'
@@ -16,11 +16,6 @@ export function AdminSeasonsPage(): JSX.Element {
   const [searchParams] = useSearchParams()
   const selectedRegistrySeason = searchParams.get('season')?.trim() || null
   const [season, setSeason] = useState('2000/2001')
-  const [sourceSeason, setSourceSeason] = useState('2000/2001')
-  const [seed, setSeed] = useState(12345)
-  const [dryRun, setDryRun] = useState(true)
-  const [overwriteExisting, setOverwriteExisting] = useState(false)
-  const [preview, setPreview] = useState<SeasonBootstrapResponse | null>(null)
   const [calendarSeed, setCalendarSeed] = useState(12345)
   const [seasonStartCalendarYear, setSeasonStartCalendarYear] = useState(2000)
   const [seasonStartYearWeek, setSeasonStartYearWeek] = useState(37)
@@ -71,16 +66,6 @@ export function AdminSeasonsPage(): JSX.Element {
   const calendarQuery = useQuery({ queryKey: ['season-calendar', season], queryFn: () => getSeasonCalendar(season), retry: false })
   const lifecycleQuery = useQuery<SeasonLifecycleResponse>({ queryKey: ['season-lifecycle', season], queryFn: () => getSeasonLifecycle(season), enabled: false, retry: false })
 
-  const bootstrapMutation = useMutation({
-    mutationFn: (persist: boolean) => bootstrapSeasonFromInitialPool(season, { source_season: sourceSeason, seed, dry_run: !persist, overwrite_existing: overwriteExisting }),
-    onSuccess: (result) => {
-      setPreview(result)
-      if (!result.metadata.dry_run) {
-        void queryClient.invalidateQueries({ queryKey: ['season-active-players', season] })
-      }
-    }
-  })
-
   const calendarMutation = useMutation({
     mutationFn: (persist: boolean) => buildSeasonCalendar(season, {
       seed: calendarSeed,
@@ -99,10 +84,10 @@ export function AdminSeasonsPage(): JSX.Element {
     }
   })
 
-  const displayedPlayers = preview?.players.length ? preview.players : playersQuery.data?.players ?? []
-  const displayedSummary = preview?.summary ?? playersQuery.data?.summary
-  const displayedWarnings = preview?.warnings ?? playersQuery.data?.warnings ?? []
-  const metadata = preview?.metadata ?? playersQuery.data?.metadata ?? null
+  const displayedPlayers = playersQuery.data?.players ?? []
+  const displayedSummary = playersQuery.data?.summary
+  const displayedWarnings = playersQuery.data?.warnings ?? []
+  const metadata = playersQuery.data?.metadata ?? null
   const activeCount = playersQuery.data?.summary.total_active_players ?? 0
   const hasActivePlayers = activeCount > 0
   const tierCounts = useMemo(() => displayedSummary?.by_potential_tier ?? {}, [displayedSummary])
@@ -238,8 +223,8 @@ export function AdminSeasonsPage(): JSX.Element {
 
   return (
     <section className="panel">
-      <PageIntro title="Seasons / Bootstrap" subtitle="Convert the curated initial pool into deterministic first-season active player records." />
-      <p className="status">Bootstrap converts the curated initial pool into active first-season players. It does not simulate tournaments yet.</p>
+      <PageIntro title="Seasons / Legacy state" subtitle="Inspect historical global season artifacts and author source calendars; canonical Product Run player truth is Run-owned." />
+      <p className="status">Legacy active-player files remain readable for old saves and diagnostics. Current Product Runs use InitialWorld + lifecycle + sporting state instead.</p>
       <p className="status"><Link to="/admin/seasons/build">Open Season Builder</Link> for read-only preflight foundation and planned workflow overview.</p>
       <SelectedSeasonWorkspace selectedSeasonRaw={selectedRegistrySeason} />
       <SeasonCategoryPoints seasonLabelRaw={selectedRegistrySeason} />
@@ -247,7 +232,7 @@ export function AdminSeasonsPage(): JSX.Element {
 
       <WorkflowBanner />
 
-      <AdminSection title="Season Control Overview" subtitle="Bootstrap active players and orient the shared season cockpit controls before using mutating commands." defaultOpen variant="primary">
+      <AdminSection title="Season Control Overview" subtitle="Inspect legacy active-player state and orient calendar/diagnostic controls. Canonical Run player state is not authored here." defaultOpen variant="readonly" badges={["LEGACY", "READ-ONLY"]}>
         <div className="admin-workflow-grid" aria-label="Season week and year week explanation">
           <div>
             <h3>Active season</h3>
@@ -259,19 +244,20 @@ export function AdminSeasonsPage(): JSX.Element {
           </div>
         </div>
 
-      <SectionCard title="Bootstrap controls">
-        <div className="grid">
-          <label>Target season<input value={season} onChange={(event) => setSeason(event.target.value)} /></label>
-          <label>Source initial pool season<input value={sourceSeason} onChange={(event) => setSourceSeason(event.target.value)} /></label>
-          <label>Seed<input type="number" value={seed} onChange={(event) => setSeed(Number(event.target.value))} /></label>
-          <label><input type="checkbox" checked={dryRun} onChange={(event) => setDryRun(event.target.checked)} /> Dry run default</label>
-          <label><input type="checkbox" checked={overwriteExisting} onChange={(event) => setOverwriteExisting(event.target.checked)} /> Overwrite existing active players</label>
-        </div>
-        <div className="button-row">
-          <button type="button" onClick={() => { setDryRun(true); bootstrapMutation.mutate(false) }} disabled={bootstrapMutation.isPending}>Preview bootstrap</button>
-          <button type="button" onClick={() => { setDryRun(false); bootstrapMutation.mutate(true) }} disabled={bootstrapMutation.isPending}>Persist bootstrap</button>
-        </div>
-        {bootstrapMutation.isError ? <p role="alert" className="error">{formatApiError(bootstrapMutation.error)}</p> : null}
+      <SectionCard title="Legacy active player state — read-only">
+        <p className="status"><StatusBadge label="LEGACY / READ-ONLY" /> The old global season-active-player registry remains available only for historical inspection, legacy ranking tables and diagnostics. Canonical Product Run roster truth is owned by InitialWorld, lifecycle and sporting state.</p>
+        <SummaryPills items={[
+          { label: 'Target legacy season', value: season },
+          { label: 'Active players exist', value: hasActivePlayers ? 'Yes' : 'No' },
+          { label: 'Persisted active players', value: activeCount },
+          { label: 'Displayed players', value: displayedPlayers.length }
+        ]} />
+        {metadata ? <MetadataList items={[
+          { label: 'Legacy bootstrap ID', value: metadata.bootstrap_id },
+          { label: 'Legacy bootstrap fingerprint', value: metadata.bootstrap_fingerprint },
+          { label: 'Source pool fingerprint', value: metadata.source_initial_pool_fingerprint },
+          { label: 'Ranking seeding', value: metadata.ranking_seeding_implemented ? 'Implemented' : 'Not implemented yet' }
+        ]} /> : <p className="status">No legacy active-player bootstrap metadata exists for this season.</p>}
       </SectionCard>
 
       <SectionCard title="Season status">
@@ -279,17 +265,12 @@ export function AdminSeasonsPage(): JSX.Element {
           { label: 'Active players exist', value: hasActivePlayers ? 'Yes' : 'No' },
           { label: 'Persisted active players', value: activeCount },
           { label: 'Displayed players', value: displayedPlayers.length },
-          { label: 'Last result', value: preview ? (preview.metadata.dry_run ? 'Preview' : 'Persisted bootstrap') : 'Persisted state' }
+          { label: 'Authority', value: 'Legacy persisted registry' }
         ]} />
-        {metadata ? <MetadataList items={[
-          { label: 'Bootstrap ID', value: metadata.bootstrap_id },
-          { label: 'Bootstrap fingerprint', value: metadata.bootstrap_fingerprint },
-          { label: 'Source pool fingerprint', value: metadata.source_initial_pool_fingerprint },
-          { label: 'Ranking seeding', value: metadata.ranking_seeding_implemented ? 'Implemented' : 'Not implemented yet' }
-        ]} /> : <p className="status">No bootstrap metadata has been persisted for this season yet.</p>}
+        <p className="status">This status is historical compatibility only; it is not canonical Run/Branch roster authority.</p>
       </SectionCard>
 
-      <SectionCard title="Bootstrap summary">
+      <SectionCard title="Legacy active player summary">
         <SummaryPills items={[
           { label: 'Total active players', value: displayedSummary?.total_active_players ?? 0 },
           { label: 'Countries represented', value: displayedSummary?.countries_represented ?? 0 },
@@ -303,7 +284,7 @@ export function AdminSeasonsPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Warnings">
-        {displayedWarnings.length ? <ul>{displayedWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : <p className="status">No bootstrap warnings.</p>}
+        {displayedWarnings.length ? <ul>{displayedWarnings.map((warning) => <li key={warning}>{warning}</li>)}</ul> : <p className="status">No legacy active-player warnings.</p>}
       </SectionCard>
 
       </AdminSection>

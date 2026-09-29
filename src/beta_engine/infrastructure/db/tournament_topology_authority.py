@@ -54,7 +54,10 @@ class TournamentTopologyAuthorityStore:
             raise ValueError("Tournament Topology scope is not writable")
 
     def _participant_order(self, *, field) -> tuple[str, ...]:
-        if field.source_kind == "finals_participant_selection":
+        if field.source_kind in {
+            "finals_participant_selection",
+            "finals_effective_participant_state",
+        }:
             if not field.seed_order_player_ids:
                 raise ValueError("Finals group topology requires frozen Race seed order")
             if set(field.seed_order_player_ids) != set(field.direct_main_player_ids):

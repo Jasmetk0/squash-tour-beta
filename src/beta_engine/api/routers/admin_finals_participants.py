@@ -17,10 +17,11 @@ from beta_engine.application.finals_race_replacement import (
     FinalsReplacementPreviewCommand,
     WorldTourFinalsReplacementService,
 )
-from beta_engine.domain.finals import WorldTourFinalsReplacementAuthority
 from beta_engine.domain.finals import (
+    WorldTourFinalsEffectiveParticipantState,
     WorldTourFinalsParticipantSelectionConfiguration,
     WorldTourFinalsParticipantSelectionSnapshot,
+    WorldTourFinalsReplacementAuthority,
 )
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionConflict,
@@ -63,6 +64,16 @@ class FinalsReplacementDecisionRequest(BaseModel):
     command_id: str
 
 
+class FinalsEffectiveParticipantStateResponse(BaseModel):
+    state: WorldTourFinalsEffectiveParticipantState | None
+    fingerprint: str | None
+
+
+class FinalsReplacementAuthorityResponse(BaseModel):
+    authority: WorldTourFinalsReplacementAuthority
+    fingerprint: str
+
+
 def _service(
     runtime: ApiRuntime,
 ) -> WorldTourFinalsParticipantSelectionAuthorityService:
@@ -75,7 +86,10 @@ def _replacement_service(runtime: ApiRuntime) -> WorldTourFinalsReplacementServi
     return WorldTourFinalsReplacementService(runtime.repository._session_factory)
 
 
-@router.get("/{target_season_index}/replacements/effective")
+@router.get(
+    "/{target_season_index}/replacements/effective",
+    response_model=FinalsEffectiveParticipantStateResponse,
+)
 def inspect_effective_finals_field(
     run_id: str,
     branch_id: str,
@@ -83,8 +97,12 @@ def inspect_effective_finals_field(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ):
     try:
-        return _replacement_service(runtime).inspect(
+        state = _replacement_service(runtime).inspect(
             run_id=run_id, branch_id=branch_id, target_season_index=target_season_index
+        )
+        return FinalsEffectiveParticipantStateResponse(
+            state=state,
+            fingerprint=state.fingerprint if state is not None else None,
         )
     except ValueError as exc:
         raise HTTPException(
@@ -98,7 +116,7 @@ def inspect_effective_finals_field(
 
 @router.post(
     "/{target_season_index}/replacements/preview",
-    response_model=WorldTourFinalsReplacementAuthority,
+    response_model=FinalsReplacementAuthorityResponse,
 )
 def preview_finals_replacement(
     run_id: str,
@@ -108,13 +126,17 @@ def preview_finals_replacement(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ):
     try:
-        return _replacement_service(runtime).preview(
+        authority = _replacement_service(runtime).preview(
             FinalsReplacementPreviewCommand(
                 run_id=run_id,
                 branch_id=branch_id,
                 target_season_index=target_season_index,
                 **payload.model_dump(),
             )
+        )
+        return FinalsReplacementAuthorityResponse(
+            authority=authority,
+            fingerprint=authority.fingerprint,
         )
     except (ValueError, ValidationError) as exc:
         raise HTTPException(
@@ -125,7 +147,7 @@ def preview_finals_replacement(
 
 @router.post(
     "/{target_season_index}/replacements/{vacancy_id}/decision",
-    response_model=WorldTourFinalsReplacementAuthority,
+    response_model=FinalsReplacementAuthorityResponse,
 )
 def decide_finals_replacement(
     run_id: str,
@@ -136,7 +158,7 @@ def decide_finals_replacement(
     runtime: Annotated[ApiRuntime, Depends(get_runtime)],
 ):
     try:
-        return _replacement_service(runtime).decide(
+        authority = _replacement_service(runtime).decide(
             FinalsReplacementDecisionCommand(
                 run_id=run_id,
                 branch_id=branch_id,
@@ -144,6 +166,10 @@ def decide_finals_replacement(
                 vacancy_id=vacancy_id,
                 **payload.model_dump(),
             )
+        )
+        return FinalsReplacementAuthorityResponse(
+            authority=authority,
+            fingerprint=authority.fingerprint,
         )
     except (ValueError, ValidationError) as exc:
         raise HTTPException(

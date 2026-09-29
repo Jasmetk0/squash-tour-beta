@@ -32,6 +32,10 @@ from beta_engine.application.authoritative_slot_matches import (
 from beta_engine.application.canonical_tournament_topology import (
     project_canonical_draw_to_match_topology,
 )
+from beta_engine.application.hybrid_knockout_execution import (
+    extend_week_schedule_with_hybrid_knockout,
+    project_hybrid_knockout_bracket_to_plans,
+)
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
     FinalSeasonTransitionCommand,
@@ -169,6 +173,9 @@ from beta_engine.infrastructure.db.tournament_group_tie_resolution_authority imp
 )
 from beta_engine.infrastructure.db.tournament_hybrid_knockout_entrants_authority import (
     TournamentHybridKnockoutEntrantsAuthorityStore,
+)
+from beta_engine.infrastructure.db.tournament_hybrid_knockout_bracket_authority import (
+    TournamentHybridKnockoutBracketAuthorityStore,
 )
 from beta_engine.infrastructure.db.tournament_topology_authority import (
     TournamentTopologyAuthorityStore,
@@ -10748,6 +10755,94 @@ class AuthoritativeRunSimulationDriver:
                 )
         return plans
 
+    def _hybrid_knockout_brackets_for_week(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ):
+        """Resolve already-materialized hybrid brackets in the current Calendar week."""
+
+        bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
+        values = []
+        for event, _ in self._group_match_schedules_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            authority = bracket_store.get(
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event.event_id,
+            )
+            if authority is not None:
+                values.append((event, authority))
+        return tuple(sorted(values, key=lambda item: item[0].event_id))
+
+    def _hybrid_knockout_plans(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+    ) -> dict[str, SimulationMatchEventPlan]:
+        plans: dict[str, SimulationMatchEventPlan] = {}
+        for _, authority in self._hybrid_knockout_brackets_for_week(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        ):
+            for plan in project_hybrid_knockout_bracket_to_plans(authority):
+                if plan.group_id in plans:
+                    raise ValueError(
+                        "hybrid knockout contains duplicate week match identity"
+                    )
+                plans[plan.group_id] = plan
+        return plans
+
+    def _execution_schedule(
+        self,
+        session: Session,
+        *,
+        run_id: str,
+        branch_id: str,
+        week: RankingWeek,
+        base_schedule: WeekSimulationSchedule | None = None,
+    ) -> WeekSimulationSchedule | None:
+        """Return the immutable base Week Schedule plus derived post-group knockout slots."""
+
+        base = (
+            base_schedule
+            if base_schedule is not None
+            else self._schedule(session, run_id, branch_id, week)
+        )
+        if base is None:
+            return None
+        brackets = tuple(
+            authority
+            for _, authority in self._hybrid_knockout_brackets_for_week(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+            )
+        )
+        return extend_week_schedule_with_hybrid_knockout(
+            base_schedule=base,
+            brackets=brackets,
+            reserved_nonmatch_ordinals=tuple(
+                sorted(
+                    set(self._entry_slot_ordinals(session, run_id, branch_id, week))
+                    | set(self._wc_slot_ordinals(session, run_id, branch_id, week))
+                )
+            ),
+        )
+
     def _topology_for_session(
         self, session, run_id, branch_id, packages, *, week
     ):
@@ -10797,6 +10892,20 @@ class AuthoritativeRunSimulationDriver:
                 + ", ".join(sorted(overlap))
             )
         plans.update(group_plans)
+
+        hybrid_plans = self._hybrid_knockout_plans(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=week,
+        )
+        overlap = set(plans) & set(hybrid_plans)
+        if overlap:
+            raise ValueError(
+                "week hybrid knockout topology shares match identity: "
+                + ", ".join(sorted(overlap))
+            )
+        plans.update(hybrid_plans)
         return plans
 
     def _validate_schedule(self, session, schedule, packages):

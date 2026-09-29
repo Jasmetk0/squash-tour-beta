@@ -24,6 +24,7 @@ from beta_engine.infrastructure.db.models import (
     TournamentGroupStandingsAuthorityModel,
     TournamentGroupTieResolutionAuthorityModel,
     TournamentHybridKnockoutEntrantsAuthorityModel,
+    TournamentHybridKnockoutBracketAuthorityModel,
     TournamentTopologyAuthorityModel,
     TournamentWildCardAuthorityModel,
     WeekTournamentLockAuthorityModel,
@@ -942,6 +943,65 @@ def _validate_hybrid_knockout_entrants_rows_shape(
             )
 
 
+def _validate_hybrid_knockout_bracket_rows_shape(
+    bracket_rows,
+    entrants_rows,
+):
+    from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
+        TournamentHybridKnockoutBracketAuthority,
+        TournamentHybridKnockoutBracketBuilder,
+    )
+    from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
+        TournamentHybridKnockoutEntrantsAuthority,
+    )
+
+    entrants = {
+        row.event_id: TournamentHybridKnockoutEntrantsAuthority.model_validate_json(
+            row.payload_json
+        )
+        for row in entrants_rows
+    }
+    for row in bracket_rows:
+        authority = TournamentHybridKnockoutBracketAuthority.model_validate_json(
+            row.payload_json
+        )
+        if (
+            authority.run_id,
+            authority.branch_id,
+            authority.event_id,
+            authority.generated_by_command_id,
+            authority.entrants_authority_fingerprint,
+            authority.terminal_match_id,
+            authority.fingerprint,
+        ) != (
+            row.run_id,
+            row.branch_id,
+            row.event_id,
+            row.command_id,
+            row.entrants_authority_fingerprint,
+            row.terminal_match_id,
+            row.authority_fingerprint,
+        ):
+            raise ValueError("Saved Hybrid Knockout Bracket row is corrupt")
+        entrant_authority = entrants.get(row.event_id)
+        if entrant_authority is None:
+            raise ValueError(
+                "Saved Hybrid Knockout Bracket lacks Entrants dependency"
+            )
+        if entrant_authority.fingerprint != authority.entrants_authority_fingerprint:
+            raise ValueError(
+                "Saved Hybrid Knockout Bracket Entrants fingerprint is stale"
+            )
+        rebuilt = TournamentHybridKnockoutBracketBuilder.build(
+            entrants=entrant_authority,
+            command_id=row.command_id,
+        )
+        if rebuilt != authority:
+            raise ValueError(
+                "Saved Hybrid Knockout Bracket does not replay from Entrants"
+            )
+
+
 def _validate_finals_authority_rows_shape(
     race_configurations,
     race_snapshots,
@@ -1417,6 +1477,8 @@ def _component(
     include_group_tie_resolutions=False,
     hybrid_knockout_entrants=(),
     include_hybrid_knockout_entrants=False,
+    hybrid_knockout_brackets=(),
+    include_hybrid_knockout_brackets=False,
     finals_race_configurations=(),
     include_finals_race_configurations=False,
     finals_race_snapshots=(),
@@ -1458,6 +1520,10 @@ def _component(
         hybrid_knockout_entrants,
         topology_authorities,
         group_standings,
+    )
+    _validate_hybrid_knockout_bracket_rows_shape(
+        hybrid_knockout_brackets,
+        hybrid_knockout_entrants,
     )
     _validate_finals_authority_rows_shape(
         finals_race_configurations,
@@ -1655,6 +1721,21 @@ def _component(
                 "payload_json": row.payload_json,
             }
             for row in hybrid_knockout_entrants
+        ]
+    if include_hybrid_knockout_brackets:
+        body["hybrid_knockout_brackets"] = [
+            {
+                "run_id": row.run_id,
+                "branch_id": row.branch_id,
+                "event_id": row.event_id,
+                "command_id": row.command_id,
+                "request_fingerprint": row.request_fingerprint,
+                "authority_fingerprint": row.authority_fingerprint,
+                "entrants_authority_fingerprint": row.entrants_authority_fingerprint,
+                "terminal_match_id": row.terminal_match_id,
+                "payload_json": row.payload_json,
+            }
+            for row in hybrid_knockout_brackets
         ]
     if include_finals_race_configurations:
         body["finals_race_configurations"] = [
@@ -2228,6 +2309,7 @@ def _load(payload, *, run_id, branch_id):
         "group_standings",
         "group_tie_resolutions",
         "hybrid_knockout_entrants",
+        "hybrid_knockout_brackets",
         "finals_race_configurations",
         "finals_race_snapshots",
         "finals_participant_configurations",
@@ -2299,6 +2381,11 @@ def _load(payload, *, run_id, branch_id):
             for value in component.get("hybrid_knockout_entrants", [])
         ],
         include_hybrid_knockout_entrants="hybrid_knockout_entrants" in component,
+        hybrid_knockout_brackets=[
+            TournamentHybridKnockoutBracketAuthorityModel(**value)
+            for value in component.get("hybrid_knockout_brackets", [])
+        ],
+        include_hybrid_knockout_brackets="hybrid_knockout_brackets" in component,
         finals_race_configurations=[
             WorldTourFinalsRaceConfigurationModel(**value)
             for value in component.get("finals_race_configurations", [])
@@ -2375,6 +2462,7 @@ def _load(payload, *, run_id, branch_id):
                 "group_standings",
                 "group_tie_resolutions",
                 "hybrid_knockout_entrants",
+                "hybrid_knockout_brackets",
                 "finals_race_configurations",
                 "finals_race_snapshots",
                 "finals_participant_configurations",

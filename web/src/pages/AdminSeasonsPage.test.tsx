@@ -682,8 +682,9 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByRole('button', { name: /Rankings \/ Snapshots/i })).toHaveAttribute('aria-expanded', 'false')
 
     await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-    expect(screen.getByRole('heading', { name: 'Event Entries' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Preview entries' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy Event Entries — read-only' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Preview entries' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Persist entries' })).not.toBeInTheDocument()
   })
 
   it('shows read-only and mutating badges on workflow warnings', async () => {
@@ -914,138 +915,47 @@ describe('AdminSeasonsPage', () => {
     expect(screen.queryByRole('button', { name: 'Run week simulation' })).not.toBeInTheDocument()
   })
 
-  it('renders Event Entries section and previews entries', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    expect(await screen.findByRole('heading', { name: 'Event Entries' })).toBeInTheDocument()
-    expect(screen.getByText('Entry generation selects players for a planned calendar event from active season players. It does not create draws or simulate matches yet.')).toBeInTheDocument()
-    expect(await screen.findAllByText(/World A/)).not.toHaveLength(0)
-
-    await userEvent.click(screen.getByRole('button', { name: 'Preview entries' }))
-    expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    const table = await screen.findByRole('table', { name: 'Event entries table' })
-    expect(within(table).getByText('accepted_main_draw')).toBeInTheDocument()
-    expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
-    expect(screen.getByText('entry_error: entry error')).toBeInTheDocument()
-    expect(screen.getByText('entry_warn: entry warning')).toBeInTheDocument()
-  })
-
-  it('persists entries with dry_run false', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist entries' }))
-    expect(api.generateEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
-  })
-
-
-  it('renders Event Draws section and previews draws', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    expect(await screen.findByRole('heading', { name: 'Event Draws' })).toBeInTheDocument()
-    expect(screen.getByText('Draw generation creates bracket slots from persisted entry lists. It does not simulate matches or update rankings yet.')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Preview draw' }))
-    expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    const mainTable = await screen.findByRole('table', { name: 'Main draw table' })
-    expect(within(mainTable).getAllByText('Adam Ahmed AA01').length).toBeGreaterThan(0)
-    expect(within(mainTable).getByText('Q placeholder')).toBeInTheDocument()
-    const qualTable = await screen.findByRole('table', { name: 'Qualification draw table' })
-    expect(within(qualTable).getAllByText('Ben Beta BB02').length).toBeGreaterThan(0)
-    expect(screen.getByText('draw_error: draw error')).toBeInTheDocument()
-    expect(screen.getByText('draw_warn: draw warning')).toBeInTheDocument()
-  })
-
-  it('persists draws with dry_run false', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist draw' }))
-    expect(api.generateEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
-  })
-
-
-  it('renders Event Matches section and previews match package', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    expect(await screen.findByRole('heading', { name: 'Event Matches' })).toBeInTheDocument()
-    expect(screen.getByText('Match generation creates match records from persisted draw packages. Simulation stores results but does not update rankings/race yet.')).toBeInTheDocument()
-
-    await userEvent.click(screen.getByRole('button', { name: 'Preview match package' }))
-    expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    const table = await screen.findByRole('table', { name: 'Event matches table' })
-    expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
-    expect(within(table).getByText('Ben Beta BB02')).toBeInTheDocument()
-    expect(screen.getByText('match_error: match error')).toBeInTheDocument()
-    expect(screen.getByText('match_warn: match warning')).toBeInTheDocument()
-  })
-
-  it('persists match package with dry_run false', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist match package' }))
-    expect(api.generateEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
-  })
-
-  it('renders progression status and calls progression command APIs', async () => {
+  it('keeps persisted legacy Entry Draw and Match artifacts read-only', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
     api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
     api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
     api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
+
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
-    expect(await screen.findByRole('heading', { name: 'Progression status' })).toBeInTheDocument()
-    expect(screen.getByText('Progression commands update match states and propagate winners. They do not update ranking/race yet.')).toBeInTheDocument()
-    expect(screen.getAllByText('Adam Ahmed AA01').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Ben Beta BB02').length).toBeGreaterThan(0)
+    expect(await screen.findByRole('heading', { name: 'Legacy Event Entries — read-only' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy Event Draws — read-only' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy Event Matches — read-only' })).toBeInTheDocument()
+    expect(screen.getAllByText('LEGACY / READ-ONLY').length).toBeGreaterThanOrEqual(3)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Refresh progression' }))
-    expect(api.refreshEventProgression).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
-    await userEvent.click(screen.getByRole('button', { name: 'Process BYEs' }))
-    expect(api.processEventByes).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
-    await userEvent.click(screen.getByRole('button', { name: 'Promote qualifiers' }))
-    expect(api.promoteEventQualifiers).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
-    await userEvent.selectOptions(screen.getByLabelText('Progression draw'), 'main')
-    await userEvent.clear(screen.getByLabelText('Round number'))
-    await userEvent.type(screen.getByLabelText('Round number'), '2')
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate round' }))
-    expect(api.simulateEventRound).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345, draw_type: 'main', round_number: 2 })
-    expect(await screen.findByText(/Last progression action: simulate_round/)).toBeInTheDocument()
-    expect(screen.getByText('progression_warn: progression warning')).toBeInTheDocument()
-  })
+    const entryTable = await screen.findByRole('table', { name: 'Legacy persisted event entries table' })
+    expect(within(entryTable).getByText('accepted_main_draw')).toBeInTheDocument()
+    expect(within(entryTable).getByText('Adam Ahmed AA01')).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Main draw table' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Event matches table' })).toBeInTheDocument()
 
-  it('simulates next and selected match through API', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    for (const action of [
+      'Preview entries',
+      'Persist entries',
+      'Preview draw',
+      'Persist draw',
+      'Preview match package',
+      'Persist match package',
+      'Simulate next pending match',
+      'Simulate selected match',
+      'Refresh progression',
+      'Process BYEs',
+      'Promote qualifiers',
+      'Simulate round',
+      'Simulate draw'
+    ]) {
+      expect(screen.queryByRole('button', { name: action })).not.toBeInTheDocument()
+    }
 
-    await userEvent.click(await screen.findByRole('button', { name: 'Simulate next pending match' }))
-    expect(api.simulateNextEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345 })
-    expect(await screen.findByText('11-7, 11-8, 11-9')).toBeInTheDocument()
-
-    await userEvent.selectOptions(screen.getByLabelText('Selected match'), 'm1')
-    await userEvent.click(screen.getByRole('button', { name: 'Simulate selected match' }))
-    expect(api.simulateEventMatch).toHaveBeenCalledWith('EVT-2000-W01-wt_a', 'm1', { seed: 12345 })
+    expect(api.getEventEntryList).toHaveBeenCalledWith('EVT-2000-W01-wt_a')
+    expect(api.getEventDrawPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a')
+    expect(api.getEventMatchPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a')
   })
 
 
@@ -1117,79 +1027,32 @@ describe('AdminSeasonsPage', () => {
   })
 
 
-  it('renders Event Results section and previews extracted result package', async () => {
+  it('keeps persisted legacy Result and Point Award artifacts read-only', async () => {
     api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    expect(await screen.findByRole('heading', { name: 'Event Results' })).toBeInTheDocument()
-    expect(screen.getByText('Result extraction summarizes completed tournament outcomes. Point awards are generated and applied explicitly in the Ranking / Race Points section.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Preview results' }))
-    expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    const topTable = await screen.findByRole('table', { name: 'Event result top finishers table' })
-    expect(within(topTable).getByText('Champion')).toBeInTheDocument()
-    expect(within(topTable).getByText('Adam Ahmed AA01')).toBeInTheDocument()
-    const fullTable = await screen.findByRole('table', { name: 'Event full player results table' })
-    expect(within(fullTable).getByText('champion')).toBeInTheDocument()
-    expect(within(fullTable).getByText('finalist')).toBeInTheDocument()
-    expect(screen.getByText('result_error: result error')).toBeInTheDocument()
-    expect(screen.getByText('result_warn: result warning')).toBeInTheDocument()
-  })
-
-  it('persists extracted results with dry_run false', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist results' }))
-    expect(api.extractEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
-  })
-
-
-  it('renders Event Points section and previews awards with dry_run true', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
+    api.getEventMatchPackage.mockResolvedValue({ ...matchResult, match_package_exists: true })
     api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
+    api.getEventPointAwards.mockResolvedValue({ ...pointAwardsResult, award_package_exists: true, applied: false })
+
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
 
-    expect(await screen.findByRole('heading', { name: 'Ranking / Race Points' })).toBeInTheDocument()
-    expect(screen.getByText('Point awarding uses persisted event results. Applying points mutates active season player ranking/race points. Rolling 61-week ranking and best-N logic are not implemented yet.')).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Preview point awards' })).toBeEnabled())
-    await userEvent.click(screen.getByRole('button', { name: 'Preview point awards' }))
-    expect(api.generateEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    const awardsTable = await screen.findByRole('table', { name: 'Event point awards table' })
-    expect(within(awardsTable).getByText('champion')).toBeInTheDocument()
-    expect(within(awardsTable).getAllByText('1000').length).toBeGreaterThan(0)
-    expect(screen.getByText('point_error: point error')).toBeInTheDocument()
-    expect(screen.getByText('point_warn: point warning')).toBeInTheDocument()
-  })
+    expect(await screen.findByRole('heading', { name: 'Legacy Event Results — read-only' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy Ranking / Race Point Awards — read-only' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Player event results table' })).toBeInTheDocument()
+    expect(await screen.findByRole('table', { name: 'Event point awards table' })).toBeInTheDocument()
 
-  it('persists point awards and applies points through API', async () => {
-    api.getSeasonCalendar.mockResolvedValue(calendarResponse)
-    api.getEventEntryList.mockResolvedValue({ ...entryResult, entry_list_exists: true })
-    api.getEventDrawPackage.mockResolvedValue({ ...drawResult, draw_package_exists: true })
-    api.getEventMatchPackage.mockResolvedValue({ ...simulatedMatchResult, match_package_exists: true })
-    api.getEventResultPackage.mockResolvedValue({ ...eventResult, result_package_exists: true })
-    api.generateEventPointAwards.mockResolvedValue(persistedPointAwardsResult)
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
-    await expandAdminSection(/Manual Artifact Tools \/ Advanced/i)
+    for (const action of [
+      'Preview results',
+      'Persist results',
+      'Preview point awards',
+      'Persist point awards',
+      'Apply points to active players'
+    ]) {
+      expect(screen.queryByRole('button', { name: action })).not.toBeInTheDocument()
+    }
 
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Persist point awards' })).toBeEnabled())
-    await userEvent.click(screen.getByRole('button', { name: 'Persist point awards' }))
-    expect(api.generateEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', expect.objectContaining({ dry_run: false }))
-    await userEvent.click(await screen.findByRole('button', { name: 'Apply points to active players' }))
-    expect(api.applyEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a', { seed: 12345, allow_reapply: false })
-    const updatesTable = await screen.findByRole('table', { name: 'Applied point updates table' })
-    expect(within(updatesTable).getAllByText('1000').length).toBeGreaterThan(0)
+    expect(api.getEventResultPackage).toHaveBeenCalledWith('EVT-2000-W01-wt_a')
+    expect(api.getEventPointAwards).toHaveBeenCalledWith('EVT-2000-W01-wt_a')
   })
 
 

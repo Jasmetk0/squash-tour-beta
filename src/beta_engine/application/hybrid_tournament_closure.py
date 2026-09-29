@@ -349,6 +349,33 @@ def build_hybrid_tournament_result_authority(
     )
 
 
+def hybrid_ranking_policy_blockers(
+    *,
+    standings: TournamentGroupStandingsAuthority,
+    bracket: TournamentHybridKnockoutBracketAuthority,
+    policy: TournamentHybridRankingPolicyAuthority | None,
+) -> tuple[str, ...]:
+    """Return product/config blockers without reading or mutating match execution state."""
+
+    if policy is None:
+        return ("hybrid_ranking_policy_required",)
+    blockers: list[str] = []
+    configured = dict(policy.knockout_stage_points)
+    missing = [
+        stage
+        for stage in required_hybrid_knockout_stages(bracket)
+        if stage not in configured
+    ]
+    if missing:
+        blockers.append("hybrid_ranking_policy_incomplete")
+    if policy.played_group_win_points > 0 and any(
+        receipt.result_kind == "walkover"
+        for receipt in standings.source_results
+    ):
+        blockers.append("hybrid_group_walkover_ranking_unresolved")
+    return tuple(blockers)
+
+
 def build_hybrid_tournament_point_award_authority(
     *,
     result: TournamentResultAuthority,
@@ -532,13 +559,14 @@ class TournamentHybridClosureService:
                 "Hybrid Tournament closure requires explicit Hybrid Ranking Policy"
             )
 
-        required_stages = required_hybrid_knockout_stages(bracket)
-        configured = dict(policy.knockout_stage_points)
-        missing = [stage for stage in required_stages if stage not in configured]
-        if missing:
+        blockers = hybrid_ranking_policy_blockers(
+            standings=standings,
+            bracket=bracket,
+            policy=policy,
+        )
+        if blockers:
             raise ValueError(
-                "Hybrid Ranking Policy is incomplete for this bracket: "
-                + ", ".join(missing)
+                "Hybrid Tournament closure is blocked: " + ", ".join(blockers)
             )
 
         result = build_hybrid_tournament_result_authority(

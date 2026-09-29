@@ -3,6 +3,11 @@
 import pytest
 from sqlalchemy import delete
 
+from beta_engine.application.finals_race_replacement import (
+    FinalsReplacementDecisionCommand,
+    FinalsReplacementPreviewCommand,
+    WorldTourFinalsReplacementService,
+)
 from beta_engine.domain.finals import (
     WorldTourFinalsParticipantSelectionConfiguration,
     WorldTourFinalsRaceConfiguration,
@@ -90,7 +95,7 @@ def database(tmp_path):
     engine.dispose()
 
 
-def install_selection(factory, *, capacity: int = 6):
+def install_selection(factory, *, capacity: int = 6, race_population: int | None = None):
     race_config = WorldTourFinalsRaceConfiguration(
         run_id="run",
         branch_id="branch",
@@ -121,7 +126,7 @@ def install_selection(factory, *, capacity: int = 6):
                     player_id=f"p{index}",
                     tie_break_token=f"token-{index:02d}",
                 )
-                for index in range(1, capacity + 1)
+                for index in range(1, (race_population or capacity) + 1)
             ),
             eligible_results=(),
         )
@@ -302,6 +307,168 @@ def test_finals_pure_knockout_adapts_race_seeding_into_ordinary_draw_pipeline(da
             command_id="generate-finals-topology",
         )
         assert topology.knockout_draw_fingerprint == draw.fingerprint
+
+
+@pytest.mark.pr_critical
+def test_accepted_finals_race_replacement_updates_entry_field_and_knockout_draw(database):
+    selected = install_selection(database, capacity=6, race_population=9)
+
+    with database.begin() as session:
+        initial_field = TournamentEntryFieldStore(
+            session
+        ).stage_initial_from_finals_participant_selection(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            target_season_index=0,
+            command_id="build-finals-entry-field",
+        )
+
+    service = WorldTourFinalsReplacementService(database)
+    preview = service.preview(
+        FinalsReplacementPreviewCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            withdrawn_player_id="p3",
+            withdrawal_reason="injury",
+            vacancy_id="vacancy-p3",
+            expected_effective_state_fingerprint=None,
+            command_id="preview-p3",
+        )
+    )
+    assert preview.offered_candidate_player_id == "p7"
+    initial_effective = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        target_season_index=0,
+    )
+    assert initial_effective is not None
+
+    declined = service.decide(
+        FinalsReplacementDecisionCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            vacancy_id="vacancy-p3",
+            expected_preview_fingerprint=preview.fingerprint,
+            expected_effective_state_fingerprint=initial_effective.fingerprint,
+            decision="decline",
+            command_id="decline-p7",
+        )
+    )
+    assert declined.offered_candidate_player_id == "p8"
+
+    accepted = service.decide(
+        FinalsReplacementDecisionCommand(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=0,
+            vacancy_id="vacancy-p3",
+            expected_preview_fingerprint=declined.fingerprint,
+            expected_effective_state_fingerprint=initial_effective.fingerprint,
+            decision="accept",
+            command_id="accept-p8",
+        )
+    )
+    assert accepted.status == "accepted"
+
+    effective = service.inspect(
+        run_id="run",
+        branch_id="branch",
+        target_season_index=0,
+    )
+    assert effective is not None
+    assert tuple(player.player_id for player in effective.participants) == (
+        "p1",
+        "p2",
+        "p4",
+        "p5",
+        "p6",
+        "p8",
+    )
+    assert "p3" in effective.withdrawn_player_ids
+    assert tuple(player.player_id for player in selected.participants) == (
+        "p1",
+        "p2",
+        "p3",
+        "p4",
+        "p5",
+        "p6",
+    )
+
+    with database.begin() as session:
+        field_history = TournamentEntryFieldStore(session).history(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+        )
+        assert len(field_history) == 2
+        replacement_field = field_history[-1]
+        assert replacement_field.base_field_fingerprint == initial_field.fingerprint
+        assert (
+            replacement_field.source_kind
+            == "finals_effective_participant_state"
+        )
+        assert (
+            replacement_field.finals_effective_participant_state_fingerprint
+            == effective.fingerprint
+        )
+        assert replacement_field.direct_main_player_ids == (
+            "p1",
+            "p2",
+            "p4",
+            "p5",
+            "p6",
+            "p8",
+        )
+
+        format_authority = TournamentFormatAuthorityStore(session).configure(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="configure-finals-knockout-after-replacement",
+            format_kind="knockout",
+        )
+        draw_input = TournamentDrawInputAuthorityStore(session).commit(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="commit-finals-replacement-draw-input",
+            draw_seed=456,
+        )
+        assert draw_input.schema_version == "tournament_draw_input_authority.v11"
+        assert draw_input.source_kind == "finals_effective_participant_state"
+        assert (
+            draw_input.finals_effective_participant_state_fingerprint
+            == effective.fingerprint
+        )
+        assert draw_input.finals_participant_selection_fingerprint == selected.fingerprint
+        assert draw_input.tournament_ranking_authority_fingerprint is None
+        assert draw_input.ranking_snapshot_fingerprint is None
+        assert (
+            draw_input.tournament_format_authority_fingerprint
+            == format_authority.fingerprint
+        )
+        assert draw_input.direct_main_player_ids == replacement_field.direct_main_player_ids
+        assert draw_input.capacity.main_draw_size == 8
+        assert draw_input.capacity.bye_slots == 2
+        assert draw_input.main_seed_count == 2
+        assert draw_input.main_seed_player_ids == ("p1", "p2")
+
+        draw = TournamentDrawAuthorityStore(session).generate(
+            run_id="run",
+            branch_id="branch",
+            event_id="FINALS",
+            command_id="generate-finals-replacement-draw",
+        )
+        assert draw.main.bracket_size == 8
+        assert len(draw.main.bye_slot_indexes) == 2
+        assert {
+            slot.seed_number: slot.player_id
+            for slot in draw.main.slots
+            if slot.seed_number is not None
+        } == {1: "p1", 2: "p2"}
 
 
 @pytest.mark.pr_critical

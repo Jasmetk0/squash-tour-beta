@@ -304,6 +304,16 @@ def _remap_tournament_sources(
             raise RankingForkRemapUnsupportedError(
                 "Canonical tournament source authority bundle is incomplete"
             )
+        if (
+            source.canonical_result.schema_version
+            == "tournament_result_authority.v2"
+            or source.canonical_awards.schema_version
+            == "tournament_point_award_authority.v4"
+        ):
+            raise RankingForkRemapUnsupportedError(
+                "Hybrid tournament ranking source fork remap is not defined; "
+                "standings/bracket/policy provenance cannot be retargeted generically"
+            )
 
         target_result = source.canonical_result.__class__.model_validate_json(
             source.canonical_result.model_copy(

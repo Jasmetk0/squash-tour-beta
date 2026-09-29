@@ -1,15 +1,21 @@
 """Canonical hybrid ranking composition without double-counted tournament sources."""
 
+from types import SimpleNamespace
+
 import pytest
+
+import beta_engine.application.hybrid_tournament_closure as closure_module
 
 from beta_engine.application.hybrid_tournament_closure import (
     build_hybrid_tournament_point_award_authority,
+    build_hybrid_tournament_result_authority,
     hybrid_ranking_policy_blockers,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
     prepare_canonical_tournament_ranking_sources,
 )
+from beta_engine.domain.matches.formats import EffectiveMatchFormatSnapshot, MatchFormat
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.rankings.tournament_source import OwnedTournamentRankingSource
 from beta_engine.infrastructure.db.ranking_fork_remap import (
@@ -17,10 +23,15 @@ from beta_engine.infrastructure.db.ranking_fork_remap import (
     _remap_tournament_sources,
 )
 from beta_engine.domain.tournaments.group_standings_authority import (
+    TournamentGroupPlayedGame,
     TournamentGroupResultReceipt,
     TournamentGroupStanding,
     TournamentGroupStandingRow,
     TournamentGroupStandingsAuthority,
+)
+from beta_engine.domain.tournaments.group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthority,
+    TournamentGroupScheduledMatch,
 )
 from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketAuthority,
@@ -29,6 +40,7 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
 from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
 )
+from beta_engine.domain.tournaments.walkover_authority import TournamentWalkoverResult
 from beta_engine.domain.tournaments.result_authority import (
     TournamentMatchResultAuthority,
     TournamentPlayerResultAuthority,
@@ -351,3 +363,175 @@ def test_hybrid_owned_ranking_source_fork_remap_fails_closed_until_full_chain_ex
             source_branch_id="branch",
             target_branch_id="fork",
         )
+
+
+
+@pytest.mark.pr_critical
+def test_hybrid_result_builder_combines_exact_group_and_knockout_receipts(monkeypatch):
+    fmt = EffectiveMatchFormatSnapshot.create(
+        format=MatchFormat(best_of=3, games_to=11, win_by=2),
+        source_scope="tournament_group_rules_policy",
+        source_key="hybrid-result-test",
+    )
+    schedule = TournamentGroupMatchScheduleAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        generated_by_command_id="schedule",
+        format_authority_fingerprint=fp("6"),
+        topology_authority_fingerprint=fp("7"),
+        group_rules_policy_fingerprint=fp("8"),
+        group_count=1,
+        group_size=2,
+        match_day_count=1,
+        matches=(
+            TournamentGroupScheduledMatch(
+                match_id="group-final",
+                group_index=1,
+                topology_match_index=1,
+                match_day_ordinal=1,
+                match_order=1,
+                top_slot_index=1,
+                bottom_slot_index=2,
+                top_player_id="A",
+                bottom_player_id="B",
+                effective_match_format=fmt,
+            ),
+        ),
+    )
+    receipt = TournamentGroupResultReceipt(
+        match_id="group-final",
+        group_index=1,
+        result_fingerprint=fp("9"),
+        result_kind="played",
+        winner_player_id="A",
+        loser_player_id="B",
+        best_of=3,
+        termination_reason="COMPLETED",
+        games=(
+            TournamentGroupPlayedGame(
+                winner_player_id="A",
+                loser_player_id="B",
+                winner_points=11,
+                loser_points=6,
+            ),
+            TournamentGroupPlayedGame(
+                winner_player_id="A",
+                loser_player_id="B",
+                winner_points=11,
+                loser_points=8,
+            ),
+        ),
+    )
+    standings = TournamentGroupStandingsAuthority(
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        generated_by_command_id="standings",
+        group_match_schedule_fingerprint=schedule.fingerprint,
+        group_rules_policy_fingerprint=schedule.group_rules_policy_fingerprint,
+        source_results=(receipt,),
+        groups=(
+            TournamentGroupStanding(
+                group_index=1,
+                rows=(
+                    TournamentGroupStandingRow(
+                        group_index=1,
+                        position=1,
+                        player_id="A",
+                        wins=1,
+                        losses=0,
+                        group_points=4,
+                        played_matches=1,
+                        walkovers_received=0,
+                        walkovers_conceded=0,
+                        games_won=2,
+                        games_lost=0,
+                        points_won=22,
+                        points_lost=14,
+                    ),
+                    TournamentGroupStandingRow(
+                        group_index=1,
+                        position=2,
+                        player_id="B",
+                        wins=0,
+                        losses=1,
+                        group_points=0,
+                        played_matches=1,
+                        walkovers_received=0,
+                        walkovers_conceded=0,
+                        games_won=0,
+                        games_lost=2,
+                        points_won=14,
+                        points_lost=22,
+                    ),
+                ),
+            ),
+        ),
+    )
+    bracket = two_player_bracket()
+
+    class FakeScheduleStore:
+        def __init__(self, session):
+            pass
+
+        def get(self, **kwargs):
+            return schedule
+
+    monkeypatch.setattr(
+        closure_module,
+        "TournamentGroupMatchScheduleAuthorityStore",
+        FakeScheduleStore,
+    )
+    knockout = TournamentWalkoverResult(
+        match_id="final",
+        winner_player_id="A",
+        loser_player_id="B",
+    )
+    monkeypatch.setattr(
+        closure_module,
+        "load_authoritative_group",
+        lambda row: SimpleNamespace(
+            result=knockout,
+            result_fingerprint=fp("a"),
+        ),
+    )
+
+    class FakeScalars:
+        def all(self):
+            return [SimpleNamespace(match_id="final")]
+
+    class FakeSession:
+        def scalars(self, statement):
+            return FakeScalars()
+
+    result = build_hybrid_tournament_result_authority(
+        session=FakeSession(),
+        run_id="run",
+        branch_id="branch",
+        event_id="event",
+        completed_week=RankingWeek(season_index=0, week=10),
+        standings=standings,
+        bracket=bracket,
+    )
+
+    assert result.schema_version == "tournament_result_authority.v2"
+    assert result.champion_player_id == "A"
+    assert result.finalist_player_id == "B"
+    by_id = {player.player_id: player for player in result.players}
+    assert by_id["A"].played_group_wins == 1
+    assert by_id["A"].knockout_reached_stage == "champion"
+    assert by_id["B"].knockout_reached_stage == "finalist"
+    assert tuple(match.draw_type for match in result.matches) == (
+        "group",
+        "knockout",
+    )
+
+
+@pytest.mark.pr_critical
+def test_missing_hybrid_ranking_policy_is_an_explicit_closure_blocker():
+    assert hybrid_ranking_policy_blockers(
+        standings=standings_with_walkover(),
+        bracket=two_player_bracket(),
+        policy=None,
+    ) == ("hybrid_ranking_policy_required",)

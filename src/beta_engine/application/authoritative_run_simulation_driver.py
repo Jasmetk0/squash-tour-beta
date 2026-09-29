@@ -38,7 +38,7 @@ from beta_engine.application.hybrid_knockout_execution import (
 )
 from beta_engine.application.hybrid_tournament_closure import (
     TournamentHybridClosureService,
-    hybrid_ranking_policy_blockers,
+    hybrid_tournament_closure_blockers,
 )
 from beta_engine.application.final_season_transition import (
     FINAL_WEEK,
@@ -11583,10 +11583,11 @@ class AuthoritativeRunSimulationDriver:
                         elif owned.get(event.event_id) is not None:
                             phase_blockers = ()
                         else:
-                            phase_blockers = hybrid_ranking_policy_blockers(
+                            phase_blockers = hybrid_tournament_closure_blockers(
                                 standings=standings,
                                 bracket=bracket,
                                 policy=ranking_policy,
+                                calendar_event=event,
                             )
                             if not phase_blockers:
                                 phase_blockers = ("hybrid_knockout_closure_required",)
@@ -12347,10 +12348,11 @@ class AuthoritativeRunSimulationDriver:
                 branch_id=command.branch_id,
                 event_id=event_id,
             )
-            if hybrid_ranking_policy_blockers(
+            if hybrid_tournament_closure_blockers(
                 standings=standings,
                 bracket=bracket,
                 policy=policy,
+                calendar_event=evidence.calendar_event,
             ):
                 continue
             if fault_at == "after_final_before_source":
@@ -12363,6 +12365,7 @@ class AuthoritativeRunSimulationDriver:
                 event_id=event_id,
                 completed_week=command.expected_week,
                 command_id=command.command_id,
+                calendar_event=evidence.calendar_event,
             )
 
     @staticmethod

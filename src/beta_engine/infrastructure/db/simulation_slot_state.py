@@ -3024,6 +3024,12 @@ def restore_saved_simulation_slots(
     if (live or {}).get("fingerprint") != (expected or {}).get("fingerprint"):
         raise ValueError("Live simulation-slot state differs from saved head")
     session.execute(
+        delete(TournamentGroupStandingsAuthorityModel).where(
+            TournamentGroupStandingsAuthorityModel.run_id == run_id,
+            TournamentGroupStandingsAuthorityModel.branch_id == branch_id,
+        )
+    )
+    session.execute(
         delete(TournamentGroupMatchScheduleAuthorityModel).where(
             TournamentGroupMatchScheduleAuthorityModel.run_id == run_id,
             TournamentGroupMatchScheduleAuthorityModel.branch_id == branch_id,
@@ -3173,6 +3179,8 @@ def restore_saved_simulation_slots(
         session.add(TournamentTopologyAuthorityModel(**value))
     for value in (target or {}).get("group_match_schedules", []):
         session.add(TournamentGroupMatchScheduleAuthorityModel(**value))
+    for value in (target or {}).get("group_standings", []):
+        session.add(TournamentGroupStandingsAuthorityModel(**value))
     for value in (target or {}).get("wild_card_authorities", []):
         session.add(TournamentWildCardAuthorityModel(**value))
     for value in (target or {}).get("draw_inputs", []):
@@ -3247,6 +3255,17 @@ def restore_saved_simulation_slots(
             {value["event_id"] for value in target_group_match_schedules}
         ):
             schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    target_group_standings = (target or {}).get("group_standings", [])
+    if target_group_standings:
+        from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+            TournamentGroupStandingsAuthorityStore,
+        )
+
+        standings_store = TournamentGroupStandingsAuthorityStore(session)
+        for event_id in sorted(
+            {value["event_id"] for value in target_group_standings}
+        ):
+            standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     target_wild_cards = (target or {}).get("wild_card_authorities", [])
     if target_wild_cards:
         from beta_engine.infrastructure.db.tournament_wild_card_authority import (

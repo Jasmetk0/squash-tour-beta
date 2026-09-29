@@ -2174,6 +2174,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         bracket_store = TournamentHybridKnockoutBracketAuthorityStore(session)
         for event_id in sorted({row.event_id for row in hybrid_knockout_brackets}):
             bracket_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    hybrid_ranking_policies = session.scalars(
+        select(TournamentHybridRankingPolicyAuthorityModel)
+        .where(
+            TournamentHybridRankingPolicyAuthorityModel.run_id == run_id,
+            TournamentHybridRankingPolicyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridRankingPolicyAuthorityModel.event_id)
+    ).all()
+    if hybrid_ranking_policies:
+        from beta_engine.infrastructure.db.tournament_hybrid_ranking_policy_authority import (
+            TournamentHybridRankingPolicyAuthorityStore,
+        )
+
+        policy_store = TournamentHybridRankingPolicyAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in hybrid_ranking_policies}):
+            policy_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2297,6 +2313,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or group_tie_resolutions
         or hybrid_knockout_entrants
         or hybrid_knockout_brackets
+        or hybrid_ranking_policies
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -2338,6 +2355,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_hybrid_knockout_entrants=bool(hybrid_knockout_entrants),
             hybrid_knockout_brackets=hybrid_knockout_brackets,
             include_hybrid_knockout_brackets=bool(hybrid_knockout_brackets),
+            hybrid_ranking_policies=hybrid_ranking_policies,
+            include_hybrid_ranking_policies=bool(hybrid_ranking_policies),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -2981,6 +3000,14 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentHybridKnockoutBracketAuthorityModel.event_id)
     ).all()
+    hybrid_ranking_policies = session.scalars(
+        select(TournamentHybridRankingPolicyAuthorityModel)
+        .where(
+            TournamentHybridRankingPolicyAuthorityModel.run_id == run_id,
+            TournamentHybridRankingPolicyAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentHybridRankingPolicyAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -3046,6 +3073,7 @@ def _live_component_with_saved_shape(
             group_tie_resolutions,
             hybrid_knockout_entrants,
             hybrid_knockout_brackets,
+            hybrid_ranking_policies,
             wild_cards,
             draw_inputs,
             draws,
@@ -3097,6 +3125,8 @@ def _live_component_with_saved_shape(
         include_hybrid_knockout_entrants="hybrid_knockout_entrants" in shape_hint,
         hybrid_knockout_brackets=hybrid_knockout_brackets,
         include_hybrid_knockout_brackets="hybrid_knockout_brackets" in shape_hint,
+        hybrid_ranking_policies=hybrid_ranking_policies,
+        include_hybrid_ranking_policies="hybrid_ranking_policies" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

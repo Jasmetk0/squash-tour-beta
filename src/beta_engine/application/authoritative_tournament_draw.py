@@ -320,15 +320,30 @@ class CanonicalTournamentDrawService:
         qualification_sections = (
             initial_draw.qualification_brackets if initial_draw is not None else ()
         )
+        effective_capacity = (
+            draw_input.capacity if draw_input is not None else field.capacity
+        )
+        active_main_entrant_count = (
+            len(draw_input.direct_main_player_ids)
+            + len(draw_input.wild_card_player_ids)
+            + len(draw_input.qualifier_placeholder_ids)
+            if draw_input is not None
+            else field.active_main_entrant_count
+        )
+        effective_main_bye_count = (
+            effective_capacity.bye_slots
+            if draw_input is not None
+            else field.effective_main_bye_count
+        )
         return CanonicalTournamentDrawState(
             run_id=run_id,
             branch_id=branch_id,
             event_id=event_id,
             field_sequence=len(history),
             field_fingerprint=field.fingerprint,
-            main_draw_capacity=field.capacity.main_draw_size,
-            active_main_entrant_count=field.active_main_entrant_count,
-            effective_main_bye_count=field.effective_main_bye_count,
+            main_draw_capacity=effective_capacity.main_draw_size,
+            active_main_entrant_count=active_main_entrant_count,
+            effective_main_bye_count=effective_main_bye_count,
             draw_input_committed=draw_input is not None,
             draw_input_fingerprint=(
                 draw_input.fingerprint if draw_input is not None else None
@@ -369,6 +384,10 @@ class CanonicalTournamentDrawService:
             main_diagnostics=(
                 initial_draw.main_bracket_diagnostics
                 if initial_draw is not None
-                else field.main_diagnostics
+                else (
+                    effective_capacity.main_diagnostics
+                    if draw_input is not None
+                    else field.main_diagnostics
+                )
             ),
         )

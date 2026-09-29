@@ -1463,16 +1463,21 @@ class TournamentDrawInputAuthorityBuilder:
             format_authority.run_id,
             format_authority.branch_id,
             format_authority.event_id,
-            format_authority.entry_field_fingerprint,
             format_authority.target_season_index,
         ) != (
             field.run_id,
             field.branch_id,
             field.event_id,
-            field.fingerprint,
             selection.target_season_index,
         ):
-            raise ValueError("Finals Tournament Format authority is stale for Entry Field")
+            raise ValueError("Finals Tournament Format authority scope is stale")
+        if (
+            field.source_kind == "finals_participant_selection"
+            and format_authority.entry_field_fingerprint != field.fingerprint
+        ):
+            raise ValueError(
+                "Initial Finals Tournament Format authority is stale for Entry Field"
+            )
         if format_authority.format_kind != "knockout":
             raise ValueError(
                 "Finals classic Draw Input requires pure knockout Tournament Format"

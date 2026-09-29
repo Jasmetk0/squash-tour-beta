@@ -1,52 +1,46 @@
 # Current implementation and next action
 
-## Active implementation — canonical group Match + Match Day schedule authority
+## Active implementation — canonical group Simulation Slot execution
 
-The season-versioned Tournament Format / Topology chain now materializes group pairings into
-one immutable local Match/Schedule authority without routing them through the bracket-only
-Week Simulation Schedule contract.
+The canonical group path now continues beyond structural Match Schedule authority into the
+same authoritative Simulation Slot ledger already used by bracket matches.
 
-- `TournamentGroupMatchScheduleAuthority` is fingerprint-bound to the exact frozen
-  Tournament Format and Tournament Topology authorities;
-- every topology pairing becomes one concrete group match with direct player identities,
-  canonical group/slot provenance and one hash-protected `EffectiveMatchFormatSnapshot`;
-- inherited group BO3/BO5 records `tournament_group_rules_policy` provenance, while an
-  explicit Tournament Edition override records `tournament_group_edition_override`;
-  both keep the normal games-to-11, win-by-2 match contract;
-- Match Day chronology uses one deterministic round-robin circle schedule: an even
-  `N`-player group uses `N-1` days, an odd group uses `N` days with an implicit bye;
-- no player can occur twice on one group Match Day, Match Day ordinals are contiguous and
-  each day's match order is deterministic across all groups;
-- the authority must cover every frozen topology pairing exactly once and replays exactly
-  from Format + Topology; stale dependencies fail closed;
-- Tournament Preparation now progresses from `group_match_schedule_required` to
-  `group_match_execution_adapter_required`; it exposes the frozen schedule fingerprint,
-  match count and Match Day count but deliberately remains
-  `ready_for_match_schedule = false` because the global Simulation Slot adapter does not
-  yet consume this group authority;
-- Admin HTTP can generate/inspect the group Match Schedule and returns an explicit
-  `authority_fingerprint`; Planned Event exposes the generation command and resulting
-  match/day counts;
-- Saved Revision captures, hashes, restores and replay-validates the complete
-  Group Rules → Format → Topology → Group Match Schedule chain in dependency order;
-- restore preflight coverage now includes the earlier Finals Race/participant and
-  Group Rules/Format/Topology row families as well as this Match Schedule authority, so
-  live structural truth absent from a saved head fails closed before restore;
-- historical branch fork remap explicitly rejects the whole Format/Topology/Group Match
-  Schedule chain until a dedicated identity-remap contract exists;
-- Finals group input still preserves Race-derived Entry seed order; this slice does not
-  use Race again after groups have been assigned.
+- frozen `TournamentGroupMatchScheduleAuthority` matches are projected as direct-player
+  `SimulationMatchEventPlan` nodes and participate in the existing global
+  `WeekSimulationSchedule.v2` chronology rather than a parallel group simulator;
+- Week Simulation Schedule phase metadata now identifies `group` matches while retaining the
+  same global-slot collision, Match Day ordering and cross-event player-conflict rules;
+- adopted tournament authority v7 can freeze one group-based Tournament Edition from its exact
+  Run-owned Calendar Event, point-award authority and
+  `group_match_schedule_fingerprint`; historical v1-v6 readers remain supported and draw-only
+  canonical authority still emits v6;
+- replay fails closed if the stored Group Match Schedule fingerprint changes, and one Tournament
+  Edition cannot simultaneously use Draw and Group Match Schedule execution sources;
+- the existing `AuthoritativeSlotMatchExecutor` now accepts an explicit
+  `EffectiveMatchFormatSnapshot`; bracket callers retain the official BO5 default, while group
+  execution passes the exact frozen BO3/BO5 snapshot including its provenance;
+- group matches persist their real `MatchResult`, result fingerprint, sporting effects and
+  terminal player checkpoint through the existing `SimulationEventGroupModel` /
+  `SimulationSlotModel` ledger;
+- live / Next Rally execution resolves the same frozen group match format instead of silently
+  falling back to official BO5;
+- canonical Tournament Preparation now reports the frozen group Match Schedule as
+  `group_match_execution_ready` and allows the global Week Schedule to consume it;
+- after every frozen group match has completed, the Week is deliberately **not** treated as a
+  completed tournament: transition stops on `group_standings_authority_required`, so no
+  champion, ranking points, hybrid entrants or group order are fabricated from raw match results;
+- Race-derived Entry seed order remains only the initial group-assignment input. Race is not
+  reused after groups begin and is not a post-group reseeding source;
+- `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice freezes **what group matches exist and their local conflict-free Match Day
-chronology**. It does not yet materialize those matches into global Simulation Slots,
-simulate results, calculate group standings/W/O effects/tie-breaks or resolve hybrid
-knockout entrants.
+This slice therefore establishes **real canonical execution and persisted group results**.
+It still does not calculate the group table, apply W/O table semantics, resolve ties or produce
+the entrant positions needed by a hybrid knockout stage.
 
-**Next after this PR:** add a canonical Simulation Slot adapter that consumes the frozen
-group Match Schedule and its effective match-format snapshots, persists match results,
-then build the decided group standings/W/O/tie-break authority before resolving hybrid
-knockout entrants from final group positions. The pure-knockout Finals Draw adapter
-remains a separate explicit dependency.
+**Next after this PR:** build one immutable group standings/result authority over the completed
+group-match receipts, implementing only already-decided W/O and tie-break policy. Once final
+group positions are frozen, resolve `groups_knockout` crossing sources from those positions
+without Race reseeding. The pure-knockout Finals Draw adapter remains a separate dependency.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

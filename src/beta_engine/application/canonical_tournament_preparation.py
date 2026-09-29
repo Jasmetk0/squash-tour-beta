@@ -145,6 +145,7 @@ class CanonicalTournamentPreparationState(BaseModel):
     entry_source_kind: Literal[
         "ranking_applications",
         "finals_participant_selection",
+        "finals_effective_participant_state",
     ] | None = None
     entry_source_authority_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
@@ -336,7 +337,10 @@ class CanonicalTournamentPreparationService:
         if (
             finals_selection is not None
             and field is not None
-            and field.source_kind != "finals_participant_selection"
+            and field.source_kind not in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }
         ):
             raise ValueError(
                 "Finals participant selection conflicts with existing Ranking/Application Entry Field"
@@ -420,7 +424,10 @@ class CanonicalTournamentPreparationService:
         field_ready = field is not None
         finals_field = bool(
             field is not None
-            and field.source_kind == "finals_participant_selection"
+            and field.source_kind in {
+                "finals_participant_selection",
+                "finals_effective_participant_state",
+            }
         )
         entry_source_ready = ranking_ready or finals_selection is not None or finals_field
         wc_required = bool(

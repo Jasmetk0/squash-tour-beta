@@ -9193,5 +9193,5 @@ def test_group_match_schedule_executes_through_canonical_slots_and_stops_for_sta
             OwnedTournamentRankingSourceStore(session).history(
                 run_id="run", branch_id="branch"
             )
-            == []
+            == ()
         )

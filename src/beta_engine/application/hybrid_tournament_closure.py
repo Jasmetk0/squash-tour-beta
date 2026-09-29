@@ -347,7 +347,11 @@ def build_hybrid_tournament_result_authority(
     for player_id in sorted(players):
         state = players[player_id]
         knockout_stage = state["knockout_stage"]
-        reached_stage = str(knockout_stage) if knockout_stage is not None else "group_stage"
+        reached_stage = (
+            str(knockout_stage)
+            if knockout_stage is not None
+            else f"group_position_{int(state['group_position'])}"
+        )
         result_players.append(
             TournamentPlayerResultAuthority(
                 player_id=player_id,
@@ -452,19 +456,6 @@ def hybrid_tournament_closure_blockers(
         blockers.append("hybrid_calendar_event_evidence_required")
     elif calendar_event.ranking_status.value != "ranked":
         blockers.append("hybrid_ranked_closure_required")
-    elif calendar_event.prize_money_table:
-        group_players = {
-            row.player_id
-            for group in standings.groups
-            for row in group.rows
-        }
-        group_only = group_players - _knockout_entrant_player_ids(bracket)
-        if group_only:
-            # Current Prize Money authority has Qualification/Main Draw finishing
-            # stages only. Mapping group elimination to another payout stage would
-            # silently invent product semantics, so configured hybrid prize money
-            # waits for a dedicated group-stage payout configuration.
-            blockers.append("hybrid_prize_money_group_stage_policy_required")
     return tuple(dict.fromkeys(blockers))
 
 

@@ -190,6 +190,38 @@ class TournamentResultAuthority(FrozenInput):
                 raise ValueError(
                     "Hybrid Tournament Result v2 requires group/knockout match evidence"
                 )
+            positions = tuple(
+                (player.group_index, player.group_position) for player in self.players
+            )
+            if len(positions) != len(set(positions)):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 contains duplicate group position"
+                )
+            by_id = {player.player_id: player for player in self.players}
+            champion = by_id[self.champion_player_id]
+            finalist = by_id[self.finalist_player_id]
+            if (
+                champion.knockout_reached_stage != "champion"
+                or champion.reached_stage != "champion"
+                or finalist.knockout_reached_stage != "finalist"
+                or finalist.reached_stage != "finalist"
+            ):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 champion/finalist stage metadata mismatch"
+                )
+            match_players = {
+                player_id
+                for match in self.matches
+                for player_id in (
+                    match.winner_player_id,
+                    match.loser_player_id,
+                )
+                if player_id is not None
+            }
+            if not match_players <= set(by_id):
+                raise ValueError(
+                    "Hybrid Tournament Result v2 match references unknown player"
+                )
         return self
 
     @property

@@ -1713,6 +1713,22 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         schedule_store = TournamentGroupMatchScheduleAuthorityStore(session)
         for event_id in sorted({row.event_id for row in group_match_schedules}):
             schedule_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
+    group_standings = session.scalars(
+        select(TournamentGroupStandingsAuthorityModel)
+        .where(
+            TournamentGroupStandingsAuthorityModel.run_id == run_id,
+            TournamentGroupStandingsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupStandingsAuthorityModel.event_id)
+    ).all()
+    if group_standings:
+        from beta_engine.infrastructure.db.tournament_group_standings_authority import (
+            TournamentGroupStandingsAuthorityStore,
+        )
+
+        standings_store = TournamentGroupStandingsAuthorityStore(session)
+        for event_id in sorted({row.event_id for row in group_standings}):
+            standings_store.get(run_id=run_id, branch_id=branch_id, event_id=event_id)
     wild_card_authorities = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -1832,6 +1848,7 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
         or format_authorities
         or topology_authorities
         or group_match_schedules
+        or group_standings
         or wild_card_authorities
         or draw_inputs
         or draw_authorities
@@ -1865,6 +1882,8 @@ def capture_saved_simulation_slots(session, payload, *, run_id, branch_id):
             include_topology_authorities=bool(topology_authorities),
             group_match_schedules=group_match_schedules,
             include_group_match_schedules=bool(group_match_schedules),
+            group_standings=group_standings,
+            include_group_standings=bool(group_standings),
             wild_card_authorities=wild_card_authorities,
             include_wild_card_authorities=bool(wild_card_authorities),
             draw_inputs=draw_inputs,
@@ -2444,6 +2463,14 @@ def _live_component_with_saved_shape(
         )
         .order_by(TournamentGroupMatchScheduleAuthorityModel.event_id)
     ).all()
+    group_standings = session.scalars(
+        select(TournamentGroupStandingsAuthorityModel)
+        .where(
+            TournamentGroupStandingsAuthorityModel.run_id == run_id,
+            TournamentGroupStandingsAuthorityModel.branch_id == branch_id,
+        )
+        .order_by(TournamentGroupStandingsAuthorityModel.event_id)
+    ).all()
     wild_cards = session.scalars(
         select(TournamentWildCardAuthorityModel)
         .where(
@@ -2505,6 +2532,7 @@ def _live_component_with_saved_shape(
             format_authorities,
             topology_authorities,
             group_match_schedules,
+            group_standings,
             wild_cards,
             draw_inputs,
             draws,
@@ -2548,6 +2576,8 @@ def _live_component_with_saved_shape(
         include_topology_authorities="topology_authorities" in shape_hint,
         group_match_schedules=group_match_schedules,
         include_group_match_schedules="group_match_schedules" in shape_hint,
+        group_standings=group_standings,
+        include_group_standings="group_standings" in shape_hint,
         wild_card_authorities=wild_cards,
         include_wild_card_authorities="wild_card_authorities" in shape_hint,
         draw_inputs=draw_inputs,

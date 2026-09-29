@@ -26,6 +26,10 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
 from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
 )
+from beta_engine.domain.tournaments.models import CalendarEvent
+from beta_engine.domain.tournaments.prize_money_award_authority import (
+    build_tournament_prize_money_award_authority,
+)
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPhasePointComponent,
     TournamentPlayerPointAwardAuthority,
@@ -40,7 +44,10 @@ from beta_engine.domain.tournaments.walkover_authority import TournamentWalkover
 from beta_engine.infrastructure.db.authoritative_group_state import (
     load_authoritative_group,
 )
-from beta_engine.infrastructure.db.models import SimulationEventGroupModel
+from beta_engine.infrastructure.db.models import (
+    AdoptedTournamentAuthorityModel,
+    SimulationEventGroupModel,
+)
 from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
@@ -108,6 +115,57 @@ def _knockout_loss_stage(*, round_number: int, round_count: int) -> str:
         return mapping[distance]
     except KeyError as exc:
         raise ValueError("Hybrid knockout stage depth is unsupported") from exc
+
+
+def _knockout_entrant_player_ids(
+    bracket: TournamentHybridKnockoutBracketAuthority,
+) -> frozenset[str]:
+    entrants = {
+        source.removeprefix("player:")
+        for match in bracket.matches
+        if match.round_number == 1
+        for source in match.participant_sources
+        if source.startswith("player:")
+    }
+    if len(entrants) != bracket.entrant_count:
+        raise ValueError("Hybrid Knockout Bracket entrant provenance is incomplete")
+    return frozenset(entrants)
+
+
+def _frozen_calendar_event(
+    session: Session,
+    *,
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    completed_week: RankingWeek,
+) -> CalendarEvent:
+    row = session.get(
+        AdoptedTournamentAuthorityModel,
+        (run_id, branch_id, completed_week.ordinal),
+    )
+    if row is None:
+        raise ValueError(
+            "Hybrid Tournament closure requires frozen adopted tournament evidence"
+        )
+    payload = json.loads(row.package_json)
+    if payload.get("schema_version") != "adopted_tournament_authority.v7":
+        raise ValueError(
+            "Hybrid Tournament closure requires canonical adopted authority v7"
+        )
+    matches = [
+        item
+        for item in payload.get("tournaments", [])
+        if item.get("event_id") == event_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "Hybrid Tournament closure cannot resolve one frozen Calendar Event"
+        )
+    event = CalendarEvent.model_validate(matches[0]["calendar_event"])
+    if event.event_id != event_id:
+        raise ValueError("Hybrid Tournament frozen Calendar Event identity mismatch")
+    return event
 
 
 def required_hybrid_knockout_stages(
@@ -376,6 +434,40 @@ def hybrid_ranking_policy_blockers(
     return tuple(blockers)
 
 
+def hybrid_tournament_closure_blockers(
+    *,
+    standings: TournamentGroupStandingsAuthority,
+    bracket: TournamentHybridKnockoutBracketAuthority,
+    policy: TournamentHybridRankingPolicyAuthority | None,
+    calendar_event: CalendarEvent | None,
+) -> tuple[str, ...]:
+    blockers = list(
+        hybrid_ranking_policy_blockers(
+            standings=standings,
+            bracket=bracket,
+            policy=policy,
+        )
+    )
+    if calendar_event is None:
+        blockers.append("hybrid_calendar_event_evidence_required")
+    elif calendar_event.ranking_status.value != "ranked":
+        blockers.append("hybrid_ranked_closure_required")
+    elif calendar_event.prize_money_table:
+        group_players = {
+            row.player_id
+            for group in standings.groups
+            for row in group.rows
+        }
+        group_only = group_players - _knockout_entrant_player_ids(bracket)
+        if group_only:
+            # Current Prize Money authority has Qualification/Main Draw finishing
+            # stages only. Mapping group elimination to another payout stage would
+            # silently invent product semantics, so configured hybrid prize money
+            # waits for a dedicated group-stage payout configuration.
+            blockers.append("hybrid_prize_money_group_stage_policy_required")
+    return tuple(dict.fromkeys(blockers))
+
+
 def build_hybrid_tournament_point_award_authority(
     *,
     result: TournamentResultAuthority,
@@ -592,6 +684,7 @@ class TournamentHybridClosureService:
         event_id: str,
         completed_week: RankingWeek,
         command_id: str,
+        calendar_event: CalendarEvent | None = None,
     ) -> OwnedTournamentRankingSource:
         standings = TournamentGroupStandingsAuthorityStore(self.session).get(
             run_id=run_id,
@@ -612,20 +705,28 @@ class TournamentHybridClosureService:
             raise ValueError(
                 "Hybrid Tournament closure requires final Standings and Knockout Bracket"
             )
-        if policy is None:
-            raise ValueError(
-                "Hybrid Tournament closure requires explicit Hybrid Ranking Policy"
+        if calendar_event is None:
+            calendar_event = _frozen_calendar_event(
+                self.session,
+                run_id=run_id,
+                branch_id=branch_id,
+                event_id=event_id,
+                completed_week=completed_week,
             )
 
-        blockers = hybrid_ranking_policy_blockers(
+        blockers = hybrid_tournament_closure_blockers(
             standings=standings,
             bracket=bracket,
             policy=policy,
+            calendar_event=calendar_event,
         )
         if blockers:
             raise ValueError(
                 "Hybrid Tournament closure is blocked: " + ", ".join(blockers)
             )
+
+        assert policy is not None
+        assert calendar_event is not None
 
         result = build_hybrid_tournament_result_authority(
             session=self.session,
@@ -639,6 +740,10 @@ class TournamentHybridClosureService:
         awards = build_hybrid_tournament_point_award_authority(
             result=result,
             policy=policy,
+        )
+        prize_awards = build_tournament_prize_money_award_authority(
+            result=result,
+            event=calendar_event,
         )
 
         first_publication_week, closing_eligibility_ordinal = _ranking_source_boundary(
@@ -665,18 +770,24 @@ class TournamentHybridClosureService:
                 binding=binding,
                 canonical_result=result,
                 canonical_awards=awards,
+                canonical_prize_awards=prize_awards,
                 adopted_by_command_id=command_id,
-                provenance_kind="canonical_run_owned_tournament_authorities_final_closing",
+                provenance_kind=(
+                    "canonical_run_owned_tournament_authorities_and_prize_money_final_closing"
+                ),
             )
         else:
             prepare_canonical_tournament_ranking_sources(binding, result, awards)
             proposed = OwnedTournamentRankingSource(
-                schema_version="owned_tournament_ranking_source.v4",
+                schema_version="owned_tournament_ranking_source.v5",
                 binding=binding,
                 canonical_result=result,
                 canonical_awards=awards,
+                canonical_prize_awards=prize_awards,
                 adopted_by_command_id=command_id,
-                provenance_kind="canonical_run_owned_tournament_authorities",
+                provenance_kind=(
+                    "canonical_run_owned_tournament_authorities_and_prize_money"
+                ),
             )
 
         store = OwnedTournamentRankingSourceStore(self.session)
@@ -691,6 +802,8 @@ class TournamentHybridClosureService:
                 or existing.canonical_awards is None
                 or existing.canonical_result.fingerprint != result.fingerprint
                 or existing.canonical_awards.fingerprint != awards.fingerprint
+                or existing.canonical_prize_awards is None
+                or existing.canonical_prize_awards.fingerprint != prize_awards.fingerprint
                 or existing.binding != binding
             ):
                 raise TournamentHybridClosureConflict(

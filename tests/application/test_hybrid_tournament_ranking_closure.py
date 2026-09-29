@@ -10,6 +10,7 @@ from beta_engine.application.hybrid_tournament_closure import (
     build_hybrid_tournament_point_award_authority,
     build_hybrid_tournament_result_authority,
     hybrid_ranking_policy_blockers,
+    hybrid_tournament_closure_blockers,
 )
 from beta_engine.application.ranking_tournament_ingestion import (
     TournamentRankingBinding,
@@ -37,6 +38,7 @@ from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
     TournamentHybridKnockoutBracketAuthority,
     TournamentHybridKnockoutBracketMatch,
 )
+from beta_engine.domain.tournaments.models import CalendarEvent
 from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
     TournamentHybridRankingPolicyAuthority,
 )
@@ -51,6 +53,34 @@ from beta_engine.domain.tournaments.result_authority import (
 def fp(char: str) -> str:
     return char * 64
 
+
+
+def calendar_event(*, prize_money_table=None) -> CalendarEvent:
+    return CalendarEvent(
+        event_id="event",
+        season="2000/2001",
+        season_week=10,
+        calendar_year=2000,
+        year_week=10,
+        template_id="template",
+        event_name="Hybrid Finals",
+        category="FINALS",
+        tour_level="WORLD_TOUR",
+        host_country="CZE",
+        region="Europe",
+        main_draw_size=2,
+        qualification_draw_size=0,
+        seeds_count=0,
+        qualifier_spots=0,
+        ranking_points_table={
+            "champion": 100,
+            "finalist": 60,
+        },
+        ranking_configuration_legacy=False,
+        prize_money_currency=("EUR" if prize_money_table else None),
+        prize_money_table=prize_money_table or {},
+        calendar_fingerprint=fp("f"),
+    )
 
 def policy(*, group_win: int = 10, stages=None):
     return TournamentHybridRankingPolicyAuthority(
@@ -535,3 +565,47 @@ def test_missing_hybrid_ranking_policy_is_an_explicit_closure_blocker():
         bracket=two_player_bracket(),
         policy=None,
     ) == ("hybrid_ranking_policy_required",)
+
+
+
+@pytest.mark.pr_critical
+def test_configured_hybrid_prize_money_fails_closed_when_group_only_payout_stage_is_undefined():
+    base = standings_with_walkover()
+    group = base.groups[0]
+    extended_rows = group.rows + (
+        TournamentGroupStandingRow(
+            group_index=1,
+            position=3,
+            player_id="C",
+            wins=0,
+            losses=1,
+            group_points=0,
+            played_matches=1,
+            walkovers_received=0,
+            walkovers_conceded=0,
+            games_won=0,
+            games_lost=2,
+            points_won=10,
+            points_lost=22,
+        ),
+    )
+    standings = base.model_copy(
+        update={"groups": (group.model_copy(update={"rows": extended_rows}),)}
+    )
+
+    blockers = hybrid_tournament_closure_blockers(
+        standings=standings,
+        bracket=two_player_bracket(),
+        policy=policy(group_win=0),
+        calendar_event=calendar_event(
+            prize_money_table={"finalist": 500, "champion": 1000}
+        ),
+    )
+    assert "hybrid_prize_money_group_stage_policy_required" in blockers
+
+    assert hybrid_tournament_closure_blockers(
+        standings=standings,
+        bracket=two_player_bracket(),
+        policy=policy(group_win=0),
+        calendar_event=calendar_event(),
+    ) == ()

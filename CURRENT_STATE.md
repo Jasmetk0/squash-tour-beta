@@ -1,48 +1,45 @@
 # Current implementation and next action
 
-## Active implementation — canonical group standings authority
+## Active implementation — audited group tie resolution and hybrid entrants
 
-Canonical group execution now continues from the frozen Group Match Schedule through one
-immutable final-table authority instead of leaving raw Simulation Slot receipts as an
-interpretive boundary.
+Canonical group flow now continues from final group-match receipts through explicit unresolved
+tie handling and, for `groups_knockout`, into one immutable first-round entrant authority.
 
-- `TournamentGroupStandingsAuthority` freezes one Run/Branch/Event table from the exact
-  `TournamentGroupMatchScheduleAuthority` plus one canonical result fingerprint per scheduled
-  match; replay rejects stale schedules, changed result receipts or corrupted table payloads;
-- decided Master scoring is implemented for effective BO3 and BO5 group matches: wins are the
-  first ordering criterion, followed by group-table points using 4/3/1/0 for BO3 and
-  6/5/4/2/1/0 for BO5 outcomes;
-- two-player ties use the actually played head-to-head match; ties of three or more use the
-  exact all-group games-won/games-lost ratio and then points-won/points-lost ratio, with no
-  rounded-display comparison, player-id fallback, Race fallback or random draw;
-- whenever a multi-player tie narrows to exactly two, head-to-head takes over as required by
-  Master; if all decided automatic criteria are exhausted, the authority fails closed on an
-  explicit Admin-resolution requirement rather than inventing final positions;
-- W/O contributes one group win and the maximum points for the effective format (4 BO3 / 6
-  BO5) while contributing **no fabricated games or points** to ratio evidence; a W/O is not
-  silently converted into played H2H evidence;
-- group RET table scoring remains deliberately unsupported because Master still marks that
-  treatment OPEN; the generic W/O rule is not extended to RET/DQ/Default/ABN;
-- the authority is persisted with idempotent command/request fingerprints and exposed through
-  Admin inspect/generate endpoints;
-- Saved Revision capture/restore now carries and revalidates the table together with the exact
-  Match Schedule and Simulation Event Group receipts; historical Branch fork remap fails closed
-  until a dedicated Format/Topology/Schedule/Standings remap exists;
-- authoritative Position still blocks after the last group match while standings are absent.
-  Once standings exist, it advances to the explicit
-  `group_post_standings_progression_required` boundary instead of treating a group event as
-  closed or reseeding from Race;
+- automatic standings still use only the decided Master v68 criteria: wins, group points,
+  played H2H for a two-player tie, then exact all-group game and point ratios;
+- when those criteria still cannot produce a unique order, the engine exposes an immutable
+  `TournamentGroupStandingsTieCase` bound to the exact group, players, reason and source
+  match-result fingerprints; no player-ID, Race, Ranking or random fallback is permitted;
+- Admin may resolve only that exact current case and must provide the complete order of the
+  affected players plus an audit reason. `TournamentGroupTieResolutionAuthority` is immutable,
+  request-fingerprinted and exact-retry safe even after the decision advances the pipeline;
+- stale case fingerprints, changed ordering under the same command ID, unrelated decisions and
+  attempts to reorder already-frozen final standings fail closed;
+- `TournamentGroupStandingsAuthority.v2` freezes any actually-used Admin resolution provenance
+  while historical v1 tables remain replayable;
+- `TournamentHybridKnockoutEntrantsAuthority` resolves the already-configured
+  `hybrid_first_round_crossings` strictly from final group positions. It never reseeds from
+  Official Ranking, Tournament Ranking Snapshot or Finals Race;
+- authoritative Position distinguishes the real boundaries:
+  `group_standings_admin_resolution_required`,
+  `group_standings_authority_required`,
+  `hybrid_knockout_entrants_authority_required`,
+  `hybrid_knockout_execution_required`, and `groups_only_closure_required`;
+- Save/Restore carries and replays Match Schedule → tie resolutions → final standings → hybrid
+  entrants as one dependency chain. Central restore coverage includes both new row families;
+- historical Branch fork remap remains deliberately fail-closed for the complete group
+  authority chain until dedicated identity remapping exists;
+- group RET table scoring remains OPEN in Master and is still not inferred from W/O rules;
 - `SQUASH_ENGINE_MASTER_VISION.md` remains untouched.
 
-This slice establishes **canonical final group order whenever the already-decided automatic
-criteria can resolve it**. It intentionally does not decide the still-open RET policy or
-cross-group comparison rules, and it does not yet create hybrid-knockout entrants or close a
-pure-groups tournament.
+This slice establishes **auditable final group order plus immutable groups+knockout entrants**.
+It does not yet materialize or execute the hybrid knockout bracket, close a pure-groups
+Tournament Edition, decide cross-group comparison rules, or decide the OPEN RET table policy.
 
-**Next after this PR:** add the explicit audited Admin resolution authority for the rare case
-where all automatic tie-breaks are exhausted, then consume frozen final group positions to
-materialize `groups_knockout` crossing entrants without Race reseeding. Pure-groups closure
-and the pure-knockout Finals Draw adapter remain explicit follow-on boundaries.
+**Next after this PR:** materialize the configured hybrid first knockout round from the frozen
+entrant authority and execute it through the existing canonical Simulation Slot / Match Engine
+path, preserving the predefined crossings and never reseeding from Race or Ranking. Pure-groups
+closure and the pure-knockout Finals Draw adapter remain separate explicit follow-on boundaries.
 
 ## Active implementation — retire new legacy Branch simulation for Package-backed Runs
 

@@ -19,7 +19,6 @@ from beta_engine.infrastructure.db.models import (
     RunContainerModel,
     TournamentDrawInputAuthorityModel,
     TournamentEntryFieldVersionModel,
-    TournamentFormatAuthorityModel,
 )
 from beta_engine.infrastructure.db.finals_participant_selection import (
     WorldTourFinalsParticipantSelectionStore,
@@ -609,13 +608,6 @@ class TournamentEntryFieldStore:
         ) is not None:
             raise TournamentEntryFieldConflict(
                 "Finals Entry Field replacement is locked after Draw Input commitment"
-            )
-        if self.session.get(
-            TournamentFormatAuthorityModel,
-            (run_id, branch_id, event_id),
-        ) is not None:
-            raise TournamentEntryFieldConflict(
-                "Finals Entry Field replacement is blocked after Tournament Format commitment"
             )
         if previous is not None and previous.source_authority_fingerprint == state.fingerprint:
             raise TournamentEntryFieldConflict(

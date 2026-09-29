@@ -4257,12 +4257,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4326,12 +4326,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError("Match Day schedule changed during orchestration")
             branch = session.get(RunBranchModel, command.branch_id)
@@ -4497,12 +4497,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4566,12 +4566,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError("Round schedule changed during orchestration")
             branch = session.get(RunBranchModel, command.branch_id)
@@ -4731,12 +4731,12 @@ class AuthoritativeRunSimulationDriver:
                     return json.loads(parent.result_json)
 
                 current_frozen = json.loads(parent.result_json)
-                schedule = self._schedule(
+                schedule = self._execution_schedule(
                     session,
-                    command.run_id,
-                    command.branch_id,
-                    command.expected_week,
-                )
+                    run_id=command.run_id,
+                    branch_id=command.branch_id,
+                    week=command.expected_week,
+                    )
                 if (
                     schedule is None
                     or schedule.fingerprint
@@ -4804,12 +4804,12 @@ class AuthoritativeRunSimulationDriver:
                 return json.loads(parent.result_json)
             frozen = json.loads(parent.result_json)
 
-            schedule = self._schedule(
+            schedule = self._execution_schedule(
                 session,
-                command.run_id,
-                command.branch_id,
-                command.expected_week,
-            )
+                run_id=command.run_id,
+                branch_id=command.branch_id,
+                week=command.expected_week,
+                )
             if schedule is None or schedule.fingerprint != frozen["schedule_fingerprint"]:
                 raise ValueError(
                     "Tournament schedule changed during orchestration"
@@ -5037,12 +5037,12 @@ class AuthoritativeRunSimulationDriver:
                     str(slot_ordinal)
                 )
                 if stored_child is None:
-                    schedule = self._schedule(
+                    schedule = self._execution_schedule(
                         session,
-                        command.run_id,
-                        command.branch_id,
-                        command.expected_week,
-                    )
+                        run_id=command.run_id,
+                        branch_id=command.branch_id,
+                        week=command.expected_week,
+                        )
                     if (
                         schedule is None
                         or schedule.fingerprint
@@ -9135,7 +9135,12 @@ class AuthoritativeRunSimulationDriver:
         if position.current_slot_kind != "match" or position.slot_ordinal is None:
             raise ValueError("Next Match Day requires a current competitive match slot")
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Match Day requires an adopted Week Simulation Schedule v2"
@@ -9222,7 +9227,12 @@ class AuthoritativeRunSimulationDriver:
         if position.current_slot_kind != "match" or position.slot_ordinal is None:
             raise ValueError("Next Round requires a current competitive match slot")
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Round requires an adopted Week Simulation Schedule v2"
@@ -9349,7 +9359,12 @@ class AuthoritativeRunSimulationDriver:
                 "Next Tournament requires a current competitive match slot"
             )
 
-        schedule = self._schedule(session, run_id, branch_id, position.current_week)
+        schedule = self._execution_schedule(
+            session,
+            run_id=run_id,
+            branch_id=branch_id,
+            week=position.current_week,
+        )
         if schedule is None or schedule.schema_version != "week_simulation_schedule.v2":
             raise ValueError(
                 "Next Tournament requires an adopted Week Simulation Schedule v2"
@@ -9488,8 +9503,11 @@ class AuthoritativeRunSimulationDriver:
         if draft.base_revision_id != branch.saved_head_revision_id:
             raise ValueError("Next Week Working Draft base is not the Saved head")
 
-        schedule = self._schedule(
-            session, request.run_id, request.branch_id, week
+        schedule = self._execution_schedule(
+            session,
+            run_id=request.run_id,
+            branch_id=request.branch_id,
+            week=week,
         )
         targets = ()
         if position.current_slot_kind == "match":
@@ -9792,7 +9810,14 @@ class AuthoritativeRunSimulationDriver:
                 week=week,
                 packages=packages,
             )
-            schedule = self._schedule(session, run_id, branch_id, week)
+            base_schedule = self._schedule(session, run_id, branch_id, week)
+            schedule = self._execution_schedule(
+                session,
+                run_id=run_id,
+                branch_id=branch_id,
+                week=week,
+                base_schedule=base_schedule,
+            )
             plans = self._topology_for_session(
                 session, run_id, branch_id, packages, week=week
             )
@@ -9842,8 +9867,16 @@ class AuthoritativeRunSimulationDriver:
                 "reserved_wc_slot_ordinals": list(wc_slot_ordinals),
                 "event_ids": list(event_ids),
                 "group_ids": list(plans),
-                "schedule": schedule.canonical_payload() if schedule else None,
-                "schedule_fingerprint": schedule.fingerprint if schedule else None,
+                "schedule": base_schedule.canonical_payload() if base_schedule else None,
+                "schedule_fingerprint": (
+                    base_schedule.fingerprint if base_schedule else None
+                ),
+                "effective_execution_schedule": (
+                    schedule.canonical_payload() if schedule else None
+                ),
+                "effective_execution_schedule_fingerprint": (
+                    schedule.fingerprint if schedule else None
+                ),
                 "expected_position_fingerprint": requirement_position.position_fingerprint,
                 "canonical_preparation": (
                     preparation.model_dump(mode="json")

@@ -166,11 +166,17 @@
     Revision and fail historical fork remaps closed. Multi-group unique-winner selection,
     cross-group comparison, OPEN group RET scoring, group-W/O ranking reward semantics and
     unranked pure-group completion remain explicit blockers rather than inferred defaults.
-45. Next: implement the World Tour Finals pure-knockout Draw adapter behind the existing
+45. ✅ Implement the World Tour Finals pure-knockout Draw adapter behind the former
     `knockout_draw_adapter_required` preparation state: consume the frozen Race-seeded Finals
-    participant/Entry Field authority, create canonical Draw Input/Draw without synthesizing
-    Official Ranking/application evidence, preserve Race seed order, and reuse the ordinary
-    knockout topology/execution/closure pipeline. Keep unresolved group-format policies separate.
+    participant/Entry Field plus pure-knockout Format authority, derive ordinary Master §15.2
+    bracket/BYE geometry, freeze Draw Input v10 without synthesizing Official Ranking/application
+    evidence, preserve Race-derived seed order and reuse the ordinary Draw/knockout Topology path.
+    Keep unresolved group-format policies separate.
+46. Next: implement the decided World Tour Finals withdrawal/replacement dependency from the
+    frozen Race reserve order as a dedicated authority. Do not re-enable generic ranking-based
+    Entry repair or invent the still-undefined reserve-notification workflow; preserve exact
+    pre/post-draw historical boundaries and fail closed where replacement timing/repair semantics
+    are not already decided.
 
 
 ## Active pre-alpha sequence — AI Entry regression synchronization

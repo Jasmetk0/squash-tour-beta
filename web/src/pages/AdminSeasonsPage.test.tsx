@@ -13,7 +13,6 @@ const api = vi.hoisted(() => ({
   getAdminRankingSnapshot: vi.fn(),
   getAdminPointBreakdown: vi.fn(),
   getViewerPointBreakdown: vi.fn(),
-  bootstrapSeasonFromInitialPool: vi.fn(),
   getSeasonCalendar: vi.fn(),
   getSeasonLifecycle: vi.fn(),
   buildSeasonCalendar: vi.fn(),
@@ -696,31 +695,22 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getAllByText(/No rollback is implemented/).length).toBeGreaterThan(0)
   })
 
-  it('renders bootstrap controls and previews with dry_run true', async () => {
+  it('keeps legacy active-player bootstrap state read-only', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
 
-    expect(await screen.findByRole('heading', { name: 'Seasons / Bootstrap' })).toBeInTheDocument()
-    expect(screen.getAllByLabelText('Target season')[0]).toHaveValue('2000/2001')
-    expect(screen.getByLabelText('Source initial pool season')).toHaveValue('2000/2001')
-    expect(screen.getAllByLabelText('Seed')[0]).toHaveValue(12345)
+    expect(await screen.findByRole('heading', { name: 'Seasons / Legacy state' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy active player state — read-only' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Preview bootstrap' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Persist bootstrap' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Source initial pool season')).not.toBeInTheDocument()
+    expect(api.getSeasonActivePlayers).toHaveBeenCalledWith('2000/2001')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Preview bootstrap' }))
-    expect(api.bootstrapSeasonFromInitialPool).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: true, seed: 12345 }))
-    expect(await screen.findByText('Source initial pool is very small for a professional tour bootstrap.')).toBeInTheDocument()
-  })
-
-  it('persists with dry_run false and renders active player table', async () => {
-    renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')
     await expandAdminSection(/Rankings \/ Snapshots/i)
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Persist bootstrap' }))
-    expect(api.bootstrapSeasonFromInitialPool).toHaveBeenCalledWith('2000/2001', expect.objectContaining({ dry_run: false }))
-
     const table = await screen.findByRole('table', { name: 'Active season players table' })
     expect(within(table).getByText('Adam Ahmed AA01')).toBeInTheDocument()
     expect(within(table).getByText('fresh')).toBeInTheDocument()
-    expect(within(table).getAllByText('0').length).toBeGreaterThan(0)
   })
+
 
   it('renders calendar builder controls and previews calendar', async () => {
     renderWithRoute(<AdminSeasonsPage />, '/admin/seasons')

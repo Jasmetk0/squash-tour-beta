@@ -2,7 +2,15 @@
 
 from __future__ import annotations
 
-from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, text
+from sqlalchemy import (
+    CheckConstraint,
+    Index,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    text,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
@@ -50,13 +58,15 @@ class OfficialRankingCommandModel(Base):
     input_manifest_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
-
 class OfficialRankingCandidateModel(Base):
     """Append-only calculation history; not a Viewer publication marker."""
 
     __tablename__ = "official_ranking_candidates"
     __table_args__ = (
-        CheckConstraint("week_ordinal >= 0 AND week_ordinal < 3050", name="ck_official_candidate_week"),
+        CheckConstraint(
+            "week_ordinal >= 0 AND week_ordinal < 3050",
+            name="ck_official_candidate_week",
+        ),
     )
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -92,7 +102,10 @@ class OfficialRankingResultVersionModel(Base):
 
     __tablename__ = "official_ranking_result_versions"
     __table_args__ = (
-        CheckConstraint("effective_ordinal >= 0 AND effective_ordinal < 3050", name="ck_ranking_result_week"),
+        CheckConstraint(
+            "effective_ordinal >= 0 AND effective_ordinal < 3050",
+            name="ck_ranking_result_week",
+        ),
     )
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -108,7 +121,10 @@ class OfficialRankingZeroVersionModel(Base):
 
     __tablename__ = "official_ranking_zero_versions"
     __table_args__ = (
-        CheckConstraint("effective_ordinal >= 0 AND effective_ordinal < 3050", name="ck_ranking_zero_week"),
+        CheckConstraint(
+            "effective_ordinal >= 0 AND effective_ordinal < 3050",
+            name="ck_ranking_zero_week",
+        ),
     )
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -133,6 +149,7 @@ class OwnedTournamentRankingSourceModel(Base):
 
 class RankingTransitionAuthorityModel(Base):
     """Immutable historically effective ranking boundary inputs."""
+
     __tablename__ = "ranking_transition_authorities"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -215,9 +232,7 @@ class TournamentGroupRulesPolicyModel(Base):
     )
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
-    effective_from_season_index: Mapped[int] = mapped_column(
-        Integer, primary_key=True
-    )
+    effective_from_season_index: Mapped[int] = mapped_column(Integer, primary_key=True)
     command_id: Mapped[str] = mapped_column(String(128), nullable=False)
     authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
@@ -291,8 +306,12 @@ class TournamentGroupMatchScheduleAuthorityModel(Base):
     command_id: Mapped[str] = mapped_column(String(128), nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
-    format_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
-    topology_authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    format_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
+    topology_authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
@@ -509,7 +528,9 @@ class TournamentDrawRevisionModel(Base):
     command_id: Mapped[str] = mapped_column(String(128), nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     revision_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
-    predecessor_draw_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    predecessor_draw_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
     successor_draw_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -562,6 +583,7 @@ class AuthoritativeWorldEventModel(Base):
 
 class InitialWorldStateModel(Base):
     """Current independent initial-world snapshot owned by one Run/Branch."""
+
     __tablename__ = "initial_world_states"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -571,6 +593,7 @@ class InitialWorldStateModel(Base):
 
 class PlayerLifecycleWeekStateModel(Base):
     """Immutable Run/Branch-owned lifecycle snapshot at one FAX week."""
+
     __tablename__ = "player_lifecycle_week_states"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -663,6 +686,7 @@ class DefinitiveWildCardAssignmentAuthorityModel(Base):
 
 class PlayerSportingWeekStateModel(Base):
     """Immutable Run/Branch-owned canonical sporting snapshot at one FAX week."""
+
     __tablename__ = "player_sporting_week_states"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -671,9 +695,9 @@ class PlayerSportingWeekStateModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
-
 class CompletedWeekSportingContextModel(Base):
     """Explicit Run/Branch-owned completed-week sporting evidence projection."""
+
     __tablename__ = "completed_week_sporting_contexts"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -714,9 +738,7 @@ class TournamentEntryFieldVersionModel(Base):
     ranking_authority_fingerprint: Mapped[str] = mapped_column(
         String(64), nullable=False
     )
-    applications_fingerprint: Mapped[str] = mapped_column(
-        String(64), nullable=False
-    )
+    applications_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     applications_json: Mapped[str] = mapped_column(Text, nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -734,10 +756,14 @@ class StandaloneMatchWorkspaceModel(Base):
 
 class SimulationSlotModel(Base):
     """Immutable plan plus evolving completion head for one global slot."""
+
     __tablename__ = "simulation_slots"
     __table_args__ = (
         UniqueConstraint(
-            "run_id", "branch_id", "week_ordinal", "slot_ordinal",
+            "run_id",
+            "branch_id",
+            "week_ordinal",
+            "slot_ordinal",
             name="uq_simulation_slot_global_ordinal",
         ),
     )
@@ -756,6 +782,7 @@ class SimulationSlotModel(Base):
 
 class SimulationEventGroupModel(Base):
     """Atomic match/result/effect receipt; exists only after group commit."""
+
     __tablename__ = "simulation_event_groups"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -779,9 +806,13 @@ class AuthoritativeLiveMatchModel(Base):
     slot_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     group_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     match_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    authoritative_input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    authoritative_input_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
     authoritative_input_json: Mapped[str] = mapped_column(Text, nullable=False)
-    execution_command_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    execution_command_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False
+    )
     effects_policy_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
@@ -800,7 +831,9 @@ class LiveMatchWorkingModel(Base):
     state_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
     working_state_json: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
-    final_result_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    final_result_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
     final_result_json: Mapped[str | None] = mapped_column(Text, nullable=True)
 
 
@@ -922,12 +955,24 @@ class SimulationRunModel(Base):
     config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
     world_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    world_generation_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    parent_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="fresh_seed")
-    source_rollover_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
-    source_rollover_from_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    source_rollover_to_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    world_generation_fingerprint: Mapped[str | None] = mapped_column(
+        String(256), nullable=True
+    )
+    parent_run_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    source_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="fresh_seed"
+    )
+    source_rollover_run_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
+    source_rollover_from_season: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
+    source_rollover_to_season: Mapped[int | None] = mapped_column(
+        Integer, nullable=True
+    )
 
 
 class RunContainerModel(Base):
@@ -935,7 +980,9 @@ class RunContainerModel(Base):
 
     __tablename__ = "runs"
     __table_args__ = (
-        CheckConstraint("storage_kind IN ('built_in', 'custom_local')", name="ck_runs_storage_kind"),
+        CheckConstraint(
+            "storage_kind IN ('built_in', 'custom_local')", name="ck_runs_storage_kind"
+        ),
         Index(
             "uq_runs_display_name",
             "display_name",
@@ -946,12 +993,16 @@ class RunContainerModel(Base):
 
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     display_name: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    storage_kind: Mapped[str] = mapped_column(String(32), nullable=False, default="built_in")
+    storage_kind: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="built_in"
+    )
     read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # A canonical Run may be created before any World Package is attached.
     # Existing legacy-backed Runs continue to persist their immutable world id.
     world_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    world_package_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    world_package_fingerprint: Mapped[str | None] = mapped_column(
+        String(256), nullable=True
+    )
     config_version: Mapped[str | None] = mapped_column(String(128), nullable=True)
     config_fingerprint: Mapped[str | None] = mapped_column(String(256), nullable=True)
     global_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
@@ -970,8 +1021,12 @@ class LegacySimulationRunMappingModel(Base):
     __tablename__ = "legacy_simulation_run_mappings"
 
     simulation_run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
-    run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True, index=True)
-    mapping_kind: Mapped[str] = mapped_column(String(64), nullable=False, default="legacy_single_attempt")
+    run_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, unique=True, index=True
+    )
+    mapping_kind: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="legacy_single_attempt"
+    )
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
@@ -994,14 +1049,22 @@ class RunBranchModel(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     read_only: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    forked_from_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    forked_from_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    forked_from_branch_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
+    forked_from_checkpoint_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
     forked_from_saved_revision_id: Mapped[str | None] = mapped_column(
         String(128), nullable=True, index=True
     )
-    saved_head_revision_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    saved_head_revision_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    legacy_simulation_run_id: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True, index=True)
+    legacy_simulation_run_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, unique=True, index=True
+    )
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
 
@@ -1046,6 +1109,7 @@ class BranchSavedRevisionModel(Base):
 
 class RunPackageStateModel(Base):
     """Sole live, Branch-owned canonical Package snapshot."""
+
     __tablename__ = "run_package_states"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -1055,6 +1119,7 @@ class RunPackageStateModel(Base):
 
 class RunPackageIdentityAllocatorModel(Base):
     """Run-wide monotonic ID high-water mark; IDs are never recycled."""
+
     __tablename__ = "run_package_identity_allocators"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     next_run_local_id: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
@@ -1062,6 +1127,7 @@ class RunPackageIdentityAllocatorModel(Base):
 
 class RunPackageApplicationReceiptModel(Base):
     """Immutable command receipt and Package provenance evidence."""
+
     __tablename__ = "run_package_application_receipts"
     run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -1082,14 +1148,18 @@ class BranchWorkingDraftModel(Base):
             f"'{DIRTY_WORKING_DRAFT_STATUS}')",
             name="ck_branch_working_drafts_status",
         ),
-        CheckConstraint("change_count >= 0", name="ck_branch_working_drafts_change_count"),
+        CheckConstraint(
+            "change_count >= 0", name="ck_branch_working_drafts_change_count"
+        ),
         CheckConstraint("draft_version >= 0", name="ck_branch_working_drafts_version"),
     )
 
     draft_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    base_revision_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
+    base_revision_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, index=True
+    )
     status: Mapped[str] = mapped_column(
         String(32), nullable=False, default=CLEAN_WORKING_DRAFT_STATUS
     )
@@ -1181,12 +1251,16 @@ class BranchStateModel(Base):
 
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
-    head_checkpoint_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    head_checkpoint_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True, index=True
+    )
     current_season: Mapped[int | None] = mapped_column(Integer, nullable=True)
     current_week: Mapped[int | None] = mapped_column(Integer, nullable=True)
     current_event_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     current_event_sequence: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    state_schema_version: Mapped[str] = mapped_column(String(64), nullable=False, default="branch_state_v1")
+    state_schema_version: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="branch_state_v1"
+    )
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="active")
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
 
@@ -1196,9 +1270,15 @@ class BranchCheckpointModel(Base):
 
     __tablename__ = "branch_checkpoints"
     __table_args__ = (
-        UniqueConstraint("branch_id", "sequence", name="uq_branch_checkpoints_branch_sequence"),
-        UniqueConstraint("branch_id", "command_id", name="uq_branch_checkpoints_branch_command"),
-        CheckConstraint("content_hash_algorithm = 'sha256'", name="ck_branch_checkpoints_sha256"),
+        UniqueConstraint(
+            "branch_id", "sequence", name="uq_branch_checkpoints_branch_sequence"
+        ),
+        UniqueConstraint(
+            "branch_id", "command_id", name="uq_branch_checkpoints_branch_command"
+        ),
+        CheckConstraint(
+            "content_hash_algorithm = 'sha256'", name="ck_branch_checkpoints_sha256"
+        ),
         Index(
             "uq_branch_checkpoints_one_initial_per_branch",
             "branch_id",
@@ -1243,7 +1323,9 @@ class BranchCheckpointModel(Base):
     branch_seed: Mapped[int | None] = mapped_column(Integer, nullable=True)
     seed_namespace_json: Mapped[str] = mapped_column(Text, nullable=False)
     payload_schema_version: Mapped[str] = mapped_column(String(64), nullable=False)
-    content_hash_algorithm: Mapped[str] = mapped_column(String(16), nullable=False, default="sha256")
+    content_hash_algorithm: Mapped[str] = mapped_column(
+        String(16), nullable=False, default="sha256"
+    )
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -1258,31 +1340,54 @@ class BranchForkCommandModel(Base):
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     source_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
     source_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
-    target_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
+    target_branch_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, unique=True
+    )
+    target_legacy_simulation_run_id: Mapped[str] = mapped_column(
+        String(128), nullable=False, unique=True
+    )
     result_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
     result_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    result_legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    result_legacy_simulation_run_id: Mapped[str] = mapped_column(
+        String(128), nullable=False
+    )
     metadata_json: Mapped[str] = mapped_column(Text, nullable=False, default="{}")
-    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
 
 
 class BranchSimulationCommandModel(Base):
     """Completed, idempotent Branch simulation command journal."""
+
     __tablename__ = "branch_simulation_commands"
-    __table_args__ = (UniqueConstraint("branch_id", "previous_head_checkpoint_id", name="uq_branch_simulation_commands_branch_previous_head"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "branch_id",
+            "previous_head_checkpoint_id",
+            name="uq_branch_simulation_commands_branch_previous_head",
+        ),
+    )
     command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     action_kind: Mapped[str] = mapped_column(String(64), nullable=False)
-    expected_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    previous_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    resulting_head_checkpoint_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    expected_head_checkpoint_id: Mapped[str] = mapped_column(
+        String(128), nullable=False
+    )
+    previous_head_checkpoint_id: Mapped[str] = mapped_column(
+        String(128), nullable=False
+    )
+    resulting_head_checkpoint_id: Mapped[str] = mapped_column(
+        String(128), nullable=False
+    )
     legacy_simulation_run_id: Mapped[str] = mapped_column(String(128), nullable=False)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
     audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
 
 
 class OfficialBranchSelectionCommandModel(Base):
@@ -1293,12 +1398,20 @@ class OfficialBranchSelectionCommandModel(Base):
     command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     product_run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
-    expected_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    expected_previous_official_branch_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
     target_branch_id: Mapped[str] = mapped_column(String(128), nullable=False)
-    result_previous_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    result_official_branch_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    result_previous_official_branch_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
+    result_official_branch_id: Mapped[str | None] = mapped_column(
+        String(128), nullable=True
+    )
     audit_reason: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[str] = mapped_column(String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP"))
+    created_at: Mapped[str] = mapped_column(
+        String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
+    )
 
 
 class SeasonStateModel(Base):
@@ -1316,7 +1429,11 @@ class SeasonStateModel(Base):
 
 class CompletedEventModel(Base):
     __tablename__ = "completed_events"
-    __table_args__ = (UniqueConstraint("run_id", "event_sequence", name="uq_completed_events_run_sequence"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "event_sequence", name="uq_completed_events_run_sequence"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1326,7 +1443,11 @@ class CompletedEventModel(Base):
 
 class CompletedEventMetadataModel(Base):
     __tablename__ = "completed_event_metadata"
-    __table_args__ = (UniqueConstraint("run_id", "event_id", name="uq_completed_event_metadata_run_event"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "event_id", name="uq_completed_event_metadata_run_event"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1339,7 +1460,11 @@ class CompletedEventMetadataModel(Base):
 
 class CompletedTournamentInputModel(Base):
     __tablename__ = "completed_tournament_inputs"
-    __table_args__ = (UniqueConstraint("run_id", "event_id", name="uq_completed_tournament_input_run_event"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "event_id", name="uq_completed_tournament_input_run_event"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1350,7 +1475,11 @@ class CompletedTournamentInputModel(Base):
 
 class RankingSnapshotModel(Base):
     __tablename__ = "ranking_snapshots"
-    __table_args__ = (UniqueConstraint("run_id", "snapshot_sequence", name="uq_ranking_snapshots_run_sequence"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "snapshot_sequence", name="uq_ranking_snapshots_run_sequence"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1364,7 +1493,11 @@ class RankingSnapshotModel(Base):
 
 class RaceSnapshotModel(Base):
     __tablename__ = "race_snapshots"
-    __table_args__ = (UniqueConstraint("run_id", "snapshot_sequence", name="uq_race_snapshots_run_sequence"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "snapshot_sequence", name="uq_race_snapshots_run_sequence"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1374,7 +1507,6 @@ class RaceSnapshotModel(Base):
     as_of_season: Mapped[int] = mapped_column(Integer, nullable=False)
     as_of_week: Mapped[int] = mapped_column(Integer, nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
-
 
 
 class WorldTourFinalsRaceConfigurationModel(Base):
@@ -1401,7 +1533,6 @@ class WorldTourFinalsRaceSnapshotModel(Base):
     input_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     cutoff_week_ordinal: Mapped[int] = mapped_column(Integer, nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
-
 
 
 class WorldTourFinalsParticipantSelectionConfigurationModel(Base):
@@ -1434,14 +1565,36 @@ class WorldTourFinalsEffectiveParticipantStateModel(Base):
     """Append-only effective Finals field lineage."""
 
     __tablename__ = "world_tour_finals_effective_participant_states"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "sequence",
+            name="uq_finals_effective_state_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "command_id",
+            name="uq_finals_effective_state_scope_command",
+        ),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     target_season_index: Mapped[int] = mapped_column(Integer, nullable=False)
     finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
-    state_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
-    predecessor_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    state_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True
+    )
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
     command_id: Mapped[str] = mapped_column(String(128), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
@@ -1450,6 +1603,26 @@ class WorldTourFinalsReplacementAuthorityModel(Base):
     """Append-only preview/decision history for Finals Race vacancies."""
 
     __tablename__ = "world_tour_finals_replacement_authorities"
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "sequence",
+            name="uq_finals_replacement_scope_sequence",
+        ),
+        UniqueConstraint(
+            "run_id",
+            "branch_id",
+            "target_season_index",
+            "finals_event_id",
+            "vacancy_id",
+            "command_id",
+            name="uq_finals_replacement_scope_command",
+        ),
+    )
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     branch_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1457,15 +1630,21 @@ class WorldTourFinalsReplacementAuthorityModel(Base):
     finals_event_id: Mapped[str] = mapped_column(String(128), nullable=False)
     vacancy_id: Mapped[str] = mapped_column(String(128), nullable=False)
     sequence: Mapped[int] = mapped_column(Integer, nullable=False)
-    authority_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False, unique=True)
-    predecessor_fingerprint: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    authority_fingerprint: Mapped[str] = mapped_column(
+        String(64), nullable=False, unique=True
+    )
+    predecessor_fingerprint: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
     command_id: Mapped[str] = mapped_column(String(128), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class FinalsQualificationModel(Base):
     __tablename__ = "finals_qualification"
-    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),)
+    __table_args__ = (
+        UniqueConstraint("run_id", "season", name="uq_finals_qualification_run_season"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1477,7 +1656,9 @@ class FinalsQualificationModel(Base):
 
 class FinalsResultModel(Base):
     __tablename__ = "finals_results"
-    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_finals_results_run_season"),)
+    __table_args__ = (
+        UniqueConstraint("run_id", "season", name="uq_finals_results_run_season"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1490,7 +1671,11 @@ class FinalsResultModel(Base):
 
 class SeasonRolloverModel(Base):
     __tablename__ = "season_rollovers"
-    __table_args__ = (UniqueConstraint("run_id", "to_season", name="uq_season_rollovers_run_to_season"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id", "to_season", name="uq_season_rollovers_run_to_season"
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1540,7 +1725,14 @@ class NextSeasonPlayerModel(Base):
 
 class AdminActionModel(Base):
     __tablename__ = "admin_actions"
-    __table_args__ = (UniqueConstraint("run_id", "event_id", "action_sequence", name="uq_admin_actions_run_event_sequence"),)
+    __table_args__ = (
+        UniqueConstraint(
+            "run_id",
+            "event_id",
+            "action_sequence",
+            name="uq_admin_actions_run_event_sequence",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1552,7 +1744,9 @@ class AdminActionModel(Base):
 
 class RunTalentPlanModel(Base):
     __tablename__ = "run_talent_plans"
-    __table_args__ = (UniqueConstraint("run_id", "season", name="uq_run_talent_plan_run_season"),)
+    __table_args__ = (
+        UniqueConstraint("run_id", "season", name="uq_run_talent_plan_run_season"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     run_id: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -1588,7 +1782,9 @@ class RunTalentCountryAllocationModel(Base):
 
 class RunProspectModel(Base):
     __tablename__ = "run_prospects"
-    __table_args__ = (UniqueConstraint("run_id", "prospect_id", name="uq_run_prospects_run_prospect"),)
+    __table_args__ = (
+        UniqueConstraint("run_id", "prospect_id", name="uq_run_prospects_run_prospect"),
+    )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     prospect_id: Mapped[str] = mapped_column(String(160), nullable=False)
@@ -1605,7 +1801,9 @@ class RunProspectModel(Base):
     country_code: Mapped[str] = mapped_column(String(8), nullable=False, index=True)
     country_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
     status: Mapped[str] = mapped_column(String(32), nullable=False, default="prospect")
-    source_type: Mapped[str] = mapped_column(String(64), nullable=False, default="weekly_15yo_cohort")
+    source_type: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="weekly_15yo_cohort"
+    )
     cohort_policy_version: Mapped[str] = mapped_column(String(64), nullable=False)
     profile_version: Mapped[str] = mapped_column(String(64), nullable=False)
     first_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
@@ -1643,7 +1841,9 @@ class RunGeneratedPlayerProvenanceModel(Base):
     talent_seed_value: Mapped[str | None] = mapped_column(String(128), nullable=True)
     quality_band: Mapped[str | None] = mapped_column(String(64), nullable=True)
     is_top_band: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    source_type: Mapped[str] = mapped_column(String(32), nullable=False, default="planner_generated")
+    source_type: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="planner_generated"
+    )
     override_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
     origin_source_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     origin_quality_band: Mapped[str | None] = mapped_column(String(64), nullable=True)

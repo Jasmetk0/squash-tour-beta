@@ -123,7 +123,13 @@ class WorldTourFinalsReplacementStore:
         return state
 
     def authority_history(
-        self, *, run_id: str, branch_id: str, vacancy_id: str
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        target_season_index: int,
+        finals_event_id: str,
+        vacancy_id: str,
     ) -> tuple[WorldTourFinalsReplacementAuthority, ...]:
         self._scope(run_id, branch_id)
         rows = self.session.scalars(
@@ -131,6 +137,10 @@ class WorldTourFinalsReplacementStore:
             .where(
                 WorldTourFinalsReplacementAuthorityModel.run_id == run_id,
                 WorldTourFinalsReplacementAuthorityModel.branch_id == branch_id,
+                WorldTourFinalsReplacementAuthorityModel.target_season_index
+                == target_season_index,
+                WorldTourFinalsReplacementAuthorityModel.finals_event_id
+                == finals_event_id,
                 WorldTourFinalsReplacementAuthorityModel.vacancy_id == vacancy_id,
             )
             .order_by(WorldTourFinalsReplacementAuthorityModel.sequence)
@@ -165,7 +175,11 @@ class WorldTourFinalsReplacementStore:
     ) -> WorldTourFinalsReplacementAuthority:
         self._scope(value.run_id, value.branch_id, writing=True)
         rows = self.authority_history(
-            run_id=value.run_id, branch_id=value.branch_id, vacancy_id=value.vacancy_id
+            run_id=value.run_id,
+            branch_id=value.branch_id,
+            target_season_index=value.target_season_index,
+            finals_event_id=value.finals_event_id,
+            vacancy_id=value.vacancy_id,
         )
         by_command = next(
             (item for item in rows if item.command_id == value.command_id), None

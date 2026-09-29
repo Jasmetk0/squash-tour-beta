@@ -123,7 +123,11 @@ def test_persisted_decline_accept_history_is_append_only_and_idempotent(tmp_path
         assert [
             a.status
             for a in store.authority_history(
-                run_id="run", branch_id="branch", vacancy_id="v1"
+                run_id="run",
+                branch_id="branch",
+                target_season_index=0,
+                finals_event_id="FINALS",
+                vacancy_id="v1",
             )
         ] == ["awaiting_decision", "awaiting_decision", "accepted"]
         assert tuple(
@@ -138,4 +142,32 @@ def test_persisted_decline_accept_history_is_append_only_and_idempotent(tmp_path
             store.put_authority(
                 preview.model_copy(update={"withdrawal_reason": "different"})
             )
+
+        other_edition = preview.model_copy(
+            update={
+                "target_season_index": 1,
+                "finals_event_id": "FINALS-2",
+                "command_id": "preview-other-edition",
+            }
+        )
+        store.put_authority(other_edition)
+        assert store.authority_history(
+            run_id="run",
+            branch_id="branch",
+            target_season_index=1,
+            finals_event_id="FINALS-2",
+            vacancy_id="v1",
+        ) == (other_edition,)
+        assert (
+            len(
+                store.authority_history(
+                    run_id="run",
+                    branch_id="branch",
+                    target_season_index=0,
+                    finals_event_id="FINALS",
+                    vacancy_id="v1",
+                )
+            )
+            == 3
+        )
     engine.dispose()

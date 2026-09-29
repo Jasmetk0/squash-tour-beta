@@ -106,6 +106,8 @@ class WorldTourFinalsReplacementService:
             existing = store.authority_history(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
+                target_season_index=command.target_season_index,
+                finals_event_id=selection.finals_event_id,
                 vacancy_id=command.vacancy_id,
             )
             if existing:
@@ -142,6 +144,8 @@ class WorldTourFinalsReplacementService:
             history = store.authority_history(
                 run_id=command.run_id,
                 branch_id=command.branch_id,
+                target_season_index=command.target_season_index,
+                finals_event_id=selection.finals_event_id,
                 vacancy_id=command.vacancy_id,
             )
             retry = next(

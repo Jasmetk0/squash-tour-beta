@@ -25,8 +25,7 @@ capture/restore, Planned Event UI, Entry Field/Draw Input adaptation, post-draw 
 Revision/cutoff/W/O integration, preparation blockers, and closure provenance remain to be wired.
 Until those boundaries exist, the new kernel is not a production mutation path.
 
-**Next:** persist and expose this authority through guarded preview/decision commands, then adapt
-the accepted effective field into the existing pre-draw and pure-knockout post-draw canonical
+**Next:** adapt the persisted accepted effective field into the existing pre-draw and pure-knockout post-draw canonical
 chains. Keep concurrent post-draw vacancies and started-group replacement fail-closed unless the
 existing authorities provide an unambiguous atomic mapping.
 

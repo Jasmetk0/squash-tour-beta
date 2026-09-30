@@ -7337,6 +7337,36 @@ export type ViewerTournamentResult = {
   matches: ViewerTournamentResultMatch[]
 }
 
+export type ViewerFinalsParticipant = {
+  player_id: string
+  seed: number
+  race_rank: number
+  race_points: number
+  qualification_source: 'direct_entry' | 'race'
+  direct_entry_event_ids: string[]
+}
+
+export type ViewerFinalsSeason = {
+  schema_version: 'viewer_finals_season.v1'
+  target_season_index: number
+  race_cutoff_season_index: number
+  race_cutoff_week: number
+  selection_published: boolean
+  finals_event_id: string | null
+  participant_capacity: number | null
+  participants: ViewerFinalsParticipant[]
+  result_published: boolean
+  result: ViewerTournamentResult | null
+}
+
+export type ViewerFinalsHistory = {
+  schema_version: 'viewer_finals_history.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  latest_target_season_index: number | null
+  seasons: ViewerFinalsSeason[]
+}
+
 export type ViewerFinalsRaceCountedResult = {
   event_id: string
   completed_season_index: number

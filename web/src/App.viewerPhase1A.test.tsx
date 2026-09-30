@@ -57,6 +57,7 @@ const api = vi.hoisted(() => ({
   getViewerVisibleProspects: vi.fn(),
   getViewerRankingTable: vi.fn(),
   getViewerOfficialRanking: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
@@ -154,6 +155,13 @@ function resetApiMocks(): void {
     best_n: 15,
     row_count: 0,
     rows: []
+  }))
+  api.getViewerFinalsRace.mockImplementation(async (productRunId: string) => ({
+    schema_version: 'viewer_finals_race_history.v1',
+    product_run_id: productRunId,
+    viewer_branch_id: `${productRunId}-official`,
+    latest_target_season_index: null,
+    publications: []
   }))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },
@@ -1322,44 +1330,52 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('shows top-level race snapshot metadata and preview when an active run has parseable race snapshots', async () => {
+  it('shows canonical Finals Race standings for the active Product Run', async () => {
     setTestActiveRun('run-a')
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'run-a',
-      snapshots: [
-        { snapshot_sequence: 2, snapshot_kind: 'TOURNAMENT', source_event_id: 'E1', payload: {} },
-        { snapshot_sequence: 9, snapshot_kind: 'WEEK', source_event_id: 'E4', payload: { race_table: { rows: topRaceRows(11) } } }
-      ]
+    api.getViewerFinalsRace.mockResolvedValue({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'run-a',
+      viewer_branch_id: 'run-a-official',
+      latest_target_season_index: 29,
+      publications: [{
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'run-a',
+        viewer_branch_id: 'run-a-official',
+        target_season_index: 29,
+        cutoff_season_index: 29,
+        cutoff_week: 55,
+        best_n: 8,
+        selection_published: true,
+        finals_event_id: 'FINALS-2029',
+        rows: [{
+          rank: 1,
+          player_id: 'R1',
+          race_points: 7000,
+          tournaments_counted: 8,
+          finals_selected: true,
+          finals_seed: 1,
+          qualification_source: 'race',
+          counted_results: [
+            { event_id: 'E1', completed_season_index: 29, completed_week: 12, race_points: 1200 }
+          ]
+        }]
+      }]
     })
 
     renderAppAt('/viewer/rankings/race')
 
     expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('Race to Finals active run snapshot summary')
-    expect(panel).toHaveTextContent('run-a')
-    expect(panel).toHaveTextContent('Race snapshot count')
-    expect(panel).toHaveTextContent('2')
-    expect(panel).toHaveTextContent('Latest snapshot sequence')
-    expect(panel).toHaveTextContent('9')
-    expect(panel).toHaveTextContent('Latest source event ID')
-    expect(panel).toHaveTextContent('E4')
-    expect(panel).toHaveTextContent('Latest snapshot kind')
-    expect(panel).toHaveTextContent('WEEK')
-    expect(screen.getByRole('heading', { name: 'Top 10 Race Preview' })).toBeInTheDocument()
-    const table = screen.getByRole('table', { name: 'Latest Top 10 race preview table' })
-    expect(within(table).getByRole('link', { name: 'Paul Coll' })).toHaveAttribute(
+    const table = await screen.findByRole('table', { name: 'Canonical Finals Race standings' })
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run-a')
+    expect(within(table).getByRole('link', { name: 'R1' })).toHaveAttribute(
       'href',
       '/viewer/runs/run-a/players/R1/career'
     )
-    expect(within(table).getByRole('link', { name: 'NZ' })).toHaveAttribute('href', '/viewer/runs/run-a/countries/NZ')
     expect(within(table).getByText('7000')).toBeInTheDocument()
-    expect(within(table).getAllByText('8').length).toBeGreaterThan(0)
-    expect(within(table).getByText('Qualified')).toBeInTheDocument()
-    expect(within(table).getByText('1500')).toBeInTheDocument()
-    expect(within(table).getAllByRole('row')).toHaveLength(11)
-    expect(screen.queryByText('Race Top Player 11')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
-    expect(screen.getByRole('link', { name: 'View latest race snapshot' })).toHaveAttribute('href', '/viewer/runs/run-a/race/9')
+    expect(within(table).getByText('8')).toBeInTheDocument()
+    expect(within(table).getByText('Race qualified · seed 1')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open run-scoped Race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.queryByText(/snapshot sequence/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -1387,9 +1403,9 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     cleanup()
     renderAppAt('/viewer/rankings/race')
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open active run race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
-    expect(screen.queryByRole('link', { name: 'View latest race snapshot' })).not.toBeInTheDocument()
+    expect(await screen.findByText('No canonical Finals Race has been published for this Viewer Branch yet.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open run-scoped Race' })).toHaveAttribute('href', '/viewer/runs/run-a/race')
+    expect(screen.queryByText(/snapshot sequence/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

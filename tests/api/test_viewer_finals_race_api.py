@@ -7,8 +7,8 @@ import pytest
 from tests.api.test_admin_world_tour_finals_participants_api import (
     _seed_calendar_and_race,
 )
-from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
-from tests.api.viewer_saved_revision_helpers import save_simulation
+from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.api.viewer_saved_revision_helpers import canonical_product_run, save_simulation
 
 
 @pytest.mark.pr_critical
@@ -17,9 +17,9 @@ def test_viewer_finals_race_is_published_only_from_saved_simulation_component(
 ) -> None:
     database_url = f"sqlite:///{tmp_path / 'viewer-finals-race.sqlite'}"
     with ApiServer(database_url=database_url) as server:
-        run_id, branch_id, _ = _create_run(
+        branch_id, run_id = canonical_product_run(
             server,
-            display_name="Viewer Finals Race",
+            run_id="viewer-finals-race",
         )
         factory = server.app.state.runtime.repository._session_factory
         race = _seed_calendar_and_race(
@@ -103,9 +103,9 @@ def test_viewer_finals_race_is_published_only_from_saved_simulation_component(
 def test_viewer_finals_race_empty_saved_history_is_public_empty_state(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'viewer-finals-race-empty.sqlite'}"
     with ApiServer(database_url=database_url) as server:
-        run_id, _, _ = _create_run(
+        _, run_id = canonical_product_run(
             server,
-            display_name="Viewer Empty Finals Race",
+            run_id="viewer-empty-finals-race",
         )
         status, payload = _request(
             "GET",

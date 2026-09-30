@@ -9,8 +9,8 @@ import {
   getRunPlayerCareerPerformance,
   getRunPlayerDetail,
   getRunPlayerTournamentResults,
-  listRunNations,
-  listRunPlayers
+  getViewerCountries,
+  getViewerPlayers
 } from '../api/client'
 import { CurrentContextStrip, MetadataList, PageIntro, SectionCard } from '../components/RunScopedUi'
 import {
@@ -385,7 +385,7 @@ function displayDistribution(values: Array<{ band: string; count: number }> | nu
 }
 
 export function ViewerRunPlayersPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId } = useViewerProductRunRouteContext()
   const [searchParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [countryCode, setCountryCode] = useState(() => searchParams.get('country') ?? '')
@@ -393,34 +393,36 @@ export function ViewerRunPlayersPage(): JSX.Element {
   const [minAge, setMinAge] = useState('')
   const [maxAge, setMaxAge] = useState('')
 
-  const queryParams = useMemo(
-    () => ({
-      search: search.trim() || undefined,
-      country_code: countryCode.trim().toUpperCase() || undefined,
-      source_type: sourceType || undefined,
-      min_age: minAge ? Number(minAge) : undefined,
-      max_age: maxAge ? Number(maxAge) : undefined,
-      limit: 200,
-      offset: 0,
-      sort: 'overall_desc'
-    }),
-    [search, countryCode, sourceType, minAge, maxAge]
-  )
-
   const playersQuery = useQuery({
-    queryKey: ['viewer-run-players', runId, queryParams],
-    queryFn: () => listRunPlayers(legacySimulationRunId, queryParams),
-    enabled: Boolean(runId)
+    queryKey: ['viewer-run-players-canonical', runId],
+    queryFn: () => getViewerPlayers(runId),
+    enabled: Boolean(runId),
+    retry: false
   })
-  const players = normalizePlayerListEntries(playersQuery.data?.players)
+
+  const players = useMemo(() => {
+    const normalizedSearch = search.trim().toLowerCase()
+    const normalizedCountry = countryCode.trim().toUpperCase()
+    const min = minAge ? Number(minAge) : null
+    const max = maxAge ? Number(maxAge) : null
+    return (playersQuery.data?.players ?? [])
+      .filter((player) => !normalizedSearch || [player.player_id, player.name, player.country_code].some((value) => value.toLowerCase().includes(normalizedSearch)))
+      .filter((player) => !normalizedCountry || player.country_code === normalizedCountry)
+      .filter((player) => !sourceType || player.identity_source === sourceType)
+      .filter((player) => min === null || player.age >= min)
+      .filter((player) => max === null || player.age <= max)
+      .sort((a, b) => (b.current_ovr ?? -1) - (a.current_ovr ?? -1) || a.player_id.localeCompare(b.player_id))
+  }, [playersQuery.data?.players, search, countryCode, sourceType, minAge, maxAge])
 
   return (
     <section className="panel">
-      <PageIntro title="Players" subtitle="Read-only player profiles for the selected run." />
+      <PageIntro title="Players" subtitle="Canonical Saved-Revision player profiles for the selected Product Run." />
       <CurrentContextStrip
         items={[
-          { label: 'Active run ID', value: runId || 'unknown' },
-          { label: 'Total player count', value: playersQuery.data?.total ?? '—' },
+          { label: 'Product Run', value: runId || 'unknown' },
+          { label: 'Viewer Branch', value: playersQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Public week', value: playersQuery.data ? `S${playersQuery.data.season_index} W${playersQuery.data.week}` : '—' },
+          { label: 'Total player count', value: playersQuery.data?.player_count ?? '—' },
           { label: 'Visible players', value: players.length }
         ]}
       />
@@ -436,29 +438,27 @@ export function ViewerRunPlayersPage(): JSX.Element {
             <input value={countryCode} onChange={(event) => setCountryCode(event.target.value)} maxLength={3} />
           </label>
           <label>
-            Source type
+            Identity source
             <select value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
-              {PLAYER_SOURCE_OPTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {value || 'all'}
-                </option>
-              ))}
+              <option value="">all</option>
+              <option value="initial_world">initial world</option>
+              <option value="run_prospect">run prospect</option>
             </select>
           </label>
           <label>
             Age min
-            <input type="number" value={minAge} onChange={(event) => setMinAge(event.target.value)} min={15} max={60} />
+            <input type="number" value={minAge} onChange={(event) => setMinAge(event.target.value)} min={15} max={120} />
           </label>
           <label>
             Age max
-            <input type="number" value={maxAge} onChange={(event) => setMaxAge(event.target.value)} min={15} max={60} />
+            <input type="number" value={maxAge} onChange={(event) => setMaxAge(event.target.value)} min={15} max={120} />
           </label>
         </div>
       </SectionCard>
 
       <SectionCard title="Player profiles">
-        {playersQuery.isLoading ? <p className="status">Loading players…</p> : null}
-        {playersQuery.error ? <p className="error">Failed to load players: {String(playersQuery.error)}</p> : null}
+        {playersQuery.isLoading ? <p className="status">Loading canonical players…</p> : null}
+        {playersQuery.error ? <p className="error">Failed to load canonical players: {String(playersQuery.error)}</p> : null}
         {!playersQuery.isLoading && !playersQuery.error && playersQuery.data ? (
           players.length > 0 ? (
             <table>
@@ -467,8 +467,10 @@ export function ViewerRunPlayersPage(): JSX.Element {
                   <th>Name</th>
                   <th>Country</th>
                   <th>Age</th>
-                  <th>Quality band</th>
+                  <th>Status</th>
                   <th>Power Rating</th>
+                  <th>Potential</th>
+                  <th>Source</th>
                   <th>Player Profile</th>
                 </tr>
               </thead>
@@ -477,9 +479,11 @@ export function ViewerRunPlayersPage(): JSX.Element {
                   <tr key={player.player_id}>
                     <td>{player.name}</td>
                     <td>{countryCodeCell(player.country_code, runId)}</td>
-                    <td>{displayMetric(player.age)}</td>
-                    <td>{player.quality_band ?? '—'}</td>
-                    <td>{displayMetric(player.overall)}</td>
+                    <td>{player.age}</td>
+                    <td>{player.status}</td>
+                    <td>{displayMetric(player.current_ovr)}</td>
+                    <td>{displayMetric(player.potential_ovr)}</td>
+                    <td>{player.identity_source.replace(/_/g, ' ')}</td>
                     <td>
                       <Link to={viewerPlayerProfilePath(runId, player.player_id)}>Open Player Profile</Link>
                     </td>
@@ -488,7 +492,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
               </tbody>
             </table>
           ) : (
-            <p className="status">No data is available for this run yet.</p>
+            <p className="status">No canonical players match these filters.</p>
           )
         ) : null}
       </SectionCard>
@@ -719,97 +723,92 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
 }
 
 export function ViewerRunCountriesPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId } = useViewerProductRunRouteContext()
   const [search, setSearch] = useState('')
-  const [sort, setSort] = useState('total_players_desc')
+  const [sort, setSort] = useState('player_count_desc')
 
-  const queryParams = useMemo(
-    () => ({
-      search: search.trim() || undefined,
-      sort,
-      limit: 300,
-      offset: 0
-    }),
-    [search, sort]
-  )
-
-  const nationsQuery = useQuery({
-    queryKey: ['viewer-run-countries', runId, queryParams],
-    queryFn: () => listRunNations(legacySimulationRunId, queryParams),
-    enabled: Boolean(runId)
+  const countriesQuery = useQuery({
+    queryKey: ['viewer-run-countries-canonical', runId],
+    queryFn: () => getViewerCountries(runId),
+    enabled: Boolean(runId),
+    retry: false
   })
-  const nations = normalizeNationListEntries(nationsQuery.data?.nations)
+
+  const countries = useMemo(() => {
+    const normalizedSearch = search.trim().toUpperCase()
+    const values = (countriesQuery.data?.countries ?? []).filter(
+      (country) => !normalizedSearch || country.country_code.includes(normalizedSearch)
+    )
+    return [...values].sort((a, b) => {
+      if (sort === 'average_ovr_desc') return (b.average_current_ovr ?? -1) - (a.average_current_ovr ?? -1) || a.country_code.localeCompare(b.country_code)
+      if (sort === 'country_code_asc') return a.country_code.localeCompare(b.country_code)
+      return b.player_count - a.player_count || a.country_code.localeCompare(b.country_code)
+    })
+  }, [countriesQuery.data?.countries, search, sort])
 
   return (
     <section className="panel">
-      <PageIntro title="Countries" subtitle="Read-only country strength overview for the selected run." />
+      <PageIntro title="Countries" subtitle="Canonical Saved-Revision country strength overview for the selected Product Run." />
       <CurrentContextStrip
         items={[
-          { label: 'Active run ID', value: runId || 'unknown' },
-          { label: 'Total country count', value: nationsQuery.data?.total ?? '—' },
-          { label: 'Visible countries', value: nations.length }
+          { label: 'Product Run', value: runId || 'unknown' },
+          { label: 'Viewer Branch', value: countriesQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Public week', value: countriesQuery.data ? `S${countriesQuery.data.season_index} W${countriesQuery.data.week}` : '—' },
+          { label: 'Total country count', value: countriesQuery.data?.country_count ?? '—' },
+          { label: 'Visible countries', value: countries.length }
         ]}
       />
 
       <SectionCard title="Country filters">
         <div className="form-grid">
           <label>
-            Search country
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
+            Search country code
+            <input value={search} onChange={(event) => setSearch(event.target.value)} maxLength={3} />
           </label>
           <label>
             Sort
             <select value={sort} onChange={(event) => setSort(event.target.value)}>
-              {COUNTRY_SORT_OPTIONS.map((value) => (
-                <option key={value} value={value}>
-                  {value}
-                </option>
-              ))}
+              <option value="player_count_desc">player count desc</option>
+              <option value="average_ovr_desc">average Power Rating desc</option>
+              <option value="country_code_asc">country code asc</option>
             </select>
           </label>
         </div>
       </SectionCard>
 
       <SectionCard title="Country overview">
-        {nationsQuery.isLoading ? <p className="status">Loading countries…</p> : null}
-        {nationsQuery.error ? <p className="error">Failed to load countries: {String(nationsQuery.error)}</p> : null}
-        {!nationsQuery.isLoading && !nationsQuery.error && nationsQuery.data ? (
-          nations.length > 0 ? (
+        {countriesQuery.isLoading ? <p className="status">Loading canonical countries…</p> : null}
+        {countriesQuery.error ? <p className="error">Failed to load canonical countries: {String(countriesQuery.error)}</p> : null}
+        {!countriesQuery.isLoading && !countriesQuery.error && countriesQuery.data ? (
+          countries.length > 0 ? (
             <table>
               <thead>
                 <tr>
                   <th>Country</th>
                   <th>Players</th>
+                  <th>Active</th>
+                  <th>Retired</th>
                   <th>Average Power Rating</th>
-                  <th>Average age</th>
                   <th>Top player</th>
-                  <th>Source mix</th>
                   <th>Country Profile</th>
                 </tr>
               </thead>
               <tbody>
-                {nations.map((nation) => (
-                  <tr key={nation.country_code}>
-                    <td>{nation.country_name ?? nation.country_code} ({nation.country_code})</td>
-                    <td>{displayMetric(nation.total_players)}</td>
-                    <td>{displayFixed(nation.average_overall)}</td>
-                    <td>{displayFixed(nation.average_age)}</td>
-                    <td>
-                      {playerProfileCell(runId, nation.top_player_id, nation.top_player_name)}
-                    </td>
-                    <td>
-                      carryover {displayMetric(nation.rollover_carried_count)} · intake {displayMetric(nation.planner_generated_count)} ·
-                      manual {displayMetric(nation.manual_override_count)}
-                    </td>
-                    <td>
-                      <Link to={viewerCountryProfilePath(runId, nation.country_code)}>Open country profile</Link>
-                    </td>
+                {countries.map((country) => (
+                  <tr key={country.country_code}>
+                    <td>{country.country_code}</td>
+                    <td>{country.player_count}</td>
+                    <td>{country.active_player_count}</td>
+                    <td>{country.retired_player_count}</td>
+                    <td>{displayFixed(country.average_current_ovr)}</td>
+                    <td>{playerProfileCell(runId, country.top_player_id, country.top_player_name)}</td>
+                    <td><Link to={viewerCountryProfilePath(runId, country.country_code)}>Open country profile</Link></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
-            <p className="status">No data is available for this run yet.</p>
+            <p className="status">No canonical countries match these filters.</p>
           )
         ) : null}
       </SectionCard>

@@ -1632,5 +1632,6 @@ projects the applied Calendar packages without consulting the live source librar
 SimulationRun schedule/event registry. Tournament list, Season Calendar, Planned Event and
 Week schedule metadata consume this Saved Calendar projection. Viewer Week Ranking
 publications now consume canonical Saved Official Ranking history by season/week and
-`week_ordinal`; Week Race publication linkage remains the compatibility-backed follow-up
-owned by the separate canonical Race/Finals migration.
+`week_ordinal`. The old shared Ranking/Race snapshot compatibility module is reduced to
+Race-only because Ranking list/detail routes are fully canonical; weekly Race history
+remains compatibility-backed until its own decided canonical publication timeline exists.

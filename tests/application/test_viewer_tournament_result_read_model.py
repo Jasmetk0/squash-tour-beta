@@ -14,6 +14,7 @@ from beta_engine.application.season_point_awards_service import (
     FrozenPointAwardAuthority,
 )
 from beta_engine.application.viewer_tournament_result_read_model import (
+    resolve_viewer_completed_tournaments,
     resolve_viewer_tournament_result,
 )
 from beta_engine.domain.rankings.official import RankingWeek
@@ -34,8 +35,10 @@ def _source(
     run_id: str = "run",
     branch_id: str = "branch",
     event_id: str = "event",
+    season_index: int = 2,
+    week_number: int = 17,
 ) -> OwnedTournamentRankingSource:
-    week = RankingWeek(season_index=2, week=17)
+    week = RankingWeek(season_index=season_index, week=week_number)
     result = TournamentResultAuthority(
         run_id=run_id,
         branch_id=branch_id,
@@ -165,7 +168,10 @@ def _source(
         edition_id=event_id,
         event_id=event_id,
         completed_week=week,
-        first_publication_week=RankingWeek(season_index=2, week=18),
+        first_publication_week=RankingWeek(
+            season_index=season_index,
+            week=min(61, week_number + 1),
+        ),
         validity_weeks=61,
         ranking_status="ranked",
         expected_result_fingerprint=result.fingerprint,
@@ -263,4 +269,63 @@ def test_viewer_result_rejects_wrong_requested_scope() -> None:
             run_id="run",
             branch_id="other",
             event_id="event",
+        )
+
+
+
+def test_viewer_completed_tournaments_orders_saved_canonical_results() -> None:
+    later = _source(event_id="later", season_index=3, week_number=4)
+    earlier = _source(event_id="earlier", season_index=2, week_number=55)
+    ranking = RankingRevisionState(
+        run_id="run",
+        branch_id="branch",
+        entries=(),
+        sources=(),
+        tournament_sources=(later, earlier),
+    )
+
+    result = resolve_viewer_completed_tournaments(
+        ranking,
+        run_id="run",
+        branch_id="branch",
+    )
+
+    assert result.schema_version == "viewer_completed_tournaments.v1"
+    assert result.tournament_count == 2
+    assert [item.event_id for item in result.tournaments] == ["earlier", "later"]
+    assert [(item.completed_season_index, item.completed_week) for item in result.tournaments] == [
+        (2, 55),
+        (3, 4),
+    ]
+    assert result.tournaments[0].champion_player_id == "A"
+    assert result.tournaments[0].finalist_player_id == "B"
+    assert result.tournaments[0].player_count == 5
+    assert result.tournaments[0].match_count == 4
+
+    rendered = str(result.model_dump(mode="json"))
+    for forbidden in (
+        "fingerprint",
+        "command_id",
+        "provenance",
+        "canonical_awards",
+        "point_distribution",
+    ):
+        assert forbidden not in rendered
+
+
+def test_viewer_completed_tournaments_rejects_duplicate_event_sources() -> None:
+    first = _source(event_id="duplicate")
+    second = _source(event_id="duplicate")
+    ranking = RankingRevisionState(
+        run_id="run",
+        branch_id="branch",
+        entries=(),
+        sources=(),
+        tournament_sources=(first, second),
+    )
+    with pytest.raises(ValueError, match="ambiguous"):
+        resolve_viewer_completed_tournaments(
+            ranking,
+            run_id="run",
+            branch_id="branch",
         )

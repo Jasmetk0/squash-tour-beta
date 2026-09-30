@@ -3040,7 +3040,14 @@ to canonical authority.
 - fingerprints, command provenance, point/prize authorities and other Admin internals are
   deliberately excluded;
 - Tournament Detail's primary result section now consumes this canonical projection;
-- legacy event/result payload may still remain in collapsed technical compatibility data
-  and in the tournament-list summary until a separate list/history detachment slice.
+- `viewer_completed_tournaments.v1` now publishes deterministic Saved-Revision completed
+  tournament history from the same canonical tournament sources;
+- the Viewer tournament list uses canonical completed history for completion state,
+  champion/finalist and player/match counts, and can show a canonical completed event even
+  when no legacy persisted event row exists;
+- legacy `listEvents()` / ordered-calendar data remains list compatibility metadata only
+  for sequence/template/category/tour until Viewer Saved Revision exposes a public
+  Calendar Package component; legacy `tournament_result` is no longer public result
+  authority on the list or detail.
 
 See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.

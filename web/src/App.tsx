@@ -28,6 +28,7 @@ import {
   ViewerRankingSnapshotDetailPage,
   ViewerRankingsPage,
   ViewerRacePage,
+  ViewerRunRacePage,
   ViewerRaceSnapshotDetailPage
 } from './pages/viewer/rankings'
 import { ViewerSeasonHubPage, ViewerTourCalendarPage, ViewerCurrentWeekPage, ViewerTournamentsPage } from './pages/viewer/tour'
@@ -241,7 +242,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}>
         <Route path="rankings" element={<ViewerOfficialRankingHistoryPage />} />
         <Route path="rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
-        <Route path="race" element={<ViewerRunSnapshotListPage mode="race" />} />
+        <Route path="race" element={<ViewerRunRacePage />} />
         <Route path="race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />
         <Route path="tournaments" element={<ViewerRunTournamentsPage />} />
         <Route path="tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />

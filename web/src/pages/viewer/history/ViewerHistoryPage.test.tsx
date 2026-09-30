@@ -1,91 +1,142 @@
 import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
+import {
+  clearViewerStorage,
+  expectNoForbiddenViewerActions,
+  renderWithViewerProviders,
+  setViewerActiveProductRunId
+} from '../../../test/viewerTestUtils'
 import { ViewerHistoryPage } from './ViewerHistoryPage'
 
 const api = vi.hoisted(() => ({
-  getRun: vi.fn(),
-  getRunActivity: vi.fn(),
-  getRunStatusSummary: vi.fn(),
-  listEvents: vi.fn(),
-  listRaceSnapshots: vi.fn(),
-  listRankingSnapshots: vi.fn()
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn()
 }))
 
 vi.mock('../../../api/client', () => api)
-
 
 function renderHistory(): void {
   renderWithViewerProviders(<ViewerHistoryPage />)
 }
 
-function resetApiMocks(): void {
-  api.getRun.mockResolvedValue({
-    run: { run_id: 'history run', season: 2032, seed: 7, next_event_index: 1, total_events: 3, completed_event_ids: ['EVT-1'] },
-    season_state: {
-      season: 2032,
-      next_event_index: 1,
-      completed_event_ids: ['EVT-1'],
-      ordered_events: [
-        { event_id: 'EVT-1', season: 2032, week: 11, tour: 'World Tour', category: 'Gold', template_id: 'TPL-1' }
-      ]
-    }
-  })
-  api.getRunActivity.mockResolvedValue({
-    run_id: 'history run',
-    items: [
-      { kind: 'event', sequence: 2, label: 'Event completed', event_id: 'EVT-1', season: 2032, week: 11 },
-      { kind: 'ranking_snapshot', sequence: 5, label: 'Ranking snapshot stored', snapshot_sequence: 9, season: 2032, week: 11 }
+function mockCanonicalHistory(): void {
+  api.getViewerTournamentHistory.mockResolvedValue({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: 'history run',
+    viewer_branch_id: 'branch-history',
+    tournament_count: 2,
+    published_result_count: 1,
+    tournaments: [
+      {
+        event_id: 'EVT-1',
+        season: '2032/2033',
+        season_week: 11,
+        event_name: 'History Open',
+        template_id: 'TPL-1',
+        category: 'GOLD',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'CZE',
+        host_city: 'Brno',
+        region: 'EUROPE',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: true,
+        champion_player_id: 'P1',
+        finalist_player_id: 'P2'
+      }
     ]
   })
-  api.getRunStatusSummary.mockResolvedValue({
-    run_id: 'history run',
-    season: 2032,
-    seed: 7,
-    progress: { next_event_index: 1, total_events: 3, completed_event_count: 1 },
-    finals: { qualification_available: false, result_available: false },
-    rollover: null,
-    source: { source_type: 'fresh_seed', parent_run_id: null },
-    lineage: { child_run_count: 0 },
-    history_counts: { events: 1, ranking_snapshots: 1, race_snapshots: 1 }
+  api.listViewerOfficialRankingHistory.mockResolvedValue({
+    schema_version: 'viewer_official_ranking_history.v1',
+    product_run_id: 'history run',
+    viewer_branch_id: 'branch-history',
+    public_head_ordinal: 2000,
+    publication_count: 2,
+    publications: [
+      { season_index: 32, week: 10, week_ordinal: 1999, snapshot_fingerprint: 'a'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 },
+      { season_index: 32, week: 11, week_ordinal: 2000, snapshot_fingerprint: 'b'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 64 }
+    ]
   })
-  api.listEvents.mockResolvedValue({ run_id: 'history run', events: [{ event_id: 'EVT-1', event_sequence: 1, template_id: 'TPL-1', week: 11 }] })
-  api.listRankingSnapshots.mockResolvedValue({ snapshots: [{ snapshot_sequence: 9, snapshot_kind: 'ranking', source_event_id: 'EVT-1', payload: {} }] })
-  api.listRaceSnapshots.mockResolvedValue({ snapshots: [{ snapshot_sequence: 4, snapshot_kind: 'race', source_event_id: 'EVT-1', payload: {} }] })
+  api.getViewerFinalsRace.mockResolvedValue({
+    schema_version: 'viewer_finals_race_history.v1',
+    product_run_id: 'history run',
+    viewer_branch_id: 'branch-history',
+    latest_target_season_index: 32,
+    publications: [
+      {
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'history run',
+        viewer_branch_id: 'branch-history',
+        target_season_index: 32,
+        cutoff_season_index: 32,
+        cutoff_week: 11,
+        best_n: 9,
+        selection_published: false,
+        finals_event_id: null,
+        rows: []
+      }
+    ]
+  })
 }
 
-describe('ViewerHistoryPage', () => {
+describe('ViewerHistoryPage canonical landing', () => {
   beforeEach(() => {
     clearViewerStorage()
     vi.clearAllMocks()
-    resetApiMocks()
+    mockCanonicalHistory()
   })
 
-  it('shows the existing empty state when no active run is selected', () => {
+  it('shows a Product Run empty state when nothing is selected', () => {
     renderHistory()
 
     expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(screen.getByText('Read-only history and season timeline for the selected Viewer run.')).toBeInTheDocument()
-    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
-
+    expect(screen.getByText('No Product Run is selected yet.')).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
-  it('renders active run history counts, latest activity, and source links', async () => {
-    setViewerActiveRunId('history run')
+  it('renders canonical Saved-Revision history counts and run-scoped links', async () => {
+    setViewerActiveProductRunId('history run')
+    renderHistory()
+
+    expect(await screen.findByRole('article', { name: 'Canonical history summary' })).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('history run')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('history run')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('history run')
+
+    expect(await screen.findByText('branch-history')).toBeInTheDocument()
+    expect(screen.getByText('Completed tournaments')).toBeInTheDocument()
+    expect(screen.getByText('Official Ranking publications')).toBeInTheDocument()
+    expect(screen.getByText('Finals Race publications')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open full run history' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/history%20run/history'
+    )
+    expect(screen.getByRole('link', { name: 'Tournaments' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/history%20run/tournaments'
+    )
+    expectNoForbiddenViewerActions()
+  })
+
+  it('fails closed when one canonical history authority is unavailable', async () => {
+    setViewerActiveProductRunId('history run')
+    api.listViewerOfficialRankingHistory.mockRejectedValueOnce(new Error('ranking unavailable'))
 
     renderHistory()
 
-    expect(await screen.findByText('History summary')).toBeInTheDocument()
-    expect(screen.getByText('history run')).toBeInTheDocument()
-    expect(screen.getByText('Activity item count')).toBeInTheDocument()
-    expect(screen.getByText('Event count')).toBeInTheDocument()
-    expect(screen.getByText('Ranking snapshot count')).toBeInTheDocument()
-    expect(screen.getByText('Race snapshot count')).toBeInTheDocument()
-    expect(await screen.findByText('Ranking snapshot stored')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: '#9' })[0]).toHaveAttribute('href', '/viewer/runs/history%20run/rankings/9')
-    expect(screen.getByRole('link', { name: '#4' })).toHaveAttribute('href', '/viewer/runs/history%20run/race/4')
-    expect(screen.getByRole('link', { name: 'Open active run history' })).toHaveAttribute('href', '/viewer/runs/history%20run/history')
+    expect(await screen.findByText('Canonical history is temporarily unavailable.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical history summary fields' })).not.toBeInTheDocument()
+    expect(screen.queryByText(/ranking unavailable/i)).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
   })
 })

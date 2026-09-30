@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import type { RunPlayerListItem } from '../../../api/types'
+import type { RunPlayerListItem, ViewerPlayer } from '../../../api/types'
 import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList, ViewerSampleList, ViewerSectionCard } from '../../../components/viewer/ViewerLandingComponents'
 import { viewerPlannedEventPath, viewerPlayersPath, viewerTopH2HPath, viewerTopSearchPath, viewerTournamentDetailPath, viewerWeekDetailPath } from '../../../viewer/viewerRoutes'
 import { renderLinkedCountry, renderLinkedPlayer, renderPlayerSampleMetadata } from '../people'
@@ -78,7 +78,7 @@ export function ViewerComparisonSummary({ playerA, playerB, title = 'Comparison 
   )
 }
 
-export function ViewerSamplePlayersList({ players, label, runId }: { players: RunPlayerListItem[]; label: string; runId?: string }): JSX.Element | null {
+export function ViewerSamplePlayersList({ players, label, runId }: { players: Array<RunPlayerListItem | ViewerPlayer>; label: string; runId?: string }): JSX.Element | null {
   return (
     <ViewerSampleList
       title="Sample players"

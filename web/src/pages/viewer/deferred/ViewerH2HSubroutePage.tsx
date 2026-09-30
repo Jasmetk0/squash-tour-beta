@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 
-import { listRunPlayers } from '../../../api/client'
+import { getViewerPlayers } from '../../../api/client'
 import {
   ViewerActiveRunCard,
   ViewerActiveRunLinks,
@@ -11,7 +11,6 @@ import {
 } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import {
   viewerPlayersPath,
   viewerRacePath,
@@ -36,7 +35,6 @@ export function ViewerH2HSubroutePage({
   kind: ViewerH2HSubrouteKind
 }): JSX.Element {
   const productRunId = useActiveViewerProductRunId()
-  const legacySimulationRunId = useActiveViewerRunId()
   const content = viewerH2HSubrouteContent[kind]
 
   const {
@@ -51,9 +49,9 @@ export function ViewerH2HSubroutePage({
   })
 
   const playersQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-legacy-players', kind, legacySimulationRunId],
-    queryFn: () => listRunPlayers(legacySimulationRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(legacySimulationRunId),
+    queryKey: ['viewer-h2h-subroute-canonical-players', kind, productRunId],
+    queryFn: () => getViewerPlayers(productRunId ?? ''),
+    enabled: Boolean(productRunId),
     retry: false,
   })
 
@@ -68,8 +66,8 @@ export function ViewerH2HSubroutePage({
     )
   }
 
-  const samplePlayers = playersQuery.data?.players ?? []
-  const playerTotal = playersQuery.data?.total
+  const samplePlayers = playersQuery.data?.players.slice(0, 50) ?? []
+  const playerTotal = playersQuery.data?.player_count
   const isLoading = isLoadingMetadata || playersQuery.isLoading
   const hasError = hasMetadataError || playersQuery.isError
   const hasAnyData = hasAnySourceMetadata || samplePlayers.length > 0
@@ -77,7 +75,7 @@ export function ViewerH2HSubroutePage({
   return (
     <ViewerShellPage
       title={content.title}
-      description="Read-only H2H Explorer using canonical Saved-Revision sporting metadata while player browsing remains on the current legacy player source."
+      description="Read-only H2H Explorer using canonical Saved-Revision sporting and player metadata."
     >
       <ViewerLandingGrid>
         <ViewerActiveRunCard
@@ -86,7 +84,7 @@ export function ViewerH2HSubroutePage({
           title={content.title + ' source metadata'}
         >
           {isLoading ? (
-            <p className="status">Loading canonical and player source metadata…</p>
+            <p className="status">Loading canonical H2H source metadata…</p>
           ) : null}
           {hasError ? (
             <ViewerEmptyState>Some H2H source metadata is temporarily unavailable.</ViewerEmptyState>
@@ -102,9 +100,7 @@ export function ViewerH2HSubroutePage({
               }),
               {
                 label: 'Player source',
-                value: legacySimulationRunId
-                  ? 'Legacy SimulationRun player registry'
-                  : 'Unavailable',
+                value: 'Canonical Saved-Revision player projection',
               },
               {
                 label: 'Total player count',
@@ -119,12 +115,6 @@ export function ViewerH2HSubroutePage({
 
           {!isLoading && !hasError && !hasAnyData ? (
             <ViewerEmptyState>No canonical source data or player sample is available for this Product Run yet.</ViewerEmptyState>
-          ) : null}
-
-          {!legacySimulationRunId ? (
-            <ViewerEmptyState>
-              Canonical sporting metadata is available, but the legacy player source is not mapped for this selection.
-            </ViewerEmptyState>
           ) : null}
 
           <ViewerSamplePlayersList

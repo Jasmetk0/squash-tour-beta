@@ -4,8 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { EventRecord, SeasonStateResponse } from '../api/types'
+import { getViewerRunCalendar, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -17,7 +16,6 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import { TournamentResultMetadataList } from '../viewer/TournamentResultMetadata'
 import {
   viewerPlannedEventPath,
   viewerTournamentsPath,
@@ -28,72 +26,11 @@ import {
   buildEventDetailLinks,
   snapshotsForSourceEvent
 } from './viewer/tour/viewerEventDetailDisplay'
-import { getPlannedEventStatus } from './plannedEventUtils'
-
-type PlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
-
-type PlannedTournamentContext = PlannedEvent & {
-  planPosition: number
-}
-
-function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<string, PlannedTournamentContext> {
-  const plannedContext = new Map<string, PlannedTournamentContext>()
-  const orderedEvents = runData?.season_state?.ordered_events
-
-  if (!Array.isArray(orderedEvents)) return plannedContext
-
-  orderedEvents.forEach((event, index) => {
-    if (event && typeof event === 'object' && typeof event.event_id === 'string') {
-      plannedContext.set(event.event_id, { ...event, planPosition: index })
-    }
-  })
-  return plannedContext
-}
-
-function isScalar(value: unknown): value is string | number {
-  return typeof value === 'string' || typeof value === 'number'
-}
-
-function safeText(value: unknown, fallback: string | number = '—'): string | number {
-  return isScalar(value) ? value : fallback
-}
-
-function safeNumber(value: unknown): number | null {
-  return typeof value === 'number' && Number.isFinite(value) ? value : null
-}
-
-function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
-  if (!Array.isArray(events)) return []
-  return events.filter((event) => event && typeof event === 'object' && typeof event.event_id === 'string')
-}
-
-function safeCompletedEventIds(data: SeasonStateResponse | undefined): string[] {
-  const completedEventIds = data?.season_state?.completed_event_ids
-  return Array.isArray(completedEventIds) ? completedEventIds.filter((eventId) => typeof eventId === 'string') : []
-}
 
 function safeSnapshotRecords<T extends { snapshot_sequence: number }>(snapshots: T[] | undefined): T[] {
   if (!Array.isArray(snapshots)) return []
   return snapshots.filter((snapshot) => snapshot && typeof snapshot === 'object' && typeof snapshot.snapshot_sequence === 'number')
 }
-
-function eventWeek(event: EventRecord | null | undefined, planned: PlannedTournamentContext | undefined): number | null {
-  return safeNumber(event?.week) ?? safeNumber(planned?.week) ?? null
-}
-
-function eventSeason(event: EventRecord | null | undefined, planned: PlannedTournamentContext | undefined): number | null {
-  return safeNumber(event?.season) ?? safeNumber(planned?.season) ?? null
-}
-
-function resultAvailability(event: EventRecord | null | undefined): string {
-  if (!event) return 'Not loaded'
-  return event.tournament_result ? 'Result publication available' : 'No result publication recorded'
-}
-
-function completionStatus(event: EventRecord, completedEventIds: Set<string>): string {
-  return completedEventIds.has(event.event_id) ? 'Completed in season plan' : 'Completion not recorded in plan'
-}
-
 
 function drawSlotLabel(slot: {
   slot_index: number
@@ -128,73 +65,75 @@ function TournamentListResultMetadata({ event, runId }: { event: EventRecord; ru
 }
 
 export function ViewerRunTournamentsPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-
-  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId) })
-  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId), retry: false })
-
-  const events = safeEventRecords(eventsQuery.data?.events)
-  const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
-  const completedEventIds = useMemo(
-    () => new Set(safeCompletedEventIds(runQuery.data)),
-    [runQuery.data?.season_state.completed_event_ids]
-  )
-  const completedPersistedCount = events.filter((event) => completedEventIds.has(event.event_id)).length
+  const { productRunId: runId } = useViewerProductRunRouteContext()
+  const calendarQuery = useQuery({
+    queryKey: ['viewer-run-calendar', runId],
+    queryFn: () => getViewerRunCalendar(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const events = calendarQuery.data?.events ?? []
+  const completedCount = events.filter((event) => event.result !== null).length
 
   return (
     <section className="panel">
       <RunScopedHeader
         title="Tournaments"
         runId={runId}
-        subtitle="Read-only tournament schedule and results for the selected run."
+        subtitle="Read-only canonical tournament schedule and results for the selected Viewer Branch."
       />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Event count', value: events.length },
-          { label: 'Completed events', value: completedEventIds.size },
-          { label: 'Completed persisted events', value: completedPersistedCount }
+          { label: 'Viewer Branch', value: calendarQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Calendar events', value: events.length },
+          { label: 'Completed results', value: completedCount }
         ]}
       />
 
       <SectionCard title="Tournament publications">
-        {eventsQuery.isLoading && <p className="status">Loading tournaments...</p>}
-        {eventsQuery.error && <p className="error">Failed to load tournaments: {formatApiError(eventsQuery.error)}</p>}
-        {runQuery.error && <p className="error">Failed to load ordered calendar context: {formatApiError(runQuery.error)}</p>}
-        {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
+        {calendarQuery.isLoading ? <p className="status">Loading canonical tournaments...</p> : null}
+        {calendarQuery.error && !isApiNotFound(calendarQuery.error) ? (
+          <p className="error">Failed to load canonical tournaments: {formatApiError(calendarQuery.error)}</p>
+        ) : null}
+        {isApiNotFound(calendarQuery.error) ? <EmptyState message="No saved Calendar Package is available for this run yet." /> : null}
+        {!calendarQuery.isLoading && !calendarQuery.error && events.length === 0 ? (
           <EmptyState message="No data is available for this run yet." />
-        )}
-        {events.length > 0 && (
+        ) : null}
+        {events.length > 0 ? (
           <ul className="item-list" aria-label="Tournament event list">
-            {events.map((event) => {
-              const planned = plannedContext.get(event.event_id)
-              const week = eventWeek(event, planned)
-              const season = eventSeason(event, planned)
-
-              return (
-                <li key={event.event_id} id={`event-${event.event_id}`}>
-                  <strong>{event.event_id}</strong>
+            {events.map((event) => (
+              <li key={event.event_id} id={`event-${event.event_id}`}>
+                <strong>{event.event_name || event.event_id}</strong>
+                <MetadataList
+                  items={[
+                    { label: 'Event ID', value: event.event_id },
+                    { label: 'Season', value: event.season },
+                    { label: 'Week', value: displayWeekDetailLink(runId, event.season_week) },
+                    { label: 'Template', value: event.template_id },
+                    { label: 'Category', value: event.category || '—' },
+                    { label: 'Tour', value: event.tour_level ?? '—' },
+                    { label: 'Host', value: event.host_city ? `${event.host_city}, ${event.host_country}` : event.host_country },
+                    { label: 'Completion', value: event.result ? 'Completed' : 'Not completed in saved public state' },
+                    { label: 'Result availability', value: event.result ? 'Canonical result available' : 'No canonical result published' }
+                  ]}
+                />
+                {event.result ? (
                   <MetadataList
                     items={[
-                      { label: 'Sequence', value: safeText(event.event_sequence) },
-                      { label: 'Season', value: season ?? '—' },
-                      { label: 'Week', value: displayWeekDetailLink(runId, week) },
-                      { label: 'Template', value: safeText(planned?.template_id ?? event.template_id) },
-                      { label: 'Category', value: safeText(planned?.category, 'No ordered-calendar category') },
-                      { label: 'Tour', value: safeText(planned?.tour, 'No ordered-calendar tour') },
-                      { label: 'Completion', value: completionStatus(event, completedEventIds) },
-                      { label: 'Result availability', value: resultAvailability(event) }
+                      { label: 'Champion', value: event.result.champion_player_id },
+                      { label: 'Finalist', value: event.result.finalist_player_id },
+                      { label: 'Matches', value: event.result.match_count }
                     ]}
                   />
-                  <TournamentListResultMetadata event={event} runId={runId} />
-                  <p>
-                    <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
-                  </p>
-                </li>
-              )
-            })}
+                ) : null}
+                <p>
+                  <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                </p>
+              </li>
+            ))}
           </ul>
-        )}
+        ) : null}
       </SectionCard>
     </section>
   )
@@ -204,13 +143,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const { eventId = '' } = useParams()
   const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
-  const eventQuery = useQuery({
-    queryKey: ['event', runId, eventId],
-    queryFn: () => getEvent(legacySimulationRunId, eventId),
+  const calendarQuery = useQuery({
+    queryKey: ['viewer-run-calendar', runId],
+    queryFn: () => getViewerRunCalendar(runId),
     enabled: Boolean(runId && eventId),
     retry: false
   })
-  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && eventId), retry: false })
   const rankingSnapshotsQuery = useQuery({
     queryKey: ['viewer-tournament-ranking-snapshots', runId, eventId],
     queryFn: () => listRankingSnapshots(legacySimulationRunId),
@@ -248,33 +186,16 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     retry: false
   })
 
-  const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
-  const planned = plannedContext.get(eventId)
-  const orderedEvents = Array.isArray(runQuery.data?.season_state?.ordered_events) ? runQuery.data.season_state.ordered_events : []
-  const completedEventIds = useMemo(
-    () => new Set(safeCompletedEventIds(runQuery.data)),
-    [runQuery.data?.season_state.completed_event_ids]
-  )
-  const plannedStatus = planned
-    ? getPlannedEventStatus({
-        index: planned.planPosition,
-        nextEventIndex: runQuery.data?.season_state.next_event_index ?? 0,
-        completedEventIds,
-        eventId: planned.event_id
-      })
-    : null
-  const event = eventQuery.data
-  const week = eventWeek(event, planned)
-  const season = eventSeason(event, planned)
-  const templateId = planned?.template_id ?? event?.template_id ?? null
+  const event = calendarQuery.data?.events.find((candidate) => candidate.event_id === eventId)
+  const week = event?.season_week ?? null
   const rankingPublications = snapshotsForSourceEvent(safeSnapshotRecords(rankingSnapshotsQuery.data?.snapshots), eventId)
   const racePublications = snapshotsForSourceEvent(safeSnapshotRecords(raceSnapshotsQuery.data?.snapshots), eventId)
   const sourceLinks = buildEventDetailLinks({
     runId,
     eventId,
     week,
-    hasPlanned: Boolean(planned),
-    hasPersisted: Boolean(event),
+    hasPlanned: Boolean(event),
+    hasPersisted: Boolean(event?.result),
     rankingSnapshotSequences: rankingPublications.map((snapshot) => snapshot.snapshot_sequence),
     raceSnapshotSequences: racePublications.map((snapshot) => snapshot.snapshot_sequence)
   })
@@ -290,7 +211,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
         items={[
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Event', value: eventId || 'unknown' },
-          { label: 'Result availability', value: resultAvailability(event) }
+          { label: 'Result availability', value: event?.result ? 'Canonical result available' : 'No canonical result published' }
         ]}
       />
 
@@ -321,42 +242,46 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       {eventId && (
         <>
           <SectionCard title="Tournament metadata">
-            {eventQuery.isLoading && <p className="status">Loading tournament detail...</p>}
-            {eventQuery.error && !isApiNotFound(eventQuery.error) && (
-              <p className="error">Failed to load tournament detail: {formatApiError(eventQuery.error)}</p>
-            )}
-            {isApiNotFound(eventQuery.error) && <EmptyState message={`Event ${eventId} was not found for this run.`} />}
-            {runQuery.error && <p className="error">Failed to load ordered calendar context: {formatApiError(runQuery.error)}</p>}
+            {calendarQuery.isLoading ? <p className="status">Loading canonical tournament metadata...</p> : null}
+            {calendarQuery.error && !isApiNotFound(calendarQuery.error) ? (
+              <p className="error">Failed to load canonical tournament metadata: {formatApiError(calendarQuery.error)}</p>
+            ) : null}
+            {isApiNotFound(calendarQuery.error) ? <EmptyState message="No saved Calendar Package is available for this run yet." /> : null}
+            {calendarQuery.data && !event ? <EmptyState message={`Event ${eventId} was not found in the saved Viewer calendar.`} /> : null}
             {event ? (
               <>
                 <SummaryPills
                   items={[
-                    { label: 'Status', value: plannedStatus ?? completionStatus(event, completedEventIds) },
-                    { label: 'Result availability', value: resultAvailability(event) },
-                    { label: 'Ordered-calendar match', value: planned ? 'Available' : 'Not available' }
+                    { label: 'Status', value: event.result ? 'Completed' : event.source_status },
+                    { label: 'Result availability', value: event.result ? 'Canonical result available' : 'No canonical result published' },
+                    { label: 'Viewer Branch', value: calendarQuery.data?.viewer_branch_id ?? '—' }
                   ]}
                 />
                 <CompactSummaryCard
                   items={[
                     { label: 'Event ID', value: event.event_id },
                     { label: 'Run ID', value: runId || 'unknown' },
-                    { label: 'Sequence', value: safeText(event.event_sequence) },
-                    { label: 'Season', value: season ?? '—' },
-                    { label: 'Week', value: displayWeekDetailLink(runId, week) },
-                    { label: 'Tour', value: safeText(planned?.tour, 'No ordered-calendar tour') },
-                    { label: 'Category', value: safeText(planned?.category, 'No ordered-calendar category') },
-                    { label: 'Template', value: safeText(templateId) }
+                    { label: 'Event name', value: event.event_name || event.event_id },
+                    { label: 'Season', value: event.season },
+                    { label: 'Week', value: displayWeekDetailLink(runId, event.season_week) },
+                    { label: 'Tour', value: event.tour_level ?? '—' },
+                    { label: 'Category', value: event.category || '—' },
+                    { label: 'Template', value: event.template_id }
                   ]}
                 />
-                {planned ? (
-                  <MetadataList
-                    items={[
-                      { label: 'Plan position', value: `${planned.planPosition + 1} of ${orderedEvents.length}` },
-                      { label: 'Plan index', value: planned.planPosition },
-                      { label: 'Current next event index', value: runQuery.data?.season_state.next_event_index ?? '—' }
-                    ]}
-                  />
-                ) : null}
+                <MetadataList
+                  items={[
+                    { label: 'Host country', value: event.host_country },
+                    { label: 'Host city', value: event.host_city ?? '—' },
+                    { label: 'Region', value: event.region },
+                    { label: 'Main draw', value: event.main_draw_size },
+                    { label: 'Qualification draw', value: event.qualification_draw_size },
+                    { label: 'Qualifier spots', value: event.qualifier_spots },
+                    { label: 'Wild Card slots', value: event.wild_card_slots },
+                    { label: 'BYE slots', value: event.bye_slots },
+                    { label: 'Ranking status', value: event.ranking_status }
+                  ]}
+                />
               </>
             ) : null}
           </SectionCard>
@@ -549,8 +474,8 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
             <SectionCard title="Read-only data">
               <details>
                 <summary>Show technical event data</summary>
-                <p className="status">Read-only technical event/result data for audit/debugging. Viewer tournament detail pages do not mutate run state.</p>
-                <JsonPayloadBlock title="Technical event record" emptyText="No technical event data is available for this event." payload={event} />
+                <p className="status">Read-only canonical Calendar event data from the Viewer Saved Revision. Viewer tournament detail pages do not mutate run state.</p>
+                <JsonPayloadBlock title="Canonical calendar event" emptyText="No technical event data is available for this event." payload={event} />
               </details>
             </SectionCard>
           ) : null}

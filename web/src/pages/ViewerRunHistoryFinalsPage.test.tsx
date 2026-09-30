@@ -272,8 +272,8 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.getByText('WTF-2031')).toBeInTheDocument()
 
     const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })
-    expect(within(table).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P1')
-    expect(within(table).getByRole('link', { name: 'P3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P3')
+    expect(within(table).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P1/career')
+    expect(within(table).getByRole('link', { name: 'P3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P3/career')
     expect(within(table).queryByText('P2')).not.toBeInTheDocument()
     expect(within(table).getByText('Direct entry')).toBeInTheDocument()
     expect(within(table).getByText('Race')).toBeInTheDocument()

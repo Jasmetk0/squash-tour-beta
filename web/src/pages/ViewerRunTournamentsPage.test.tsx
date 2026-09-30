@@ -415,7 +415,8 @@ describe('ViewerRunTournamentDetailPage', () => {
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-NO-WEEK')
 
-    expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
+    expect(await screen.findByText('WT-GOLD')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
     expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()

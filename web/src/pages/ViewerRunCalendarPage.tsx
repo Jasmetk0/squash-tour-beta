@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getRun, getViewerTournamentHistory, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -114,119 +114,99 @@ function safeSnapshotRecords<T extends RankingSnapshot | RaceSnapshot>(snapshots
 
 
 export function ViewerRunCalendarPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId } = useViewerProductRunRouteContext()
 
-  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId), retry: false })
-
-  const orderedEvents = safeOrderedEvents(runQuery.data)
-  const nextEventIndex = runQuery.data?.season_state.next_event_index ?? 0
-  const completedEventIds = useMemo(
-    () => new Set(safeCompletedEventIds(runQuery.data)),
-    [runQuery.data?.season_state.completed_event_ids]
-  )
-  const eventRecords = useMemo(() => safeEventRecords(eventsQuery.data?.events), [eventsQuery.data?.events])
-  const eventRecordIds = useMemo(() => new Set(eventRecords.map((event) => event.event_id)), [eventRecords])
-  const eventRecordsById = useMemo(() => new Map(eventRecords.map((event) => [event.event_id, event])), [eventRecords])
-  const completedCount = completedEventIds.size
+  const historyQuery = useQuery({
+    queryKey: ['viewer-tournament-history', runId],
+    queryFn: () => getViewerTournamentHistory(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const tournaments = historyQuery.data?.tournaments ?? []
+  const seasons = Array.from(new Set(tournaments.map((event) => event.season)))
+  const publishedCount = historyQuery.data?.published_result_count ?? 0
 
   return (
     <section className="panel">
       <RunScopedHeader
         title="Season Calendar"
         runId={runId}
-        subtitle="Read-only season schedule for the selected run."
+        subtitle="Canonical read-only schedule from the selected Viewer Branch's saved Calendar Packages."
       />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Season', value: runQuery.data?.season_state.season ?? '—' },
-          { label: 'Ordered events', value: orderedEvents.length },
-          { label: 'Completed events', value: completedCount },
-          { label: 'Next event index', value: runQuery.data ? nextEventIndex : '—' }
+          { label: 'Viewer Branch', value: historyQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Saved seasons', value: seasons.length },
+          { label: 'Tournament count', value: historyQuery.data?.tournament_count ?? 0 },
+          { label: 'Published results', value: publishedCount }
         ]}
       />
 
-      <SectionCard title="Season timeline overview">
-        {runQuery.isLoading ? <p className="status">Loading season calendar…</p> : null}
-        {runQuery.error ? <p className="error">Failed to load run season state: {formatApiError(runQuery.error)}</p> : null}
-        {eventsQuery.error ? <p className="error">Failed to load tournament records: {formatApiError(eventsQuery.error)}</p> : null}
-        {runQuery.data ? (
+      <SectionCard title="Saved Calendar overview">
+        {historyQuery.isLoading ? <p className="status">Loading canonical season calendar…</p> : null}
+        {historyQuery.error && !isApiNotFound(historyQuery.error) ? (
+          <p className="error">Failed to load canonical season calendar: {formatApiError(historyQuery.error)}</p>
+        ) : null}
+        {isApiNotFound(historyQuery.error) ? (
+          <EmptyState message="No saved Calendar Package is available for this Viewer Branch yet." />
+        ) : null}
+        {historyQuery.data ? (
           <>
             <SummaryPills
               items={[
-                { label: 'Season', value: runQuery.data.season_state.season },
-                { label: 'Ordered event count', value: orderedEvents.length },
-                { label: 'Completed event count', value: completedCount },
-                { label: 'Next event index', value: nextEventIndex }
+                { label: 'Saved seasons', value: seasons.length },
+                { label: 'Tournament count', value: historyQuery.data.tournament_count },
+                { label: 'Published results', value: publishedCount }
               ]}
             />
             <CompactSummaryCard
               items={[
                 { label: 'Active run id', value: runId || 'unknown' },
-                { label: 'Season', value: runQuery.data.season_state.season },
-                { label: 'Calendar source', value: 'Ordered season plan' }
+                { label: 'Viewer Branch', value: historyQuery.data.viewer_branch_id },
+                { label: 'Calendar source', value: 'Saved Run Package Calendar authority' },
+                { label: 'Seasons', value: seasons.length ? seasons.join(', ') : '—' }
               ]}
             />
           </>
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Season timeline">
-        {runQuery.data && orderedEvents.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
-        {runQuery.data && orderedEvents.length > 0 ? (
-          <ol className="item-list" aria-label="Viewer season calendar events">
-            {orderedEvents.map((event, index) => {
-              const status = plannedStatus({ index, nextEventIndex, completedEventIds, eventId: event.event_id })
-              const eventRecord = eventRecordsById.get(event.event_id)
-              const hasEventRecord = eventRecordIds.has(event.event_id)
-              const resultMetadataItems = eventRecord?.tournament_result
-                ? tournamentResultPayloadMetadataItems(eventRecord.tournament_result, { runId })
-                : []
-
-              return (
-                <li key={event.event_id}>
-                  <strong>{event.event_id}</strong>
-                  <MetadataList
-                    items={[
-                      { label: 'Status', value: eventStatusLabel(status) },
-                      { label: 'Event ID', value: event.event_id },
-                      { label: 'Season', value: safeText(event.season) },
-                      { label: 'Week', value: safeWeekLabel(event.week) },
-                      { label: 'Tour', value: safeText(event.tour) },
-                      { label: 'Category', value: safeText(event.category) },
-                      { label: 'Template ID', value: safeText(event.template_id) },
-                      { label: 'Plan position', value: `${index + 1} of ${orderedEvents.length}` },
-                      ...resultMetadataItems
-                    ]}
-                  />
-                  <p>
-                    <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
-                    {' · '}
-                    <Link to={viewerWeekDetailPath(runId, event.week)}>Open week detail</Link>
-                    {hasEventRecord ? (
-                      <>
-                        {' · '}
-                        <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
-                      </>
-                    ) : null}
-                  </p>
-                </li>
-              )
-            })}
+      <SectionCard title="Canonical season timeline">
+        {historyQuery.data && tournaments.length === 0 ? (
+          <EmptyState message="No tournaments are present in the saved Calendar Packages." />
+        ) : null}
+        {tournaments.length > 0 ? (
+          <ol className="item-list" aria-label="Viewer canonical season calendar events">
+            {tournaments.map((event, index) => (
+              <li key={event.event_id}>
+                <strong>{event.event_name || event.event_id}</strong>
+                <MetadataList
+                  items={[
+                    { label: 'Event ID', value: event.event_id },
+                    { label: 'Season', value: event.season },
+                    { label: 'Week', value: `W${event.season_week}` },
+                    { label: 'Tour', value: event.tour_level?.replace(/_/g, ' ') ?? '—' },
+                    { label: 'Category', value: event.category || '—' },
+                    { label: 'Template ID', value: event.template_id },
+                    { label: 'Host', value: event.host_city ? `${event.host_city}, ${event.host_country}` : event.host_country },
+                    { label: 'Calendar position', value: `${index + 1} of ${tournaments.length}` },
+                    { label: 'Result publication', value: event.result_published ? 'Published' : 'Not published' },
+                    { label: 'Champion', value: event.champion_player_id ?? '—' }
+                  ]}
+                />
+                <p>
+                  <Link to={viewerPlannedEventPath(runId, event.event_id)}>Open planned event</Link>
+                  {' · '}
+                  <Link to={viewerWeekDetailPath(runId, event.season_week)}>Open week detail</Link>
+                  {' · '}
+                  <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                </p>
+              </li>
+            ))}
           </ol>
         ) : null}
       </SectionCard>
-
-      {runQuery.data ? (
-        <SectionCard title="Read-only data">
-          <details>
-            <summary>Show technical calendar data</summary>
-            <p className="status">Read-only technical calendar data for audit/debugging. Viewer calendar pages do not mutate run state.</p>
-            <JsonPayloadBlock title="Technical calendar record" emptyText="No technical data is available." payload={runQuery.data} />
-          </details>
-        </SectionCard>
-      ) : null}
     </section>
   )
 }

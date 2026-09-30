@@ -3182,3 +3182,10 @@ Viewer Home active-run summaries are now detached from legacy SimulationRun runt
 Legacy `getRun`, run-status, event-list, snapshot-list, activity and Finals-summary readers are no longer used on Home. Home also stops linking to legacy Ranking/Race `snapshotSequence` details, preserving canonical `week_ordinal` and `target_season_index` identity boundaries.
 
 Schedule preview is intentionally not reconstructed from legacy SimulationRun state. Home links to the run-scoped calendar surface until the canonical saved-calendar stack is integrated here. See `docs/VIEWER_CANONICAL_HOME_V1.md`.
+
+### Stack integration recovery
+
+The cumulative Viewer/Admin implementation branch is intentionally proposed directly to `buuk` by PR #1066 after several stacked child PRs were merged into work branches instead of the integration branch. This preserves the actual cumulative ancestry rather than replaying dependent commits manually.
+
+The parallel #1060–#1063 Viewer calendar/ranking compatibility stack remains separate because a direct branch merge has overlapping conflicts. Its unique work is retained on its existing branches and must be reconciled against `buuk` after #1066 lands; no parallel content is treated as superseded merely because the main stack is integrated first.
+

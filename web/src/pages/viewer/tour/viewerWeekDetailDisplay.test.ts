@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import type {
   EventRecord,
-  RankingSnapshot,
   SeasonStateResponse,
 } from "../../../api/types";
 import {
@@ -14,7 +13,6 @@ import {
   parseViewerWeekParam,
   persistedEventsForWeek,
   plannedEventsForWeek,
-  snapshotsForWeekSourceEvents,
   sourceEventIdsForWeek,
 } from "./viewerWeekDetailDisplay";
 
@@ -66,33 +64,6 @@ const eventRecords: EventRecord[] = [
     week: 5,
     template_id: "WT-ONLY",
     tournament_result: {},
-  },
-];
-
-const snapshots: RankingSnapshot[] = [
-  {
-    snapshot_sequence: 3,
-    snapshot_kind: "ranking",
-    source_event_id: "EVENT/1",
-    payload: {},
-  },
-  {
-    snapshot_sequence: 4,
-    snapshot_kind: "ranking",
-    source_event_id: "EVENT/10",
-    payload: {},
-  },
-  {
-    snapshot_sequence: 5,
-    snapshot_kind: "ranking",
-    source_event_id: "EVENT",
-    payload: {},
-  },
-  {
-    snapshot_sequence: 6,
-    snapshot_kind: "ranking",
-    source_event_id: null,
-    payload: {},
   },
 ];
 
@@ -167,16 +138,6 @@ describe("viewerWeekDetailDisplay helpers", () => {
     expect(persistedEventsForWeek(eventRecords, null, sourceIds)).toEqual([]);
   });
 
-  it("matches snapshot source_event_id exactly and handles nullish snapshots safely", () => {
-    expect(
-      snapshotsForWeekSourceEvents(snapshots, new Set(["EVENT/1"])).map(
-        (snapshot) => snapshot.snapshot_sequence,
-      ),
-    ).toEqual([3]);
-    expect(snapshotsForWeekSourceEvents(null, new Set(["EVENT/1"]))).toEqual([]);
-    expect(snapshotsForWeekSourceEvents(undefined, new Set(["EVENT/1"]))).toEqual([]);
-  });
-
   it("handles completed planned-event inputs without throwing", () => {
     const planned = plannedEventsForWeek(seasonState, 5);
 
@@ -191,7 +152,6 @@ describe("viewerWeekDetailDisplay helpers", () => {
         runId: "run alpha/#1",
         week: 5,
         rankingPublicationOrdinals: [1709],
-        raceSnapshotSequences: [9],
       }),
     ).toEqual([
       { label: "Run browser", href: "/viewer/runs" },
@@ -212,10 +172,6 @@ describe("viewerWeekDetailDisplay helpers", () => {
       {
         label: "Ranking publication #1709",
         href: "/viewer/runs/run%20alpha%2F%231/rankings/1709",
-      },
-      {
-        label: "Race publication #9",
-        href: "/viewer/runs/run%20alpha%2F%231/race/9",
       },
     ]);
     expect(

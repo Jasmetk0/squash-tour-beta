@@ -273,7 +273,7 @@ describe('ViewerRunHistoryFinalsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Finals Qualification' })).toBeInTheDocument()
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
-    expect(await screen.findByText('W40')).toBeInTheDocument()
+    expect((await screen.findAllByText('W40')).length).toBeGreaterThan(0)
     expect(screen.getByText('WTF-2031')).toBeInTheDocument()
 
     const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })

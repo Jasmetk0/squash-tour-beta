@@ -8,7 +8,7 @@ import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } f
 const api = vi.hoisted(() => ({
   getViewerRunCalendar: vi.fn(),
   getViewerCompletedTournaments: vi.fn(),
-  listRankingSnapshots: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
   listRaceSnapshots: vi.fn()
 }))
 
@@ -128,11 +128,31 @@ function mockCompleted(): void {
 }
 
 function mockSnapshots(): void {
-  api.listRankingSnapshots.mockResolvedValue({
-    run_id: 'viewer-run-2d',
-    snapshots: [
-      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'EVENT-NEXT', payload: { table: 'metadata-only' } },
-      { snapshot_sequence: 5, snapshot_kind: 'WEEK', source_event_id: 'EVENT-COMPLETE', payload: {} }
+  api.listViewerOfficialRankingHistory.mockResolvedValue({
+    schema_version: 'viewer_official_ranking_history.v1',
+    product_run_id: 'viewer-run-2d',
+    viewer_branch_id: 'branch-viewer',
+    public_head_ordinal: 1709,
+    publication_count: 2,
+    publications: [
+      {
+        season_index: 28,
+        week: 2,
+        week_ordinal: 1709,
+        snapshot_fingerprint: 'a'.repeat(64),
+        policy_id: 'official-weekly',
+        best_n: 12,
+        row_count: 64
+      },
+      {
+        season_index: 28,
+        week: 1,
+        week_ordinal: 1708,
+        snapshot_fingerprint: 'b'.repeat(64),
+        policy_id: 'official-weekly',
+        best_n: 12,
+        row_count: 64
+      }
     ]
   })
   api.listRaceSnapshots.mockResolvedValue({
@@ -345,10 +365,11 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
     )
     expect(screen.getByText('Ranking publications count')).toBeInTheDocument()
     expect(screen.getByText('Race publications count')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /Ranking publication #4/i })[0]).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Ranking publication #1709/i })[0]).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2d/rankings/4'
+      '/viewer/runs/viewer-run-2d/rankings/1709'
     )
+    expect(screen.getByText('Official · 64 ranked players · official-weekly')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Race publication #7/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/race/7'
@@ -384,16 +405,28 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
     expect(within(completed).getByText('15')).toBeInTheDocument()
   })
 
-  it('shows deferred publication metadata when snapshots cannot be source-matched', async () => {
-    api.listRankingSnapshots.mockResolvedValueOnce({
-      run_id: 'viewer-run-2d',
-      snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: null, payload: {} }]
+  it('shows deferred publication metadata when neither canonical ranking nor Race matches the week', async () => {
+    api.listViewerOfficialRankingHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_official_ranking_history.v1',
+      product_run_id: 'viewer-run-2d',
+      viewer_branch_id: 'branch-viewer',
+      public_head_ordinal: 1715,
+      publication_count: 1,
+      publications: [{
+        season_index: 28,
+        week: 8,
+        week_ordinal: 1715,
+        snapshot_fingerprint: 'c'.repeat(64),
+        policy_id: 'official-weekly',
+        best_n: 12,
+        row_count: 64
+      }]
     })
     api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-2d', snapshots: [] })
 
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
-    expect(await screen.findByText('No ranking or race publications are source-matched to this week.')).toBeInTheDocument()
+    expect(await screen.findByText('No canonical ranking or source-matched Race publication is available for this week.')).toBeInTheDocument()
   })
 
   it('shows no-data state for a missing empty week', async () => {
@@ -409,7 +442,7 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
     expect(await screen.findByText('Week must be a positive whole number in the URL (for example /weeks/12).')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
     expect(api.getViewerCompletedTournaments).not.toHaveBeenCalled()
-    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
     expect(api.listRaceSnapshots).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })

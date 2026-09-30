@@ -210,17 +210,6 @@ function topRankingRows(count: number): Array<Record<string, unknown>> {
   }))
 }
 
-function topRaceRows(count: number): Array<Record<string, unknown>> {
-  return Array.from({ length: count }, (_, index) => ({
-    rank: index + 1,
-    player: { id: `R${index + 1}`, name: index === 0 ? 'Paul Coll' : `Race Top Player ${index + 1}`, country_code: index === 0 ? 'NZ' : 'EG' },
-    points: 7000 - index,
-    events_counted: index === 0 ? 8 : 6,
-    qualification_status: index === 0 ? 'Qualified' : 'Chasing',
-    next_max_points: index === 0 ? 1500 : 1000
-  }))
-}
-
 function setTestActiveRun(runId: string): void {
   localStorage.setItem('beta_engine:viewer_active_run_id', runId)
   localStorage.setItem('beta_engine:viewer_active_product_run_id', runId)

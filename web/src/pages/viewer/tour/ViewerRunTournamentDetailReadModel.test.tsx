@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerCompletedTournaments: vi.fn(),
   getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),

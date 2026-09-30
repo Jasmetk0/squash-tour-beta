@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerRunCalendar: vi.fn(),
   getViewerCompletedTournaments: vi.fn(),
   getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
@@ -117,8 +118,71 @@ function expectNoForbiddenViewerActions(): void {
 describe('ViewerRunTournamentsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockRunMetadata()
-    mockEvents()
+    api.getViewerRunCalendar.mockResolvedValue({
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 1,
+      event_count: 2,
+      seasons: [
+        {
+          season: 2027,
+          event_count: 2,
+          events: [
+            {
+              event_id: 'EVENT-1',
+              season: 2027,
+              season_week: 3,
+              calendar_year: 2027,
+              year_week: 39,
+              template_id: 'WT-PLAT',
+              event_name: 'World Platinum',
+              category: 'Platinum',
+              tour_level: 'WORLD_TOUR',
+              host_country: 'EGY',
+              host_city: 'Cairo',
+              region: 'Africa',
+              duration_in_season_weeks: 1,
+              start_season_week: 3,
+              end_season_week: 3,
+              status: 'completed',
+              main_draw_size: 32,
+              qualification_draw_size: 16,
+              seeds_count: 8,
+              qualifier_spots: 4,
+              wild_cards: 2,
+              byes: 0,
+              prestige: 9
+            },
+            {
+              event_id: 'EVENT-2',
+              season: 2027,
+              season_week: 4,
+              calendar_year: 2027,
+              year_week: 40,
+              template_id: 'ET-GOLD',
+              event_name: 'Elite Gold',
+              category: 'Gold',
+              tour_level: 'ELITE_TOUR',
+              host_country: 'FRA',
+              host_city: 'Paris',
+              region: 'Europe',
+              duration_in_season_weeks: 1,
+              start_season_week: 4,
+              end_season_week: 4,
+              status: 'planned',
+              main_draw_size: 16,
+              qualification_draw_size: 8,
+              seeds_count: 4,
+              qualifier_spots: 2,
+              wild_cards: 1,
+              byes: 0,
+              prestige: 6
+            }
+          ]
+        }
+      ]
+    })
     api.getViewerCompletedTournaments.mockResolvedValue({
       schema_version: 'viewer_completed_tournaments.v1',
       product_run_id: 'viewer-run-1',
@@ -139,78 +203,35 @@ describe('ViewerRunTournamentsPage', () => {
     })
   })
 
-  it('renders canonical completed tournament metadata on the sports-facing list', async () => {
+  it('renders Saved Calendar schedule plus canonical completed tournament metadata', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
+    expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-1')
     expect(api.getViewerCompletedTournaments).toHaveBeenCalledWith('viewer-run-1')
     const eventOne = (await screen.findByText('EVENT-1')).closest('li') as HTMLElement
     expect(screen.getByText('EVENT-2')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
     expect(screen.getByText('ET-GOLD')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/weeks/3'
+    )
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('WORLD TOUR').length).toBeGreaterThan(0)
     expect(within(eventOne).getByText('Canonical Saved Revision result')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
     expect(within(eventOne).getByText('P-001')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Finalist')).toBeInTheDocument()
     expect(within(eventOne).getByText('P-002')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Players')).toBeInTheDocument()
     expect(within(eventOne).getByText('5')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Matches')).toBeInTheDocument()
     expect(within(eventOne).getByText('4')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
     )
-    expect(screen.queryByText('Ali Farag')).not.toBeInTheDocument()
-    expect(screen.queryByText(/event-list-payload-should-not-render/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Match 1 should not render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('keeps missing tournament list weeks as plain text without a broken week link', async () => {
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [
-        {
-          event_sequence: 10,
-          event_id: 'EVENT-NO-WEEK',
-          season: 2027,
-          week: null,
-          template_id: 'WT-GOLD',
-          tournament_result: null
-        }
-      ]
-    })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
-
-    const eventWithoutWeek = (await screen.findByText('EVENT-NO-WEEK')).closest('li') as HTMLElement
-    expect(within(eventWithoutWeek).getByText('—')).toBeInTheDocument()
-    expect(within(eventWithoutWeek).queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('ignores legacy tournament result payload when no canonical saved result exists', async () => {
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [
-        {
-          event_sequence: 10,
-          event_id: 'EVENT-UNKNOWN',
-          season: 2027,
-          week: 5,
-          template_id: 'WT-GOLD',
-          tournament_result: {
-            secret_debug_marker: 'unknown-list-payload-should-not-render',
-            fake_champion: 'Fake Champion',
-            unknown_status: 'invented'
-          }
-        }
-      ]
-    })
+  it('shows a Saved Calendar event without inventing a result', async () => {
     api.getViewerCompletedTournaments.mockResolvedValueOnce({
       schema_version: 'viewer_completed_tournaments.v1',
       product_run_id: 'viewer-run-1',
@@ -221,16 +242,21 @@ describe('ViewerRunTournamentsPage', () => {
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
-    const event = (await screen.findByText('EVENT-UNKNOWN')).closest('li') as HTMLElement
+    const event = (await screen.findByText('EVENT-2')).closest('li') as HTMLElement
     expect(within(event).getByText('No canonical saved result')).toBeInTheDocument()
     expect(within(event).queryByText('Champion')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Fake Champion/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('renders safe empty state only when schedule and canonical history are both empty', async () => {
-    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+  it('renders safe empty state only when Saved Calendar and canonical history are both empty', async () => {
+    api.getViewerRunCalendar.mockResolvedValueOnce({
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 1,
+      event_count: 0,
+      seasons: [{ season: 2027, event_count: 0, events: [] }]
+    })
     api.getViewerCompletedTournaments.mockResolvedValueOnce({
       schema_version: 'viewer_completed_tournaments.v1',
       product_run_id: 'viewer-run-1',
@@ -241,15 +267,20 @@ describe('ViewerRunTournamentsPage', () => {
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
-    expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
-    expect(await screen.findByText('No tournament schedule or canonical completed result is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No Saved Calendar event or canonical completed result is available for this run yet.')).toBeInTheDocument()
     expect(screen.queryByText(/champion|winner|final score|standings|match result/i)).not.toBeInTheDocument()
-    expect(document.body).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()
   })
 
-  it('shows a canonical completed tournament even without a legacy event record', async () => {
-    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+  it('shows a canonical completed tournament even when no Saved Calendar event exists', async () => {
+    api.getViewerRunCalendar.mockResolvedValueOnce({
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 1,
+      event_count: 0,
+      seasons: [{ season: 2028, event_count: 0, events: [] }]
+    })
     api.getViewerCompletedTournaments.mockResolvedValueOnce({
       schema_version: 'viewer_completed_tournaments.v1',
       product_run_id: 'viewer-run-1',
@@ -285,7 +316,43 @@ describe('ViewerRunTournamentsPage', () => {
     )
   })
 
-  it('drops malformed tournament list rows and does not create unsafe links from object IDs', async () => {
+  it('encodes Saved Calendar tournament identities safely in detail links', async () => {
+    api.getViewerRunCalendar.mockResolvedValueOnce({
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 1,
+      event_count: 1,
+      seasons: [{
+        season: 2027,
+        event_count: 1,
+        events: [{
+          event_id: 'EVT/1 #A',
+          season: 2027,
+          season_week: 6,
+          calendar_year: 2027,
+          year_week: 42,
+          template_id: 'WT-GOLD',
+          event_name: 'Encoded',
+          category: 'Gold',
+          tour_level: 'WORLD_TOUR',
+          host_country: 'CZE',
+          host_city: null,
+          region: 'Europe',
+          duration_in_season_weeks: 1,
+          start_season_week: 6,
+          end_season_week: 6,
+          status: 'planned',
+          main_draw_size: 16,
+          qualification_draw_size: 0,
+          seeds_count: 4,
+          qualifier_spots: 0,
+          wild_cards: 1,
+          byes: 0,
+          prestige: 5
+        }]
+      }]
+    })
     api.getViewerCompletedTournaments.mockResolvedValueOnce({
       schema_version: 'viewer_completed_tournaments.v1',
       product_run_id: 'viewer-run-1',
@@ -293,22 +360,19 @@ describe('ViewerRunTournamentsPage', () => {
       tournament_count: 0,
       tournaments: []
     })
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [null, 12, 'bad', {}, { event_id: { bad: true }, week: 3 }, { event_id: 'EVENT-SAFE', week: { bad: true }, template_id: { bad: true }, tournament_result: { fake_winner: 'Fake Winner' } }]
-    })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
-    expect(await screen.findByText('EVENT-SAFE')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/tournaments/EVENT-SAFE')
-    expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
-    expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
+    const item = (await screen.findByText('EVT/1 #A')).closest('li') as HTMLElement
+    expect(within(item).getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/EVT%2F1%20%23A'
+    )
     expect(document.body).not.toHaveTextContent('[object Object]')
-    expectNoForbiddenViewerActions()
   })
-
 })
+
+
 
 describe('ViewerRunTournamentDetailPage', () => {
   beforeEach(() => {

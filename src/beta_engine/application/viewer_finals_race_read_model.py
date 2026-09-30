@@ -152,8 +152,11 @@ def _effective_states(
     *,
     run_id: str,
     branch_id: str,
-) -> dict[int, WorldTourFinalsEffectiveParticipantState]:
-    latest: dict[int, tuple[int, WorldTourFinalsEffectiveParticipantState]] = {}
+) -> dict[tuple[int, str], WorldTourFinalsEffectiveParticipantState]:
+    by_scope: dict[
+        tuple[int, str],
+        list[tuple[int, WorldTourFinalsEffectiveParticipantState]],
+    ] = {}
     for row in _component_rows(component, "finals_effective_states"):
         state = WorldTourFinalsEffectiveParticipantState.model_validate(
             _payload(row, label="Finals effective participant state")
@@ -162,22 +165,44 @@ def _effective_states(
             raise ValueError(
                 "Saved Finals effective participant state belongs to another Viewer Branch"
             )
-        if row.get("run_id") != run_id or row.get("branch_id") != branch_id:
-            raise ValueError("Saved Finals effective-state row scope differs from payload")
-        if row.get("target_season_index") != state.target_season_index:
-            raise ValueError("Saved Finals effective-state season differs from payload")
-        if row.get("state_fingerprint") != state.fingerprint:
-            raise ValueError("Saved Finals effective-state fingerprint is corrupt")
+        if (
+            row.get("run_id"),
+            row.get("branch_id"),
+            row.get("target_season_index"),
+            row.get("finals_event_id"),
+            row.get("state_fingerprint"),
+            row.get("predecessor_fingerprint"),
+            row.get("command_id"),
+        ) != (
+            run_id,
+            branch_id,
+            state.target_season_index,
+            state.finals_event_id,
+            state.fingerprint,
+            state.predecessor_fingerprint,
+            state.created_by_command_id,
+        ):
+            raise ValueError("Saved Finals effective-state row identity is corrupt")
         sequence = row.get("sequence")
         if not isinstance(sequence, int) or sequence < 1:
             raise ValueError("Saved Finals effective-state sequence is corrupt")
-        current = latest.get(state.target_season_index)
-        if current is None or sequence > current[0]:
-            latest[state.target_season_index] = (sequence, state)
-        elif sequence == current[0]:
-            raise ValueError("Viewer Saved Revision has duplicate Finals effective-state sequence")
-    return {season: value[1] for season, value in latest.items()}
+        by_scope.setdefault(
+            (state.target_season_index, state.finals_event_id),
+            [],
+        ).append((sequence, state))
 
+    latest: dict[tuple[int, str], WorldTourFinalsEffectiveParticipantState] = {}
+    for scope, values in by_scope.items():
+        ordered = sorted(values, key=lambda item: item[0])
+        if [sequence for sequence, _ in ordered] != list(range(1, len(ordered) + 1)):
+            raise ValueError("Saved Finals effective-state sequence has a gap")
+        predecessor: str | None = None
+        for _, state in ordered:
+            if state.predecessor_fingerprint != predecessor:
+                raise ValueError("Saved Finals effective-state lineage is broken")
+            predecessor = state.fingerprint
+        latest[scope] = ordered[-1][1]
+    return latest
 
 def resolve_viewer_finals_race_history(
     component: dict[str, object] | None,
@@ -198,12 +223,26 @@ def resolve_viewer_finals_race_history(
         ):
             raise ValueError("Finals participant selection references another Race snapshot")
 
-        effective_state = effective.get(race.target_season_index)
+        season_effective_scopes = tuple(
+            scope for scope in effective if scope[0] == race.target_season_index
+        )
+        if selection is None and season_effective_scopes:
+            raise ValueError(
+                "Finals effective participant state exists without published selection"
+            )
+        if (
+            selection is not None
+            and any(scope[1] != selection.finals_event_id for scope in season_effective_scopes)
+        ):
+            raise ValueError(
+                "Viewer Saved Revision has ambiguous Finals effective-state event identity"
+            )
+        effective_state = (
+            effective.get((race.target_season_index, selection.finals_event_id))
+            if selection is not None
+            else None
+        )
         if effective_state is not None:
-            if selection is None:
-                raise ValueError(
-                    "Finals effective participant state exists without published selection"
-                )
             if effective_state.initial_selection_fingerprint != selection.fingerprint:
                 raise ValueError(
                     "Finals effective participant state references another selection"

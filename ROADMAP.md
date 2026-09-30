@@ -1625,7 +1625,10 @@ closes cannot leak into Viewer. The public projection is sporting-only and hides
 authority/provenance fingerprints and point/prize internals.
 
 Completed tournament history is now also projected from the same Saved Ranking tournament
-sources and drives completion/result metadata on the Viewer tournament list. Legacy event
-records remain only for schedule/template/category/tour compatibility because Saved
-Revision still lacks a public Calendar Package component. Full schedule detachment, Race
-and Finals remain separate follow-up slices.
+sources and drives completion/result metadata on the Viewer tournament list.
+
+Viewer Saved Revision now exposes immutable Run Package state and `viewer_run_calendar.v1`
+projects the applied Calendar packages without consulting the live source library or legacy
+SimulationRun schedule/event registry. Tournament list, Season Calendar, Planned Event and
+Week schedule metadata consume this Saved Calendar projection. Week Ranking/Race
+publication lists, Race and Finals remain separate follow-up migrations.

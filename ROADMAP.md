@@ -1650,3 +1650,15 @@ Planned Event detail now resolves event identity and schedule metadata directly 
 Saved-Revision Tournament History. It no longer reads the legacy Run season plan/persisted-event
 registry or exposes legacy next-event/persisted-event status as authority. Week Detail is now the
 remaining schedule-view migration boundary.
+
+
+### Viewer Finals Race downstream integration
+
+The public Race to Finals landing and run-scoped Race route now consume the canonical
+season-scoped World Tour Finals Race captured in the selected Viewer Branch Saved Revision.
+The projection preserves frozen Race order/points and counted-result sporting evidence, joins
+published Finals participant selection, and follows the latest saved effective participant state
+after accepted replacements. Tie-break tokens, fingerprints and Admin replacement audit remain
+private. Legacy Race snapshot-sequence detail and remaining Home/History/deferred consumers are
+separate compatibility-detachment follow-ups; canonical Finals event/result presentation remains
+the next dedicated Finals Viewer slice.

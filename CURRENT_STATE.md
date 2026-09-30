@@ -3257,3 +3257,16 @@ Stats, Predictions, Ranking-deferred and Tour-deferred pages use Product Run ide
 
 See `docs/VIEWER_DEFERRED_CANONICAL_SOURCES_V1.md`.
 
+### H2H canonical sporting metadata boundary
+
+H2H deferred subroutes now use Product Run-scoped canonical Saved-Revision/publication sources for sporting metadata:
+
+- Saved Calendar;
+- Tournament History;
+- Official Ranking History;
+- World Tour Finals Race History.
+
+The only remaining legacy dependency in this H2H slice is `listRunPlayers`, isolated to player sample/browsing data because no canonical Product Run player projection exists yet. It is not used to infer sporting state.
+
+See `docs/VIEWER_H2H_CANONICAL_METADATA_V1.md`.
+

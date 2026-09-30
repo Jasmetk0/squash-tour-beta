@@ -1,14 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
 
-import {
-  getFinalsSummary,
-  getRunStatusSummary,
-  listEvents,
-  listRaceSnapshots,
-  listRankingSnapshots,
-  listRunPlayers,
-} from '../../../api/client'
+import { listRunPlayers } from '../../../api/client'
 import {
   ViewerActiveRunCard,
   ViewerActiveRunLinks,
@@ -18,9 +10,9 @@ import {
   ViewerSectionCard,
 } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import {
-  viewerFinalsPath,
   viewerPlayersPath,
   viewerRacePath,
   viewerRankingsPath,
@@ -29,172 +21,119 @@ import {
   viewerTournamentsPath,
 } from '../../../viewer/viewerRoutes'
 import { ViewerSamplePlayersList } from '../explore/viewerComparisonRender'
-import { formatFinalsAvailability } from '../tour/viewerTourDisplay'
-import { hasAvailableFinals } from './viewerDeferredSourceMetadata'
 import {
   type ViewerH2HSubrouteKind,
   viewerH2HSubrouteContent,
 } from './viewerDeferredConfigs'
+import {
+  commonDeferredSourceMetadataItems,
+} from './ViewerDeferredSourceMetadataRender'
+import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries'
 
 export function ViewerH2HSubroutePage({
   kind,
 }: {
   kind: ViewerH2HSubrouteKind
 }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
+  const productRunId = useActiveViewerProductRunId()
+  const legacySimulationRunId = useActiveViewerRunId()
   const content = viewerH2HSubrouteContent[kind]
-  const queryEnabled = Boolean(activeRunId)
-  const statusQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-status', kind, activeRunId],
-    queryFn: () => getRunStatusSummary(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
+
+  const {
+    metadata,
+    isLoadingMetadata,
+    hasMetadataError,
+    hasAnySourceMetadata,
+  } = useViewerDeferredSourceQueries({
+    productRunId,
+    kind,
+    scope: 'h2h',
   })
+
   const playersQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-players', kind, activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const eventsQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-events', kind, activeRunId],
-    queryFn: () => listEvents(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const rankingSnapshotsQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-ranking-snapshots', kind, activeRunId],
-    queryFn: () => listRankingSnapshots(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const raceSnapshotsQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-race-snapshots', kind, activeRunId],
-    queryFn: () => listRaceSnapshots(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const finalsQuery = useQuery({
-    queryKey: ['viewer-h2h-subroute-finals', kind, activeRunId],
-    queryFn: () => getFinalsSummary(activeRunId ?? ''),
-    enabled: queryEnabled,
+    queryKey: ['viewer-h2h-subroute-legacy-players', kind, legacySimulationRunId],
+    queryFn: () => listRunPlayers(legacySimulationRunId ?? '', { limit: 50, offset: 0 }),
+    enabled: Boolean(legacySimulationRunId),
     retry: false,
   })
 
-  if (!activeRunId) {
+  if (!productRunId) {
     return (
       <ViewerShellPage
         title={content.title}
         description="Read-only H2H Explorer that defers analytics until authoritative match history exists."
       >
-        <ViewerEmptyState>
-          No data is available for this run yet.
-        </ViewerEmptyState>
+        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
 
   const samplePlayers = playersQuery.data?.players ?? []
   const playerTotal = playersQuery.data?.total
-  const completedEventCount =
-    eventsQuery.data?.events.length ??
-    statusQuery.data?.history_counts.events ??
-    statusQuery.data?.progress.completed_event_count
-  const rankingSnapshotCount =
-    rankingSnapshotsQuery.data?.snapshots.length ??
-    statusQuery.data?.history_counts.ranking_snapshots
-  const raceSnapshotCount =
-    raceSnapshotsQuery.data?.snapshots.length ??
-    statusQuery.data?.history_counts.race_snapshots
-  const finalsAvailability = finalsQuery.data
-    ? formatFinalsAvailability(finalsQuery.data)
-    : statusQuery.data?.finals.result_available
-      ? 'Finals result available'
-      : statusQuery.data?.finals.qualification_available
-        ? 'Finals qualification available'
-        : 'Finals summary not available yet'
-  const hasFinalsAvailability = hasAvailableFinals(finalsAvailability)
+  const isLoading = isLoadingMetadata || playersQuery.isLoading
+  const hasError = hasMetadataError || playersQuery.isError
+  const hasAnyData = hasAnySourceMetadata || samplePlayers.length > 0
 
   return (
     <ViewerShellPage
       title={content.title}
-      description="Read-only H2H Explorer that defers analytics until authoritative match history exists."
+      description="Read-only H2H Explorer using canonical Saved-Revision sporting metadata while player browsing remains on the current legacy player source."
     >
       <ViewerLandingGrid>
         <ViewerActiveRunCard
-          ariaLabel={`${content.title} source metadata`}
-          kicker="Active Viewer run"
-          title={`${content.title} source metadata`}
+          ariaLabel={content.title + ' canonical source metadata'}
+          kicker="Selected Product Run"
+          title={content.title + ' source metadata'}
         >
-          {statusQuery.isLoading ||
-          playersQuery.isLoading ||
-          eventsQuery.isLoading ||
-          rankingSnapshotsQuery.isLoading ||
-          raceSnapshotsQuery.isLoading ||
-          finalsQuery.isLoading ? (
-            <p className="status">Loading active-run metadata…</p>
+          {isLoading ? (
+            <p className="status">Loading canonical and player source metadata…</p>
           ) : null}
+          {hasError ? (
+            <ViewerEmptyState>Some H2H source metadata is temporarily unavailable.</ViewerEmptyState>
+          ) : null}
+
           <ViewerMetadataList
-            ariaLabel={`${content.title} source metadata values`}
+            ariaLabel={content.title + ' source metadata values'}
             items={[
-              { label: 'Active run ID', value: activeRunId },
+              ...commonDeferredSourceMetadataItems({
+                productRunId,
+                metadata,
+                isLoading: isLoadingMetadata,
+              }),
+              {
+                label: 'Player source',
+                value: legacySimulationRunId
+                  ? 'Legacy SimulationRun player registry'
+                  : 'Unavailable',
+              },
               {
                 label: 'Total player count',
-                value: playersQuery.isLoading
-                  ? 'Loading…'
-                  : (playerTotal ?? '—'),
+                value: playersQuery.isLoading ? 'Loading…' : (playerTotal ?? '—'),
               },
               {
                 label: 'Returned/sample player count',
-                value: playersQuery.isLoading
-                  ? 'Loading…'
-                  : samplePlayers.length,
-              },
-              {
-                label: 'Completed/persisted event count',
-                value: eventsQuery.isLoading
-                  ? 'Loading…'
-                  : (completedEventCount ?? '—'),
-              },
-              {
-                label: 'Ranking snapshot count',
-                value: rankingSnapshotsQuery.isLoading
-                  ? 'Loading…'
-                  : (rankingSnapshotCount ?? '—'),
-              },
-              {
-                label: 'Race snapshot count',
-                value: raceSnapshotsQuery.isLoading
-                  ? 'Loading…'
-                  : (raceSnapshotCount ?? '—'),
-              },
-              {
-                label: 'Finals availability',
-                value: finalsQuery.isLoading ? (
-                  'Loading…'
-                ) : hasFinalsAvailability ? (
-                  <Link to={viewerFinalsPath(activeRunId)}>
-                    {finalsAvailability}
-                  </Link>
-                ) : (
-                  finalsAvailability
-                ),
+                value: playersQuery.isLoading ? 'Loading…' : samplePlayers.length,
               },
             ]}
           />
-          {!playersQuery.isLoading &&
-          !playersQuery.isError &&
-          samplePlayers.length === 0 ? (
+
+          {!isLoading && !hasError && !hasAnyData ? (
+            <ViewerEmptyState>No canonical source data or player sample is available for this Product Run yet.</ViewerEmptyState>
+          ) : null}
+
+          {!legacySimulationRunId ? (
             <ViewerEmptyState>
-              No data is available for this run yet.
+              Canonical sporting metadata is available, but the legacy player source is not mapped for this selection.
             </ViewerEmptyState>
           ) : null}
+
           <ViewerSamplePlayersList
             players={samplePlayers}
-            label={`${content.title} sample players`}
-            runId={activeRunId}
+            label={content.title + ' sample players'}
+            runId={productRunId}
           />
         </ViewerActiveRunCard>
+
         <ViewerSectionCard
           title="Deferred H2H outputs"
           kicker="No authoritative match read model"
@@ -204,25 +143,26 @@ export function ViewerH2HSubroutePage({
           </ViewerEmptyState>
           <p className="status">{content.note}</p>
         </ViewerSectionCard>
+
         <ViewerSectionCard title="Source links" kicker="Read-only navigation">
           <ViewerActiveRunLinks
             links={[
               { label: 'Open H2H comparison', to: viewerTopH2HPath() },
               {
                 label: 'Open active run players',
-                to: viewerPlayersPath(activeRunId),
+                to: viewerPlayersPath(productRunId),
               },
               {
                 label: 'Open active run tournaments',
-                to: viewerTournamentsPath(activeRunId),
+                to: viewerTournamentsPath(productRunId),
               },
               {
                 label: 'Open active run rankings',
-                to: viewerRankingsPath(activeRunId),
+                to: viewerRankingsPath(productRunId),
               },
               {
                 label: 'Open active run race',
-                to: viewerRacePath(activeRunId),
+                to: viewerRacePath(productRunId),
               },
               { label: 'Open run browser', to: viewerRunsPath() },
             ]}

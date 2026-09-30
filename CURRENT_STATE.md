@@ -3058,8 +3058,13 @@ to canonical authority.
 - Viewer Week ranking publications now use canonical Saved-Revision Official Ranking
   history, filtered by public season/week and linked by canonical `week_ordinal`;
 - legacy Ranking snapshot sequence/source-event matching is no longer used by the Week
-  page. Race publication linkage remains on its compatibility snapshot reader in this
-  slice and is owned by the separate canonical Race/Finals migration.
+  page;
+- the former generic Ranking/Race snapshot compatibility component is now Race-only:
+  canonical Ranking list/detail routes use their dedicated Saved-Revision components,
+  while the remaining Race list/detail keeps legacy snapshot reads until a distinct
+  canonical weekly Race publication timeline exists;
+- the Race compatibility module no longer imports or branches on legacy Ranking APIs,
+  Ranking preview parsers or Ranking route helpers.
 
 See `docs/VIEWER_TOURNAMENT_RESULT_V1.md` and
 `docs/VIEWER_SAVED_CALENDAR_V1.md`.

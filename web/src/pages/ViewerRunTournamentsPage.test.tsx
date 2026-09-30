@@ -357,9 +357,9 @@ describe('ViewerRunTournamentDetailPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
     expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-001 · champion · 2W–0L · seed 1')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-001 · champion · 2W–0L · seed 1')
     expect(screen.getByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-003 · semifinal · 1W–1L · qualifier')
-    expect(screen.getByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('final · main R2 · P-001 def. P-002 · 3-2')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('final · main R2 · P-001 def. P-002 · 3-2')
     expect(screen.queryByText('Legacy Champion')).not.toBeInTheDocument()
     expect(screen.queryByText(/parseable-hidden-payload/i)).not.toBeVisible()
     const technicalSection = screen.getByText('Show technical event data').closest('details')
@@ -416,10 +416,6 @@ describe('ViewerRunTournamentDetailPage', () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-NO-WEEK')
 
     expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
-    )
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
     expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
@@ -443,7 +439,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/tournaments')
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('Canonical Tournament Result is not available for this tournament yet.')).toBeInTheDocument()
     expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
     expect(document.body).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()

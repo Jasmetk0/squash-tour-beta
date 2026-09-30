@@ -9,6 +9,14 @@ import {
 import { ViewerRunWeekPage } from '../../ViewerRunCalendarPage'
 
 const api = vi.hoisted(() => ({
+  ApiError: class ApiError extends Error {
+    status: number
+
+    constructor(message: string, status = 500) {
+      super(message)
+      this.status = status
+    }
+  },
   getViewerRunCalendar: vi.fn(),
   getViewerCompletedTournaments: vi.fn(),
   listViewerOfficialRankingHistory: vi.fn(),

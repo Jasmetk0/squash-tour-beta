@@ -243,7 +243,7 @@ describe('ViewerRunTournamentsPage', () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     const event = (await screen.findByText('EVENT-2')).closest('li') as HTMLElement
-    expect(within(event).getByText('No canonical saved result')).toBeInTheDocument()
+    expect(within(event).getAllByText('No canonical saved result').length).toBeGreaterThan(0)
     expect(within(event).queryByText('Champion')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })

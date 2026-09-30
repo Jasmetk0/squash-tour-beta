@@ -3168,3 +3168,17 @@ The run-scoped Viewer History page is now detached from the legacy SimulationRun
 The three domains remain separate timelines with their own canonical identities. History does not fabricate a cross-domain sequence and does not reinterpret legacy Race `snapshotSequence` values as canonical Finals Race season identities. Legacy technical activity JSON is no longer rendered on this route. See `docs/VIEWER_CANONICAL_HISTORY_V1.md`.
 
 Remaining Viewer compatibility work includes the legacy Race snapshot-sequence detail route and broader top-level Home/deferred consumers. Those should be migrated only where canonical identity can be preserved explicitly.
+
+
+### Canonical Viewer Home
+
+Viewer Home active-run summaries are now detached from legacy SimulationRun runtime/state readers. The page uses only canonical public Viewer projections:
+
+- Viewer Official Context for Product Run/current public context;
+- `viewer_tournament_history.v1` for published completed tournaments;
+- `viewer_official_ranking_history.v1` for Official Ranking publications;
+- `viewer_finals_race_history.v1` for World Tour Finals Race publications.
+
+Legacy `getRun`, run-status, event-list, snapshot-list, activity and Finals-summary readers are no longer used on Home. Home also stops linking to legacy Ranking/Race `snapshotSequence` details, preserving canonical `week_ordinal` and `target_season_index` identity boundaries.
+
+Schedule preview is intentionally not reconstructed from legacy SimulationRun state. Home links to the run-scoped calendar surface until the canonical saved-calendar stack is integrated here. See `docs/VIEWER_CANONICAL_HOME_V1.md`.

@@ -251,8 +251,9 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('viewer-run-2e')
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
 
-    expect(screen.getByRole('list', { name: 'Canonical completed tournament history' })).toHaveTextContent('Diamond Open')
-    expect(screen.getByRole('list', { name: 'Canonical completed tournament history' })).not.toHaveTextContent('Future Open')
+    const tournamentHistory = await screen.findByRole('list', { name: 'Canonical completed tournament history' })
+    expect(tournamentHistory).toHaveTextContent('Diamond Open')
+    expect(tournamentHistory).not.toHaveTextContent('Future Open')
     expect(screen.getByRole('list', { name: 'Canonical Official Ranking publication history' })).toHaveTextContent('ordinal 1931')
     expect(screen.getByRole('list', { name: 'Canonical Finals Race publication history' })).toHaveTextContent('Target season 31')
     expect(screen.queryByText(/hidden-ranking-fingerprint/i)).not.toBeInTheDocument()

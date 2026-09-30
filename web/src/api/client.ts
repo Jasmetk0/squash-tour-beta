@@ -83,6 +83,7 @@ import type {
   ViewerTournamentEntryField,
   ViewerTournamentDraw,
   ViewerTournamentWildCards,
+  ViewerTournamentResult,
   ViewerOfficialRanking,
   ViewerOfficialRankingHistory,
   RunBranch,
@@ -947,6 +948,10 @@ export function getViewerTournamentDraw(productRunId: string, eventId: string): 
 
 export function getViewerTournamentWildCards(productRunId: string, eventId: string): Promise<ViewerTournamentWildCards> {
   return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/wild-cards`)
+}
+
+export function getViewerTournamentResult(productRunId: string, eventId: string): Promise<ViewerTournamentResult> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/result`)
 }
 
 export function listViewerOfficialRankingHistory(productRunId: string): Promise<ViewerOfficialRankingHistory> {

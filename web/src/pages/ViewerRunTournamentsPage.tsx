@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { EventRecord, SeasonStateResponse } from '../api/types'
+import { getEvent, getRun, getViewerCompletedTournaments, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import type { EventRecord, SeasonStateResponse, ViewerCompletedTournamentSummary } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -17,7 +17,6 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import { TournamentResultMetadataList } from '../viewer/TournamentResultMetadata'
 import {
   viewerPlannedEventPath,
   viewerTournamentsPath,
@@ -85,15 +84,15 @@ function eventSeason(event: EventRecord | null | undefined, planned: PlannedTour
   return safeNumber(event?.season) ?? safeNumber(planned?.season) ?? null
 }
 
-function resultAvailability(event: EventRecord | null | undefined): string {
-  if (!event) return 'Not loaded'
-  return event.tournament_result ? 'Result publication available' : 'No result publication recorded'
+function canonicalCompletionStatus(
+  eventId: string,
+  canonicalResult: ViewerCompletedTournamentSummary | undefined,
+  completedEventIds: Set<string>
+): string {
+  if (canonicalResult) return 'Canonical Saved Revision result'
+  if (completedEventIds.has(eventId)) return 'Completed in season plan; result not published canonically'
+  return 'Not completed in season plan'
 }
-
-function completionStatus(event: EventRecord, completedEventIds: Set<string>): string {
-  return completedEventIds.has(event.event_id) ? 'Completed in season plan' : 'Completion not recorded in plan'
-}
-
 
 function drawSlotLabel(slot: {
   slot_index: number
@@ -116,22 +115,17 @@ function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
   return <Link to={viewerWeekDetailPath(runId, week)}>{`W${week}`}</Link>
 }
 
-function TournamentListResultMetadata({ event, runId }: { event: EventRecord; runId: string }): JSX.Element | null {
-  return (
-    <TournamentResultMetadataList
-      payload={event.tournament_result}
-      runId={runId}
-      matches="matchCount"
-      playerLabelMode="identityWithCountry"
-    />
-  )
-}
-
 export function ViewerRunTournamentsPage(): JSX.Element {
   const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
 
   const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId) })
   const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId), retry: false })
+  const completedQuery = useQuery({
+    queryKey: ['viewer-completed-tournaments', runId],
+    queryFn: () => getViewerCompletedTournaments(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
 
   const events = safeEventRecords(eventsQuery.data?.events)
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
@@ -139,62 +133,92 @@ export function ViewerRunTournamentsPage(): JSX.Element {
     () => new Set(safeCompletedEventIds(runQuery.data)),
     [runQuery.data?.season_state.completed_event_ids]
   )
-  const completedPersistedCount = events.filter((event) => completedEventIds.has(event.event_id)).length
+  const eventsById = useMemo(
+    () => new Map(events.map((event) => [event.event_id, event])),
+    [events]
+  )
+  const canonicalCompleted = completedQuery.data?.tournaments ?? []
+  const canonicalCompletedById = useMemo(
+    () => new Map(canonicalCompleted.map((item) => [item.event_id, item])),
+    [canonicalCompleted]
+  )
+  const tournamentIds = useMemo(() => {
+    const ids = events.map((event) => event.event_id)
+    for (const item of canonicalCompleted) {
+      if (!ids.includes(item.event_id)) ids.push(item.event_id)
+    }
+    return ids
+  }, [events, canonicalCompleted])
 
   return (
     <section className="panel">
       <RunScopedHeader
         title="Tournaments"
         runId={runId}
-        subtitle="Read-only tournament schedule and results for the selected run."
+        subtitle="Read-only tournament schedule plus canonical Saved-Revision results for the selected run."
       />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Event count', value: events.length },
-          { label: 'Completed events', value: completedEventIds.size },
-          { label: 'Completed persisted events', value: completedPersistedCount }
+          { label: 'Tournament records', value: tournamentIds.length },
+          { label: 'Canonical completed results', value: canonicalCompleted.length },
+          { label: 'Season-plan completed IDs', value: completedEventIds.size }
         ]}
       />
 
       <SectionCard title="Tournament publications">
-        {eventsQuery.isLoading && <p className="status">Loading tournaments...</p>}
-        {eventsQuery.error && <p className="error">Failed to load tournaments: {formatApiError(eventsQuery.error)}</p>}
+        {eventsQuery.isLoading && <p className="status">Loading schedule compatibility records...</p>}
+        {eventsQuery.error && <p className="error">Legacy schedule records could not be loaded: {formatApiError(eventsQuery.error)}</p>}
+        {completedQuery.isLoading && <p className="status">Loading canonical completed tournaments...</p>}
+        {completedQuery.error && !isApiNotFound(completedQuery.error) ? (
+          <p className="error">Failed to load canonical completed tournaments: {formatApiError(completedQuery.error)}</p>
+        ) : null}
         {runQuery.error && <p className="error">Failed to load ordered calendar context: {formatApiError(runQuery.error)}</p>}
-        {!eventsQuery.isLoading && !eventsQuery.error && events.length === 0 && (
-          <EmptyState message="No data is available for this run yet." />
-        )}
-        {events.length > 0 && (
+        {!eventsQuery.isLoading && !completedQuery.isLoading && tournamentIds.length === 0 ? (
+          <EmptyState message="No tournament schedule or canonical completed result is available for this run yet." />
+        ) : null}
+        {tournamentIds.length > 0 ? (
           <ul className="item-list" aria-label="Tournament event list">
-            {events.map((event) => {
-              const planned = plannedContext.get(event.event_id)
-              const week = eventWeek(event, planned)
-              const season = eventSeason(event, planned)
+            {tournamentIds.map((eventId) => {
+              const event = eventsById.get(eventId)
+              const planned = plannedContext.get(eventId)
+              const canonicalResult = canonicalCompletedById.get(eventId)
+              const week = canonicalResult?.completed_week ?? eventWeek(event, planned)
+              const season = canonicalResult?.completed_season_index ?? eventSeason(event, planned)
 
               return (
-                <li key={event.event_id} id={`event-${event.event_id}`}>
-                  <strong>{event.event_id}</strong>
+                <li key={eventId} id={`event-${eventId}`}>
+                  <strong>{eventId}</strong>
                   <MetadataList
                     items={[
-                      { label: 'Sequence', value: safeText(event.event_sequence) },
+                      { label: 'Sequence', value: event ? safeText(event.event_sequence) : '—' },
                       { label: 'Season', value: season ?? '—' },
                       { label: 'Week', value: displayWeekDetailLink(runId, week) },
-                      { label: 'Template', value: safeText(planned?.template_id ?? event.template_id) },
+                      { label: 'Template', value: safeText(planned?.template_id ?? event?.template_id, 'No saved calendar metadata') },
                       { label: 'Category', value: safeText(planned?.category, 'No ordered-calendar category') },
                       { label: 'Tour', value: safeText(planned?.tour, 'No ordered-calendar tour') },
-                      { label: 'Completion', value: completionStatus(event, completedEventIds) },
-                      { label: 'Result availability', value: resultAvailability(event) }
+                      { label: 'Completion', value: canonicalCompletionStatus(eventId, canonicalResult, completedEventIds) },
+                      { label: 'Result availability', value: canonicalResult ? 'Canonical Saved Revision result available' : 'No canonical saved result' }
                     ]}
                   />
-                  <TournamentListResultMetadata event={event} runId={runId} />
+                  {canonicalResult ? (
+                    <SummaryPills
+                      items={[
+                        { label: 'Champion', value: canonicalResult.champion_player_id },
+                        { label: 'Finalist', value: canonicalResult.finalist_player_id },
+                        { label: 'Players', value: canonicalResult.player_count },
+                        { label: 'Matches', value: canonicalResult.match_count }
+                      ]}
+                    />
+                  ) : null}
                   <p>
-                    <Link to={viewerTournamentDetailPath(runId, event.event_id)}>Open tournament detail</Link>
+                    <Link to={viewerTournamentDetailPath(runId, eventId)}>Open tournament detail</Link>
                   </p>
                 </li>
               )
             })}
           </ul>
-        )}
+        ) : null}
       </SectionCard>
     </section>
   )
@@ -247,6 +271,13 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const canonicalResultAvailability = resultQuery.data
+    ? 'Canonical Saved Revision result available'
+    : resultQuery.isLoading
+      ? 'Loading canonical saved result'
+      : isApiNotFound(resultQuery.error)
+        ? 'No canonical saved result yet'
+        : 'Canonical result unavailable'
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -290,7 +321,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
         items={[
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Event', value: eventId || 'unknown' },
-          { label: 'Result availability', value: resultAvailability(event) }
+          { label: 'Result availability', value: canonicalResultAvailability }
         ]}
       />
 
@@ -331,8 +362,17 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               <>
                 <SummaryPills
                   items={[
-                    { label: 'Status', value: plannedStatus ?? completionStatus(event, completedEventIds) },
-                    { label: 'Result availability', value: resultAvailability(event) },
+                    { label: 'Status', value: plannedStatus ?? canonicalCompletionStatus(event.event_id, resultQuery.data ? {
+                      event_id: resultQuery.data.event_id,
+                      completed_season_index: resultQuery.data.completed_season_index,
+                      completed_week: resultQuery.data.completed_week,
+                      champion_player_id: resultQuery.data.champion_player_id,
+                      finalist_player_id: resultQuery.data.finalist_player_id,
+                      qualification_winner_ids: resultQuery.data.qualification_winner_ids,
+                      player_count: resultQuery.data.players.length,
+                      match_count: resultQuery.data.matches.length
+                    } : undefined, completedEventIds) },
+                    { label: 'Result availability', value: canonicalResultAvailability },
                     { label: 'Ordered-calendar match', value: planned ? 'Available' : 'Not available' }
                   ]}
                 />

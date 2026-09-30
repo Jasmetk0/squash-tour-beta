@@ -20,9 +20,11 @@ A live canonical tournament close is intentionally invisible until the Ranking c
 is explicitly Saved. This preserves the same Viewer publication boundary used by
 canonical Official Ranking.
 
-## Public sporting projection
+## Public sporting projections
 
-`viewer_tournament_result.v1` exposes:
+`viewer_tournament_result.v1` exposes one completed event in detail:
+
+
 
 - Product Run, Viewer Branch and event identity;
 - completed season index and Season Week;
@@ -32,6 +34,17 @@ canonical Official Ranking.
   stage, elimination/match references, wins/losses, BYEs/W/Os and group/hybrid placement
   fields when those are part of canonical result history;
 - completed match identity, phase, round/position, winner/loser and scoreline.
+
+`viewer_completed_tournaments.v1` exposes the Saved-Revision history collection:
+
+- one deterministic summary per event with canonical result authority;
+- completed season index and Season Week;
+- champion/finalist and Qualification winner IDs;
+- player and completed-match counts;
+- deterministic ordering by completed season, completed week and event ID.
+
+The collection skips ranking tournament sources that do not yet own canonical Result
+authority and fails closed if duplicate event identities make public history ambiguous.
 
 ## Deliberately hidden
 
@@ -47,8 +60,13 @@ Viewer does not expose:
 
 ## Compatibility boundary
 
-Tournament Detail now uses this canonical projection for its primary result section.
-Legacy event/result payloads may still exist as collapsed technical compatibility data
-and the tournament-list summary may still use the legacy event record until a separate
-list/history detachment slice is completed. Their presence does not make them authority
-for the canonical detail result.
+Tournament Detail uses the canonical single-event projection for its primary result
+section. The tournament list uses the canonical completed-history collection for
+completion state, champion/finalist and result counts.
+
+Legacy event/result payloads may still exist as collapsed technical compatibility data.
+The list still uses legacy/ordered-calendar records only for schedule metadata such as
+sequence, template, category and tour because Viewer Saved Revision does not yet expose a
+public Calendar Package component. A canonical completed result is still listed even if
+the legacy event record is absent. Legacy result payloads are never authority for public
+sporting outcomes.

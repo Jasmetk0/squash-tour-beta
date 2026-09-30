@@ -241,7 +241,7 @@ export default function App(): JSX.Element {
         <Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}>
         <Route path="rankings" element={<ViewerOfficialRankingHistoryPage />} />
         <Route path="rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />
-        <Route path="race" element={<ViewerRunSnapshotListPage mode="race" />} />
+        <Route path="race" element={<ViewerRunSnapshotListPage />} />
         <Route path="race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />
         <Route path="tournaments" element={<ViewerRunTournamentsPage />} />
         <Route path="tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />

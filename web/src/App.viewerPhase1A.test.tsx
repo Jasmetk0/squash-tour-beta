@@ -670,7 +670,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     clearTestActiveRun()
     const emptyStateRoutes = [
       ['/viewer/rankings', 'No data is available for this run yet.'],
-      ['/viewer/rankings/race', 'No data is available for this run yet.'],
+      ['/viewer/rankings/race', 'Select a Product Run before opening Race to Finals.'],
       ['/viewer/tour', 'No data is available for this run yet.'],
       ['/viewer/tour/current-week', 'No data is available for this run yet.'],
       ['/viewer/tour/tournaments', 'No data is available for this run yet.'],
@@ -2123,7 +2123,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/runs/run-a/calendar')
 
     expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Season timeline' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Canonical season timeline' })).toBeInTheDocument()
     expect(await screen.findByRole('list', { name: 'Viewer season calendar events' })).toHaveTextContent('E1')
     expect(screen.queryByText('This section uses existing read-only run data only.')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
@@ -2133,7 +2133,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
     renderAppAt('/viewer/runs/run-a/tournaments')
 
     expect(await screen.findByText('Tournaments', { selector: 'h2' })).toBeInTheDocument()
-    expect(screen.getByText(/Read-only tournament schedule and results for the selected run/)).toBeInTheDocument()
+    expect(screen.getByText(/Canonical multi-season tournament schedule and saved results for the selected Viewer Branch/)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

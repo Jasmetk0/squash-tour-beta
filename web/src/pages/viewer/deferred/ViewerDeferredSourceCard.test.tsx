@@ -17,8 +17,8 @@ describe('ViewerDeferredSourceCard', () => {
         hasMetadataError={false}
         hasAnySourceMetadata={true}
         metadataItems={[
-          { label: 'Active run ID', value: 'run alpha' },
-          { label: 'Completed/persisted event count', value: 4 },
+          { label: 'Product Run', value: 'run alpha' },
+          { label: 'Saved Calendar events', value: 4 },
         ]}
         deferredCopy="No match odds are shown yet."
         sourceLinks={[{ label: 'Open run browser', to: '/viewer/runs' }]}
@@ -28,7 +28,7 @@ describe('ViewerDeferredSourceCard', () => {
     )
 
     const card = screen.getByRole('article', {
-      name: 'Match Odds active run metadata summary',
+      name: 'Match Odds canonical Product Run metadata summary',
     })
     expect(card).toBeInTheDocument()
     expect(card).toHaveClass('viewer-active-run-card')
@@ -36,7 +36,7 @@ describe('ViewerDeferredSourceCard', () => {
     expect(
       screen.getByRole('heading', { name: 'Match Odds sources' }),
     ).toBeInTheDocument()
-    const loadingMessage = screen.getByText('Loading active run metadata…')
+    const loadingMessage = screen.getByText('Loading canonical Saved-Revision metadata…')
     expect(loadingMessage).toBeInTheDocument()
     expect(loadingMessage).toHaveClass('status')
     expect(loadingMessage).toHaveClass('viewer-status-message')
@@ -45,7 +45,7 @@ describe('ViewerDeferredSourceCard', () => {
       screen.getByRole('heading', { name: 'Available source metadata' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('Completed/persisted event count'),
+      screen.getByText('Saved Calendar events'),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('heading', { name: 'Deferred output' }),
@@ -72,7 +72,7 @@ describe('ViewerDeferredSourceCard', () => {
         isLoadingMetadata={false}
         hasMetadataError={false}
         hasAnySourceMetadata={false}
-        metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+        metadataItems={[{ label: 'Product Run', value: 'run alpha' }]}
         deferredCopy="No match odds are shown yet."
         sourceLinks={[]}
         sourceLinksAriaLabel="Match Odds links"
@@ -81,7 +81,7 @@ describe('ViewerDeferredSourceCard', () => {
     )
 
     expect(
-      screen.getByText('No data is available for this run yet.'),
+      screen.getByText('No canonical source data is available for this Product Run yet.'),
     ).toBeInTheDocument()
   })
 
@@ -93,7 +93,7 @@ describe('ViewerDeferredSourceCard', () => {
         isLoadingMetadata={false}
         hasMetadataError={true}
         hasAnySourceMetadata={false}
-        metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+        metadataItems={[{ label: 'Product Run', value: 'run alpha' }]}
         deferredCopy="No match odds are shown yet."
         sourceLinks={[]}
         sourceLinksAriaLabel="Match Odds links"
@@ -102,7 +102,7 @@ describe('ViewerDeferredSourceCard', () => {
     )
 
     expect(
-      screen.getByText('Some active run metadata is temporarily unavailable.'),
+      screen.getByText('Some canonical Saved-Revision metadata is temporarily unavailable.'),
     ).toBeInTheDocument()
   })
 
@@ -114,7 +114,7 @@ describe('ViewerDeferredSourceCard', () => {
         isLoadingMetadata={true}
         hasMetadataError={false}
         hasAnySourceMetadata={false}
-        metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+        metadataItems={[{ label: 'Product Run', value: 'run alpha' }]}
         deferredCopy="No match odds are shown yet."
         sourceLinks={[]}
         sourceLinksAriaLabel="Match Odds links"
@@ -122,9 +122,9 @@ describe('ViewerDeferredSourceCard', () => {
       { includeViewerContext: false },
     )
 
-    expect(screen.getByText('Loading active run metadata…')).toBeInTheDocument()
+    expect(screen.getByText('Loading canonical Saved-Revision metadata…')).toBeInTheDocument()
     expect(
-      screen.queryByText('No data is available for this run yet.'),
+      screen.queryByText('No canonical source data is available for this Product Run yet.'),
     ).not.toBeInTheDocument()
   })
 
@@ -136,7 +136,7 @@ describe('ViewerDeferredSourceCard', () => {
         isLoadingMetadata={false}
         hasMetadataError={true}
         hasAnySourceMetadata={false}
-        metadataItems={[{ label: 'Active run ID', value: 'run alpha' }]}
+        metadataItems={[{ label: 'Product Run', value: 'run alpha' }]}
         deferredCopy="No match odds are shown yet."
         sourceLinks={[]}
         sourceLinksAriaLabel="Match Odds links"
@@ -145,10 +145,10 @@ describe('ViewerDeferredSourceCard', () => {
     )
 
     expect(
-      screen.getByText('Some active run metadata is temporarily unavailable.'),
+      screen.getByText('Some canonical Saved-Revision metadata is temporarily unavailable.'),
     ).toBeInTheDocument()
     expect(
-      screen.queryByText('No data is available for this run yet.'),
+      screen.queryByText('No canonical source data is available for this Product Run yet.'),
     ).not.toBeInTheDocument()
   })
 })

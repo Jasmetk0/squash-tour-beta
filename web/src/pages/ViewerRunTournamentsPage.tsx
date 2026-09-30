@@ -278,6 +278,18 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       : isApiNotFound(resultQuery.error)
         ? 'No canonical saved result yet'
         : 'Canonical result unavailable'
+  const canonicalResultSummary: ViewerCompletedTournamentSummary | undefined = resultQuery.data
+    ? {
+        event_id: resultQuery.data.event_id,
+        completed_season_index: resultQuery.data.completed_season_index,
+        completed_week: resultQuery.data.completed_week,
+        champion_player_id: resultQuery.data.champion_player_id,
+        finalist_player_id: resultQuery.data.finalist_player_id,
+        qualification_winner_ids: resultQuery.data.qualification_winner_ids,
+        player_count: resultQuery.data.players.length,
+        match_count: resultQuery.data.matches.length
+      }
+    : undefined
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -362,16 +374,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               <>
                 <SummaryPills
                   items={[
-                    { label: 'Status', value: plannedStatus ?? canonicalCompletionStatus(event.event_id, resultQuery.data ? {
-                      event_id: resultQuery.data.event_id,
-                      completed_season_index: resultQuery.data.completed_season_index,
-                      completed_week: resultQuery.data.completed_week,
-                      champion_player_id: resultQuery.data.champion_player_id,
-                      finalist_player_id: resultQuery.data.finalist_player_id,
-                      qualification_winner_ids: resultQuery.data.qualification_winner_ids,
-                      player_count: resultQuery.data.players.length,
-                      match_count: resultQuery.data.matches.length
-                    } : undefined, completedEventIds) },
+                    { label: 'Status', value: plannedStatus ?? canonicalCompletionStatus(event.event_id, canonicalResultSummary, completedEventIds) },
                     { label: 'Result availability', value: canonicalResultAvailability },
                     { label: 'Ordered-calendar match', value: planned ? 'Available' : 'Not available' }
                   ]}

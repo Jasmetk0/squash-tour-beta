@@ -7332,6 +7332,55 @@ export type ViewerRunCalendar = {
   seasons: ViewerCalendarSeason[]
 }
 
+export type ViewerPlayer = {
+  player_id: string
+  name: string
+  country_code: string
+  age: number
+  status: 'active' | 'retired'
+  tour_entry_season_index: number | null
+  tour_entry_week: number | null
+  current_ovr: number | null
+  potential_ovr: number | null
+  current_form: number | null
+  match_sharpness: number | null
+  long_term_fatigue: number | null
+  identity_source: 'initial_world' | 'run_prospect'
+}
+
+export type ViewerPlayers = {
+  schema_version: 'viewer_players.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  season_index: number
+  week: number
+  player_count: number
+  active_player_count: number
+  retired_player_count: number
+  players: ViewerPlayer[]
+}
+
+export type ViewerCountry = {
+  country_code: string
+  player_count: number
+  active_player_count: number
+  retired_player_count: number
+  average_current_ovr: number | null
+  top_player_id: string | null
+  top_player_name: string | null
+  top_player_current_ovr: number | null
+}
+
+export type ViewerCountries = {
+  schema_version: 'viewer_countries.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  season_index: number
+  week: number
+  country_count: number
+  countries: ViewerCountry[]
+}
+
 export type ViewerTournamentResultPlayer = {
   player_id: string
   draw_type: 'qualification' | 'main' | 'both' | 'hybrid' | 'group'

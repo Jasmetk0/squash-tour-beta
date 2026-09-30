@@ -669,6 +669,7 @@ class ViewerSavedRevisionSnapshot:
     context: ViewerOfficialRunContext
     revision: BranchSavedRevisionRecord
     ranking: object | None
+    run_package_state: object | None
     simulation_slot_component: dict[str, object] | None
     definitive_wild_cards: tuple[object, ...] | None
 
@@ -5218,6 +5219,11 @@ class SimulationPersistenceRepository:
                     run_id=product_run_id,
                     branch_id=component_branch_id,
                 )
+                run_package_state = load_saved_run_package_state(
+                    revision.payload,
+                    run_id=product_run_id,
+                    branch_id=component_branch_id,
+                )
                 simulation = load_saved_simulation_slot_component(
                     revision.payload,
                     run_id=product_run_id,
@@ -5288,6 +5294,7 @@ class SimulationPersistenceRepository:
                 context=context,
                 revision=revision,
                 ranking=ranking,
+                run_package_state=run_package_state,
                 simulation_slot_component=simulation,
                 definitive_wild_cards=wild_cards,
             )

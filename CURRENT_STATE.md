@@ -3022,3 +3022,25 @@ Viewer Tournament Detail now resolves the selected Viewer Branch's effective can
 ### Canonical Viewer definitive Wild Cards
 
 Viewer Tournament Detail now exposes only persisted definitive WC/RWC assignments from the selected Viewer Branch. Public output includes WC slot, player identity, original-vs-reserve source and RWC ordinal where applicable. Preliminary nominations, unfilled slots, Admin review metadata, fingerprints, chronology/provenance and first-Tour-entry trigger internals remain hidden. An event with no definitive WC assignment returns an empty canonical public collection rather than using legacy wildcard action logs. See `docs/VIEWER_TOURNAMENT_WILD_CARDS_V1.md`.
+
+
+### Canonical Viewer Tournament Result
+
+Viewer Tournament Detail now reads completed sporting outcomes from the selected Viewer
+Branch's immutable Saved Ranking component. The read model resolves exactly one
+`OwnedTournamentRankingSource` for the event and requires its canonical
+`TournamentResultAuthority`; it never promotes the legacy SimulationRun result package
+to canonical authority.
+
+- a live canonical tournament close remains invisible until Ranking Save publishes the
+  updated Saved Revision;
+- champion/finalist, Qualification winners, per-player stages/results and completed match
+  scorelines are projected as public sporting facts;
+- group/hybrid result metadata is preserved when present in canonical result authority;
+- fingerprints, command provenance, point/prize authorities and other Admin internals are
+  deliberately excluded;
+- Tournament Detail's primary result section now consumes this canonical projection;
+- legacy event/result payload may still remain in collapsed technical compatibility data
+  and in the tournament-list summary until a separate list/history detachment slice.
+
+See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.

@@ -1660,5 +1660,10 @@ The projection preserves frozen Race order/points and counted-result sporting ev
 published Finals participant selection, and follows the latest saved effective participant state
 after accepted replacements. Tie-break tokens, fingerprints and Admin replacement audit remain
 private. Legacy Race snapshot-sequence detail and remaining Home/History/deferred consumers are
-separate compatibility-detachment follow-ups; canonical Finals event/result presentation remains
-the next dedicated Finals Viewer slice.
+separate compatibility-detachment follow-ups.
+
+The World Tour Finals hub and qualification route now reuse this same Saved-Revision publication
+for the confirmed participant field. Public participation follows the latest saved effective field
+after accepted replacements and exposes only seed, player, Race rank/points and direct-entry-vs-Race
+qualification source. The dedicated Finals result page remains the next Finals Viewer migration and
+must bind to canonical Tournament Result authority rather than infer an outcome from Race/selection.

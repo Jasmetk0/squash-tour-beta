@@ -13,7 +13,7 @@ import {
 const api = vi.hoisted(() => ({
   getRunActivity: vi.fn(),
   getViewerFinalsRace: vi.fn(),
-  getFinalsResult: vi.fn()
+  getViewerTournamentResult: vi.fn()
 }))
 
 vi.mock('../api/client', async (importOriginal) => {
@@ -76,13 +76,71 @@ function mockApi(): void {
       ]
     }]
   })
-  api.getFinalsResult.mockResolvedValue({
-    run_id: 'viewer-run-2e',
-    season: 2031,
+  api.getViewerTournamentResult.mockResolvedValue({
+    schema_version: 'viewer_tournament_result.v1',
+    product_run_id: 'viewer-run-2e',
+    viewer_branch_id: 'branch-viewer',
     event_id: 'WTF-2031',
-    source_as_of_season: 2031,
-    source_as_of_week: 41,
-    result: { unknown_shape: true, technical_result_marker_should_be_collapsed: true }
+    completed_season_index: 31,
+    completed_week: 41,
+    champion_player_id: 'P3',
+    finalist_player_id: 'P1',
+    qualification_winner_ids: ['Q1'],
+    players: [
+      {
+        player_id: 'P3',
+        draw_type: 'main',
+        seed_number: 2,
+        qualifier: false,
+        main_entry_status: 'direct',
+        reached_stage: 'champion',
+        final_round_number: 3,
+        eliminated_by_player_id: null,
+        last_match_id: 'F',
+        wins: 3,
+        losses: 0,
+        byes_received: 0,
+        walkovers_received: 0,
+        retired_or_walkover_loss: false,
+        group_index: null,
+        group_position: null,
+        played_group_wins: null,
+        group_walkovers_received: null,
+        knockout_reached_stage: null
+      },
+      {
+        player_id: 'P1',
+        draw_type: 'main',
+        seed_number: 1,
+        qualifier: false,
+        main_entry_status: 'direct',
+        reached_stage: 'final',
+        final_round_number: 3,
+        eliminated_by_player_id: 'P3',
+        last_match_id: 'F',
+        wins: 2,
+        losses: 1,
+        byes_received: 0,
+        walkovers_received: 0,
+        retired_or_walkover_loss: false,
+        group_index: null,
+        group_position: null,
+        played_group_wins: null,
+        group_walkovers_received: null,
+        knockout_reached_stage: null
+      }
+    ],
+    matches: [
+      {
+        match_id: 'F',
+        draw_type: 'main',
+        round_number: 3,
+        bracket_position: 1,
+        winner_player_id: 'P3',
+        loser_player_id: 'P1',
+        scoreline: '11-8 11-9 11-7'
+      }
+    ]
   })
 }
 
@@ -285,18 +343,66 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expectNoDuplicateRunNav()
   })
 
-  it('renders Finals Result with safe metadata/deferred message and collapsed technical data', async () => {
+  it('renders Finals Result from canonical Tournament Result publication', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
 
     expect(await screen.findByRole('heading', { name: 'Finals Result' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2e').length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('Available')).length).toBeGreaterThan(0)
-    expect(screen.getByText('W41')).toBeInTheDocument()
-    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    const details = screen.getByText('Show technical finals result data').closest('details')
-    expect(details).not.toHaveAttribute('open')
-    expect(screen.queryByText(/technical_result_marker_should_be_collapsed/i)).not.toBeVisible()
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
+    expect(await screen.findByRole('list', { name: 'Canonical Finals match results' })).toHaveTextContent('11-8 11-9 11-7')
+    expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-2e', 'WTF-2031')
+
+    expect((await screen.findAllByText('W41')).length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'WTF-2031' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2e/tournaments/WTF-2031'
+    )
+    expect(screen.getAllByRole('link', { name: 'P3' }).length).toBeGreaterThan(0)
+    expect(screen.getAllByRole('link', { name: 'P1' }).length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Q1' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2e/players/Q1/career'
+    )
+    expect(screen.getByRole('list', { name: 'Canonical Finals player results' })).toBeInTheDocument()
+    expect(screen.getByRole('list', { name: 'Canonical Finals match results' })).toBeInTheDocument()
+    expect(screen.queryByText('Show technical finals result data')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expectNoDuplicateRunNav()
   })
+
+  it('keeps Finals Result unpublished until canonical Tournament Result exists', async () => {
+    api.getViewerTournamentResult.mockRejectedValueOnce({ status: 404 })
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+
+    expect(await screen.findByText('Canonical Finals Tournament Result is not published yet.')).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-2e', 'WTF-2031')
+    expect(screen.queryByRole('list', { name: 'Canonical Finals match results' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('does not query a Tournament Result before the canonical Finals event identity is published', async () => {
+    api.getViewerFinalsRace.mockResolvedValueOnce({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'viewer-run-2e',
+      viewer_branch_id: 'branch-viewer',
+      latest_target_season_index: 31,
+      publications: [{
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'viewer-run-2e',
+        viewer_branch_id: 'branch-viewer',
+        target_season_index: 31,
+        cutoff_season_index: 31,
+        cutoff_week: 40,
+        best_n: 2,
+        selection_published: false,
+        finals_event_id: null,
+        rows: []
+      }]
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-2e/finals/result')
+
+    expect(await screen.findByText('The canonical Finals event identity is not published yet.')).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+    expect(screen.getByText('Finals source links become available after the event identity is published.')).toBeInTheDocument()
+  })
+
 })

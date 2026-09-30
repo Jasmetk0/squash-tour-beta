@@ -3146,3 +3146,12 @@ SimulationRun Finals summary/qualification registry.
   Viewer authority migration.
 
 See `docs/VIEWER_FINALS_PARTICIPANTS_V1.md`.
+
+
+### Canonical Viewer Finals Result
+
+The dedicated World Tour Finals Result route now uses the canonical Saved-Revision publication chain end to end. Viewer first resolves the latest published Finals event identity from `viewer_finals_race_history.v1`, then reads that exact event through `viewer_tournament_result.v1`. Champion/finalist, Qualification winners, player rows, match rows and scorelines therefore come from the same Branch-owned Tournament Result authority used by Tournament Detail.
+
+The route no longer calls the legacy SimulationRun Finals result endpoint or renders its technical payload. If the Finals event identity is not published, the Tournament Result query is not issued. If the event exists but its canonical result has not reached the selected Saved Revision, Viewer reports the result as not published instead of falling back to legacy data. See `docs/VIEWER_FINALS_RESULT_V1.md`.
+
+Remaining Viewer compatibility work includes legacy Race snapshot-sequence detail plus Home/History/deferred consumers; this slice does not change Finals gameplay or qualification policy.

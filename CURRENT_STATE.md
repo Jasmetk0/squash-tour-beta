@@ -3189,3 +3189,14 @@ The cumulative Viewer/Admin implementation branch is intentionally proposed dire
 
 The parallel #1060–#1063 Viewer calendar/ranking compatibility stack remains separate because a direct branch merge has overlapping conflicts. Its unique work is retained on its existing branches and must be reconciled against `buuk` after #1066 lands; no parallel content is treated as superseded merely because the main stack is integrated first.
 
+### Reconciled Viewer ranking/snapshot compatibility
+
+The remaining parallel Viewer compatibility work is reconciled onto the current `buuk` line without reverting newer canonical Home/History/Finals surfaces:
+
+- Viewer Week now reads Official Ranking publications from canonical Saved-Revision ranking history and links them by `week_ordinal`;
+- legacy weekly Race publications remain on the explicit `snapshotSequence` compatibility surface;
+- the generic legacy snapshot module is reduced to Race-only;
+- canonical Ranking and legacy Race identities remain distinct and are not translated into one another.
+
+This reconciliation intentionally preserves the newer calendar/tournament/history implementations already integrated through #1066.
+

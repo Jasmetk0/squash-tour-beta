@@ -9,7 +9,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentHistory: vi.fn(),
   listEvents: vi.fn(),
-  listRankingSnapshots: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
   listRaceSnapshots: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
@@ -168,11 +168,15 @@ function mockCanonicalCalendarHistory(): void {
 }
 
 function mockSnapshots(): void {
-  api.listRankingSnapshots.mockResolvedValue({
-    run_id: 'viewer-run-2d',
-    snapshots: [
-      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'EVENT-NEXT', payload: { table: 'metadata-only' } },
-      { snapshot_sequence: 5, snapshot_kind: 'WEEK', source_event_id: 'EVENT-COMPLETE', payload: {} }
+  api.listViewerOfficialRankingHistory.mockResolvedValue({
+    schema_version: 'viewer_official_ranking_history.v1',
+    product_run_id: 'viewer-run-2d',
+    viewer_branch_id: 'branch-viewer',
+    public_head_ordinal: 4,
+    publication_count: 2,
+    publications: [
+      { season_index: 28, week: 2, week_ordinal: 4, snapshot_fingerprint: 'a'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 48 },
+      { season_index: 28, week: 1, week_ordinal: 5, snapshot_fingerprint: 'b'.repeat(64), policy_id: 'best-15', best_n: 15, row_count: 48 }
     ]
   })
   api.listRaceSnapshots.mockResolvedValue({
@@ -486,9 +490,13 @@ describe('ViewerRunWeekPage', () => {
   })
 
   it('shows deferred publication metadata message when snapshots cannot be safely matched', async () => {
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      snapshots: [{ snapshot_sequence: 8, snapshot_kind: 'WEEK', source_event_id: null, payload: {} }]
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      schema_version: 'viewer_official_ranking_history.v1',
+      product_run_id: 'viewer-run-2d',
+      viewer_branch_id: 'branch-viewer',
+      public_head_ordinal: 0,
+      publication_count: 0,
+      publications: []
     })
     api.listRaceSnapshots.mockResolvedValue({ run_id: 'viewer-run-2d', snapshots: [] })
 
@@ -514,7 +522,7 @@ describe('ViewerRunWeekPage', () => {
     expect(screen.getByText('Week must be a positive whole number in the URL (for example /weeks/12).')).toBeInTheDocument()
     expect(api.getRun).not.toHaveBeenCalled()
     expect(api.listEvents).not.toHaveBeenCalled()
-    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
     expect(api.listRaceSnapshots).not.toHaveBeenCalled()
     expect(screen.queryByText(/match result|final score|standings|winner/i)).not.toBeInTheDocument()
     expect(document.body).not.toHaveTextContent('[object Object]')

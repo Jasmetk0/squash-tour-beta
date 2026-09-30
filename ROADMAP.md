@@ -1688,3 +1688,8 @@ The remaining Race snapshot-sequence detail URL is intentionally not reinterpret
 Top-level Viewer Home now consumes canonical Saved-Revision public readers for Product Run context, Tournament History, Official Ranking History and Finals Race History. Legacy runtime/activity/snapshot summaries are removed from Home.
 
 Next Viewer compatibility work should integrate the canonical saved-calendar stack into Home/season surfaces where appropriate and resolve the remaining legacy Race snapshot-sequence detail route only with an explicit identity decision. Do not map `snapshotSequence` to `target_season_index` implicitly.
+
+### Remaining Viewer compatibility cleanup
+
+Viewer Week canonical Ranking publication integration and Race-only snapshot compatibility have been reconciled onto the current integration line. Ranking history uses `week_ordinal`; legacy Race detail remains `snapshotSequence` until an explicit product identity decision replaces that compatibility surface.
+

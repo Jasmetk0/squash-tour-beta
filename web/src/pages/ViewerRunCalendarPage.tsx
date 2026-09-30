@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getRun, getViewerTournamentHistory, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
+import { getRun, getViewerTournamentHistory, listEvents, listRaceSnapshots, listViewerOfficialRankingHistory } from '../api/client'
+import type { EventRecord, RaceSnapshot, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -76,7 +76,7 @@ function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
   return events.filter((event) => event && typeof event === 'object' && typeof event.event_id === 'string')
 }
 
-function safeSnapshotRecords<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[] | undefined): T[] {
+function safeRaceSnapshotRecords(snapshots: RaceSnapshot[] | undefined): RaceSnapshot[] {
   if (!Array.isArray(snapshots)) return []
   return snapshots.filter((snapshot) => snapshot && typeof snapshot === 'object' && typeof snapshot.snapshot_sequence === 'number')
 }
@@ -270,16 +270,16 @@ export function ViewerRunPlannedEventPage(): JSX.Element {
 
 export function ViewerRunWeekPage(): JSX.Element {
   const { week = '' } = useParams()
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId, legacySimulationRunId, currentSeason } = useViewerProductRunRouteContext()
   const parsedWeek = parseViewerWeekParam(week)
   const hasValidWeek = parsedWeek != null
   const queriesEnabled = Boolean(runId && hasValidWeek)
 
   const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: queriesEnabled, retry: false })
   const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: queriesEnabled, retry: false })
-  const rankingSnapshotsQuery = useQuery({
-    queryKey: ['viewer-week-ranking-snapshots', runId, legacySimulationRunId],
-    queryFn: () => listRankingSnapshots(legacySimulationRunId),
+  const rankingHistoryQuery = useQuery({
+    queryKey: ['viewer-official-ranking-history', runId],
+    queryFn: () => listViewerOfficialRankingHistory(runId),
     enabled: queriesEnabled,
     retry: false
   })
@@ -305,11 +305,14 @@ export function ViewerRunWeekPage(): JSX.Element {
     [eventRecords, parsedWeek, weekEventIds]
   )
   const rankingPublications = useMemo(
-    () => snapshotsForWeekSourceEvents(safeSnapshotRecords(rankingSnapshotsQuery.data?.snapshots), weekEventIds),
-    [rankingSnapshotsQuery.data?.snapshots, weekEventIds]
+    () => (rankingHistoryQuery.data?.publications ?? []).filter((publication) => {
+      if (publication.week !== parsedWeek) return false
+      return currentSeason == null || 2000 + publication.season_index === currentSeason
+    }),
+    [rankingHistoryQuery.data?.publications, currentSeason, parsedWeek]
   )
   const racePublications = useMemo(
-    () => snapshotsForWeekSourceEvents(safeSnapshotRecords(raceSnapshotsQuery.data?.snapshots), weekEventIds),
+    () => snapshotsForWeekSourceEvents(safeRaceSnapshotRecords(raceSnapshotsQuery.data?.snapshots), weekEventIds),
     [raceSnapshotsQuery.data?.snapshots, weekEventIds]
   )
   const completedWeekEvents = useMemo(() => completedPlannedEventsForWeek(weekEvents, completedEventIds), [completedEventIds, weekEvents])
@@ -319,7 +322,7 @@ export function ViewerRunWeekPage(): JSX.Element {
     ? buildWeekContextLinks({
         runId,
         week: parsedWeek,
-        rankingSnapshotSequences: rankingPublications.map((snapshot) => snapshot.snapshot_sequence),
+        rankingPublicationOrdinals: rankingPublications.map((publication) => publication.week_ordinal),
         raceSnapshotSequences: racePublications.map((snapshot) => snapshot.snapshot_sequence)
       })
     : []
@@ -439,9 +442,9 @@ export function ViewerRunWeekPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Publications this week">
-        {rankingSnapshotsQuery.error ? <p className="error">Failed to load ranking publications: {formatApiError(rankingSnapshotsQuery.error)}</p> : null}
+        {rankingHistoryQuery.error ? <p className="error">Failed to load ranking publications: {formatApiError(rankingHistoryQuery.error)}</p> : null}
         {raceSnapshotsQuery.error ? <p className="error">Failed to load race publications: {formatApiError(raceSnapshotsQuery.error)}</p> : null}
-        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && hasValidWeek ? (
+        {!rankingHistoryQuery.error && !raceSnapshotsQuery.error && hasValidWeek ? (
           <MetadataList
             items={[
               { label: 'Ranking publications count', value: rankingPublications.length },
@@ -449,12 +452,12 @@ export function ViewerRunWeekPage(): JSX.Element {
             ]}
           />
         ) : null}
-        {!rankingSnapshotsQuery.error && rankingPublications.length > 0 ? (
+        {!rankingHistoryQuery.error && rankingPublications.length > 0 ? (
           <ul className="item-list" aria-label="Week ranking publications">
-            {rankingPublications.map((snapshot) => (
-              <li key={`ranking-${snapshot.snapshot_sequence}`}>
-                <Link to={viewerRankingSnapshotPath(runId, snapshot.snapshot_sequence)}>Ranking publication #{snapshot.snapshot_sequence}</Link>{' '}
-                <span className="status">Source {safeText(snapshot.source_event_id)}</span>
+            {rankingPublications.map((publication) => (
+              <li key={`ranking-${publication.week_ordinal}`}>
+                <Link to={viewerRankingSnapshotPath(runId, publication.week_ordinal)}>Ranking publication #{publication.week_ordinal}</Link>{' '}
+                <span className="status">Season {2000 + publication.season_index} · W{publication.week}</span>
               </li>
             ))}
           </ul>
@@ -469,7 +472,7 @@ export function ViewerRunWeekPage(): JSX.Element {
             ))}
           </ul>
         ) : null}
-        {!rankingSnapshotsQuery.error && !raceSnapshotsQuery.error && !hasPublicationMatches && weekEvents.length > 0 ? (
+        {!rankingHistoryQuery.error && !raceSnapshotsQuery.error && !hasPublicationMatches && weekEvents.length > 0 ? (
           <p className="status">No ranking or race publications are source-matched to this week.</p>
         ) : null}
       </SectionCard>

@@ -5,13 +5,11 @@ import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRoute
 
 import {
   getRaceSnapshot,
-  getRankingSnapshot,
   getRun,
   listEvents,
-  listRaceSnapshots,
-  listRankingSnapshots
+  listRaceSnapshots
 } from '../api/client'
-import type { RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
+import type { RaceSnapshot, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -25,22 +23,16 @@ import {
 import { SelectableHistoryList } from '../components/SelectableHistoryList'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { RacePreviewTable } from '../viewer/RacePreviewTable'
-import { RankingPreviewTable } from '../viewer/RankingPreviewTable'
 import { parseRacePreviewPayload } from '../viewer/racePayload'
-import { parseRankingPreviewPayload } from '../viewer/rankingPayload'
 import { getSnapshotPayloadRows, getSnapshotPayloadTableAuditStatus } from './viewer/rankings/viewerSnapshotPayloadDisplay'
 import {
   viewerPlannedEventPath,
   viewerRacePath,
   viewerRaceSnapshotPath,
-  viewerRankingSnapshotPath,
-  viewerRankingsPath,
   viewerSeasonCalendarPath,
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
-
-type ViewerSnapshotMode = 'ranking' | 'race'
 
 type PlannedSnapshotContext = {
   week: number
@@ -55,50 +47,14 @@ type PersistedEventContext = {
   week: number | null
 }
 
-type SnapshotPageCopy = {
-  listTitle: string
-  detailTitle: string
-  publicationLabel: string
-  pluralPublicationLabel: string
-  listDescription: string
-  detailDescription: string
-  detailLinkLabel: string
-  listPathSegment: string
-}
-
-const SNAPSHOT_COPY: Record<ViewerSnapshotMode, SnapshotPageCopy> = {
-  ranking: {
-    listTitle: 'MSA Rankings',
-    detailTitle: 'MSA Rankings',
-    publicationLabel: 'Ranking publication',
-    pluralPublicationLabel: 'Ranking publications',
-    listDescription: 'Read-only weekly ranking publications for the selected run.',
-    detailDescription: 'Read-only ranking publication metadata for the selected run.',
-    detailLinkLabel: 'Open ranking detail',
-    listPathSegment: 'rankings'
-  },
-  race: {
-    listTitle: 'Race to Finals',
-    detailTitle: 'Race to Finals',
-    publicationLabel: 'Race publication',
-    pluralPublicationLabel: 'Race publications',
-    listDescription: 'Read-only Race publications for the selected run.',
-    detailDescription: 'Read-only Race publication metadata for the selected run.',
-    detailLinkLabel: 'Open race detail',
-    listPathSegment: 'race'
-  }
-}
-
-function getSnapshotCopy(mode: ViewerSnapshotMode): SnapshotPageCopy {
-  return SNAPSHOT_COPY[mode]
-}
-
-function listSnapshots(mode: ViewerSnapshotMode, runId: string): Promise<{ snapshots: Array<RankingSnapshot | RaceSnapshot> }> {
-  return mode === 'ranking' ? listRankingSnapshots(runId) : listRaceSnapshots(runId)
-}
-
-function getSnapshot(mode: ViewerSnapshotMode, runId: string, sequence: number): Promise<RankingSnapshot | RaceSnapshot> {
-  return mode === 'ranking' ? getRankingSnapshot(runId, sequence) : getRaceSnapshot(runId, sequence)
+const RACE_COPY = {
+  listTitle: 'Race to Finals',
+  detailTitle: 'Race to Finals',
+  publicationLabel: 'Race publication',
+  pluralPublicationLabel: 'Race publications',
+  listDescription: 'Read-only Race publications for the selected run.',
+  detailDescription: 'Read-only Race publication metadata for the selected run.',
+  detailLinkLabel: 'Open race detail'
 }
 
 function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<string, PlannedSnapshotContext> {
@@ -128,7 +84,7 @@ function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
-function isSnapshotListItem(value: unknown): value is RankingSnapshot | RaceSnapshot {
+function isSnapshotListItem(value: unknown): value is RaceSnapshot {
   if (!isPlainRecord(value)) return false
   const sequence = value.snapshot_sequence
   if (typeof sequence !== 'number' || !Number.isInteger(sequence) || sequence <= 0) return false
@@ -137,21 +93,21 @@ function isSnapshotListItem(value: unknown): value is RankingSnapshot | RaceSnap
   return true
 }
 
-function normalizeSnapshots(data: { snapshots?: unknown } | undefined): Array<RankingSnapshot | RaceSnapshot> {
+function normalizeSnapshots(data: { snapshots?: unknown } | undefined): RaceSnapshot[] {
   return Array.isArray(data?.snapshots) ? data.snapshots.filter(isSnapshotListItem) : []
 }
 
-function detailPath(mode: ViewerSnapshotMode, runId: string, sequence: number): string {
-  return mode === 'ranking' ? viewerRankingSnapshotPath(runId, sequence) : viewerRaceSnapshotPath(runId, sequence)
+function detailPath(runId: string, sequence: number): string {
+  return viewerRaceSnapshotPath(runId, sequence)
 }
 
-function listPath(mode: ViewerSnapshotMode, runId: string): string {
-  return mode === 'ranking' ? viewerRankingsPath(runId) : viewerRacePath(runId)
+function listPath(runId: string): string {
+  return viewerRacePath(runId)
 }
 
-export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
+export function ViewerRunSnapshotListPage(): JSX.Element {
   const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-  const copy = getSnapshotCopy(mode)
+  const copy = RACE_COPY
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedSequence, setSelectedSequence] = useState<number | null>(null)
   const [weekFilter, setWeekFilter] = useState('')
@@ -162,8 +118,8 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const hasRequestedSequence = Number.isInteger(requestedSequence) && requestedSequence > 0
 
   const snapshotsQuery = useQuery({
-    queryKey: [`viewer-${mode}-publications`, runId, legacySimulationRunId],
-    queryFn: () => listSnapshots(mode, legacySimulationRunId),
+    queryKey: ['viewer-race-publications', runId, legacySimulationRunId],
+    queryFn: () => listRaceSnapshots(legacySimulationRunId),
     enabled: Boolean(runId)
   })
   const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId) })
@@ -262,8 +218,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   const selectedPlanned = selectedSourceEventId ? plannedContext.get(selectedSourceEventId) : undefined
   const selectedPersisted = selectedSourceEventId ? persistedEventsById.get(selectedSourceEventId) : undefined
   const selectedWeek = resolveWeek(selectedPlanned, selectedPersisted)
-  const selectedRankingPreview = mode === 'ranking' && selected ? parseRankingPreviewPayload(selected.payload) : null
-  const selectedRacePreview = mode === 'race' && selected ? parseRacePreviewPayload(selected.payload) : null
+  const selectedRacePreview = selected ? parseRacePreviewPayload(selected.payload) : null
 
   return (
     <section className="panel">
@@ -290,12 +245,6 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
               { label: 'Planned template', value: selectedPlanned?.templateId ?? 'No ordered-plan match' }
             ]}
           />
-          {selectedRankingPreview?.rows.length ? (
-            <>
-              <h4>Top 10 Ranking Preview</h4>
-              <RankingPreviewTable rows={selectedRankingPreview.rows} ariaLabel="Latest selected Top 10 ranking preview table" runId={runId} />
-            </>
-          ) : null}
           {selectedRacePreview?.rows.length ? (
             <>
               <h4>Top 10 Race Preview</h4>
@@ -303,7 +252,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
             </>
           ) : null}
           <p>
-            <Link to={detailPath(mode, runId, selected.snapshot_sequence)}>{copy.detailLinkLabel}</Link>
+            <Link to={detailPath(runId, selected.snapshot_sequence)}>{copy.detailLinkLabel}</Link>
           </p>
         </SectionCard>
       ) : null}
@@ -398,7 +347,7 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
               const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
               const week = resolveWeek(planned, persisted)
               return (
-                <li key={`${mode}-${snapshot.snapshot_sequence}-publication-card`}>
+                <li key={`race-${snapshot.snapshot_sequence}-publication-card`}>
                   <article aria-label={`${copy.publicationLabel} ${snapshot.snapshot_sequence}`}>
                     <h4>
                       {copy.publicationLabel} #{snapshot.snapshot_sequence}
@@ -418,8 +367,8 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
                         {
                           label: 'Publication detail',
                           value: (
-                            <Link to={detailPath(mode, runId, snapshot.snapshot_sequence)}>
-                              Open {mode === 'ranking' ? 'ranking' : 'race'} publication detail
+                            <Link to={detailPath(runId, snapshot.snapshot_sequence)}>
+                              Open race publication detail
                             </Link>
                           )
                         },
@@ -454,22 +403,22 @@ export function ViewerRunSnapshotListPage({ mode }: { mode: ViewerSnapshotMode }
   )
 }
 
-export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode }): JSX.Element {
+export function ViewerRunSnapshotDetailPage(): JSX.Element {
   const { snapshotSequence = '' } = useParams()
   const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-  const copy = getSnapshotCopy(mode)
+  const copy = RACE_COPY
   const parsedSequence = Number(snapshotSequence)
   const isValidSequence = /^\d+$/.test(snapshotSequence) && Number.isSafeInteger(parsedSequence) && parsedSequence > 0
 
   const snapshotQuery = useQuery({
-    queryKey: [`viewer-${mode}-publication`, runId, parsedSequence],
-    queryFn: () => getSnapshot(mode, legacySimulationRunId, parsedSequence),
+    queryKey: ['viewer-race-publication', runId, parsedSequence],
+    queryFn: () => getRaceSnapshot(legacySimulationRunId, parsedSequence),
     enabled: Boolean(runId && isValidSequence),
     retry: false
   })
   const snapshotsQuery = useQuery({
-    queryKey: [`viewer-${mode}-publications`, runId, legacySimulationRunId],
-    queryFn: () => listSnapshots(mode, legacySimulationRunId),
+    queryKey: ['viewer-race-publications', runId, legacySimulationRunId],
+    queryFn: () => listRaceSnapshots(legacySimulationRunId),
     enabled: Boolean(runId && isValidSequence)
   })
   const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && isValidSequence) })
@@ -498,7 +447,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
   const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
   const week = resolveWeek(planned, persisted)
   const payloadRows = snapshot ? getSnapshotPayloadRows(snapshot.payload) : []
-  const payloadTableAudit = snapshot ? getSnapshotPayloadTableAuditStatus(mode, snapshot.payload) : null
+  const payloadTableAudit = snapshot ? getSnapshotPayloadTableAuditStatus('race', snapshot.payload) : null
 
   return (
     <section className="panel">
@@ -507,7 +456,7 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
         items={[
           { label: 'Active run', value: runId || 'unknown' },
           { label: 'Snapshot sequence', value: snapshotSequence || 'unknown' },
-          { label: 'Publication type', value: mode === 'ranking' ? 'MSA Rankings' : 'Race to Finals' },
+          { label: 'Publication type', value: 'Race to Finals' },
           { label: 'Status', value: snapshot ? 'Loaded' : 'Pending' }
         ]}
       />
@@ -517,16 +466,16 @@ export function ViewerRunSnapshotDetailPage({ mode }: { mode: ViewerSnapshotMode
           items={[
             {
               label: 'Previous publication',
-              value: previousSnapshot ? <Link to={detailPath(mode, runId, previousSnapshot.snapshot_sequence)}>#{previousSnapshot.snapshot_sequence}</Link> : 'None'
+              value: previousSnapshot ? <Link to={detailPath(runId, previousSnapshot.snapshot_sequence)}>#{previousSnapshot.snapshot_sequence}</Link> : 'None'
             },
             {
               label: 'Next publication',
-              value: nextSnapshot ? <Link to={detailPath(mode, runId, nextSnapshot.snapshot_sequence)}>#{nextSnapshot.snapshot_sequence}</Link> : 'None'
+              value: nextSnapshot ? <Link to={detailPath(runId, nextSnapshot.snapshot_sequence)}>#{nextSnapshot.snapshot_sequence}</Link> : 'None'
             }
           ]}
         />
         <p>
-          <Link to={listPath(mode, runId)}>Back to {copy.pluralPublicationLabel.toLowerCase()}</Link>
+          <Link to={listPath(runId)}>Back to {copy.pluralPublicationLabel.toLowerCase()}</Link>
         </p>
       </SectionCard>
 

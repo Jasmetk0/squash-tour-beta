@@ -1622,5 +1622,10 @@ Tournament Detail now continues the canonical selected-Viewer-Branch chain throu
 Entry Field → definitive WC/RWC → effective Draw → completed Tournament Result. Result
 publication is bounded by the immutable Saved Ranking component, so live Working Draft
 closes cannot leak into Viewer. The public projection is sporting-only and hides
-authority/provenance fingerprints and point/prize internals. Tournament-list/history
-detachment from legacy event records, Race and Finals remain separate follow-up slices.
+authority/provenance fingerprints and point/prize internals.
+
+Completed tournament history is now also projected from the same Saved Ranking tournament
+sources and drives completion/result metadata on the Viewer tournament list. Legacy event
+records remain only for schedule/template/category/tour compatibility because Saved
+Revision still lacks a public Calendar Package component. Full schedule detachment, Race
+and Finals remain separate follow-up slices.

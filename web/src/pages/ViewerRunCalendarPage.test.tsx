@@ -311,8 +311,8 @@ describe('ViewerRunPlannedEventPage', () => {
     expect(api.getRun).not.toHaveBeenCalled()
     expect(api.listEvents).not.toHaveBeenCalled()
 
+    expect((await screen.findAllByText('Gold Open')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVENT-NEXT').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Gold Open').length).toBeGreaterThan(0)
     expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W2').length).toBeGreaterThan(0)
     expect(screen.getAllByText('ELITE TOUR').length).toBeGreaterThan(0)

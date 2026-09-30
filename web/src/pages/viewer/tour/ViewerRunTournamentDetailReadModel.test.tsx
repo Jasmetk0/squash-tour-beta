@@ -60,17 +60,6 @@ describe('ViewerRunTournamentDetailPage read model', () => {
       template_id: 'WT-PLAT',
       tournament_result: { opaque_payload_marker: 'hidden until technical details open' }
     })
-    api.listRankingSnapshots.mockResolvedValue({
-      run_id: 'run alpha',
-      snapshots: [
-        { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: 'EVENT/1', payload: {} },
-        { snapshot_sequence: 11, snapshot_kind: 'ranking', source_event_id: 'OTHER', payload: {} }
-      ]
-    })
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'run alpha',
-      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT/1', payload: {} }]
-    })
     api.getViewerTournamentEntryField.mockResolvedValue({
       schema_version: 'viewer_tournament_entry_field.v1',
       product_run_id: 'run alpha',
@@ -119,106 +108,62 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('canonical result missing', 404))
   })
 
-  it('renders safe persisted tournament metadata and encoded source links', async () => {
+  it('renders safe persisted tournament metadata and generic publication navigation only', async () => {
     renderDetail()
 
-    expect(await screen.findByRole('heading', { name: 'Tournament Detail' })).toBeInTheDocument()
-    expect(api.getEvent).toHaveBeenCalledWith('run alpha', 'EVENT/1')
-    expect(api.getRun).toHaveBeenCalledWith('run alpha')
-    expect(api.listRankingSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(screen.getAllByText('run alpha').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EVENT/1').length).toBeGreaterThan(0)
-    expect(await screen.findByText('Sequence')).toBeInTheDocument()
-    expect(screen.getByText('W5')).toBeInTheDocument()
-    expect(screen.getByText('World Tour')).toBeInTheDocument()
+    expect(await screen.findByText('EVENT/1')).toBeInTheDocument()
     expect(screen.getByText('Platinum')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
 
-    const sourceLinks = screen.getByRole('heading', { name: 'Source context links' }).closest('article') ?? screen.getByText('Safe links').closest('dl')
+    const sourceLinks = screen.getByRole('heading', { name: 'Source context links' }).closest('article') as HTMLElement
     expect(sourceLinks).not.toBeNull()
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Run browser' })).toHaveAttribute('href', '/viewer/runs')
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Tournament list' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Run browser' })).toHaveAttribute('href', '/viewer/runs')
+    expect(within(sourceLinks).getByRole('link', { name: 'Tournament list' })).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/tournaments'
     )
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/calendar'
     )
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Planned calendar event' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Planned calendar event' })).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/calendar/EVENT%2F1'
     )
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Week W5' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Week W5' })).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/weeks/5'
     )
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Ranking publication #10' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Ranking snapshots' })).toHaveAttribute(
       'href',
-      '/viewer/runs/run%20alpha/rankings/10'
+      '/viewer/runs/run%20alpha/rankings'
     )
-    expect(within(sourceLinks as HTMLElement).getByRole('link', { name: 'Race publication #12' })).toHaveAttribute(
+    expect(within(sourceLinks).getByRole('link', { name: 'Race snapshots' })).toHaveAttribute(
       'href',
-      '/viewer/runs/run%20alpha/race/12'
+      '/viewer/runs/run%20alpha/race'
     )
-    expect(screen.getByText('Ranking publications from event')).toBeInTheDocument()
-    expect(screen.getByText('Race publications from event')).toBeInTheDocument()
-    expect(screen.queryByText(/winner/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/champion/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/^Draw size$/i)).not.toBeInTheDocument()
+    expect(screen.getByText(/does not infer event-specific Ranking or Race publications/i)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /publication #/i })).not.toBeInTheDocument()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
 
-  it('keeps tournament detail visible when ranking snapshot publications fail', async () => {
-    api.listRankingSnapshots.mockRejectedValue(new Error('ranking snapshot outage'))
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'run alpha',
-      snapshots: [{ snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT/1', payload: {} }]
-    })
+
+
+
+  it('never calls legacy Ranking or Race snapshot APIs from canonical Tournament Detail', async () => {
+    api.listRankingSnapshots.mockRejectedValue(new Error('must not be called'))
+    api.listRaceSnapshots.mockRejectedValue(new Error('must not be called'))
 
     renderDetail()
 
     expect(await screen.findByText('EVENT/1')).toBeInTheDocument()
-    expect(await screen.findByText('Failed to load ranking publications: ranking snapshot outage')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Source context links' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Race publication #12' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/run%20alpha/race/12'
-    )
-    expect(screen.queryByRole('link', { name: /Ranking publication #/ })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('keeps tournament detail visible when race snapshot publications fail', async () => {
-    api.listRaceSnapshots.mockRejectedValue(new Error('race snapshot outage'))
-
-    renderDetail()
-
-    expect(await screen.findByText('EVENT/1')).toBeInTheDocument()
-    expect(await screen.findByText('Failed to load race publications: race snapshot outage')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Source context links' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ranking publication #10' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/run%20alpha/rankings/10'
-    )
-    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('keeps persisted event metadata visible when both snapshot publication queries fail', async () => {
-    api.listRankingSnapshots.mockRejectedValue(new Error('ranking snapshot outage'))
-    api.listRaceSnapshots.mockRejectedValue(new Error('race snapshot outage'))
-
-    renderDetail()
-
-    expect(await screen.findByText('Sequence')).toBeInTheDocument()
-    expect(screen.getByText('W5')).toBeInTheDocument()
-    expect(await screen.findByText('Failed to load ranking publications: ranking snapshot outage')).toBeInTheDocument()
-    expect(await screen.findByText('Failed to load race publications: race snapshot outage')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Ranking publication #/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.queryByText(/snapshot outage/i)).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: /publication #/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

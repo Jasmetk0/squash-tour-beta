@@ -20,6 +20,10 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
 
+from beta_engine.application.ranking_bootstrap_command import RankingBootstrapCommand
+from beta_engine.domain.rankings.official import OfficialRankingPolicy
+from beta_engine.infrastructure.db.ranking_week_command import RankingWeekCommandRunner
+
 
 @pytest.mark.pr_critical
 def test_viewer_tournament_result_is_published_only_from_saved_ranking_component(
@@ -38,6 +42,20 @@ def test_viewer_tournament_result_is_published_only_from_saved_ranking_component
         repository = _repository(database_url)
         with repository._session_factory.begin() as session:
             OwnedTournamentRankingSourceStore(session).append(source)
+
+        # A live owned source by itself is not a Saved-Revision publication.
+        # Stage a real Ranking component change so the normal explicit Ranking Save
+        # can capture both the ranking entry and the owned tournament source.
+        RankingWeekCommandRunner(repository._session_factory).execute(
+            RankingBootstrapCommand(
+                command_id="viewer-result-ranking-bootstrap",
+                run_id=run_id,
+                branch_id=branch_id,
+                policy=OfficialRankingPolicy(policy_id="viewer-result-test-policy"),
+                players=(),
+                discipline="none",
+            )
+        )
 
         root = (
             f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"

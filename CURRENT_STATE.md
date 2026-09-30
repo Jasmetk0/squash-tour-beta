@@ -3085,3 +3085,20 @@ History projection instead of the legacy SimulationRun season plan/event registr
   combine legacy planned/persisted event records and legacy Ranking/Race snapshot links.
 
 See `docs/VIEWER_SEASON_CALENDAR_V1.md`.
+
+
+### Canonical Viewer Planned Event
+
+`/viewer/runs/:runId/calendar/:eventId` now resolves the requested event directly from
+canonical Saved-Revision Tournament History.
+
+- the route performs no legacy `getRun()` or `listEvents()` read;
+- season/week/Tour/category/template/host and bracket-capacity metadata come from saved
+  Calendar Package authority;
+- published-result status/champion/finalist come from the same Saved Ranking join;
+- legacy next-event index, current/upcoming status, persisted-event sequence and raw event
+  technical payloads are no longer presented as Planned Event authority;
+- missing event identity fails closed rather than searching a legacy event registry;
+- Week Detail remains the next schedule-view compatibility boundary.
+
+See `docs/VIEWER_PLANNED_EVENT_V1.md`.

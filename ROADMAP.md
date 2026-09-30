@@ -1681,3 +1681,10 @@ Remaining Viewer detachment should focus on the legacy Race snapshot-sequence de
 Run-scoped Viewer History now uses canonical Saved-Revision Tournament History, Official Ranking History and Finals Race History instead of legacy SimulationRun activity. Publication identities remain domain-native rather than being merged into an invented universal sequence.
 
 The remaining Race snapshot-sequence detail URL is intentionally not reinterpreted as `target_season_index`; either an explicit compatibility mapping or a route retirement/migration decision is required. Continue detaching top-level Home and other deferred Viewer consumers without inventing policy or identity.
+
+
+### Viewer canonical Home downstream integration
+
+Top-level Viewer Home now consumes canonical Saved-Revision public readers for Product Run context, Tournament History, Official Ranking History and Finals Race History. Legacy runtime/activity/snapshot summaries are removed from Home.
+
+Next Viewer compatibility work should integrate the canonical saved-calendar stack into Home/season surfaces where appropriate and resolve the remaining legacy Race snapshot-sequence detail route only with an explicit identity decision. Do not map `snapshotSequence` to `target_season_index` implicitly.

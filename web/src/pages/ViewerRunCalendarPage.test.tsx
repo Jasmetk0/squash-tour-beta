@@ -11,7 +11,14 @@ const api = vi.hoisted(() => ({
   getViewerTournamentHistory: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
-  listRaceSnapshots: vi.fn()
+  listRaceSnapshots: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
 }))
 
 vi.mock('../api/client', () => api)
@@ -258,7 +265,7 @@ describe('ViewerRunCalendarPage', () => {
 
   it('shows a canonical empty state when no saved Calendar Package exists', async () => {
     api.getViewerTournamentHistory.mockRejectedValueOnce(
-      Object.assign(new Error('missing calendar'), { status: 404 })
+      new api.ApiError('missing calendar', 404)
     )
 
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')

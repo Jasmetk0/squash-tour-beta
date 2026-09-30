@@ -9,3 +9,5 @@ export * from './ViewerStatsDeferredPage'
 export * from './ViewerTourDeferredPage'
 export * from './ViewerH2HSubroutePage'
 export * from './ViewerPredictionDeferredPage'
+
+export * from './useViewerDeferredSourceQueries'

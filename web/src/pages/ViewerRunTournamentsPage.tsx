@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerCompletedTournaments, getViewerRunCalendar, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getEvent, getRun, getViewerCompletedTournaments, getViewerRunCalendar, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards } from '../api/client'
 import type { EventRecord, SeasonStateResponse, ViewerCalendarEvent, ViewerCompletedTournamentSummary } from '../api/types'
 import {
   CompactSummaryCard,
@@ -23,10 +23,7 @@ import {
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
-import {
-  buildEventDetailLinks,
-  snapshotsForSourceEvent
-} from './viewer/tour/viewerEventDetailDisplay'
+import { buildEventDetailLinks } from './viewer/tour/viewerEventDetailDisplay'
 import { getPlannedEventStatus } from './plannedEventUtils'
 
 type PlannedEvent = SeasonStateResponse['season_state']['ordered_events'][number]
@@ -69,11 +66,6 @@ function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
 function safeCompletedEventIds(data: SeasonStateResponse | undefined): string[] {
   const completedEventIds = data?.season_state?.completed_event_ids
   return Array.isArray(completedEventIds) ? completedEventIds.filter((eventId) => typeof eventId === 'string') : []
-}
-
-function safeSnapshotRecords<T extends { snapshot_sequence: number }>(snapshots: T[] | undefined): T[] {
-  if (!Array.isArray(snapshots)) return []
-  return snapshots.filter((snapshot) => snapshot && typeof snapshot === 'object' && typeof snapshot.snapshot_sequence === 'number')
 }
 
 function eventWeek(event: EventRecord | null | undefined, planned: PlannedTournamentContext | undefined): number | null {
@@ -244,18 +236,6 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     retry: false
   })
   const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && eventId), retry: false })
-  const rankingSnapshotsQuery = useQuery({
-    queryKey: ['viewer-tournament-ranking-snapshots', runId, eventId],
-    queryFn: () => listRankingSnapshots(legacySimulationRunId),
-    enabled: Boolean(runId && eventId),
-    retry: false
-  })
-  const raceSnapshotsQuery = useQuery({
-    queryKey: ['viewer-tournament-race-snapshots', runId, eventId],
-    queryFn: () => listRaceSnapshots(legacySimulationRunId),
-    enabled: Boolean(runId && eventId),
-    retry: false
-  })
   const entryFieldQuery = useQuery({
     queryKey: ['viewer-tournament-entry-field', runId, eventId],
     queryFn: () => getViewerTournamentEntryField(runId, eventId),
@@ -319,16 +299,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const week = eventWeek(event, planned)
   const season = eventSeason(event, planned)
   const templateId = planned?.template_id ?? event?.template_id ?? null
-  const rankingPublications = snapshotsForSourceEvent(safeSnapshotRecords(rankingSnapshotsQuery.data?.snapshots), eventId)
-  const racePublications = snapshotsForSourceEvent(safeSnapshotRecords(raceSnapshotsQuery.data?.snapshots), eventId)
   const sourceLinks = buildEventDetailLinks({
     runId,
     eventId,
     week,
     hasPlanned: Boolean(planned),
-    hasPersisted: Boolean(event),
-    rankingSnapshotSequences: rankingPublications.map((snapshot) => snapshot.snapshot_sequence),
-    raceSnapshotSequences: racePublications.map((snapshot) => snapshot.snapshot_sequence)
+    hasPersisted: Boolean(event)
   })
 
   return (
@@ -522,12 +498,11 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {event ? (
             <SectionCard title="Source context links">
-              {rankingSnapshotsQuery.error ? <p className="error">Failed to load ranking publications: {formatApiError(rankingSnapshotsQuery.error)}</p> : null}
-              {raceSnapshotsQuery.error ? <p className="error">Failed to load race publications: {formatApiError(raceSnapshotsQuery.error)}</p> : null}
+              <p className="status">
+                Canonical Tournament Detail does not infer event-specific Ranking or Race publications from legacy snapshot source-event metadata.
+              </p>
               <MetadataList
                 items={[
-                  { label: 'Ranking publications from event', value: rankingPublications.length },
-                  { label: 'Race publications from event', value: racePublications.length },
                   {
                     label: 'Safe links',
                     value: (

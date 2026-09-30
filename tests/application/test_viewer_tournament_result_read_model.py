@@ -57,7 +57,6 @@ def _source(
                 last_match_id="final",
                 wins=2,
                 losses=0,
-                byes_received=1,
             ),
             TournamentPlayerResultAuthority(
                 player_id="B",
@@ -77,10 +76,29 @@ def _source(
                 reached_stage="semifinal",
                 final_round_number=1,
                 eliminated_by_player_id="A",
-                last_match_id="semi",
+                last_match_id="semi-a",
                 wins=1,
                 losses=1,
-                walkovers_received=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="C",
+                draw_type="main",
+                reached_stage="semifinal",
+                final_round_number=1,
+                eliminated_by_player_id="B",
+                last_match_id="semi-b",
+                wins=0,
+                losses=1,
+            ),
+            TournamentPlayerResultAuthority(
+                player_id="D",
+                draw_type="qualification",
+                reached_stage="qualification_final",
+                final_round_number=1,
+                eliminated_by_player_id="Q",
+                last_match_id="q-final",
+                wins=0,
+                losses=1,
             ),
         ),
         matches=(
@@ -90,12 +108,12 @@ def _source(
                 round_number=1,
                 bracket_position=1,
                 winner_player_id="Q",
-                loser_player_id="B",
+                loser_player_id="D",
                 scoreline="3-1",
                 result_fingerprint="1" * 64,
             ),
             TournamentMatchResultAuthority(
-                match_id="semi",
+                match_id="semi-a",
                 draw_type="main",
                 round_number=1,
                 bracket_position=1,
@@ -105,6 +123,16 @@ def _source(
                 result_fingerprint="2" * 64,
             ),
             TournamentMatchResultAuthority(
+                match_id="semi-b",
+                draw_type="main",
+                round_number=1,
+                bracket_position=2,
+                winner_player_id="B",
+                loser_player_id="C",
+                scoreline="3-1",
+                result_fingerprint="3" * 64,
+            ),
+            TournamentMatchResultAuthority(
                 match_id="final",
                 draw_type="main",
                 round_number=2,
@@ -112,7 +140,7 @@ def _source(
                 winner_player_id="A",
                 loser_player_id="B",
                 scoreline="3-2",
-                result_fingerprint="3" * 64,
+                result_fingerprint="4" * 64,
             ),
         ),
     )
@@ -125,6 +153,7 @@ def _source(
                 "finalist": 650,
                 "semifinal": 400,
                 "qualification_winner": 150,
+                "qualification_final": 100,
             },
             point_distribution_source="test",
         ),
@@ -175,13 +204,14 @@ def test_viewer_result_projects_only_public_sporting_facts() -> None:
     assert result.champion_player_id == "A"
     assert result.finalist_player_id == "B"
     assert result.qualification_winner_ids == ("Q",)
-    assert [player.player_id for player in result.players] == ["A", "B", "Q"]
+    assert [player.player_id for player in result.players] == ["A", "B", "Q", "C", "D"]
     assert result.players[0].main_entry_status == "direct"
     assert result.players[2].qualifier
-    assert result.players[2].walkovers_received == 1
+    assert result.players[2].walkovers_received == 0
     assert [match.match_id for match in result.matches] == [
         "q-final",
-        "semi",
+        "semi-a",
+        "semi-b",
         "final",
     ]
     assert result.matches[-1].scoreline == "3-2"

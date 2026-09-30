@@ -1630,5 +1630,7 @@ sources and drives completion/result metadata on the Viewer tournament list.
 Viewer Saved Revision now exposes immutable Run Package state and `viewer_run_calendar.v1`
 projects the applied Calendar packages without consulting the live source library or legacy
 SimulationRun schedule/event registry. Tournament list, Season Calendar, Planned Event and
-Week schedule metadata consume this Saved Calendar projection. Week Ranking/Race
-publication lists, Race and Finals remain separate follow-up migrations.
+Week schedule metadata consume this Saved Calendar projection. Viewer Week Ranking
+publications now consume canonical Saved Official Ranking history by season/week and
+`week_ordinal`; Week Race publication linkage remains the compatibility-backed follow-up
+owned by the separate canonical Race/Finals migration.

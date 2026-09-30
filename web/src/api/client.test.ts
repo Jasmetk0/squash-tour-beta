@@ -22,6 +22,7 @@ import {
   getRunContainer,
   getRunPackageState,
   getViewerOfficialRunContext,
+  getViewerTournamentHistory,
   listRunBranches,
   getRunBranch,
   createRunBranchFromSavedRevision,
@@ -71,6 +72,33 @@ import type {
   SeasonBuilderFutureApplyRequestValidationPreviewResponse
 } from './types'
 
+
+describe('Viewer tournament history client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical tournament history from the encoded Product Run route', async () => {
+    const body = {
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'run/a',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      published_result_count: 0,
+      tournaments: []
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerTournamentHistory('run/a')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa/tournaments',
+      expect.anything()
+    )
+  })
+})
 
 describe('run Package state client', () => {
   afterEach(() => vi.restoreAllMocks())

@@ -1713,3 +1713,7 @@ Top-level Tour Calendar now consumes `viewer_run_calendar.v1` directly and no lo
 
 Shared deferred Viewer pages are now Product Run-scoped and Saved-Revision-backed. Remaining legacy Viewer cleanup is outside this shared block, notably H2H-specific legacy source metadata and the explicit legacy Race snapshot compatibility path.
 
+### H2H Viewer cleanup
+
+H2H sporting metadata is now canonical and Product Run-scoped. The remaining H2H legacy dependency is the player registry; replace `listRunPlayers` only when a canonical Product Run player projection is defined. H2H analytics themselves remain deferred until authoritative match history exists.
+

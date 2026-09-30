@@ -1,54 +1,54 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { listRunNations } from '../../../api/client'
+import { getViewerCountries } from '../../../api/client'
 import { ViewerEmptyState, ViewerSampleList } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { viewerCountriesPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata } from './viewerPeopleRender'
 
 export function ViewerCountriesPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const nationsQuery = useQuery({
-    queryKey: ['viewer-countries-hub-run-nations', activeRunId],
-    queryFn: () => listRunNations(activeRunId ?? '', { limit: 5, offset: 0 }),
-    enabled: Boolean(activeRunId),
+  const productRunId = useActiveViewerProductRunId()
+  const countriesQuery = useQuery({
+    queryKey: ['viewer-countries-hub-canonical', productRunId],
+    queryFn: () => getViewerCountries(productRunId ?? ''),
+    enabled: Boolean(productRunId),
     retry: false
   })
 
-  if (!activeRunId) {
+  if (!productRunId) {
     return (
-      <ViewerShellPage title="Countries" description="Read-only country profiles and national summaries in the selected Viewer context.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+      <ViewerShellPage title="Countries" description="Read-only canonical country summaries in the selected Viewer Product Run.">
+        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
 
-  const nations = nationsQuery.data?.nations ?? []
+  const countries = countriesQuery.data?.countries.slice(0, 5) ?? []
 
   return (
-    <ViewerShellPage title="Countries" description="Read-only country profiles using existing active-run country data.">
-      <article className="viewer-active-run-card" aria-label="Countries active run summary">
-        <span className="eyebrow">Active Viewer run</span>
+    <ViewerShellPage title="Countries" description="Read-only Saved-Revision country summaries for the selected Product Run.">
+      <article className="viewer-active-run-card" aria-label="Countries canonical Product Run summary">
+        <span className="eyebrow">Selected Product Run</span>
         <h3>Countries summary</h3>
-        {nationsQuery.isLoading ? <p className="status">Loading active run country metadata…</p> : null}
-        {nationsQuery.isError ? <ViewerEmptyState>Country metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
+        {countriesQuery.isLoading ? <p className="status">Loading canonical country metadata…</p> : null}
+        {countriesQuery.isError ? <ViewerEmptyState>Canonical country metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Total country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nationsQuery.data?.total ?? '—'}</dd></div>
-          <div><dt>Returned country count</dt><dd>{nationsQuery.isLoading ? 'Loading…' : nations.length}</dd></div>
+          <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
+          <div><dt>Viewer Branch</dt><dd>{countriesQuery.data?.viewer_branch_id ?? '—'}</dd></div>
+          <div><dt>Total country count</dt><dd>{countriesQuery.isLoading ? 'Loading…' : countriesQuery.data?.country_count ?? '—'}</dd></div>
         </dl>
-        {!nationsQuery.isLoading && !nationsQuery.isError && nations.length === 0 ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        {!countriesQuery.isLoading && !countriesQuery.isError && countries.length === 0 ? <ViewerEmptyState>No canonical countries are available for this Product Run yet.</ViewerEmptyState> : null}
         <ViewerSampleList
           title="Sample countries"
-          label="Sample active run countries"
-          items={nations}
-          getKey={(nation) => nation.country_code}
-          renderItem={(nation) => renderCountrySampleMetadata(nation, activeRunId)}
+          label="Sample canonical countries"
+          items={countries}
+          getKey={(country) => country.country_code}
+          renderItem={(country) => renderCountrySampleMetadata(country, productRunId)}
         />
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerCountriesPath(activeRunId)}>Open active run countries</Link>
+          <Link className="viewer-active-run-link" to={viewerCountriesPath(productRunId)}>Open Product Run countries</Link>
         </p>
       </article>
     </ViewerShellPage>

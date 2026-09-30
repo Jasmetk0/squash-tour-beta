@@ -121,15 +121,6 @@ describe('ViewerRunWeekPage canonical publication read model', () => {
         }
       ]
     })
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'legacy-run-alpha',
-      snapshots: [{
-        snapshot_sequence: 9,
-        snapshot_kind: 'race',
-        source_event_id: 'EVENT/1',
-        payload: {}
-      }]
-    })
   })
 
   it('joins Saved Calendar, canonical Result and canonical Ranking publication for the week', async () => {
@@ -147,18 +138,13 @@ describe('ViewerRunWeekPage canonical publication read model', () => {
     expect(within(rankingList).getByText('Official · 64 ranked players · official-weekly')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Ranking publication #1711' })).not.toBeInTheDocument()
 
-    const raceList = screen.getByRole('list', { name: 'Week race publications' })
-    expect(within(raceList).getByRole('link', { name: 'Race publication #9' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/run%20alpha/race/9'
-    )
-
     const completed = screen.getByRole('list', { name: 'Viewer week canonical completed tournaments' })
     expect(within(completed).getByText('PLAYER-CHAMP')).toBeInTheDocument()
     expect(within(completed).getByText('PLAYER-FINAL')).toBeInTheDocument()
 
     expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('run alpha')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('legacy-run-alpha')
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -179,50 +165,50 @@ describe('ViewerRunWeekPage canonical publication read model', () => {
         row_count: 64
       }]
     })
-    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'legacy-run-alpha', snapshots: [] })
-
     renderWeek()
 
     expect(
       await screen.findByText(
-        'No canonical ranking or source-matched Race publication is available for this week.'
+        'No canonical Official Ranking publication is available for this week.'
       )
     ).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Ranking publication #1713' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('keeps Race publication visible when canonical Ranking history fails', async () => {
+  it('keeps canonical Week visible when canonical Ranking history fails without consulting legacy Race', async () => {
     api.listViewerOfficialRankingHistory.mockRejectedValueOnce(new Error('canonical ranking outage'))
+    api.listRaceSnapshots.mockRejectedValueOnce(new Error('must not be called'))
 
     renderWeek()
 
-    expect(
-      await screen.findByText(/Failed to load canonical ranking publications:/)
-    ).toBeInTheDocument()
-    expect(
-      screen.getAllByRole('link', { name: 'Race publication #9' })[0]
-    ).toHaveAttribute(
+    expect(await screen.findByText(/Failed to load canonical ranking publications:/)).toBeInTheDocument()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.queryByRole('link', { name: /Race publication #/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Race snapshots' })).toHaveAttribute(
       'href',
-      '/viewer/runs/run%20alpha/race/9'
+      '/viewer/runs/run%20alpha/race'
     )
     expectNoForbiddenViewerActions()
   })
 
-  it('keeps canonical Ranking publication visible when legacy Race history fails', async () => {
-    api.listRaceSnapshots.mockRejectedValueOnce(new Error('race outage'))
+
+  it('keeps canonical Ranking publication independent of legacy Race compatibility outages', async () => {
+    api.listRaceSnapshots.mockRejectedValueOnce(new Error('must not be called'))
 
     renderWeek()
 
-    expect(await screen.findByText(/Failed to load race publications:/)).toBeInTheDocument()
     expect(
-      screen.getAllByRole('link', { name: 'Ranking publication #1712' })[0]
+      (await screen.findAllByRole('link', { name: 'Ranking publication #1712' }))[0]
     ).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/rankings/1712'
     )
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.queryByText(/race outage|Failed to load race publications/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
 
   it('keeps invalid week params local without calling publication APIs', async () => {
     renderWeek('/viewer/runs/run%20alpha/week-missing')

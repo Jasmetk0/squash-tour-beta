@@ -2124,7 +2124,7 @@ describe('Viewer Phase 1B/1C/1D routes and safety', () => {
 
     expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Canonical season timeline' })).toBeInTheDocument()
-    expect(await screen.findByRole('list', { name: 'Canonical season calendar events' })).toHaveTextContent('E1')
+    expect(await screen.findByRole('list', { name: 'Viewer canonical season calendar events' })).toHaveTextContent('E1')
     expect(screen.queryByText('This section uses existing read-only run data only.')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Jump to W24' })).not.toBeInTheDocument()
   })

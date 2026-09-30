@@ -3067,3 +3067,21 @@ saved Calendar Packages into one deterministic multi-season tournament history.
   reads and remain future detachment work.
 
 See `docs/VIEWER_TOURNAMENT_HISTORY_V1.md`.
+
+
+### Canonical Viewer Season Calendar
+
+The top-level Viewer Season Calendar now reuses the canonical Saved-Revision Tournament
+History projection instead of the legacy SimulationRun season plan/event registry.
+
+- `/viewer/runs/:runId/calendar` performs no `getRun()` or `listEvents()` read;
+- all saved Calendar Packages are shown as one deterministic multi-season timeline;
+- schedule identity/name/week/Tour/category/host data comes from saved Run Package authority;
+- result-publication/champion data comes from the same saved canonical result join used by
+  Tournament History;
+- live Working Draft Package changes remain invisible until Save;
+- the page does not recreate legacy `next_event_index` current/upcoming semantics;
+- Planned Event and Week Detail remain separate compatibility migrations because they still
+  combine legacy planned/persisted event records and legacy Ranking/Race snapshot links.
+
+See `docs/VIEWER_SEASON_CALENDAR_V1.md`.

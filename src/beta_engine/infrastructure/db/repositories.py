@@ -53,6 +53,7 @@ from beta_engine.domain.run_branches import (
     first_available_timeline_name,
     normalize_branch_display_name,
 )
+from beta_engine.domain.run_packages import RunPackageState
 
 from beta_engine.world_packages import OFFICIAL_FAX_WORLD_ID
 from beta_engine.infrastructure.db.models import (
@@ -671,6 +672,7 @@ class ViewerSavedRevisionSnapshot:
     ranking: object | None
     simulation_slot_component: dict[str, object] | None
     definitive_wild_cards: tuple[object, ...] | None
+    run_package_state: RunPackageState | None = None
 
 
 class BranchExecutionTargetResolutionError(ValueError):
@@ -5228,6 +5230,11 @@ class SimulationPersistenceRepository:
                     run_id=product_run_id,
                     branch_id=component_branch_id,
                 )
+                run_packages = load_saved_run_package_state(
+                    revision.payload,
+                    run_id=product_run_id,
+                    branch_id=component_branch_id,
+                )
             except (BranchRevisionStateConflictError, TypeError, ValueError) as exc:
                 raise ViewerOfficialRunContextConflictError(str(exc)) from exc
 
@@ -5290,6 +5297,7 @@ class SimulationPersistenceRepository:
                 ranking=ranking,
                 simulation_slot_component=simulation,
                 definitive_wild_cards=wild_cards,
+                run_package_state=run_packages,
             )
 
     def get_branch_execution_target(self, *, branch_id: str) -> BranchExecutionTarget:

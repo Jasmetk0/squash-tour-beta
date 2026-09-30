@@ -42,6 +42,27 @@ class ViewerTournamentResultMatch(BaseModel):
     scoreline: str = Field(min_length=1)
 
 
+class ViewerCompletedTournamentSummary(BaseModel):
+    event_id: str = Field(min_length=1)
+    completed_season_index: int = Field(ge=0)
+    completed_week: int = Field(ge=1, le=61)
+    champion_player_id: str = Field(min_length=1)
+    finalist_player_id: str = Field(min_length=1)
+    qualification_winner_ids: tuple[str, ...]
+    player_count: int = Field(ge=0)
+    match_count: int = Field(ge=0)
+
+
+class ViewerCompletedTournamentCollection(BaseModel):
+    schema_version: Literal["viewer_completed_tournaments.v1"] = (
+        "viewer_completed_tournaments.v1"
+    )
+    product_run_id: str
+    viewer_branch_id: str
+    tournament_count: int = Field(ge=0)
+    tournaments: tuple[ViewerCompletedTournamentSummary, ...]
+
+
 class ViewerTournamentResult(BaseModel):
     schema_version: Literal["viewer_tournament_result.v1"] = "viewer_tournament_result.v1"
     product_run_id: str
@@ -115,6 +136,74 @@ def _project_result(
             )
             for match in result.matches
         ),
+    )
+
+
+def resolve_viewer_completed_tournaments(
+    ranking: RankingRevisionState | None,
+    *,
+    run_id: str,
+    branch_id: str,
+) -> ViewerCompletedTournamentCollection:
+    if ranking is None:
+        raise KeyError("Viewer Saved Revision has no Ranking component")
+    if (ranking.run_id, ranking.branch_id) != (run_id, branch_id):
+        raise ValueError("Viewer Ranking component scope differs from selected Branch")
+
+    seen_event_ids: set[str] = set()
+    summaries: list[ViewerCompletedTournamentSummary] = []
+    for source in ranking.tournament_sources:
+        event_id = source.binding.event_id
+        if event_id in seen_event_ids:
+            raise ValueError("Viewer completed tournament source identity is ambiguous")
+        seen_event_ids.add(event_id)
+        if source.canonical_result is None:
+            continue
+        if (
+            source.binding.run_id,
+            source.binding.branch_id,
+            source.binding.event_id,
+        ) != (run_id, branch_id, event_id):
+            raise ValueError(
+                "Owned completed tournament source scope differs from Viewer Branch"
+            )
+        result = source.canonical_result
+        if (
+            result.run_id,
+            result.branch_id,
+            result.event_id,
+        ) != (run_id, branch_id, event_id):
+            raise ValueError(
+                "Canonical completed Tournament Result scope differs from Viewer Branch"
+            )
+        summaries.append(
+            ViewerCompletedTournamentSummary(
+                event_id=event_id,
+                completed_season_index=result.completed_week.season_index,
+                completed_week=result.completed_week.week,
+                champion_player_id=result.champion_player_id,
+                finalist_player_id=result.finalist_player_id,
+                qualification_winner_ids=result.qualification_winner_ids,
+                player_count=len(result.players),
+                match_count=len(result.matches),
+            )
+        )
+
+    ordered = tuple(
+        sorted(
+            summaries,
+            key=lambda item: (
+                item.completed_season_index,
+                item.completed_week,
+                item.event_id,
+            ),
+        )
+    )
+    return ViewerCompletedTournamentCollection(
+        product_run_id=run_id,
+        viewer_branch_id=branch_id,
+        tournament_count=len(ordered),
+        tournaments=ordered,
     )
 
 

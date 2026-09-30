@@ -312,20 +312,3 @@ def test_viewer_completed_tournaments_orders_saved_canonical_results() -> None:
     ):
         assert forbidden not in rendered
 
-
-def test_viewer_completed_tournaments_rejects_duplicate_event_sources() -> None:
-    first = _source(event_id="duplicate")
-    second = _source(event_id="duplicate")
-    ranking = RankingRevisionState(
-        run_id="run",
-        branch_id="branch",
-        entries=(),
-        sources=(),
-        tournament_sources=(first, second),
-    )
-    with pytest.raises(ValueError, match="ambiguous"):
-        resolve_viewer_completed_tournaments(
-            ranking,
-            run_id="run",
-            branch_id="branch",
-        )

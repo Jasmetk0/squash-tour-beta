@@ -11,17 +11,26 @@ describe('ViewerHomePage source guard', () => {
     expect(strippedViewerHomeSource).toContain('normalizeViewerHomeActiveRunId(activeRunId)')
   })
 
-  it('does not pass raw activeRunId into active-run API calls', () => {
-    for (const forbiddenRawActiveRunUse of [
-      'getRun(activeRunId',
-      'getRunStatusSummary(activeRunId',
-      'listEvents(activeRunId',
-      'listRankingSnapshots(activeRunId',
-      'listRaceSnapshots(activeRunId',
-      'getRunActivity(activeRunId',
-      'getFinalsSummary(activeRunId'
+  it('uses only canonical Viewer Home readers for active-run summaries', () => {
+    for (const canonicalReader of [
+      'getViewerOfficialRunContext',
+      'getViewerTournamentHistory',
+      'listViewerOfficialRankingHistory',
+      'getViewerFinalsRace'
     ]) {
-      expect(strippedViewerHomeSource).not.toContain(forbiddenRawActiveRunUse)
+      expect(strippedViewerHomeSource).toContain(canonicalReader)
+    }
+
+    for (const legacyReader of [
+      'getRun(',
+      'getRunStatusSummary(',
+      'listEvents(',
+      'listRankingSnapshots(',
+      'listRaceSnapshots(',
+      'getRunActivity(',
+      'getFinalsSummary('
+    ]) {
+      expect(strippedViewerHomeSource).not.toContain(legacyReader)
     }
   })
 
@@ -32,21 +41,17 @@ describe('ViewerHomePage source guard', () => {
       'viewerTournamentsPath(activeRunId',
       'viewerSeasonCalendarPath(activeRunId',
       'viewerHistoryPath(activeRunId',
-      'viewerRankingSnapshotPath(activeRunId',
-      'viewerRaceSnapshotPath(activeRunId',
-      'viewerTournamentDetailPath(activeRunId',
-      'viewerWeekDetailPath(activeRunId',
-      'viewerPlannedEventPath(activeRunId',
-      'renderLinkedEventId(activeRunId',
-      'renderLinkedWeek(activeRunId',
-      'renderActivityItem(latestActivityItem, activeRunId'
+      'viewerTournamentDetailPath(activeRunId'
     ]) {
       expect(strippedViewerHomeSource).not.toContain(forbiddenRawActiveRunUse)
     }
   })
 
-  it('does not reintroduce stale broad Home headings', () => {
+  it('does not reintroduce stale snapshot/activity Home compatibility surfaces', () => {
     expect(strippedViewerHomeSource).not.toContain('Top 10 Rankings')
-    expect(strippedViewerHomeSource).not.toContain('Race to Finals')
+    expect(strippedViewerHomeSource).not.toContain('Ranking snapshots')
+    expect(strippedViewerHomeSource).not.toContain('Race snapshots')
+    expect(strippedViewerHomeSource).not.toContain('activity items')
+    expect(strippedViewerHomeSource).not.toContain('snapshot_sequence')
   })
 })

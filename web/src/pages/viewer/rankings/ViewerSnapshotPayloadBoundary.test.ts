@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest'
 import viewerRunSnapshotsPageSource from '../../ViewerRunSnapshotsPage.tsx?raw'
 import viewerSnapshotPayloadDisplaySource from './viewerSnapshotPayloadDisplay.ts?raw'
 import { parseRacePreviewPayload } from '../../../viewer/racePayload'
-import { parseRankingPreviewPayload } from '../../../viewer/rankingPayload'
 import { parseRaceSnapshotRows, parseRankingSnapshotRows } from './viewerSnapshotPayloadDisplay'
 
 function detailPageSource(): string {
@@ -29,16 +28,14 @@ describe('Viewer snapshot payload list/detail boundary', () => {
     expect(detailSource).not.toContain('Standings preview')
   })
 
-  it('keeps list selected-publication previews intentionally separate from detail payload tables', () => {
-    // List selected-publication previews are still allowed to use the typed preview parser/table path.
-    // The detail source slice above is the boundary guard that prevents these heuristic previews
-    // from being reintroduced into detail-page unknown-payload table rendering.
-    expect(viewerRunSnapshotsPageSource).toContain('RankingPreviewTable')
+  it('keeps the remaining Race list preview separate from conservative detail payload rendering', () => {
+    // Canonical Ranking has its own dedicated Viewer path and must not leak back into this
+    // compatibility module. The Race list preview remains typed; detail stays conservative.
+    expect(viewerRunSnapshotsPageSource).not.toContain('RankingPreviewTable')
+    expect(viewerRunSnapshotsPageSource).not.toContain('parseRankingPreviewPayload')
     expect(viewerRunSnapshotsPageSource).toContain('RacePreviewTable')
-    expect(viewerRunSnapshotsPageSource).toContain('parseRankingPreviewPayload')
     expect(viewerRunSnapshotsPageSource).toContain('parseRacePreviewPayload')
 
-    expect(parseRankingPreviewPayload({ rankings: [{ rank: 1, player_id: 'p1', player_name: 'Preview Player', points: 100 }] }).rows).toHaveLength(1)
     expect(parseRacePreviewPayload({ race_to_finals: { rows: [{ position: 1, player_id: 'p2', player_name: 'Race Preview Player', race_points: 80 }] } }).rows).toHaveLength(1)
     expect(detailPageSource()).not.toContain('parseRankingPreviewPayload')
     expect(detailPageSource()).not.toContain('parseRacePreviewPayload')

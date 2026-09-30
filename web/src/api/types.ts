@@ -7259,6 +7259,25 @@ export type ViewerTournamentDraw = {
   qualification_sections: ViewerTournamentDrawBracket[]
 }
 
+export type ViewerCompletedTournamentSummary = {
+  event_id: string
+  completed_season_index: number
+  completed_week: number
+  champion_player_id: string
+  finalist_player_id: string
+  qualification_winner_ids: string[]
+  player_count: number
+  match_count: number
+}
+
+export type ViewerCompletedTournamentCollection = {
+  schema_version: 'viewer_completed_tournaments.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  tournament_count: number
+  tournaments: ViewerCompletedTournamentSummary[]
+}
+
 export type ViewerTournamentResultPlayer = {
   player_id: string
   draw_type: 'qualification' | 'main' | 'both' | 'hybrid' | 'group'

@@ -1674,3 +1674,10 @@ must bind to canonical Tournament Result authority rather than infer an outcome 
 The World Tour Finals Viewer chain now continues through canonical Race/participant publication -> Finals event identity -> canonical Tournament Result. The dedicated Finals Result page is Saved-Revision bounded, exposes sporting result data only, and has no legacy SimulationRun Finals-result fallback.
 
 Remaining Viewer detachment should focus on the legacy Race snapshot-sequence detail route and remaining Home/History/deferred compatibility consumers. Do not infer new Finals policy while removing those reads; `SQUASH_ENGINE_MASTER_VISION.md` remains the product authority.
+
+
+### Viewer canonical History downstream integration
+
+Run-scoped Viewer History now uses canonical Saved-Revision Tournament History, Official Ranking History and Finals Race History instead of legacy SimulationRun activity. Publication identities remain domain-native rather than being merged into an invented universal sequence.
+
+The remaining Race snapshot-sequence detail URL is intentionally not reinterpreted as `target_season_index`; either an explicit compatibility mapping or a route retirement/migration decision is required. Continue detaching top-level Home and other deferred Viewer consumers without inventing policy or identity.

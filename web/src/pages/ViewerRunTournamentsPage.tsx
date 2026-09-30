@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { getEvent, getRun, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentResult, getViewerTournamentWildCards, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
 import type { EventRecord, SeasonStateResponse } from '../api/types'
 import {
   CompactSummaryCard,
@@ -21,7 +21,6 @@ import {
   TournamentResultMetadataList,
   tournamentResultMetadataItems
 } from '../viewer/TournamentResultMetadata'
-import { parseTournamentResultPayload } from '../viewer/tournamentResultPayload'
 import {
   viewerPlannedEventPath,
   viewerTournamentsPath,
@@ -98,9 +97,6 @@ function completionStatus(event: EventRecord, completedEventIds: Set<string>): s
   return completedEventIds.has(event.event_id) ? 'Completed in season plan' : 'Completion not recorded in plan'
 }
 
-function displayValue(value: unknown): number | string {
-  return safeText(value)
-}
 
 function drawSlotLabel(slot: {
   slot_index: number
@@ -248,6 +244,12 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
     enabled: Boolean(runId && eventId),
     retry: false
   })
+  const resultQuery = useQuery({
+    queryKey: ['viewer-tournament-result', runId, eventId],
+    queryFn: () => getViewerTournamentResult(runId, eventId),
+    enabled: Boolean(runId && eventId),
+    retry: false
+  })
 
   const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
   const planned = plannedContext.get(eventId)
@@ -265,7 +267,6 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       })
     : null
   const event = eventQuery.data
-  const resultPreview = useMemo(() => parseTournamentResultPayload(event?.tournament_result), [event?.tournament_result])
   const week = eventWeek(event, planned)
   const season = eventSeason(event, planned)
   const templateId = planned?.template_id ?? event?.template_id ?? null
@@ -495,37 +496,55 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
             </SectionCard>
           ) : null}
 
-          {event ? (
-            <SectionCard title="Tournament Result Preview">
-              {resultPreview.summary ? (
-                <MetadataList
-                  items={[
-                    ...tournamentResultMetadataItems(resultPreview.summary, {
-                      runId,
-                      includeFinalist: true,
-                      includeResultStatus: false,
-                      matches: false,
-                      includeEmptyValues: true,
-                      playerLabelMode: 'identityWithCountry'
-                    }),
-                    { label: 'Reported score', value: displayValue(resultPreview.summary.finalScore) },
-                    { label: 'Match count', value: displayValue(resultPreview.summary.matchCount) },
-                    { label: 'Completed matches', value: displayValue(resultPreview.summary.completedMatchCount) },
-                    { label: 'Draw size', value: displayValue(resultPreview.summary.drawSize) },
-                    { label: 'Round count', value: displayValue(resultPreview.summary.roundCount) },
-                    ...tournamentResultMetadataItems(resultPreview.summary, {
-                      runId,
-                      includeChampion: false,
-                      includeResultStatus: true,
-                      matches: false,
-                      includeEmptyValues: true,
-                      playerLabelMode: 'identityWithCountry'
-                    })
-                  ]}
-                />
-              ) : (
-                <EmptyState message="This preview is not connected for this data shape yet." />
-              )}
+          {eventId ? (
+            <SectionCard title="Canonical Tournament Result">
+              {resultQuery.isLoading ? <p className="status">Loading canonical Tournament Result…</p> : null}
+              {resultQuery.error && !isApiNotFound(resultQuery.error) ? (
+                <p className="error">Failed to load canonical Tournament Result: {formatApiError(resultQuery.error)}</p>
+              ) : null}
+              {isApiNotFound(resultQuery.error) ? (
+                <EmptyState message="Canonical Tournament Result is not available for this tournament yet." />
+              ) : null}
+              {resultQuery.data ? (
+                <>
+                  <MetadataList
+                    items={[
+                      { label: 'Viewer Branch', value: resultQuery.data.viewer_branch_id },
+                      { label: 'Completed season', value: resultQuery.data.completed_season_index },
+                      { label: 'Completed week', value: resultQuery.data.completed_week },
+                      { label: 'Champion', value: resultQuery.data.champion_player_id },
+                      { label: 'Finalist', value: resultQuery.data.finalist_player_id },
+                      { label: 'Qualification winners', value: resultQuery.data.qualification_winner_ids.length ? resultQuery.data.qualification_winner_ids.join(', ') : 'None' },
+                      { label: 'Players', value: resultQuery.data.players.length },
+                      { label: 'Matches', value: resultQuery.data.matches.length }
+                    ]}
+                  />
+                  <div>
+                    <strong>Player results</strong>
+                    <ul className="item-list" aria-label="Canonical Tournament player results">
+                      {resultQuery.data.players.map((player) => (
+                        <li key={player.player_id}>
+                          {player.player_id} · {player.reached_stage.replace(/_/g, ' ')} · {player.wins}W–{player.losses}L
+                          {player.seed_number == null ? '' : ` · seed ${player.seed_number}`}
+                          {player.qualifier ? ' · qualifier' : ''}
+                          {player.group_position == null ? '' : ` · group #${player.group_index ?? '?'} position ${player.group_position}`}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <strong>Match results</strong>
+                    <ul className="item-list" aria-label="Canonical Tournament match results">
+                      {resultQuery.data.matches.map((match) => (
+                        <li key={match.match_id}>
+                          {match.match_id} · {match.draw_type} R{match.round_number} · {match.winner_player_id}
+                          {match.loser_player_id ? ` def. ${match.loser_player_id}` : ''} · {match.scoreline}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </>
+              ) : null}
             </SectionCard>
           ) : null}
 

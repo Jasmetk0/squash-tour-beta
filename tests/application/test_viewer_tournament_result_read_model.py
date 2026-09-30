@@ -281,7 +281,7 @@ def test_viewer_completed_tournaments_orders_saved_canonical_results() -> None:
         branch_id="branch",
         entries=(),
         sources=(),
-        tournament_sources=(later, earlier),
+        tournament_sources=(earlier, later),
     )
 
     result = resolve_viewer_completed_tournaments(

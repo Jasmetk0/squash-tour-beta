@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -76,19 +75,6 @@ def _component_rows(
     return tuple(rows)
 
 
-def _payload(row: dict[str, object], *, label: str) -> dict[str, object]:
-    raw = row.get("payload_json")
-    if not isinstance(raw, str):
-        raise ValueError(f"Saved {label} payload is missing")
-    try:
-        value = json.loads(raw)
-    except (TypeError, ValueError) as exc:
-        raise ValueError(f"Saved {label} payload is corrupt") from exc
-    if not isinstance(value, dict):
-        raise ValueError(f"Saved {label} payload must be an object")
-    return value
-
-
 def _race_snapshots(
     component: dict[str, object] | None,
     *,
@@ -98,9 +84,10 @@ def _race_snapshots(
     values: list[WorldTourFinalsRaceSnapshot] = []
     seen_seasons: set[int] = set()
     for row in _component_rows(component, "finals_race_snapshots"):
-        snapshot = WorldTourFinalsRaceSnapshot.model_validate(
-            _payload(row, label="Finals Race snapshot")
-        )
+        raw_payload = row.get("payload_json")
+        if not isinstance(raw_payload, str):
+            raise ValueError("Saved Finals Race snapshot payload is missing")
+        snapshot = WorldTourFinalsRaceSnapshot.model_validate_json(raw_payload)
         if (snapshot.run_id, snapshot.branch_id) != (run_id, branch_id):
             raise ValueError("Saved Finals Race snapshot belongs to another Viewer Branch")
         if row.get("run_id") != run_id or row.get("branch_id") != branch_id:
@@ -128,8 +115,11 @@ def _participant_selections(
 ) -> dict[int, WorldTourFinalsParticipantSelectionSnapshot]:
     result: dict[int, WorldTourFinalsParticipantSelectionSnapshot] = {}
     for row in _component_rows(component, "finals_participant_snapshots"):
-        snapshot = WorldTourFinalsParticipantSelectionSnapshot.model_validate(
-            _payload(row, label="Finals participant selection")
+        raw_payload = row.get("payload_json")
+        if not isinstance(raw_payload, str):
+            raise ValueError("Saved Finals participant selection payload is missing")
+        snapshot = WorldTourFinalsParticipantSelectionSnapshot.model_validate_json(
+            raw_payload
         )
         if (snapshot.run_id, snapshot.branch_id) != (run_id, branch_id):
             raise ValueError(
@@ -168,9 +158,10 @@ def _effective_states(
         list[tuple[int, WorldTourFinalsEffectiveParticipantState]],
     ] = {}
     for row in _component_rows(component, "finals_effective_states"):
-        state = WorldTourFinalsEffectiveParticipantState.model_validate(
-            _payload(row, label="Finals effective participant state")
-        )
+        raw_payload = row.get("payload_json")
+        if not isinstance(raw_payload, str):
+            raise ValueError("Saved Finals effective participant state payload is missing")
+        state = WorldTourFinalsEffectiveParticipantState.model_validate_json(raw_payload)
         if (state.run_id, state.branch_id) != (run_id, branch_id):
             raise ValueError(
                 "Saved Finals effective participant state belongs to another Viewer Branch"

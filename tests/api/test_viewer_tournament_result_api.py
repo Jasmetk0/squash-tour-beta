@@ -60,10 +60,11 @@ def test_viewer_tournament_result_is_published_only_from_saved_ranking_component
         assert payload["champion_player_id"] == "A"
         assert payload["finalist_player_id"] == "B"
         assert payload["qualification_winner_ids"] == ["Q"]
-        assert [player["player_id"] for player in payload["players"]] == ["A", "B", "Q"]
+        assert [player["player_id"] for player in payload["players"]] == ["A", "B", "Q", "C", "D"]
         assert [match["match_id"] for match in payload["matches"]] == [
             "q-final",
-            "semi",
+            "semi-a",
+            "semi-b",
             "final",
         ]
         assert payload["matches"][-1]["scoreline"] == "3-2"

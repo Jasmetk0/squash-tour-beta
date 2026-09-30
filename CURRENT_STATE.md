@@ -3044,3 +3044,28 @@ to canonical authority.
   and in the tournament-list summary until a separate list/history detachment slice.
 
 See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.
+
+### Canonical Viewer Run Calendar / tournament catalog
+
+Run-scoped Viewer Tournament list and Tournament Detail metadata now read Calendar
+Edition data from the selected Viewer Branch's immutable Saved `run_package_state`.
+Every Saved Calendar Package is reconstructed through
+`CalendarPackageRunAdapter.project_calendar`; the Viewer never reloads the mutable
+source calendar or the legacy SimulationRun event registry for these two surfaces.
+
+- live Package application/editing remains invisible until normal Working Draft Save;
+- event identity, season/week, template/category/tour, host and draw-capacity metadata
+  come from the Saved Run-owned Calendar Package;
+- optional list-level champion/finalist/match-count summary comes only from canonical
+  Tournament Results captured in the same Saved Ranking component;
+- duplicate event identities across applied Calendar Packages and incoherent scope fail
+  closed;
+- Run-local IDs, Package/source fingerprints, provenance and Admin command metadata are
+  not public;
+- this does **not** implement or infer `announcement_week` / derived public
+  `Public Stage`; it preserves the schedule visibility already exposed by the current
+  Viewer while changing authority;
+- run-scoped Calendar/Week pages, legacy ranking/race publication-link readers,
+  top-level `/viewer/tour/tournaments`, Race and Finals remain separate migrations.
+
+See `docs/VIEWER_RUN_CALENDAR_V1.md`.

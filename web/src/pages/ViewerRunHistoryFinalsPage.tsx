@@ -381,7 +381,7 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
                   value: <Link to={viewerTournamentDetailPath(runId, result.event_id)}>{result.event_id}</Link>
                 },
                 { label: 'Completed season', value: result.completed_season_index },
-                { label: 'Completed week', value: \`W\${result.completed_week}\` },
+                { label: 'Completed week', value: `W${result.completed_week}` },
                 {
                   label: 'Champion',
                   value: <Link to={viewerPlayerProfilePath(runId, result.champion_player_id)}>{result.champion_player_id}</Link>
@@ -413,10 +413,10 @@ export function ViewerRunFinalsResultPage(): JSX.Element {
                 {result.players.map((player) => (
                   <li key={player.player_id}>
                     <Link to={viewerPlayerProfilePath(runId, player.player_id)}>{player.player_id}</Link>
-                    {\` · \${player.reached_stage.replace(/_/g, ' ')} · \${player.wins}W–\${player.losses}L\`}
-                    {player.seed_number == null ? '' : \` · seed \${player.seed_number}\`}
+                    {` · ${player.reached_stage.replace(/_/g, ' ')} · ${player.wins}W–${player.losses}L`}
+                    {player.seed_number == null ? '' : ` · seed ${player.seed_number}`}
                     {player.qualifier ? ' · qualifier' : ''}
-                    {player.group_position == null ? '' : \` · group #\${player.group_index ?? '?'} position \${player.group_position}\`}
+                    {player.group_position == null ? '' : ` · group #${player.group_index ?? '?'} position ${player.group_position}`}
                   </li>
                 ))}
               </ul>

@@ -11,7 +11,8 @@ import {
 } from './ViewerRunHistoryFinalsPage'
 
 const api = vi.hoisted(() => ({
-  getRunActivity: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
   getViewerFinalsRace: vi.fn(),
   getViewerTournamentResult: vi.fn()
 }))
@@ -37,20 +38,74 @@ function renderViewerRoute(route: string): void {
 }
 
 function mockApi(): void {
-  api.getRunActivity.mockResolvedValue({
-    run_id: 'viewer-run-2e',
-    items: [
+  api.getViewerTournamentHistory.mockResolvedValue({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: 'viewer-run-2e',
+    viewer_branch_id: 'branch-viewer',
+    tournament_count: 2,
+    published_result_count: 1,
+    tournaments: [
       {
-        kind: 'race_snapshot',
-        sequence: 8,
-        label: 'Race snapshot stored',
-        season: 2031,
+        event_id: 'EVENT-40',
+        season: '2031/32',
+        season_week: 40,
+        event_name: 'Diamond Open',
+        template_id: 'diamond-open',
+        category: 'diamond',
+        tour_level: 'world_tour',
+        host_country: 'CZE',
+        host_city: 'Brno',
+        region: 'Europe',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'completed',
+        result_published: true,
+        champion_player_id: 'P3',
+        finalist_player_id: 'P1'
+      },
+      {
+        event_id: 'EVENT-41',
+        season: '2031/32',
+        season_week: 41,
+        event_name: 'Future Open',
+        template_id: 'future-open',
+        category: 'gold',
+        tour_level: 'world_tour',
+        host_country: 'CZE',
+        host_city: 'Praha',
+        region: 'Europe',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'planned',
+        result_published: false,
+        champion_player_id: null,
+        finalist_player_id: null
+      }
+    ]
+  })
+  api.listViewerOfficialRankingHistory.mockResolvedValue({
+    schema_version: 'viewer_official_ranking_history.v1',
+    product_run_id: 'viewer-run-2e',
+    viewer_branch_id: 'branch-viewer',
+    public_head_ordinal: 1931,
+    publication_count: 1,
+    publications: [
+      {
+        season_index: 31,
         week: 40,
-        event_id: null,
-        snapshot_sequence: 12,
-        source_event_id: 'EVENT-40',
-        related_run_id: null,
-        raw_history_marker_should_be_collapsed: true
+        week_ordinal: 1931,
+        snapshot_fingerprint: 'hidden-ranking-fingerprint',
+        policy_id: 'best-n-9',
+        best_n: 9,
+        row_count: 48
       }
     ]
   })
@@ -188,78 +243,81 @@ describe('ViewerRunHistoryFinalsPage', () => {
     mockApi()
   })
 
-  it('renders History with run activity metadata and no raw JSON as primary content', async () => {
+  it('renders canonical Saved-Revision history without legacy activity data', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2e/history')
 
     expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2e').length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('Race snapshot stored')).length).toBeGreaterThan(0)
-    expect(screen.getByText('race_snapshot')).toBeInTheDocument()
-    expect(await screen.findByText('W40')).toBeInTheDocument()
-    expect(screen.getByText('Show technical history data')).toBeInTheDocument()
-    expect(within(document.body).queryByText(/raw_history_marker_should_be_collapsed/i)).not.toBeVisible()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('viewer-run-2e')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('viewer-run-2e')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
+
+    expect(screen.getByRole('list', { name: 'Canonical completed tournament history' })).toHaveTextContent('Diamond Open')
+    expect(screen.getByRole('list', { name: 'Canonical completed tournament history' })).not.toHaveTextContent('Future Open')
+    expect(screen.getByRole('list', { name: 'Canonical Official Ranking publication history' })).toHaveTextContent('ordinal 1931')
+    expect(screen.getByRole('list', { name: 'Canonical Finals Race publication history' })).toHaveTextContent('Target season 31')
+    expect(screen.queryByText(/hidden-ranking-fingerprint/i)).not.toBeInTheDocument()
+    expect(screen.queryByText('Show technical history data')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expectNoUnsafeOutput()
     expectNoDuplicateRunNav()
   })
 
-  it('renders History route loading/empty/deferred behavior without fake read-model data', async () => {
-    api.getRunActivity.mockResolvedValueOnce({ run_id: 'viewer-run-1', items: [] })
+  it('renders canonical History empty states without inventing publications', async () => {
+    api.getViewerTournamentHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      published_result_count: 0,
+      tournaments: []
+    })
+    api.listViewerOfficialRankingHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_official_ranking_history.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      public_head_ordinal: 0,
+      publication_count: 0,
+      publications: []
+    })
+    api.getViewerFinalsRace.mockResolvedValueOnce({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      latest_target_season_index: null,
+      publications: []
+    })
+
     renderViewerRoute('/viewer/runs/viewer-run-1/history')
 
-    expect(screen.getByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(screen.getByText('Loading history…')).toBeInTheDocument()
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(api.getRunActivity).toHaveBeenCalledWith('viewer-run-1')
+    expect(await screen.findByText('No canonical sporting publications are available for this run yet.')).toBeInTheDocument()
+    expect(screen.getByText('No completed canonical Tournament Results are published yet.')).toBeInTheDocument()
+    expect(screen.getByText('No canonical Official Ranking publications are available yet.')).toBeInTheDocument()
+    expect(screen.getByText('No canonical World Tour Finals Race publications are available yet.')).toBeInTheDocument()
     expectNoUnsafeOutput()
   })
 
-  it('renders encoded History run IDs as safe route context and passes decoded runId to the API', async () => {
-    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run/alpha #1', items: [] })
+  it('passes decoded Product Run ID to every canonical History reader', async () => {
     renderViewerRoute('/viewer/runs/run%2Falpha%20%231/history')
 
     expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(api.getRunActivity).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run/alpha #1')
     expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
     expectNoUnsafeOutput()
   })
 
-  it('renders History API errors without fake fallback data or expanded technical payloads', async () => {
-    api.getRunActivity.mockRejectedValueOnce(new Error('history outage'))
+  it('renders canonical History reader errors without legacy fallback', async () => {
+    api.getViewerTournamentHistory.mockRejectedValueOnce(new Error('tournament history outage'))
+    api.listViewerOfficialRankingHistory.mockRejectedValueOnce(new Error('ranking history outage'))
+    api.getViewerFinalsRace.mockRejectedValueOnce(new Error('race history outage'))
+
     renderViewerRoute('/viewer/runs/viewer-run-1/history')
 
-    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(await screen.findByText(/Failed to load run activity: history outage/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load canonical tournament history: tournament history outage/i)).toBeInTheDocument()
+    expect(screen.getByText(/Failed to load canonical ranking history: ranking history outage/i)).toBeInTheDocument()
+    expect(screen.getByText(/Failed to load canonical Finals Race history: race history outage/i)).toBeInTheDocument()
     expect(screen.queryByText('Show technical history data')).not.toBeInTheDocument()
-    expectNoUnsafeOutput()
-  })
-
-  it('renders malformed History payloads scalar-safely without unsafe object output', async () => {
-    api.getRunActivity.mockResolvedValueOnce({
-      run_id: { unsafe: 'run-object' },
-      items: [
-        null,
-        7,
-        'raw history string',
-        {},
-        {
-          kind: { unsafe: 'kind-object' },
-          label: { unsafe: 'label-object' },
-          sequence: { unsafe: 'sequence-object' },
-          event_id: { unsafe: 'event-object' },
-          season: { unsafe: 'season-object' },
-          week: { unsafe: 'week-object' },
-          snapshot_sequence: { unsafe: 'snapshot-object' },
-          source_event_id: { unsafe: 'source-event-object' },
-          related_run_id: { unsafe: 'related-run-object' }
-        }
-      ]
-    })
-    renderViewerRoute('/viewer/runs/viewer-run-1/history')
-
-    expect(await screen.findByRole('heading', { name: 'History' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    expect(screen.getByText('Show technical history data').closest('details')).not.toHaveAttribute('open')
     expectNoUnsafeOutput()
   })
 

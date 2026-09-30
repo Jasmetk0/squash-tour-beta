@@ -3,8 +3,8 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getFinalsQualification, getFinalsResult, getFinalsSummary, getRunActivity } from '../api/client'
-import type { FinalsQualificationResponse, FinalsResultResponse, FinalsSummaryResponse, RunActivityItem } from '../api/types'
+import { getFinalsResult, getRunActivity, getViewerFinalsRace } from '../api/client'
+import type { FinalsResultResponse, RunActivityItem, ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../api/types'
 import {
   CurrentContextStrip,
   EmptyState,
@@ -298,6 +298,50 @@ function isPreviewableActivityItem(item: RunActivityItem | undefined): item is R
   return Boolean(item && isScalar(item.label) && isScalar(item.kind))
 }
 
+function latestFinalsPublication(history: ViewerFinalsRaceHistory | undefined): ViewerFinalsRacePublication | null {
+  if (!history || history.latest_target_season_index == null) return null
+  return history.publications.find(
+    (publication) => publication.target_season_index === history.latest_target_season_index
+  ) ?? null
+}
+
+function confirmedFinalsParticipants(publication: ViewerFinalsRacePublication | null): ViewerFinalsRaceRow[] {
+  if (!publication?.selection_published) return []
+  return publication.rows
+    .filter((row) => row.finals_selected === true)
+    .sort((a, b) => (a.finals_seed ?? Number.MAX_SAFE_INTEGER) - (b.finals_seed ?? Number.MAX_SAFE_INTEGER))
+}
+
+function FinalsParticipantList({ runId, rows }: { runId: string; rows: ViewerFinalsRaceRow[] }): JSX.Element {
+  if (!rows.length) return <EmptyState message="Confirmed World Tour Finals participants are not published yet." />
+  return (
+    <div className="table-wrap">
+      <table aria-label="Canonical World Tour Finals participants">
+        <thead>
+          <tr>
+            <th>Seed</th>
+            <th>Player</th>
+            <th>Race rank</th>
+            <th>Race points</th>
+            <th>Qualification</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.player_id}>
+              <td>{row.finals_seed ?? '—'}</td>
+              <td><Link to={viewerPlayerProfilePath(runId, row.player_id)}>{row.player_id}</Link></td>
+              <td>#{row.rank}</td>
+              <td>{row.race_points}</td>
+              <td>{row.qualification_source === 'direct_entry' ? 'Direct entry' : row.qualification_source === 'race' ? 'Race' : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function TechnicalData({ summary, title, payload, emptyText }: { summary: string; title: string; payload: unknown; emptyText: string }): JSX.Element {
   return (
     <details>
@@ -378,70 +422,61 @@ export function ViewerRunHistoryPage(): JSX.Element {
 }
 
 export function ViewerRunFinalsPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-  const summaryQuery = useQuery({
-    queryKey: ['finals-summary', runId, legacySimulationRunId],
-    queryFn: () => getFinalsSummary(legacySimulationRunId),
+  const { productRunId: runId } = useViewerProductRunRouteContext()
+  const raceQuery = useQuery({
+    queryKey: ['viewer-finals-race', runId],
+    queryFn: () => getViewerFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })
-
-  const summary = summaryQuery.data
-  const qualification = summary?.qualification ?? null
-  const result = summary?.result ?? null
-  const qualificationPayload = isRecord(qualification?.qualification) ? qualification.qualification : null
-  const resultPayload = isRecord(result?.result) ? result.result : null
-  const qualificationPlayerIds = collectPlayerIds(qualificationPayload)
-  const resultPlayerIds = collectPlayerIds(resultPayload)
+  const publication = latestFinalsPublication(raceQuery.data)
+  const participants = confirmedFinalsParticipants(publication)
 
   return (
     <section className="panel">
-      <RunScopedHeader title="World Tour Finals" runId={runId} subtitle="Read-only Finals summary, qualification, and result metadata from existing run data only." />
+      <RunScopedHeader
+        title="World Tour Finals"
+        runId={runId}
+        subtitle="Canonical confirmed Finals field from the selected Viewer Branch's Saved Revision."
+      />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Qualification', value: qualification ? 'Available' : 'Unavailable' },
-          { label: 'Result', value: result ? 'Available' : 'Unavailable' },
-          { label: 'Season', value: safeScalarValue(summary?.season ?? qualification?.season ?? result?.season) }
+          { label: 'Qualification', value: publication?.selection_published ? 'Published' : publication ? 'Pending' : 'Unavailable' },
+          { label: 'Target season index', value: publication?.target_season_index ?? '—' },
+          { label: 'Confirmed players', value: participants.length }
         ]}
       />
 
       <SectionCard title="Finals Summary">
-        {summaryQuery.isLoading ? <p className="status">Loading Finals summary…</p> : null}
-        {summaryQuery.error ? <p className="error">Failed to load Finals summary: {formatApiError(summaryQuery.error)}</p> : null}
-        {summary ? <MetadataList items={finalsSummaryItems(summary, runId)} /> : null}
-      </SectionCard>
-
-      <SectionCard title="Qualification">
-        {summaryQuery.isLoading ? <p className="status">Loading Finals qualification metadata…</p> : null}
-        {qualification ? (
-          hasPayloadData(qualificationPayload) ? (
-            <>
-              <MetadataList items={qualificationMetadataItems(qualification, runId)} />
-              {renderPlayerLinks(runId, qualificationPlayerIds)}
-            </>
-          ) : (
-            <EmptyState message="This preview is not connected for this data shape yet." />
-          )
-        ) : summaryQuery.data ? (
-          <EmptyState message="This preview is not connected for this data shape yet." />
+        {raceQuery.isLoading ? <p className="status">Loading canonical Finals publication…</p> : null}
+        {raceQuery.error ? <p className="error">Failed to load canonical Finals publication: {formatApiError(raceQuery.error)}</p> : null}
+        {publication ? (
+          <MetadataList
+            items={[
+              { label: 'Viewer Branch', value: publication.viewer_branch_id },
+              { label: 'Finals event ID', value: publication.finals_event_id ?? 'Not selected yet' },
+              { label: 'Race cutoff', value: `season ${publication.cutoff_season_index}, W${publication.cutoff_week}` },
+              { label: 'Best-N', value: publication.best_n },
+              { label: 'Selection published', value: publication.selection_published ? 'Yes' : 'No' },
+              { label: 'Confirmed participants', value: participants.length }
+            ]}
+          />
+        ) : raceQuery.data ? (
+          <EmptyState message="No canonical World Tour Finals Race publication exists yet." />
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Result">
-        {summaryQuery.isLoading ? <p className="status">Loading Finals result metadata…</p> : null}
-        {result ? (
-          hasPayloadData(resultPayload) ? (
-            <>
-              <MetadataList items={resultMetadataItems(result, runId)} />
-              {renderPlayerLinks(runId, resultPlayerIds)}
-            </>
-          ) : (
-            <EmptyState message="This preview is not connected for this data shape yet." />
-          )
-        ) : summaryQuery.data ? (
-          <EmptyState message="This preview is not connected for this data shape yet." />
-        ) : null}
+      <SectionCard title="Confirmed Finals Participants">
+        <FinalsParticipantList runId={runId} rows={participants} />
+      </SectionCard>
+
+      <SectionCard title="Finals Result">
+        <p className="status">
+          Finals result publication remains a separate migration. The confirmed participant field above is canonical;
+          the existing result page remains read-only compatibility until it is bound to canonical Tournament Result history.
+        </p>
+        <p><Link to={viewerFinalsResultPath(runId)}>Open Finals result</Link></p>
       </SectionCard>
 
       <SectionCard title="Links">
@@ -454,63 +489,59 @@ export function ViewerRunFinalsPage(): JSX.Element {
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>
         </p>
       </SectionCard>
-
-      {summary ? (
-        <SectionCard title="Read-only data">
-          <TechnicalData
-            summary="Show technical finals data"
-            title="Technical Finals data"
-            payload={summary}
-            emptyText="No technical Finals data is available."
-          />
-        </SectionCard>
-      ) : null}
     </section>
   )
 }
 
 export function ViewerRunFinalsQualificationPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-  const qualificationQuery = useQuery({
-    queryKey: ['finals-qualification', runId, legacySimulationRunId],
-    queryFn: () => getFinalsQualification(legacySimulationRunId),
+  const { productRunId: runId } = useViewerProductRunRouteContext()
+  const raceQuery = useQuery({
+    queryKey: ['viewer-finals-race', runId],
+    queryFn: () => getViewerFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })
-
-  const notFound = isApiNotFound(qualificationQuery.error)
-  const qualification = qualificationQuery.data
-  const payload = isRecord(qualification?.qualification) ? qualification.qualification : null
-  const playerIds = collectPlayerIds(payload)
-  const hasSafePreview = Boolean(qualification && hasQualificationPreviewData(payload))
+  const publication = latestFinalsPublication(raceQuery.data)
+  const participants = confirmedFinalsParticipants(publication)
 
   return (
     <section className="panel">
-      <RunScopedHeader title="Finals Qualification" runId={runId} subtitle="Read-only Finals qualification for the selected run." />
+      <RunScopedHeader
+        title="Finals Qualification"
+        runId={runId}
+        subtitle="Canonical confirmed World Tour Finals participant field from Saved Revision authority."
+      />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Season', value: qualification?.season ?? '—' },
-          { label: 'Source snapshot', value: qualification ? sourceSnapshotLabel(qualification.source_as_of_season, qualification.source_as_of_week) : '—' },
-          { label: 'Qualification', value: payload ? 'Available' : notFound ? 'Unavailable' : 'Loading' }
+          { label: 'Target season index', value: publication?.target_season_index ?? '—' },
+          { label: 'Race cutoff', value: publication ? `W${publication.cutoff_week}` : '—' },
+          { label: 'Qualification', value: publication?.selection_published ? 'Published' : publication ? 'Pending' : 'Unavailable' }
         ]}
       />
 
       <SectionCard title="Qualification Summary">
-        {qualificationQuery.isLoading ? <p className="status">Loading Finals qualification…</p> : null}
-        {qualificationQuery.error && !notFound ? <p className="error">Failed to load Finals qualification: {formatApiError(qualificationQuery.error)}</p> : null}
-        {notFound ? <EmptyState message="No data is available for this run yet." /> : null}
-        {qualification ? (
-          hasSafePreview ? (
-            <MetadataList items={subpageQualificationMetadataItems(qualification, runId)} />
-          ) : (
-            <EmptyState message="This preview is not connected for this data shape yet." />
-          )
+        {raceQuery.isLoading ? <p className="status">Loading canonical Finals qualification…</p> : null}
+        {raceQuery.error ? <p className="error">Failed to load canonical Finals qualification: {formatApiError(raceQuery.error)}</p> : null}
+        {publication ? (
+          <MetadataList
+            items={[
+              { label: 'Viewer Branch', value: publication.viewer_branch_id },
+              { label: 'Finals event ID', value: publication.finals_event_id ?? 'Not selected yet' },
+              { label: 'Target season index', value: publication.target_season_index },
+              { label: 'Cutoff season index', value: publication.cutoff_season_index },
+              { label: 'Cutoff week', value: `W${publication.cutoff_week}` },
+              { label: 'Best-N', value: publication.best_n },
+              { label: 'Confirmed players', value: participants.length }
+            ]}
+          />
+        ) : raceQuery.data ? (
+          <EmptyState message="No canonical World Tour Finals Race publication exists yet." />
         ) : null}
       </SectionCard>
 
-      <SectionCard title="Qualified Players / Links">
-        {hasSafePreview && playerIds.length > 0 ? renderPlayerLinks(runId, playerIds) : <EmptyState message="This preview is not connected for this data shape yet." />}
+      <SectionCard title="Confirmed Participants">
+        <FinalsParticipantList runId={runId} rows={participants} />
       </SectionCard>
 
       <SectionCard title="Links">
@@ -521,17 +552,6 @@ export function ViewerRunFinalsQualificationPage(): JSX.Element {
           <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>Open tournaments</Link>
         </p>
       </SectionCard>
-
-      {payload ? (
-        <SectionCard title="Read-only data">
-          <TechnicalData
-            summary="Show technical finals qualification data"
-            title="Technical qualification data"
-            payload={qualification}
-            emptyText="No technical Finals qualification data is available."
-          />
-        </SectionCard>
-      ) : null}
     </section>
   )
 }

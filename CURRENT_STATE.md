@@ -3200,3 +3200,16 @@ The remaining parallel Viewer compatibility work is reconciled onto the current 
 
 This reconciliation intentionally preserves the newer calendar/tournament/history implementations already integrated through #1066.
 
+### Canonical Viewer Saved Calendar authority
+
+The canonical Saved Calendar read boundary is available from the selected Viewer Branch Saved Revision:
+
+- `viewer_run_calendar.v1` projects applied Calendar Packages from immutable Saved Run Package state;
+- Working Draft Calendar changes remain invisible until Save;
+- multiple distinct seasons are supported;
+- duplicate public season identities or duplicate event IDs fail closed;
+- package IDs, fingerprints, provenance, prize-money/ranking internals and Run-local IDs are excluded from Viewer output;
+- public API: `GET /viewer/runs/{product_run_id}/calendar`.
+
+The current Viewer UI may continue to use newer integrated Calendar/Tournament surfaces while this API becomes the direct Saved Calendar authority for downstream migration.
+

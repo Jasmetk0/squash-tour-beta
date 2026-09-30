@@ -23,6 +23,7 @@ import {
   getRunPackageState,
   getViewerOfficialRunContext,
   getViewerTournamentHistory,
+  getViewerRunCalendar,
   getViewerFinalsRace,
   listRunBranches,
   getRunBranch,
@@ -95,6 +96,33 @@ describe('Viewer Finals Race client', () => {
     await expect(getViewerFinalsRace('run/a #1')).resolves.toEqual(body)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/race/finals',
+      expect.anything()
+    )
+  })
+})
+
+describe('Viewer Saved Calendar client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical Saved Calendar from the encoded Product Run route', async () => {
+    const body = {
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 0,
+      event_count: 0,
+      seasons: []
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerRunCalendar('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/calendar',
       expect.anything()
     )
   })

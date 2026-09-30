@@ -208,12 +208,12 @@ export function buildWeekEventLinks({
 export function buildWeekContextLinks({
   runId,
   week,
-  rankingSnapshotSequences = [],
+  rankingPublicationOrdinals = [],
   raceSnapshotSequences = [],
 }: {
   runId: string;
   week: number;
-  rankingSnapshotSequences?: number[];
+  rankingPublicationOrdinals?: number[];
   raceSnapshotSequences?: number[];
 }): ViewerEventDetailLink[] {
   return [
@@ -223,9 +223,9 @@ export function buildWeekContextLinks({
     { label: `Week W${week}`, href: viewerWeekDetailPath(runId, week) },
     { label: "Ranking snapshots", href: viewerRankingsPath(runId) },
     { label: "Race snapshots", href: viewerRacePath(runId) },
-    ...rankingSnapshotSequences.map((sequence) => ({
-      label: `Ranking publication #${sequence}`,
-      href: viewerRankingSnapshotPath(runId, sequence),
+    ...rankingPublicationOrdinals.map((ordinal) => ({
+      label: `Ranking publication #${ordinal}`,
+      href: viewerRankingSnapshotPath(runId, ordinal),
     })),
     ...raceSnapshotSequences.map((sequence) => ({
       label: `Race publication #${sequence}`,

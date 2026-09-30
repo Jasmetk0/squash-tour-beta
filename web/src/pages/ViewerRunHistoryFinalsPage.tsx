@@ -2,16 +2,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getRunActivity, getViewerFinalsRace, getViewerTournamentResult } from '../api/client'
-import type { RunActivityItem, ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../api/types'
+import { getViewerFinalsRace, getViewerTournamentHistory, getViewerTournamentResult, listViewerOfficialRankingHistory } from '../api/client'
+import type { ViewerFinalsRaceHistory, ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../api/types'
 import {
   CurrentContextStrip,
   EmptyState,
-  JsonPayloadBlock,
   MetadataList,
   RunScopedHeader,
   SectionCard,
-  SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import {
@@ -27,28 +25,6 @@ import {
   viewerTournamentsPath
 } from '../viewer/viewerRoutes'
 
-
-function isScalar(value: unknown): value is string | number | boolean {
-  return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean'
-}
-
-function safeScalarValue(value: unknown, fallback: string | number = '—'): string | number {
-  if (typeof value === 'string' || typeof value === 'number') return value
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No'
-  return fallback
-}
-
-function formatWeek(week: number | null | undefined): string {
-  return typeof week === 'number' ? `W${week}` : '—'
-}
-
-function formatSeason(season: number | null | undefined): string | number {
-  return typeof season === 'number' ? season : '—'
-}
-
-function isPreviewableActivityItem(item: RunActivityItem | undefined): item is RunActivityItem {
-  return Boolean(item && isScalar(item.label) && isScalar(item.kind))
-}
 
 function latestFinalsPublication(history: ViewerFinalsRaceHistory | undefined): ViewerFinalsRacePublication | null {
   if (!history || history.latest_target_season_index == null) return null
@@ -94,81 +70,125 @@ function FinalsParticipantList({ runId, rows }: { runId: string; rows: ViewerFin
   )
 }
 
-function TechnicalData({ summary, title, payload, emptyText }: { summary: string; title: string; payload: unknown; emptyText: string }): JSX.Element {
-  return (
-    <details>
-      <summary>{summary}</summary>
-      <JsonPayloadBlock title={title} payload={payload} emptyText={emptyText} />
-    </details>
-  )
-}
-
 export function ViewerRunHistoryPage(): JSX.Element {
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
-  const activityQuery = useQuery({
-    queryKey: ['run-activity', runId, legacySimulationRunId],
-    queryFn: () => getRunActivity(legacySimulationRunId),
+  const { productRunId: runId } = useViewerProductRunRouteContext()
+  const tournamentsQuery = useQuery({
+    queryKey: ['viewer-history-tournaments', runId],
+    queryFn: () => getViewerTournamentHistory(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const rankingsQuery = useQuery({
+    queryKey: ['viewer-history-rankings', runId],
+    queryFn: () => listViewerOfficialRankingHistory(runId),
+    enabled: Boolean(runId),
+    retry: false
+  })
+  const raceQuery = useQuery({
+    queryKey: ['viewer-history-finals-race', runId],
+    queryFn: () => getViewerFinalsRace(runId),
     enabled: Boolean(runId),
     retry: false
   })
 
-  const items = Array.isArray(activityQuery.data?.items) ? activityQuery.data.items : []
-  const latestItem = items[0]
-  const canPreviewLatest = isPreviewableActivityItem(latestItem)
+  const completedTournaments = (tournamentsQuery.data?.tournaments ?? []).filter((event) => event.result_published)
+  const rankingPublications = rankingsQuery.data?.publications ?? []
+  const racePublications = raceQuery.data?.publications ?? []
+  const viewerBranchId =
+    tournamentsQuery.data?.viewer_branch_id ??
+    rankingsQuery.data?.viewer_branch_id ??
+    raceQuery.data?.viewer_branch_id ??
+    '—'
+  const loading = tournamentsQuery.isLoading || rankingsQuery.isLoading || raceQuery.isLoading
+  const hasPublishedHistory = completedTournaments.length > 0 || rankingPublications.length > 0 || racePublications.length > 0
 
   return (
     <section className="panel">
-      <RunScopedHeader title="History" runId={runId} subtitle="Read-only run activity and season timeline." />
+      <RunScopedHeader
+        title="History"
+        runId={runId}
+        subtitle="Canonical Saved-Revision sporting publication history for the selected Viewer Branch."
+      />
       <CurrentContextStrip
         items={[
           { label: 'Active run', value: runId || 'unknown' },
-          { label: 'Activity count', value: activityQuery.data ? items.length : '—' },
-          { label: 'Latest activity', value: canPreviewLatest ? latestItem.label : items.length > 0 ? 'Preview deferred' : '—' }
+          { label: 'Viewer Branch', value: viewerBranchId },
+          { label: 'Completed tournaments', value: tournamentsQuery.data ? completedTournaments.length : '—' },
+          { label: 'Ranking publications', value: rankingsQuery.data ? rankingPublications.length : '—' },
+          { label: 'Finals Race publications', value: raceQuery.data ? racePublications.length : '—' }
         ]}
       />
 
-      <SectionCard title="Season timeline">
-        {activityQuery.isLoading ? <p className="status">Loading history…</p> : null}
-        {activityQuery.error ? <p className="error">Failed to load run activity: {formatApiError(activityQuery.error)}</p> : null}
-        {activityQuery.data && items.length === 0 ? <EmptyState message="No data is available for this run yet." /> : null}
-        {activityQuery.data && items.length > 0 ? (
-          canPreviewLatest ? (
-            <>
-              <SummaryPills
-                items={[
-                  { label: 'Activity count', value: items.length },
-                  { label: 'Latest kind', value: safeScalarValue(latestItem.kind) },
-                  { label: 'Latest season', value: formatSeason(latestItem.season) },
-                  { label: 'Latest week', value: formatWeek(latestItem.week) }
-                ]}
-              />
-              <MetadataList
-                items={[
-                  { label: 'Latest label', value: safeScalarValue(latestItem.label) },
-                  { label: 'Sequence', value: safeScalarValue(latestItem.sequence) },
-                  { label: 'Event ID', value: safeScalarValue(latestItem.event_id) },
-                  { label: 'Snapshot sequence', value: safeScalarValue(latestItem.snapshot_sequence) },
-                  { label: 'Source event', value: safeScalarValue(latestItem.source_event_id) },
-                  { label: 'Related run', value: safeScalarValue(latestItem.related_run_id) }
-                ]}
-              />
-            </>
-          ) : (
-            <EmptyState message="This preview is not connected for this data shape yet." />
-          )
+      {loading ? <p className="status">Loading canonical history…</p> : null}
+      {tournamentsQuery.error ? (
+        <p className="error">Failed to load canonical tournament history: {formatApiError(tournamentsQuery.error)}</p>
+      ) : null}
+      {rankingsQuery.error ? (
+        <p className="error">Failed to load canonical ranking history: {formatApiError(rankingsQuery.error)}</p>
+      ) : null}
+      {raceQuery.error ? (
+        <p className="error">Failed to load canonical Finals Race history: {formatApiError(raceQuery.error)}</p>
+      ) : null}
+
+      {!loading && !tournamentsQuery.error && !rankingsQuery.error && !raceQuery.error && !hasPublishedHistory ? (
+        <EmptyState message="No canonical sporting publications are available for this run yet." />
+      ) : null}
+
+      <SectionCard title="Completed Tournaments">
+        {tournamentsQuery.data && completedTournaments.length === 0 ? (
+          <EmptyState message="No completed canonical Tournament Results are published yet." />
+        ) : null}
+        {completedTournaments.length > 0 ? (
+          <ul className="item-list" aria-label="Canonical completed tournament history">
+            {completedTournaments.map((event) => (
+              <li key={event.event_id}>
+                <Link to={viewerTournamentDetailPath(runId, event.event_id)}>{event.event_name || event.event_id}</Link>
+                {' · '}{event.season} W{event.season_week}
+                {event.champion_player_id ? <> · champion {event.champion_player_id}</> : null}
+                {event.finalist_player_id ? <> · finalist {event.finalist_player_id}</> : null}
+              </li>
+            ))}
+          </ul>
         ) : null}
       </SectionCard>
 
-      {activityQuery.data ? (
-        <SectionCard title="Read-only data">
-          <TechnicalData
-            summary="Show technical history data"
-            title="Technical activity data"
-            payload={activityQuery.data}
-            emptyText="No technical history data is available."
-          />
-        </SectionCard>
-      ) : null}
+      <SectionCard title="Official Ranking Publications">
+        {rankingsQuery.data && rankingPublications.length === 0 ? (
+          <EmptyState message="No canonical Official Ranking publications are available yet." />
+        ) : null}
+        {rankingPublications.length > 0 ? (
+          <>
+            <ul className="item-list" aria-label="Canonical Official Ranking publication history">
+              {rankingPublications.map((publication) => (
+                <li key={publication.week_ordinal}>
+                  Season {publication.season_index} W{publication.week} · ordinal {publication.week_ordinal} · {publication.row_count} players · {publication.policy_id}
+                </li>
+              ))}
+            </ul>
+            <p><Link to={viewerRankingsPath(runId)}>Open canonical rankings</Link></p>
+          </>
+        ) : null}
+      </SectionCard>
+
+      <SectionCard title="World Tour Finals Race Publications">
+        {raceQuery.data && racePublications.length === 0 ? (
+          <EmptyState message="No canonical World Tour Finals Race publications are available yet." />
+        ) : null}
+        {racePublications.length > 0 ? (
+          <>
+            <ul className="item-list" aria-label="Canonical Finals Race publication history">
+              {racePublications.map((publication) => (
+                <li key={publication.target_season_index}>
+                  Target season {publication.target_season_index} · cutoff season {publication.cutoff_season_index} W{publication.cutoff_week}
+                  {publication.selection_published ? ' · selection published' : ' · selection pending'}
+                  {publication.finals_event_id ? <> · Finals {publication.finals_event_id}</> : null}
+                </li>
+              ))}
+            </ul>
+            <p><Link to={viewerFinalsPath(runId)}>Open World Tour Finals</Link></p>
+          </>
+        ) : null}
+      </SectionCard>
     </section>
   )
 }

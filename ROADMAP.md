@@ -1640,6 +1640,13 @@ migration slices.
 
 The top-level Season Calendar now reuses canonical Saved-Revision Tournament History and no
 longer reads the legacy SimulationRun season plan or event registry. It deliberately avoids
-reconstructing current/upcoming status from legacy next-event state. Planned Event and Week
-Detail remain follow-up slices because their richer context still depends on compatibility
-event state plus legacy Ranking/Race publication readers.
+reconstructing current/upcoming status from legacy next-event state. Week Detail remains a
+follow-up slice because its richer context still depends on compatibility event state plus
+legacy Ranking/Race publication readers.
+
+### Viewer Planned Event downstream integration
+
+Planned Event detail now resolves event identity and schedule metadata directly from canonical
+Saved-Revision Tournament History. It no longer reads the legacy Run season plan/persisted-event
+registry or exposes legacy next-event/persisted-event status as authority. Week Detail is now the
+remaining schedule-view migration boundary.

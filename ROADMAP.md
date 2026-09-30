@@ -1622,5 +1622,17 @@ Tournament Detail now continues the canonical selected-Viewer-Branch chain throu
 Entry Field → definitive WC/RWC → effective Draw → completed Tournament Result. Result
 publication is bounded by the immutable Saved Ranking component, so live Working Draft
 closes cannot leak into Viewer. The public projection is sporting-only and hides
-authority/provenance fingerprints and point/prize internals. Tournament-list/history
-detachment from legacy event records, Race and Finals remain separate follow-up slices.
+authority/provenance fingerprints and point/prize internals. Tournament-list/detail metadata detachment is the next downstream slice; broader
+Calendar/Week progress reads, Race and Finals remain separate follow-ups.
+
+### Viewer Saved Calendar tournament catalog integration
+
+Run-scoped Tournament list/detail metadata now uses the selected Viewer Branch's Saved
+Run-owned Calendar Package rather than legacy SimulationRun event records. Live Package
+changes cannot leak before Save, and list-level completion summaries are joined only from
+canonical Tournament Results in the same Saved Revision. This is an authority migration,
+not a new public-knowledge policy: `announcement_week` / derived public `Public Stage`
+remains an explicit future gate. Run-scoped Calendar/Week progress views, legacy
+ranking/race publication links, top-level Tour tournament summary, Race and Finals remain
+separate migrations.
+

@@ -53,7 +53,7 @@ describe('ViewerCountriesPage canonical people', () => {
 
     expect(await screen.findByText('Countries summary')).toBeInTheDocument()
     expect(api.getViewerCountries).toHaveBeenCalledWith('run alpha')
-    expect(await screen.findByRole('link', { name: 'NZL' })).toBeInTheDocument()
+    expect((await screen.findAllByRole('link', { name: 'NZL' })).length).toBeGreaterThan(0)
     expect(screen.getByText('Active players')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'NZL' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/countries/NZL')
     expect(screen.getByRole('link', { name: 'Paul Coll' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/players/paul%20coll/career')

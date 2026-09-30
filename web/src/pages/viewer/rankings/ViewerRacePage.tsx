@@ -115,6 +115,10 @@ function ViewerFinalsRaceContent({
         <ViewerEmptyState>No canonical Finals Race has been published for this Viewer Branch yet.</ViewerEmptyState>
       ) : null}
 
+      {productRunId && showRunLink ? (
+        <ViewerActiveRunLinks links={[{ label: 'Open run-scoped Race', to: viewerRacePath(productRunId) }]} />
+      ) : null}
+
       {latest && productRunId ? (
         <>
           <ViewerSectionCard kicker="Latest saved season" title={`Race to Finals · ${seasonLabel(latest.target_season_index)}`} variant="hero">
@@ -130,9 +134,6 @@ function ViewerFinalsRaceContent({
               ]}
             />
             <FinalsRaceTable publication={latest} productRunId={productRunId} />
-            {showRunLink ? (
-              <ViewerActiveRunLinks links={[{ label: 'Open run-scoped Race', to: viewerRacePath(productRunId) }]} />
-            ) : null}
           </ViewerSectionCard>
 
           <ViewerSectionCard kicker="Saved history" title="Seasonal Race publications">

@@ -15,7 +15,7 @@ import {
   SectionCard,
   SummaryPills
 } from '../components/RunScopedUi'
-import { formatApiError } from '../utils/apiErrors'
+import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { tournamentResultPayloadMetadataItems } from '../viewer/TournamentResultMetadata'
 import { findPersistedEventById, findPlannedEventById } from './viewer/tour/viewerEventDetailDisplay'
 import {

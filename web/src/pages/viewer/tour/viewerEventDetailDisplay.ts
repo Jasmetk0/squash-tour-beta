@@ -1,10 +1,8 @@
-import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../../../api/types'
+import type { EventRecord, SeasonStateResponse } from '../../../api/types'
 import {
   viewerPlannedEventPath,
   viewerRacePath,
-  viewerRaceSnapshotPath,
   viewerRankingsPath,
-  viewerRankingSnapshotPath,
   viewerRunsPath,
   viewerSeasonCalendarPath,
   viewerTournamentDetailPath,
@@ -87,26 +85,18 @@ export function buildPersistedEventMetadataItems(
   ]
 }
 
-export function snapshotsForSourceEvent<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[] | null | undefined, eventId: string): T[] {
-  return (snapshots ?? []).filter((snapshot) => snapshot.source_event_id === eventId)
-}
-
 export function buildEventDetailLinks({
   runId,
   eventId,
   week,
   hasPlanned,
-  hasPersisted,
-  rankingSnapshotSequences = [],
-  raceSnapshotSequences = []
+  hasPersisted
 }: {
   runId: string
   eventId: string
   week?: number | null
   hasPlanned?: boolean
   hasPersisted?: boolean
-  rankingSnapshotSequences?: number[]
-  raceSnapshotSequences?: number[]
 }): ViewerEventDetailLink[] {
   const links: ViewerEventDetailLink[] = [
     { label: 'Run browser', href: viewerRunsPath() },
@@ -129,13 +119,6 @@ export function buildEventDetailLinks({
   links.push({ label: 'Ranking snapshots', href: viewerRankingsPath(runId) })
   links.push({ label: 'Race snapshots', href: viewerRacePath(runId) })
 
-  rankingSnapshotSequences.forEach((sequence) => {
-    links.push({ label: `Ranking publication #${sequence}`, href: viewerRankingSnapshotPath(runId, sequence) })
-  })
-
-  raceSnapshotSequences.forEach((sequence) => {
-    links.push({ label: `Race publication #${sequence}`, href: viewerRaceSnapshotPath(runId, sequence) })
-  })
 
   return links
 }

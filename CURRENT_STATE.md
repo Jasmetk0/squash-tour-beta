@@ -3244,4 +3244,16 @@ The top-level `/viewer/tour/calendar` landing now uses the selected Product Run 
 - the route links into the run-scoped canonical Season Calendar surface;
 - Working Draft schedule state is not inferred.
 
+### Canonical deferred Viewer source metadata
+
+The shared deferred Viewer source path now reads only canonical Saved-Revision/publication authorities:
+
+- `viewer_run_calendar.v1`;
+- canonical Tournament History;
+- canonical Official Ranking History;
+- canonical World Tour Finals Race History.
+
+Stats, Predictions, Ranking-deferred and Tour-deferred pages use Product Run identity and no longer read legacy SimulationRun status/event/snapshot/Finals-summary sources. These pages remain explicitly deferred: they expose only source availability and navigation, not synthesized sporting outputs.
+
+See `docs/VIEWER_DEFERRED_CANONICAL_SOURCES_V1.md`.
 

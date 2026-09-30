@@ -7,7 +7,9 @@ describe('Viewer snapshot detail route wiring', () => {
   it('keeps ranking and race detail routes on dedicated Viewer wrappers', () => {
     expect(appSource).toContain('<Route path="viewer/runs/:runId" element={<ViewerProductRunRouteBoundary />}>')
     expect(appSource).toContain('<Route path="rankings/:snapshotSequence" element={<ViewerRankingSnapshotDetailPage />} />')
+    expect(appSource).toContain('<Route path="race" element={<ViewerRunRacePage />} />')
     expect(appSource).toContain('<Route path="race/:snapshotSequence" element={<ViewerRaceSnapshotDetailPage />} />')
+    expect(appSource).not.toContain('<Route path="race" element={<ViewerRunSnapshotListPage mode="race" />} />')
     expect(appSource).not.toMatch(/ViewerRunSnapshotDetailPage/)
   })
 

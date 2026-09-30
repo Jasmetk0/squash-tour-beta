@@ -378,8 +378,6 @@ describe('ViewerRunTournamentDetailPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
     mockRunMetadata()
-    api.listRankingSnapshots.mockResolvedValue({ run_id: 'viewer-run-1', snapshots: [] })
-    api.listRaceSnapshots.mockResolvedValue({ run_id: 'viewer-run-1', snapshots: [] })
     api.getEvent.mockResolvedValue({
       event_sequence: 8,
       event_id: 'EVENT-1',
@@ -568,14 +566,14 @@ describe('ViewerRunTournamentDetailPage', () => {
       run: { run_id: 'run/alpha #1', season: 2030, seed: 1, config_version: 'v', config_fingerprint: 'fp', next_event_index: 0, total_events: 0, completed_event_ids: [] },
       season_state: { season: 2030, next_event_index: 0, completed_event_ids: [], ordered_events: [{ event_id: { bad: true }, week: { bad: true } }] }
     })
-    api.listRankingSnapshots.mockResolvedValueOnce({ run_id: 'run/alpha #1', snapshots: [null, {}, { snapshot_sequence: { bad: true }, source_event_id: { bad: true } }] })
-    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'run/alpha #1', snapshots: [null, 7] })
 
     renderViewerTournamentRoute('/viewer/runs/run%2Falpha%20%231/tournaments/EVT%2F1%20%23A')
 
     expect(await screen.findByRole('heading', { name: 'Tournament Detail' })).toBeInTheDocument()
     expect(api.getEvent).toHaveBeenCalledWith('run/alpha #1', 'EVT/1 #A')
     expect(api.getRun).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
     expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/tournaments')

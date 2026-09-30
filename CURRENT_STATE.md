@@ -3125,3 +3125,24 @@ the selected Viewer Branch's immutable Saved Revision.
   remain compatibility follow-ups and are not canonical authority.
 
 See `docs/VIEWER_FINALS_RACE_V1.md`.
+
+
+### Canonical Viewer World Tour Finals participants
+
+The run-scoped World Tour Finals hub and qualification page now consume the same canonical
+Saved-Revision Finals Race publication as the public Race surface instead of the legacy
+SimulationRun Finals summary/qualification registry.
+
+- the latest published participant selection defines whether the Finals field is public;
+- when accepted replacement history exists, the latest saved effective participant state is
+  the current confirmed public field, so withdrawn players disappear and accepted Race reserves
+  appear without mutating the immutable initial selection;
+- the public table exposes Finals seed, player identity, frozen Race rank/points and
+  `direct_entry` vs `race` qualification source;
+- selection/effective-state fingerprints, predecessor lineage, withdrawal/decline/accept audit
+  and command provenance remain private;
+- live Finals selection/replacement changes remain invisible until authoritative Simulation Save;
+- the dedicated Finals result page remains compatibility-backed and is the next distinct Finals
+  Viewer authority migration.
+
+See `docs/VIEWER_FINALS_PARTICIPANTS_V1.md`.

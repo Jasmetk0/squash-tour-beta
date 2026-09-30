@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
@@ -53,16 +52,6 @@ function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
   return <Link to={viewerWeekDetailPath(runId, week)}>{`W${week}`}</Link>
 }
 
-function TournamentListResultMetadata({ event, runId }: { event: EventRecord; runId: string }): JSX.Element | null {
-  return (
-    <TournamentResultMetadataList
-      payload={event.tournament_result}
-      runId={runId}
-      matches="matchCount"
-      playerLabelMode="identityWithCountry"
-    />
-  )
-}
 
 export function ViewerRunTournamentsPage(): JSX.Element {
   const { productRunId: runId } = useViewerProductRunRouteContext()

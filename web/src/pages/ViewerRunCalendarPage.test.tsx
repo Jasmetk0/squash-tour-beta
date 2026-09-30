@@ -155,10 +155,6 @@ function mockSnapshots(): void {
       }
     ]
   })
-  api.listRaceSnapshots.mockResolvedValue({
-    run_id: 'viewer-run-2d',
-    snapshots: [{ snapshot_sequence: 7, snapshot_kind: 'WEEK', source_event_id: 'EVENT-NEXT', payload: {} }]
-  })
 }
 
 function seasonCalendarEventRow(eventId: string): HTMLElement {
@@ -345,7 +341,7 @@ describe('ViewerRunPlannedEventPage canonical Saved Calendar', () => {
 })
 
 describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
-  it('renders Saved Calendar events and source-matched public ranking/race publications', async () => {
+  it('renders Saved Calendar events and canonical Ranking publication without legacy Race matching', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
@@ -363,16 +359,19 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
     )
-    expect(screen.getByText('Ranking publications count')).toBeInTheDocument()
-    expect(screen.getByText('Race publications count')).toBeInTheDocument()
+    expect(screen.getByText('Canonical Ranking publications count')).toBeInTheDocument()
+    expect(screen.getByText('Race publication status')).toBeInTheDocument()
+    expect(screen.getByText('Available only through the dedicated legacy Race compatibility route')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Ranking publication #1709/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/rankings/1709'
     )
     expect(screen.getByText('Official · 64 ranked players · official-weekly')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /Race publication #7/i })[0]).toHaveAttribute(
+    expect(screen.queryByRole('link', { name: /Race publication #/i })).not.toBeInTheDocument()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(screen.getByRole('link', { name: 'Race snapshots' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2d/race/7'
+      '/viewer/runs/viewer-run-2d/race'
     )
     expectNoForbiddenViewerActions()
   })
@@ -405,7 +404,7 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
     expect(within(completed).getByText('15')).toBeInTheDocument()
   })
 
-  it('shows deferred publication metadata when neither canonical ranking nor Race matches the week', async () => {
+  it('shows canonical Ranking absence without consulting legacy Race history', async () => {
     api.listViewerOfficialRankingHistory.mockResolvedValueOnce({
       schema_version: 'viewer_official_ranking_history.v1',
       product_run_id: 'viewer-run-2d',
@@ -422,11 +421,10 @@ describe('ViewerRunWeekPage canonical Saved Calendar schedule', () => {
         row_count: 64
       }]
     })
-    api.listRaceSnapshots.mockResolvedValueOnce({ run_id: 'viewer-run-2d', snapshots: [] })
-
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
-    expect(await screen.findByText('No canonical ranking or source-matched Race publication is available for this week.')).toBeInTheDocument()
+    expect(await screen.findByText('No canonical Official Ranking publication is available for this week.')).toBeInTheDocument()
+    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
   })
 
   it('shows no-data state for a missing empty week', async () => {

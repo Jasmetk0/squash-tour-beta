@@ -36,24 +36,24 @@ export function ViewerDeferredSourceCard({
   return (
     <article
       className="viewer-active-run-card viewer-deferred-source-card"
-      aria-label={`${title} active run metadata summary`}
+      aria-label={`${title} canonical Product Run metadata summary`}
     >
-      <span className="eyebrow">Active Viewer run</span>
+      <span className="eyebrow">Selected Product Run</span>
       <h3>{title} sources</h3>
       <p className="subtitle">{subtitle}</p>
       {isLoadingMetadata ? (
-        <p className="status viewer-status-message viewer-status-message--loading">Loading active run metadata…</p>
+        <p className="status viewer-status-message viewer-status-message--loading">Loading canonical Saved-Revision metadata…</p>
       ) : null}
       {hasMetadataError ? (
         <ViewerEmptyState>
-          Some active run metadata is temporarily unavailable.
+          Some canonical Saved-Revision metadata is temporarily unavailable.
         </ViewerEmptyState>
       ) : null}
       <section aria-label={`${title} source metadata`}>
         <h3>Available source metadata</h3>
         {renderSourceMetadataList(metadataItems)}
         {!isLoadingMetadata && !hasMetadataError && !hasAnySourceMetadata ? (
-          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+          <ViewerEmptyState>No canonical source data is available for this Product Run yet.</ViewerEmptyState>
         ) : null}
       </section>
       <section aria-label={`${title} deferred output explanation`}>

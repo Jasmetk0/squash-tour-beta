@@ -232,7 +232,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-2d')
     expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('viewer-run-2d')
 
-    const season = screen.getByRole('list', { name: 'Viewer season calendar events 2028/2029' })
+    const season = await screen.findByRole('list', { name: 'Viewer season calendar events 2028/2029' })
     const opener = within(season).getByText('Season Opener').closest('li') as HTMLElement
     expect(within(opener).getByText('Completed · result published')).toBeInTheDocument()
     expect(within(opener).getByText('PLAYER-42')).toBeInTheDocument()
@@ -240,7 +240,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
       'href',
       '/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE'
     )
-    expect(screen.getByRole('list', { name: 'Viewer season calendar events 2029/2030' })).toHaveTextContent('Future Bronze')
+    expect(await screen.findByRole('list', { name: 'Viewer season calendar events 2029/2030' })).toHaveTextContent('Future Bronze')
     expectNoForbiddenViewerActions()
   })
 
@@ -259,7 +259,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-2d')
-    expect(screen.getAllByText('Season Opener').length).toBeGreaterThan(0)
+    expect((await screen.findAllByText('Season Opener')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('PLAYER-42').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'Week W1' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/1')
     expectNoForbiddenViewerActions()
@@ -280,7 +280,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('viewer-run-2d')
     expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('viewer-run-2d')
 
-    const events = screen.getByRole('list', { name: 'Viewer week Saved Calendar events' })
+    const events = await screen.findByRole('list', { name: 'Viewer week Saved Calendar events' })
     expect(within(events).getByText('Gold Open')).toBeInTheDocument()
     expect(within(events).queryByText('Season Opener')).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ranking publication #4' })).toHaveAttribute(

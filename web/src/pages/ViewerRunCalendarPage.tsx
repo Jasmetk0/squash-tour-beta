@@ -3,8 +3,8 @@ import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
-import { getRun, getViewerCompletedTournaments, getViewerRunCalendar, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
-import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../api/types'
+import { getViewerCompletedTournaments, getViewerRunCalendar, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import type { RaceSnapshot, RankingSnapshot } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -16,25 +16,10 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError } from '../utils/apiErrors'
-import { findPersistedEventById, findPlannedEventById } from './viewer/tour/viewerEventDetailDisplay'
-import {
-  buildPlannedEventContextLinks,
-  buildPlannedEventDetailMetadataItems,
-  resolvePlannedEventStatusLabel
-} from './viewer/tour/viewerPlannedEventDetailDisplay'
 import {
   buildWeekContextLinks,
-  buildWeekDetailMetadataItems,
-  buildWeekEventLinks,
-  buildWeekPersistedEventMetadataItems,
-  buildWeekPlannedEventMetadataItems,
-  completedPlannedEventsForWeek,
   parseViewerWeekParam,
-  persistedEventsByExactId,
-  persistedEventsForWeek,
-  plannedEventsForWeek,
-  snapshotsForWeekSourceEvents,
-  sourceEventIdsForWeek
+  snapshotsForWeekSourceEvents
 } from './viewer/tour/viewerWeekDetailDisplay'
 import {
   viewerPlannedEventPath,
@@ -45,65 +30,12 @@ import {
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
 
-function plannedStatus({
-  index,
-  nextEventIndex,
-  completedEventIds,
-  eventId
-}: {
-  index: number
-  nextEventIndex: number
-  completedEventIds: Set<string>
-  eventId: string
-}): string {
-  if (completedEventIds.has(eventId)) return 'completed'
-  if (index === nextEventIndex) return 'current/next'
-  if (index > nextEventIndex) return 'upcoming'
-  return 'planned'
-}
-
-function eventStatusLabel(status: string): string {
-  return status.charAt(0).toUpperCase() + status.slice(1)
-}
-
-function eventIsCompleted(completedEventIds: Set<string>, eventId: string): string {
-  return completedEventIds.has(eventId) ? 'Yes' : 'No'
-}
-
 function isScalar(value: unknown): value is string | number {
   return typeof value === 'string' || typeof value === 'number'
 }
 
 function safeText(value: unknown, fallback: string | number = '—'): string | number {
   return isScalar(value) ? value : fallback
-}
-
-function safeWeekLabel(value: unknown): string {
-  return typeof value === 'number' && Number.isInteger(value) && value > 0 ? `W${value}` : '—'
-}
-
-function safeOrderedEvents(data: SeasonStateResponse | undefined): SeasonStateResponse['season_state']['ordered_events'] {
-  const orderedEvents = data?.season_state?.ordered_events
-  if (!Array.isArray(orderedEvents)) return []
-
-  return orderedEvents.filter((event) =>
-    event &&
-    typeof event === 'object' &&
-    typeof event.event_id === 'string' &&
-    typeof event.week === 'number' &&
-    Number.isInteger(event.week) &&
-    event.week > 0
-  )
-}
-
-function safeCompletedEventIds(data: SeasonStateResponse | undefined): string[] {
-  const completedEventIds = data?.season_state?.completed_event_ids
-  return Array.isArray(completedEventIds) ? completedEventIds.filter((eventId) => typeof eventId === 'string') : []
-}
-
-function safeEventRecords(events: EventRecord[] | undefined): EventRecord[] {
-  if (!Array.isArray(events)) return []
-  return events.filter((event) => event && typeof event === 'object' && typeof event.event_id === 'string')
 }
 
 function safeSnapshotRecords<T extends RankingSnapshot | RaceSnapshot>(snapshots: T[] | undefined): T[] {

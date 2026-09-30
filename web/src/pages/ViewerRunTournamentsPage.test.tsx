@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerCompletedTournaments: vi.fn(),
   getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
@@ -118,13 +119,31 @@ describe('ViewerRunTournamentsPage', () => {
     vi.resetAllMocks()
     mockRunMetadata()
     mockEvents()
+    api.getViewerCompletedTournaments.mockResolvedValue({
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 1,
+      tournaments: [
+        {
+          event_id: 'EVENT-1',
+          completed_season_index: 27,
+          completed_week: 3,
+          champion_player_id: 'P-001',
+          finalist_player_id: 'P-002',
+          qualification_winner_ids: ['P-003'],
+          player_count: 5,
+          match_count: 4
+        }
+      ]
+    })
   })
 
-  it('renders parseable tournament result metadata on the sports-facing tournaments list', async () => {
+  it('renders canonical completed tournament metadata on the sports-facing list', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
+    expect(api.getViewerCompletedTournaments).toHaveBeenCalledWith('viewer-run-1')
     const eventOne = (await screen.findByText('EVENT-1')).closest('li') as HTMLElement
     expect(screen.getByText('EVENT-2')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
@@ -132,23 +151,23 @@ describe('ViewerRunTournamentsPage', () => {
     expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
+    expect(within(eventOne).getByText('Canonical Saved Revision result')).toBeInTheDocument()
     expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
-    expect(within(eventOne).getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
-    )
-    expect(within(eventOne).getByText('Result status')).toBeInTheDocument()
-    expect(within(eventOne).getByText('completed')).toBeInTheDocument()
+    expect(within(eventOne).getByText('P-001')).toBeInTheDocument()
+    expect(within(eventOne).getByText('Finalist')).toBeInTheDocument()
+    expect(within(eventOne).getByText('P-002')).toBeInTheDocument()
+    expect(within(eventOne).getByText('Players')).toBeInTheDocument()
+    expect(within(eventOne).getByText('5')).toBeInTheDocument()
     expect(within(eventOne).getByText('Matches')).toBeInTheDocument()
-    expect(within(eventOne).getByText('31')).toBeInTheDocument()
+    expect(within(eventOne).getByText('4')).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
     )
+    expect(screen.queryByText('Ali Farag')).not.toBeInTheDocument()
     expect(screen.queryByText(/event-list-payload-should-not-render/i)).not.toBeInTheDocument()
     expect(screen.queryByText(/Match 1 should not render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
-    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
   it('keeps missing tournament list weeks as plain text without a broken week link', async () => {
@@ -174,7 +193,7 @@ describe('ViewerRunTournamentsPage', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('hides unknown tournament result payloads on the tournaments list without fake result metadata', async () => {
+  it('ignores legacy tournament result payload when no canonical saved result exists', async () => {
     api.listEvents.mockResolvedValueOnce({
       run_id: 'viewer-run-1',
       events: [
@@ -192,29 +211,78 @@ describe('ViewerRunTournamentsPage', () => {
         }
       ]
     })
+    api.getViewerCompletedTournaments.mockResolvedValueOnce({
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      tournaments: []
+    })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
-    expect(await screen.findByText('EVENT-UNKNOWN')).toBeInTheDocument()
-    expect(screen.getByText('Result publication available')).toBeInTheDocument()
-    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
+    const event = (await screen.findByText('EVENT-UNKNOWN')).closest('li') as HTMLElement
+    expect(within(event).getByText('No canonical saved result')).toBeInTheDocument()
+    expect(within(event).queryByText('Champion')).not.toBeInTheDocument()
     expect(screen.queryByText(/Fake Champion/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Fake Champion/i })).not.toBeInTheDocument()
-    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
     expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('renders safe empty state on the normal tournament list route without invented data', async () => {
+  it('renders safe empty state only when schedule and canonical history are both empty', async () => {
     api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+    api.getViewerCompletedTournaments.mockResolvedValueOnce({
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      tournaments: []
+    })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
+    expect(await screen.findByText('No tournament schedule or canonical completed result is available for this run yet.')).toBeInTheDocument()
     expect(screen.queryByText(/champion|winner|final score|standings|match result/i)).not.toBeInTheDocument()
     expect(document.body).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()
+  })
+
+  it('shows a canonical completed tournament even without a legacy event record', async () => {
+    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
+    api.getViewerCompletedTournaments.mockResolvedValueOnce({
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 1,
+      tournaments: [
+        {
+          event_id: 'CANONICAL-ONLY',
+          completed_season_index: 28,
+          completed_week: 11,
+          champion_player_id: 'P-A',
+          finalist_player_id: 'P-B',
+          qualification_winner_ids: [],
+          player_count: 16,
+          match_count: 15
+        }
+      ]
+    })
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    const item = (await screen.findByText('CANONICAL-ONLY')).closest('li') as HTMLElement
+    expect(within(item).getByText('Canonical Saved Revision result')).toBeInTheDocument()
+    expect(within(item).getByText('P-A')).toBeInTheDocument()
+    expect(within(item).getByText('P-B')).toBeInTheDocument()
+    expect(within(item).getByRole('link', { name: 'W11' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/weeks/11'
+    )
+    expect(within(item).getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-1/tournaments/CANONICAL-ONLY'
+    )
   })
 
   it('drops malformed tournament list rows and does not create unsafe links from object IDs', async () => {

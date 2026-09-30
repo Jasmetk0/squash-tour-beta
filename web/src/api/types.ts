@@ -7259,6 +7259,45 @@ export type ViewerTournamentDraw = {
   qualification_sections: ViewerTournamentDrawBracket[]
 }
 
+export type ViewerCalendarResultSummary = {
+  champion_player_id: string
+  finalist_player_id: string
+  match_count: number
+}
+
+export type ViewerCalendarEvent = {
+  event_id: string
+  season: string
+  season_index: number
+  season_week: number
+  calendar_year: number | null
+  year_week: number | null
+  template_id: string
+  event_name: string
+  category: string
+  tour_level: string | null
+  host_country: string
+  host_city: string | null
+  region: string
+  main_draw_size: number
+  qualification_draw_size: number
+  qualifier_spots: number
+  wild_card_slots: number
+  bye_slots: number
+  ranking_status: string
+  source_status: string
+  result: ViewerCalendarResultSummary | null
+}
+
+export type ViewerRunCalendar = {
+  schema_version: 'viewer_run_calendar.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  calendar_count: number
+  event_count: number
+  events: ViewerCalendarEvent[]
+}
+
 export type ViewerTournamentResultPlayer = {
   player_id: string
   draw_type: 'qualification' | 'main' | 'both' | 'hybrid' | 'group'

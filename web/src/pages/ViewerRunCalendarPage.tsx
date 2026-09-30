@@ -17,12 +17,6 @@ import {
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { tournamentResultPayloadMetadataItems } from '../viewer/TournamentResultMetadata'
-import { findPersistedEventById, findPlannedEventById } from './viewer/tour/viewerEventDetailDisplay'
-import {
-  buildPlannedEventContextLinks,
-  buildPlannedEventDetailMetadataItems,
-  resolvePlannedEventStatusLabel
-} from './viewer/tour/viewerPlannedEventDetailDisplay'
 import {
   buildWeekContextLinks,
   buildWeekDetailMetadataItems,
@@ -45,31 +39,6 @@ import {
   viewerTournamentDetailPath,
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
-
-function plannedStatus({
-  index,
-  nextEventIndex,
-  completedEventIds,
-  eventId
-}: {
-  index: number
-  nextEventIndex: number
-  completedEventIds: Set<string>
-  eventId: string
-}): string {
-  if (completedEventIds.has(eventId)) return 'completed'
-  if (index === nextEventIndex) return 'current/next'
-  if (index > nextEventIndex) return 'upcoming'
-  return 'planned'
-}
-
-function eventStatusLabel(status: string): string {
-  return status.charAt(0).toUpperCase() + status.slice(1)
-}
-
-function eventIsCompleted(completedEventIds: Set<string>, eventId: string): string {
-  return completedEventIds.has(eventId) ? 'Yes' : 'No'
-}
 
 function isScalar(value: unknown): value is string | number {
   return typeof value === 'string' || typeof value === 'number'

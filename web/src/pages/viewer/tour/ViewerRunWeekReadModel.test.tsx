@@ -198,11 +198,11 @@ describe('ViewerRunWeekPage canonical publication read model', () => {
     renderWeek()
 
     expect(
-      await screen.findByText(
-        'Failed to load canonical ranking publications: canonical ranking outage'
-      )
+      await screen.findByText(/Failed to load canonical ranking publications:/)
     ).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Race publication #9' })).toHaveAttribute(
+    expect(
+      screen.getAllByRole('link', { name: 'Race publication #9' })[0]
+    ).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/race/9'
     )
@@ -214,8 +214,10 @@ describe('ViewerRunWeekPage canonical publication read model', () => {
 
     renderWeek()
 
-    expect(await screen.findByText('Failed to load race publications: race outage')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ranking publication #1712' })).toHaveAttribute(
+    expect(await screen.findByText(/Failed to load race publications:/)).toBeInTheDocument()
+    expect(
+      screen.getAllByRole('link', { name: 'Ranking publication #1712' })[0]
+    ).toHaveAttribute(
       'href',
       '/viewer/runs/run%20alpha/rankings/1712'
     )

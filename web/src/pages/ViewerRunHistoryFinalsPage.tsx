@@ -22,9 +22,7 @@ import {
   viewerPlannedEventPath,
   viewerPlayerProfilePath,
   viewerRacePath,
-  viewerRaceSnapshotPath,
   viewerRankingsPath,
-  viewerRankingSnapshotPath,
   viewerSeasonCalendarPath,
   viewerTournamentDetailPath,
   viewerTournamentsPath
@@ -155,65 +153,6 @@ function renderPlayerLinks(runId: string, playerIds: string[]): JSX.Element | nu
   )
 }
 
-function finalsSummaryItems(summary: FinalsSummaryResponse | undefined, runId: string): Array<{ label: string; value: ReactNode }> {
-  const qualification = summary?.qualification ?? null
-  const result = summary?.result ?? null
-  const qualificationPayload = qualification?.qualification ?? null
-  const resultPayload = result?.result ?? null
-  const eventId = safeLinkId(result?.event_id)
-  return [
-    { label: 'Active run ID', value: safeScalarValue(summary?.run_id, runId || 'unknown') },
-    { label: 'Qualification availability', value: qualification ? 'Available' : 'Unavailable' },
-    { label: 'Result availability', value: result ? 'Available' : 'Unavailable' },
-    { label: 'Season', value: safeScalarValue(summary?.season ?? qualification?.season ?? result?.season) },
-    { label: 'Source event ID', value: eventId ? <Link to={viewerPlannedEventPath(runId, eventId)}>{eventId}</Link> : '—' },
-    { label: 'Qualification source snapshot', value: qualification?.source_as_of_week != null ? `${qualification.source_as_of_season} W${qualification.source_as_of_week}` : '—' },
-    { label: 'Result source snapshot', value: result?.source_as_of_week != null ? `${result.source_as_of_season} W${result.source_as_of_week}` : '—' },
-    ...collectArrayCountItems(qualificationPayload).map((item) => ({ label: `Qualification ${item.label}`, value: item.value })),
-    ...collectArrayCountItems(resultPayload).map((item) => ({ label: `Result ${item.label}`, value: item.value }))
-  ]
-}
-
-function qualificationPrimitiveMetadataItems(payload: Record<string, unknown> | null | undefined): Array<{ label: string; value: string | number }> {
-  const excluded = new Set([
-    'ranking_snapshot_sequence',
-    'source_ranking_snapshot_sequence',
-    'ranking_snapshot_seq',
-    'source_ranking_snapshot_seq',
-    'race_snapshot_sequence',
-    'source_race_snapshot_sequence',
-    'race_snapshot_seq',
-    'source_race_snapshot_seq'
-  ])
-  return collectPrimitivePayloadItems(payload, excluded).filter((item) => {
-    const label = item.label.toLowerCase()
-    return label.includes('cutoff') || label.includes('ranking') || label.includes('race') || label.includes('qualification')
-  })
-}
-
-function subpageQualificationMetadataItems(qualification: FinalsQualificationResponse, runId: string): Array<{ label: string; value: ReactNode }> {
-  const payload = qualification.qualification
-  const rankingSequence = findSnapshotSequence(payload, 'ranking')
-  const raceSequence = findSnapshotSequence(payload, 'race')
-  const qualifiedPlayersCount = readArrayFieldLength(payload, 'qualified_player_ids')
-  const groupCount = readArrayFieldLength(payload, 'groups')
-  const items: Array<{ label: string; value: ReactNode }> = [
-    { label: 'Active run ID', value: qualification.run_id },
-    { label: 'Season', value: qualification.season },
-    { label: 'Source season', value: qualification.source_as_of_season },
-    { label: 'Source week', value: formatWeek(qualification.source_as_of_week) },
-    { label: 'Qualification availability', value: hasPayloadData(payload) ? 'Available' : 'Unavailable' }
-  ]
-
-  if (qualifiedPlayersCount != null) items.push({ label: 'Qualified player count', value: qualifiedPlayersCount })
-  if (groupCount != null) items.push({ label: 'Group count', value: groupCount })
-  if (rankingSequence != null) items.push({ label: 'Ranking snapshot sequence', value: <Link to={viewerRankingSnapshotPath(runId, rankingSequence)}>Ranking snapshot {rankingSequence}</Link> })
-  if (raceSequence != null) items.push({ label: 'Race snapshot sequence', value: <Link to={viewerRaceSnapshotPath(runId, raceSequence)}>Race snapshot {raceSequence}</Link> })
-  items.push(...qualificationPrimitiveMetadataItems(payload))
-
-  return items
-}
-
 function subpageResultMetadataItems(result: FinalsResultResponse, runId: string): Array<{ label: string; value: ReactNode }> {
   const payload = result.result
   const playerIds = collectPlayerIds(payload)
@@ -227,22 +166,6 @@ function subpageResultMetadataItems(result: FinalsResultResponse, runId: string)
     ...collectArrayCountItems(payload),
     ...collectPrimitivePayloadItems(payload),
     ...playerIds.map((playerId) => ({ label: `Player ${playerId}`, value: <Link to={viewerPlayerProfilePath(runId, playerId)}>Player Profile</Link> }))
-  ]
-}
-
-function qualificationMetadataItems(qualification: FinalsQualificationResponse, runId: string): Array<{ label: string; value: ReactNode }> {
-  const payload = qualification.qualification
-  const rankingSequence = findSnapshotSequence(payload, 'ranking')
-  const raceSequence = findSnapshotSequence(payload, 'race')
-  return [
-    { label: 'Run ID', value: safeScalarValue(qualification.run_id) },
-    { label: 'Season', value: safeScalarValue(qualification.season) },
-    { label: 'Source season', value: safeScalarValue(qualification.source_as_of_season) },
-    { label: 'Source week', value: `W${qualification.source_as_of_week}` },
-    { label: 'Ranking snapshot', value: rankingSequence != null ? <Link to={viewerRankingSnapshotPath(runId, rankingSequence)}>Ranking snapshot {rankingSequence}</Link> : '—' },
-    { label: 'Race snapshot', value: raceSequence != null ? <Link to={viewerRaceSnapshotPath(runId, raceSequence)}>Race snapshot {raceSequence}</Link> : '—' },
-    ...collectArrayCountItems(payload),
-    ...collectPrimitivePayloadItems(payload, new Set(['ranking_snapshot_sequence', 'source_ranking_snapshot_sequence', 'ranking_snapshot_seq', 'source_ranking_snapshot_seq', 'race_snapshot_sequence', 'source_race_snapshot_sequence', 'race_snapshot_seq', 'source_race_snapshot_seq']))
   ]
 }
 
@@ -262,28 +185,12 @@ function resultMetadataItems(result: FinalsResultResponse, runId: string): Array
   ]
 }
 
-function hasQualificationPreviewData(payload: Record<string, unknown> | null | undefined): boolean {
-  return hasPayloadData(payload) && (
-    collectPlayerIds(payload).length > 0 ||
-    readArrayFieldLength(payload, 'qualified_player_ids') != null ||
-    readArrayFieldLength(payload, 'groups') != null ||
-    findSnapshotSequence(payload, 'ranking') != null ||
-    findSnapshotSequence(payload, 'race') != null ||
-    qualificationPrimitiveMetadataItems(payload).length > 0
-  )
-}
-
 function hasResultPreviewData(payload: Record<string, unknown> | null | undefined): boolean {
   return hasPayloadData(payload) && (
     collectPlayerIds(payload).length > 0 ||
     collectArrayCountItems(payload).length > 0 ||
     collectPrimitivePayloadItems(payload).length > 0
   )
-}
-
-function readArrayFieldLength(payload: Record<string, unknown> | null | undefined, key: string): number | null {
-  const value = payload?.[key]
-  return Array.isArray(value) ? value.length : null
 }
 
 function formatWeek(week: number | null | undefined): string {

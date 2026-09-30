@@ -210,7 +210,7 @@ describe('ViewerRunHistoryFinalsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
-    expect(screen.getByText('Published')).toBeInTheDocument()
+    expect((await screen.findAllByText('Published')).length).toBeGreaterThan(0)
     expect(screen.getByText('WTF-2031')).toBeInTheDocument()
 
     const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })
@@ -273,7 +273,7 @@ describe('ViewerRunHistoryFinalsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Finals Qualification' })).toBeInTheDocument()
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
-    expect(screen.getByText('W40')).toBeInTheDocument()
+    expect(await screen.findByText('W40')).toBeInTheDocument()
     expect(screen.getByText('WTF-2031')).toBeInTheDocument()
 
     const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })

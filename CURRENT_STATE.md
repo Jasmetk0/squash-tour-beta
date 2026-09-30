@@ -3235,3 +3235,13 @@ The top-level `/viewer/history` landing now uses only Saved-Revision public auth
 
 Legacy activity feed, SimulationRun status/event registry, Ranking snapshots and Race snapshots are no longer read by the top-level History landing. The page summarizes canonical publication counts and links into the run-scoped canonical History surface.
 
+### Canonical top-level Viewer Tour Calendar
+
+The top-level `/viewer/tour/calendar` landing now uses the selected Product Run and `viewer_run_calendar.v1` Saved-Revision authority.
+
+- legacy SimulationRun `getRun` metadata is removed from this landing;
+- the summary exposes Saved Calendar Product Run, Viewer Branch, season count and event count;
+- the route links into the run-scoped canonical Season Calendar surface;
+- Working Draft schedule state is not inferred.
+
+

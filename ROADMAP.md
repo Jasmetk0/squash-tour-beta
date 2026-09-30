@@ -1705,3 +1705,7 @@ Season Calendar, Planned Event and Week Detail now consume `viewer_run_calendar.
 
 Top-level Viewer History is now fully Saved-Revision-backed and no longer depends on legacy run activity/event/snapshot readers. Remaining legacy Viewer cleanup can focus on deferred surfaces and the explicit Race snapshot compatibility path.
 
+### Viewer Tour Calendar cleanup
+
+Top-level Tour Calendar now consumes `viewer_run_calendar.v1` directly and no longer depends on legacy SimulationRun metadata. Remaining legacy Viewer cleanup can focus on deferred surfaces and explicit Race snapshot compatibility.
+

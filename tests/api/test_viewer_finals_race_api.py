@@ -55,7 +55,7 @@ def test_viewer_finals_race_is_published_only_from_saved_simulation_component(
 
         # Live Finals Race / participant authority is not itself a Viewer publication.
         status, before_save = _request("GET", viewer_url)
-        assert status == 200
+        assert status == 200, (status, before_save)
         assert before_save["publications"] == []
         assert before_save["latest_target_season_index"] is None
 

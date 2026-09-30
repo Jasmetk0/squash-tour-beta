@@ -74,8 +74,9 @@ export function ViewerHomePage(): JSX.Element {
   const canRenderActiveRunData = queryEnabled && !isActiveSummaryLoading && !isActiveSummaryUnavailable
 
   const completedTournaments = (tournamentsQuery.data?.tournaments ?? []).filter((event) => event.result_published)
-  const latestCompletedTournament = completedTournaments.at(-1) ?? null
-  const latestRankingPublication = rankingsQuery.data?.publications.at(-1) ?? null
+  const latestCompletedTournament = completedTournaments.length > 0 ? completedTournaments[completedTournaments.length - 1] : null
+  const rankingPublications = rankingsQuery.data?.publications ?? []
+  const latestRankingPublication = rankingPublications.length > 0 ? rankingPublications[rankingPublications.length - 1] : null
   const latestRacePublication =
     raceQuery.data?.latest_target_season_index == null
       ? null

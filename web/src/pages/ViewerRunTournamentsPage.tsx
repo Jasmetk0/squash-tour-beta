@@ -17,10 +17,7 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import {
-  TournamentResultMetadataList,
-  tournamentResultMetadataItems
-} from '../viewer/TournamentResultMetadata'
+import { TournamentResultMetadataList } from '../viewer/TournamentResultMetadata'
 import {
   viewerPlannedEventPath,
   viewerTournamentsPath,

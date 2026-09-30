@@ -1613,4 +1613,14 @@ The Viewer tournament downstream chain now reaches canonical Entry Field → eff
 
 ### Viewer Wild Card downstream integration
 
-The selected Viewer Branch now supplies a definitive public WC/RWC projection alongside canonical Entry Field and effective Draw. Only persisted definitive assignments are public; nomination/review state and first-entry/provenance internals stay Admin-side. Canonical tournament results/history, Race and Finals remain separate downstream migrations.
+The selected Viewer Branch now supplies a definitive public WC/RWC projection alongside canonical Entry Field and effective Draw. Only persisted definitive assignments are public; nomination/review state and first-entry/provenance internals stay Admin-side. Race and Finals remain separate downstream migrations.
+
+
+### Viewer Tournament Result downstream integration
+
+Tournament Detail now continues the canonical selected-Viewer-Branch chain through
+Entry Field → definitive WC/RWC → effective Draw → completed Tournament Result. Result
+publication is bounded by the immutable Saved Ranking component, so live Working Draft
+closes cannot leak into Viewer. The public projection is sporting-only and hides
+authority/provenance fingerprints and point/prize internals. Tournament-list/history
+detachment from legacy event records, Race and Finals remain separate follow-up slices.

@@ -1693,3 +1693,7 @@ Next Viewer compatibility work should integrate the canonical saved-calendar sta
 
 Viewer Week canonical Ranking publication integration and Race-only snapshot compatibility have been reconciled onto the current integration line. Ranking history uses `week_ordinal`; legacy Race detail remains `snapshotSequence` until an explicit product identity decision replaces that compatibility surface.
 
+### Viewer Saved Calendar authority
+
+The canonical `viewer_run_calendar.v1` Saved-Revision API has been restored on the current integration line. Downstream Viewer Calendar/Planned Event/Week surfaces may migrate to this direct authority incrementally without reverting newer Tournament History/Home/Finals work.
+

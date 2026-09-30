@@ -348,7 +348,7 @@ describe('ViewerRunHistoryFinalsPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Finals Result' })).toBeInTheDocument()
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
-    expect(await screen.findByText('11-8 11-9 11-7')).toBeInTheDocument()
+    expect(await screen.findByRole('list', { name: 'Canonical Finals match results' })).toHaveTextContent('11-8 11-9 11-7')
     expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-2e', 'WTF-2031')
 
     expect((await screen.findAllByText('W41')).length).toBeGreaterThan(0)

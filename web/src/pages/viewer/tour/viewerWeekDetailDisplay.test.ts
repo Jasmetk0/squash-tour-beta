@@ -190,7 +190,7 @@ describe("viewerWeekDetailDisplay helpers", () => {
       buildWeekContextLinks({
         runId: "run alpha/#1",
         week: 5,
-        rankingSnapshotSequences: [3],
+        rankingPublicationOrdinals: [1709],
         raceSnapshotSequences: [9],
       }),
     ).toEqual([
@@ -210,8 +210,8 @@ describe("viewerWeekDetailDisplay helpers", () => {
       },
       { label: "Race snapshots", href: "/viewer/runs/run%20alpha%2F%231/race" },
       {
-        label: "Ranking publication #3",
-        href: "/viewer/runs/run%20alpha%2F%231/rankings/3",
+        label: "Ranking publication #1709",
+        href: "/viewer/runs/run%20alpha%2F%231/rankings/1709",
       },
       {
         label: "Race publication #9",

@@ -3102,3 +3102,26 @@ canonical Saved-Revision Tournament History.
 - Week Detail remains the next schedule-view compatibility boundary.
 
 See `docs/VIEWER_PLANNED_EVENT_V1.md`.
+
+
+### Canonical Viewer Finals Race
+
+The main public Race to Finals surface now reads season-scoped canonical Race evidence from
+the selected Viewer Branch's immutable Saved Revision.
+
+- `/viewer/rankings/race` and `/viewer/runs/:runId/race` use
+  `viewer_finals_race_history.v1`, not the legacy SimulationRun Race snapshot registry;
+- every saved World Tour Finals Race season publishes frozen rank, Race points and counted
+  sporting results without exposing tie-break tokens or authority fingerprints;
+- Finals selection status is joined only from the same Saved Revision;
+- when accepted Finals replacements exist, the latest effective participant state determines
+  current public Finals membership and seed while the immutable initial selection remains
+  historical evidence;
+- before selection exists, the public field reports selection pending rather than falsely
+  classifying every player as not selected;
+- live Race/selection/replacement Working Draft changes remain invisible until normal
+  authoritative Simulation Save;
+- legacy `race/:snapshotSequence` detail plus older Home/History/deferred Race consumers
+  remain compatibility follow-ups and are not canonical authority.
+
+See `docs/VIEWER_FINALS_RACE_V1.md`.

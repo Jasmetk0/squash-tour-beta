@@ -3055,8 +3055,11 @@ to canonical authority.
   Calendar output;
 - package IDs/versions, fingerprints/provenance, ranking point tables and prize-money
   configuration remain hidden from the public Calendar projection;
-- Week ranking/race publication lists still use their existing read-only compatibility
-  endpoints pending their own Viewer Saved-Revision migration.
+- Viewer Week ranking publications now use canonical Saved-Revision Official Ranking
+  history, filtered by public season/week and linked by canonical `week_ordinal`;
+- legacy Ranking snapshot sequence/source-event matching is no longer used by the Week
+  page. Race publication linkage remains on its compatibility snapshot reader in this
+  slice and is owned by the separate canonical Race/Finals migration.
 
 See `docs/VIEWER_TOURNAMENT_RESULT_V1.md` and
 `docs/VIEWER_SAVED_CALENDAR_V1.md`.

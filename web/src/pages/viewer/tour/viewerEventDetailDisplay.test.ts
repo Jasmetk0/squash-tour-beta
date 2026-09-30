@@ -1,13 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import type { EventRecord, RaceSnapshot, RankingSnapshot, SeasonStateResponse } from '../../../api/types'
+import type { EventRecord, SeasonStateResponse } from '../../../api/types'
 import {
   buildEventDetailLinks,
   buildPersistedEventMetadataItems,
   buildPlannedEventMetadataItems,
   findPersistedEventById,
-  findPlannedEventById,
-  snapshotsForSourceEvent
+  findPlannedEventById
 } from './viewerEventDetailDisplay'
 
 const seasonState: SeasonStateResponse['season_state'] = {
@@ -67,19 +66,6 @@ describe('viewerEventDetailDisplay', () => {
     ])
   })
 
-  it('filters ranking and race snapshots by exact source event ID', () => {
-    const rankingSnapshots: RankingSnapshot[] = [
-      { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: 'EVENT/1', payload: {} },
-      { snapshot_sequence: 11, snapshot_kind: 'ranking', source_event_id: 'OTHER', payload: {} }
-    ]
-    const raceSnapshots: RaceSnapshot[] = [
-      { snapshot_sequence: 12, snapshot_kind: 'race', source_event_id: 'EVENT/1', payload: {} }
-    ]
-
-    expect(snapshotsForSourceEvent(rankingSnapshots, 'EVENT/1')).toEqual([rankingSnapshots[0]])
-    expect(snapshotsForSourceEvent(raceSnapshots, 'EVENT/1')).toEqual([raceSnapshots[0]])
-  })
-
   it('builds encoded safe source links in stable order', () => {
     expect(
       buildEventDetailLinks({
@@ -87,9 +73,7 @@ describe('viewerEventDetailDisplay', () => {
         eventId: 'EVENT/1',
         week: 5,
         hasPlanned: true,
-        hasPersisted: true,
-        rankingSnapshotSequences: [10],
-        raceSnapshotSequences: [12]
+        hasPersisted: true
       })
     ).toEqual([
       { label: 'Run browser', href: '/viewer/runs' },
@@ -99,31 +83,8 @@ describe('viewerEventDetailDisplay', () => {
       { label: 'Tournament detail', href: '/viewer/runs/run%20alpha/tournaments/EVENT%2F1' },
       { label: 'Week W5', href: '/viewer/runs/run%20alpha/weeks/5' },
       { label: 'Ranking snapshots', href: '/viewer/runs/run%20alpha/rankings' },
-      { label: 'Race snapshots', href: '/viewer/runs/run%20alpha/race' },
-      { label: 'Ranking publication #10', href: '/viewer/runs/run%20alpha/rankings/10' },
-      { label: 'Race publication #12', href: '/viewer/runs/run%20alpha/race/12' }
+      { label: 'Race snapshots', href: '/viewer/runs/run%20alpha/race' }
     ])
-  })
-
-  it('does not partially match snapshot source event IDs', () => {
-    const rankingSnapshots: RankingSnapshot[] = [
-      { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: 'EVENT/10', payload: {} },
-      { snapshot_sequence: 11, snapshot_kind: 'ranking', source_event_id: 'EVENT/1', payload: {} }
-    ]
-
-    expect(snapshotsForSourceEvent(rankingSnapshots, 'EVENT/1')).toEqual([rankingSnapshots[1]])
-  })
-
-  it('handles null and undefined snapshot source event IDs safely', () => {
-    const rankingSnapshots = [
-      { snapshot_sequence: 10, snapshot_kind: 'ranking', source_event_id: null, payload: {} },
-      { snapshot_sequence: 11, snapshot_kind: 'ranking', payload: {} },
-      { snapshot_sequence: 12, snapshot_kind: 'ranking', source_event_id: 'EVENT/1', payload: {} }
-    ] as RankingSnapshot[]
-
-    expect(snapshotsForSourceEvent(rankingSnapshots, 'EVENT/1')).toEqual([rankingSnapshots[2]])
-    expect(snapshotsForSourceEvent(undefined, 'EVENT/1')).toEqual([])
-    expect(snapshotsForSourceEvent(null, 'EVENT/1')).toEqual([])
   })
 
   it('builds only base context and snapshot-list links without persisted, planned, or week context', () => {
@@ -141,18 +102,16 @@ describe('viewerEventDetailDisplay', () => {
     ])
   })
 
-  it('keeps stable source-link order for multiple ranking and race publication sequences', () => {
-    expect(
-      buildEventDetailLinks({
-        runId: 'run alpha',
-        eventId: 'EVENT/1',
-        week: 5,
-        hasPlanned: true,
-        hasPersisted: true,
-        rankingSnapshotSequences: [10, 13],
-        raceSnapshotSequences: [12, 14]
-      }).map((link) => link.label)
-    ).toEqual([
+  it('keeps only generic Ranking and Race compatibility links without inferred publication ids', () => {
+    const links = buildEventDetailLinks({
+      runId: 'run alpha',
+      eventId: 'EVENT/1',
+      week: 5,
+      hasPlanned: true,
+      hasPersisted: true
+    })
+
+    expect(links.map((link) => link.label)).toEqual([
       'Run browser',
       'Tournament list',
       'Season calendar',
@@ -160,12 +119,9 @@ describe('viewerEventDetailDisplay', () => {
       'Tournament detail',
       'Week W5',
       'Ranking snapshots',
-      'Race snapshots',
-      'Ranking publication #10',
-      'Ranking publication #13',
-      'Race publication #12',
-      'Race publication #14'
+      'Race snapshots'
     ])
+    expect(links.some((link) => /publication #/i.test(link.label))).toBe(false)
   })
 
   it('returns null when planned event lists are missing or empty', () => {

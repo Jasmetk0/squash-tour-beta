@@ -1701,3 +1701,7 @@ The canonical `viewer_run_calendar.v1` Saved-Revision API has been restored on t
 
 Season Calendar, Planned Event and Week Detail now consume `viewer_run_calendar.v1` directly. Remaining Viewer compatibility work should focus on replacing the legacy Race `snapshotSequence` surface only when a canonical public Race identity is explicitly defined.
 
+### Viewer history cleanup
+
+Top-level Viewer History is now fully Saved-Revision-backed and no longer depends on legacy run activity/event/snapshot readers. Remaining legacy Viewer cleanup can focus on deferred surfaces and the explicit Race snapshot compatibility path.
+

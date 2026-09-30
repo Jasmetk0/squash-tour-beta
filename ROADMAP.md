@@ -1697,3 +1697,7 @@ Viewer Week canonical Ranking publication integration and Race-only snapshot com
 
 The canonical `viewer_run_calendar.v1` Saved-Revision API has been restored on the current integration line. Downstream Viewer Calendar/Planned Event/Week surfaces may migrate to this direct authority incrementally without reverting newer Tournament History/Home/Finals work.
 
+### Viewer Saved Calendar downstream migration
+
+Season Calendar, Planned Event and Week Detail now consume `viewer_run_calendar.v1` directly. Remaining Viewer compatibility work should focus on replacing the legacy Race `snapshotSequence` surface only when a canonical public Race identity is explicitly defined.
+

@@ -58,6 +58,7 @@ const api = vi.hoisted(() => ({
   getViewerRankingTable: vi.fn(),
   getViewerOfficialRanking: vi.fn(),
   getViewerFinalsRace: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
   getRun: vi.fn(),
   getRunStatusSummary: vi.fn(),
   listEvents: vi.fn(),
@@ -162,6 +163,35 @@ function resetApiMocks(): void {
     viewer_branch_id: `${productRunId}-official`,
     latest_target_season_index: null,
     publications: []
+  }))
+  api.getViewerTournamentHistory.mockImplementation(async (productRunId: string) => ({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: productRunId,
+    viewer_branch_id: `${productRunId}-official`,
+    tournament_count: 1,
+    published_result_count: 0,
+    tournaments: [{
+      event_id: 'E1',
+      season: '2029/30',
+      season_week: 2,
+      event_name: 'Canonical Event E1',
+      template_id: 'TEMP-A',
+      category: 'GOLD',
+      tour_level: 'WORLD_TOUR',
+      host_country: 'CZE',
+      host_city: 'Prague',
+      region: 'EUROPE',
+      main_draw_size: 16,
+      qualification_draw_size: 8,
+      seeds_count: 4,
+      qualifier_spots: 4,
+      wild_cards: 2,
+      byes: 0,
+      ranking_status: 'ranked',
+      result_published: false,
+      champion_player_id: null,
+      finalist_player_id: null
+    }]
   }))
   api.getRun.mockResolvedValue({
     run: { run_id: 'run-a', season: 2029, seed: 7, next_event_index: 0, total_events: 1, completed_event_ids: [] },

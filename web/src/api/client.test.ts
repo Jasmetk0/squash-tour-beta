@@ -24,6 +24,8 @@ import {
   getViewerOfficialRunContext,
   getViewerTournamentHistory,
   getViewerRunCalendar,
+  getViewerPlayers,
+  getViewerCountries,
   getViewerFinalsRace,
   listRunBranches,
   getRunBranch,
@@ -123,6 +125,60 @@ describe('Viewer Saved Calendar client', () => {
     await expect(getViewerRunCalendar('run/a #1')).resolves.toEqual(body)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/calendar',
+      expect.anything()
+    )
+  })
+})
+
+describe('Viewer canonical people client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical Players from the encoded Product Run route', async () => {
+    const body = {
+      schema_version: 'viewer_players.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      player_count: 0,
+      active_player_count: 0,
+      retired_player_count: 0,
+      players: []
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerPlayers('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/players',
+      expect.anything()
+    )
+  })
+
+  it('reads canonical Countries from the encoded Product Run route', async () => {
+    const body = {
+      schema_version: 'viewer_countries.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      country_count: 0,
+      countries: []
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerCountries('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/countries',
       expect.anything()
     )
   })

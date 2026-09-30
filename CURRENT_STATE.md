@@ -3270,3 +3270,19 @@ The only remaining legacy dependency in this H2H slice is `listRunPlayers`, isol
 
 See `docs/VIEWER_H2H_CANONICAL_METADATA_V1.md`.
 
+### Canonical Viewer Players and Countries authority
+
+The selected Viewer Branch Saved Revision now exposes canonical public people projections:
+
+- `viewer_players.v1` joins Initial World identity, current player lifecycle, current sporting state and the Saved Run prospect source;
+- `viewer_countries.v1` aggregates the canonical player projection by country;
+- active/retired status, age, Tour-entry boundary and current sporting display metrics are Saved-Revision-backed;
+- legacy SimulationRun player lists are not authority for these new endpoints;
+- player identity/provenance internals, seeds, fingerprints and hidden traits are not published.
+
+Endpoints:
+- `GET /viewer/runs/{product_run_id}/players`
+- `GET /viewer/runs/{product_run_id}/countries`
+
+See `docs/VIEWER_CANONICAL_PEOPLE_V1.md`.
+

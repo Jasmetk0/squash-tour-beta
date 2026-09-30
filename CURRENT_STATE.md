@@ -3155,3 +3155,16 @@ The dedicated World Tour Finals Result route now uses the canonical Saved-Revisi
 The route no longer calls the legacy SimulationRun Finals result endpoint or renders its technical payload. If the Finals event identity is not published, the Tournament Result query is not issued. If the event exists but its canonical result has not reached the selected Saved Revision, Viewer reports the result as not published instead of falling back to legacy data. See `docs/VIEWER_FINALS_RESULT_V1.md`.
 
 Remaining Viewer compatibility work includes legacy Race snapshot-sequence detail plus Home/History/deferred consumers; this slice does not change Finals gameplay or qualification policy.
+
+
+### Canonical Viewer History
+
+The run-scoped Viewer History page is now detached from the legacy SimulationRun activity feed. It reads only Saved-Revision-bounded public projections from the selected Viewer Branch:
+
+- completed published tournaments from `viewer_tournament_history.v1`;
+- Official Ranking publication history from `viewer_official_ranking_history.v1`;
+- World Tour Finals Race publication history from `viewer_finals_race_history.v1`.
+
+The three domains remain separate timelines with their own canonical identities. History does not fabricate a cross-domain sequence and does not reinterpret legacy Race `snapshotSequence` values as canonical Finals Race season identities. Legacy technical activity JSON is no longer rendered on this route. See `docs/VIEWER_CANONICAL_HISTORY_V1.md`.
+
+Remaining Viewer compatibility work includes the legacy Race snapshot-sequence detail route and broader top-level Home/deferred consumers. Those should be migrated only where canonical identity can be preserved explicitly.

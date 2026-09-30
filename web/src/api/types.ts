@@ -7259,6 +7259,52 @@ export type ViewerTournamentDraw = {
   qualification_sections: ViewerTournamentDrawBracket[]
 }
 
+export type ViewerTournamentResultPlayer = {
+  player_id: string
+  draw_type: 'qualification' | 'main' | 'both' | 'hybrid' | 'group'
+  seed_number: number | null
+  qualifier: boolean
+  main_entry_status: 'direct' | 'wild_card' | 'lucky_loser' | null
+  reached_stage: string
+  final_round_number: number | null
+  eliminated_by_player_id: string | null
+  last_match_id: string | null
+  wins: number
+  losses: number
+  byes_received: number
+  walkovers_received: number
+  retired_or_walkover_loss: boolean
+  group_index: number | null
+  group_position: number | null
+  played_group_wins: number | null
+  group_walkovers_received: number | null
+  knockout_reached_stage: string | null
+}
+
+export type ViewerTournamentResultMatch = {
+  match_id: string
+  draw_type: 'qualification' | 'main' | 'group' | 'knockout'
+  round_number: number
+  bracket_position: number
+  winner_player_id: string
+  loser_player_id: string | null
+  scoreline: string
+}
+
+export type ViewerTournamentResult = {
+  schema_version: 'viewer_tournament_result.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  event_id: string
+  completed_season_index: number
+  completed_week: number
+  champion_player_id: string
+  finalist_player_id: string
+  qualification_winner_ids: string[]
+  players: ViewerTournamentResultPlayer[]
+  matches: ViewerTournamentResultMatch[]
+}
+
 export type ViewerOfficialRankingRow = {
   rank: number
   player_id: string

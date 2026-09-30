@@ -135,12 +135,22 @@ def _participant_selections(
             raise ValueError(
                 "Saved Finals participant selection belongs to another Viewer Branch"
             )
-        if row.get("run_id") != run_id or row.get("branch_id") != branch_id:
-            raise ValueError("Saved Finals participant row scope differs from its payload")
-        if row.get("target_season_index") != snapshot.target_season_index:
-            raise ValueError("Saved Finals participant row season differs from its payload")
-        if row.get("snapshot_fingerprint") != snapshot.fingerprint:
-            raise ValueError("Saved Finals participant snapshot fingerprint is corrupt")
+        if (
+            row.get("run_id"),
+            row.get("branch_id"),
+            row.get("target_season_index"),
+            row.get("snapshot_fingerprint"),
+            row.get("configuration_fingerprint"),
+            row.get("race_snapshot_fingerprint"),
+        ) != (
+            run_id,
+            branch_id,
+            snapshot.target_season_index,
+            snapshot.fingerprint,
+            snapshot.configuration_fingerprint,
+            snapshot.race_snapshot_fingerprint,
+        ):
+            raise ValueError("Saved Finals participant row identity is corrupt")
         if snapshot.target_season_index in result:
             raise ValueError("Viewer Saved Revision has duplicate Finals participant seasons")
         result[snapshot.target_season_index] = snapshot

@@ -3286,3 +3286,19 @@ Endpoints:
 
 See `docs/VIEWER_CANONICAL_PEOPLE_V1.md`.
 
+### Canonical Viewer people UI migration
+
+Viewer people list/search/sample surfaces now consume Product Run-scoped canonical people projections:
+
+- top-level Players and Countries hubs;
+- Viewer Search player/country results;
+- H2H deferred player samples;
+- run-scoped Players list;
+- run-scoped Countries list.
+
+These migrated surfaces no longer use legacy `listRunPlayers` / `listRunNations`. Viewer Search also uses canonical Saved Calendar + Tournament History for tournament results.
+
+Legacy player career/history/performance details and legacy detailed country profiles remain explicit compatibility islands until dedicated canonical historical/profile read models exist.
+
+See `docs/VIEWER_CANONICAL_PEOPLE_UI_MIGRATION_V1.md`.
+

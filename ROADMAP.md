@@ -1717,3 +1717,7 @@ Shared deferred Viewer pages are now Product Run-scoped and Saved-Revision-backe
 
 H2H sporting metadata is now canonical and Product Run-scoped. The remaining H2H legacy dependency is the player registry; replace `listRunPlayers` only when a canonical Product Run player projection is defined. H2H analytics themselves remain deferred until authoritative match history exists.
 
+### Canonical Viewer people migration
+
+Canonical Saved-Revision Players/Countries endpoints now exist. Next migrate run-scoped Players/Countries pages, top-level People landings and H2H player samples from legacy `listRunPlayers/listRunNations` onto these Product Run-scoped projections, then retire the remaining Viewer SimulationRun player compatibility reads.
+

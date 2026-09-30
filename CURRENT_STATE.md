@@ -3225,3 +3225,13 @@ Season Calendar, Planned Event and Week Detail now read schedule truth directly 
 
 See `docs/VIEWER_DIRECT_SAVED_CALENDAR_INTEGRATION_V1.md`.
 
+### Canonical top-level Viewer History
+
+The top-level `/viewer/history` landing now uses only Saved-Revision public authorities for the selected Product Run:
+
+- canonical Tournament History;
+- canonical Official Ranking History;
+- canonical World Tour Finals Race history.
+
+Legacy activity feed, SimulationRun status/event registry, Ranking snapshots and Race snapshots are no longer read by the top-level History landing. The page summarizes canonical publication counts and links into the run-scoped canonical History surface.
+

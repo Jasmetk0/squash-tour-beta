@@ -22,6 +22,7 @@ import {
   getRunContainer,
   getRunPackageState,
   getViewerOfficialRunContext,
+  getViewerCompletedTournaments,
   listRunBranches,
   getRunBranch,
   createRunBranchFromSavedRevision,
@@ -1347,6 +1348,44 @@ describe('Finals Race replacement client', () => {
         method: 'POST',
         body: JSON.stringify(payload)
       })
+    )
+  })
+})
+
+
+describe('Viewer completed tournaments client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical completed tournament history with an encoded Product Run ID', async () => {
+    const body = {
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 1,
+      tournaments: [
+        {
+          event_id: 'EVENT/1',
+          completed_season_index: 2,
+          completed_week: 17,
+          champion_player_id: 'P-1',
+          finalist_player_id: 'P-2',
+          qualification_winner_ids: [],
+          player_count: 16,
+          match_count: 15
+        }
+      ]
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerCompletedTournaments('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/tournaments/completed',
+      expect.anything()
     )
   })
 })

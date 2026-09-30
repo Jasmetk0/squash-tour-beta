@@ -23,6 +23,7 @@ import {
   getRunPackageState,
   getViewerOfficialRunContext,
   getViewerCompletedTournaments,
+  getViewerRunCalendar,
   listRunBranches,
   getRunBranch,
   createRunBranchFromSavedRevision,
@@ -1385,6 +1386,66 @@ describe('Viewer completed tournaments client', () => {
     await expect(getViewerCompletedTournaments('run/a #1')).resolves.toEqual(body)
     expect(fetchMock).toHaveBeenCalledWith(
       'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/tournaments/completed',
+      expect.anything()
+    )
+  })
+})
+
+
+describe('Viewer Saved Calendar client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical Saved Calendar with an encoded Product Run ID', async () => {
+    const body = {
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      season_count: 1,
+      event_count: 1,
+      seasons: [
+        {
+          season: '2030/2031',
+          event_count: 1,
+          events: [
+            {
+              event_id: 'EVENT/1',
+              season: '2030/2031',
+              season_week: 7,
+              calendar_year: 2030,
+              year_week: 43,
+              template_id: 'WT-PLAT',
+              event_name: 'Czech Open',
+              category: 'Platinum',
+              tour_level: 'WORLD_TOUR',
+              host_country: 'CZE',
+              host_city: 'Brno',
+              region: 'Europe',
+              duration_in_season_weeks: 1,
+              start_season_week: 7,
+              end_season_week: 7,
+              status: 'planned',
+              main_draw_size: 32,
+              qualification_draw_size: 16,
+              seeds_count: 8,
+              qualifier_spots: 4,
+              wild_cards: 2,
+              byes: 0,
+              prestige: 8.5
+            }
+          ]
+        }
+      ]
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerRunCalendar('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/calendar',
       expect.anything()
     )
   })

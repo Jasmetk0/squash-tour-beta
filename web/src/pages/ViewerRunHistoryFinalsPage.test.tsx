@@ -360,7 +360,7 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expect(screen.getAllByRole('link', { name: 'P1' }).length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'Q1' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2e/players/Q1'
+      '/viewer/runs/viewer-run-2e/players/Q1/career'
     )
     expect(screen.getByRole('list', { name: 'Canonical Finals player results' })).toBeInTheDocument()
     expect(screen.getByRole('list', { name: 'Canonical Finals match results' })).toBeInTheDocument()

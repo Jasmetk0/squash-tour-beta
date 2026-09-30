@@ -59,6 +59,7 @@ The public list does not expose:
 ## Remaining compatibility surfaces
 
 Tournament Detail still reads the legacy persisted event record for some descriptive/technical
-compatibility metadata and legacy Ranking/Race publication links. The Season Calendar and Week
-Viewer pages also retain legacy season/event readers. Those are separate migration slices and do
-not make the top-level Tournament History list legacy-backed again.
+compatibility metadata and legacy Ranking/Race publication links. The top-level Season Calendar
+now reuses this canonical history projection, while Planned Event and Week Detail still retain
+legacy season/event readers. Those are separate migration slices and do not make Tournament
+History or the top-level Calendar legacy-backed again.

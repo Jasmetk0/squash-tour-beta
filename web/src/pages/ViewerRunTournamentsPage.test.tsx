@@ -286,6 +286,13 @@ describe('ViewerRunTournamentsPage', () => {
   })
 
   it('drops malformed tournament list rows and does not create unsafe links from object IDs', async () => {
+    api.getViewerCompletedTournaments.mockResolvedValueOnce({
+      schema_version: 'viewer_completed_tournaments.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      tournaments: []
+    })
     api.listEvents.mockResolvedValueOnce({
       run_id: 'viewer-run-1',
       events: [null, 12, 'bad', {}, { event_id: { bad: true }, week: 3 }, { event_id: 'EVENT-SAFE', week: { bad: true }, template_id: { bad: true }, tournament_result: { fake_winner: 'Fake Winner' } }]

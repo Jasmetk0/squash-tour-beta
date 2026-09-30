@@ -1633,5 +1633,13 @@ Packages only from the selected Viewer Branch's Saved Run Package component and 
 canonical Tournament Results only from the same Saved Ranking component. Live Package/result
 changes do not appear before their normal Save boundaries, and orphan/duplicate identities fail
 closed instead of falling back to the legacy event registry. Tournament Detail technical
-compatibility metadata, Season Calendar/Week legacy reads, Race and Finals remain separate
+compatibility metadata, Planned Event/Week legacy reads, Race and Finals remain separate
 migration slices.
+
+### Viewer Season Calendar downstream integration
+
+The top-level Season Calendar now reuses canonical Saved-Revision Tournament History and no
+longer reads the legacy SimulationRun season plan or event registry. It deliberately avoids
+reconstructing current/upcoming status from legacy next-event state. Planned Event and Week
+Detail remain follow-up slices because their richer context still depends on compatibility
+event state plus legacy Ranking/Race publication readers.

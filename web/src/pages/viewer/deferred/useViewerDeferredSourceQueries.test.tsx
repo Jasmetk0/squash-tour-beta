@@ -1,24 +1,14 @@
 import { screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import {
-  makeEventListResponse,
-  makeFinalsSummary,
-  makeRaceSnapshotListResponse,
-  makeRankingSnapshotListResponse,
-  makeRunStatusSummary,
-  makeSeasonStateResponse,
-} from '../../../test/viewerDeferredFixtures'
 import { renderWithViewerProviders } from '../../../test/viewerTestUtils'
 import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries'
 
 const api = vi.hoisted(() => ({
-  getFinalsSummary: vi.fn(),
-  getRun: vi.fn(),
-  getRunStatusSummary: vi.fn(),
-  listEvents: vi.fn(),
-  listRaceSnapshots: vi.fn(),
-  listRankingSnapshots: vi.fn(),
+  getViewerRunCalendar: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
 }))
 
 vi.mock('../../../api/client', () => api)
@@ -26,12 +16,140 @@ vi.mock('../../../api/client', () => api)
 type HookProps = Parameters<typeof useViewerDeferredSourceQueries>[0]
 
 function setupApiMocks(): void {
-  api.getRun.mockResolvedValue(makeSeasonStateResponse(7))
-  api.getRunStatusSummary.mockResolvedValue(makeRunStatusSummary())
-  api.listEvents.mockResolvedValue(makeEventListResponse(2))
-  api.listRankingSnapshots.mockResolvedValue(makeRankingSnapshotListResponse())
-  api.listRaceSnapshots.mockResolvedValue(makeRaceSnapshotListResponse())
-  api.getFinalsSummary.mockResolvedValue(makeFinalsSummary())
+  api.getViewerRunCalendar.mockResolvedValue({
+    schema_version: 'viewer_run_calendar.v1',
+    product_run_id: 'run alpha',
+    viewer_branch_id: 'branch-a',
+    season_count: 1,
+    event_count: 2,
+    seasons: [
+      {
+        season: '2030/2031',
+        event_count: 2,
+        events: [
+          {
+            event_id: 'EVENT-1',
+            season: '2030/2031',
+            season_week: 1,
+            calendar_year: 2030,
+            year_week: 40,
+            template_id: 'WT-GOLD',
+            event_name: 'Completed Open',
+            category: 'GOLD',
+            tour_level: 'WORLD_TOUR',
+            host_country: 'CZE',
+            host_city: 'Brno',
+            region: 'EUROPE',
+            duration_in_season_weeks: 1,
+            start_season_week: 1,
+            end_season_week: 1,
+            status: 'completed',
+            main_draw_size: 32,
+            qualification_draw_size: 16,
+            seeds_count: 8,
+            qualifier_spots: 4,
+            wild_cards: 2,
+            byes: 0,
+            prestige: 8,
+          },
+          {
+            event_id: 'EVENT-2',
+            season: '2030/2031',
+            season_week: 2,
+            calendar_year: 2030,
+            year_week: 41,
+            template_id: 'WT-PLAT',
+            event_name: 'Next Open',
+            category: 'PLATINUM',
+            tour_level: 'WORLD_TOUR',
+            host_country: 'EGY',
+            host_city: 'Cairo',
+            region: 'AFRICA',
+            duration_in_season_weeks: 1,
+            start_season_week: 2,
+            end_season_week: 2,
+            status: 'planned',
+            main_draw_size: 32,
+            qualification_draw_size: 16,
+            seeds_count: 8,
+            qualifier_spots: 4,
+            wild_cards: 2,
+            byes: 0,
+            prestige: 9,
+          },
+        ],
+      },
+    ],
+  })
+  api.getViewerTournamentHistory.mockResolvedValue({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: 'run alpha',
+    viewer_branch_id: 'branch-a',
+    tournament_count: 2,
+    published_result_count: 1,
+    tournaments: [
+      {
+        event_id: 'EVENT-1',
+        season: '2030/2031',
+        season_week: 1,
+        event_name: 'Completed Open',
+        template_id: 'WT-GOLD',
+        category: 'GOLD',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'CZE',
+        host_city: 'Brno',
+        region: 'EUROPE',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: true,
+        champion_player_id: 'P1',
+        finalist_player_id: 'P2',
+      },
+    ],
+  })
+  api.listViewerOfficialRankingHistory.mockResolvedValue({
+    schema_version: 'viewer_official_ranking_history.v1',
+    product_run_id: 'run alpha',
+    viewer_branch_id: 'branch-a',
+    public_head_ordinal: 100,
+    publication_count: 1,
+    publications: [
+      {
+        season_index: 30,
+        week: 1,
+        week_ordinal: 100,
+        snapshot_fingerprint: 'a'.repeat(64),
+        policy_id: 'best-15',
+        best_n: 15,
+        row_count: 64,
+      },
+    ],
+  })
+  api.getViewerFinalsRace.mockResolvedValue({
+    schema_version: 'viewer_finals_race_history.v1',
+    product_run_id: 'run alpha',
+    viewer_branch_id: 'branch-a',
+    latest_target_season_index: 30,
+    publications: [
+      {
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'run alpha',
+        viewer_branch_id: 'branch-a',
+        target_season_index: 30,
+        cutoff_season_index: 30,
+        cutoff_week: 1,
+        best_n: 9,
+        selection_published: false,
+        finals_event_id: null,
+        rows: [],
+      },
+    ],
+  })
 }
 
 function renderHookProbe(props: HookProps): void {
@@ -39,16 +157,14 @@ function renderHookProbe(props: HookProps): void {
     const result = useViewerDeferredSourceQueries(props)
     return (
       <dl>
-        <dt>loading</dt>
-        <dd>{String(result.isLoadingMetadata)}</dd>
-        <dt>error</dt>
-        <dd>{String(result.hasMetadataError)}</dd>
-        <dt>has metadata</dt>
-        <dd>{String(result.hasAnySourceMetadata)}</dd>
-        <dt>event count</dt>
-        <dd>{String(result.metadata.eventCount)}</dd>
-        <dt>ordered count</dt>
-        <dd>{String(result.orderedEventCount)}</dd>
+        <dt>loading</dt><dd>{String(result.isLoadingMetadata)}</dd>
+        <dt>error</dt><dd>{String(result.hasMetadataError)}</dd>
+        <dt>has metadata</dt><dd>{String(result.hasAnySourceMetadata)}</dd>
+        <dt>calendar events</dt><dd>{String(result.metadata.calendarEventCount)}</dd>
+        <dt>completed tournaments</dt><dd>{String(result.metadata.completedTournamentCount)}</dd>
+        <dt>ranking publications</dt><dd>{String(result.metadata.rankingPublicationCount)}</dd>
+        <dt>race publications</dt><dd>{String(result.metadata.finalsRacePublicationCount)}</dd>
+        <dt>next event</dt><dd>{result.metadata.nextCalendarEvent?.event_id ?? 'none'}</dd>
       </dl>
     )
   }
@@ -56,151 +172,57 @@ function renderHookProbe(props: HookProps): void {
   renderWithViewerProviders(<Probe />, { includeViewerContext: false })
 }
 
-describe('useViewerDeferredSourceQueries', () => {
+describe('useViewerDeferredSourceQueries canonical sources', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     setupApiMocks()
   })
 
-  it('disables all API calls when no active run is selected', () => {
+  it('disables all canonical calls when no Product Run is selected', () => {
     renderHookProbe({
-      activeRunId: null,
+      productRunId: null,
       kind: 'match-odds',
       scope: 'prediction',
     })
 
-    expect(api.getRun).not.toHaveBeenCalled()
-    expect(api.getRunStatusSummary).not.toHaveBeenCalled()
-    expect(api.listEvents).not.toHaveBeenCalled()
-    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
-    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
-    expect(api.getFinalsSummary).not.toHaveBeenCalled()
+    expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
+    expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
     expect(screen.getByText('loading').nextSibling).toHaveTextContent('false')
-    expect(screen.getByText('error').nextSibling).toHaveTextContent('false')
-    expect(screen.getByText('has metadata').nextSibling).toHaveTextContent(
-      'false',
-    )
+    expect(screen.getByText('has metadata').nextSibling).toHaveTextContent('false')
   })
 
-  it('defaults to status/events/ranking/race/finals calls without loading the run', async () => {
+  it('loads only canonical Saved-Revision/publication sources for the Product Run', async () => {
     renderHookProbe({
-      activeRunId: 'run alpha',
+      productRunId: 'run alpha',
       kind: 'match-odds',
       scope: 'prediction',
     })
 
-    await waitFor(() =>
-      expect(api.getRunStatusSummary).toHaveBeenCalledWith('run alpha'),
-    )
-    expect(api.listEvents).toHaveBeenCalledWith('run alpha')
-    expect(api.listRankingSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(api.getFinalsSummary).toHaveBeenCalledWith('run alpha')
-    expect(api.getRun).not.toHaveBeenCalled()
+    await waitFor(() => expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha'))
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run alpha')
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('run alpha')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run alpha')
+
+    await waitFor(() => {
+      expect(screen.getByText('calendar events').nextSibling).toHaveTextContent('2')
+      expect(screen.getByText('completed tournaments').nextSibling).toHaveTextContent('1')
+      expect(screen.getByText('ranking publications').nextSibling).toHaveTextContent('1')
+      expect(screen.getByText('race publications').nextSibling).toHaveTextContent('1')
+      expect(screen.getByText('next event').nextSibling).toHaveTextContent('EVENT-2')
+    })
   })
 
-  it('loads the active run only when includeRun is true', async () => {
+  it('fails closed when one canonical source is unavailable', async () => {
+    api.getViewerTournamentHistory.mockRejectedValueOnce(new Error('history unavailable'))
+
     renderHookProbe({
-      activeRunId: 'run alpha',
-      kind: 'match-odds',
-      scope: 'prediction',
-      includeRun: true,
-    })
-
-    await waitFor(() => expect(api.getRun).toHaveBeenCalledWith('run alpha'))
-  })
-
-  it('skips finals calls when includeFinals is false while preserving other source calls', async () => {
-    renderHookProbe({
-      activeRunId: 'run alpha',
-      kind: 'match-odds',
-      scope: 'prediction',
-      includeFinals: false,
-    })
-
-    await waitFor(() =>
-      expect(api.getRunStatusSummary).toHaveBeenCalledWith('run alpha'),
-    )
-    expect(api.listEvents).toHaveBeenCalledWith('run alpha')
-    expect(api.listRankingSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(api.listRaceSnapshots).toHaveBeenCalledWith('run alpha')
-    expect(api.getFinalsSummary).not.toHaveBeenCalled()
-  })
-
-  it('preserves status-progress event count fallback order', async () => {
-    renderHookProbe({
-      activeRunId: 'run alpha',
-      kind: 'draws',
-      scope: 'tour',
-      eventCountMode: 'status-progress',
-    })
-
-    await waitFor(() =>
-      expect(screen.getByText('event count').nextSibling).toHaveTextContent(
-        '2',
-      ),
-    )
-
-    vi.clearAllMocks()
-    setupApiMocks()
-    api.listEvents.mockImplementationOnce(() => new Promise(() => undefined))
-    renderHookProbe({
-      activeRunId: 'run alpha',
-      kind: 'draws',
-      scope: 'tour-progress-fallback',
-      eventCountMode: 'status-progress',
-    })
-
-    await waitFor(() =>
-      expect(
-        screen.getAllByText('event count')[1].nextSibling,
-      ).toHaveTextContent('5'),
-    )
-
-    vi.clearAllMocks()
-    setupApiMocks()
-    api.listEvents.mockImplementationOnce(() => new Promise(() => undefined))
-    api.getRunStatusSummary.mockResolvedValueOnce(
-      makeRunStatusSummary({
-        progress: {
-          next_event_index: 0,
-          total_events: 61,
-          completed_event_count: undefined as unknown as number,
-        },
-        history_counts: {
-          events: 9,
-          ranking_snapshots: 2,
-          race_snapshots: 1,
-        },
-      }),
-    )
-    renderHookProbe({
-      activeRunId: 'run alpha',
-      kind: 'draws',
-      scope: 'tour-history-fallback',
-      eventCountMode: 'status-progress',
-    })
-
-    await waitFor(() =>
-      expect(
-        screen.getAllByText('event count')[2].nextSibling,
-      ).toHaveTextContent('9'),
-    )
-  })
-
-  it('preserves run-ordered event count behavior', async () => {
-    renderHookProbe({
-      activeRunId: 'run alpha',
+      productRunId: 'run alpha',
       kind: 'title-leaders',
       scope: 'stats',
-      includeRun: true,
-      eventCountMode: 'run-ordered',
     })
 
-    await waitFor(() =>
-      expect(screen.getByText('event count').nextSibling).toHaveTextContent(
-        '7',
-      ),
-    )
+    await waitFor(() => expect(screen.getByText('error').nextSibling).toHaveTextContent('true'))
   })
 })

@@ -1709,3 +1709,7 @@ Top-level Viewer History is now fully Saved-Revision-backed and no longer depend
 
 Top-level Tour Calendar now consumes `viewer_run_calendar.v1` directly and no longer depends on legacy SimulationRun metadata. Remaining legacy Viewer cleanup can focus on deferred surfaces and explicit Race snapshot compatibility.
 
+### Deferred Viewer source cleanup
+
+Shared deferred Viewer pages are now Product Run-scoped and Saved-Revision-backed. Remaining legacy Viewer cleanup is outside this shared block, notably H2H-specific legacy source metadata and the explicit legacy Race snapshot compatibility path.
+

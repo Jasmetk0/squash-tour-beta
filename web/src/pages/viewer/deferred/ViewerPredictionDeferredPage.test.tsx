@@ -8,11 +8,10 @@ import {
 import { ViewerPredictionDeferredPage } from './ViewerPredictionDeferredPage'
 
 const api = vi.hoisted(() => ({
-  getFinalsSummary: vi.fn(),
-  getRunStatusSummary: vi.fn(),
-  listEvents: vi.fn(),
-  listRaceSnapshots: vi.fn(),
-  listRankingSnapshots: vi.fn(),
+  getViewerRunCalendar: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  listViewerOfficialRankingHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
 }))
 
 vi.mock('../../../api/client', () => api)
@@ -34,13 +33,12 @@ describe('ViewerPredictionDeferredPage', () => {
       screen.getByRole('heading', { level: 2, name: 'Match Odds' }),
     ).toBeInTheDocument()
     expect(
-      screen.getByText('No data is available for this run yet.'),
+      screen.getByText('No Product Run is selected yet.'),
     ).toBeInTheDocument()
-    expect(api.getRunStatusSummary).not.toHaveBeenCalled()
-    expect(api.listEvents).not.toHaveBeenCalled()
-    expect(api.listRankingSnapshots).not.toHaveBeenCalled()
-    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
-    expect(api.getFinalsSummary).not.toHaveBeenCalled()
+    expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
+    expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
 
     expectNoForbiddenViewerActions()
   })

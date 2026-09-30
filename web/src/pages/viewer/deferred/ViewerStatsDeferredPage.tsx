@@ -1,6 +1,6 @@
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadataRender'
 import { ViewerDeferredSourceCard } from './ViewerDeferredSourceCard'
 import { buildStatsDeferredSourceLinks } from './viewerDeferredLinks'
@@ -15,33 +15,26 @@ export function ViewerStatsDeferredPage({
 }: {
   kind: ViewerStatsDeferredKind
 }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
+  const productRunId = useActiveViewerProductRunId()
   const config = viewerStatsDeferredConfigs[kind]
   const {
-    statusQuery,
-    eventsQuery,
-    rankingSnapshotsQuery,
-    raceSnapshotsQuery,
-    finalsQuery,
     metadata,
     isLoadingMetadata,
     hasMetadataError,
     hasAnySourceMetadata,
   } = useViewerDeferredSourceQueries({
-    activeRunId,
+    productRunId,
     kind,
     scope: 'stats',
   })
 
-  if (!activeRunId) {
+  if (!productRunId) {
     return (
       <ViewerShellPage
         title={config.title}
-        description="Read-only stats and records destination requiring an active Viewer run."
+        description="Read-only stats and records destination requiring a selected Viewer Product Run."
       >
-        <ViewerEmptyState>
-          No data is available for this run yet.
-        </ViewerEmptyState>
+        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
@@ -49,30 +42,27 @@ export function ViewerStatsDeferredPage({
   return (
     <ViewerShellPage
       title={config.title}
-      description="Conservative read-only stats and records page using existing active-run metadata only."
+      description="Conservative read-only stats and records page using canonical Saved-Revision source metadata only."
     >
       <ViewerDeferredSourceCard
         title={config.title}
         subtitle={
           <>
             No records or statistics are calculated here yet. This page only
-            shows safe source availability from the active Viewer run.
+            shows safe canonical source availability from the selected Product Run.
           </>
         }
         isLoadingMetadata={isLoadingMetadata}
         hasMetadataError={hasMetadataError}
         hasAnySourceMetadata={hasAnySourceMetadata}
         metadataItems={commonDeferredSourceMetadataItems({
-          activeRunId,
+          productRunId,
           metadata,
-          eventsLoading: eventsQuery.isLoading,
-          rankingSnapshotsLoading: rankingSnapshotsQuery.isLoading,
-          raceSnapshotsLoading: raceSnapshotsQuery.isLoading,
-          finalsLoading: finalsQuery.isLoading,
+          isLoading: isLoadingMetadata,
         })}
         deferredCopy={config.deferredCopy}
-        sourceLinks={buildStatsDeferredSourceLinks(activeRunId)}
-        sourceLinksAriaLabel={`${config.title} links`}
+        sourceLinks={buildStatsDeferredSourceLinks(productRunId)}
+        sourceLinksAriaLabel={config.title + ' links'}
       />
     </ViewerShellPage>
   )

@@ -2,14 +2,10 @@ import { Link } from 'react-router-dom'
 
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { viewerPlannedEventPath } from '../../../viewer/viewerRoutes'
-import { selectNextOrderedEvent } from '../tour/viewerTourDisplay'
 import {
-  renderFinalsSourceValue,
-  renderLatestPersistedEventSourceValue,
-  renderLatestRaceSnapshotSourceValue,
-  renderLatestRankingSnapshotSourceValue,
+  commonDeferredSourceMetadataItems,
   renderLoadingValue,
 } from './ViewerDeferredSourceMetadataRender'
 import { ViewerDeferredSourceCard } from './ViewerDeferredSourceCard'
@@ -25,135 +21,68 @@ export function ViewerTourDeferredPage({
 }: {
   kind: ViewerTourDeferredKind
 }): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
+  const productRunId = useActiveViewerProductRunId()
   const config = viewerTourDeferredConfigs[kind]
   const {
-    runQuery,
-    eventsQuery,
-    rankingSnapshotsQuery,
-    raceSnapshotsQuery,
-    finalsQuery,
     metadata,
-    orderedEventCount,
-    season,
     isLoadingMetadata,
     hasMetadataError,
     hasAnySourceMetadata,
   } = useViewerDeferredSourceQueries({
-    activeRunId,
+    productRunId,
     kind,
     scope: 'tour',
-    includeRun: true,
-    eventCountMode: 'status-progress',
   })
 
-  if (!activeRunId) {
+  if (!productRunId) {
     return (
       <ViewerShellPage
         title={config.title}
-        description="Read-only Tour destination requiring an active Viewer run."
+        description="Read-only Tour destination requiring a selected Viewer Product Run."
       >
-        <ViewerEmptyState>
-          No data is available for this run yet.
-        </ViewerEmptyState>
+        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
 
-  const nextScheduledEvent = selectNextOrderedEvent(runQuery.data)
-
   return (
     <ViewerShellPage
       title={config.title}
-      description="Conservative read-only Tour page using existing active-run metadata only."
+      description="Conservative read-only Tour page using canonical Saved-Revision source metadata only."
     >
       <ViewerDeferredSourceCard
         title={config.title}
         subtitle={
           <>
-            No real read model exists yet. This page only shows safe source
-            availability from the active Viewer run.
+            No dedicated read model exists yet. This page only shows safe canonical
+            source availability from the selected Product Run.
           </>
         }
         isLoadingMetadata={isLoadingMetadata}
         hasMetadataError={hasMetadataError}
         hasAnySourceMetadata={hasAnySourceMetadata}
         metadataItems={[
-          { label: 'Active run ID', value: activeRunId },
+          ...commonDeferredSourceMetadataItems({
+            productRunId,
+            metadata,
+            isLoading: isLoadingMetadata,
+          }),
           {
-            label: 'Season',
-            value: renderLoadingValue(runQuery.isLoading, season),
-          },
-          {
-            label: 'Completed/persisted event count',
-            value: renderLoadingValue(eventsQuery.isLoading, metadata.eventCount),
-          },
-          {
-            label: 'Ordered calendar event count',
-            value: renderLoadingValue(runQuery.isLoading, orderedEventCount),
-          },
-          {
-            label: 'Ranking snapshot count',
-            value: renderLoadingValue(
-              rankingSnapshotsQuery.isLoading,
-              metadata.rankingSnapshotCount,
-            ),
-          },
-          {
-            label: 'Race snapshot count',
-            value: renderLoadingValue(
-              raceSnapshotsQuery.isLoading,
-              metadata.raceSnapshotCount,
-            ),
-          },
-          {
-            label: 'Finals availability',
-            value: renderFinalsSourceValue(
-              activeRunId,
-              metadata.finalsAvailability,
-              finalsQuery.isLoading,
-            ),
-          },
-          {
-            label: 'Next scheduled event',
-            value: nextScheduledEvent ? (
-              <Link
-                to={viewerPlannedEventPath(
-                  activeRunId,
-                  nextScheduledEvent.event_id,
-                )}
-              >
-                {nextScheduledEvent.event_id}
-              </Link>
-            ) : (
-              '—'
-            ),
-          },
-          {
-            label: 'Latest persisted event',
-            value: renderLatestPersistedEventSourceValue(
-              activeRunId,
-              metadata.latestPersistedEvent,
-            ),
-          },
-          {
-            label: 'Latest ranking snapshot',
-            value: renderLatestRankingSnapshotSourceValue(
-              activeRunId,
-              metadata.latestRankingSnapshot,
-            ),
-          },
-          {
-            label: 'Latest race snapshot',
-            value: renderLatestRaceSnapshotSourceValue(
-              activeRunId,
-              metadata.latestRaceSnapshot,
-            ),
+            label: 'Next Saved Calendar event',
+            value: isLoadingMetadata
+              ? renderLoadingValue(true, null)
+              : metadata.nextCalendarEvent
+                ? (
+                  <Link to={viewerPlannedEventPath(productRunId, metadata.nextCalendarEvent.event_id)}>
+                    {metadata.nextCalendarEvent.event_name || metadata.nextCalendarEvent.event_id}
+                  </Link>
+                )
+                : '—',
           },
         ]}
         deferredCopy={config.deferredCopy}
-        sourceLinks={buildTourDeferredSourceLinks(activeRunId)}
-        sourceLinksAriaLabel={`${config.title} source links`}
+        sourceLinks={buildTourDeferredSourceLinks(productRunId)}
+        sourceLinksAriaLabel={config.title + ' source links'}
       />
     </ViewerShellPage>
   )

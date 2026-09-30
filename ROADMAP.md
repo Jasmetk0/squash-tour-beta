@@ -1613,4 +1613,78 @@ The Viewer tournament downstream chain now reaches canonical Entry Field → eff
 
 ### Viewer Wild Card downstream integration
 
-The selected Viewer Branch now supplies a definitive public WC/RWC projection alongside canonical Entry Field and effective Draw. Only persisted definitive assignments are public; nomination/review state and first-entry/provenance internals stay Admin-side. Canonical tournament results/history, Race and Finals remain separate downstream migrations.
+The selected Viewer Branch now supplies a definitive public WC/RWC projection alongside canonical Entry Field and effective Draw. Only persisted definitive assignments are public; nomination/review state and first-entry/provenance internals stay Admin-side. Race and Finals remain separate downstream migrations.
+
+
+### Viewer Tournament Result downstream integration
+
+Tournament Detail now continues the canonical selected-Viewer-Branch chain through
+Entry Field → definitive WC/RWC → effective Draw → completed Tournament Result. Result
+publication is bounded by the immutable Saved Ranking component, so live Working Draft
+closes cannot leak into Viewer. The public projection is sporting-only and hides
+authority/provenance fingerprints and point/prize internals. Race and Finals remain separate
+follow-up slices.
+
+
+### Viewer Tournament History downstream integration
+
+The top-level Tournament list/history is now canonical and multi-season. It reads Calendar
+Packages only from the selected Viewer Branch's Saved Run Package component and joins published
+canonical Tournament Results only from the same Saved Ranking component. Live Package/result
+changes do not appear before their normal Save boundaries, and orphan/duplicate identities fail
+closed instead of falling back to the legacy event registry. Tournament Detail technical
+compatibility metadata, Planned Event/Week legacy reads, Race and Finals remain separate
+migration slices.
+
+### Viewer Season Calendar downstream integration
+
+The top-level Season Calendar now reuses canonical Saved-Revision Tournament History and no
+longer reads the legacy SimulationRun season plan or event registry. It deliberately avoids
+reconstructing current/upcoming status from legacy next-event state. Week Detail remains a
+follow-up slice because its richer context still depends on compatibility event state plus
+legacy Ranking/Race publication readers.
+
+### Viewer Planned Event downstream integration
+
+Planned Event detail now resolves event identity and schedule metadata directly from canonical
+Saved-Revision Tournament History. It no longer reads the legacy Run season plan/persisted-event
+registry or exposes legacy next-event/persisted-event status as authority. Week Detail is now the
+remaining schedule-view migration boundary.
+
+
+### Viewer Finals Race downstream integration
+
+The public Race to Finals landing and run-scoped Race route now consume the canonical
+season-scoped World Tour Finals Race captured in the selected Viewer Branch Saved Revision.
+The projection preserves frozen Race order/points and counted-result sporting evidence, joins
+published Finals participant selection, and follows the latest saved effective participant state
+after accepted replacements. Tie-break tokens, fingerprints and Admin replacement audit remain
+private. Legacy Race snapshot-sequence detail and remaining Home/History/deferred consumers are
+separate compatibility-detachment follow-ups.
+
+The World Tour Finals hub and qualification route now reuse this same Saved-Revision publication
+for the confirmed participant field. Public participation follows the latest saved effective field
+after accepted replacements and exposes only seed, player, Race rank/points and direct-entry-vs-Race
+qualification source. The dedicated Finals result page remains the next Finals Viewer migration and
+must bind to canonical Tournament Result authority rather than infer an outcome from Race/selection.
+
+
+### Viewer Finals Result downstream integration
+
+The World Tour Finals Viewer chain now continues through canonical Race/participant publication -> Finals event identity -> canonical Tournament Result. The dedicated Finals Result page is Saved-Revision bounded, exposes sporting result data only, and has no legacy SimulationRun Finals-result fallback.
+
+Remaining Viewer detachment should focus on the legacy Race snapshot-sequence detail route and remaining Home/History/deferred compatibility consumers. Do not infer new Finals policy while removing those reads; `SQUASH_ENGINE_MASTER_VISION.md` remains the product authority.
+
+
+### Viewer canonical History downstream integration
+
+Run-scoped Viewer History now uses canonical Saved-Revision Tournament History, Official Ranking History and Finals Race History instead of legacy SimulationRun activity. Publication identities remain domain-native rather than being merged into an invented universal sequence.
+
+The remaining Race snapshot-sequence detail URL is intentionally not reinterpreted as `target_season_index`; either an explicit compatibility mapping or a route retirement/migration decision is required. Continue detaching top-level Home and other deferred Viewer consumers without inventing policy or identity.
+
+
+### Viewer canonical Home downstream integration
+
+Top-level Viewer Home now consumes canonical Saved-Revision public readers for Product Run context, Tournament History, Official Ranking History and Finals Race History. Legacy runtime/activity/snapshot summaries are removed from Home.
+
+Next Viewer compatibility work should integrate the canonical saved-calendar stack into Home/season surfaces where appropriate and resolve the remaining legacy Race snapshot-sequence detail route only with an explicit identity decision. Do not map `snapshotSequence` to `target_season_index` implicitly.

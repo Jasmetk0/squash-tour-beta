@@ -1,5 +1,4 @@
 import { screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { describe, expect, it, beforeEach, vi } from 'vitest'
 
@@ -8,9 +7,17 @@ import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } f
 
 const api = vi.hoisted(() => ({
   getRun: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
-  listRaceSnapshots: vi.fn()
+  listRaceSnapshots: vi.fn(),
+  ApiError: class ApiError extends Error {
+    status: number
+    constructor(message: string, status: number) {
+      super(message)
+      this.status = status
+    }
+  }
 }))
 
 vi.mock('../api/client', () => api)
@@ -82,6 +89,84 @@ function mockEvents(): void {
 }
 
 
+function mockCanonicalCalendarHistory(): void {
+  api.getViewerTournamentHistory.mockResolvedValue({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: 'viewer-run-2d',
+    viewer_branch_id: 'branch-viewer',
+    tournament_count: 3,
+    published_result_count: 1,
+    tournaments: [
+      {
+        event_id: 'EVENT-COMPLETE',
+        season: '2000/2001',
+        season_week: 1,
+        event_name: 'Season Opener',
+        template_id: 'WT-PLAT',
+        category: 'PLATINUM',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'EGY',
+        host_city: 'Cairo',
+        region: 'AFRICA',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: true,
+        champion_player_id: 'PLAYER-42',
+        finalist_player_id: 'PLAYER-99'
+      },
+      {
+        event_id: 'EVENT-NEXT',
+        season: '2000/2001',
+        season_week: 2,
+        event_name: 'Gold Open',
+        template_id: 'ET-GOLD',
+        category: 'GOLD',
+        tour_level: 'ELITE_TOUR',
+        host_country: 'CZE',
+        host_city: 'Prague',
+        region: 'EUROPE',
+        main_draw_size: 16,
+        qualification_draw_size: 8,
+        seeds_count: 4,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: false,
+        champion_player_id: null,
+        finalist_player_id: null
+      },
+      {
+        event_id: 'EVENT-FUTURE',
+        season: '2001/2002',
+        season_week: 3,
+        event_name: 'Future Bronze',
+        template_id: 'WT-BRONZE',
+        category: 'BRONZE',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'USA',
+        host_city: null,
+        region: 'AMERICAS',
+        main_draw_size: 8,
+        qualification_draw_size: 0,
+        seeds_count: 2,
+        qualifier_spots: 0,
+        wild_cards: 1,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: false,
+        champion_player_id: null,
+        finalist_player_id: null
+      }
+    ]
+  })
+}
+
 function mockSnapshots(): void {
   api.listRankingSnapshots.mockResolvedValue({
     run_id: 'viewer-run-2d',
@@ -135,262 +220,185 @@ function expectNoForbiddenViewerActions(): void {
 describe('ViewerRunCalendarPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockRunMetadata()
-    mockEvents()
-    mockSnapshots()
+    mockCanonicalCalendarHistory()
   })
 
-  it('renders sports-facing run calendar metadata and Viewer route links without primary raw JSON', async () => {
+  it('renders canonical saved Calendar Packages without legacy run/event reads', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
 
     expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2d').length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('2028')).length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EVENT-COMPLETE').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EVENT-NEXT').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EVENT-FUTURE').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('WT-PLAT').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('WT-BRONZE').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Gold').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Bronze').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Completed').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Current/next').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Upcoming').length).toBeGreaterThan(0)
-    expect(screen.getAllByRole('link', { name: /Open planned event/i })[1]).toHaveAttribute(
+    expect(await screen.findByRole('heading', { name: 'Canonical season timeline' })).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('viewer-run-2d')
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+
+    const list = screen.getByRole('list', { name: 'Viewer canonical season calendar events' })
+    expect(within(list).getByText('Season Opener')).toBeInTheDocument()
+    expect(within(list).getByText('Gold Open')).toBeInTheDocument()
+    expect(within(list).getByText('Future Bronze')).toBeInTheDocument()
+    expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2001/2002').length).toBeGreaterThan(0)
+
+    const completed = within(list).getByText('Season Opener').closest('li') as HTMLElement
+    expect(within(completed).getByText('PLATINUM')).toBeInTheDocument()
+    expect(within(completed).getByText('WORLD TOUR')).toBeInTheDocument()
+    expect(within(completed).getByText('Cairo, EGY')).toBeInTheDocument()
+    expect(within(completed).getByText('Published')).toBeInTheDocument()
+    expect(within(completed).getByText('PLAYER-42')).toBeInTheDocument()
+    expect(within(completed).getByRole('link', { name: 'Open planned event' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT'
+      '/viewer/runs/viewer-run-2d/calendar/EVENT-COMPLETE'
     )
-    expect(screen.getAllByRole('link', { name: /Open week detail/i })[1]).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
-    expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
+    expect(within(completed).getByRole('link', { name: 'Open week detail' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/weeks/1'
+    )
+    expect(within(completed).getByRole('link', { name: 'Open tournament detail' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-COMPLETE'
     )
-    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
-    expect(within(nextRow).getByText('Champion')).toBeInTheDocument()
-    expect(within(nextRow).getByRole('link', { name: 'Linked Champion' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2d/players/PLAYER-42/career'
+
+    expect(screen.queryByText('Show technical calendar data')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('shows a canonical empty state when no saved Calendar Package exists', async () => {
+    api.getViewerTournamentHistory.mockRejectedValueOnce(
+      new api.ApiError('missing calendar', 404)
     )
-    expect(within(nextRow).getByText('Result status')).toBeInTheDocument()
-    expect(within(nextRow).getByText('completed')).toBeInTheDocument()
-    expect(within(nextRow).getByText('Matches')).toBeInTheDocument()
-    expect(within(nextRow).getByText('31 of 31')).toBeInTheDocument()
-    expect(screen.getByText('Show technical calendar data')).toBeInTheDocument()
-    expect(screen.queryByText(/raw_calendar_marker_should_be_hidden/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/raw_week_result_marker_should_be_hidden/i)).not.toBeInTheDocument()
+
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
+
+    expect(
+      await screen.findByText('No saved Calendar Package is available for this Viewer Branch yet.')
+    ).toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
-    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
-
-  it('keeps season calendar champion plain text when parsed tournament_result has no player id', async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      events: [
-        {
-          event_sequence: 2,
-          event_id: 'EVENT-NEXT',
-          season: 2028,
-          week: 2,
-          template_id: 'ET-GOLD',
-          tournament_result: { champion: { player_name: 'Plain Calendar Champion' }, result_status: 'completed', match_count: 15 }
-        }
-      ]
+  it('renders an empty saved Calendar without inventing tournament data', async () => {
+    api.getViewerTournamentHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'viewer-run-2d',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      published_result_count: 0,
+      tournaments: []
     })
 
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
 
-    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
-    expect(within(nextRow).getByText('Champion')).toBeInTheDocument()
-    expect(within(nextRow).getByText('Plain Calendar Champion')).toBeInTheDocument()
-    expect(within(nextRow).queryByRole('link', { name: 'Plain Calendar Champion' })).not.toBeInTheDocument()
-    expect(within(nextRow).getByText('Result status')).toBeInTheDocument()
-    expect(within(nextRow).getByText('Matches')).toBeInTheDocument()
+    expect(
+      await screen.findByText('No tournaments are present in the saved Calendar Packages.')
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Viewer canonical season calendar events' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
-
-  it('does not show fake season calendar metadata for unknown persisted tournament_result payloads', async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      events: [
-        {
-          event_sequence: 2,
-          event_id: 'EVENT-NEXT',
-          season: 2028,
-          week: 2,
-          template_id: 'ET-GOLD',
-          tournament_result: { unknown_calendar_payload_marker_should_be_hidden: true }
-        }
-      ]
-    })
-
-    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar')
-
-    expect(await screen.findByRole('heading', { name: 'Season Calendar' })).toBeInTheDocument()
-    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    const nextRow = seasonCalendarEventRow('EVENT-NEXT')
-    expect(within(nextRow).queryByText('Champion')).not.toBeInTheDocument()
-    expect(within(nextRow).queryByText('Result status')).not.toBeInTheDocument()
-    expect(within(nextRow).queryByText('Matches')).not.toBeInTheDocument()
-    expect(screen.queryByText(/unknown_calendar_payload_marker_should_be_hidden/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
 })
 
 describe('ViewerRunPlannedEventPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockRunMetadata()
-    mockEvents()
-    mockSnapshots()
+    mockCanonicalCalendarHistory()
   })
 
-  it('renders sports-facing planned event detail with collapsed technical data and no commissioner controls', async () => {
+  it('renders canonical saved Calendar event detail without legacy run/event reads', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT')
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2d').length).toBeGreaterThan(0)
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('viewer-run-2d')
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+
+    expect((await screen.findAllByText('Gold Open')).length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVENT-NEXT').length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('2028')).length).toBeGreaterThan(0)
+    expect(screen.getAllByText('2000/2001').length).toBeGreaterThan(0)
     expect(screen.getAllByText('W2').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Gold').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Elite Tour').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('ELITE TOUR').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('GOLD').length).toBeGreaterThan(0)
     expect(screen.getAllByText('ET-GOLD').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Current/next').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('2 of 3').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Prague, CZE').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Not published').length).toBeGreaterThan(0)
+
     expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/calendar'
     )
-    expect(screen.getByRole('link', { name: 'Week W2' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
+    expect(screen.getByRole('link', { name: 'Week W2' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2d/weeks/2'
+    )
     expect(screen.getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
     )
-    expect(screen.getByText('Persisted event record')).toBeInTheDocument()
-    expect(screen.getByText('Persisted event sequence')).toBeInTheDocument()
-    expect(screen.getByText('Persisted event week')).toBeInTheDocument()
-    expect(screen.queryByText('Tournament Result Preview')).not.toBeInTheDocument()
-    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Linked Champion' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
-    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
-    expect(screen.queryByText(/raw_week_result_marker_should_be_hidden/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical planned event data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/event_id/i)).not.toBeVisible()
-    await userEvent.click(screen.getByText('Show technical planned event data'))
-    expect(within(technicalSection as HTMLElement).getByText(/EVENT-NEXT/i)).toBeVisible()
-    expect(screen.queryByText(/wildcard/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/withdrawal/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/late replacement/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/commissioner/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/Persisted event record/i)).not.toBeInTheDocument()
+    expect(screen.queryByText(/next event index/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
-    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
-  it('keeps planned event result content hidden when parsed tournament_result has no player id', async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      events: [
-        {
-          event_sequence: 2,
-          event_id: 'EVENT-NEXT',
-          season: 2028,
-          week: 2,
-          template_id: 'ET-GOLD',
-          tournament_result: { champion: { player_name: 'Plain Planned Champion' }, result_status: 'completed', match_count: 15 }
-        }
-      ]
-    })
-
-    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT')
+  it('fails safely when the event is not present in saved Calendar Packages', async () => {
+    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/UNKNOWN-EVENT')
 
     expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
-    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByText('Persisted event record')).toBeInTheDocument()
-    expect(screen.queryByText('Tournament Result Preview')).not.toBeInTheDocument()
-    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
-    expect(screen.queryByText('Plain Planned Champion')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Plain Planned Champion' })).not.toBeInTheDocument()
-    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
-    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
+    expect(
+      await screen.findByText('This event is not present in the saved Calendar Packages.')
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Tournament detail' })).not.toBeInTheDocument()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
-  it('does not show fake planned event result metadata for unknown tournament_result payloads', async () => {
-    api.listEvents.mockResolvedValue({
-      run_id: 'viewer-run-2d',
-      events: [
-        {
-          event_sequence: 2,
-          event_id: 'EVENT-NEXT',
-          season: 2028,
-          week: 2,
-          template_id: 'ET-GOLD',
-          tournament_result: { unknown_planned_payload_marker_should_be_hidden: true }
-        }
-      ]
+  it('handles encoded canonical event IDs without unsafe legacy fallback', async () => {
+    api.getViewerTournamentHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'run/alpha #1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 1,
+      published_result_count: 0,
+      tournaments: [{
+        event_id: 'EVT/1 #A',
+        season: '2030/2031',
+        season_week: 7,
+        event_name: 'Encoded Open',
+        template_id: 'WT-GOLD',
+        category: 'GOLD',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'CZE',
+        host_city: null,
+        region: 'EUROPE',
+        main_draw_size: 16,
+        qualification_draw_size: 8,
+        seeds_count: 4,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: false,
+        champion_player_id: null,
+        finalist_player_id: null
+      }]
     })
-
-    renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/calendar/EVENT-NEXT')
-
-    expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
-    expect((await screen.findAllByText('EVENT-NEXT')).length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2d/calendar'
-    )
-    expect(screen.getByRole('link', { name: 'Week W2' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2d/weeks/2')
-    expect(screen.getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2d/tournaments/EVENT-NEXT'
-    )
-    expect(screen.queryByText('Tournament Result Preview')).not.toBeInTheDocument()
-    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
-    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
-    expect(screen.queryByText('Matches')).not.toBeInTheDocument()
-    expect(screen.queryByText(/unknown_planned_payload_marker_should_be_hidden/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical planned event data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expectNoForbiddenViewerActions()
-  })
-
-  it('handles encoded planned event route params and malformed payload rows without unsafe output', async () => {
-    api.getRun.mockResolvedValueOnce({
-      run: { run_id: 'run/alpha #1', season: 2030, seed: 1, config_version: 'v', config_fingerprint: 'fp', next_event_index: 0, total_events: 2, completed_event_ids: [] },
-      season_state: {
-        season: 2030,
-        next_event_index: 0,
-        completed_event_ids: [{ bad: true }],
-        ordered_events: [
-          { event_id: { bad: true }, season: 2030, week: 7, tour: 'Bad', category: 'Bad', template_id: 'BAD' },
-          { event_id: 'EVT/1 #A', season: 2030, week: 7, tour: { bad: true }, category: 'Gold', template_id: { bad: true } }
-        ]
-      }
-    })
-    api.listEvents.mockResolvedValueOnce({ run_id: 'run/alpha #1', events: [null, 42, { event_id: { bad: true }, week: { bad: true } }] })
 
     renderViewerCalendarRoute('/viewer/runs/run%2Falpha%20%231/calendar/EVT%2F1%20%23A')
 
-    expect(await screen.findByRole('heading', { name: 'Planned Event' })).toBeInTheDocument()
-    expect(api.getRun).toHaveBeenCalledWith('run/alpha #1')
-    expect(api.listEvents).toHaveBeenCalledWith('run/alpha #1')
-    expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
-    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/calendar')
-    expect(screen.queryByRole('link', { name: 'Tournament detail' })).not.toBeInTheDocument()
+    expect(await screen.findByText('Encoded Open')).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.getRun).not.toHaveBeenCalled()
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(screen.getByRole('link', { name: 'Season calendar' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/calendar'
+    )
+    expect(screen.getByRole('link', { name: 'Tournament detail' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/tournaments/EVT%2F1%20%23A'
+    )
     expect(document.body).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()
   })
-
 })
 
 describe('ViewerRunWeekPage', () => {

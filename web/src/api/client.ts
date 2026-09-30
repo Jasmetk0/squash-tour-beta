@@ -83,6 +83,9 @@ import type {
   ViewerTournamentEntryField,
   ViewerTournamentDraw,
   ViewerTournamentWildCards,
+  ViewerTournamentHistory,
+  ViewerTournamentResult,
+  ViewerFinalsRaceHistory,
   ViewerOfficialRanking,
   ViewerOfficialRankingHistory,
   RunBranch,
@@ -249,19 +252,8 @@ import type {
   TournamentTemplateRecord,
   TournamentTemplateUpsertPayload,
   SeasonActivePlayersResponse,
-  SeasonBootstrapPayload,
-  SeasonCalendarBuildPayload,
   SeasonCalendarBuildResponse,
   SeasonCalendarEvent,
-  SeasonBootstrapResponse,
-  EntryListGeneratePayload,
-  DrawGeneratePayload,
-  MatchGeneratePayload,
-  MatchSimulatePayload,
-  ProgressionCommandPayload,
-  ProgressionCommandResult,
-  SimulateDrawPayload,
-  SimulateRoundPayload,
   TournamentProgressionStatus,
   SeasonEventDrawPackageResult,
   SeasonEventMatchPackageResult,
@@ -269,20 +261,14 @@ import type {
   MatchReplayResponse,
   SeasonEventResultPackageResult,
   EventPointAwardPackageResult,
-  PointAwardGeneratePayload,
-  PointAwardApplyPayload,
-  PointAwardApplyResult,
   PlayerPointBreakdownQueryParams,
   PlayerPointBreakdownResponse,
   RankingTableQueryParams,
   RankingTableResponse,
   WeeklyRankingSnapshotGeneratePayload,
   WeeklyRankingSnapshotResult,
-  EventResultExtractPayload,
   SeasonEventEntryListResult,
   SeasonLifecycleResponse,
-  SimulateOneEventRequest,
-  SimulateOneEventResult,
   SimulateSeasonWeekPreflightRequest,
   SimulateSeasonWeekPreflightResult,
   SeasonWeekRecoveryRequest,
@@ -526,10 +512,6 @@ export function getViewerPointBreakdown(season = '2000/2001', params: PlayerPoin
   return request(`/viewer/point-breakdowns/${encodeURIComponent(season)}${pointBreakdownQuery(params)}`)
 }
 
-export function bootstrapSeasonFromInitialPool(season: string, payload: SeasonBootstrapPayload): Promise<SeasonBootstrapResponse> {
-  return request(`/admin/seasons/${encodeURIComponent(season)}/bootstrap-from-initial-pool`, { method: 'POST', body: JSON.stringify(payload) })
-}
-
 export function getSeasonCalendar(season: string): Promise<SeasonCalendarBuildResponse> {
   return request(`/admin/seasons/${encodeURIComponent(season)}/calendar`)
 }
@@ -562,10 +544,6 @@ export function getSeasonLifecycle(season: string): Promise<SeasonLifecycleRespo
   return request(`/admin/lifecycle/${encodeURIComponent(season)}`)
 }
 
-
-export function simulateOneEvent(eventId: string, payload: SimulateOneEventRequest): Promise<SimulateOneEventResult> {
-  return request(`/admin/events/${encodeURIComponent(eventId)}/simulate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 function verifyLegacySeasonReadinessBoundary(metadata: {
   authority_scope: string
@@ -613,41 +591,22 @@ export async function preflightSeasonRange(payload: SeasonRangePreflightRequest)
 }
 
 
-export function buildSeasonCalendar(season: string, payload: SeasonCalendarBuildPayload): Promise<SeasonCalendarBuildResponse> {
-  return request(`/admin/seasons/${encodeURIComponent(season)}/calendar/build`, { method: 'POST', body: JSON.stringify(payload) })
-}
-
 export function getEventEntryList(eventId: string): Promise<SeasonEventEntryListResult> {
   return request(`/admin/entries/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventEntryList(eventId: string, payload: EntryListGeneratePayload): Promise<SeasonEventEntryListResult> {
-  return request(`/admin/entries/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventDrawPackage(eventId: string): Promise<SeasonEventDrawPackageResult> {
   return request(`/admin/draws/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventDrawPackage(eventId: string, payload: DrawGeneratePayload): Promise<SeasonEventDrawPackageResult> {
-  return request(`/admin/draws/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventMatchPackage(eventId: string): Promise<SeasonEventMatchPackageResult> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventMatchPackage(eventId: string, payload: MatchGeneratePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateNextEventMatch(eventId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-next`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventMatch(eventId: string, matchId: string, payload: MatchSimulatePayload): Promise<SeasonEventMatchPackageResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate/${encodeURIComponent(matchId)}`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventMatchReplay(eventId: string, matchId: string): Promise<MatchReplayResponse> {
   return request(`/admin/matches/${encodeURIComponent(eventId)}/replay/${encodeURIComponent(matchId)}`)
@@ -662,45 +621,21 @@ export function getEventProgressionStatus(eventId: string): Promise<TournamentPr
   return request(`/admin/matches/${encodeURIComponent(eventId)}/progression`)
 }
 
-export function processEventByes(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/process-byes`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function refreshEventProgression(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/refresh-progression`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function promoteEventQualifiers(eventId: string, payload: ProgressionCommandPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/promote-qualifiers`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventRound(eventId: string, payload: SimulateRoundPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-round`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function simulateEventDraw(eventId: string, payload: SimulateDrawPayload): Promise<ProgressionCommandResult> {
-  return request(`/admin/matches/${encodeURIComponent(eventId)}/simulate-draw`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventResultPackage(eventId: string): Promise<SeasonEventResultPackageResult> {
   return request(`/admin/results/${encodeURIComponent(eventId)}`)
 }
 
-export function extractEventResultPackage(eventId: string, payload: EventResultExtractPayload): Promise<SeasonEventResultPackageResult> {
-  return request(`/admin/results/${encodeURIComponent(eventId)}/extract`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function getEventPointAwards(eventId: string): Promise<EventPointAwardPackageResult> {
   return request(`/admin/points/${encodeURIComponent(eventId)}`)
 }
 
-export function generateEventPointAwards(eventId: string, payload: PointAwardGeneratePayload): Promise<EventPointAwardPackageResult> {
-  return request(`/admin/points/${encodeURIComponent(eventId)}/generate`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
-export function applyEventPointAwards(eventId: string, payload: PointAwardApplyPayload): Promise<PointAwardApplyResult> {
-  return request(`/admin/points/${encodeURIComponent(eventId)}/apply`, { method: 'POST', body: JSON.stringify(payload) })
-}
 
 export function generateInitialPlayerPool(payload: InitialPoolGeneratePayload): Promise<InitialPoolResponse> {
   return request('/admin/players/initial-pool/generate', { method: 'POST', body: JSON.stringify(payload) })
@@ -1015,6 +950,18 @@ export function getViewerTournamentDraw(productRunId: string, eventId: string): 
 
 export function getViewerTournamentWildCards(productRunId: string, eventId: string): Promise<ViewerTournamentWildCards> {
   return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/wild-cards`)
+}
+
+export function getViewerTournamentHistory(productRunId: string): Promise<ViewerTournamentHistory> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments`)
+}
+
+export function getViewerTournamentResult(productRunId: string, eventId: string): Promise<ViewerTournamentResult> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/tournaments/${encodeURIComponent(eventId)}/result`)
+}
+
+export function getViewerFinalsRace(productRunId: string): Promise<ViewerFinalsRaceHistory> {
+  return request(`/viewer/runs/${encodeURIComponent(productRunId)}/race/finals`)
 }
 
 export function listViewerOfficialRankingHistory(productRunId: string): Promise<ViewerOfficialRankingHistory> {

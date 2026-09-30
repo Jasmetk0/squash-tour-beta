@@ -4654,20 +4654,6 @@ export type SeasonActivePlayersResponse = {
   warnings: string[]
 }
 
-export type SeasonBootstrapPayload = {
-  source_season?: string
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
-export type SeasonBootstrapResponse = {
-  players: SeasonActivePlayer[]
-  summary: SeasonBootstrapSummary
-  metadata: SeasonBootstrapMetadata
-  warnings: string[]
-}
-
 export type SeasonCalendarValidationIssue = {
   severity: 'error' | 'warning' | 'info'
   code: string
@@ -4888,21 +4874,6 @@ export type SimulateOneEventStepStatusValue = 'skipped' | 'planned' | 'succeeded
 
 export type SimulateOneEventDrawType = 'qualification_then_main' | 'qualification' | 'main'
 
-export type SimulateOneEventRequest = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  max_steps: number
-  stop_after_stage?: EventLifecycleStage | null
-  apply_points: boolean
-  publish_snapshot: boolean
-  allow_incomplete_results?: boolean
-  allow_blocked?: boolean
-  include_not_entered: boolean
-  max_alternates: number
-  simulate_draw_type: SimulateOneEventDrawType
-}
-
 export type SimulateOneEventStepStatus = {
   step: SimulateOneEventStepName
   status: SimulateOneEventStepStatusValue
@@ -4991,13 +4962,6 @@ export type SimulateOneEventReport = {
   }
 }
 
-export type SimulateOneEventResult = {
-  report: SimulateOneEventReport | null
-  validation_warnings: string[]
-  validation_errors: string[]
-}
-
-
 export type SimulateSeasonWeekPreflightRequest = {
   season: string
   season_week: number
@@ -5082,16 +5046,6 @@ export type SimulateSeasonWeekPreflightResult = {
   metadata: SeasonWeekPreflightMetadata
   validation_warnings: string[]
   validation_errors: string[]
-}
-
-export type SeasonCalendarBuildPayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  season_start_calendar_year: number
-  season_start_year_week: number
-  include_inactive_templates: boolean
-  max_events?: number | null
 }
 
 export type SeasonCalendarBuildResponse = {
@@ -5301,12 +5255,6 @@ export type SeasonEventDrawPackage = {
   metadata: DrawPackageMetadata
   validation_warnings: DrawValidationIssue[]
   validation_errors: DrawValidationIssue[]
-}
-
-export type DrawGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
 }
 
 export type SeasonEventDrawPackageResult = {
@@ -6223,20 +6171,6 @@ export type SeasonEventMatchPackage = {
   validation_errors: MatchValidationIssue[]
 }
 
-export type MatchGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  tournament_edition_match_format?: MatchFormat | null
-  phase_match_formats?: Record<string, MatchFormat>
-  round_match_formats?: Record<string, MatchFormat>
-}
-
-export type MatchSimulatePayload = {
-  seed: number
-  timing_override?: MatchTimingOverride | null
-}
-
 export type TournamentProgressionStatus = {
   event_id: string
   season: string
@@ -6255,33 +6189,6 @@ export type TournamentProgressionStatus = {
   finalist_name: string | null
   warnings: MatchValidationIssue[]
   errors: MatchValidationIssue[]
-}
-
-export type ProgressionCommandPayload = {
-  seed: number
-}
-
-export type SimulateRoundPayload = {
-  seed: number
-  draw_type: 'qualification' | 'main'
-  round_number: number
-}
-
-export type SimulateDrawPayload = {
-  seed: number
-  draw_type: 'qualification' | 'main'
-}
-
-export type ProgressionCommandResult = {
-  event_id: string
-  action: 'process_byes' | 'refresh_status' | 'simulate_round' | 'simulate_draw' | 'promote_qualifiers' | 'advance_completed'
-  match_package: SeasonEventMatchPackage
-  progression_status: TournamentProgressionStatus
-  changed_match_ids: string[]
-  promoted_player_ids: string[]
-  validation_warnings: MatchValidationIssue[]
-  validation_errors: MatchValidationIssue[]
-  metadata: Record<string, unknown>
 }
 
 export type SeasonEventMatchPackageResult = {
@@ -6403,12 +6310,6 @@ export type SeasonEventResultPackage = {
   validation_errors: EventResultValidationIssue[]
 }
 
-export type EventResultExtractPayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
 export type SeasonEventResultPackageResult = {
   result_package: SeasonEventResultPackage | null
   summary: EventResultSummary | null
@@ -6416,14 +6317,6 @@ export type SeasonEventResultPackageResult = {
   validation_warnings: EventResultValidationIssue[]
   validation_errors: EventResultValidationIssue[]
   result_package_exists: boolean
-}
-
-export type EntryListGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-  max_alternates: number
-  include_not_entered: boolean
 }
 
 export type SeasonEventEntryListResult = {
@@ -6505,17 +6398,6 @@ export type EventPointAwardPackage = {
   validation_errors: PointAwardValidationIssue[]
 }
 
-export type PointAwardGeneratePayload = {
-  seed: number
-  dry_run: boolean
-  overwrite_existing: boolean
-}
-
-export type PointAwardApplyPayload = {
-  seed: number
-  allow_reapply: boolean
-}
-
 export type EventPointAwardPackageResult = {
   award_package: EventPointAwardPackage | null
   summary: PointAwardSummary | null
@@ -6525,28 +6407,6 @@ export type EventPointAwardPackageResult = {
   award_package_exists: boolean
   applied: boolean
 }
-
-export type UpdatedPlayerPoints = {
-  player_id: string
-  player_name: string | null
-  previous_ranking_points: number
-  previous_race_points: number
-  new_ranking_points: number
-  new_race_points: number
-  delta_ranking_points: number
-  delta_race_points: number
-}
-
-export type PointAwardApplyResult = {
-  event_id: string
-  applied: boolean
-  award_package: EventPointAwardPackage | null
-  updated_players: UpdatedPlayerPoints[]
-  validation_warnings: PointAwardValidationIssue[]
-  validation_errors: PointAwardValidationIssue[]
-  metadata: PointAwardMetadata | null
-}
-
 
 export type SeasonWeekRecoveryRequest = {
   season: string
@@ -7397,6 +7257,123 @@ export type ViewerTournamentDraw = {
   revision_count: number
   main: ViewerTournamentDrawBracket
   qualification_sections: ViewerTournamentDrawBracket[]
+}
+
+export type ViewerTournamentHistoryItem = {
+  event_id: string
+  season: string
+  season_week: number
+  event_name: string
+  template_id: string
+  category: string
+  tour_level: string | null
+  host_country: string
+  host_city: string | null
+  region: string
+  main_draw_size: number
+  qualification_draw_size: number
+  seeds_count: number
+  qualifier_spots: number
+  wild_cards: number
+  byes: number
+  ranking_status: string
+  result_published: boolean
+  champion_player_id: string | null
+  finalist_player_id: string | null
+}
+
+export type ViewerTournamentHistory = {
+  schema_version: 'viewer_tournament_history.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  tournament_count: number
+  published_result_count: number
+  tournaments: ViewerTournamentHistoryItem[]
+}
+
+export type ViewerTournamentResultPlayer = {
+  player_id: string
+  draw_type: 'qualification' | 'main' | 'both' | 'hybrid' | 'group'
+  seed_number: number | null
+  qualifier: boolean
+  main_entry_status: 'direct' | 'wild_card' | 'lucky_loser' | null
+  reached_stage: string
+  final_round_number: number | null
+  eliminated_by_player_id: string | null
+  last_match_id: string | null
+  wins: number
+  losses: number
+  byes_received: number
+  walkovers_received: number
+  retired_or_walkover_loss: boolean
+  group_index: number | null
+  group_position: number | null
+  played_group_wins: number | null
+  group_walkovers_received: number | null
+  knockout_reached_stage: string | null
+}
+
+export type ViewerTournamentResultMatch = {
+  match_id: string
+  draw_type: 'qualification' | 'main' | 'group' | 'knockout'
+  round_number: number
+  bracket_position: number
+  winner_player_id: string
+  loser_player_id: string | null
+  scoreline: string
+}
+
+export type ViewerTournamentResult = {
+  schema_version: 'viewer_tournament_result.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  event_id: string
+  completed_season_index: number
+  completed_week: number
+  champion_player_id: string
+  finalist_player_id: string
+  qualification_winner_ids: string[]
+  players: ViewerTournamentResultPlayer[]
+  matches: ViewerTournamentResultMatch[]
+}
+
+export type ViewerFinalsRaceCountedResult = {
+  event_id: string
+  completed_season_index: number
+  completed_week: number
+  race_points: number
+}
+
+export type ViewerFinalsRaceRow = {
+  rank: number
+  player_id: string
+  race_points: number
+  tournaments_counted: number
+  finals_selected: boolean | null
+  finals_seed: number | null
+  qualification_source: 'direct_entry' | 'race' | null
+  counted_results: ViewerFinalsRaceCountedResult[]
+}
+
+export type ViewerFinalsRacePublication = {
+  schema_version: 'viewer_finals_race_publication.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  target_season_index: number
+  cutoff_season_index: number
+  cutoff_week: number
+  best_n: number
+  selection_published: boolean
+  finals_event_id: string | null
+  rows: ViewerFinalsRaceRow[]
+}
+
+export type ViewerFinalsRaceHistory = {
+  schema_version: 'viewer_finals_race_history.v1'
+  product_run_id: string
+  viewer_branch_id: string
+  latest_target_season_index: number | null
+  publications: ViewerFinalsRacePublication[]
 }
 
 export type ViewerOfficialRankingRow = {

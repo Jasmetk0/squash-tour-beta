@@ -432,9 +432,83 @@ The frontend API surface now matches that ownership boundary as well.
 This prevents a future current UI from accidentally reintroducing the retired sidecar
 histories simply by importing an old convenience client.
 
-**Next after this PR:** audit the remaining current frontend/API compatibility surface
-around tournament preparation and remove the next dead legacy entrypoint without
-touching historical server readers.
+The next frontend/API compatibility audit retired the manual per-event legacy mutation
+pipeline from the current Admin Seasons surface.
+
+- persisted legacy EntryList, DrawPackage, MatchPackage, Result and Point Award artifacts
+  remain readable for old saves, replay and diagnostics;
+- their current panels are explicitly labeled `LEGACY / READ-ONLY`;
+- the web client no longer exports the low-level legacy POST helpers for generating Entry,
+  Draw and Match packages, simulating/progressing legacy matches, extracting legacy
+  Results, or generating/applying legacy Point Awards;
+- mutation-only web DTOs were removed with those helpers;
+- the Admin Seasons component no longer keeps preview/mutation state for those artifacts:
+  the inspection panels are projections of persisted GET evidence only;
+- historical backend endpoints are unchanged, and the higher-level explicitly legacy
+  season diagnostic/orchestration tools remain separate from canonical Run/Branch
+  tournament preparation;
+- current canonical tournament preparation continues through Planned Event / authoritative
+  Simulation and cannot be recreated by clicking the old stage-by-stage web controls.
+
+This closes the next dead compatibility entrypoint without deleting historical evidence.
+
+The follow-up audit also retires the direct `Simulate One Event` mutation from the
+current Admin Seasons web surface.
+
+- the browser client no longer exposes `POST /admin/events/{event_id}/simulate`;
+- the direct Preview/Run One Event panel and its mutation state are removed;
+- mutation-only `SimulateOneEventRequest` / `SimulateOneEventResult` web wrappers are
+  removed;
+- the backend `SeasonEventSimulationService` is intentionally retained because legacy
+  week preflight still composes its dry-run report as diagnostic evidence;
+- `SimulateOneEventReport` and its step/report types therefore remain in the frontend
+  read model for the read-only week-preflight viewer;
+- no server historical endpoint or compatibility service is deleted in this slice.
+
+This preserves legacy diagnostic reconstruction while removing another current-product
+shortcut capable of mutating the old file-backed tournament pipeline.
+
+The season-level follow-up retires direct browser bootstrap of the legacy global
+`season_active_players.json` registry.
+
+- Admin Seasons no longer exposes Preview/Persist bootstrap controls;
+- the browser client no longer exports the legacy
+  `bootstrap-from-initial-pool` POST helper;
+- mutation-only `SeasonBootstrapPayload` / `SeasonBootstrapResponse` web wrappers are
+  removed;
+- the historical active-player registry stays readable through
+  `getSeasonActivePlayers` for old saves, legacy ranking tables and diagnostics;
+- the page labels that state explicitly as `LEGACY / READ-ONLY`;
+- canonical Product Run roster truth remains InitialWorld + lifecycle + sporting state,
+  and this cleanup does not touch those Run-owned authorities;
+- the backend historical bootstrap service/endpoint remains available outside the current
+  browser client.
+
+The Calendar source-authoring audit then removes the weaker direct Calendar Builder
+shortcut from Admin Seasons while preserving the actual source-authoring chain.
+
+- Admin Seasons no longer exposes direct Preview/Persist/Overwrite Calendar controls;
+- the browser client no longer exports the direct `buildSeasonCalendar` POST helper and
+  its mutation-only `SeasonCalendarBuildPayload`;
+- `SeasonCalendarBuildResponse` stays because persisted source Calendar inspection is
+  still a read model;
+- the Admin Seasons Calendar panels now project only persisted source Calendar evidence and
+  explicitly label it as source/read-only on that page;
+- authoring is handed off to the dedicated Season Builder, whose reviewed preflight,
+  dry-run identity and guarded create-only command write the same source Calendar service;
+- `CalendarPackageRunAdapter` is unchanged and still packages the persisted source
+  Calendar into immutable Run-owned Calendar authority;
+- the backend direct Calendar build endpoint remains historical/compatibility support in
+  this slice; only its current-browser shortcut is retired.
+
+This removes the unguarded overwrite-capable UI path without pretending the persisted
+source Calendar registry itself is obsolete. Product Runs continue to consume the applied
+Calendar Package, not the mutable source registry.
+
+**Next after this PR:** audit source-calendar ranking/category editing surfaces against
+Season Builder/Calendar Package ownership. Keep source-authoring controls that are still
+required to author Package content; retire only duplicate shortcuts that bypass the reviewed
+authoring workflow.
 
 
 ## Active implementation — canonical result/ranking source fence
@@ -2948,3 +3022,170 @@ Viewer Tournament Detail now resolves the selected Viewer Branch's effective can
 ### Canonical Viewer definitive Wild Cards
 
 Viewer Tournament Detail now exposes only persisted definitive WC/RWC assignments from the selected Viewer Branch. Public output includes WC slot, player identity, original-vs-reserve source and RWC ordinal where applicable. Preliminary nominations, unfilled slots, Admin review metadata, fingerprints, chronology/provenance and first-Tour-entry trigger internals remain hidden. An event with no definitive WC assignment returns an empty canonical public collection rather than using legacy wildcard action logs. See `docs/VIEWER_TOURNAMENT_WILD_CARDS_V1.md`.
+
+
+### Canonical Viewer Tournament Result
+
+Viewer Tournament Detail now reads completed sporting outcomes from the selected Viewer
+Branch's immutable Saved Ranking component. The read model resolves exactly one
+`OwnedTournamentRankingSource` for the event and requires its canonical
+`TournamentResultAuthority`; it never promotes the legacy SimulationRun result package
+to canonical authority.
+
+- a live canonical tournament close remains invisible until Ranking Save publishes the
+  updated Saved Revision;
+- champion/finalist, Qualification winners, per-player stages/results and completed match
+  scorelines are projected as public sporting facts;
+- group/hybrid result metadata is preserved when present in canonical result authority;
+- fingerprints, command provenance, point/prize authorities and other Admin internals are
+  deliberately excluded;
+- Tournament Detail's primary result section now consumes this canonical projection;
+- legacy event/result payload may still remain in collapsed technical compatibility data
+  on Tournament Detail, but it is no longer the Tournament list/history authority.
+
+See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.
+
+
+### Canonical Viewer Tournament History
+
+The top-level Viewer Tournament list is now detached from the legacy SimulationRun event
+registry. The selected Viewer Branch's Saved Revision loads its Run Package state directly
+alongside Ranking/Simulation/WC components, and `viewer_tournament_history.v1` projects all
+saved Calendar Packages into one deterministic multi-season tournament history.
+
+- Calendar Package state is read from the exact immutable Saved Revision; live Package changes
+  are invisible until ordinary Working Draft Save;
+- canonical Tournament Results are joined only from the same Saved Ranking component and are
+  invisible until Ranking Save;
+- the list exposes public schedule/geometry metadata plus result publication, champion and
+  finalist, but no Package IDs/fingerprints/provenance or authority internals;
+- a canonical result without a matching saved Calendar event fails closed rather than being
+  backfilled from legacy event records;
+- `ViewerRunTournamentsPage` no longer calls legacy `listEvents()` or `getRun()` for its
+  list route;
+- Tournament Detail, Season Calendar and Week compatibility metadata still have separate legacy
+  reads and remain future detachment work.
+
+See `docs/VIEWER_TOURNAMENT_HISTORY_V1.md`.
+
+
+### Canonical Viewer Season Calendar
+
+The top-level Viewer Season Calendar now reuses the canonical Saved-Revision Tournament
+History projection instead of the legacy SimulationRun season plan/event registry.
+
+- `/viewer/runs/:runId/calendar` performs no `getRun()` or `listEvents()` read;
+- all saved Calendar Packages are shown as one deterministic multi-season timeline;
+- schedule identity/name/week/Tour/category/host data comes from saved Run Package authority;
+- result-publication/champion data comes from the same saved canonical result join used by
+  Tournament History;
+- live Working Draft Package changes remain invisible until Save;
+- the page does not recreate legacy `next_event_index` current/upcoming semantics;
+- Planned Event and Week Detail remain separate compatibility migrations because they still
+  combine legacy planned/persisted event records and legacy Ranking/Race snapshot links.
+
+See `docs/VIEWER_SEASON_CALENDAR_V1.md`.
+
+
+### Canonical Viewer Planned Event
+
+`/viewer/runs/:runId/calendar/:eventId` now resolves the requested event directly from
+canonical Saved-Revision Tournament History.
+
+- the route performs no legacy `getRun()` or `listEvents()` read;
+- season/week/Tour/category/template/host and bracket-capacity metadata come from saved
+  Calendar Package authority;
+- published-result status/champion/finalist come from the same Saved Ranking join;
+- legacy next-event index, current/upcoming status, persisted-event sequence and raw event
+  technical payloads are no longer presented as Planned Event authority;
+- missing event identity fails closed rather than searching a legacy event registry;
+- Week Detail remains the next schedule-view compatibility boundary.
+
+See `docs/VIEWER_PLANNED_EVENT_V1.md`.
+
+
+### Canonical Viewer Finals Race
+
+The main public Race to Finals surface now reads season-scoped canonical Race evidence from
+the selected Viewer Branch's immutable Saved Revision.
+
+- `/viewer/rankings/race` and `/viewer/runs/:runId/race` use
+  `viewer_finals_race_history.v1`, not the legacy SimulationRun Race snapshot registry;
+- every saved World Tour Finals Race season publishes frozen rank, Race points and counted
+  sporting results without exposing tie-break tokens or authority fingerprints;
+- Finals selection status is joined only from the same Saved Revision;
+- when accepted Finals replacements exist, the latest effective participant state determines
+  current public Finals membership and seed while the immutable initial selection remains
+  historical evidence;
+- before selection exists, the public field reports selection pending rather than falsely
+  classifying every player as not selected;
+- live Race/selection/replacement Working Draft changes remain invisible until normal
+  authoritative Simulation Save;
+- legacy `race/:snapshotSequence` detail plus older Home/History/deferred Race consumers
+  remain compatibility follow-ups and are not canonical authority.
+
+See `docs/VIEWER_FINALS_RACE_V1.md`.
+
+
+### Canonical Viewer World Tour Finals participants
+
+The run-scoped World Tour Finals hub and qualification page now consume the same canonical
+Saved-Revision Finals Race publication as the public Race surface instead of the legacy
+SimulationRun Finals summary/qualification registry.
+
+- the latest published participant selection defines whether the Finals field is public;
+- when accepted replacement history exists, the latest saved effective participant state is
+  the current confirmed public field, so withdrawn players disappear and accepted Race reserves
+  appear without mutating the immutable initial selection;
+- the public table exposes Finals seed, player identity, frozen Race rank/points and
+  `direct_entry` vs `race` qualification source;
+- selection/effective-state fingerprints, predecessor lineage, withdrawal/decline/accept audit
+  and command provenance remain private;
+- live Finals selection/replacement changes remain invisible until authoritative Simulation Save;
+- the dedicated Finals result page remains compatibility-backed and is the next distinct Finals
+  Viewer authority migration.
+
+See `docs/VIEWER_FINALS_PARTICIPANTS_V1.md`.
+
+
+### Canonical Viewer Finals Result
+
+The dedicated World Tour Finals Result route now uses the canonical Saved-Revision publication chain end to end. Viewer first resolves the latest published Finals event identity from `viewer_finals_race_history.v1`, then reads that exact event through `viewer_tournament_result.v1`. Champion/finalist, Qualification winners, player rows, match rows and scorelines therefore come from the same Branch-owned Tournament Result authority used by Tournament Detail.
+
+The route no longer calls the legacy SimulationRun Finals result endpoint or renders its technical payload. If the Finals event identity is not published, the Tournament Result query is not issued. If the event exists but its canonical result has not reached the selected Saved Revision, Viewer reports the result as not published instead of falling back to legacy data. See `docs/VIEWER_FINALS_RESULT_V1.md`.
+
+Remaining Viewer compatibility work includes legacy Race snapshot-sequence detail plus Home/History/deferred consumers; this slice does not change Finals gameplay or qualification policy.
+
+
+### Canonical Viewer History
+
+The run-scoped Viewer History page is now detached from the legacy SimulationRun activity feed. It reads only Saved-Revision-bounded public projections from the selected Viewer Branch:
+
+- completed published tournaments from `viewer_tournament_history.v1`;
+- Official Ranking publication history from `viewer_official_ranking_history.v1`;
+- World Tour Finals Race publication history from `viewer_finals_race_history.v1`.
+
+The three domains remain separate timelines with their own canonical identities. History does not fabricate a cross-domain sequence and does not reinterpret legacy Race `snapshotSequence` values as canonical Finals Race season identities. Legacy technical activity JSON is no longer rendered on this route. See `docs/VIEWER_CANONICAL_HISTORY_V1.md`.
+
+Remaining Viewer compatibility work includes the legacy Race snapshot-sequence detail route and broader top-level Home/deferred consumers. Those should be migrated only where canonical identity can be preserved explicitly.
+
+
+### Canonical Viewer Home
+
+Viewer Home active-run summaries are now detached from legacy SimulationRun runtime/state readers. The page uses only canonical public Viewer projections:
+
+- Viewer Official Context for Product Run/current public context;
+- `viewer_tournament_history.v1` for published completed tournaments;
+- `viewer_official_ranking_history.v1` for Official Ranking publications;
+- `viewer_finals_race_history.v1` for World Tour Finals Race publications.
+
+Legacy `getRun`, run-status, event-list, snapshot-list, activity and Finals-summary readers are no longer used on Home. Home also stops linking to legacy Ranking/Race `snapshotSequence` details, preserving canonical `week_ordinal` and `target_season_index` identity boundaries.
+
+Schedule preview is intentionally not reconstructed from legacy SimulationRun state. Home links to the run-scoped calendar surface until the canonical saved-calendar stack is integrated here. See `docs/VIEWER_CANONICAL_HOME_V1.md`.
+
+### Stack integration recovery
+
+The cumulative Viewer/Admin implementation branch is intentionally proposed directly to `buuk` by PR #1066 after several stacked child PRs were merged into work branches instead of the integration branch. This preserves the actual cumulative ancestry rather than replaying dependent commits manually.
+
+The parallel #1060–#1063 Viewer calendar/ranking compatibility stack remains separate because a direct branch merge has overlapping conflicts. Its unique work is retained on its existing branches and must be reconciled against `buuk` after #1066 lands; no parallel content is treated as superseded merely because the main stack is integrated first.
+

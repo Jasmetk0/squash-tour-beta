@@ -83,7 +83,7 @@ describe('History/Finals Viewer route source guard', () => {
     expect(appSource).toContain('path="finals/result" element={<ViewerRunFinalsResultPage />}')
   })
 
-  it('keeps history/finals source routed through scalar-safe helpers and Viewer route helpers', () => {
+  it('keeps history/finals source on canonical Viewer readers and Viewer route helpers', () => {
     for (const helperName of [
       'viewerFinalsPath',
       'viewerFinalsQualificationPath',
@@ -91,8 +91,6 @@ describe('History/Finals Viewer route source guard', () => {
       'viewerPlayerProfilePath',
       'viewerPlannedEventPath',
       'viewerTournamentDetailPath',
-      'viewerRankingSnapshotPath',
-      'viewerRaceSnapshotPath',
       'viewerRankingsPath',
       'viewerRacePath',
       'viewerTournamentsPath'
@@ -100,17 +98,19 @@ describe('History/Finals Viewer route source guard', () => {
       expect(historyFinalsSource).toContain(helperName)
     }
 
-    for (const helperName of [
-      'isScalar',
-      'safeScalarValue',
-      'safeLinkId',
-      'isPreviewableActivityItem',
-      'collectPlayerIds',
-      'hasQualificationPreviewData',
-      'hasResultPreviewData'
+    for (const canonicalReader of [
+      'getViewerTournamentHistory',
+      'listViewerOfficialRankingHistory',
+      'getViewerFinalsRace',
+      'getViewerTournamentResult'
     ]) {
-      expect(historyFinalsSource).toContain(helperName)
+      expect(historyFinalsSource).toContain(canonicalReader)
     }
+
+    expect(historyFinalsSource).not.toContain('getRunActivity')
+    expect(historyFinalsSource).not.toContain('getFinalsResult')
+    expect(historyFinalsSource).not.toContain('getFinalsSummary')
+    expect(historyFinalsSource).not.toContain('getFinalsQualification')
   })
 
   it('keeps history/finals source read-only without Admin or mutation affordances', () => {
@@ -141,7 +141,8 @@ describe('History/Finals Viewer route source guard', () => {
     expect(historyFinalsSource).toContain('viewerFinalsPath(runId)')
     expect(historyFinalsSource).toContain('viewerFinalsQualificationPath(runId)')
     expect(historyFinalsSource).toContain('viewerFinalsResultPath(runId)')
-    expect(historyFinalsSource).toContain('safeScalarValue')
-    expect(historyFinalsSource).toContain('safeLinkId')
+    expect(historyFinalsSource).toContain('getViewerTournamentHistory')
+    expect(historyFinalsSource).toContain('listViewerOfficialRankingHistory')
+    expect(historyFinalsSource).not.toContain('getRunActivity')
   })
 })

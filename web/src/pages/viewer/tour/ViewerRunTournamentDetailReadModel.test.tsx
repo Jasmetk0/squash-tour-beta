@@ -18,6 +18,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
@@ -113,6 +114,7 @@ describe('ViewerRunTournamentDetailPage read model', () => {
         { wildcard_index: 2, player_id: 'P-RWC', source: 'reserve_wc', reserve_ordinal: 3 }
       ]
     })
+    api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('canonical result missing', 404))
   })
 
   it('renders safe persisted tournament metadata and encoded source links', async () => {

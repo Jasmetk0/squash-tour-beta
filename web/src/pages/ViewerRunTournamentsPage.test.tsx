@@ -11,6 +11,8 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
@@ -85,6 +87,62 @@ function mockEvents(): void {
   })
 }
 
+function mockViewerTournamentHistory(): void {
+  api.getViewerTournamentHistory.mockResolvedValue({
+    schema_version: 'viewer_tournament_history.v1',
+    product_run_id: 'viewer-run-1',
+    viewer_branch_id: 'branch-viewer',
+    tournament_count: 2,
+    published_result_count: 1,
+    tournaments: [
+      {
+        event_id: 'EVENT-OLD',
+        season: '2000/2001',
+        season_week: 5,
+        event_name: 'Old Open',
+        template_id: 'WT-GOLD',
+        category: 'GOLD',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'CZE',
+        host_city: 'Prague',
+        region: 'EUROPE',
+        main_draw_size: 16,
+        qualification_draw_size: 8,
+        seeds_count: 4,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: false,
+        champion_player_id: null,
+        finalist_player_id: null
+      },
+      {
+        event_id: 'EVENT-1',
+        season: '2002/2003',
+        season_week: 17,
+        event_name: 'Current Open',
+        template_id: 'WT-PLAT',
+        category: 'DIAMOND',
+        tour_level: 'WORLD_TOUR',
+        host_country: 'EGY',
+        host_city: 'Cairo',
+        region: 'AFRICA',
+        main_draw_size: 32,
+        qualification_draw_size: 16,
+        seeds_count: 8,
+        qualifier_spots: 4,
+        wild_cards: 2,
+        byes: 0,
+        ranking_status: 'ranked',
+        result_published: true,
+        champion_player_id: 'P-001',
+        finalist_player_id: 'P-002'
+      }
+    ]
+  })
+}
+
 function expectNoForbiddenViewerActions(): void {
   const forbiddenLabels = [
     'Simulate',
@@ -115,123 +173,80 @@ function expectNoForbiddenViewerActions(): void {
 describe('ViewerRunTournamentsPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockRunMetadata()
-    mockEvents()
+    mockViewerTournamentHistory()
   })
 
-  it('renders parseable tournament result metadata on the sports-facing tournaments list', async () => {
+  it('renders canonical multi-season tournament history without legacy event reads', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-1').length).toBeGreaterThan(0)
-    const eventOne = (await screen.findByText('EVENT-1')).closest('li') as HTMLElement
-    expect(screen.getByText('EVENT-2')).toBeInTheDocument()
-    expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(screen.getByText('ET-GOLD')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
-    expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
-    expect(within(eventOne).getByText('Champion')).toBeInTheDocument()
-    expect(within(eventOne).getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
+    expect(await screen.findByRole('heading', { name: 'Canonical Tournament History' })).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('viewer-run-1')
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+
+    const list = screen.getByRole('list', { name: 'Canonical tournament history list' })
+    expect(within(list).getByText('Old Open')).toBeInTheDocument()
+    expect(within(list).getByText('Current Open')).toBeInTheDocument()
+
+    const old = within(list).getByText('Old Open').closest('li') as HTMLElement
+    expect(within(old).getByText('2000/2001')).toBeInTheDocument()
+    expect(within(old).getByRole('link', { name: 'W5' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
+      '/viewer/runs/viewer-run-1/weeks/5'
     )
-    expect(within(eventOne).getByText('Result status')).toBeInTheDocument()
-    expect(within(eventOne).getByText('completed')).toBeInTheDocument()
-    expect(within(eventOne).getByText('Matches')).toBeInTheDocument()
-    expect(within(eventOne).getByText('31')).toBeInTheDocument()
-    expect(screen.getAllByRole('link', { name: /Open tournament detail/i })[0]).toHaveAttribute(
+    expect(within(old).getByText('Not published')).toBeInTheDocument()
+
+    const current = within(list).getByText('Current Open').closest('li') as HTMLElement
+    expect(within(current).getByText('2002/2003')).toBeInTheDocument()
+    expect(within(current).getByText('DIAMOND')).toBeInTheDocument()
+    expect(within(current).getByText('WORLD TOUR')).toBeInTheDocument()
+    expect(within(current).getByText('Cairo, EGY')).toBeInTheDocument()
+    expect(within(current).getByText('Published')).toBeInTheDocument()
+    expect(within(current).getByText('P-001')).toBeInTheDocument()
+    expect(within(current).getByText('P-002')).toBeInTheDocument()
+    expect(within(current).getByRole('link', { name: 'Open tournament detail' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
     )
-    expect(screen.queryByText(/event-list-payload-should-not-render/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Match 1 should not render/i)).not.toBeInTheDocument()
+
     expectNoForbiddenViewerActions()
-    expect(screen.queryByRole('navigation', { name: /run navigation/i })).not.toBeInTheDocument()
   })
 
-  it('keeps missing tournament list weeks as plain text without a broken week link', async () => {
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [
-        {
-          event_sequence: 10,
-          event_id: 'EVENT-NO-WEEK',
-          season: 2027,
-          week: null,
-          template_id: 'WT-GOLD',
-          tournament_result: null
-        }
-      ]
+  it('shows a safe empty state when the Viewer Branch has no saved Calendar Package', async () => {
+    api.getViewerTournamentHistory.mockRejectedValueOnce(
+      new api.ApiError('Viewer Saved Revision has no applied Calendar Package', 404)
+    )
+
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+
+    expect(
+      await screen.findByText('No saved Calendar Package is available for this Viewer Branch yet.')
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical tournament history list' })).not.toBeInTheDocument()
+    expect(api.listEvents).not.toHaveBeenCalled()
+    expect(api.getRun).not.toHaveBeenCalled()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('renders an empty canonical list without inventing sporting data', async () => {
+    api.getViewerTournamentHistory.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      tournament_count: 0,
+      published_result_count: 0,
+      tournaments: []
     })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
-    const eventWithoutWeek = (await screen.findByText('EVENT-NO-WEEK')).closest('li') as HTMLElement
-    expect(within(eventWithoutWeek).getByText('—')).toBeInTheDocument()
-    expect(within(eventWithoutWeek).queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
+    expect(
+      await screen.findByText('No tournaments are present in the saved Calendar Packages.')
+    ).toBeInTheDocument()
+    expect(screen.queryByText(/fake champion|invented winner|legacy champion/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
-
-  it('hides unknown tournament result payloads on the tournaments list without fake result metadata', async () => {
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [
-        {
-          event_sequence: 10,
-          event_id: 'EVENT-UNKNOWN',
-          season: 2027,
-          week: 5,
-          template_id: 'WT-GOLD',
-          tournament_result: {
-            secret_debug_marker: 'unknown-list-payload-should-not-render',
-            fake_champion: 'Fake Champion',
-            unknown_status: 'invented'
-          }
-        }
-      ]
-    })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
-
-    expect(await screen.findByText('EVENT-UNKNOWN')).toBeInTheDocument()
-    expect(screen.getByText('Result publication available')).toBeInTheDocument()
-    expect(screen.queryByText('Champion')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Fake Champion/i)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Fake Champion/i })).not.toBeInTheDocument()
-    expect(screen.queryByText('Result status')).not.toBeInTheDocument()
-    expect(screen.queryByText(/unknown-list-payload-should-not-render/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('renders safe empty state on the normal tournament list route without invented data', async () => {
-    api.listEvents.mockResolvedValueOnce({ run_id: 'viewer-run-1', events: [] })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
-
-    expect(await screen.findByRole('heading', { name: 'Tournaments' })).toBeInTheDocument()
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.queryByText(/champion|winner|final score|standings|match result/i)).not.toBeInTheDocument()
-    expect(document.body).not.toHaveTextContent('[object Object]')
-    expectNoForbiddenViewerActions()
-  })
-
-  it('drops malformed tournament list rows and does not create unsafe links from object IDs', async () => {
-    api.listEvents.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      events: [null, 12, 'bad', {}, { event_id: { bad: true }, week: 3 }, { event_id: 'EVENT-SAFE', week: { bad: true }, template_id: { bad: true }, tournament_result: { fake_winner: 'Fake Winner' } }]
-    })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
-
-    expect(await screen.findByText('EVENT-SAFE')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/tournaments/EVENT-SAFE')
-    expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
-    expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
-    expect(document.body).not.toHaveTextContent('[object Object]')
-    expectNoForbiddenViewerActions()
-  })
-
 })
 
 describe('ViewerRunTournamentDetailPage', () => {
@@ -293,9 +308,10 @@ describe('ViewerRunTournamentDetailPage', () => {
         { wildcard_index: 2, player_id: 'P-RWC', source: 'reserve_wc', reserve_ordinal: 3 }
       ]
     })
+    api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('canonical result missing', 404))
   })
 
-  it('renders parseable tournament result preview with collapsed technical data', async () => {
+  it('renders canonical saved tournament result instead of legacy result payload', async () => {
     api.getEvent.mockResolvedValueOnce({
       event_sequence: 8,
       event_id: 'EVENT-1',
@@ -304,88 +320,67 @@ describe('ViewerRunTournamentDetailPage', () => {
       template_id: 'WT-PLAT',
       tournament_result: {
         summary: {
-          champion: { player_id: 'P-001', name: 'Ali Farag', country: 'EGY' },
-          finalist: { player_id: 'P-002', name: 'Paul Coll', country: 'NZL' },
-          final_score: '11-8, 9-11, 11-7, 11-6',
-          match_count: 31,
-          completed_matches: 30,
-          draw_size: 32,
-          round_count: 5,
-          status: 'completed',
+          champion: { player_id: 'LEGACY', name: 'Legacy Champion', country: 'OLD' },
           secret_debug_marker: 'parseable-hidden-payload'
         }
       }
     })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
-
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Canonical Draw' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Definitive Wild Cards' })).toBeInTheDocument()
-    expect(api.getViewerTournamentWildCards).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #1 · P-WC · Original WC')
-    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #2 · P-RWC · Reserve WC #3')
-    expect(api.getViewerTournamentDraw).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByRole('list', { name: 'Canonical Main draw slots' })).toBeInTheDocument()
-    expect(screen.getByText('#1 · P-001 · seed 1')).toBeInTheDocument()
-    expect(screen.getByText('#2 · BYE')).toBeInTheDocument()
-    expect(screen.getByText('#3 · Q1')).toBeInTheDocument()
-    expect(screen.getByText('#4 · P-002 · seed 2 · wild card')).toBeInTheDocument()
-    expect(api.getViewerTournamentEntryField).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getAllByText('branch-viewer').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('P-001, P-002')).toBeInTheDocument()
-    expect(screen.getByText('P-003')).toBeInTheDocument()
-    expect(screen.getByText('P-004')).toBeInTheDocument()
-    expect(screen.getByText('P-099')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
-    )
-    expect(screen.getByRole('link', { name: 'Paul Coll (NZL)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-002/career'
-    )
-    expect(screen.getByText('11-8, 9-11, 11-7, 11-6')).toBeInTheDocument()
-    expect(screen.getByText('31')).toBeInTheDocument()
-    expect(screen.getAllByText('30').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('32').length).toBeGreaterThan(0)
-    expect(screen.getByText('5')).toBeInTheDocument()
-    expect(screen.getByText('completed')).toBeInTheDocument()
-    expect(screen.queryByText(/This preview is not connected/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Match 1/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical event data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/parseable-hidden-payload/i)).not.toBeVisible()
-    expectNoForbiddenViewerActions()
-  })
-
-
-  it('keeps tournament result champion and finalist as plain text when player IDs are missing', async () => {
-    api.getEvent.mockResolvedValueOnce({
-      event_sequence: 8,
+    api.getViewerTournamentResult.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_result.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
       event_id: 'EVENT-1',
-      season: 2027,
-      week: 3,
-      template_id: 'WT-PLAT',
-      tournament_result: {
-        summary: {
-          champion: { name: 'Ali Farag', country: 'EGY' },
-          finalist: { name: 'Paul Coll', country: 'NZL' },
-          status: 'completed'
+      completed_season_index: 27,
+      completed_week: 3,
+      champion_player_id: 'P-001',
+      finalist_player_id: 'P-002',
+      qualification_winner_ids: ['P-003'],
+      players: [
+        {
+          player_id: 'P-001', draw_type: 'main', seed_number: 1, qualifier: false,
+          main_entry_status: 'direct', reached_stage: 'champion', final_round_number: 2,
+          eliminated_by_player_id: null, last_match_id: 'final', wins: 2, losses: 0,
+          byes_received: 0, walkovers_received: 0, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
+        },
+        {
+          player_id: 'P-002', draw_type: 'main', seed_number: 2, qualifier: false,
+          main_entry_status: null, reached_stage: 'finalist', final_round_number: 2,
+          eliminated_by_player_id: 'P-001', last_match_id: 'final', wins: 1, losses: 1,
+          byes_received: 0, walkovers_received: 0, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
+        },
+        {
+          player_id: 'P-003', draw_type: 'both', seed_number: null, qualifier: true,
+          main_entry_status: null, reached_stage: 'semifinal', final_round_number: 1,
+          eliminated_by_player_id: 'P-001', last_match_id: 'semi', wins: 1, losses: 1,
+          byes_received: 0, walkovers_received: 1, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
         }
-      }
+      ],
+      matches: [
+        { match_id: 'semi', draw_type: 'main', round_number: 1, bracket_position: 1, winner_player_id: 'P-001', loser_player_id: 'P-003', scoreline: '3-0' },
+        { match_id: 'final', draw_type: 'main', round_number: 2, bracket_position: 1, winner_player_id: 'P-001', loser_player_id: 'P-002', scoreline: '3-2' }
+      ]
     })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
 
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByText('Ali Farag (EGY)')).toBeInTheDocument()
-    expect(screen.getByText('Paul Coll (NZL)')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Ali Farag (EGY)' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Paul Coll (NZL)' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-001 · champion · 2W–0L · seed 1')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-003 · semifinal · 1W–1L · qualifier')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('final · main R2 · P-001 def. P-002 · 3-2')
+    expect(screen.queryByText('Legacy Champion')).not.toBeInTheDocument()
+    expect(screen.queryByText(/parseable-hidden-payload/i)).not.toBeVisible()
+    const technicalSection = screen.getByText('Show technical event data').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
     expectNoForbiddenViewerActions()
   })
+
 
   it('renders sports-facing tournament detail with deferred preview for unknown result shapes', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
@@ -398,7 +393,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('Canonical Tournament Result is not available for this tournament yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments'
@@ -434,11 +429,8 @@ describe('ViewerRunTournamentDetailPage', () => {
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-NO-WEEK')
 
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
-    )
+    expect(await screen.findByText('WT-GOLD')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
     expect(screen.getAllByText('—').length).toBeGreaterThan(0)
     expect(screen.queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open week detail/i })).not.toBeInTheDocument()
@@ -462,7 +454,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
     expect(screen.getAllByText('EVT/1 #A').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/tournaments')
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('Canonical Tournament Result is not available for this tournament yet.')).toBeInTheDocument()
     expect(screen.queryByText('Fake Winner')).not.toBeInTheDocument()
     expect(document.body).not.toHaveTextContent('[object Object]')
     expectNoForbiddenViewerActions()

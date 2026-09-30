@@ -1,13 +1,10 @@
 import type {
   EventRecord,
-  RaceSnapshot,
-  RankingSnapshot,
   SeasonStateResponse,
 } from "../../../api/types";
 import {
   viewerPlannedEventPath,
   viewerRacePath,
-  viewerRaceSnapshotPath,
   viewerRankingsPath,
   viewerRankingSnapshotPath,
   viewerRunsPath,
@@ -22,8 +19,6 @@ import type {
   ViewerEventMetadataItem,
 } from "./viewerEventDetailDisplay";
 import { resolvePlannedEventStatusLabel } from "./viewerPlannedEventDetailDisplay";
-
-export type WeekSnapshotPublication = RankingSnapshot | RaceSnapshot;
 
 export function parseViewerWeekParam(week: string | undefined): number | null {
   if (!week) return null;
@@ -65,17 +60,6 @@ export function persistedEventsByExactId(
   events: EventRecord[] | null | undefined,
 ): Map<string, EventRecord> {
   return new Map((events ?? []).map((event) => [event.event_id, event]));
-}
-
-export function snapshotsForWeekSourceEvents<T extends WeekSnapshotPublication>(
-  snapshots: T[] | null | undefined,
-  sourceEventIds: Set<string>,
-): T[] {
-  return (snapshots ?? []).filter((snapshot) =>
-    Boolean(
-      snapshot.source_event_id && sourceEventIds.has(snapshot.source_event_id),
-    ),
-  );
 }
 
 export function completedPlannedEventsForWeek(
@@ -209,12 +193,10 @@ export function buildWeekContextLinks({
   runId,
   week,
   rankingPublicationOrdinals = [],
-  raceSnapshotSequences = [],
 }: {
   runId: string;
   week: number;
   rankingPublicationOrdinals?: number[];
-  raceSnapshotSequences?: number[];
 }): ViewerEventDetailLink[] {
   return [
     { label: "Run browser", href: viewerRunsPath() },
@@ -226,10 +208,6 @@ export function buildWeekContextLinks({
     ...rankingPublicationOrdinals.map((ordinal) => ({
       label: `Ranking publication #${ordinal}`,
       href: viewerRankingSnapshotPath(runId, ordinal),
-    })),
-    ...raceSnapshotSequences.map((sequence) => ({
-      label: `Race publication #${sequence}`,
-      href: viewerRaceSnapshotPath(runId, sequence),
     })),
   ];
 }

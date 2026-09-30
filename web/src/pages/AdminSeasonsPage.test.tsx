@@ -35,7 +35,6 @@ const api = vi.hoisted(() => ({
   getEventPointAwards: vi.fn(),
   generateEventPointAwards: vi.fn(),
   applyEventPointAwards: vi.fn(),
-  simulateOneEvent: vi.fn(),
   preflightSeasonWeek: vi.fn(),
   recoverSeasonWeek: vi.fn(),
   getSeasonReadiness: vi.fn(),
@@ -593,7 +592,6 @@ describe('AdminSeasonsPage', () => {
     api.getEventPointAwards.mockResolvedValue(emptyPointAwardsResult)
     api.generateEventPointAwards.mockResolvedValue(pointAwardsResult)
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
-    api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
     api.recoverSeasonWeek.mockResolvedValue(weekRecoveryResult)
     api.getSeasonReadiness.mockResolvedValue(seasonReadinessResult)
@@ -610,7 +608,7 @@ describe('AdminSeasonsPage', () => {
     expect(screen.getByText('Legacy mutating commands are explicitly marked and are not canonical-run eligible.')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Season Control Overview/i })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: /Primary Workflow/i })).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getByRole('heading', { name: 'Season Calendar Builder' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Legacy source calendar — read-only here' })).toBeInTheDocument()
   })
 
   it('renders selected season workspace for valid season labels', async () => {

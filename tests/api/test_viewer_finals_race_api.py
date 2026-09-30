@@ -62,7 +62,7 @@ def test_viewer_finals_race_is_published_only_from_saved_simulation_component(
         save_simulation(server, run_id, branch_id)
 
         status, published = _request("GET", viewer_url)
-        assert status == 200
+        assert status == 200, (status, published)
         assert published["schema_version"] == "viewer_finals_race_history.v1"
         assert published["product_run_id"] == run_id
         assert published["viewer_branch_id"] == branch_id

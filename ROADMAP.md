@@ -1667,3 +1667,10 @@ for the confirmed participant field. Public participation follows the latest sav
 after accepted replacements and exposes only seed, player, Race rank/points and direct-entry-vs-Race
 qualification source. The dedicated Finals result page remains the next Finals Viewer migration and
 must bind to canonical Tournament Result authority rather than infer an outcome from Race/selection.
+
+
+### Viewer Finals Result downstream integration
+
+The World Tour Finals Viewer chain now continues through canonical Race/participant publication -> Finals event identity -> canonical Tournament Result. The dedicated Finals Result page is Saved-Revision bounded, exposes sporting result data only, and has no legacy SimulationRun Finals-result fallback.
+
+Remaining Viewer detachment should focus on the legacy Race snapshot-sequence detail route and remaining Home/History/deferred compatibility consumers. Do not infer new Finals policy while removing those reads; `SQUASH_ENGINE_MASTER_VISION.md` remains the product authority.

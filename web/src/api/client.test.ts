@@ -23,6 +23,7 @@ import {
   getRunPackageState,
   getViewerOfficialRunContext,
   getViewerTournamentHistory,
+  getViewerFinalsRace,
   listRunBranches,
   getRunBranch,
   createRunBranchFromSavedRevision,
@@ -72,6 +73,32 @@ import type {
   SeasonBuilderFutureApplyRequestValidationPreviewResponse
 } from './types'
 
+
+describe('Viewer Finals Race client', () => {
+  afterEach(() => vi.restoreAllMocks())
+
+  it('reads canonical Finals Race history from the encoded Product Run route', async () => {
+    const body = {
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'run/a #1',
+      viewer_branch_id: 'branch-viewer',
+      latest_target_season_index: null,
+      publications: []
+    }
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    )
+
+    await expect(getViewerFinalsRace('run/a #1')).resolves.toEqual(body)
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://127.0.0.1:8000/viewer/runs/run%2Fa%20%231/race/finals',
+      expect.anything()
+    )
+  })
+})
 
 describe('Viewer tournament history client', () => {
   afterEach(() => vi.restoreAllMocks())

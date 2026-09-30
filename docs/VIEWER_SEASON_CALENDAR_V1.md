@@ -40,10 +40,9 @@ invisible until their Ranking Save boundary.
 
 ## Remaining compatibility
 
-The following routes remain separate follow-up work:
+Planned Event detail now resolves its event from the same canonical history authority.
+Week Detail (`/weeks/:week`) remains separate follow-up work because it still combines
+legacy season/event state with legacy Ranking/Race snapshot links.
 
-- Planned Event detail (`/calendar/:eventId`);
-- Week Detail (`/weeks/:week`);
-- their legacy Ranking/Race snapshot links and persisted-event compatibility metadata.
-
-The canonical top-level Calendar does not promote those compatibility readers to authority.
+The canonical Calendar and Planned Event routes do not promote those remaining compatibility
+readers to authority.

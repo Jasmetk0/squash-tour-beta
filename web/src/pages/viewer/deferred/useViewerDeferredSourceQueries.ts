@@ -1,158 +1,122 @@
 import { useQuery } from '@tanstack/react-query'
 
 import {
-  getFinalsSummary,
-  getRun,
-  getRunStatusSummary,
-  listEvents,
-  listRaceSnapshots,
-  listRankingSnapshots,
+  getViewerFinalsRace,
+  getViewerRunCalendar,
+  getViewerTournamentHistory,
+  listViewerOfficialRankingHistory,
 } from '../../../api/client'
-import {
-  buildDeferredSourceMetadata,
-  hasAnyDeferredSourceMetadata,
-} from './viewerDeferredSourceMetadata'
+import type {
+  ViewerCalendarEvent,
+  ViewerFinalsRacePublication,
+  ViewerOfficialRankingHistoryItem,
+  ViewerTournamentHistoryItem,
+} from '../../../api/types'
 
 export type ViewerDeferredSourceQueryOptions = {
-  activeRunId: string | null
+  productRunId: string | null
   kind: string
   scope: string
-  includeRun?: boolean
-  includeFinals?: boolean
-  eventCountMode?: 'events' | 'status-progress' | 'run-ordered'
+}
+
+export type ViewerDeferredCanonicalMetadata = {
+  viewerBranchId: string | null
+  seasonCount: number
+  calendarEventCount: number
+  completedTournamentCount: number
+  rankingPublicationCount: number
+  finalsRacePublicationCount: number
+  latestCompletedTournament: ViewerTournamentHistoryItem | null
+  latestRankingPublication: ViewerOfficialRankingHistoryItem | null
+  latestFinalsRacePublication: ViewerFinalsRacePublication | null
+  nextCalendarEvent: ViewerCalendarEvent | null
+}
+
+function firstPendingCalendarEvent(events: ViewerCalendarEvent[]): ViewerCalendarEvent | null {
+  return (
+    events.find((event) => event.status === 'active') ??
+    events.find((event) => event.status === 'planned' || event.status === 'scheduled') ??
+    null
+  )
 }
 
 export function useViewerDeferredSourceQueries({
-  activeRunId,
+  productRunId,
   kind,
   scope,
-  includeRun = false,
-  includeFinals = true,
-  eventCountMode = 'events',
 }: ViewerDeferredSourceQueryOptions) {
-  const queryEnabled = Boolean(activeRunId)
-  const runQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-run`, kind, activeRunId],
-    queryFn: () => getRun(activeRunId ?? ''),
-    enabled: queryEnabled && includeRun,
+  const enabled = Boolean(productRunId)
+
+  const calendarQuery = useQuery({
+    queryKey: [`viewer-${scope}-deferred-calendar`, kind, productRunId],
+    queryFn: () => getViewerRunCalendar(productRunId ?? ''),
+    enabled,
     retry: false,
   })
-  const statusQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-status`, kind, activeRunId],
-    queryFn: () => getRunStatusSummary(activeRunId ?? ''),
-    enabled: queryEnabled,
+  const tournamentsQuery = useQuery({
+    queryKey: [`viewer-${scope}-deferred-tournaments`, kind, productRunId],
+    queryFn: () => getViewerTournamentHistory(productRunId ?? ''),
+    enabled,
     retry: false,
   })
-  const eventsQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-events`, kind, activeRunId],
-    queryFn: () => listEvents(activeRunId ?? ''),
-    enabled: queryEnabled,
+  const rankingsQuery = useQuery({
+    queryKey: [`viewer-${scope}-deferred-rankings`, kind, productRunId],
+    queryFn: () => listViewerOfficialRankingHistory(productRunId ?? ''),
+    enabled,
     retry: false,
   })
-  const rankingSnapshotsQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-ranking-snapshots`, kind, activeRunId],
-    queryFn: () => listRankingSnapshots(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const raceSnapshotsQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-race-snapshots`, kind, activeRunId],
-    queryFn: () => listRaceSnapshots(activeRunId ?? ''),
-    enabled: queryEnabled,
-    retry: false,
-  })
-  const finalsQuery = useQuery({
-    queryKey: [`viewer-${scope}-deferred-finals`, kind, activeRunId],
-    queryFn: () => getFinalsSummary(activeRunId ?? ''),
-    enabled: queryEnabled && includeFinals,
+  const finalsRaceQuery = useQuery({
+    queryKey: [`viewer-${scope}-deferred-finals-race`, kind, productRunId],
+    queryFn: () => getViewerFinalsRace(productRunId ?? ''),
+    enabled,
     retry: false,
   })
 
-  const metadata = buildDeferredSourceMetadata({
-    events: eventsQuery.data?.events,
-    rankingSnapshots: rankingSnapshotsQuery.data?.snapshots,
-    raceSnapshots: raceSnapshotsQuery.data?.snapshots,
-    status: statusQuery.data,
-    finals: finalsQuery.data,
-    eventCount: resolveDeferredEventCount({
-      eventCountMode,
-      eventsQuery,
-      statusQuery,
-      runQuery,
-    }),
-  })
-  const orderedEventCount =
-    runQuery.data?.season_state.ordered_events.length ??
-    runQuery.data?.run.total_events ??
-    statusQuery.data?.progress.total_events ??
-    null
-  const season =
-    runQuery.data?.season_state.season ??
-    runQuery.data?.run.season ??
-    statusQuery.data?.season ??
-    finalsQuery.data?.season ??
-    null
-  const metadataQueries = includeRun
-    ? [
-        runQuery,
-        statusQuery,
-        eventsQuery,
-        rankingSnapshotsQuery,
-        raceSnapshotsQuery,
-        finalsQuery,
-      ]
-    : [statusQuery, eventsQuery, rankingSnapshotsQuery, raceSnapshotsQuery, finalsQuery]
-  const isLoadingMetadata = metadataQueries.some((query) => query.isLoading)
-  const hasMetadataError = metadataQueries.some((query) => query.isError)
-  // Pages with route-specific ordered event fallback ordering can compute this locally.
-  const hasAnySourceMetadata = hasAnyDeferredSourceMetadata(
-    metadata,
-    includeRun ? orderedEventCount : undefined,
+  const calendarEvents = (calendarQuery.data?.seasons ?? []).flatMap((season) => season.events)
+  const completedTournaments = (tournamentsQuery.data?.tournaments ?? []).filter(
+    (event) => event.result_published,
   )
+  const rankingPublications = rankingsQuery.data?.publications ?? []
+  const finalsRacePublications = finalsRaceQuery.data?.publications ?? []
+
+  const metadata: ViewerDeferredCanonicalMetadata = {
+    viewerBranchId:
+      calendarQuery.data?.viewer_branch_id ??
+      tournamentsQuery.data?.viewer_branch_id ??
+      rankingsQuery.data?.viewer_branch_id ??
+      finalsRaceQuery.data?.viewer_branch_id ??
+      null,
+    seasonCount: calendarQuery.data?.season_count ?? 0,
+    calendarEventCount: calendarQuery.data?.event_count ?? 0,
+    completedTournamentCount: completedTournaments.length,
+    rankingPublicationCount: rankingsQuery.data?.publication_count ?? rankingPublications.length,
+    finalsRacePublicationCount: finalsRacePublications.length,
+    latestCompletedTournament:
+      completedTournaments.length > 0 ? completedTournaments[completedTournaments.length - 1] : null,
+    latestRankingPublication:
+      rankingPublications.length > 0 ? rankingPublications[rankingPublications.length - 1] : null,
+    latestFinalsRacePublication:
+      finalsRacePublications.length > 0 ? finalsRacePublications[finalsRacePublications.length - 1] : null,
+    nextCalendarEvent: firstPendingCalendarEvent(calendarEvents),
+  }
+
+  const queries = [calendarQuery, tournamentsQuery, rankingsQuery, finalsRaceQuery]
+  const isLoadingMetadata = enabled && queries.some((query) => query.isLoading)
+  const hasMetadataError = enabled && queries.some((query) => query.isError)
+  const hasAnySourceMetadata =
+    metadata.calendarEventCount > 0 ||
+    metadata.completedTournamentCount > 0 ||
+    metadata.rankingPublicationCount > 0 ||
+    metadata.finalsRacePublicationCount > 0
 
   return {
-    runQuery,
-    statusQuery,
-    eventsQuery,
-    rankingSnapshotsQuery,
-    raceSnapshotsQuery,
-    finalsQuery,
+    calendarQuery,
+    tournamentsQuery,
+    rankingsQuery,
+    finalsRaceQuery,
     metadata,
-    orderedEventCount,
-    season,
     isLoadingMetadata,
     hasMetadataError,
     hasAnySourceMetadata,
   }
-}
-
-type DeferredEventCountQueryArgs = Pick<
-  ViewerDeferredSourceQueryOptions,
-  'eventCountMode'
-> & {
-  eventsQuery: { data?: Awaited<ReturnType<typeof listEvents>> }
-  statusQuery: { data?: Awaited<ReturnType<typeof getRunStatusSummary>> }
-  runQuery: { data?: Awaited<ReturnType<typeof getRun>> }
-}
-
-function resolveDeferredEventCount({
-  eventCountMode,
-  eventsQuery,
-  statusQuery,
-  runQuery,
-}: DeferredEventCountQueryArgs): number | null | undefined {
-  if (eventCountMode === 'status-progress') {
-    return (
-      eventsQuery.data?.events.length ??
-      statusQuery.data?.progress.completed_event_count ??
-      statusQuery.data?.history_counts.events ??
-      null
-    )
-  }
-
-  if (eventCountMode === 'run-ordered') {
-    return runQuery.data?.season_state.ordered_events.length ?? null
-  }
-
-  return undefined
 }

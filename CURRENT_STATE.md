@@ -3044,10 +3044,19 @@ to canonical authority.
   tournament history from the same canonical tournament sources;
 - the Viewer tournament list uses canonical completed history for completion state,
   champion/finalist and player/match counts, and can show a canonical completed event even
-  when no legacy persisted event row exists;
-- legacy `listEvents()` / ordered-calendar data remains list compatibility metadata only
-  for sequence/template/category/tour until Viewer Saved Revision exposes a public
-  Calendar Package component; legacy `tournament_result` is no longer public result
-  authority on the list or detail.
+  when no Saved Calendar event exists;
+- Viewer Saved Revision now also exposes its immutable Run Package state to read models;
+- `viewer_run_calendar.v1` projects applied Calendar packages only from that saved package
+  state, with deterministic season/event ordering and fail-closed duplicate identities;
+- the Viewer tournament list, Season Calendar, Planned Event schedule and Week schedule
+  now use the canonical Saved Calendar projection rather than `getRun()` /
+  `listEvents()` legacy SimulationRun schedule/event records;
+- unsaved Package edits and later source-library edits cannot change public Viewer
+  Calendar output;
+- package IDs/versions, fingerprints/provenance, ranking point tables and prize-money
+  configuration remain hidden from the public Calendar projection;
+- Week ranking/race publication lists still use their existing read-only compatibility
+  endpoints pending their own Viewer Saved-Revision migration.
 
-See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.
+See `docs/VIEWER_TOURNAMENT_RESULT_V1.md` and
+`docs/VIEWER_SAVED_CALENDAR_V1.md`.

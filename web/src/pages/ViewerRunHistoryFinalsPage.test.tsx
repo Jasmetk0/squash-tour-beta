@@ -12,8 +12,7 @@ import {
 
 const api = vi.hoisted(() => ({
   getRunActivity: vi.fn(),
-  getFinalsSummary: vi.fn(),
-  getFinalsQualification: vi.fn(),
+  getViewerFinalsRace: vi.fn(),
   getFinalsResult: vi.fn()
 }))
 
@@ -55,31 +54,27 @@ function mockApi(): void {
       }
     ]
   })
-  api.getFinalsSummary.mockResolvedValue({
-    run_id: 'viewer-run-2e',
-    season: 2031,
-    qualification: {
-      run_id: 'viewer-run-2e',
-      season: 2031,
-      source_as_of_season: 2031,
-      source_as_of_week: 40,
-      qualification: { qualified_player_ids: ['P1', 'P2'], groups: [['P1'], ['P2']] }
-    },
-    result: {
-      run_id: 'viewer-run-2e',
-      season: 2031,
-      event_id: 'WTF-2031',
-      source_as_of_season: 2031,
-      source_as_of_week: 41,
-      result: { champion_player_id: 'P1', runner_up_player_id: 'P2' }
-    }
-  })
-  api.getFinalsQualification.mockResolvedValue({
-    run_id: 'viewer-run-2e',
-    season: 2031,
-    source_as_of_season: 2031,
-    source_as_of_week: 40,
-    qualification: { unknown_shape: true, technical_qualification_marker_should_be_collapsed: true }
+  api.getViewerFinalsRace.mockResolvedValue({
+    schema_version: 'viewer_finals_race_history.v1',
+    product_run_id: 'viewer-run-2e',
+    viewer_branch_id: 'branch-viewer',
+    latest_target_season_index: 31,
+    publications: [{
+      schema_version: 'viewer_finals_race_publication.v1',
+      product_run_id: 'viewer-run-2e',
+      viewer_branch_id: 'branch-viewer',
+      target_season_index: 31,
+      cutoff_season_index: 31,
+      cutoff_week: 40,
+      best_n: 2,
+      selection_published: true,
+      finals_event_id: 'WTF-2031',
+      rows: [
+        { rank: 1, player_id: 'P1', race_points: 125, tournaments_counted: 2, finals_selected: true, finals_seed: 1, qualification_source: 'direct_entry', counted_results: [] },
+        { rank: 2, player_id: 'P2', race_points: 90, tournaments_counted: 1, finals_selected: false, finals_seed: null, qualification_source: null, counted_results: [] },
+        { rank: 3, player_id: 'P3', race_points: 80, tournaments_counted: 1, finals_selected: true, finals_seed: 2, qualification_source: 'race', counted_results: [] }
+      ]
+    }]
   })
   api.getFinalsResult.mockResolvedValue({
     run_id: 'viewer-run-2e',
@@ -210,120 +205,82 @@ describe('ViewerRunHistoryFinalsPage', () => {
     expectNoUnsafeOutput()
   })
 
-  it('renders Finals overview availability and Viewer links without simulation controls', async () => {
+  it('renders canonical confirmed Finals field including effective replacement', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2e/finals')
 
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2e').length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('Available')).length).toBeGreaterThan(1)
-    expect(await screen.findByText('W40')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open Finals qualification' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2e/finals/qualification'
-    )
-    expect(screen.getByRole('link', { name: 'Open Finals result' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2e/finals/result'
-    )
-    expect(screen.queryByRole('button', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Simulate World Tour Finals/i })).not.toBeInTheDocument()
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
+    expect(screen.getByText('Published')).toBeInTheDocument()
+    expect(screen.getByText('WTF-2031')).toBeInTheDocument()
+
+    const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })
+    expect(within(table).getByRole('link', { name: 'P1' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P1')
+    expect(within(table).getByRole('link', { name: 'P3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2e/players/P3')
+    expect(within(table).queryByText('P2')).not.toBeInTheDocument()
+    expect(within(table).getByText('Direct entry')).toBeInTheDocument()
+    expect(within(table).getByText('Race')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
-    expectNoUnsafeOutput()
     expectNoDuplicateRunNav()
   })
 
-  it('renders Finals loading/empty/deferred behavior without fake qualification data', async () => {
-    api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: 'viewer-run-1',
-      season: 2031,
-      qualification: null,
-      result: null
+  it('renders canonical Finals empty publication without inventing qualification', async () => {
+    api.getViewerFinalsRace.mockResolvedValueOnce({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
+      latest_target_season_index: null,
+      publications: []
     })
     renderViewerRoute('/viewer/runs/viewer-run-1/finals')
 
     expect(screen.getByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
-    expect(screen.getByText('Loading Finals summary…')).toBeInTheDocument()
-    expect(await screen.findAllByText('This preview is not connected for this data shape yet.')).toHaveLength(2)
-    expect(api.getFinalsSummary).toHaveBeenCalledWith('viewer-run-1')
-    expectNoUnsafeOutput()
+    expect(screen.getByText('Loading canonical Finals publication…')).toBeInTheDocument()
+    expect(await screen.findByText('No canonical World Tour Finals Race publication exists yet.')).toBeInTheDocument()
+    expect(screen.getByText('Confirmed World Tour Finals participants are not published yet.')).toBeInTheDocument()
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-1')
   })
 
-  it('renders encoded Finals run IDs as safe route context and passes decoded runId to the API', async () => {
-    api.getFinalsSummary.mockResolvedValueOnce({ run_id: 'run/alpha #1', season: 2031, qualification: null, result: null })
+  it('passes decoded Product Run ID to canonical Finals publication API', async () => {
+    api.getViewerFinalsRace.mockResolvedValueOnce({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'run/alpha #1',
+      viewer_branch_id: 'branch-viewer',
+      latest_target_season_index: null,
+      publications: []
+    })
     renderViewerRoute('/viewer/runs/run%2Falpha%20%231/finals')
 
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
-    expect(api.getFinalsSummary).toHaveBeenCalledWith('run/alpha #1')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run/alpha #1')
     expect(screen.getAllByText('run/alpha #1').length).toBeGreaterThan(0)
     expect(screen.getByRole('link', { name: 'Open Finals qualification' })).toHaveAttribute(
       'href',
       '/viewer/runs/run%2Falpha%20%231/finals/qualification'
     )
-    expectNoUnsafeOutput()
   })
 
-  it('renders Finals API errors without fake fallback data', async () => {
-    api.getFinalsSummary.mockRejectedValueOnce(new Error('finals outage'))
+  it('renders canonical Finals API errors without legacy fallback', async () => {
+    api.getViewerFinalsRace.mockRejectedValueOnce(new Error('finals publication outage'))
     renderViewerRoute('/viewer/runs/viewer-run-1/finals')
 
     expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
-    expect(await screen.findByText(/Failed to load Finals summary: finals outage/i)).toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load canonical Finals publication: finals publication outage/i)).toBeInTheDocument()
     expect(screen.queryByText('Show technical finals data')).not.toBeInTheDocument()
-    expectNoUnsafeOutput()
   })
 
-  it('renders malformed Finals payloads scalar-safely without unsafe object links', async () => {
-    api.getFinalsSummary.mockResolvedValueOnce({
-      run_id: { unsafe: 'run-object' },
-      season: { unsafe: 'season-object' },
-      qualification: {
-        run_id: { unsafe: 'qualification-run-object' },
-        season: { unsafe: 'qualification-season-object' },
-        source_as_of_season: { unsafe: 'source-season-object' },
-        source_as_of_week: { unsafe: 'source-week-object' },
-        qualification: {
-          qualified_player_ids: [{ unsafe: 'player-object' }, null, 4],
-          groups: [{ unsafe: 'group-object' }],
-          ranking_snapshot_sequence: { unsafe: 'ranking-sequence-object' },
-          race_snapshot_sequence: { unsafe: 'race-sequence-object' },
-          status: { unsafe: 'status-object' },
-          points: { unsafe: 'points-object' }
-        }
-      },
-      result: {
-        run_id: { unsafe: 'result-run-object' },
-        season: { unsafe: 'result-season-object' },
-        event_id: { unsafe: 'event-object' },
-        source_as_of_season: { unsafe: 'source-season-object' },
-        source_as_of_week: { unsafe: 'source-week-object' },
-        result: {
-          champion_player_id: { unsafe: 'champion-object' },
-          runner_up_player_id: { unsafe: 'runner-object' },
-          standings: [{ unsafe: 'standing-object' }],
-          rank: { unsafe: 'rank-object' },
-          points: { unsafe: 'points-object' },
-          status: { unsafe: 'status-object' }
-        }
-      }
-    })
-    renderViewerRoute('/viewer/runs/viewer-run-1/finals')
-
-    expect(await screen.findByRole('heading', { name: 'World Tour Finals' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Planned event/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Player \[object Object\] profile/i })).not.toBeInTheDocument()
-    expectNoUnsafeOutput()
-  })
-
-  it('renders Finals Qualification with safe metadata/deferred message and collapsed technical data', async () => {
+  it('renders Finals Qualification from canonical confirmed participant publication', async () => {
     renderViewerRoute('/viewer/runs/viewer-run-2e/finals/qualification')
 
     expect(await screen.findByRole('heading', { name: 'Finals Qualification' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2e').length).toBeGreaterThan(0)
-    expect(await screen.findByText('W40')).toBeInTheDocument()
-    expect(screen.getByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    const details = screen.getByText('Show technical finals qualification data').closest('details')
-    expect(details).not.toHaveAttribute('open')
-    expect(screen.queryByText(/technical_qualification_marker_should_be_collapsed/i)).not.toBeVisible()
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2e')
+    expect(screen.getByText('W40')).toBeInTheDocument()
+    expect(screen.getByText('WTF-2031')).toBeInTheDocument()
+
+    const table = screen.getByRole('table', { name: 'Canonical World Tour Finals participants' })
+    expect(within(table).getByRole('link', { name: 'P1' })).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'P3' })).toBeInTheDocument()
+    expect(within(table).queryByText('P2')).not.toBeInTheDocument()
+    expect(screen.queryByText('Show technical finals qualification data')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
     expectNoDuplicateRunNav()
   })

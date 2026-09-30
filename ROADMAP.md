@@ -1622,5 +1622,16 @@ Tournament Detail now continues the canonical selected-Viewer-Branch chain throu
 Entry Field → definitive WC/RWC → effective Draw → completed Tournament Result. Result
 publication is bounded by the immutable Saved Ranking component, so live Working Draft
 closes cannot leak into Viewer. The public projection is sporting-only and hides
-authority/provenance fingerprints and point/prize internals. Tournament-list/history
-detachment from legacy event records, Race and Finals remain separate follow-up slices.
+authority/provenance fingerprints and point/prize internals. Race and Finals remain separate
+follow-up slices.
+
+
+### Viewer Tournament History downstream integration
+
+The top-level Tournament list/history is now canonical and multi-season. It reads Calendar
+Packages only from the selected Viewer Branch's Saved Run Package component and joins published
+canonical Tournament Results only from the same Saved Ranking component. Live Package/result
+changes do not appear before their normal Save boundaries, and orphan/duplicate identities fail
+closed instead of falling back to the legacy event registry. Tournament Detail technical
+compatibility metadata, Season Calendar/Week legacy reads, Race and Finals remain separate
+migration slices.

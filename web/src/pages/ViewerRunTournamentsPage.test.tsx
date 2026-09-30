@@ -11,6 +11,7 @@ const api = vi.hoisted(() => ({
   getRun: vi.fn(),
   getViewerTournamentEntryField: vi.fn(),
   getViewerTournamentDraw: vi.fn(),
+  getViewerTournamentResult: vi.fn(),
   getViewerTournamentWildCards: vi.fn(),
   listEvents: vi.fn(),
   listRankingSnapshots: vi.fn(),
@@ -293,9 +294,10 @@ describe('ViewerRunTournamentDetailPage', () => {
         { wildcard_index: 2, player_id: 'P-RWC', source: 'reserve_wc', reserve_ordinal: 3 }
       ]
     })
+    api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('canonical result missing', 404))
   })
 
-  it('renders parseable tournament result preview with collapsed technical data', async () => {
+  it('renders canonical saved tournament result instead of legacy result payload', async () => {
     api.getEvent.mockResolvedValueOnce({
       event_sequence: 8,
       event_id: 'EVENT-1',
@@ -304,88 +306,67 @@ describe('ViewerRunTournamentDetailPage', () => {
       template_id: 'WT-PLAT',
       tournament_result: {
         summary: {
-          champion: { player_id: 'P-001', name: 'Ali Farag', country: 'EGY' },
-          finalist: { player_id: 'P-002', name: 'Paul Coll', country: 'NZL' },
-          final_score: '11-8, 9-11, 11-7, 11-6',
-          match_count: 31,
-          completed_matches: 30,
-          draw_size: 32,
-          round_count: 5,
-          status: 'completed',
+          champion: { player_id: 'LEGACY', name: 'Legacy Champion', country: 'OLD' },
           secret_debug_marker: 'parseable-hidden-payload'
         }
       }
     })
-
-    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
-
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Canonical Draw' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Definitive Wild Cards' })).toBeInTheDocument()
-    expect(api.getViewerTournamentWildCards).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #1 · P-WC · Original WC')
-    expect(screen.getByRole('list', { name: 'Definitive Wild Card assignments' })).toHaveTextContent('WC #2 · P-RWC · Reserve WC #3')
-    expect(api.getViewerTournamentDraw).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getByRole('list', { name: 'Canonical Main draw slots' })).toBeInTheDocument()
-    expect(screen.getByText('#1 · P-001 · seed 1')).toBeInTheDocument()
-    expect(screen.getByText('#2 · BYE')).toBeInTheDocument()
-    expect(screen.getByText('#3 · Q1')).toBeInTheDocument()
-    expect(screen.getByText('#4 · P-002 · seed 2 · wild card')).toBeInTheDocument()
-    expect(api.getViewerTournamentEntryField).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
-    expect(screen.getAllByText('branch-viewer').length).toBeGreaterThanOrEqual(2)
-    expect(screen.getByText('P-001, P-002')).toBeInTheDocument()
-    expect(screen.getByText('P-003')).toBeInTheDocument()
-    expect(screen.getByText('P-004')).toBeInTheDocument()
-    expect(screen.getByText('P-099')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-001/career'
-    )
-    expect(screen.getByRole('link', { name: 'Paul Coll (NZL)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/P-002/career'
-    )
-    expect(screen.getByText('11-8, 9-11, 11-7, 11-6')).toBeInTheDocument()
-    expect(screen.getByText('31')).toBeInTheDocument()
-    expect(screen.getAllByText('30').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('32').length).toBeGreaterThan(0)
-    expect(screen.getByText('5')).toBeInTheDocument()
-    expect(screen.getByText('completed')).toBeInTheDocument()
-    expect(screen.queryByText(/This preview is not connected/i)).not.toBeInTheDocument()
-    expect(screen.queryByText(/Match 1/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical event data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/parseable-hidden-payload/i)).not.toBeVisible()
-    expectNoForbiddenViewerActions()
-  })
-
-
-  it('keeps tournament result champion and finalist as plain text when player IDs are missing', async () => {
-    api.getEvent.mockResolvedValueOnce({
-      event_sequence: 8,
+    api.getViewerTournamentResult.mockResolvedValueOnce({
+      schema_version: 'viewer_tournament_result.v1',
+      product_run_id: 'viewer-run-1',
+      viewer_branch_id: 'branch-viewer',
       event_id: 'EVENT-1',
-      season: 2027,
-      week: 3,
-      template_id: 'WT-PLAT',
-      tournament_result: {
-        summary: {
-          champion: { name: 'Ali Farag', country: 'EGY' },
-          finalist: { name: 'Paul Coll', country: 'NZL' },
-          status: 'completed'
+      completed_season_index: 27,
+      completed_week: 3,
+      champion_player_id: 'P-001',
+      finalist_player_id: 'P-002',
+      qualification_winner_ids: ['P-003'],
+      players: [
+        {
+          player_id: 'P-001', draw_type: 'main', seed_number: 1, qualifier: false,
+          main_entry_status: 'direct', reached_stage: 'champion', final_round_number: 2,
+          eliminated_by_player_id: null, last_match_id: 'final', wins: 2, losses: 0,
+          byes_received: 0, walkovers_received: 0, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
+        },
+        {
+          player_id: 'P-002', draw_type: 'main', seed_number: 2, qualifier: false,
+          main_entry_status: null, reached_stage: 'finalist', final_round_number: 2,
+          eliminated_by_player_id: 'P-001', last_match_id: 'final', wins: 1, losses: 1,
+          byes_received: 0, walkovers_received: 0, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
+        },
+        {
+          player_id: 'P-003', draw_type: 'both', seed_number: null, qualifier: true,
+          main_entry_status: null, reached_stage: 'semifinal', final_round_number: 1,
+          eliminated_by_player_id: 'P-001', last_match_id: 'semi', wins: 1, losses: 1,
+          byes_received: 0, walkovers_received: 1, retired_or_walkover_loss: false,
+          group_index: null, group_position: null, played_group_wins: null,
+          group_walkovers_received: null, knockout_reached_stage: null
         }
-      }
+      ],
+      matches: [
+        { match_id: 'semi', draw_type: 'main', round_number: 1, bracket_position: 1, winner_player_id: 'P-001', loser_player_id: 'P-003', scoreline: '3-0' },
+        { match_id: 'final', draw_type: 'main', round_number: 2, bracket_position: 1, winner_player_id: 'P-001', loser_player_id: 'P-002', scoreline: '3-2' }
+      ]
     })
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
 
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
-    expect(screen.getByText('Ali Farag (EGY)')).toBeInTheDocument()
-    expect(screen.getByText('Paul Coll (NZL)')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Ali Farag (EGY)' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Paul Coll (NZL)' })).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).toHaveBeenCalledWith('viewer-run-1', 'EVENT-1')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-001 · champion · 2W–0L · seed 1')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('P-003 · semifinal · 1W–1L · qualifier')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('final · main R2 · P-001 def. P-002 · 3-2')
+    expect(screen.queryByText('Legacy Champion')).not.toBeInTheDocument()
+    expect(screen.queryByText(/parseable-hidden-payload/i)).not.toBeVisible()
+    const technicalSection = screen.getByText('Show technical event data').closest('details')
+    expect(technicalSection).not.toHaveAttribute('open')
     expectNoForbiddenViewerActions()
   })
+
 
   it('renders sports-facing tournament detail with deferred preview for unknown result shapes', async () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
@@ -398,7 +379,7 @@ describe('ViewerRunTournamentDetailPage', () => {
     expect(screen.getAllByText('Platinum').length).toBeGreaterThan(0)
     expect(screen.getAllByText('World Tour').length).toBeGreaterThan(0)
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
+    expect(await screen.findByText('Canonical Tournament Result is not available for this tournament yet.')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /Back to tournaments/i })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/tournaments'
@@ -434,7 +415,7 @@ describe('ViewerRunTournamentDetailPage', () => {
 
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-NO-WEEK')
 
-    expect(await screen.findByRole('heading', { name: 'Tournament Result Preview' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Canonical Tournament Result' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Ali Farag (EGY)' })).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-1/players/P-001/career'

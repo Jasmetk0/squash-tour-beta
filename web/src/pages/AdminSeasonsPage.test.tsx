@@ -37,7 +37,6 @@ const api = vi.hoisted(() => ({
   getEventPointAwards: vi.fn(),
   generateEventPointAwards: vi.fn(),
   applyEventPointAwards: vi.fn(),
-  simulateOneEvent: vi.fn(),
   preflightSeasonWeek: vi.fn(),
   recoverSeasonWeek: vi.fn(),
   getSeasonReadiness: vi.fn(),
@@ -597,7 +596,6 @@ describe('AdminSeasonsPage', () => {
     api.getEventPointAwards.mockResolvedValue(emptyPointAwardsResult)
     api.generateEventPointAwards.mockResolvedValue(pointAwardsResult)
     api.applyEventPointAwards.mockResolvedValue(pointApplyResult)
-    api.simulateOneEvent.mockResolvedValue(simulateOneEventResult)
     api.preflightSeasonWeek.mockResolvedValue(weekPreflightResult)
     api.recoverSeasonWeek.mockResolvedValue(weekRecoveryResult)
     api.getSeasonReadiness.mockResolvedValue(seasonReadinessResult)

@@ -2,8 +2,8 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 68
-**Aktualizováno:** 28. 9. 2026 (UTC) – obecné skupiny, hybridní turnaje, W/O a verzované ověřování férovosti
+**Verze dokumentu:** 69
+**Aktualizováno:** 30. 9. 2026 – pre-alpha skupinový RET, Test Lab, Run ochrana/kompatibilita a uživatelský rozsah
 **Účel dokumentu:** jediný průběžný zdroj pravdy pro to, co má Squash Engine být, co už je rozhodnuté, jakým směrem se projekt ubírá, co se musí teprve dořešit a – v oddělené evidenční vrstvě – co je prokazatelně naprogramované a sloučené.
 
 Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost produktového pravidla neznamená, že už je naprogramované. Ověřený stav kódu se od verze 51 zapisuje výhradně do samostatné kapitoly 35; implementace sama nikdy nevytváří ani nemění produktový canon.
@@ -15,6 +15,8 @@ Tento dokument primárně popisuje zamýšlený produkt. Samotná přítomnost p
 **Nová produktová rozhodnutí v67:** první pre-alpha zahrnuje individuální World Tour Finals, ale nezahrnuje týmové soutěže. World Tour Finals Race čerpá v Official FAX Runu sezonní body jen z nejvyšší World Tour, pracuje s konfigurovaným počtem nejlepších výsledků, rozhoduje účast i nasazení a má pevný sezonní uzávěrkový snapshot. Kapacitu a formát Finals určuje uživatel; přímé vstupy za jím zvolená vítězství a náhrady z Race zachovávají níže uvedené hranice. Implementační stav zůstává výhradně otázkou aktuálního GitHubu a `CURRENT_STATE.md`.
 
 **Nová produktová rozhodnutí v68:** obecné formáty `Skupiny` a `Skupiny + pavouk`, stejně velké skupiny, nastavitelná skupinová nasazení, bodování BO3/BO5 a pořadí skupiny, upozornění při nerozhodnuté shodě bez automatického losu, zachování dokončených výsledků po odstoupení a skupinové W/O bez smyšleného skóre. World Tour Finals používají obecné formáty, mohou přidělovat Official Ranking body po fázích a po skupinách postupují podle výsledků a křížení, nikoliv nového nasazení z Race. Rozhodnutá pravidla lze později porovnávat z hlediska férovosti a u podporovaných konfigurací verzovat po Runech/sezonách; tím se nemění pevná pravidla klasického pavouku ani automaticky nezavádějí nové přepínače. Detail v 15.14–15.15 a 26.1. Jde o produktový zápis dostupných potvrzených dohod, nikoliv tvrzení o jejich implementaci nebo nové celkové počty vyřešených PAQ.
+
+**Nová rozhodnutí v69:** první pre-alpha používá skupinový RET s maximem bodů pro vítěze a vyloučením neúplného zápasu ze skupinových poměrů, srovnání stejných míst napříč srovnatelnými skupinami, jednotný formát skupinové fáze, validované návrhy křížení, neměnné Draw Versions a omezené ruční přesuny. Globální Match/Tournament Test Lab bez Runu, přenosné opakovatelné scénáře a programové batch testy jsou povinné. Potvrzeny jsou dvě jazykové verze lokálního Adminu, základní Replay bez animace, odklad Live Rankingu, zákaz přestupu země, větvení, zálohy a bezpečné migrace starších Runů. AI oprávnění rozlišují editovatelnou kopii a chráněný GitHub originál. Číslování Pre-alpha/Alpha/Beta je předběžné až do vydání. Detail a status PAQ v 31.25; nejde o tvrzení o implementaci.
 
 **Canonical cesta:** `SQUASH_ENGINE_MASTER_VISION.md` v kořeni repozitáře `Jasmetk0/squash-tour-beta`. Číslo vydání se mění uvnitř; přiložená/exportovaná verze je přenosná kopie téhož obsahu. Git historie uchovává další změny bez dalšího souběžného „nejnovějšího“ Masteru. `CURRENT_STATE.md` je krátký commitově ukotvený index implementace a aktuálního zadání; `ROADMAP.md` určuje technické pořadí. Ani jeden nemění tento produktový canon.
 
@@ -433,11 +435,13 @@ Přesný UX tohoto postupu se ještě dořeší.
 
 **[ROZHODNUTO V PRINCIPU][CÍLOVÁ FUNKCE]** Projekt bude obsahovat také vestavěný GitHub Run určený k rychlému testování jednotlivých zápasů a Match Enginu. Jeho zdrojový baseline je stejně jako jiné vestavěné GitHub položky read-only.
 
+**[UPŘESNĚNO PRO PRE-ALPHA v69]** Tento vestavěný Run je pouze možný zdroj testovacích dat. Globální Match a Tournament Test Lab z 31.25 se otevírá i bez vybraného Runu a jeho izolovaná session nevyžaduje kopii vestavěného Runu.
+
 **[ROZHODNUTO V PRINCIPU]** Akce typu `New Test Session` vytvoří oddělenou editovatelnou testovací session/kopii, kterou lze upravovat a vrátit k baseline. Testovací změny ani výsledky nesmějí měnit vestavěný zdroj.
 
 **[ROZHODNUTO V PRINCIPU]** Do Test Labu lze převzít hráče z jiného Runu v historickém stavu zvoleného Runu, branche a weeku. Vzniká oddělený snapshot s dohledatelnou provenance, nikoliv živé propojení. Pozdější úpravy nebo testovací zápasy nemění zdrojového hráče, jeho ranking, H2H, statistiky ani původní Run. Tentýž zdrojový hráč proto může v Test Labu existovat vícekrát jako různé historické verze.
 
-**[ODLOŽENO]** Přesné obrazovky, importní volby, rozsah kopírovaného hráčského stavu, nástroje pro úpravy, ukládání a životní cyklus testovacích sessions. Zatím je pevný pouze směr Test Labu a nezávislých historických snapshotů.
+**[ODLOŽENO]** Přesné obrazovky, importní volby, rozsah kopírovaného hráčského stavu a detaily životního cyklu sessions. Povinný funkční základ globálního Test Labu, scénářů a programového ovládání je určen v 31.25.
 
 ## 3.6 Kopírování Runu
 
@@ -2648,7 +2652,7 @@ Příklad tří Q pavouků pro osm hráčů:
 
 > `seed_layers ≤ velikost skupiny − 2`
 
-**[AKTUALIZOVÁNO v68]** Společná pravidla pořadí, bodování, úplné shody a odstoupení ze skupiny určuje 15.14. Nadále zůstávají otevřené tam vyjmenované mimořádné případy, zejména zvláštní skupinové vyhodnocení RET a srovnání stejných nepostupových míst napříč skupinami pro LL. Zdejší konkrétní Q pravidla (jeden postupující, jedno vzájemné utkání, minimální velikost a omezení seed vrstev) nejsou obecným skupinovým kontraktem zrušena.
+**[AKTUALIZOVÁNO v69]** Společná pravidla pořadí, bodování, úplné shody a odstoupení ze skupiny určuje 15.14. Zvláštní skupinové vyhodnocení RET a základní srovnání stejných míst napříč srovnatelnými skupinami již mají pre-alpha default; mimořádné případy a samostatné pořadí LL zůstávají otevřené. Zdejší konkrétní Q pravidla (jeden postupující, jedno vzájemné utkání, minimální velikost a omezení seed vrstev) nejsou obecným skupinovým kontraktem zrušena.
 
 ## 15.8 Lucky loseři
 
@@ -2848,7 +2852,7 @@ Skupinové body jsou autorita pořadí skupiny, nikoliv automaticky body do Offi
 
 **[ROZHODNUTO, NIKOLIV PROVISIONAL]** W/O přidá oprávněnému soupeři jednu výhru výhradně pro pořadí skupiny a maximum skupinových bodů příslušného formátu (ve výchozí tabulce 4 pro BO3, 6 pro BO5). Do poměrů her ani míčků se nepřidává žádné smyšlené skóre. Jde o skupinovou výjimku pro hodnocení pořadí, nikoliv odehraný zápas: podle 16.3 stále nevzniká kariérní zápasová výhra/prohra, H2H, rally ani délka zápasu.
 
-**[OTEVŘENO – UŽŠÍ SKUPINOVÝ DOPAD]** Obecný význam RET v 16.3 je již rozhodnutý a zůstává platný. Dosud není rozhodnuto jeho zvláštní přidělení skupinových bodů a případná zvláštní úprava podkladů pro skupinový tie-break; pravidlo W/O se na rozehranou skreč nesmí bez dalšího rozhodnutí rozšířit. Stejně se automaticky nepřebírají cizí sportovní předpisy pro DQ, Default, ABN či jiné neúplné výsledky.
+**[ROZHODNUTO PRO PRE-ALPHA – SKUPINOVÝ RET, 30. 9. 2026]** Pokud zápas po zahájení skončí `RET`, oprávněný vítěz získá jednu výhru pro skupinu a maximum skupinových bodů efektivního formátu (výchozí BO3: 4, BO5: 6); odstoupivší získá 0. Celý tento nedokončený zápas se pro oba hráče vynechá ze skupinových poměrů vyhraných/prohraných her a míčků. Skutečně odehrané skóre, rally a důsledky se zachovají v historii a obecných statistikách; obecný sportovní status RET podle 16.3 zůstává výhrou/prohrou. Skupinový RET proto není W/O ani zápas s domyšleným konečným skóre. Toto je výchozí pravidlo pro první pre-alpha, později přezkoumatelné testováním férovosti a případnou verzovanou změnou pravidel bez zpětného přepisu historie. Přesný skupinový dopad DQ, Default, ABN a jiných neúplných výsledků zůstává otevřený.
 
 ### Postup do pavouku
 
@@ -2856,7 +2860,11 @@ Skupinové body jsou autorita pořadí skupiny, nikoliv automaticky body do Offi
 
 Příklad pro čtyři skupiny se dvěma postupujícími je čtvrtfinále `A1–B2 / C1–D2 / B1–A2 / D1–C2` a semifinále vítězů prvních dvou a posledních dvou čtvrtfinále. Jde o příklad platného křížení, nikoliv jediný univerzálně povinný mapping všech turnajů. Hráči stejné skupiny se v tomto příkladu mohou znovu potkat až ve finále.
 
-**[OTEVŘENO]** Obecný mapping všech dalších kombinací počtu skupin a postupujících, srovnávání nejlepších druhých či stejných nepostupových míst napříč skupinami (včetně LL), určení jediného vítěze z více samostatných skupin bez navazující fáze a mimořádné případy bez dostatku odehraných dat pro poměry. Smíšený BO3/BO5 uvnitř téže skupiny a jeho srovnatelnost nebyly tímto blokem samostatně rozhodnuty. Tyto mezery nesmí implementace uzavřít tichým defaultem.
+**[ROZHODNUTO PRO PRE-ALPHA, 30. 9. 2026]** Všechny zápasy jedné skupinové fáze používají jednotně BO3 nebo jednotně BO5; navazující vyřazovací fáze smí mít jiný formát. Samostatné `Skupiny` s více skupinami určují vítěze jednotlivých skupin, nikoli jediného vítěze celého turnaje. Ten vyžaduje jednu skupinu nebo navazující rozhodující fázi, například `Skupiny + pavouk`.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Srovnání hráčů na stejném umístění z různých skupin (například nejlepší druzí či relevantní LL pool) je možné jen mezi skupinami se stejnou plánovanou velikostí a stejným formátem: počet výher → skupinové body → poměr her → poměr míčků. Při úplné shodě či nedostatku podkladů engine nerozhodne skrytým fallbackem; ukáže nevyřešený případ Adminovi. Toto meziskupinové pořadí nenahrazuje samostatné rozhodnuté pořadí LL podle fáze a dalších vstupů. Jemné edge cases a férovost defaultu se systematicky vyhodnotí na implementovaném enginu; neblokují toto výchozí rozhodnutí.
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Pro běžné kombinace `2 skupiny × 2 postupující` a `4 skupiny × 2 postupující` jsou dostupné předpřipravené mappingy v duchu výše uvedených křížení. Pro další konfigurace engine sestaví návrh úplného pavouku se symbolickými sloty (`A1`, `B2` atd.), zkontroluje úplnost, jedinečnost a proveditelnost a upozorní na předčasné opakování skupinového zápasu. Admin návrh potvrdí nebo upraví v povolených mezích; systém jej nesmí přijmout neúplný ani tiše vybrat nejednoznačný mapping. Přesný univerzální optimalizační algoritmus a mimořádné konfigurace zůstávají otevřené.
 
 ## 15.15 Rozhodnutá pravidla, férovost a sezonní verze
 
@@ -2922,7 +2930,7 @@ Základní hranicí je zahájení zápasu, tedy odehrání prvního míčku.
 
 **[ROZHODNUTO]** W/O je pro turnajový postup plnohodnotné dosažení dalšího kola: postupující hráč získá rankingovou hodnotu a případné prize money podle svého následného skutečně dosaženého finishing stage, přestože samotný W/O nevytvoří zápasovou výhru, prohru ani H2H. Jde o výslovnou výjimku z pravidla, že samotný BYE vyšší rankingovou hodnotu neodemkne.
 
-**[UPŘESNĚNÍ v68]** U skupin může W/O přidělit výhru a body pouze do skupinového pořadí podle 15.14. To není zápasová bilance ani H2H; nevytváří se smyšlené skóre. Skupinové bodování RET je samostatná dosud otevřená otázka, nikoliv znovuotevření obecného RET kontraktu výše.
+**[UPŘESNĚNÍ v69]** U skupin může W/O přidělit výhru a body pouze do skupinového pořadí podle 15.14. To není zápasová bilance ani H2H; nevytváří se smyšlené skóre. Samostatně je v 15.14 rozhodnuto skupinové bodování RET; nemění obecný RET kontrakt této kapitoly.
 
 ### DQ – diskvalifikace
 
@@ -3119,17 +3127,11 @@ Průběžný feed je pohled na právě relevantní momenty simulace, nikoliv ná
 
 ## 17.4 Determinismus
 
-**[OTEVŘENO]** Zatím není definitivně rozhodnuto, zda musí stejný seed a totožný stav vždy vyrobit naprosto stejné výsledky.
+**[ROZHODNUTO v66, PAQ-127 – PRE-ALPHA CONTRACT]** Stejný uložený výchozí stav, efektivní pravidla a konfigurace, kompatibilní verze modelu, seed a stejný příkaz vedou ke stejnému výsledku včetně zápasů a rally. `Opakovat` jako výslovně nová alternativa použije nový zaznamenaný seed; retry/resume téže operace zachová původní. Replay pouze čte uloženou historii. Toto rozhodnutí nahrazuje starší srpnový odstavec, který tuto otázku ponechal otevřenou.
 
-Tato otázka byla v navazujícím rozhodování dne 5. 8. 2026 výslovně přeskočena. Nesmí se proto považovat za nově uzavřenou ani odvozovat ze souhlasu s determinismem losu nebo Candidate Branch plánování.
+**[HRANICE]** Stejný seed po změně relevantních vstupů, pravidel nebo verze modelu negarantuje stejný výsledek; reprodukce napříč různými verzemi enginu, platformami a hardwarem není tímto automaticky garantována. V rámci téže úlohy se stejnými vstupy nesmí pořadí plánování Candidate Branches měnit výsledky.
 
-Starší dokumentace označovala plný determinismus jako pevné pravidlo. Toto označení se ruší, dokud nebude otázka znovu výslovně rozhodnutá.
-
-Novější prozatímní silný směr v kapitole 22 zavádí užší reprodukovatelnost jednoho konkrétního Forecast vzorku pomocí master seedu, čísla pokusu, totožného vstupního snapshotu a kompatibilní verze modelu. Tím se neuzavírá plný determinismus všech běžných simulací, různých verzí enginu, platforem ani hardwaru. Stejný seed po změně simulačně relevantních dat nebo algoritmu proto sám o sobě negarantuje stejnou historii.
-
-To není v rozporu s užším rozhodnutým kontraktem Candidate Branches: v rámci jedné konkrétní hromadné úlohy, stejné verze enginu a stejných vstupů nesmí pouhá změna pořadí plánování změnit výsledek jednotlivého kandidáta. Širší determinismus napříč verzemi enginu a všemi typy simulace zůstává otevřený.
-
-**[ROZHODNUTO PRO PRVNÍ VERZI – ÚZKÝ RETRY CONTRACT]** Opakování téže neúspěšné operace se stejnými vstupy musí vytvořit stejné kandidátní výsledky. Oprava lokální chyby nesmí bez kauzálního důvodu znovu vylosovat rozhodnutí, která na ni nezávisela; přepočítají se pouze dotčený výsledek a jeho skutečné závislosti. Tento kontrakt chrání opravitelnost batchů a audit, ale sám o sobě stále nerozhoduje plný seed a determinismus všech simulací v celém enginu.
+**[ROZHODNUTO PRO PRVNÍ VERZI – ÚZKÝ RETRY CONTRACT]** Opakování téže neúspěšné operace se stejnými vstupy musí vytvořit stejné kandidátní výsledky. Oprava lokální chyby nesmí bez kauzálního důvodu znovu vylosovat rozhodnutí, která na ni nezávisela; přepočítají se pouze dotčený výsledek a jeho skutečné závislosti. Tento starší užší kontrakt chrání opravitelnost batchů a audit; obecný pre-alpha determinismus je od v66 výslovně rozhodnutý výše.
 
 **[ROZHODNUTO PRO LOSOVÁNÍ]** Každá automaticky vytvořená nebo přegenerovaná verze losu má technický `draw_seed`. Stejný draw seed spolu se stejným seznamem účastníků, rankingem, nasazením, typy míst, nastavením turnaje a verzí losovacího algoritmu musí vytvořit totožný los.
 
@@ -3562,6 +3564,8 @@ Season Closing Ranking je přímo navázaný na `Season Closure Marker` a použ�
 **[ROZHODNUTO]** Historické průběžné stavy Live Rankingu se samostatně neukládají. Live Ranking se vypočítá z posledního oficiálního snapshotu, uložených výsledků aktuálního weeku a platných pravidel propadávání bodů. Pro rychlost může existovat dočasná cache, ale není zdrojem pravdy.
 
 **[ODLOŽENO]** Přesný výpočet Live Rankingu, propadávání bodů uvnitř weeku a zacházení s rozehranými turnaji.
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v69]** Samostatný Live Ranking se v prvním vydání nevyžaduje. Týdenní Official Ranking, jeho historické snapshoty a Season Closing Ranking fungují; UI žádný dosud neexistující live výpočet nevydává za Live Ranking. Cílový Live Ranking popsaný výše zůstává zachován pro další vydání.
 
 ## 18.7 Další rankingy
 
@@ -4160,7 +4164,7 @@ Možné sekce z předchozího návrhu:
 
 **[ROZHODNUTO PRO SOUČASNOU VERZI]** `Scores` pokrývá celý skutečně simulovaný veřejný rozsah: detailně simulovanou část MSA Tour, juniorské mistrovství světa, olympijské hry a případné později přidané veřejné soutěže. Běžné juniorské turnaje se tím nezačínají simulovat.
 
-**[ODLOŽENO]** Přesný layout Scores, chronologické řazení, filtry, štítky soutěží, úplný katalog veřejných statistik, replay ovládání, URL struktura, vizuální styl a případný pozdější live režim. Detailní návrh stránky byl výslovně zastaven, aby se nejprve řešila důležitější funkčnost první verze.
+**[ODLOŽENO]** Přesný layout Scores, chronologické řazení, filtry, štítky soutěží, úplný katalog veřejných statistik, pokročilé replay ovládání, URL struktura, vizuální styl a případný pozdější live režim. Základní pre-alpha Replay však již musí zpřístupnit uloženou časovou osu, krokování dopředu/dozadu, skóre, události a zaznamenané fyzické i mentální stavy. Kurtové a úderové animace patří do velmi vzdálené budoucnosti. Detailní návrh stránky byl výslovně zastaven, aby se nejprve řešila důležitější funkčnost první verze.
 
 ---
 
@@ -4213,6 +4217,8 @@ Export slouží pro:
 **[ROZHODNUTO]** Při konfliktu názvu engine upozorní, navrhne nový jedinečný název a dovolí ho upravit. Import nelze dokončit s neplatným konfliktním názvem.
 
 **[ROZHODNUTO]** Run ze starší podporované verze schématu se nejdříve validuje a migruje jako bezpečná nová lokální kopie. Původní importovaný soubor zůstává beze změny. Před dokončením engine ukáže převáděné části, změny významu, varování a případné již nepodporované funkce.
+
+**[ROZHODNUTO PRO PRE-ALPHA, 30. 9. 2026]** Aktualizovaná aplikace musí umět otevřít podporované Runy vytvořené starším pre-alpha vydáním. Při prvním otevření po změně schématu vytvoří bezpečnou zálohu a provede potřebnou migraci na kopii, validuje výsledek a teprve pak ji zpřístupní. Při selhání původní Run zůstane použitelný; žádná migrace nesmí potichu přepsat odehrané výsledky, historii nebo tehdy účinná pravidla. Migrace se nespouští bez potřeby při každém startu. Přesná technická matice podporovaných starých formátů, verze schématu a testy zůstávají `PAQ-013/028/134`; produktový požadavek na průběžnou kompatibilitu mezi podporovanými pre-alpha vydáními je rozhodnutý.
 
 **[ROZHODNUTO]** Soubor vytvořený novější nepodporovanou verzí se nenačte částečně ani se tiše nepřevede směrem dolů. Import se bezpečně zastaví a přesně oznámí minimální potřebnou verzi enginu. Neznámá data se nikdy potichu nezahodí.
 
@@ -4552,6 +4558,8 @@ Starší ligový návrh připouštěl remízy v týmovém výsledku. To není v 
 
 **[ROZHODNUTO]** Překládají se systémové a uživatelské prvky rozhraní. Uživatelské a historické vlastní názvy, například jména hráčů, vlastní názvy turnajů, názvy branchí a osobní poznámky, se automaticky nepřekládají.
 
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA, 30. 9. 2026]** Čeština i angličtina jsou skutečně dostupné už v prvním lokálním vydání, včetně základního Adminu, globálního Test Labu, potvrzovacích dialogů, validací a chybových hlášení. Jediný globální přepínač si pamatuje volbu. Nepřekládané uživatelské názvy a lokalizovaná jména zemí se řídí předchozím odstavcem.
+
 **[ROZHODNUTO]** Země mohou mít český i anglický lokalizovaný název pod stejným stabilním ID nebo kódem. Pokud překlad v jednom jazyce chybí, použije se dostupný název jako fallback.
 
 ## 27.2 Jednotky a měny
@@ -4573,6 +4581,8 @@ Starší ligový návrh připouštěl remízy v týmovém výsledku. To není v 
 ## 27.4 Podporovaná zařízení
 
 **[ROZHODNUTO PRO SOUČASNOU VERZI]** Squash Engine se navrhuje jako desktopová aplikace. Mobilní ani plnohodnotné responzivní zobrazení se nyní neřeší; může být přidáno až v budoucí verzi.
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA]** Povinným prostředím je lokální běh na uživatelově Windows počítači; veřejný hosting a mobilní provoz nejsou součástí akceptace. Konkrétní klávesnicový a další accessibility kontrakt zůstává otevřenou částí `PAQ-126`.
 
 ## 27.5 Hromadný výběr v Adminu
 
@@ -5242,13 +5252,13 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 
 `OQ` není nový status. O skutečném stavu vždy rozhoduje text bodu a odpovídající detailní kapitola: jeden široký okruh může současně obsahovat již rozhodnutý základ, otevřený detail i část odloženou na později. Atomické podotázky skutečně nutné pro první pre-alpha verzi jsou odděleně vedené v kapitole 31 jako `PAQ`; tím se zabrání tomu, aby se kalibrace, technický detail, Official Run obsah a uživatelské produktové rozhodnutí zaměnily za jednu otázku.
 
-**Příklad:** `OQ-037` říká, že dlouhodobá historie losu není uzavřená. `PAQ-093` z ní izoluje konkrétní produktovou otázku, zda každý potvrzený los nebo jeho oprava vytvoří neměnnou `Draw Version`.
+**Příklad:** `OQ-037` zahrnuje dlouhodobou historii losu. `PAQ-093` z ní izolovala otázku neměnné `Draw Version`, která byla následně rozhodnuta ve v69; další detaily okruhu zůstávají otevřené.
 
 ## Runy, ukládání a branche
 
 1. Detailní UX operation-scoped validace, konkrétní checklisty, katalog budoucích simulačních akcí a případný neblokující onboarding. Hierarchická prerequisite matice současných rozsahů, blokování pouze zvoleného závislého scope, progresivní validace dlouhého horizontu a vyloučení povinné globální Setup/Start brány jsou od v57 rozhodnuté.
 2. Přesný automatický formát odvozeného názvu při kopírování nebo importu Runu, pravidla porovnávání velikosti písmen a drobné UX pozdějšího přejmenování branchí. Jedinečnost názvů Runů napříč aktivními i archivovanými Runy, jedinečnost názvů branchí uvnitř Runu a výchozí řada `Timeline N` s upravitelným návrhem jsou rozhodnuté.
-3. Úplný konečný seznam datových skupin a nejjemnější granularita `Pokročilé kopie` Runu; její dva režimy, doplňování závislostí, preview a nové `run_id` jsou rozhodnuté. Dále přesné obrazovky, importní volby, rozsah snapshotu a životní cyklus sessions vestavěného Match Test Labu; read-only baseline, oddělená session, provenance a nulový dopad na zdrojový Run jsou rozhodnuté.
+3. Úplný konečný seznam datových skupin a nejjemnější granularita `Pokročilé kopie` Runu; její dva režimy, doplňování závislostí, preview a nové `run_id` jsou rozhodnuté. Dále přesné obrazovky, importní volby, rozsah snapshotu a detaily životního cyklu sessions Test Labu; globální přístup bez Runu, Match a Tournament režim, read-only vestavěný baseline, oddělená session, provenance a nulový dopad na zdrojový Run jsou rozhodnuté.
 4. Úplný katalog rizikových operací vyžadujících automatický fork-safe checkpoint a jeho technický formát. Je rozhodnuto, že checkpointy nevznikají periodicky, ruční lze vytvořit kdykoliv a automatický vzniká před operací schopnou nahradit nebo odstranit uložený stav či budoucnost.
 5. Přesné algoritmy rozdílového ukládání, deduplikace, komprese, interval technických snapshotů a výkon obnovy; přesná kapacita Undo/Redo v jedné relaci, slučování rychlých editací a jeho chování po částečném uložení. Každý Save vytváří verzi, umělé storage limity neexistují a částečné ukládání logických balíčků je rozhodnuté. Od v50 je rozhodnutá také hranice Working Draft/Saved Revision, simulace z validního draftu, potvrzovací diff, zákaz běžného Save při červené chybě a možnost uložit nezávislé validní balíčky; otevřený zůstává přesný katalog těchto balíčků a frontendové provedení.
 6. Retence, velikost, více souběžných recovery draftů a jejich vztah k novější pracovní relaci nebo Candidate Branch recovery. Základ obnovit / read-only prohlédnout / zahodit je rozhodnutý.
@@ -5337,7 +5347,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 
 ## 31.1 Účel a hranice
 
-Tato kapitola je pracovní fronta otázek, které musí být pro první pre-alpha buď výslovně rozhodnuté, nebo opatřené vědomým minimálním defaultem či stubem podle priority. **Není novým seznamem rozhodnutí.** Odpověď vznikne až následným výslovným potvrzením a teprve potom se propíše do detailní kapitoly a příslušného registru.
+Tato kapitola je pracovní fronta otázek, které musí být pro první pre-alpha buď výslovně rozhodnuté, nebo opatřené vědomým minimálním defaultem či stubem podle priority. Původní seznam otázek sám rozhodnutí nevytvářel; následné výslovně potvrzené odpovědi jsou zapsány u jednotlivých PAQ a konsolidovány v 31.25.
 
 Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvládne dva povinné uživatelské akceptační průchody popsané v kapitole 31.3 prostřednictvím Adminu. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce. Viewer není akceptační branou první pre-alpha.
 
@@ -5477,12 +5487,12 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 86. **PAQ-086 [PA0][PRODUCT] – Jak se přesně vyřeší více předběžných přihlášek před a po jednotlivých uzávěrkách?** Příklad: hráč v Main Draw jednoho turnaje může včas odstranit kolidující druhou přihlášku bez nejvyšší sankce.
 87. **PAQ-087 [PA1][CONTENT] – Jaké jsou výchozí odečty bodů, délky Disciplinary Zero a časové stupně pozdního odhlášení?** Příklad: okamžité odhlášení po deadline je méně závažné než no-show v obou turnajích.
 88. **PAQ-088 [PA0][CONTENT] – Jaké konkrétní kapacity, seed counts a BYE pravidla používají první Official Run šablony?** Příklad: draw 48 používá 16 seedů a BYE podle rozhodnutého obecného mechanismu.
-89. **PAQ-089 [PA0][PRODUCT] – Jaké úplné pořadí a tie-breaky platí pro skupinovou kvalifikaci a LL srovnání?** Příklad: musí být jasné, co rozhodne při stejných výhrách, setech i míčích.
+89. **PAQ-089 [ČÁSTEČNĚ ROZHODNUTO v69][PA0][PRODUCT] – Jaké úplné pořadí a tie-breaky platí pro skupinovou kvalifikaci a LL srovnání?** Skupinový default a srovnání stejných míst v srovnatelných skupinách určuje 15.14; nerozhodnutý tie engine předá Adminovi. Úplný katalog speciálních LL a mimořádných stavů se neuzavírá bez testování.
 90. **PAQ-090 [PA0][PRODUCT] – Kdo je způsobilý pro WC/RWC, jak se rezervy řadí a kdy přestanou být dostupné?** Příklad: hráči po přímém postupu WC zmizí, ale historie původního přidělení zůstane.
 91. **PAQ-091 [PA0][PRODUCT] – Jaké je úplné LL pořadí a bodový původ všech náhradníků?** Příklad: poražený finalista kvalifikace má prioritu před semifinalistou a shodu řeší určený ranking snapshot.
 92. **PAQ-092 [PA0][PRODUCT] – Jak se řeší všechny pre-alpha edge cases mezi redraw, seed cascade a direct-slot replacement?** Příklad: souběžná odstoupení se zpracují atomicky a seed čísla zůstanou zachovaná.
-93. **PAQ-093 [PA0][PRODUCT] – Vytvoří každý potvrzený los nebo jeho potvrzená oprava novou neměnnou `Draw Version`?** Příklad: původní los je `v1` a cascade po odstoupení seedu `v2`, zatímco preview před potvrzením verzí není.
-94. **PAQ-094 [PA0][PRODUCT] – Jaké ruční draw zásahy smí Admin provést a jak se označí vědomě nestandardní výsledek?** Příklad: ruční výměna dvou slotů zůstane auditovaná a Viewer neukáže technické interní varování.
+93. **PAQ-093 [RESOLVED v69][PA0][PRODUCT] – Vytvoří každý potvrzený los nebo jeho potvrzená oprava novou neměnnou `Draw Version`?** Odpověď: ano. První potvrzení je `v1`, každá potvrzená změna (včetně ruční) vytvoří další neměnnou verzi s důvodem a provenance; preview verzí není a odehraná historie se nepřepisuje. Viz 31.25.
+94. **PAQ-094 [ČÁSTEČNĚ ROZHODNUTO v69][PA0][PRODUCT] – Jaké ruční draw zásahy smí Admin provést a jak se označí vědomě nestandardní výsledek?** Potvrzený přesun je možný jen uvnitř přípustných oken stejné seed vrstvy, respektive mezi nenasazenými sloty; seed identita zůstává hráči, strukturální BYE a odehrané zápasy se nepřepisují. Vzniká auditovaná Draw Version. Úplný katalog výjimek a jejich veřejných označení zůstává otevřený.
 
 ## 31.14 Ranking, body, prize money a disciplína
 
@@ -5491,7 +5501,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 97. **PAQ-097 [RESOLVED v50][PA0][PRODUCT] – Jaké je přesné pořadí výpočtu Official snapshotu, expirace, nových bodů a sezonních změn?** Odpověď: po aktivaci nové policy se expirace, nové výsledky, disciplína a korekce zpracují atomicky a Official Ranking se z autoritativních vstupů vypočítá právě jednou. Na sezonní hranici mu předchází archivní Season Closing Ranking podle starých pravidel.
 98. **PAQ-098 [PA0][PRODUCT] – Jak se ve všech případech skládá kvalifikační a Main Draw část jediného výsledku?** Příklad: kvalifikant dostane `Qualified + dosažené Main Draw kolo`, LL svou Q stage plus Main Draw výsledek.
 99. **PAQ-099 [PA0][PRODUCT] – Jaké minimální Protected Ranking chování musí pre-alpha skutečně podporovat?** Příklad: je-li PR aktivní, musí být určeno použití pro entry, seeding a případně LL, nebo se některá část výslovně odloží.
-100. **PAQ-100 [PA1][PRODUCT] – Potřebuje pre-alpha samostatný Live Ranking, a pokud ano, jak propadávají body uvnitř weeku?** Příklad: Viewer může dočasně ukazovat jen poslední Official snapshot, pokud je Live Ranking vědomě stubovaný.
+100. **PAQ-100 [RESOLVED v69][PA1][PRODUCT] – Potřebuje pre-alpha samostatný Live Ranking, a pokud ano, jak propadávají body uvnitř weeku?** Odpověď: Live Ranking zůstává cílovou funkcí, pro první pre-alpha není povinný. Povinný je týdenní Official Ranking, jeho historie a Season Closing Ranking; průběžný zobrazený výsledek se nesmí mylně označit za Live Ranking. Přesný budoucí Live výpočet zůstává otevřený v 18.6.
 101. **PAQ-101 [PA1][PRODUCT] – Jak se chová nepovinné prize money od nevyplněné tabulky po úplný souhrn?** Příklad: turnaj bez částek funguje, ale zadaná tabulka musí správně pokrýt Q, Main Draw, W/O i DQ pravidla.
 102. **PAQ-102 [PA1][CONTENT] – Jaké konkrétní sankční a disciplinární defaulty potřebuje první Official Run?** Příklad: je určeno, o kolik bodů a na kolik weeků se použije Disciplinary Zero při no-show.
 
@@ -5524,9 +5534,9 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 121. **PAQ-121 [NOT REQUIRED FOR PRE-ALPHA v66][PA1][PRODUCT] – Jaká je úplná minimální mapa Viewer ↔ Admin protějšků a fallbacků?** Odpověď pro první pre-alpha: žádná nová povinná mapa, protože Viewer není akceptačním rozhraním. Cílový kontextový kontrakt kapitoly 2.4 zůstává platný pro pozdější dopracování.
 122. **PAQ-122 [PA0][PRODUCT] – Jaký společný formulářový kontrakt používají editace, preview, Save/Discard a validační chyby?** Příklad: červený blok ukáže přesné pole a důvod, aniž by ztratil ostatní rozpracované změny.
 123. **PAQ-123 [PA0][PRODUCT] – Jak se zobrazí neúplná data, `Unresolved` reference a tři úrovně závažnosti?** Příklad: chybějící nepovinná cena je modrá informace, neplatný účastník zápasu červený blok.
-124. **PAQ-124 [PA0][PRODUCT] – Jaké minimum musí ukázat draw, zápasový detail, Scores a Replay?** První pre-alpha zpřístupní potřebné výsledky, los a historický Replay v Adminu; přesný obsah zůstává otevřený. Příklad: kompaktní výsledek se rozklikne na gamy, rally log, časové události a stavy stamina.
-125. **PAQ-125 [PA1][PRODUCT] – Jaké minimum mapy branchí a časové Historie Runu patří do pre-alpha?** Příklad: lze vybrat branch a uložený bod, i když pokročilý graf a filtry přijdou později.
-126. **PAQ-126 [PA1][PRODUCT] – Jaké jsou minimální jazykové, zařízení a accessibility cíle?** Příklad: české Admin UI na desktopu musí být plně ovladatelné klávesnicí; mobil může být zatím read-only omezený.
+124. **PAQ-124 [ČÁSTEČNĚ ROZHODNUTO v69][PA0][PRODUCT] – Jaké minimum musí ukázat draw, zápasový detail, Scores a Replay?** Pre-alpha Replay v Adminu ukáže uloženou časovou osu, krokování oběma směry, skóre, události a fyzické/mentální stavy ze zaznamenané pravdy. Kurtová a úderová animace je odložená do velmi vzdálené budoucnosti. Přesné minimum ostatních částí a layout zůstávají otevřené.
+125. **PAQ-125 [ČÁSTEČNĚ ROZHODNUTO v69][PA1][PRODUCT] – Jaké minimum mapy branchí a časové Historie Runu patří do pre-alpha?** Uživatel může už v pre-alpha vytvořit branch z uloženého minulého bodu a původní průběh zůstane nedotčený. Rozsah mapy a pokročilých filtrů zůstává otevřený; některé branchení funkce mohou být již implementované, stav kódu je nutno samostatně ověřit.
+126. **PAQ-126 [ČÁSTEČNĚ ROZHODNUTO v69][PA1][PRODUCT] – Jaké jsou minimální jazykové, zařízení a accessibility cíle?** Český a anglický UI včetně základního Adminu, Test Labu a chyb jsou povinné na lokálním Windows desktopu; mobil a veřejný web neblokují první pre-alpha. Konkrétní klávesnicové a další accessibility cíle jsou stále otevřené.
 
 ## 31.18 Technická integrita, determinismus, testy a výkon
 
@@ -5552,11 +5562,11 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.20 Doplňkové průřezové mechanismy pre-alpha
 
-143. **PAQ-143 [PA1][PRODUCT] – Jaké minimální chování má změna reprezentované země, pokud nastane v akceptačním Runu?** Příklad: pre-alpha buď podporuje současný prozatímní eligibility workflow, nebo změnu dočasně bezpečně nepovolí místo náhodného nedokončeného výsledku.
+143. **PAQ-143 [RESOLVED v69][PA1][PRODUCT] – Jaké minimální chování má změna reprezentované země, pokud nastane v akceptačním Runu?** Odpověď: první pre-alpha dovoluje počáteční reprezentovanou zemi, ale pozdější přestup hráče do jiné země nepodporuje. Pokus odmítne srozumitelně a atomicky, bez změny identity, historie či eligibility. Viz 31.25.
 144. **PAQ-144 [PA0][PRODUCT] – Jaké historické objekty a stavy musí být dostupné při prohlížení minulého weeku?** Rozhodnuté minimum v66: Admin dovolí prohlížet libovolný existující week simulace a tehdejší dostupná data včetně hráčů, soutěží, výsledků, rankingů a Replay bez změny historie a bez dnešních hodnot vydávaných za minulé. Přesný katalog objektů a UX je stále otevřený. Viewer time machine zůstává cílovou funkcí mimo první pre-alpha.
 145. **PAQ-145 [PA1][PRODUCT] – Jaký minimální katalog World Events a Notification pravidel potřebuje funkční turnajový průchod?** Příklad: oznámení turnaje vytvoří veřejnou MSA zprávu, zatímco neplatná reference zůstane jen Admin varováním.
 146. **PAQ-146 [PA1][TECH] – Jaké základní H2H a statistiky se musí automaticky dopočítat z autoritativních výsledků?** Příklad: RET se počítá jako sportovní výhra/prohra, ABN bez vítěze se do H2H výher nezapočte.
-147. **PAQ-147 [PA1][PRODUCT] – Jaké minimum pokrývá kopie Runu a vestavěný Match Test Lab?** Příklad: testovací session používá read-only snapshot hráčů a její výsledek nikdy nezmění zdrojový Run.
+147. **PAQ-147 [RESOLVED v69][PA1][PRODUCT] – Jaké minimum pokrývá kopie Runu a vestavěný Match Test Lab?** Odpověď: globální Test Lab dostupný bez vybraného Runu zahrnuje Match a Tournament testování, izolované fixtures a volitelné read-only kopie snapshotů z Runů. Sdílený autoritativní engine, deterministické scénáře, krokové/celé/batch spouštění, programové rozhraní a strojový report, uložení/import/export scénářů a očekávané výsledky jsou povinný základ. Zdrojový Run se testem nikdy nemění. Viz 31.25.
 148. **PAQ-148 [PA1][TECH] – Jaká minimální lock/concurrency matice platí pro souběžné úlohy, Runy a branche?** Příklad: Forecast v jedné branchi nesmí blokovat čtení jiné, ale dva zápisy do stejného snapshotu se serializují.
 149. **PAQ-149 [PA1][PRODUCT] – Jaké minimum CSV/XLSX staging importu musí být dostupné pro tvorbu potřebných dat?** Příklad: chybný řádek země lze opravit v preview a nezávislé platné řádky bezpečně importovat.
 150. **PAQ-150 [NOT REQUIRED FOR PRE-ALPHA v66][PA0][PRODUCT] – Jaký minimální Viewer reveal/privacy režim zabrání úniku Admin truth, dokud jsou detailní reveal režimy odložené?** Odpověď pro první pre-alpha: Viewer není povinným rozhraním; jeho cílové oddělení veřejného a Admin stavu zůstává závazné, pokud je už dostupný. AI nadále nesmí vidět skrytá nebo budoucí data. Konkrétní režimy se rozhodnou před dokončením Vieweru.
@@ -5613,6 +5623,44 @@ Počty v tabulce níže označené v63 jsou historický snapshot. Ve v66 je ze s
 | Prozatímní pravidla a směry (historický stav v65) | 88 | Přesný field-specific katalog, Country↔Country model, hluboký trénink, číselná kalibrace rally i mezi-rally času a další výslovně označené směry zůstávají prozatímní či otevřené |
 
 Počet `PAQ` není odhad všech budoucích rozhodnutí. Je to současná behaviorální a obsahová brána první pre-alpha; jedna otázka se při kalibraci může rozpadnout na další podotázky a několik otázek může uzavřít jedna společná odpověď.
+
+## 31.25 Konsolidace rozhodnutí z 29.–30. 9. 2026 (v69)
+
+Tato část zachycuje potvrzený produktový rozsah první pre-alpha a výslovně ponechané otázky. Je autoritativní tam, kde starší text mluví o otevřené otázce, kterou níže uživatel následně rozhodl. Netvrdí nic o aktuálně naprogramovaném stavu; u branchí a dalších již možná existujících schopností se implementace ověří v současném `buuk` a testech. Historické počty v 31.24 zůstávají datovaným snapshotem: z výslovně označených PAQ tato konsolidace uzavírá `093`, `100`, `143` a `147` (tedy 54 resolved, 100 nadále otevřených včetně částečně rozhodnutých, 3 mimo první pre-alpha ze 157). Neoznačuje částečné odpovědi za úplné uzavření.
+
+### Turnaje, skupiny a los
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Skupinový RET: vítěz dostane maximum skupinových bodů podle BO3/BO5 a skupinovou výhru, odstoupivší 0; rozehraný zápas se nezahrne do skupinových herních ani míčkových poměrů. Skutečně odehrané skóre a RET zůstanou v historii. Přesný kontrakt a hranice vůči W/O jsou v 15.14 a 16.3. U srovnatelných stejných pozic napříč skupinami se použije výhry → skupinové body → poměr her → poměr míčků. Stejná plánovaná velikost a formát jsou podmínkou srovnání; chybějící data či zbývající shodu viditelně řeší Admin. Pouze víceskupinový formát bez finální fáze nemá jediného šampiona. Jedna skupinová fáze má jeden BO3 nebo BO5 formát. Standardní křížení `2×2` a `4×2` má šablony; ostatní konfigurace dostanou validovaný úplný návrh k potvrzení nebo opravě Adminem. Tato pravidla jsou pro pre-alpha rozhodnuté defaulty, nikoli prohlášení o navždy optimální férovosti.
+
+**[ROZHODNUTO, PAQ-093; PAQ-094 ČÁSTEČNĚ]** Každý potvrzený první los nebo potvrzená oprava vytváří neměnnou `Draw Version` (`v1`, `v2`, …) s důvodem a provenance; pouhé preview ji nevytváří. Ruční přesuny dovolují nasazené jen uvnitř povolených pozic téže seed vrstvy a nenasazené mezi nenasazenými pozicemi. Seed číslo patří hráči, BYE zůstává ve strukturálně platných pozicích a odehrané zápasy se nepřepisují. Další specifické Admin zásahy a veřejné označení výjimek jsou stále otevřené. Automatický klasický pavouk podle 15.2–15.6 se těmito skupinovými volbami nemění.
+
+**[PRAVIDLO PRO POZDĚJŠÍ VALIDACI]** Po implementaci se systematicky testují skutečné skupiny, LL, výjimečné výsledky a další smysluplné oblasti enginu včetně extrémních případů, férovosti a porovnání alternativ. Nyní se nerozhoduje hypotetický konečný tie-break při všech možných nulových jmenovatelích; před spuštěním operace vyžadující jednoznačný výsledek se nevyřešený stav viditelně předá Adminovi. Pozdější změna schválené policy může platit pro jiný Run nebo až od určené sezony, s uloženou efektivní verzí a bez retroaktivního přepočtu historie. Fairness testovací kampaň není důkazem již provedeného měření ani důvodem zneplatnit pre-alpha default.
+
+### Globální Test Lab a automatizované ověřování
+
+**[ROZHODNUTO PRO PRE-ALPHA, PAQ-147]** Globální `Test Lab` lze otevřít bez aktivního či vybraného Runu. Obsahuje `Match Test Lab` pro zápasy, rally, čas, skóre a hráčské stavy a `Tournament Test Lab` pro skupiny, formáty, entries, losy, kvalifikaci, postup, náhrady a rankingové důsledky. Oba používají stejné autoritativní sportovní mechanismy jako Runs v izolovaných sessions. Lze vytvořit vlastní dočasná testovací data nebo převzít read-only kopii snapshotu z Runu; zdrojový Run se spuštěním scénáře nikdy nezmění.
+
+**[ROZHODNUTO]** Lab podporuje krokování, dokončení zvoleného celku a batch scénářů, včetně programového/headless ovládání pro ChatGPT, Codex a další povolené testovací agenty. Scénář nese potřebné vstupy, efektivní pravidla a verze modelů, seed, volitelné pevně zadané či vynucené výsledky v izolaci, očekávané assertions a strojově čitelný report skutečných výsledků, selhání a rozdílů. Stejný kompatibilní snapshot/pravidla/verze/seed/příkaz umožní opakování; samotný stejný seed napříč změnami modelu toto neslibuje. Scénáře lze trvale uložit, znovu spustit a importovat/exportovat souborem. Konkrétní formát, katalog příkazů, UI, výkon a validace zůstávají technickým návrhem, ne záminkou nahradit skutečný engine maketou.
+
+**[HRANICE AKCEPTACE]** Test Lab doplňuje, ale nenahrazuje povinné end-to-end průchody Runem v 31.3. První pre-alpha musí mít sportovně použitelný základ pro realistické testy; rozsáhlé empirické ladění a porovnávání férovosti se provádí po zprovoznění celku. Match i Tournament Lab mají pomoci automatizovanému testování bez nutnosti zakládat Run pro každý scénář.
+
+### Runy, zálohy, agenti a kompatibilita
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Branch z libovolného přípustného minulého uloženého bodu zachová původní průběh a umožní jinou budoucnost. Úplný export/import Runu podle kapitoly 24 je povinný pro zálohování, obnovení a přenos; automatické lokální zálohy mají chránit delší práci. Technická retence, intervaly a diagnostika zůstávají k implementačnímu návrhu. Už existující rozhodnutý exportní kontrakt se touto akceptační prioritou znovu nevymýšlí.
+
+**[ROZHODNUTO]** Nové vydání aplikace podporuje otevírání Runů ze starších podporovaných pre-alpha vydání. Potřebná migrace po bezpečné záloze proběhne na kopii, výsledek se validuje, selhání ponechá původní data použitelná a historické výsledky i tehdy účinná pravidla se tiše nemění. Přesný formát schématu a kompatibilní rozsah určuje realizace `PAQ-013/028/134`. Starší aplikace nesmí automaticky zapisovat do novějšího nekompatibilního formátu.
+
+**[ROZHODNUTO – AUTORIZACE AI AGENTŮ]** Agent může vytvořit vlastní testovací Run nebo měnit konkrétní editovatelný Run pouze v rozsahu uživatelem uděleného oprávnění; opakované dotazy nejsou nutné uvnitř výslovně schváleného rozsahu. Vestavěné/oficiální GitHub Runy a balíčky jsou chráněné zdroje. Agent je může číst a pro testy upravit jejich kopii, nikoli měnit originál běžným oprávněním k Runu. Výjimka pro originál vyžaduje zvláštní výslovné povolení uživatele až po konkrétním popisu změny, důvodu, rizik a možnosti návratu. Tento organizační kontrakt doplňuje read-only pravidla kapitol 3–4 a 24; označení „Official Run“ zde znamená konkrétní chráněný vestavěný obsah, zatímco `Official Ranking` je druh žebříčku.
+
+### Rozhraní, Replay a vydávání verzí
+
+**[ROZHODNUTO PRO PRE-ALPHA]** Lokální Windows desktopové použití je dostatečné. České i anglické UI včetně globálního Test Labu, zásadních Admin toků a validací funguje od prvního vydání; veřejný hosting, mobil ani plný Viewer nejsou jeho akceptačním požadavkem. Samostatný Live Ranking také není povinný: Weekly Official Ranking, jeho historie a Season Closing Ranking ano. Zápasový Replay má uloženou časovou osu, krokování, skóre, události a fyzické/mentální stavy. Kurtová/úderová animace je velmi vzdálený budoucí cíl.
+
+**[ROZHODNUTO V PRINCIPU – RELEASE HISTORIE]** Vydaná verze má viditelné číslo, datum, changelog/Version Log s tím, co přidala či opravila, a identifikovatelný zdrojový stav; na GitHubu lze označit vydání a uchovat odpovídající sestavení. Release vzniká až po ověření funkčního celku, ne po každém PR. U Runu se zachovají verze aplikace a schématu spojené s vytvořením/převodem a efektivní verze sportovních pravidel. Případný budoucí launcher starší sestavení spustí odděleně a pro pokusy použije kopii kompatibilního Runu. Přepínač binární verze přímo v běžícím enginu není požadavkem první pre-alpha.
+
+**[PŘEDBĚŽNÝ NÁVRH, NEROZHODNUTO]** Posloupnost názvů `Pre-alpha → Alpha → Beta → Release Candidate → 1.0` a příklady čísel `v0.1.0-prealpha.1`, `v0.2.0-alpha.1`, `v0.3.0-beta.1`, `v1.0.0-rc.1`, `v1.0.0` jsou pouze diskusní schéma. Konkrétní název a číslo první vydané pre-alpha se rozhodnou až při vydávání podle skutečného stavu; příklady nerezervují další čísla. `1.1.0` pro rozšíření a `1.1.1` pro menší opravu zůstávají vhodný pracovní směr po 1.0.
+
+**[VYSVĚTLENÍ HRANICE]** Poslední rozhovor o rychlém postupu běžným editovatelným Runem do konce turnaje či sezony nepřinesl nové rozhodnutí. Již rozhodnuté příkazy a rozsahy `Simulate/Manual` z 15.12 a 17.1 platí dál. Slovo „oficiální“ v otázce na rychlou simulaci neuděluje oprávnění měnit chráněný vestavěný GitHub Run.
 
 
 # 32. Procentuální audit stavu specifikace

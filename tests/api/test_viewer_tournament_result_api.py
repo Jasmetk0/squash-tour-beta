@@ -130,3 +130,83 @@ def test_viewer_tournament_result_returns_not_found_when_saved_branch_has_no_res
             ),
         )
         assert status == 404
+
+
+
+@pytest.mark.pr_critical
+def test_viewer_completed_tournaments_publish_only_saved_canonical_results(
+    tmp_path,
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'viewer-completed-tournaments.sqlite'}"
+    with ApiServer(database_url=database_url) as server:
+        branch_id, run_id = _canonical_run(server)
+        repository = _repository(database_url)
+        with repository._session_factory.begin() as session:
+            store = OwnedTournamentRankingSourceStore(session)
+            store.append(
+                _source(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id="event-later",
+                    season_index=3,
+                    week_number=4,
+                )
+            )
+            store.append(
+                _source(
+                    run_id=run_id,
+                    branch_id=branch_id,
+                    event_id="event-earlier",
+                    season_index=2,
+                    week_number=55,
+                )
+            )
+
+        RankingWeekCommandRunner(repository._session_factory).execute(
+            RankingBootstrapCommand(
+                command_id="viewer-completed-ranking-bootstrap",
+                run_id=run_id,
+                branch_id=branch_id,
+                policy=OfficialRankingPolicy(policy_id="viewer-completed-test-policy"),
+                players=(),
+                discipline="none",
+            )
+        )
+
+        root = (
+            f"{server.base_url}/viewer/runs/{quote(run_id, safe='')}"
+            "/tournaments/completed"
+        )
+
+        assert _request("GET", root)[0] == 404
+
+        save_ranking(server, run_id, branch_id)
+
+        status, payload = _request("GET", root)
+        assert status == 200
+        assert payload["schema_version"] == "viewer_completed_tournaments.v1"
+        assert payload["product_run_id"] == run_id
+        assert payload["viewer_branch_id"] == branch_id
+        assert payload["tournament_count"] == 2
+        assert [item["event_id"] for item in payload["tournaments"]] == [
+            "event-earlier",
+            "event-later",
+        ]
+        assert [
+            (item["completed_season_index"], item["completed_week"])
+            for item in payload["tournaments"]
+        ] == [(2, 55), (3, 4)]
+        assert payload["tournaments"][0]["champion_player_id"] == "A"
+        assert payload["tournaments"][0]["player_count"] == 5
+        assert payload["tournaments"][0]["match_count"] == 4
+
+        serialized = str(payload)
+        for forbidden in (
+            "fingerprint",
+            "command_id",
+            "provenance",
+            "canonical_awards",
+            "canonical_prize_awards",
+            "point_distribution",
+        ):
+            assert forbidden not in serialized

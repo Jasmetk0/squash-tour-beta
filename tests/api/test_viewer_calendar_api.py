@@ -4,8 +4,7 @@ from urllib.parse import quote
 
 import pytest
 
-from test_simulation_api import ApiServer, _request
-from tests.api.test_saved_revision_history_api import _create_run
+from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 from test_season_point_awards_service import make_points_service
 
 

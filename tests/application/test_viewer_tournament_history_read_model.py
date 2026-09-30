@@ -92,7 +92,7 @@ def _calendar_entities(
     return (metadata, event), version
 
 
-def _state() -> RunPackageState:
+def _state(*, run_id: str = "run", branch_id: str = "branch") -> RunPackageState:
     first_entities, first_version = _calendar_entities(
         package_id="calendar-2000-2001",
         version_char="a",
@@ -112,8 +112,8 @@ def _state() -> RunPackageState:
         event_name="Current Open",
     )
     return RunPackageState(
-        run_id="run",
-        branch_id="branch",
+        run_id=run_id,
+        branch_id=branch_id,
         entities=first_entities + second_entities,
         package_versions=(first_version, second_version),
     )

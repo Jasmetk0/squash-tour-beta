@@ -3041,6 +3041,29 @@ to canonical authority.
   deliberately excluded;
 - Tournament Detail's primary result section now consumes this canonical projection;
 - legacy event/result payload may still remain in collapsed technical compatibility data
-  and in the tournament-list summary until a separate list/history detachment slice.
+  on Tournament Detail, but it is no longer the Tournament list/history authority.
 
 See `docs/VIEWER_TOURNAMENT_RESULT_V1.md`.
+
+
+### Canonical Viewer Tournament History
+
+The top-level Viewer Tournament list is now detached from the legacy SimulationRun event
+registry. The selected Viewer Branch's Saved Revision loads its Run Package state directly
+alongside Ranking/Simulation/WC components, and `viewer_tournament_history.v1` projects all
+saved Calendar Packages into one deterministic multi-season tournament history.
+
+- Calendar Package state is read from the exact immutable Saved Revision; live Package changes
+  are invisible until ordinary Working Draft Save;
+- canonical Tournament Results are joined only from the same Saved Ranking component and are
+  invisible until Ranking Save;
+- the list exposes public schedule/geometry metadata plus result publication, champion and
+  finalist, but no Package IDs/fingerprints/provenance or authority internals;
+- a canonical result without a matching saved Calendar event fails closed rather than being
+  backfilled from legacy event records;
+- `ViewerRunTournamentsPage` no longer calls legacy `listEvents()` or `getRun()` for its
+  list route;
+- Tournament Detail, Season Calendar and Week compatibility metadata still have separate legacy
+  reads and remain future detachment work.
+
+See `docs/VIEWER_TOURNAMENT_HISTORY_V1.md`.

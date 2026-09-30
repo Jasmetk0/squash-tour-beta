@@ -3213,3 +3213,15 @@ The canonical Saved Calendar read boundary is available from the selected Viewer
 
 The current Viewer UI may continue to use newer integrated Calendar/Tournament surfaces while this API becomes the direct Saved Calendar authority for downstream migration.
 
+### Direct Saved Calendar Viewer surfaces
+
+Season Calendar, Planned Event and Week Detail now read schedule truth directly from `viewer_run_calendar.v1` on the selected Viewer Branch Saved Revision.
+
+- legacy `getRun` / `listEvents` schedule reconstruction is removed from these routes;
+- published Tournament Results are joined by stable `event_id`;
+- Official Ranking publications use canonical `week_ordinal`;
+- only legacy Race snapshots remain on the explicit `snapshotSequence` compatibility path;
+- Working Draft Calendar edits remain invisible until Save.
+
+See `docs/VIEWER_DIRECT_SAVED_CALENDAR_INTEGRATION_V1.md`.
+

@@ -31,14 +31,14 @@ describe('Viewer snapshot module final source guard', () => {
     expect(detailSource).not.toContain('Standings preview')
   })
 
-  it('allows preview parser/table usage only outside the detail page source slice', () => {
+  it('keeps only Race preview parser/table usage outside the conservative detail slice', () => {
     const detailSource = detailPageSource()
 
-    // List selected-publication previews intentionally remain on the preview parser/table path.
-    // Detail payload rendering is intentionally separate and remains conservative for unknown payloads.
-    expect(viewerRunSnapshotsPageSource).toContain('RankingPreviewTable')
+    // Canonical Ranking uses dedicated Viewer components now. This compatibility module
+    // remains only for legacy Race history, whose list preview still uses the typed Race path.
+    expect(viewerRunSnapshotsPageSource).not.toContain('RankingPreviewTable')
+    expect(viewerRunSnapshotsPageSource).not.toContain('parseRankingPreviewPayload')
     expect(viewerRunSnapshotsPageSource).toContain('RacePreviewTable')
-    expect(viewerRunSnapshotsPageSource).toContain('parseRankingPreviewPayload')
     expect(viewerRunSnapshotsPageSource).toContain('parseRacePreviewPayload')
 
     expect(detailSource).not.toContain('RankingPreviewTable')

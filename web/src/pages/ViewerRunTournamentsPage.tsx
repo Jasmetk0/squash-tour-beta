@@ -207,7 +207,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       <SectionCard title="Tournament links">
         <p>
           <Link to={viewerTournamentsPath(runId)}>Back to tournaments</Link>
-          {planned ? (
+          {event ? (
             <>
               {' · '}
               <Link to={viewerPlannedEventPath(runId, eventId)}>Open calendar event</Link>

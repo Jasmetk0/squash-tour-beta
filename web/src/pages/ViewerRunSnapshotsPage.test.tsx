@@ -1,10 +1,10 @@
-import { cleanup, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { renderWithViewerProviders } from '../test/viewerTestUtils'
-import { ViewerRunSnapshotDetailPage, ViewerRunSnapshotListPage } from './ViewerRunSnapshotsPage'
+import { ViewerRunSnapshotDetailPage } from './ViewerRunSnapshotsPage'
 
 const api = vi.hoisted(() => ({
   getRaceSnapshot: vi.fn(),
@@ -27,7 +27,6 @@ afterEach(() => cleanup())
 function renderRaceRoute(route: string): void {
   renderWithViewerProviders(
     <Routes>
-      <Route path="/viewer/runs/:runId/race" element={<ViewerRunSnapshotListPage />} />
       <Route path="/viewer/runs/:runId/race/:snapshotSequence" element={<ViewerRunSnapshotDetailPage />} />
     </Routes>,
     { route }
@@ -62,16 +61,6 @@ function mockRunMetadata(runId = 'viewer-run-1', sourceEventId = 'EVENT-1'): voi
   })
 }
 
-function mockRaceSnapshots(): void {
-  api.listRaceSnapshots.mockResolvedValue({
-    run_id: 'viewer-run-1',
-    snapshots: [
-      { snapshot_sequence: 11, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} },
-      { snapshot_sequence: 12, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-2', payload: {} }
-    ]
-  })
-}
-
 function raceRows(count: number): Array<Record<string, unknown>> {
   return Array.from({ length: count }, (_, index) => ({
     position: index + 1,
@@ -83,22 +72,6 @@ function raceRows(count: number): Array<Record<string, unknown>> {
     qualification_status: index === 0 ? 'Qualified' : 'Chasing',
     next_max_points_possible: index === 0 ? 1200 : 900
   }))
-}
-
-function selectedPublicationSummary(): HTMLElement {
-  const article = screen.getByRole('heading', { name: 'Latest selected publication summary' }).closest('article')
-  expect(article).not.toBeNull()
-  return article as HTMLElement
-}
-
-function expectSelectedSequence(sequence: number): void {
-  const summary = selectedPublicationSummary()
-  expect(within(summary).getByText('Snapshot sequence')).toBeInTheDocument()
-  expect(within(summary).getByText(String(sequence))).toBeInTheDocument()
-  expect(within(summary).getByRole('link', { name: /Open race detail/i })).toHaveAttribute(
-    'href',
-    `/viewer/runs/viewer-run-1/race/${sequence}`
-  )
 }
 
 function expectNoForbiddenViewerActions(): void {
@@ -117,166 +90,6 @@ function expectNoAdminLinks(): void {
     expect(link.getAttribute('href') ?? '').not.toMatch(/^\/admin/)
   })
 }
-
-describe('ViewerRunSnapshotListPage Race compatibility', () => {
-  beforeEach(() => {
-    vi.resetAllMocks()
-    mockRunMetadata()
-  })
-
-  it('keeps Race list API errors safe and read-only', async () => {
-    api.listRaceSnapshots.mockRejectedValue(new Error('race list outage'))
-    renderRaceRoute('/viewer/runs/viewer-run-1/race')
-
-    expect(await screen.findByRole('heading', { name: 'Race to Finals' })).toBeInTheDocument()
-    expect(await screen.findByText(/Failed to load publications/i)).toBeInTheDocument()
-    expect(screen.getByText(/race list outage/i)).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-    expectNoAdminLinks()
-  })
-
-  it('renders empty Race history without fake publication data', async () => {
-    api.listRaceSnapshots.mockResolvedValue({ run_id: 'viewer-run-1', snapshots: [] })
-    renderRaceRoute('/viewer/runs/viewer-run-1/race')
-
-    expect(await screen.findByText('No data is available for this run yet.')).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: 'Latest selected publication summary' })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('drops unsafe snapshot rows before selection and navigation', async () => {
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'viewer-run-1',
-      snapshots: [
-        null,
-        123,
-        {},
-        { snapshot_sequence: -1, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', payload: {} },
-        { snapshot_sequence: 5, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-1', payload: {} }
-      ]
-    })
-    renderRaceRoute('/viewer/runs/viewer-run-1/race')
-
-    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
-    expectSelectedSequence(5)
-    expect(screen.queryByText('[object Object]')).not.toBeInTheDocument()
-  })
-
-  it('honors selectedSequence and moves selection when filters exclude it', async () => {
-    const user = userEvent.setup()
-    mockRaceSnapshots()
-    renderRaceRoute('/viewer/runs/viewer-run-1/race?selectedSequence=12')
-
-    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
-    expectSelectedSequence(12)
-    expect(screen.getByRole('button', { name: /Race publication #12/i })).toHaveAttribute('aria-current', 'true')
-
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Filter publications by week' }), '3')
-    await waitFor(() => expectSelectedSequence(11))
-    expect(screen.queryByRole('article', { name: 'Race publication 12' })).not.toBeInTheDocument()
-  })
-
-  it('renders a safe selected Race preview with Viewer-only links', async () => {
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'viewer-run-1',
-      snapshots: [{
-        snapshot_sequence: 5,
-        snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
-        source_event_id: 'EVENT-1',
-        payload: { race_to_finals: { rows: raceRows(2) } }
-      }]
-    })
-    renderRaceRoute('/viewer/runs/viewer-run-1/race')
-
-    const table = await screen.findByRole('table', { name: 'Latest selected Top 10 race preview table' })
-    expect(within(table).getByRole('link', { name: 'Mostafa Asal' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/players/R1/career'
-    )
-    expect(within(table).getByRole('link', { name: 'EGY' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/countries/EGY'
-    )
-    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/race/5'
-    )
-    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/calendar/EVENT-1'
-    )
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/tournaments/EVENT-1'
-    )
-    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/weeks/3'
-    )
-    expectNoForbiddenViewerActions()
-    expectNoAdminLinks()
-  })
-
-  it('keeps malformed Race preview payloads empty while preserving detail navigation', async () => {
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: 'viewer-run-1',
-      snapshots: [{
-        snapshot_sequence: 6,
-        snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
-        source_event_id: 'EVENT-1',
-        payload: {
-          race_to_finals: {
-            rows: [{ position: { value: 1 }, player_name: { label: 'Unsafe' }, race_points: { value: 100 } }]
-          }
-        }
-      }]
-    })
-    renderRaceRoute('/viewer/runs/viewer-run-1/race')
-
-    expect(await screen.findByRole('heading', { name: 'Latest selected publication summary' })).toBeInTheDocument()
-    expect(screen.queryByRole('table', { name: 'Latest selected Top 10 race preview table' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-1/race/6'
-    )
-    expect(document.body.textContent).not.toContain('[object Object]')
-  })
-
-  it('encodes run and source-event IDs in Race Viewer links', async () => {
-    const runId = 'viewer run/with#hash'
-    const sourceEventId = 'EVENT/SLASH#HASH'
-    const encodedRunId = encodeURIComponent(runId)
-    const encodedEventId = encodeURIComponent(sourceEventId)
-    mockRunMetadata(runId, sourceEventId)
-    api.listRaceSnapshots.mockResolvedValue({
-      run_id: runId,
-      snapshots: [{
-        snapshot_sequence: 22,
-        snapshot_kind: 'RACE_WEEKLY_PUBLICATION',
-        source_event_id: sourceEventId,
-        payload: { race_to_finals: { rows: raceRows(1) } }
-      }]
-    })
-
-    renderRaceRoute(`/viewer/runs/${encodedRunId}/race`)
-
-    expect(await screen.findByRole('table', { name: 'Latest selected Top 10 race preview table' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Open race detail/i })).toHaveAttribute(
-      'href',
-      `/viewer/runs/${encodedRunId}/race/22`
-    )
-    expect(screen.getByRole('link', { name: /Open planned event/i })).toHaveAttribute(
-      'href',
-      `/viewer/runs/${encodedRunId}/calendar/${encodedEventId}`
-    )
-    expect(screen.getByRole('link', { name: /Open tournament detail/i })).toHaveAttribute(
-      'href',
-      `/viewer/runs/${encodedRunId}/tournaments/${encodedEventId}`
-    )
-    expectNoAdminLinks()
-  })
-})
 
 describe('ViewerRunSnapshotDetailPage Race compatibility', () => {
   beforeEach(() => {

@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 from urllib import error, request
 
+import pytest
 import uvicorn
 
 from beta_engine.main import create_app
@@ -89,6 +90,7 @@ def _write_fixture(path: Path, payload: dict[str, object] = COUNTRIES_FIXTURE) -
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+@pytest.mark.pr_critical
 def test_single_year_preview_is_deterministic_for_same_seed_and_year(tmp_path) -> None:
     countries_path = tmp_path / "countries.json"
     _write_fixture(countries_path)

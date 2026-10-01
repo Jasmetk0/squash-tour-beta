@@ -48,6 +48,16 @@ describe('TalentPreviewPage', () => {
             special_prospect: 0.019,
             generational_talent: 0.001
           },
+          expected_band_counts: {
+            solid_prospect: 25.2,
+            strong_prospect: 12.6,
+            elite_prospect: 3.36,
+            special_prospect: 0.798,
+            generational_talent: 0.042
+          },
+          expected_elite_talents: 4.2,
+          expected_tour_talents: 12.6,
+          expected_pro_depth: 25.2,
           actual_band_counts: {
             solid_prospect: 30,
             strong_prospect: 10,

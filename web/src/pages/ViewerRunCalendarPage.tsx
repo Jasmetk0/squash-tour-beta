@@ -443,7 +443,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       <SectionCard title="Publications this week">
         {historyQuery.error ? <p className="error">Failed to load Tournament History: {formatApiError(historyQuery.error)}</p> : null}
         {rankingHistoryQuery.error ? <p className="error">Failed to load Official Ranking history: {formatApiError(rankingHistoryQuery.error)}</p> : null}
-        {finalsRaceQuery.error ? <p className="error">Failed to load Finals Race publications: {formatApiError(raceQuery.error)}</p> : null}
+        {finalsRaceQuery.error ? <p className="error">Failed to load Finals Race publications: {formatApiError(finalsRaceQuery.error)}</p> : null}
         {!historyQuery.error && !rankingHistoryQuery.error && !raceQuery.error && hasValidWeek ? (
           <MetadataList
             items={[

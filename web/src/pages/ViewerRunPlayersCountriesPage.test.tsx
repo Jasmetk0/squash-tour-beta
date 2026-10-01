@@ -501,7 +501,7 @@ describe('ViewerRunPlayerCareerPage canonical current profile', () => {
 
     expect(await screen.findByText('Ali A')).toBeInTheDocument()
     expect(api.getViewerPlayers).toHaveBeenCalledWith('viewer-run-2c')
-    expect(screen.getByText('branch-viewer')).toBeInTheDocument()
+    expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
     expect(screen.getByText('S2 W7')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Current sporting state' })).toBeInTheDocument()
     expect(screen.getByText('167')).toBeInTheDocument()

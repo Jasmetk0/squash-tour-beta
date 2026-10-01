@@ -16,7 +16,8 @@ const api = vi.hoisted(() => {
 
   return {
     ApiError,
-    getRunWeeklyIntakeCohortSeasonPreview: vi.fn()
+    getRunWeeklyIntakeCohortSeasonPreview: vi.fn(),
+    materializeRunProspects: vi.fn()
   }
 })
 
@@ -68,6 +69,24 @@ describe('TalentIntakePage', () => {
   beforeEach(() => {
     api.getRunWeeklyIntakeCohortSeasonPreview.mockReset()
     api.getRunWeeklyIntakeCohortSeasonPreview.mockResolvedValue(preview)
+    api.materializeRunProspects.mockReset()
+    api.materializeRunProspects.mockResolvedValue({
+      run_id: 'run-1',
+      world_id: 'official_fax_world',
+      season: '2000/2001',
+      season_start_year: 2000,
+      annual_target: 204,
+      requested_prospect_count: 204,
+      created_count: 204,
+      existing_count: 0,
+      skipped_count: 0,
+      conflict_count: 0,
+      total_persisted_for_scope: 204,
+      weeks_materialized: [],
+      country_totals: [],
+      already_materialized: false,
+      message: 'Prospect cohort materialized.'
+    })
   })
 
   it('loads the run-scoped season cohort preview without materializing players', async () => {
@@ -84,7 +103,7 @@ describe('TalentIntakePage', () => {
     expect(screen.getByRole('table', { name: 'Talent intake country totals' })).toBeInTheDocument()
     expect(screen.getByText('Czechia (CZE)')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Talent intake weekly schedule' })).toBeInTheDocument()
-    expect(screen.getByText(/does not create or persist players/i)).toBeInTheDocument()
+    expect(screen.getByText(/materialized only after confirmation/i)).toBeInTheDocument()
   })
 
   it('supports entering a Run ID from the global Talent Intake route', async () => {
@@ -99,6 +118,31 @@ describe('TalentIntakePage', () => {
         season_growth_rate: 0.015
       })
     })
+  })
+
+  it('requires review confirmation and materializes without overwrite', async () => {
+    renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
+    await screen.findByText('FAX World')
+
+    const confirmButton = screen.getByRole('button', { name: 'Confirm materialization' })
+    expect(confirmButton).toBeDisabled()
+    expect(api.materializeRunProspects).not.toHaveBeenCalled()
+
+    await userEvent.click(
+      screen.getByLabelText(/I reviewed this cohort preview and want to materialize these 15-year-old prospects/i)
+    )
+    expect(confirmButton).toBeEnabled()
+    await userEvent.click(confirmButton)
+
+    await waitFor(() => {
+      expect(api.materializeRunProspects).toHaveBeenCalledWith('run-1', {
+        base_annual_intake_target: 200,
+        season_growth_rate: 0.015,
+        overwrite: false
+      })
+    })
+    expect(await screen.findByText('Prospect cohort materialized.')).toBeInTheDocument()
+    expect(screen.getByText(/Created 204; existing 0; persisted in scope 204/i)).toBeInTheDocument()
   })
 
   it('updates the preview when annual volume controls change', async () => {

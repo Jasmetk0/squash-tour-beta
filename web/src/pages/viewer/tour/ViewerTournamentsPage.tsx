@@ -1,63 +1,77 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 
-import { getRun, listEvents } from '../../../api/client'
+import { getViewerRunCalendar, getViewerTournamentHistory } from '../../../api/client'
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
-import { viewerRunsPath, viewerSeasonCalendarPath, viewerTournamentsPath } from '../../../viewer/viewerRoutes'
-import { buildPlannedEventMap, selectLatestPersistedEvent, selectNextOrderedEvent } from './viewerTourDisplay'
-import { renderEventSummary, renderOrderedEventMetadata, renderPersistedEventSummary } from './viewerTourEventRender'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
+import { viewerPlannedEventPath, viewerRunsPath, viewerSeasonCalendarPath, viewerTournamentsPath, viewerWeekDetailPath } from '../../../viewer/viewerRoutes'
 
 export function ViewerTournamentsPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
-  const runQuery = useQuery({ queryKey: ['viewer-tournaments-run', activeRunId], queryFn: () => getRun(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
-  const eventsQuery = useQuery({ queryKey: ['viewer-tournaments-events', activeRunId], queryFn: () => listEvents(activeRunId ?? ''), enabled: Boolean(activeRunId), retry: false })
+  const productRunId = useActiveViewerProductRunId()
+  const calendarQuery = useQuery({
+    queryKey: ['viewer-tournaments-calendar', productRunId],
+    queryFn: () => getViewerRunCalendar(productRunId ?? ''),
+    enabled: Boolean(productRunId),
+    retry: false,
+  })
+  const historyQuery = useQuery({
+    queryKey: ['viewer-tournaments-history', productRunId],
+    queryFn: () => getViewerTournamentHistory(productRunId ?? ''),
+    enabled: Boolean(productRunId),
+    retry: false,
+  })
 
-  if (!activeRunId) {
+  if (!productRunId) {
     return (
-      <ViewerShellPage title="All Tournaments" description="Read-only tournament schedule and results archive for the selected Viewer run.">
-        <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+      <ViewerShellPage title="All Tournaments" description="Read-only canonical tournament schedule and results archive.">
+        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
       </ViewerShellPage>
     )
   }
 
-  const orderedEvents = runQuery.data?.season_state.ordered_events ?? []
-  const persistedEvents = eventsQuery.data?.events ?? []
-  const plannedMap = buildPlannedEventMap(runQuery.data)
-  const nextEvent = selectNextOrderedEvent(runQuery.data)
-  const latestPersistedEvent = selectLatestPersistedEvent(persistedEvents)
-  const sampleEvents = orderedEvents.slice(0, 5)
-  const hasMetadata = orderedEvents.length > 0 || persistedEvents.length > 0
+  const events = calendarQuery.data?.seasons.flatMap((season) => season.events) ?? []
+  const published = historyQuery.data?.tournaments.filter((event) => event.result_published) ?? []
+  const sampleEvents = events.slice(0, 8)
+  const isLoading = calendarQuery.isLoading || historyQuery.isLoading
+  const hasError = calendarQuery.isError || historyQuery.isError
 
   return (
-    <ViewerShellPage title="All Tournaments" description="Read-only tournament schedule and publications from the active Viewer run.">
-      <article className="viewer-active-run-card" aria-label="All Tournaments active run summary">
-        <span className="eyebrow">Active Viewer run</span>
+    <ViewerShellPage title="All Tournaments" description="Read-only Saved-Revision tournament schedule and published result metadata.">
+      <article className="viewer-active-run-card" aria-label="All Tournaments canonical Product Run summary">
+        <span className="eyebrow">Selected Product Run</span>
         <h3>All Tournaments summary</h3>
-        {runQuery.isLoading || eventsQuery.isLoading ? <p className="status">Loading tournament metadata…</p> : null}
-        {runQuery.isError || eventsQuery.isError ? <ViewerEmptyState>Tournament metadata is temporarily unavailable for this run.</ViewerEmptyState> : null}
+        {isLoading ? <p className="status">Loading canonical tournament metadata…</p> : null}
+        {hasError ? <ViewerEmptyState>Canonical tournament metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
-          <div><dt>Total ordered calendar events</dt><dd>{runQuery.isLoading ? 'Loading…' : orderedEvents.length || '—'}</dd></div>
-          <div><dt>Persisted event count</dt><dd>{eventsQuery.isLoading ? 'Loading…' : persistedEvents.length}</dd></div>
-          <div><dt>Next scheduled event</dt><dd>{nextEvent ? renderEventSummary(nextEvent, activeRunId) : '—'}</dd></div>
-          <div><dt>Latest persisted event</dt><dd>{renderPersistedEventSummary(latestPersistedEvent, plannedMap, activeRunId)}</dd></div>
+          <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
+          <div><dt>Viewer Branch</dt><dd>{calendarQuery.data?.viewer_branch_id ?? historyQuery.data?.viewer_branch_id ?? '—'}</dd></div>
+          <div><dt>Total calendar events</dt><dd>{calendarQuery.data?.event_count ?? '—'}</dd></div>
+          <div><dt>Published result count</dt><dd>{historyQuery.data?.published_result_count ?? '—'}</dd></div>
         </dl>
-        {!runQuery.isLoading && !eventsQuery.isLoading && !runQuery.isError && !eventsQuery.isError && !hasMetadata ? <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState> : null}
+        {!isLoading && !hasError && !events.length ? <ViewerEmptyState>No canonical tournament data is available yet.</ViewerEmptyState> : null}
         {sampleEvents.length ? (
           <div>
             <h4>Sample schedule events</h4>
-            <ul className="viewer-home-list" aria-label="Sample ordered tournament events">
+            <ul className="viewer-home-list" aria-label="Sample canonical tournament events">
               {sampleEvents.map((event) => (
-                <li key={event.event_id}>{renderOrderedEventMetadata(event, activeRunId)}</li>
+                <li key={event.event_id}>
+                  <dl className="metadata-list">
+                    <div><dt>Event</dt><dd><Link to={viewerPlannedEventPath(productRunId, event.event_id)}>{event.event_name || event.event_id}</Link></dd></div>
+                    <div><dt>Week</dt><dd><Link to={viewerWeekDetailPath(productRunId, event.season_week)}>W{event.season_week}</Link></dd></div>
+                    <div><dt>Category</dt><dd>{event.category}</dd></div>
+                    <div><dt>Tour</dt><dd>{event.tour_level ?? '—'}</dd></div>
+                    <div><dt>Status</dt><dd>{event.status}</dd></div>
+                  </dl>
+                </li>
               ))}
             </ul>
           </div>
         ) : null}
+        {published.length ? <p className="status">{published.length} tournament result publication(s) are available in canonical history.</p> : null}
         <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerTournamentsPath(activeRunId)}>Open active run tournaments</Link>{' '}
-          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(activeRunId)}>Open active run schedule</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerTournamentsPath(productRunId)}>Open Product Run tournaments</Link>{' '}
+          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(productRunId)}>Open Product Run schedule</Link>{' '}
           <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
         </p>
       </article>

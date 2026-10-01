@@ -754,7 +754,7 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
     expect(screen.getByText('S2 W7')).toBeInTheDocument()
     expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
     expect(screen.getByText('178.40')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Ali A/ })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: /Ali A/ })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
     )

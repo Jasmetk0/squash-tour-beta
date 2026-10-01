@@ -1793,7 +1793,11 @@ class CountryTalentYearPreviewResponse(BaseModel):
     country_name: str
     planned_count: int
     quality_weights: dict[str, float]
+    expected_band_counts: dict[str, float]
     actual_band_counts: dict[str, int]
+    expected_elite_talents: float
+    expected_tour_talents: float
+    expected_pro_depth: float
     elite_talents: int
     tour_talents: int
     pro_depth: int

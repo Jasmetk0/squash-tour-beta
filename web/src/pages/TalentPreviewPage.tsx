@@ -64,7 +64,7 @@ export function TalentPreviewPage(): JSX.Element {
       <SectionCard title="Expected Mode overview">
         <p className="status">Talent Preview does not create players. Concrete 15-year-old player generation belongs to future Talent Intake.</p>
         <p className="status">
-          Expected Mode is a long-term forecast from current country inputs. It is not a seeded concrete generation result.
+          Expected Mode is the mathematical expectation from current country inputs and quality probabilities. The advanced single-year preview also shows one seeded generated outcome beside that expectation, so unusually strong or weak annual cohorts are visible instead of being mistaken for the forecast itself.
         </p>
       </SectionCard>
 
@@ -215,11 +215,11 @@ export function TalentPreviewPage(): JSX.Element {
                   <th>Code</th>
                   <th>Name</th>
                   <th>Planned</th>
-                  <th>Solid</th>
-                  <th>Strong</th>
-                  <th>Elite</th>
-                  <th>Special</th>
-                  <th>Generational</th>
+                  <th>Solid E → G</th>
+                  <th>Strong E → G</th>
+                  <th>Elite E → G</th>
+                  <th>Special E → G</th>
+                  <th>Generational E → G</th>
                   <th>Top-band weight</th>
                   <th>Bias</th>
                   <th>Dampener</th>
@@ -231,11 +231,11 @@ export function TalentPreviewPage(): JSX.Element {
                     <td>{item.country_code}</td>
                     <td>{item.country_name}</td>
                     <td>{item.planned_count}</td>
-                    <td>{item.actual_band_counts.solid_prospect ?? 0}</td>
-                    <td>{item.actual_band_counts.strong_prospect ?? 0}</td>
-                    <td>{item.actual_band_counts.elite_prospect ?? 0}</td>
-                    <td>{item.actual_band_counts.special_prospect ?? 0}</td>
-                    <td>{item.actual_band_counts.generational_talent ?? 0}</td>
+                    <td>{formatExpectedGenerated(item, 'solid_prospect')}</td>
+                    <td>{formatExpectedGenerated(item, 'strong_prospect')}</td>
+                    <td>{formatExpectedGenerated(item, 'elite_prospect')}</td>
+                    <td>{formatExpectedGenerated(item, 'special_prospect')}</td>
+                    <td>{formatExpectedGenerated(item, 'generational_talent')}</td>
                     <td>{formatPercent(topBandWeight(item))}</td>
                     <td>
                       P {item.bias_profile.professionalism_tendency?.toFixed(2) ?? '0.00'} / T{' '}
@@ -252,6 +252,14 @@ export function TalentPreviewPage(): JSX.Element {
       </SectionCard>
     </section>
   )
+}
+
+function formatExpectedGenerated(country: TalentClassPreviewCountry, band: string): string {
+  const expected = country.expected_band_counts[band] ?? 0
+  const generated = country.actual_band_counts[band] ?? 0
+  const delta = generated - expected
+  const deltaLabel = delta >= 0 ? `+${delta.toFixed(2)}` : delta.toFixed(2)
+  return `${expected.toFixed(2)} → ${generated} (${deltaLabel})`
 }
 
 function topBandWeight(country: TalentClassPreviewCountry): number {

@@ -47,6 +47,7 @@ from beta_engine.domain.careers import CareerProgressionEngine, NextSeasonPlayer
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
 from beta_engine.domain.players.lifecycle import derive_birth_year_from_age, synthesize_birth_year_week
+from beta_engine.domain.players.talent_quality_policy import talent_quality_band_from_seed
 from beta_engine.domain.players import (
     AnnualTalentClassPlanner,
     ManualPlayerOverride,
@@ -297,6 +298,7 @@ class RunProspect:
     development_seed: str
     potential_seed: str
     trait_seed: str
+    quality_band: str
     profile_json: dict[str, object]
     development_json: dict[str, object]
     potential_json: dict[str, object]
@@ -927,7 +929,13 @@ class SimulationApiService:
             run_id=run_id, country_code=country_code, status=status, season_start_year=season_start_year, season_week=season_week, limit=limit, offset=offset
         )
         total = self.repository.count_run_prospects(run_id=run_id, country_code=country_code, status=status, season_start_year=season_start_year, season_week=season_week)
-        return RunProspectListResponse(run_id=run_id, total=total, limit=limit, offset=offset, prospects=[RunProspect(**record.__dict__) for record in prospects])
+        return RunProspectListResponse(run_id=run_id, total=total, limit=limit, offset=offset, prospects=[
+            RunProspect(
+                **record.__dict__,
+                quality_band=talent_quality_band_from_seed(record.potential_seed).value,
+            )
+            for record in prospects
+        ])
 
     def list_generated_player_provenance(
         self,

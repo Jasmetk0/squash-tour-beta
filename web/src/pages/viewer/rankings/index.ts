@@ -1,7 +1,5 @@
 export { ViewerRacePage, ViewerRunRacePage } from './ViewerRacePage'
 export { ViewerRankingsPage } from './ViewerRankingsPage'
-export { ViewerSnapshotLandingPage } from './ViewerSnapshotLandingPage'
-export type { ViewerSnapshotLandingConfig, ViewerSnapshotLandingMode } from './ViewerSnapshotLandingPage'
 export { ViewerRankingSnapshotDetailPage } from './ViewerRankingSnapshotDetailPage'
 export { ViewerRaceSnapshotDetailPage } from './ViewerRaceSnapshotDetailPage'
 

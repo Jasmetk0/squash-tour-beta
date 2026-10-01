@@ -163,6 +163,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/calendar/:eventId" element={<PlannedEventDetailPage />} />
         <Route path="admin/runs/:runId/activity" element={<ActivityPage />} />
         <Route path="admin/runs/:runId/players" element={<PlayersPage />} />
+        <Route path="admin/runs/:runId/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
         <Route path="admin/runs/:runId/nations" element={<NationsPage />} />
         <Route path="admin/runs/:runId/diagnostics" element={<RunDiagnosticsPage />} />

@@ -1740,6 +1740,26 @@ def test_run_prospects_materialize_15yo_cohort_basic_idempotent_filter_and_zero(
             assert prospect["potential_json"]["potential_identity"] == canonical["potential_identity"]
             assert prospect["potential_json"]["sporting_profile_fingerprint"] == fingerprint
             assert prospect["trait_json"]["reserved_for_future_traits"] is True
+            assert prospect["quality_band"] in {
+                "solid_prospect",
+                "strong_prospect",
+                "elite_prospect",
+                "special_prospect",
+                "generational_talent",
+            }
+
+        status, talent_summary = _request(
+            "GET",
+            f"{server.base_url}/runs/run-materialize/prospects/talent-summary?season_start_year=2027",
+        )
+        assert status == 200
+        assert talent_summary["run_id"] == "run-materialize"
+        assert talent_summary["season_start_year"] == 2027
+        assert talent_summary["total_materialized"] == listed["total"]
+        assert sum(talent_summary["generated_band_counts"].values()) == listed["total"]
+        assert sum(talent_summary["expected_band_counts"].values()) == pytest.approx(listed["total"])
+        assert sum(row["materialized_count"] for row in talent_summary["countries"]) == listed["total"]
+        assert len(talent_summary["quality_policy_fingerprint"]) == 64
 
         status, again = _request("POST", f"{server.base_url}/runs/run-materialize/prospects/materialize-15yo-cohort", {"base_annual_intake_target": 6})
         assert status == 200

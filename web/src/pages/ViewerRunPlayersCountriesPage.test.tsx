@@ -517,7 +517,7 @@ describe('ViewerRunPlayerCareerPage canonical current profile', () => {
       '/viewer/runs/viewer-run-2c/players'
     )
     expect(screen.getByText(/canonical per-player season history is not published yet/i)).toBeInTheDocument()
-    expect(screen.getByText(/canonical per-player tournament/performance history is not published yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/canonical per-player tournament\/performance history is not published yet/i)).toBeInTheDocument()
 
     expect(api.getRunPlayerDetail).not.toHaveBeenCalled()
     expect(api.getRunPlayerCareerHistory).not.toHaveBeenCalled()

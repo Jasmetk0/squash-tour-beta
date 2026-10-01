@@ -218,11 +218,12 @@ describe('TalentIntakePage', () => {
   it('shows concrete materialized prospect output separately from forecast data', async () => {
     renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
 
-    expect(await screen.findByRole('table', { name: 'Materialized talent intake prospects' })).toBeInTheDocument()
-    expect(screen.getByText('CZE Prospect 0001')).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'Elite Prospect' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: '177' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'Late Bloomer' })).toBeInTheDocument()
+    const prospectsTable = await screen.findByRole('table', { name: 'Materialized talent intake prospects' })
+    expect(prospectsTable).toBeInTheDocument()
+    expect(within(prospectsTable).getByText('CZE Prospect 0001')).toBeInTheDocument()
+    expect(within(prospectsTable).getByRole('cell', { name: 'Elite Prospect' })).toBeInTheDocument()
+    expect(within(prospectsTable).getByRole('cell', { name: '177' })).toBeInTheDocument()
+    expect(within(prospectsTable).getByRole('cell', { name: 'Late Bloomer' })).toBeInTheDocument()
     expect(screen.getByText(/Quality band comes independently from the shared rarity policy/i)).toBeInTheDocument()
     expect(api.listRunProspects).toHaveBeenCalledWith('run-1', {
       season_start_year: 2000,

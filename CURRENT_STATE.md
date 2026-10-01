@@ -3302,3 +3302,14 @@ Legacy player career/history/performance details and legacy detailed country pro
 
 See `docs/VIEWER_CANONICAL_PEOPLE_UI_MIGRATION_V1.md`.
 
+### Canonical Viewer Player/Country detail migration
+
+Run-scoped Player Profile and Country Profile surfaces now use Product Run-scoped canonical Saved-Revision people projections.
+
+- Player Profile resolves current identity/status/sporting state from `viewer_players.v1`;
+- Country Profile resolves current aggregate state from `viewer_countries.v1` and current roster from `viewer_players.v1`;
+- legacy `getRunPlayerDetail`, career/performance/results readers and `getRunNationDetail` are no longer used by these Viewer pages;
+- per-player career/tournament history and historical country analytics remain explicitly deferred until dedicated canonical history authorities exist.
+
+See `docs/VIEWER_CANONICAL_PEOPLE_DETAILS_V1.md`.
+

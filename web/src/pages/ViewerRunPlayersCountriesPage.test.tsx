@@ -750,7 +750,7 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
     expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
     expect(api.getViewerCountries).toHaveBeenCalledWith('viewer-run-2c')
     expect(api.getViewerPlayers).toHaveBeenCalledWith('viewer-run-2c')
-    expect(screen.getByText('branch-viewer')).toBeInTheDocument()
+    expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
     expect(screen.getByText('S2 W7')).toBeInTheDocument()
     expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
     expect(screen.getByText('178.40')).toBeInTheDocument()

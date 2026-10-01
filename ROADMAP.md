@@ -1729,3 +1729,7 @@ Canonical Players/Countries now drive Viewer hubs, search, H2H samples and run-s
 
 Current Player and Country detail surfaces are now canonical and Saved-Revision-backed. Remaining people-related Viewer compatibility should focus only on defining explicit canonical historical authorities for per-player career/performance/tournament history and historical country analytics; do not reconstruct them from current summaries.
 
+### Viewer Tour compatibility cleanup
+
+Season Hub, All Tournaments and Current Week are now Product Run-scoped and canonical. Remaining Tour compatibility work is concentrated in run-scoped snapshot/week/tournament detail surfaces that still depend on legacy SimulationRun snapshot/event readers.
+

@@ -44,7 +44,7 @@ describe('ViewerTournamentsPage canonical authority', () => {
     expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha')
     expect(screen.getByRole('link', { name: 'Canonical Open' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT%201')
-    expect(screen.getByRole('link', { name: 'W4' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/week/4')
+    expect(screen.getByRole('link', { name: 'W4' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/weeks/4')
     expectNoForbiddenViewerActions()
   })
 })

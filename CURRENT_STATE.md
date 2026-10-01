@@ -3325,3 +3325,10 @@ These pages no longer use legacy `useActiveViewerRunId`, `getRun`, `getRunStatus
 
 See `docs/VIEWER_CANONICAL_TOUR_HUB_V1.md`.
 
+### Retired dead Viewer snapshot compatibility surfaces
+
+The generic top-level `ViewerSnapshotLandingPage` and unused `ViewerRunSnapshotListPage` have been removed.
+
+Canonical top-level/current Ranking and Race surfaces remain authoritative. The only retained legacy Race snapshot compatibility route is the actually routed `/viewer/runs/:runId/race/:snapshotSequence` detail, because legacy Race `snapshot_sequence` identity is distinct from canonical seasonal Finals Race identity and is not reinterpreted.
+
+

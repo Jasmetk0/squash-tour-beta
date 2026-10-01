@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from beta_engine.domain.countries import Country
 from beta_engine.domain.players import (
     AnnualTalentClassPlanner,
@@ -131,6 +133,7 @@ def test_population_helps_volume_but_does_not_dominate_absurdly() -> None:
     assert by_code["HUG"].planned_count / by_code["SML"].planned_count < 3.5
 
 
+@pytest.mark.pr_critical
 def test_planner_uses_shared_provisional_quality_rarity_policy() -> None:
     planner = AnnualTalentClassPlanner()
     country = _country(code="AAA", population=50_000_000)

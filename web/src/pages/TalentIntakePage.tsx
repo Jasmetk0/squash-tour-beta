@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ApiError, getRunWeeklyIntakeCohortSeasonPreview, listRunProspects, materializeRunProspects } from '../api/client'
+import { ApiError, getRunProspectTalentSummary, getRunWeeklyIntakeCohortSeasonPreview, listRunProspects, materializeRunProspects } from '../api/client'
 
 export function TalentIntakePage(): JSX.Element {
   const params = useParams()
@@ -36,6 +36,13 @@ export function TalentIntakePage(): JSX.Element {
     retry: false
   })
 
+  const talentSummaryQuery = useQuery({
+    queryKey: ['run-prospect-talent-summary', runId, previewQuery.data?.season_start_year],
+    queryFn: () => getRunProspectTalentSummary(runId, previewQuery.data?.season_start_year),
+    enabled: runId.length > 0 && previewQuery.data !== undefined,
+    retry: false
+  })
+
   const materializeMutation = useMutation({
     mutationFn: () =>
       materializeRunProspects(runId, {
@@ -45,6 +52,7 @@ export function TalentIntakePage(): JSX.Element {
       }),
     onSuccess: () => {
       void prospectsQuery.refetch()
+      void talentSummaryQuery.refetch()
     }
   })
 
@@ -233,6 +241,90 @@ export function TalentIntakePage(): JSX.Element {
       </section>
 
       <section className="panel nested-panel">
+        <h3>Expected vs Generated talent quality</h3>
+        <p>
+          Expected values use the shared provisional rarity policy against the exact persisted 15-year-old cohort size. Generated values are derived
+          deterministically from each persisted prospect seed.
+        </p>
+        {talentSummaryQuery.isLoading ? <p className="status">Loading talent quality summary…</p> : null}
+        {talentSummaryQuery.isError ? <p className="error">Talent summary unavailable: {formatApiError(talentSummaryQuery.error)}</p> : null}
+        {talentSummaryQuery.data ? (
+          <>
+            <p>
+              Materialized cohort: <strong>{talentSummaryQuery.data.total_materialized}</strong> prospects. Policy:{' '}
+              <code>{talentSummaryQuery.data.quality_policy_id}</code>.
+            </p>
+            <table aria-label="Talent intake expected generated global quality">
+              <thead>
+                <tr>
+                  <th>Quality band</th>
+                  <th>Weight</th>
+                  <th>Expected</th>
+                  <th>Generated</th>
+                  <th>Δ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {QUALITY_BANDS.map((band) => {
+                  const expected = talentSummaryQuery.data.expected_band_counts[band] ?? 0
+                  const generated = talentSummaryQuery.data.generated_band_counts[band] ?? 0
+                  return (
+                    <tr key={band}>
+                      <td>{formatQualityBand(band)}</td>
+                      <td>{formatPercent(talentSummaryQuery.data.quality_weights[band] ?? 0)}</td>
+                      <td>{expected.toFixed(2)}</td>
+                      <td>{generated}</td>
+                      <td>{formatDelta(generated - expected)}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+
+            {talentSummaryQuery.data.countries.length > 0 ? (
+              <>
+                <h4>Country quality comparison</h4>
+                <table aria-label="Talent intake expected generated country quality">
+                  <thead>
+                    <tr>
+                      <th>Country</th>
+                      <th>Cohort</th>
+                      <th>Solid E → G</th>
+                      <th>Strong E → G</th>
+                      <th>Elite E → G</th>
+                      <th>Special E → G</th>
+                      <th>Generational E → G</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {talentSummaryQuery.data.countries.map((country) => (
+                      <tr key={country.country_code}>
+                        <td>{country.country_name ?? country.country_code} ({country.country_code})</td>
+                        <td>{country.materialized_count}</td>
+                        {QUALITY_BANDS.map((band) => (
+                          <td key={band}>
+                            {formatExpectedGenerated(
+                              country.expected_band_counts[band] ?? 0,
+                              country.generated_band_counts[band] ?? 0
+                            )}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </>
+            ) : (
+              <p className="status">Materialize the cohort to populate Expected vs Generated quality output.</p>
+            )}
+            <p className="status">
+              Quality band rarity and potential OVR are intentionally separate authorities in this slice. No OVR threshold is used to manufacture a band.
+            </p>
+          </>
+        ) : null}
+      </section>
+
+      <section className="panel nested-panel">
         <h3>Materialized cohort inspection</h3>
         <p>
           These are the prospect records currently persisted for the selected Run season. This is concrete generated output, not a forecast.
@@ -254,6 +346,7 @@ export function TalentIntakePage(): JSX.Element {
                     <th>Prospect</th>
                     <th>Country</th>
                     <th>Season week</th>
+                    <th>Quality band</th>
                     <th>Potential OVR</th>
                     <th>Development</th>
                   </tr>
@@ -264,6 +357,7 @@ export function TalentIntakePage(): JSX.Element {
                       <td>{prospect.display_name}</td>
                       <td>{prospect.country_name ?? prospect.country_code} ({prospect.country_code})</td>
                       <td>{prospect.season_week}</td>
+                      <td>{formatQualityBand(prospect.quality_band)}</td>
                       <td>{readPotentialOvr(prospect.potential_json) ?? '—'}</td>
                       <td>{readDevelopmentTiming(prospect.development_json) ?? '—'}</td>
                     </tr>
@@ -274,8 +368,8 @@ export function TalentIntakePage(): JSX.Element {
               <p className="status">No 15-year-old prospects have been materialized for this season yet.</p>
             )}
             <p className="status">
-              Potential OVR currently comes from the provisional prospect sporting-profile policy. It is not yet mapped to Talent Preview quality bands,
-              so this page intentionally does not invent an Expected vs Generated band comparison.
+              Potential OVR currently comes from the provisional prospect sporting-profile policy. Quality band comes independently from the shared
+              rarity policy and persisted prospect seed.
             </p>
           </>
         ) : null}
@@ -284,7 +378,7 @@ export function TalentIntakePage(): JSX.Element {
       <section className="panel nested-panel">
         <h3>Next workflow boundary</h3>
         <p>
-          Concrete generation can later compare this frozen cohort allocation with the Expected vs Generated talent output already shown in{' '}
+          Talent Intake now exposes its own Expected vs Generated quality distribution. The world-level calibration view remains available in{' '}
           <Link to="/admin/world/talent-preview">Talent Preview</Link>.
         </p>
         <p>
@@ -313,4 +407,27 @@ function readPotentialOvr(value: Record<string, unknown>): number | null {
 function readDevelopmentTiming(value: Record<string, unknown>): string | null {
   const timing = value.development_timing
   return typeof timing === 'string' && timing.length > 0 ? timing : null
+}
+
+
+const QUALITY_BANDS = [
+  'solid_prospect',
+  'strong_prospect',
+  'elite_prospect',
+  'special_prospect',
+  'generational_talent'
+] as const
+
+function formatQualityBand(value: string): string {
+  return value
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, (letter) => letter.toUpperCase())
+}
+
+function formatDelta(value: number): string {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}`
+}
+
+function formatExpectedGenerated(expected: number, generated: number): string {
+  return `${expected.toFixed(2)} → ${generated} (${formatDelta(generated - expected)})`
 }

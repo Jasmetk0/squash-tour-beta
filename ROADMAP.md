@@ -1741,3 +1741,7 @@ Dead generic/list snapshot surfaces are retired. Remaining legacy Race snapshot 
 
 Legacy Race compatibility is now narrowed to snapshot lookup/navigation only. Source-event context is canonical. Remaining retirement requires an explicit canonical historical identity/read model for legacy snapshot-sequence detail; do not map snapshot sequence to Finals Race season identity.
 
+### Tournament/Week Viewer compatibility cleanup
+
+Tournament Detail and Week Detail are now canonical Product Run surfaces. Remaining legacy Race snapshot compatibility is isolated to the dedicated snapshot-sequence detail route; future removal requires an explicit canonical historical identity/read model rather than mapping snapshot sequence onto Finals Race season identity.
+

@@ -3343,3 +3343,17 @@ The legacy snapshot identity remains distinct from canonical Finals Race `target
 
 See `docs/VIEWER_RACE_SNAPSHOT_CANONICAL_CONTEXT_V1.md`.
 
+### Canonical Viewer Tournament/Week detail migration
+
+Run-scoped Tournament Detail and Week Detail now use Product Run-scoped canonical Saved-Revision/publication authorities.
+
+- Tournament Detail context comes from Saved Calendar + Tournament History, with canonical Entry Field, Wild Cards, Draw and Tournament Result;
+- Official Ranking publication context comes from canonical Ranking History;
+- Finals Race context comes from canonical Finals Race History;
+- Week Detail no longer reads legacy Race snapshots and instead matches Finals Race publications by canonical cutoff season/week;
+- legacy `getEvent`, `getRun`, `listEvents`, `listRankingSnapshots`, `listRaceSnapshots` and `legacySimulationRunId` are absent from these detail surfaces.
+
+Legacy Race `snapshot_sequence` remains isolated to its dedicated compatibility detail route only.
+
+See `docs/VIEWER_CANONICAL_TOURNAMENT_WEEK_DETAILS_V1.md`.
+

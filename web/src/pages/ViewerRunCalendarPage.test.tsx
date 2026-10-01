@@ -6,10 +6,10 @@ import { renderWithViewerProviders } from '../test/viewerTestUtils'
 import { ViewerRunCalendarPage, ViewerRunPlannedEventPage, ViewerRunWeekPage } from './ViewerRunCalendarPage'
 
 const api = vi.hoisted(() => ({
+  getViewerFinalsRace: vi.fn(),
   getViewerRunCalendar: vi.fn(),
   getViewerTournamentHistory: vi.fn(),
   listViewerOfficialRankingHistory: vi.fn(),
-  listRaceSnapshots: vi.fn(),
   ApiError: class ApiError extends Error {
     status: number
     constructor(message: string, status: number) {
@@ -203,11 +203,36 @@ function mockCanonicalData(): void {
     ]
   })
 
-  api.listRaceSnapshots.mockResolvedValue({
-    run_id: 'viewer-run-2d',
-    snapshots: [
-      { snapshot_sequence: 7, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-NEXT', payload: {} },
-      { snapshot_sequence: 8, snapshot_kind: 'RACE_WEEKLY_PUBLICATION', source_event_id: 'EVENT-FUTURE', payload: {} }
+  api.getViewerFinalsRace.mockResolvedValue({
+    schema_version: 'viewer_finals_race_history.v1',
+    product_run_id: 'viewer-run-2d',
+    viewer_branch_id: 'branch-viewer',
+    latest_target_season_index: 28,
+    publications: [
+      {
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'viewer-run-2d',
+        viewer_branch_id: 'branch-viewer',
+        target_season_index: 28,
+        cutoff_season_index: 28,
+        cutoff_week: 2,
+        best_n: 8,
+        selection_published: false,
+        finals_event_id: null,
+        rows: []
+      },
+      {
+        schema_version: 'viewer_finals_race_publication.v1',
+        product_run_id: 'viewer-run-2d',
+        viewer_branch_id: 'branch-viewer',
+        target_season_index: 29,
+        cutoff_season_index: 29,
+        cutoff_week: 3,
+        best_n: 8,
+        selection_published: false,
+        finals_event_id: null,
+        rows: []
+      }
     ]
   })
 }
@@ -273,7 +298,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expectNoForbiddenViewerActions()
   })
 
-  it('renders Week Detail from Saved Calendar plus canonical ranking history and Race compatibility', async () => {
+  it('renders Week Detail from Saved Calendar plus canonical Ranking and Finals Race history', async () => {
     renderViewerCalendarRoute('/viewer/runs/viewer-run-2d/weeks/2')
 
     expect(await screen.findByRole('heading', { name: 'Week Detail' })).toBeInTheDocument()
@@ -287,11 +312,11 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
       'href',
       '/viewer/runs/viewer-run-2d/rankings/4'
     )
-    expect(screen.getByRole('link', { name: 'Race publication #7' })).toHaveAttribute(
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-2d')
+    expect(screen.getByRole('link', { name: 'Open canonical Finals Race publication for this cutoff week' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2d/race/7'
+      '/viewer/runs/viewer-run-2d/race'
     )
-    expect(screen.queryByRole('link', { name: 'Race publication #8' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
@@ -302,7 +327,7 @@ describe('Viewer canonical Saved Calendar surfaces', () => {
     expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
     expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
     expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
-    expect(api.listRaceSnapshots).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 })

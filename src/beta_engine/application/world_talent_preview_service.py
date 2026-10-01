@@ -22,7 +22,11 @@ class CountryTalentYearPreview:
     country_name: str
     planned_count: int
     quality_weights: dict[str, float]
+    expected_band_counts: dict[str, float]
     actual_band_counts: dict[str, int]
+    expected_elite_talents: float
+    expected_tour_talents: float
+    expected_pro_depth: float
     elite_talents: int
     tour_talents: int
     pro_depth: int
@@ -95,6 +99,10 @@ class WorldTalentPreviewService:
 
             quality_weights = _empty_band_weights()
             quality_weights.update({band.value: weight for band, weight in allocation.quality_weights.items()})
+            expected_band_counts = {
+                band: round(allocation.planned_count * weight, 4)
+                for band, weight in quality_weights.items()
+            }
             country_previews.append(
                 # Temporary aggregate bridge mapping until the final potential-tier model lands:
                 # Elite ~= L through S-, Tour ~= A+ through B+, Pro Depth ~= B through C-ish.
@@ -103,7 +111,16 @@ class WorldTalentPreviewService:
                     country_name=country_names.get(allocation.country_code, allocation.country_code),
                     planned_count=allocation.planned_count,
                     quality_weights=quality_weights,
+                    expected_band_counts=expected_band_counts,
                     actual_band_counts=band_counts,
+                    expected_elite_talents=round(
+                        expected_band_counts[TalentQualityBand.ELITE.value]
+                        + expected_band_counts[TalentQualityBand.SPECIAL.value]
+                        + expected_band_counts[TalentQualityBand.GENERATIONAL.value],
+                        4,
+                    ),
+                    expected_tour_talents=expected_band_counts[TalentQualityBand.STRONG.value],
+                    expected_pro_depth=expected_band_counts[TalentQualityBand.SOLID.value],
                     elite_talents=(
                         band_counts[TalentQualityBand.ELITE.value]
                         + band_counts[TalentQualityBand.SPECIAL.value]

@@ -5,11 +5,11 @@ import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRoute
 
 import {
   getRaceSnapshot,
-  getRun,
-  listEvents,
+  getViewerRunCalendar,
+  getViewerTournamentHistory,
   listRaceSnapshots
 } from '../api/client'
-import type { RaceSnapshot, SeasonStateResponse } from '../api/types'
+import type { RaceSnapshot, ViewerRunCalendarEvent, ViewerTournamentHistoryItem } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -33,17 +33,31 @@ import {
   viewerWeekDetailPath
 } from '../viewer/viewerRoutes'
 
-type PlannedSnapshotContext = {
+type CanonicalCalendarContext = {
+  eventId: string
   week: number
   category: string
-  tour: string
+  tour: string | null
   templateId: string
-  planPosition: number
+  season: string
 }
 
-type PersistedEventContext = {
-  eventSequence: number
-  week: number | null
+function buildCanonicalCalendarContext(events: ViewerRunCalendarEvent[]): Map<string, CanonicalCalendarContext> {
+  return new Map(events.map((event) => [
+    event.event_id,
+    {
+      eventId: event.event_id,
+      week: event.season_week,
+      category: event.category,
+      tour: event.tour_level,
+      templateId: event.template_id,
+      season: event.season,
+    }
+  ]))
+}
+
+function buildCanonicalHistoryContext(events: ViewerTournamentHistoryItem[]): Map<string, ViewerTournamentHistoryItem> {
+  return new Map(events.map((event) => [event.event_id, event]))
 }
 
 const RACE_COPY = {
@@ -122,19 +136,29 @@ export function ViewerRunSnapshotDetailPage(): JSX.Element {
     queryFn: () => listRaceSnapshots(legacySimulationRunId),
     enabled: Boolean(runId && isValidSequence)
   })
-  const runQuery = useQuery({ queryKey: ['run', runId, legacySimulationRunId], queryFn: () => getRun(legacySimulationRunId), enabled: Boolean(runId && isValidSequence) })
-  const eventsQuery = useQuery({ queryKey: ['events', runId, legacySimulationRunId], queryFn: () => listEvents(legacySimulationRunId), enabled: Boolean(runId && isValidSequence) })
+  const calendarQuery = useQuery({
+    queryKey: ['viewer-race-publication-calendar', runId],
+    queryFn: () => getViewerRunCalendar(runId),
+    enabled: Boolean(runId && isValidSequence),
+    retry: false
+  })
+  const historyQuery = useQuery({
+    queryKey: ['viewer-race-publication-history', runId],
+    queryFn: () => getViewerTournamentHistory(runId),
+    enabled: Boolean(runId && isValidSequence),
+    retry: false
+  })
 
   const snapshot = snapshotQuery.data ?? null
-  const plannedContext = useMemo(() => buildPlannedContext(runQuery.data), [runQuery.data])
-  const persistedEventsById = useMemo(() => {
-    const map = new Map<string, PersistedEventContext>()
-    ;(eventsQuery.data?.events ?? []).forEach((event) => {
-      if (typeof event.event_id !== 'string') return
-      map.set(event.event_id, { eventSequence: event.event_sequence, week: event.week })
-    })
-    return map
-  }, [eventsQuery.data?.events])
+  const calendarEvents = useMemo(
+    () => (calendarQuery.data?.seasons ?? []).flatMap((season) => season.events),
+    [calendarQuery.data?.seasons]
+  )
+  const calendarContext = useMemo(() => buildCanonicalCalendarContext(calendarEvents), [calendarEvents])
+  const historyContext = useMemo(
+    () => buildCanonicalHistoryContext(historyQuery.data?.tournaments ?? []),
+    [historyQuery.data?.tournaments]
+  )
 
   const neighboringSnapshots = normalizeSnapshots(snapshotsQuery.data)
   const currentSnapshotIndex = neighboringSnapshots.findIndex((item) => item.snapshot_sequence === parsedSequence)
@@ -144,9 +168,9 @@ export function ViewerRunSnapshotDetailPage(): JSX.Element {
       ? neighboringSnapshots[currentSnapshotIndex + 1]
       : null
   const sourceEventId = normalizeSourceEventId(snapshot?.source_event_id)
-  const planned = sourceEventId ? plannedContext.get(sourceEventId) : undefined
-  const persisted = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
-  const week = resolveWeek(planned, persisted)
+  const planned = sourceEventId ? calendarContext.get(sourceEventId) : undefined
+  const persisted = sourceEventId ? historyContext.get(sourceEventId) : undefined
+  const week = planned?.week ?? persisted?.season_week ?? null
   const payloadRows = snapshot ? getSnapshotPayloadRows(snapshot.payload) : []
   const payloadTableAudit = snapshot ? getSnapshotPayloadTableAuditStatus('race', snapshot.payload) : null
 
@@ -207,11 +231,11 @@ export function ViewerRunSnapshotDetailPage(): JSX.Element {
                   { label: 'Kind', value: snapshot.snapshot_kind },
                   { label: 'Source event', value: sourceEventId ?? 'No source event recorded' },
                   { label: 'Week', value: week != null ? `W${week}` : 'No week context' },
-                  { label: 'Planned category', value: planned?.category ?? 'No ordered-plan match' },
-                  { label: 'Planned tour', value: planned?.tour ?? 'No ordered-plan match' },
-                  { label: 'Planned template', value: planned?.templateId ?? 'No ordered-plan match' },
-                  { label: 'Plan position', value: planned?.planPosition ?? 'No ordered-plan match' },
-                  { label: 'Persisted source event', value: persisted ? `Found (sequence ${persisted.eventSequence})` : 'Not found' }
+                  { label: 'Planned category', value: planned?.category ?? 'No Saved Calendar match' },
+                  { label: 'Planned tour', value: planned?.tour ?? 'No Saved Calendar match' },
+                  { label: 'Planned template', value: planned?.templateId ?? 'No Saved Calendar match' },
+                  { label: 'Calendar season', value: planned?.season ?? persisted?.season ?? 'No canonical source context' },
+                  { label: 'Canonical tournament history', value: persisted ? (persisted.result_published ? 'Published result available' : 'Tournament recorded') : 'No canonical history match' }
                 ]}
               />
             ) : null}
@@ -236,12 +260,12 @@ export function ViewerRunSnapshotDetailPage(): JSX.Element {
                       sourceEventId && planned ? (
                         <Link to={viewerPlannedEventPath(runId, sourceEventId)}>Open planned event</Link>
                       ) : (
-                        'No ordered-plan match for source event.'
+                        'No Saved Calendar match for source event.'
                       )
                   },
                   {
                     label: 'Week detail',
-                    value: week != null ? <Link to={viewerWeekDetailPath(runId, week)}>Open week W{week}</Link> : 'No week context available.'
+                    value: week != null ? <Link to={viewerWeekDetailPath(runId, week)}>Open week W{week}</Link> : 'No canonical week context available.'
                   },
                   { label: 'Season calendar', value: <Link to={viewerSeasonCalendarPath(runId)}>Open season calendar</Link> }
                 ]}

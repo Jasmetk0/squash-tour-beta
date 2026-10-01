@@ -64,7 +64,7 @@ describe('ViewerSeasonHubPage canonical tour authority', () => {
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha')
     expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run alpha')
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run alpha')
-    expect(screen.getByText('branch-tour')).toBeInTheDocument()
+    expect(await screen.findByText('branch-tour')).toBeInTheDocument()
     expect(screen.getByText('Event Two')).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT%202')
     expect(screen.getByText('S2 · cutoff S1 W61')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Open Product Run tournaments' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments')

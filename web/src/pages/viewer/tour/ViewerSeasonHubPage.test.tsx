@@ -1,87 +1,73 @@
 import { screen } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveRunId } from '../../../test/viewerTestUtils'
+import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerProviders, setViewerActiveProductRunId } from '../../../test/viewerTestUtils'
 import { ViewerSeasonHubPage } from './ViewerSeasonHubPage'
 
 const api = vi.hoisted(() => ({
-  getFinalsSummary: vi.fn(),
-  getRun: vi.fn(),
-  getRunStatusSummary: vi.fn(),
-  listEvents: vi.fn()
+  getViewerRunCalendar: vi.fn(),
+  getViewerTournamentHistory: vi.fn(),
+  getViewerFinalsRace: vi.fn()
 }))
 
 vi.mock('../../../api/client', () => api)
 
-
-function renderSeasonHub(): void {
-  renderWithViewerProviders(<ViewerSeasonHubPage />)
-}
-
-describe('ViewerSeasonHubPage', () => {
+describe('ViewerSeasonHubPage canonical tour authority', () => {
   beforeEach(() => {
     clearViewerStorage()
     vi.clearAllMocks()
-    api.getRun.mockResolvedValue({
-      run: {
-        run_id: 'run alpha',
-        season: 2024,
-        seed: 123,
-        config_version: null,
-        config_fingerprint: null,
-        next_event_index: 1,
-        total_events: 2,
-        completed_event_ids: ['EVT-1']
-      },
-      season_state: {
-        season: 2024,
-        next_event_index: 1,
-        completed_event_ids: ['EVT-1'],
-        ordered_events: [
-          { event_id: 'EVT-1', season: 2024, week: 1, category: 'Gold', tour: 'World Tour', template_id: 'tmpl-1' },
-          { event_id: 'EVT 2', season: 2024, week: 2, category: 'Platinum', tour: 'World Tour', template_id: 'tmpl-2' }
+    api.getViewerRunCalendar.mockResolvedValue({
+      schema_version: 'viewer_run_calendar.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-tour',
+      season_count: 1,
+      event_count: 2,
+      seasons: [{
+        season: '2026/27',
+        event_count: 2,
+        events: [
+          { event_id: 'EVT-1', season: '2026/27', season_week: 1, calendar_year: 2026, year_week: 40, template_id: 'tmpl-1', event_name: 'Event One', category: 'Gold', tour_level: 'WORLD_TOUR', host_country: 'CZE', host_city: 'Prague', region: 'Europe', duration_in_season_weeks: 1, start_season_week: 1, end_season_week: 1, status: 'completed', main_draw_size: 32, qualification_draw_size: 16, seeds_count: 8, qualifier_spots: 4, wild_cards: 2, byes: 0, prestige: 80 },
+          { event_id: 'EVT 2', season: '2026/27', season_week: 2, calendar_year: 2026, year_week: 41, template_id: 'tmpl-2', event_name: 'Event Two', category: 'Platinum', tour_level: 'WORLD_TOUR', host_country: 'ENG', host_city: 'London', region: 'Europe', duration_in_season_weeks: 1, start_season_week: 2, end_season_week: 2, status: 'planned', main_draw_size: 32, qualification_draw_size: 16, seeds_count: 8, qualifier_spots: 4, wild_cards: 2, byes: 0, prestige: 90 }
         ]
-      }
+      }]
     })
-    api.getRunStatusSummary.mockResolvedValue({
-      run_id: 'run alpha',
-      season: 2024,
-      seed: 123,
-      progress: { next_event_index: 1, total_events: 2, completed_event_count: 1 },
-      finals: { qualification_available: true, result_available: false },
-      rollover: null,
-      source: null,
-      lineage: { child_run_count: 0 },
-      history_counts: { events: 1, ranking_snapshots: 0, race_snapshots: 0 }
+    api.getViewerTournamentHistory.mockResolvedValue({
+      schema_version: 'viewer_tournament_history.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-tour',
+      tournament_count: 2,
+      published_result_count: 1,
+      tournaments: [
+        { event_id: 'EVT-1', season: '2026/27', season_week: 1, event_name: 'Event One', template_id: 'tmpl-1', category: 'Gold', tour_level: 'WORLD_TOUR', host_country: 'CZE', host_city: 'Prague', region: 'Europe', main_draw_size: 32, qualification_draw_size: 16, seeds_count: 8, qualifier_spots: 4, wild_cards: 2, byes: 0, ranking_status: 'published', result_published: true, champion_player_id: 'P1', finalist_player_id: 'P2' }
+      ]
     })
-    api.listEvents.mockResolvedValue({
-      run_id: 'run alpha',
-      events: [{ event_id: 'EVT-1', event_sequence: 1, season: 2024, week: 1, template_id: 'tmpl-1', tournament_result: null }]
+    api.getViewerFinalsRace.mockResolvedValue({
+      schema_version: 'viewer_finals_race_history.v1',
+      product_run_id: 'run alpha',
+      viewer_branch_id: 'branch-tour',
+      latest_target_season_index: 2,
+      publications: [{ target_season_index: 2, cutoff_season_index: 1, cutoff_week: 61, best_n: 8, selection_published: true, finals_event_id: 'FINALS-2', rows: [] }]
     })
-    api.getFinalsSummary.mockResolvedValue({ run_id: 'run alpha', season: 2024, qualification: { players: [] }, result: null })
   })
 
-  it('renders the no-active-run landing without forbidden Viewer action labels', () => {
-    renderSeasonHub()
-
-    expect(screen.getByRole('heading', { level: 2, name: 'Season Hub' })).toBeInTheDocument()
-    expect(screen.getByText('No data is available for this run yet.')).toBeInTheDocument()
-
+  it('shows Product Run empty state when none is selected', () => {
+    renderWithViewerProviders(<ViewerSeasonHubPage />)
+    expect(screen.getByText('No Product Run is selected yet.')).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('renders active-run season metadata and encoded source links', async () => {
-    setViewerActiveRunId('run alpha')
-
-    renderSeasonHub()
+  it('renders canonical tour summary and Product Run links', async () => {
+    setViewerActiveProductRunId('run alpha')
+    renderWithViewerProviders(<ViewerSeasonHubPage />)
 
     expect(await screen.findByText('Season Hub summary')).toBeInTheDocument()
-    expect(screen.getByText('run alpha')).toBeInTheDocument()
-    expect(await screen.findByText('1/2 events complete')).toBeInTheDocument()
-    expect(screen.getByText('Finals qualification available')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'EVT 2' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT%202')
-    expect(screen.getByRole('link', { name: 'Open active run tournaments' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments')
-    expect(screen.getByRole('link', { name: 'Open active run schedule' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar')
-    expect(screen.getByRole('link', { name: 'Open active run finals' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/finals')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run alpha')
+    expect(api.getViewerFinalsRace).toHaveBeenCalledWith('run alpha')
+    expect(await screen.findByText('branch-tour')).toBeInTheDocument()
+    expect(screen.getByText('Event Two')).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT%202')
+    expect(screen.getByText('S2 · cutoff S1 W61')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Product Run tournaments' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments')
+    expectNoForbiddenViewerActions()
   })
 })

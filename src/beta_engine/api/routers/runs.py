@@ -6,6 +6,7 @@ from beta_engine.api.schemas import (
     BootstrapNextSeasonRequest,
     MaterializeRunProspectsRequest,
     MaterializeRunProspectsResponse,
+    MaterializedRunProspectTalentSummaryResponse,
     RunIndexResponse,
     RunWeeklyIntakeCohortSeasonPreviewResponse,
     RunIndexSummaryResponse,
@@ -87,6 +88,28 @@ def preview_run_weekly_intake_cohort_season(
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     return RunWeeklyIntakeCohortSeasonPreviewResponse.model_validate(result, from_attributes=True)
+
+
+@router.get(
+    "/{run_id}/prospects/talent-summary",
+    response_model=MaterializedRunProspectTalentSummaryResponse,
+)
+def get_run_prospect_talent_summary(
+    run_id: str,
+    season_start_year: int | None = None,
+    service: RunProspectMaterializationService = Depends(get_run_prospect_materialization_service),
+) -> MaterializedRunProspectTalentSummaryResponse:
+    try:
+        result = service.summarize_materialized_talent(
+            run_id=run_id,
+            season_start_year=season_start_year,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    return MaterializedRunProspectTalentSummaryResponse.model_validate(
+        result,
+        from_attributes=True,
+    )
 
 
 @router.post(

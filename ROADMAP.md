@@ -793,6 +793,17 @@ Viewer data. Once a prospect becomes lifecycle-visible on any branch, the backin
 public identity metadata is immutable under normal prospect materialization so later
 overwrite cannot rewrite historical Viewer identity.
 
+
+The Run prospect intake path now also shares the same provisional global
+`TalentQualityBand` rarity policy used by Talent Preview. Persisted prospect seeds
+produce deterministic band outcomes without rewriting the Run prospect source, and a
+read-only Run talent summary exposes global and per-country Expected vs Generated
+band distributions. Admin Talent Intake consumes that authority directly. The next
+quality-model step is **not** more rarity plumbing: it is an explicit product/calibration
+decision for how a prospect's innate band should influence the separate canonical
+0..200 sporting potential profile. Until that rule is defined, no OVR threshold or
+reverse classification should be introduced.
+
 Week 61 now also has a canonical **read-only Season Transition preflight**. It
 freezes the current authoritative Position, Saved Revision head and branch-state
 blockers, distinguishes those from still-missing engine writers, and projects only

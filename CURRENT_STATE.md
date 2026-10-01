@@ -3357,3 +3357,25 @@ Legacy Race `snapshot_sequence` remains isolated to its dedicated compatibility 
 
 See `docs/VIEWER_CANONICAL_TOURNAMENT_WEEK_DETAILS_V1.md`.
 
+
+
+## Current follow-up — weekly 15-year-old talent quality integration
+
+Run-scoped 15-year-old prospect materialization now has one shared provisional
+innate quality-rarity authority with the world Talent Preview. Every persisted
+Run prospect exposes a deterministic `TalentQualityBand` derived from its immutable
+persisted seed, so older materialized cohorts gain the same reproducible band
+classification without rewriting prospect metadata, changing prospect IDs or
+bypassing lifecycle immutability.
+
+A dedicated read-only talent summary reports the exact persisted cohort size,
+shared policy identity/fingerprint, global Expected vs Generated band counts and
+per-country Expected vs Generated counts. Expected values are the shared global
+rarity weights applied to the exact materialized cohort size; Generated values are
+the deterministic per-prospect band outcomes. Admin Talent Intake renders both the
+global and country comparison and shows each concrete prospect's band.
+
+This integration deliberately does **not** map `potential_ovr` to a quality band.
+The provisional prospect sporting-profile potential policy remains a separate
+calibration authority until an explicit product decision defines how innate quality
+bands should shape 0..200 potential. No threshold is inferred from current OVR values.

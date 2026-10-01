@@ -586,6 +586,7 @@ class RunProspectResponse(BaseModel):
     development_seed: str
     potential_seed: str
     trait_seed: str
+    quality_band: str
     profile_json: dict[str, object] = Field(default_factory=dict)
     development_json: dict[str, object] = Field(default_factory=dict)
     potential_json: dict[str, object] = Field(default_factory=dict)
@@ -598,6 +599,26 @@ class RunProspectListResponse(BaseModel):
     limit: int
     offset: int
     prospects: list[RunProspectResponse] = Field(default_factory=list)
+
+
+class MaterializedRunProspectTalentCountrySummaryResponse(BaseModel):
+    country_code: str
+    country_name: str | None = None
+    materialized_count: int
+    expected_band_counts: dict[str, float] = Field(default_factory=dict)
+    generated_band_counts: dict[str, int] = Field(default_factory=dict)
+
+
+class MaterializedRunProspectTalentSummaryResponse(BaseModel):
+    run_id: str
+    season_start_year: int
+    total_materialized: int
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    quality_weights: dict[str, float] = Field(default_factory=dict)
+    expected_band_counts: dict[str, float] = Field(default_factory=dict)
+    generated_band_counts: dict[str, int] = Field(default_factory=dict)
+    countries: list[MaterializedRunProspectTalentCountrySummaryResponse] = Field(default_factory=list)
 
 
 class MaterializeRunProspectsRequest(BaseModel):

@@ -75,6 +75,7 @@ import type {
   GeneratedPlayerProvenanceListResponse,
   MaterializeRunProspectsRequest,
   MaterializeRunProspectsResponse,
+  MaterializedRunProspectTalentSummaryResponse,
   RunProspectListResponse,
   RunSummary,
   RunContainer,
@@ -2496,6 +2497,18 @@ export function listRunProspects(
   return request(`/runs/${encodeURIComponent(runId)}/prospects${suffix}`)
 }
 
+
+export function getRunProspectTalentSummary(
+  runId: string,
+  seasonStartYear?: number
+): Promise<MaterializedRunProspectTalentSummaryResponse> {
+  const query = new URLSearchParams()
+  if (seasonStartYear !== undefined) {
+    query.set('season_start_year', String(seasonStartYear))
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : ''
+  return request(`/runs/${encodeURIComponent(runId)}/prospects/talent-summary${suffix}`)
+}
 
 export function materializeRunProspects(
   runId: string,

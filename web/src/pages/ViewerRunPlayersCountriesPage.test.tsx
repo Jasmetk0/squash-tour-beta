@@ -758,7 +758,10 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
       'href',
       '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
     )
-    expect(screen.getByText('Retired E')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Retired E/ })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0002/career'
+    )
     expect(screen.getByText(/canonical historical source mix/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Back to countries' })).toHaveAttribute(
       'href',

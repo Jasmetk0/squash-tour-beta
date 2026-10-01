@@ -445,188 +445,152 @@ describe('ViewerRunPlayersPage', () => {
   })
 })
 
-describe('ViewerRunPlayerCareerPage', () => {
+describe('ViewerRunPlayerCareerPage canonical current profile', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockPlayerDetail()
+    api.getViewerPlayers.mockResolvedValue({
+      schema_version: 'viewer_players.v1',
+      product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      player_count: 2,
+      active_player_count: 1,
+      retired_player_count: 1,
+      players: [
+        {
+          player_id: 'EGY-0001',
+          name: 'Ali A',
+          country_code: 'EGY',
+          age: 20,
+          status: 'active',
+          tour_entry_season_index: 1,
+          tour_entry_week: 3,
+          current_ovr: 167,
+          potential_ovr: 185,
+          current_form: 160,
+          match_sharpness: 90,
+          long_term_fatigue: 5,
+          identity_source: 'run_prospect'
+        },
+        {
+          player_id: 'ENG-0001',
+          name: 'Retired B',
+          country_code: 'ENG',
+          age: 35,
+          status: 'retired',
+          tour_entry_season_index: 0,
+          tour_entry_week: 1,
+          current_ovr: null,
+          potential_ovr: null,
+          current_form: null,
+          match_sharpness: null,
+          long_term_fatigue: null,
+          identity_source: 'initial_world'
+        }
+      ]
+    })
   })
 
-  it('renders real player profile summary and keeps technical data collapsed', async () => {
-    renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
+  it('renders canonical current player profile and defers historical sections', async () => {
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career',
+      <ViewerRunPlayerCareerPage />,
+      '/viewer/runs/:runId/players/:playerId/career'
+    )
 
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Identity' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Attributes / Power Rating' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Origin / source' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EGY-0001').length).toBeGreaterThan(0)
     expect(await screen.findByText('Ali A')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
-    ;['20', '70', '68', '66', '65', '67', '2027'].forEach((value) =>
-      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
-    )
-    expect(screen.getAllByText('planner_generated').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('elite_talent').length).toBeGreaterThan(0)
-    expect(screen.getByText('yes')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to players/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players')
-    expect(screen.getByRole('link', { name: /Country page/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries/EGY')
-    expect(screen.getByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Tournament History' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'W7' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/weeks/7')
-    expect(screen.getByRole('link', { name: 'W8' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/weeks/8')
-    expect(screen.getByRole('link', { name: 'Cairo Open' })).toHaveAttribute(
+    expect(api.getViewerPlayers).toHaveBeenCalledWith('viewer-run-2c')
+    expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
+    expect(screen.getByText('S2 W7')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Current sporting state' })).toBeInTheDocument()
+    expect(screen.getByText('167')).toBeInTheDocument()
+    expect(screen.getByText('185')).toBeInTheDocument()
+    expect(screen.getByText('run prospect')).toBeInTheDocument()
+    expect(screen.getByText('S1 W3')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute(
       'href',
-      '/viewer/runs/viewer-run-2c/tournaments/event-cairo-2027'
+      '/viewer/runs/viewer-run-2c/countries/EGY'
     )
-    expect(screen.getByText('Local Showcase')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Local Showcase' })).not.toBeInTheDocument()
-    const noWeekRow = screen.getByText('No Week Invitational').closest('tr')
-    expect(noWeekRow).not.toBeNull()
-    expect(within(noWeekRow as HTMLElement).getAllByText('—').length).toBeGreaterThan(0)
-    expect(within(noWeekRow as HTMLElement).queryByRole('link', { name: /^W/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /undefined|null/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'W9' })).not.toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Finish' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Points' })).toBeInTheDocument()
-    expect(screen.getByText('Final')).toBeInTheDocument()
-    expect(screen.getByText('Quarterfinal')).toBeInTheDocument()
-    ;['12', '14', '1', '28', '11', '4', '700', '175', 'bronze', 'R16'].forEach((value) =>
-      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
+    expect(screen.getByRole('link', { name: 'Back to players' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players'
     )
-    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical player data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/player-detail-hidden-payload/i)).not.toBeVisible()
-    await userEvent.click(screen.getByText('Show technical player data'))
-    expect(within(technicalSection as HTMLElement).getByText(/player-detail-hidden-payload/i)).toBeVisible()
+    expect(screen.getByText(/canonical per-player season history is not published yet/i)).toBeInTheDocument()
+    expect(screen.getByText(/canonical per-player tournament\/performance history is not published yet/i)).toBeInTheDocument()
+
+    expect(api.getRunPlayerDetail).not.toHaveBeenCalled()
+    expect(api.getRunPlayerCareerHistory).not.toHaveBeenCalled()
+    expect(api.getRunPlayerCareerPerformance).not.toHaveBeenCalled()
+    expect(api.getRunPlayerTournamentResults).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
-  it('shows deferred previews when career, performance, and result entries are empty', async () => {
-    mockEmptyPlayerCareerData()
+  it('fails closed when the canonical player id is absent', async () => {
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/players/UNKNOWN/career',
+      <ViewerRunPlayerCareerPage />,
+      '/viewer/runs/:runId/players/:playerId/career'
+    )
 
-    renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Tournament History' })).toBeInTheDocument()
-    expect(screen.getAllByText('This preview is not connected for this data shape yet.').length).toBeGreaterThanOrEqual(2)
+    expect(await screen.findByText(/No canonical player with this ID exists/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Current sporting state' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
+  it('keeps current profile unavailable on canonical API failure', async () => {
+    api.getViewerPlayers.mockRejectedValue(new Error('canonical player outage'))
 
-  it('renders safely for encoded slash/hash/space route params without fake data', async () => {
-    api.getRunPlayerDetail.mockResolvedValue(null)
-    mockEmptyPlayerCareerData()
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career',
+      <ViewerRunPlayerCareerPage />,
+      '/viewer/runs/:runId/players/:playerId/career'
+    )
 
-    const { container } = renderViewerRoute(
+    expect(await screen.findByText(/Failed to load canonical player profile/i)).toBeInTheDocument()
+    expect(screen.getByText(/canonical player outage/i)).toBeInTheDocument()
+    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('builds encoded canonical links from route identities', async () => {
+    api.getViewerPlayers.mockResolvedValue({
+      schema_version: 'viewer_players.v1',
+      product_run_id: 'run/alpha #1',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      player_count: 1,
+      active_player_count: 1,
+      retired_player_count: 0,
+      players: [{
+        player_id: 'P/1 #A',
+        name: 'Encoded Player',
+        country_code: 'CDE',
+        age: 24,
+        status: 'active',
+        tour_entry_season_index: null,
+        tour_entry_week: null,
+        current_ovr: 188,
+        potential_ovr: 190,
+        current_form: 170,
+        match_sharpness: 90,
+        long_term_fatigue: 4,
+        identity_source: 'initial_world'
+      }]
+    })
+
+    renderViewerRoute(
       '/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career',
       <ViewerRunPlayerCareerPage />,
       '/viewer/runs/:runId/players/:playerId/career'
     )
 
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(screen.getByText('run/alpha #1')).toBeInTheDocument()
-    expect(screen.getByText('P/1 #A')).toBeInTheDocument()
-    expect(await screen.findAllByText('This preview is not connected for this data shape yet.')).toHaveLength(3)
-    expect(api.getRunPlayerDetail).toHaveBeenCalledWith('run/alpha #1', 'P/1 #A')
-    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo|ranking|rank #|wins|losses|titles/i)).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
-    expect(container).not.toHaveTextContent('[object Object]')
-    expectNoForbiddenViewerActions()
-  })
-
-
-
-  it('keeps Player Profile safe on player detail API error', async () => {
-    api.getRunPlayerDetail.mockRejectedValue(new Error('player detail outage'))
-    mockEmptyPlayerCareerData()
-
-    renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findByText(/Failed to load player profile/i)).toBeInTheDocument()
-    expect(screen.getByText(/player detail outage/i)).toBeInTheDocument()
-    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
-    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|h2h|elo/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('rejects malformed player detail objects without object text, unsafe country links, or fake stats', async () => {
-    api.getRunPlayerDetail.mockResolvedValue({
-      player_id: { raw: 'OBJ-P' },
-      name: { raw: 'Object Name' },
-      country_code: { raw: 'OBJ-COUNTRY' },
-      age: { raw: 20 },
-      source: { raw: 'source' },
-      quality_band: { raw: 'band' },
-      ratings: { overall: 99 }
-    })
-    mockEmptyPlayerCareerData()
-
-    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findAllByText('This preview is not connected for this data shape yet.')).not.toHaveLength(0)
-    expect(container).not.toHaveTextContent('[object Object]')
-    expect(screen.queryByText(/OBJ-P|Object Name|OBJ-COUNTRY|band|99/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /OBJ-COUNTRY|Country page/i })).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
-    expect(screen.queryByText(/ranking|rank #|wins|losses|titles/i)).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('normalizes malformed player career, performance, and tournament result entries safely', async () => {
-    api.getRunPlayerDetail.mockResolvedValue(null)
-    api.getRunPlayerCareerHistory.mockResolvedValue({ entries: [null, 7, 'bad', {}, { run_id: { raw: 'OBJ-RUN' }, season: { raw: 2027 }, age: { raw: 20 }, source_type: { raw: 'OBJ-SOURCE' }, quality_band: { raw: 'OBJ-BAND' } }] })
-    api.getRunPlayerCareerPerformance.mockResolvedValue({ entries: [null, 'bad', {}, { season: { raw: 2027 }, wins: { raw: 10 }, losses: { raw: 2 } }] })
-    api.getRunPlayerTournamentResults.mockResolvedValue({ entries: [null, 12, 'bad', {}, { week: { raw: 7 }, event_id: { raw: 'OBJ-EVENT' }, event_name: { raw: 'OBJ-NAME' }, event_category: { raw: 'OBJ-CAT' }, ranking_points_awarded: { raw: 500 } }] })
-
-    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/players/EGY-0001/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Season Timeline' })).toBeInTheDocument()
-    expect(container).not.toHaveTextContent('[object Object]')
-    expect(screen.queryByText(/OBJ-RUN|OBJ-SOURCE|OBJ-BAND|OBJ-EVENT|OBJ-NAME|OBJ-CAT|500/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /^W/ })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /OBJ-EVENT|OBJ-NAME/i })).not.toBeInTheDocument()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('builds encoded Viewer-only detail links from safe player payload values', async () => {
-    api.getRunPlayerDetail.mockResolvedValue({ player_id: 'P/1 #A', name: 'Encoded Player', country_code: 'CO/DE #1', age: 22 })
-    api.getRunPlayerCareerHistory.mockResolvedValue({ entries: [] })
-    api.getRunPlayerCareerPerformance.mockResolvedValue({ entries: [] })
-    api.getRunPlayerTournamentResults.mockResolvedValue({ entries: [{ run_id: 'run/alpha #1', season: 2027, week: 9, event_sequence: 1, event_id: 'EVT/1 #A', event_name: 'Encoded Event', wins: 1, losses: 0 }] })
-
-    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
     expect(await screen.findByText('Encoded Player')).toBeInTheDocument()
-    const countryLinks = screen.getAllByRole('link', { name: /CO\/DE #1|Country page/i })
-    countryLinks.forEach((link) => {
-      expect(link).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231')
-      expect(link.getAttribute('href')).not.toContain('run/alpha #1')
-      expect(link.getAttribute('href')).not.toContain('CO/DE #1')
-      expect(link.getAttribute('href')).not.toContain('/admin')
-    })
-    expect(screen.getByRole('link', { name: 'Encoded Event' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/tournaments/EVT%2F1%20%23A')
-    expect(screen.getByRole('link', { name: 'W9' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/weeks/9')
-    expectNoForbiddenViewerActions()
-  })
-
-  it('shows deferred preview when player detail data is missing', async () => {
-    api.getRunPlayerDetail.mockResolvedValue(null)
-    mockEmptyPlayerCareerData()
-
-    renderViewerRoute('/viewer/runs/viewer-run-2c/players/MISSING/career', <ViewerRunPlayerCareerPage />, '/viewer/runs/:runId/players/:playerId/career')
-
-    expect(await screen.findByRole('heading', { name: 'Player Profile' })).toBeInTheDocument()
-    expect((await screen.findAllByText('This preview is not connected for this data shape yet.')).length).toBeGreaterThan(0)
-    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
-    expect(screen.queryByText(/world champion|grand slam|career high no\. 1|elo|h2h/i)).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical player data')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'CDE' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/run%2Falpha%20%231/countries/CDE'
+    )
     expectNoForbiddenViewerActions()
   })
 })
@@ -711,156 +675,139 @@ describe('ViewerRunCountriesPage', () => {
   })
 })
 
-describe('ViewerRunCountryDetailPage', () => {
+describe('ViewerRunCountryDetailPage canonical current profile', () => {
   beforeEach(() => {
     vi.resetAllMocks()
-    mockCountryDetail()
+    api.getViewerCountries.mockResolvedValue({
+      schema_version: 'viewer_countries.v1',
+      product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      country_count: 1,
+      countries: [{
+        country_code: 'EGY',
+        player_count: 2,
+        active_player_count: 1,
+        retired_player_count: 1,
+        average_current_ovr: 178.4,
+        top_player_id: 'EGY-0001',
+        top_player_name: 'Ali A',
+        top_player_current_ovr: 191
+      }]
+    })
+    api.getViewerPlayers.mockResolvedValue({
+      schema_version: 'viewer_players.v1',
+      product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'branch-viewer',
+      season_index: 2,
+      week: 7,
+      player_count: 2,
+      active_player_count: 1,
+      retired_player_count: 1,
+      players: [
+        {
+          player_id: 'EGY-0001',
+          name: 'Ali A',
+          country_code: 'EGY',
+          age: 24,
+          status: 'active',
+          tour_entry_season_index: 0,
+          tour_entry_week: 1,
+          current_ovr: 191,
+          potential_ovr: 195,
+          current_form: 170,
+          match_sharpness: 92,
+          long_term_fatigue: 3,
+          identity_source: 'initial_world'
+        },
+        {
+          player_id: 'EGY-0002',
+          name: 'Retired E',
+          country_code: 'EGY',
+          age: 37,
+          status: 'retired',
+          tour_entry_season_index: 0,
+          tour_entry_week: 1,
+          current_ovr: null,
+          potential_ovr: null,
+          current_form: null,
+          match_sharpness: null,
+          long_term_fatigue: null,
+          identity_source: 'initial_world'
+        }
+      ]
+    })
   })
 
-  it('renders real country profile summary and keeps technical data collapsed', async () => {
-    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
-
-    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
-    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Player base' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Source mix' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Talent bands' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Top players' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { name: 'Links' })).toBeInTheDocument()
-    expect(screen.getAllByText('viewer-run-2c').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
-    expect(await screen.findByText('Egypt')).toBeInTheDocument()
-    ;['5', '78.40', '25.20', '2', '1', '3', '80.10', '79.10', '76.10', '78.10'].forEach((value) =>
-      expect(screen.getAllByText(value).length).toBeGreaterThan(0)
-    )
-    expect(screen.getByText(/rollover_carried 1 · planner_generated 3 · manual_override 1/i)).toBeInTheDocument()
-    expect(screen.getByText(/top 2/i)).toBeInTheDocument()
-    expect(screen.getByText(/elite_talent 2/i)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Ali A (EGY-0001)' })).toHaveAttribute(
-      'href',
-      '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
-    )
-    expect(screen.getByText('Unlinked Player')).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Unlinked Player' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /Open player profile/i })).not.toBeInTheDocument()
-    expect(screen.getByText('91')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Back to countries/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/countries')
-    expect(screen.getByRole('link', { name: /Player list/i })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players?country=EGY')
-    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100/i)).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical country data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/country-detail-hidden-payload/i)).not.toBeVisible()
-    await userEvent.click(screen.getByText('Show technical country data'))
-    expect(within(technicalSection as HTMLElement).getByText(/country-detail-hidden-payload/i)).toBeVisible()
-    expectNoForbiddenViewerActions()
-  })
-
-
-  it('renders safely for encoded slash/hash/space route params without fake data', async () => {
-    api.getRunNationDetail.mockResolvedValue(null)
-
-    const { container } = renderViewerRoute(
-      '/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231',
+  it('renders canonical current country profile and player roster', async () => {
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/countries/EGY',
       <ViewerRunCountryDetailPage />,
       '/viewer/runs/:runId/countries/:countryCode'
     )
 
     expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
-    expect(screen.getByText('run/alpha #1')).toBeInTheDocument()
-    expect(screen.getByText('CO/DE #1')).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    expect(api.getRunNationDetail).toHaveBeenCalledWith('run/alpha #1', 'CO/DE #1')
-    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100|ranking|rank #|wins|losses/i)).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical country data')).not.toBeInTheDocument()
-    expect(container).not.toHaveTextContent('[object Object]')
+    expect(api.getViewerCountries).toHaveBeenCalledWith('viewer-run-2c')
+    expect(api.getViewerPlayers).toHaveBeenCalledWith('viewer-run-2c')
+    expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
+    expect(screen.getByText('S2 W7')).toBeInTheDocument()
+    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
+    expect(screen.getByText('178.40')).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Ali A/ })[0]).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
+    )
+    expect(screen.getByRole('link', { name: /Retired E/ })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/players/EGY-0002/career'
+    )
+    expect(screen.getByText(/canonical historical source mix/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Back to countries' })).toHaveAttribute(
+      'href',
+      '/viewer/runs/viewer-run-2c/countries'
+    )
+
+    expect(api.getRunNationDetail).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 
+  it('fails closed when the canonical country code is absent', async () => {
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/countries/XXX',
+      <ViewerRunCountryDetailPage />,
+      '/viewer/runs/:runId/countries/:countryCode'
+    )
 
-
-  it('keeps Country Profile safe on country detail API error', async () => {
-    api.getRunNationDetail.mockRejectedValue(new Error('country detail outage'))
-
-    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
-
-    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
-    expect(await screen.findByText(/Failed to load country profile/i)).toBeInTheDocument()
-    expect(screen.getByText(/country detail outage/i)).toBeInTheDocument()
-    expect(screen.queryByText('Egypt')).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical country data')).not.toBeInTheDocument()
-    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100/i)).not.toBeInTheDocument()
+    expect(await screen.findByText(/No canonical country with this code exists/i)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Overview' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('rejects malformed country detail objects without object text, unsafe links, or fake records', async () => {
-    api.getRunNationDetail.mockResolvedValue({ country_code: { raw: 'OBJ-COUNTRY' }, country_name: { raw: 'Object Country' }, total_players: { raw: 5 }, average_overall: { raw: 90 }, average_age: { raw: 25 }, source_mix: { manual_override: { raw: 1 } } })
+  it('keeps the country profile unavailable on canonical API failure', async () => {
+    api.getViewerCountries.mockRejectedValue(new Error('canonical country outage'))
 
-    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/countries/EGY',
+      <ViewerRunCountryDetailPage />,
+      '/viewer/runs/:runId/countries/:countryCode'
+    )
 
-    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    expect(container).not.toHaveTextContent('[object Object]')
-    expect(screen.queryByText(/OBJ-COUNTRY|Object Country|90/)).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: /OBJ-COUNTRY|Object Country/i })).not.toBeInTheDocument()
-    expect(screen.queryByText(/Team Championship|titles?|records?|medals?|hosting|Top 100/i)).not.toBeInTheDocument()
+    expect(await screen.findByText(/Failed to load canonical country profile/i)).toBeInTheDocument()
+    expect(screen.getByText(/canonical country outage/i)).toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
-  it('normalizes malformed country top players, source mix, and band arrays safely', async () => {
-    api.getRunNationDetail.mockResolvedValue({
-      country_code: 'EGY',
-      country_name: 'Egypt',
-      total_players: 5,
-      source_mix: { safe_source: 2, object_source: { raw: 1 }, string_source: '3' },
-      band_distribution: [null, 'bad', {}, { band: { raw: 'OBJ-BAND' }, count: { raw: 2 } }, { band: 'safe_band', count: 1 }],
-      origin_band_distribution: [null, { band: 'origin_safe', count: 3 }, { band: 'origin_object', count: { raw: 4 } }],
-      top_players: [null, 'bad', {}, { player_id: { raw: 'OBJ-P' }, name: { raw: 'Object Player' }, overall: { raw: 99 } }, { player_id: 'SAFE-P', name: 'Safe Player', overall: 88, source_type: { raw: 'OBJ-SOURCE' }, quality_band: { raw: 'OBJ-QUALITY' } }]
-    })
+  it('normalizes country route code case against canonical data', async () => {
+    renderViewerRoute(
+      '/viewer/runs/viewer-run-2c/countries/egy',
+      <ViewerRunCountryDetailPage />,
+      '/viewer/runs/:runId/countries/:countryCode'
+    )
 
-    const { container } = renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
-
-    expect(await screen.findByText('Egypt')).toBeInTheDocument()
-    expect(screen.getByText('safe_source 2')).toBeInTheDocument()
-    expect(screen.getByText(/safe_band 1/)).toBeInTheDocument()
-    expect(screen.getByText(/origin_safe 3/)).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Safe Player (SAFE-P)' })).toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players/SAFE-P/career')
-    expect(container).not.toHaveTextContent('[object Object]')
-    expect(screen.queryByRole('link', { name: /OBJ-P|Object Player/i })).not.toBeInTheDocument()
-    const technicalSection = screen.getByText('Show technical country data').closest('details')
-    expect(technicalSection).not.toHaveAttribute('open')
-    expect(screen.getByText(/OBJ-P|Object Player|OBJ-BAND|object_source|string_source|OBJ-SOURCE|OBJ-QUALITY|99/)).not.toBeVisible()
-    expectNoForbiddenViewerActions()
-  })
-
-  it('builds encoded Viewer-only detail links from safe country payload values', async () => {
-    api.getRunNationDetail.mockResolvedValue({ country_code: 'CO/DE #1', country_name: 'Encoded Country', total_players: 1, top_players: [{ player_id: 'P/1 #A', name: 'Encoded Player', overall: 91 }] })
-
-    renderViewerRoute('/viewer/runs/run%2Falpha%20%231/countries/CO%2FDE%20%231', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
-
-    expect(await screen.findByText('Encoded Country')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Encoded Player (P/1 #A)' })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/players/P%2F1%20%23A/career')
-    expect(screen.getByRole('link', { name: /Back to countries/i })).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/countries')
-    const playerList = screen.getByRole('link', { name: /Player list/i })
-    expect(playerList).toHaveAttribute('href', '/viewer/runs/run%2Falpha%20%231/players?country=CO%2FDE%20%231')
-    ;[screen.getByRole('link', { name: 'Encoded Player (P/1 #A)' }), playerList].forEach((link) => {
-      expect(link.getAttribute('href')).not.toContain('/admin')
-      expect(link.getAttribute('href')).not.toContain('run/alpha #1')
-    })
-    expect(screen.getByRole('link', { name: 'Encoded Player (P/1 #A)' }).getAttribute('href')).not.toContain('P/1 #A')
-    expect(playerList.getAttribute('href')).not.toContain('CO/DE #1')
-    expectNoForbiddenViewerActions()
-  })
-
-  it('shows deferred preview when country detail data is missing', async () => {
-    api.getRunNationDetail.mockResolvedValue(null)
-
-    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/MISSING', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
-
-    expect(await screen.findByRole('heading', { name: 'Country Profile' })).toBeInTheDocument()
-    expect(await screen.findByText('This preview is not connected for this data shape yet.')).toBeInTheDocument()
-    expect(screen.queryByText('Egypt')).not.toBeInTheDocument()
-    expect(screen.queryByText(/78\.40|25\.20|country-detail-hidden-payload/i)).not.toBeInTheDocument()
-    expect(screen.queryByText('Show technical country data')).not.toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
+    expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
     expectNoForbiddenViewerActions()
   })
 })
+

@@ -4,11 +4,6 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 
 import {
-  getRunNationDetail,
-  getRunPlayerCareerHistory,
-  getRunPlayerCareerPerformance,
-  getRunPlayerDetail,
-  getRunPlayerTournamentResults,
   getViewerCountries,
   getViewerPlayers
 } from '../api/client'
@@ -502,49 +497,38 @@ export function ViewerRunPlayersPage(): JSX.Element {
 
 export function ViewerRunPlayerCareerPage(): JSX.Element {
   const { playerId = '' } = useParams()
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId } = useViewerProductRunRouteContext()
 
-  const detailQuery = useQuery({
-    queryKey: ['viewer-run-player-detail', runId, playerId],
-    queryFn: () => getRunPlayerDetail(legacySimulationRunId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
-  const careerQuery = useQuery({
-    queryKey: ['viewer-player-career-history', runId, playerId],
-    queryFn: () => getRunPlayerCareerHistory(legacySimulationRunId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
-  const performanceQuery = useQuery({
-    queryKey: ['viewer-player-career-performance', runId, playerId],
-    queryFn: () => getRunPlayerCareerPerformance(legacySimulationRunId, playerId),
-    enabled: Boolean(runId && playerId)
-  })
-  const tournamentResultsQuery = useQuery({
-    queryKey: ['viewer-player-career-results', runId, playerId],
-    queryFn: () => getRunPlayerTournamentResults(legacySimulationRunId, playerId),
-    enabled: Boolean(runId && playerId)
+  const playersQuery = useQuery({
+    queryKey: ['viewer-run-player-profile-canonical', runId],
+    queryFn: () => getViewerPlayers(runId),
+    enabled: Boolean(runId && playerId),
+    retry: false
   })
 
-  const playerProfile = hasPlayerProfileShape(detailQuery.data) ? detailQuery.data : null
-  const careerEntries = normalizeCareerEntries(careerQuery.data)
-  const performanceEntries = normalizePerformanceEntries(performanceQuery.data)
-  const tournamentResultEntries = normalizeTournamentResultEntries(tournamentResultsQuery.data)
-  const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !playerProfile
+  const playerProfile = playersQuery.data?.players.find((player) => player.player_id === playerId) ?? null
 
   return (
     <section className="panel">
-      <PageIntro title="Player Profile" subtitle="Read-only player profile for the selected run." />
+      <PageIntro
+        title="Player Profile"
+        subtitle="Canonical Saved-Revision current player profile. Historical career views remain deferred until a dedicated canonical history authority exists."
+      />
       <CurrentContextStrip
         items={[
-          { label: 'Active run ID', value: runId || 'unknown' },
+          { label: 'Product Run', value: runId || 'unknown' },
+          { label: 'Viewer Branch', value: playersQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Public week', value: playersQuery.data ? `S${playersQuery.data.season_index} W${playersQuery.data.week}` : '—' },
           { label: 'Player ID', value: playerId || 'unknown' },
-          { label: 'Profile status', value: playerProfile ? 'connected' : 'preview pending' }
+          { label: 'Profile status', value: playerProfile ? 'canonical current profile' : 'unavailable' }
         ]}
       />
 
-      {detailQuery.isLoading ? <p className="status">Loading player profile…</p> : null}
-      {detailQuery.error ? <p className="error">Failed to load player profile: {String(detailQuery.error)}</p> : null}
-      {showDeferredPreview ? <p className="status">This preview is not connected for this data shape yet.</p> : null}
+      {playersQuery.isLoading ? <p className="status">Loading canonical player profile…</p> : null}
+      {playersQuery.error ? <p className="error">Failed to load canonical player profile: {String(playersQuery.error)}</p> : null}
+      {!playersQuery.isLoading && !playersQuery.error && !playerProfile ? (
+        <p className="status">No canonical player with this ID exists in the selected Saved Revision.</p>
+      ) : null}
 
       {playerProfile ? (
         <>
@@ -554,33 +538,35 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
                 { label: 'Name', value: playerProfile.name },
                 { label: 'Player ID', value: playerProfile.player_id },
                 { label: 'Country', value: countryCodeCell(playerProfile.country_code, runId) },
-                { label: 'Age', value: playerProfile.age }
+                { label: 'Age', value: playerProfile.age },
+                { label: 'Status', value: playerProfile.status }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Attributes / Power Rating">
+          <SectionCard title="Current sporting state">
             <MetadataList
               items={[
-                { label: 'Technique', value: displayMetric(playerProfile.technique) },
-                { label: 'Movement', value: displayMetric(playerProfile.movement) },
-                { label: 'Physical', value: displayMetric(playerProfile.physical) },
-                { label: 'Mental', value: displayMetric(playerProfile.mental) },
-                { label: 'Power Rating', value: displayMetric(playerProfile.overall) }
+                { label: 'Power Rating', value: displayMetric(playerProfile.current_ovr) },
+                { label: 'Potential Power Rating', value: displayMetric(playerProfile.potential_ovr) },
+                { label: 'Current form', value: displayMetric(playerProfile.current_form) },
+                { label: 'Match sharpness', value: displayMetric(playerProfile.match_sharpness) },
+                { label: 'Long-term fatigue', value: displayMetric(playerProfile.long_term_fatigue) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Origin / source">
+          <SectionCard title="Tour / identity source">
             <MetadataList
               items={[
-                { label: 'Source type', value: playerProfile.source_type ?? '—' },
-                { label: 'Manual provenance ID', value: playerProfile.override_id ?? '—' },
-                { label: 'Quality band', value: playerProfile.quality_band ?? '—' },
-                { label: 'Top band', value: typeof playerProfile.is_top_band === 'boolean' ? (playerProfile.is_top_band ? 'yes' : 'no') : '—' },
-                { label: 'Origin source type', value: playerProfile.origin_source_type ?? '—' },
-                { label: 'Origin season', value: displayMetric(playerProfile.origin_season) },
-                { label: 'Origin quality band', value: playerProfile.origin_quality_band ?? '—' }
+                { label: 'Identity source', value: playerProfile.identity_source.replace(/_/g, ' ') },
+                {
+                  label: 'Tour entry',
+                  value:
+                    playerProfile.tour_entry_season_index !== null && playerProfile.tour_entry_week !== null
+                      ? `S${playerProfile.tour_entry_season_index} W${playerProfile.tour_entry_week}`
+                      : '—'
+                }
               ]}
             />
           </SectionCard>
@@ -595,129 +581,16 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
       ) : null}
 
       <SectionCard title="Season Timeline">
-        {careerQuery.isLoading ? <p className="status">Loading season timeline…</p> : null}
-        {careerQuery.error ? <p className="error">Failed to load career history: {String(careerQuery.error)}</p> : null}
-        {careerQuery.data ? (
-          careerEntries.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Season</th>
-                  <th>Run</th>
-                  <th>Age</th>
-                  <th>Power Rating</th>
-                  <th>Technique</th>
-                  <th>Movement</th>
-                  <th>Physical</th>
-                  <th>Mental</th>
-                  <th>Source</th>
-                  <th>Quality band</th>
-                </tr>
-              </thead>
-              <tbody>
-                {careerEntries.map((entry, index) => (
-                  <tr key={`${entry.run_id}-${entry.season}-${index}`}>
-                    <td>{entry.season}</td>
-                    <td>{entry.run_id}</td>
-                    <td>{entry.age}</td>
-                    <td>{entry.overall}</td>
-                    <td>{entry.technique}</td>
-                    <td>{entry.movement}</td>
-                    <td>{entry.physical}</td>
-                    <td>{entry.mental}</td>
-                    <td>{entry.source_type ?? '—'}</td>
-                    <td>{entry.quality_band ?? '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="status">This preview is not connected for this data shape yet.</p>
-          )
-        ) : null}
+        <p className="status">
+          Deferred: canonical per-player season history is not published yet. Current profile data above comes only from the selected Saved Revision.
+        </p>
       </SectionCard>
 
       <SectionCard title="Tournament History">
-        {performanceQuery.isLoading || tournamentResultsQuery.isLoading ? <p className="status">Loading tournament history…</p> : null}
-        {performanceQuery.error ? <p className="error">Failed to load season performance: {String(performanceQuery.error)}</p> : null}
-        {tournamentResultsQuery.error ? <p className="error">Failed to load tournament results: {String(tournamentResultsQuery.error)}</p> : null}
-        {performanceEntries.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Run</th>
-                <th>Ranking</th>
-                <th>Race</th>
-                <th>Tournaments</th>
-                <th>Titles</th>
-                <th>Wins</th>
-                <th>Losses</th>
-              </tr>
-            </thead>
-            <tbody>
-              {performanceEntries.map((entry, index) => (
-                <tr key={`performance-${entry.run_id}-${entry.season}-${index}`}>
-                  <td>{entry.season}</td>
-                  <td>{entry.run_id}</td>
-                  <td>{displayMetric(entry.ranking_position)}</td>
-                  <td>{displayMetric(entry.race_position)}</td>
-                  <td>{entry.tournaments_played}</td>
-                  <td>{entry.titles}</td>
-                  <td>{entry.wins}</td>
-                  <td>{entry.losses}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-        {tournamentResultEntries.length ? (
-          <table>
-            <thead>
-              <tr>
-                <th>Season</th>
-                <th>Week</th>
-                <th>Event</th>
-                <th>Category</th>
-                <th>Finish</th>
-                <th>Wins</th>
-                <th>Losses</th>
-                <th>Points</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tournamentResultEntries.map((entry, index) => (
-                <tr key={`result-${entry.run_id}-${entry.event_id}-${entry.event_sequence}-${index}`}>
-                  <td>{entry.season}</td>
-                  <td>{weekCell(runId, entry.week)}</td>
-                  <td>{tournamentEventCell(runId, entry.event_id, entry.event_name)}</td>
-                  <td>{entry.event_category ?? '—'}</td>
-                  <td>
-                    {entry.finish ?? '—'}
-                    {entry.is_title ? ' 🏆' : ''}
-                  </td>
-                  <td>{entry.wins}</td>
-                  <td>{entry.losses}</td>
-                  <td>{displayMetric(entry.ranking_points_awarded)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : null}
-        {performanceQuery.data &&
-        tournamentResultsQuery.data &&
-        !performanceEntries.length &&
-        !tournamentResultEntries.length ? (
-          <p className="status">This preview is not connected for this data shape yet.</p>
-        ) : null}
+        <p className="status">
+          Deferred: canonical per-player tournament/performance history is not published yet. No legacy SimulationRun history is shown here.
+        </p>
       </SectionCard>
-
-      {playerProfile ? (
-        <details>
-          <summary>Show technical player data</summary>
-          <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
-        </details>
-      ) : null}
     </section>
   )
 }
@@ -818,35 +691,63 @@ export function ViewerRunCountriesPage(): JSX.Element {
 
 export function ViewerRunCountryDetailPage(): JSX.Element {
   const { countryCode = '' } = useParams()
-  const { productRunId: runId, legacySimulationRunId } = useViewerProductRunRouteContext()
+  const { productRunId: runId } = useViewerProductRunRouteContext()
 
-  const detailQuery = useQuery({
-    queryKey: ['viewer-run-country-detail', runId, countryCode],
-    queryFn: () => getRunNationDetail(legacySimulationRunId, countryCode),
-    enabled: Boolean(runId && countryCode)
+  const countriesQuery = useQuery({
+    queryKey: ['viewer-run-country-profile-canonical', runId],
+    queryFn: () => getViewerCountries(runId),
+    enabled: Boolean(runId && countryCode),
+    retry: false
+  })
+  const playersQuery = useQuery({
+    queryKey: ['viewer-run-country-profile-players-canonical', runId],
+    queryFn: () => getViewerPlayers(runId),
+    enabled: Boolean(runId && countryCode),
+    retry: false
   })
 
-  const countryProfile = hasCountryProfileShape(detailQuery.data) ? detailQuery.data : null
-  const topPlayers = normalizeTopPlayers(countryProfile?.top_players)
-  const sourceMix = normalizeCountMap(countryProfile?.source_mix)
-  const bandDistribution = normalizeDistribution(countryProfile?.band_distribution)
-  const originBandDistribution = normalizeDistribution(countryProfile?.origin_band_distribution)
-  const showDeferredPreview = !detailQuery.isLoading && !detailQuery.error && !countryProfile
+  const normalizedCode = countryCode.toUpperCase()
+  const countryProfile =
+    countriesQuery.data?.countries.find((country) => country.country_code === normalizedCode) ?? null
+  const countryPlayers = (playersQuery.data?.players ?? [])
+    .filter((player) => player.country_code === normalizedCode)
+    .sort((a, b) => (b.current_ovr ?? -1) - (a.current_ovr ?? -1) || a.player_id.localeCompare(b.player_id))
+
+  const isLoading = countriesQuery.isLoading || playersQuery.isLoading
+  const hasError = countriesQuery.isError || playersQuery.isError
 
   return (
     <section className="panel">
-      <PageIntro title="Country Profile" subtitle="Read-only country profile for the selected run." />
+      <PageIntro
+        title="Country Profile"
+        subtitle="Canonical Saved-Revision current country profile. Historical talent/source breakdowns remain deferred until a dedicated canonical history authority exists."
+      />
       <CurrentContextStrip
         items={[
-          { label: 'Active run ID', value: runId || 'unknown' },
-          { label: 'Country code', value: countryCode || 'unknown' },
-          { label: 'Profile status', value: countryProfile ? 'connected' : 'preview pending' }
+          { label: 'Product Run', value: runId || 'unknown' },
+          { label: 'Viewer Branch', value: countriesQuery.data?.viewer_branch_id ?? playersQuery.data?.viewer_branch_id ?? '—' },
+          {
+            label: 'Public week',
+            value: countriesQuery.data
+              ? `S${countriesQuery.data.season_index} W${countriesQuery.data.week}`
+              : playersQuery.data
+                ? `S${playersQuery.data.season_index} W${playersQuery.data.week}`
+                : '—'
+          },
+          { label: 'Country code', value: normalizedCode || 'unknown' },
+          { label: 'Profile status', value: countryProfile ? 'canonical current profile' : 'unavailable' }
         ]}
       />
 
-      {detailQuery.isLoading ? <p className="status">Loading country profile…</p> : null}
-      {detailQuery.error ? <p className="error">Failed to load country profile: {String(detailQuery.error)}</p> : null}
-      {showDeferredPreview ? <p className="status">This preview is not connected for this data shape yet.</p> : null}
+      {isLoading ? <p className="status">Loading canonical country profile…</p> : null}
+      {hasError ? (
+        <p className="error">
+          Failed to load canonical country profile: {String(countriesQuery.error ?? playersQuery.error)}
+        </p>
+      ) : null}
+      {!isLoading && !hasError && !countryProfile ? (
+        <p className="status">No canonical country with this code exists in the selected Saved Revision.</p>
+      ) : null}
 
       {countryProfile ? (
         <>
@@ -854,68 +755,52 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
             <MetadataList
               items={[
                 { label: 'Country code', value: countryProfile.country_code },
-                { label: 'Country name', value: countryProfile.country_name ?? '—' },
-                { label: 'Total players', value: countryProfile.total_players },
-                { label: 'Average Power Rating', value: displayFixed(countryProfile.average_overall) },
-                { label: 'Average age', value: displayFixed(countryProfile.average_age) }
+                { label: 'Total players', value: countryProfile.player_count },
+                { label: 'Active players', value: countryProfile.active_player_count },
+                { label: 'Retired players', value: countryProfile.retired_player_count },
+                { label: 'Average Power Rating', value: displayFixed(countryProfile.average_current_ovr) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Player base">
+          <SectionCard title="Top player">
             <MetadataList
               items={[
-                { label: 'Top band count', value: displayMetric(countryProfile.top_band_count) },
-                { label: 'Manual override count', value: displayMetric(countryProfile.manual_override_count) },
-                { label: 'Planner generated count', value: displayMetric(countryProfile.planner_generated_count) },
-                { label: 'Rollover carried count', value: displayMetric(countryProfile.rollover_carried_count) }
+                {
+                  label: 'Player',
+                  value: playerProfileCell(runId, countryProfile.top_player_id, countryProfile.top_player_name)
+                },
+                { label: 'Power Rating', value: displayMetric(countryProfile.top_player_current_ovr) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Source mix">
-            <p>{displayCountMap(sourceMix)}</p>
-          </SectionCard>
-
-          <SectionCard title="Talent bands">
-            <MetadataList
-              items={[
-                { label: 'Current band distribution', value: displayDistribution(bandDistribution) },
-                { label: 'Origin band distribution', value: displayDistribution(originBandDistribution) },
-                { label: 'Average technique', value: displayFixed(countryProfile.average_visible_stats?.technique) },
-                { label: 'Average movement', value: displayFixed(countryProfile.average_visible_stats?.movement) },
-                { label: 'Average physical', value: displayFixed(countryProfile.average_visible_stats?.physical) },
-                { label: 'Average mental', value: displayFixed(countryProfile.average_visible_stats?.mental) }
-              ]}
-            />
-          </SectionCard>
-
-          <SectionCard title="Top players">
-            {topPlayers.length ? (
+          <SectionCard title="Current players">
+            {countryPlayers.length ? (
               <table>
                 <thead>
                   <tr>
                     <th>Player</th>
                     <th>Age</th>
+                    <th>Status</th>
                     <th>Power Rating</th>
-                    <th>Source</th>
-                    <th>Band</th>
+                    <th>Potential</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {topPlayers.map((player, index) => (
-                    <tr key={player.player_id ?? `${player.name ?? 'unknown'}-${index}`}>
+                  {countryPlayers.map((player) => (
+                    <tr key={player.player_id}>
                       <td>{playerProfileCell(runId, player.player_id, player.name)}</td>
-                      <td>{displayMetric(player.age)}</td>
-                      <td>{displayMetric(player.overall)}</td>
-                      <td>{player.source_type ?? '—'}</td>
-                      <td>{player.quality_band ?? '—'}</td>
+                      <td>{player.age}</td>
+                      <td>{player.status}</td>
+                      <td>{displayMetric(player.current_ovr)}</td>
+                      <td>{displayMetric(player.potential_ovr)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             ) : (
-              <p className="status">No data is available for this run yet.</p>
+              <p className="status">No canonical players are published for this country in the selected Saved Revision.</p>
             )}
           </SectionCard>
 
@@ -928,12 +813,12 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
         </>
       ) : null}
 
-      {countryProfile ? (
-        <details>
-          <summary>Show technical country data</summary>
-          <pre className="json-block">{JSON.stringify(detailQuery.data, null, 2)}</pre>
-        </details>
-      ) : null}
+      <SectionCard title="Historical country analytics">
+        <p className="status">
+          Deferred: canonical historical source mix, talent-band evolution and historical country aggregates are not published yet.
+        </p>
+      </SectionCard>
     </section>
   )
 }
+

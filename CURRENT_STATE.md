@@ -3331,4 +3331,15 @@ The generic top-level `ViewerSnapshotLandingPage` and unused `ViewerRunSnapshotL
 
 Canonical top-level/current Ranking and Race surfaces remain authoritative. The only retained legacy Race snapshot compatibility route is the actually routed `/viewer/runs/:runId/race/:snapshotSequence` detail, because legacy Race `snapshot_sequence` identity is distinct from canonical seasonal Finals Race identity and is not reinterpreted.
 
+### Legacy Race snapshot detail with canonical source context
+
+The routed legacy Race snapshot detail keeps `snapshot_sequence` compatibility lookup/navigation on the legacy SimulationRun snapshot store, but source-event context is now Product Run-scoped and Saved-Revision-backed:
+
+- Saved Calendar supplies source event season/week/category/tour/template;
+- Tournament History supplies canonical tournament-history/result-publication presence;
+- legacy `getRun` and `listEvents` are no longer used by this page.
+
+The legacy snapshot identity remains distinct from canonical Finals Race `target_season_index`; no reinterpretation is performed.
+
+See `docs/VIEWER_RACE_SNAPSHOT_CANONICAL_CONTEXT_V1.md`.
 

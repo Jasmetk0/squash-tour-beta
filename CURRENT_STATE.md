@@ -3313,3 +3313,15 @@ Run-scoped Player Profile and Country Profile surfaces now use Product Run-scope
 
 See `docs/VIEWER_CANONICAL_PEOPLE_DETAILS_V1.md`.
 
+### Canonical Viewer Tour hub migration
+
+Top-level Viewer Tour surfaces now use Product Run-scoped canonical Saved-Revision/publication sources:
+
+- Season Hub -> Saved Calendar + Tournament History + Finals Race History;
+- All Tournaments -> Saved Calendar + Tournament History;
+- Current Week -> Saved Calendar filtered by Viewer-selected season/week.
+
+These pages no longer use legacy `useActiveViewerRunId`, `getRun`, `getRunStatusSummary`, `listEvents` or `getFinalsSummary`.
+
+See `docs/VIEWER_CANONICAL_TOUR_HUB_V1.md`.
+

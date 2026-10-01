@@ -21,8 +21,6 @@ import {
   SummaryPills
 } from '../components/RunScopedUi'
 import { formatApiError, isApiNotFound } from '../utils/apiErrors'
-import { RacePreviewTable } from '../viewer/RacePreviewTable'
-import { parseRacePreviewPayload } from '../viewer/racePayload'
 import { getSnapshotPayloadRows, getSnapshotPayloadTableAuditStatus } from './viewer/rankings/viewerSnapshotPayloadDisplay'
 import {
   viewerPlannedEventPath,
@@ -61,32 +59,9 @@ function buildCanonicalHistoryContext(events: ViewerTournamentHistoryItem[]): Ma
 }
 
 const RACE_COPY = {
-  listTitle: 'Race to Finals',
   detailTitle: 'Race to Finals',
-  publicationLabel: 'Race publication',
   pluralPublicationLabel: 'Race publications',
-  listDescription: 'Read-only Race publications for the selected run.',
-  detailDescription: 'Read-only Race publication metadata for the selected run.',
-  detailLinkLabel: 'Open race detail'
-}
-
-function buildPlannedContext(runData: SeasonStateResponse | undefined): Map<string, PlannedSnapshotContext> {
-  const map = new Map<string, PlannedSnapshotContext>()
-  ;(runData?.season_state.ordered_events ?? []).forEach((event, index) => {
-    if (typeof event.event_id !== 'string') return
-    map.set(event.event_id, {
-      week: event.week,
-      category: event.category,
-      tour: event.tour,
-      templateId: event.template_id,
-      planPosition: index + 1
-    })
-  })
-  return map
-}
-
-function resolveWeek(plannedContext?: PlannedSnapshotContext, persistedEvent?: PersistedEventContext): number | null {
-  return persistedEvent?.week ?? plannedContext?.week ?? null
+  detailDescription: 'Read-only legacy Race snapshot metadata with canonical Saved-Revision source context.'
 }
 
 function normalizeSourceEventId(value: unknown): string | null {

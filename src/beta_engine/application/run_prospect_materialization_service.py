@@ -11,6 +11,13 @@ from beta_engine.domain.players.prospect_sporting_profile import (
     DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
     materialize_prospect_sporting_profile,
 )
+from beta_engine.domain.players.talent_models import TalentQualityBand
+from beta_engine.domain.players.talent_quality_policy import (
+    TALENT_QUALITY_POLICY_ID,
+    normalized_talent_quality_weights,
+    talent_quality_band_from_seed,
+    talent_quality_policy_fingerprint,
+)
 from beta_engine.infrastructure.db import RunProspectRecord, SimulationPersistenceRepository, deterministic_prospect_id
 
 COHORT_POLICY_VERSION = "weekly_15yo_cohort_v1"
@@ -30,6 +37,28 @@ class MaterializedRunProspectCountryTotal:
 class MaterializedRunProspectWeekTotal:
     season_week: int
     materialized_count: int
+
+
+@dataclass(frozen=True)
+class MaterializedRunProspectTalentCountrySummary:
+    country_code: str
+    country_name: str | None
+    materialized_count: int
+    expected_band_counts: dict[str, float]
+    generated_band_counts: dict[str, int]
+
+
+@dataclass(frozen=True)
+class MaterializedRunProspectTalentSummary:
+    run_id: str
+    season_start_year: int
+    total_materialized: int
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    quality_weights: dict[str, float]
+    expected_band_counts: dict[str, float]
+    generated_band_counts: dict[str, int]
+    countries: list[MaterializedRunProspectTalentCountrySummary]
 
 
 @dataclass(frozen=True)
@@ -155,6 +184,65 @@ class RunProspectMaterializationService:
             country_totals=[MaterializedRunProspectCountryTotal(country_code=code, country_name=name, materialized_count=count) for (code, name), count in sorted(country_totals.items())],
             already_materialized=already,
             message=("Prospect cohort was already materialized." if already else "Prospect cohort materialized."),
+        )
+
+    def summarize_materialized_talent(
+        self,
+        *,
+        run_id: str,
+        season_start_year: int | None = None,
+    ) -> MaterializedRunProspectTalentSummary:
+        run_info = self.repository.get_simulation_run(run_id=run_id)
+        if run_info is None:
+            raise KeyError(f"run_id {run_id} was not found")
+        target_season = run_info.season if season_start_year is None else season_start_year
+        records = self.repository.list_run_prospects(
+            run_id=run_id,
+            season_start_year=target_season,
+            limit=None,
+        )
+        records = [record for record in records if record.source_type == SOURCE_TYPE]
+        weights = normalized_talent_quality_weights()
+        weight_payload = {band.value: weight for band, weight in weights.items()}
+        generated = {band.value: 0 for band in TalentQualityBand}
+        country_rows: dict[tuple[str, str | None], list[RunProspectRecord]] = {}
+        for record in records:
+            band = talent_quality_band_from_seed(record.potential_seed)
+            generated[band.value] += 1
+            country_rows.setdefault((record.country_code, record.country_name), []).append(record)
+
+        countries: list[MaterializedRunProspectTalentCountrySummary] = []
+        for (country_code, country_name), country_records in sorted(country_rows.items()):
+            country_generated = {band.value: 0 for band in TalentQualityBand}
+            for record in country_records:
+                band = talent_quality_band_from_seed(record.potential_seed)
+                country_generated[band.value] += 1
+            countries.append(
+                MaterializedRunProspectTalentCountrySummary(
+                    country_code=country_code,
+                    country_name=country_name,
+                    materialized_count=len(country_records),
+                    expected_band_counts={
+                        band.value: round(len(country_records) * weights[band], 4)
+                        for band in TalentQualityBand
+                    },
+                    generated_band_counts=country_generated,
+                )
+            )
+
+        return MaterializedRunProspectTalentSummary(
+            run_id=run_id,
+            season_start_year=target_season,
+            total_materialized=len(records),
+            quality_policy_id=TALENT_QUALITY_POLICY_ID,
+            quality_policy_fingerprint=talent_quality_policy_fingerprint(),
+            quality_weights=weight_payload,
+            expected_band_counts={
+                band.value: round(len(records) * weights[band], 4)
+                for band in TalentQualityBand
+            },
+            generated_band_counts=generated,
+            countries=countries,
         )
 
     def _build_records(

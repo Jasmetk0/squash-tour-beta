@@ -8,6 +8,10 @@ from beta_engine.domain.players import (
     TalentQualityBand,
     WeightedRecentGreatnessDampener,
 )
+from beta_engine.domain.players.talent_quality_policy import (
+    PROVISIONAL_TALENT_QUALITY_WEIGHTS,
+    normalized_talent_quality_weights,
+)
 
 
 def _country(
@@ -125,6 +129,19 @@ def test_population_helps_volume_but_does_not_dominate_absurdly() -> None:
 
     assert by_code["HUG"].planned_count > by_code["SML"].planned_count
     assert by_code["HUG"].planned_count / by_code["SML"].planned_count < 3.5
+
+
+def test_planner_uses_shared_provisional_quality_rarity_policy() -> None:
+    planner = AnnualTalentClassPlanner()
+    country = _country(code="AAA", population=50_000_000)
+
+    plan = planner.plan(year=2030, seed=1234, countries=[country])
+    allocation = plan.allocations[0]
+
+    assert allocation.quality_weights == normalized_talent_quality_weights()
+    assert set(allocation.quality_weights) == set(TalentQualityBand)
+    assert sum(allocation.quality_weights.values()) == 1.0
+    assert PROVISIONAL_TALENT_QUALITY_WEIGHTS[TalentQualityBand.GENERATIONAL] == 0.001
 
 
 def test_generational_band_is_very_rare() -> None:

@@ -260,7 +260,7 @@ describe('ViewerRunTournamentsPage', () => {
     renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
 
     expect(await screen.findByRole('heading', { name: 'Canonical Tournament History' })).toBeInTheDocument()
-    const list = screen.getByRole('list', { name: 'Canonical tournament history list' })
+    const list = await screen.findByRole('list', { name: 'Canonical tournament history list' })
     expect(within(list).getByText('Old Open')).toBeInTheDocument()
     expect(within(list).getByText('Canonical Open')).toBeInTheDocument()
     expect(within(list).getByRole('link', { name: 'W5' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/5')

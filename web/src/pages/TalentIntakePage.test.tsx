@@ -17,6 +17,7 @@ const api = vi.hoisted(() => {
   return {
     ApiError,
     getRunWeeklyIntakeCohortSeasonPreview: vi.fn(),
+    getRunProspectTalentSummary: vi.fn(),
     listRunProspects: vi.fn(),
     materializeRunProspects: vi.fn()
   }
@@ -104,10 +105,61 @@ describe('TalentIntakePage', () => {
           development_seed: 'c',
           potential_seed: 'd',
           trait_seed: 'e',
+          quality_band: 'elite_prospect',
           profile_json: {},
           development_json: { development_timing: 'Late Bloomer' },
           potential_json: { potential_ovr: 177 },
           trait_json: {}
+        }
+      ]
+    })
+    api.getRunProspectTalentSummary.mockReset()
+    api.getRunProspectTalentSummary.mockResolvedValue({
+      run_id: 'run-1',
+      season_start_year: 2000,
+      total_materialized: 1,
+      quality_policy_id: 'talent-quality-rarity.provisional.v1',
+      quality_policy_fingerprint: 'f'.repeat(64),
+      quality_weights: {
+        solid_prospect: 0.633,
+        strong_prospect: 0.27,
+        elite_prospect: 0.08,
+        special_prospect: 0.016,
+        generational_talent: 0.001
+      },
+      expected_band_counts: {
+        solid_prospect: 0.633,
+        strong_prospect: 0.27,
+        elite_prospect: 0.08,
+        special_prospect: 0.016,
+        generational_talent: 0.001
+      },
+      generated_band_counts: {
+        solid_prospect: 0,
+        strong_prospect: 0,
+        elite_prospect: 1,
+        special_prospect: 0,
+        generational_talent: 0
+      },
+      countries: [
+        {
+          country_code: 'CZE',
+          country_name: 'Czechia',
+          materialized_count: 1,
+          expected_band_counts: {
+            solid_prospect: 0.633,
+            strong_prospect: 0.27,
+            elite_prospect: 0.08,
+            special_prospect: 0.016,
+            generational_talent: 0.001
+          },
+          generated_band_counts: {
+            solid_prospect: 0,
+            strong_prospect: 0,
+            elite_prospect: 1,
+            special_prospect: 0,
+            generational_talent: 0
+          }
         }
       ]
     })
@@ -168,14 +220,30 @@ describe('TalentIntakePage', () => {
 
     expect(await screen.findByRole('table', { name: 'Materialized talent intake prospects' })).toBeInTheDocument()
     expect(screen.getByText('CZE Prospect 0001')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Elite Prospect' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: '177' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'Late Bloomer' })).toBeInTheDocument()
-    expect(screen.getByText(/not yet mapped to Talent Preview quality bands/i)).toBeInTheDocument()
+    expect(screen.getByText(/Quality band comes independently from the shared rarity policy/i)).toBeInTheDocument()
     expect(api.listRunProspects).toHaveBeenCalledWith('run-1', {
       season_start_year: 2000,
       limit: 500,
       offset: 0
     })
+  })
+
+  it('shows Expected vs Generated quality globally and by country', async () => {
+    renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
+
+    const globalTable = await screen.findByRole('table', { name: 'Talent intake expected generated global quality' })
+    expect(within(globalTable).getByRole('cell', { name: 'Elite Prospect' })).toBeInTheDocument()
+    expect(within(globalTable).getByRole('cell', { name: '0.08' })).toBeInTheDocument()
+    expect(within(globalTable).getByRole('cell', { name: '1' })).toBeInTheDocument()
+    expect(within(globalTable).getByRole('cell', { name: '+0.92' })).toBeInTheDocument()
+
+    const countryTable = screen.getByRole('table', { name: 'Talent intake expected generated country quality' })
+    expect(within(countryTable).getByText('Czechia (CZE)')).toBeInTheDocument()
+    expect(within(countryTable).getByText('0.08 → 1 (+0.92)')).toBeInTheDocument()
+    expect(api.getRunProspectTalentSummary).toHaveBeenCalledWith('run-1', 2000)
   })
 
   it('requires review confirmation and materializes without overwrite', async () => {
@@ -201,6 +269,7 @@ describe('TalentIntakePage', () => {
     })
     expect(await screen.findByText('Prospect cohort materialized.')).toBeInTheDocument()
     await waitFor(() => expect(api.listRunProspects.mock.calls.length).toBeGreaterThanOrEqual(2))
+    await waitFor(() => expect(api.getRunProspectTalentSummary.mock.calls.length).toBeGreaterThanOrEqual(2))
     expect(screen.getByText(/Created 204; existing 0; persisted in scope 204/i)).toBeInTheDocument()
   })
 

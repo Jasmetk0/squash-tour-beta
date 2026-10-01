@@ -3718,7 +3718,11 @@ export type TalentClassPreviewCountry = {
   country_name: string
   planned_count: number
   quality_weights: Record<string, number>
+  expected_band_counts: Record<string, number>
   actual_band_counts: Record<string, number>
+  expected_elite_talents: number
+  expected_tour_talents: number
+  expected_pro_depth: number
   elite_talents: number
   tour_talents: number
   pro_depth: number

@@ -1725,3 +1725,7 @@ Canonical Saved-Revision Players/Countries endpoints now exist. Next migrate run
 
 Canonical Players/Countries now drive Viewer hubs, search, H2H samples and run-scoped list pages. Remaining people-related legacy compatibility is limited to detailed player career/history/performance/tournament-result reads and detailed country profile reads. Replace those only with explicit canonical history/profile authorities rather than reconstructing from current summaries.
 
+### Viewer people detail cleanup
+
+Current Player and Country detail surfaces are now canonical and Saved-Revision-backed. Remaining people-related Viewer compatibility should focus only on defining explicit canonical historical authorities for per-player career/performance/tournament history and historical country analytics; do not reconstruct them from current summaries.
+

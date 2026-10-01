@@ -14,6 +14,11 @@ from beta_engine.domain.players.lifecycle import (
 )
 from beta_engine.domain.rankings.official import RankingWeek
 from beta_engine.domain.players.prospect_sporting_profile import ProspectSportingProfile
+from beta_engine.domain.players.talent_models import TalentQualityBand
+from beta_engine.domain.players.talent_quality_policy import (
+    normalized_talent_quality_weights,
+    talent_quality_band_from_seed,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import put_lifecycle
 
 
@@ -204,6 +209,24 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_id"]
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_fingerprint"]
 
+    expected_band = talent_quality_band_from_seed(first.potential_seed)
+    summary = service.summarize_materialized_talent(
+        run_id="run-m",
+        season_start_year=2027,
+    )
+    assert summary.total_materialized == result.annual_target
+    assert sum(summary.generated_band_counts.values()) == result.annual_target
+    assert summary.generated_band_counts[expected_band.value] >= 1
+    assert summary.quality_weights == {
+        band.value: weight
+        for band, weight in normalized_talent_quality_weights().items()
+    }
+    assert sum(summary.expected_band_counts.values()) == pytest.approx(result.annual_target)
+    ger_summary = next(item for item in summary.countries if item.country_code == "GER")
+    assert ger_summary.materialized_count == result.annual_target
+    assert sum(ger_summary.generated_band_counts.values()) == result.annual_target
+    assert sum(ger_summary.expected_band_counts.values()) == pytest.approx(result.annual_target)
+
 
 def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
     repository, _ = _repository(tmp_path)
@@ -338,3 +361,29 @@ def test_materialization_policy_conflict_removes_only_stale_scope_records_on_ove
     assert repository.get_run_prospect(run_id="run-policy", prospect_id="future-season-prospect") == future_season_record
     assert "materialization_policy" in ger_records[0].profile_json
     assert ger_records[0].profile_json["materialization_policy"]["policy_fingerprint"]
+
+
+def test_materialized_talent_summary_is_stable_and_preserves_global_rarity_authority(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(
+        SimulationRunInfo(run_id="run-band-summary", season=2027, seed=7)
+    )
+    service = _materialization_service(repository)
+    service.materialize_15yo_cohort(
+        run_id="run-band-summary",
+        base_annual_intake_target=120,
+    )
+
+    first = service.summarize_materialized_talent(run_id="run-band-summary")
+    second = service.summarize_materialized_talent(run_id="run-band-summary")
+
+    assert first == second
+    assert first.total_materialized > 0
+    assert set(first.generated_band_counts) == {band.value for band in TalentQualityBand}
+    assert sum(first.generated_band_counts.values()) == first.total_materialized
+    assert sum(first.expected_band_counts.values()) == pytest.approx(first.total_materialized)
+    assert sum(country.materialized_count for country in first.countries) == first.total_materialized
+    assert all(
+        sum(country.generated_band_counts.values()) == country.materialized_count
+        for country in first.countries
+    )

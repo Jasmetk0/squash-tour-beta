@@ -102,6 +102,20 @@ def test_single_year_preview_is_deterministic_for_same_seed_and_year(tmp_path) -
     assert left == right
     assert left["total_talents"] == sum(item["planned_count"] for item in left["countries"])
     preview_country = left["countries"][0]
+    assert sum(preview_country["expected_band_counts"].values()) == preview_country["planned_count"]
+    for band, weight in preview_country["quality_weights"].items():
+        assert preview_country["expected_band_counts"][band] == round(
+            preview_country["planned_count"] * weight,
+            4,
+        )
+    assert preview_country["expected_elite_talents"] == round(
+        preview_country["expected_band_counts"]["elite_prospect"]
+        + preview_country["expected_band_counts"]["special_prospect"]
+        + preview_country["expected_band_counts"]["generational_talent"],
+        4,
+    )
+    assert preview_country["expected_tour_talents"] == preview_country["expected_band_counts"]["strong_prospect"]
+    assert preview_country["expected_pro_depth"] == preview_country["expected_band_counts"]["solid_prospect"]
     assert preview_country["elite_talents"] == (
         preview_country["actual_band_counts"]["elite_prospect"]
         + preview_country["actual_band_counts"]["special_prospect"]

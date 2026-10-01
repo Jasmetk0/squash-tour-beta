@@ -444,7 +444,7 @@ export function ViewerRunWeekPage(): JSX.Element {
         {historyQuery.error ? <p className="error">Failed to load Tournament History: {formatApiError(historyQuery.error)}</p> : null}
         {rankingHistoryQuery.error ? <p className="error">Failed to load Official Ranking history: {formatApiError(rankingHistoryQuery.error)}</p> : null}
         {finalsRaceQuery.error ? <p className="error">Failed to load Finals Race publications: {formatApiError(finalsRaceQuery.error)}</p> : null}
-        {!historyQuery.error && !rankingHistoryQuery.error && !raceQuery.error && hasValidWeek ? (
+        {!historyQuery.error && !rankingHistoryQuery.error && !finalsRaceQuery.error && hasValidWeek ? (
           <MetadataList
             items={[
               { label: 'Published tournament results', value: completedResults.length },

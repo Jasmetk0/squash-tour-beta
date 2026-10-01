@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -142,8 +142,9 @@ describe('TalentIntakePage', () => {
       })
     })
     expect(await screen.findByText('FAX World')).toBeInTheDocument()
-    expect(screen.getByRole('table', { name: 'Talent intake country totals' })).toBeInTheDocument()
-    expect(screen.getByText('Czechia (CZE)')).toBeInTheDocument()
+    const countryTotalsTable = screen.getByRole('table', { name: 'Talent intake country totals' })
+    expect(countryTotalsTable).toBeInTheDocument()
+    expect(within(countryTotalsTable).getByText('Czechia (CZE)')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Talent intake weekly schedule' })).toBeInTheDocument()
     expect(screen.getByText(/materialized only after confirmation/i)).toBeInTheDocument()
   })

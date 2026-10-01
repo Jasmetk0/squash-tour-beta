@@ -1733,3 +1733,7 @@ Current Player and Country detail surfaces are now canonical and Saved-Revision-
 
 Season Hub, All Tournaments and Current Week are now Product Run-scoped and canonical. Remaining Tour compatibility work is concentrated in run-scoped snapshot/week/tournament detail surfaces that still depend on legacy SimulationRun snapshot/event readers.
 
+### Snapshot compatibility cleanup
+
+Dead generic/list snapshot surfaces are retired. Remaining legacy Race snapshot compatibility is now isolated to the routed snapshot-sequence detail page. Do not map legacy `snapshot_sequence` to canonical Finals Race `target_season_index`; retire or replace that detail only when an explicit canonical historical identity/read model exists.
+

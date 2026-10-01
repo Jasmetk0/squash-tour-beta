@@ -1721,3 +1721,7 @@ H2H sporting metadata is now canonical and Product Run-scoped. The remaining H2H
 
 Canonical Saved-Revision Players/Countries endpoints now exist. Next migrate run-scoped Players/Countries pages, top-level People landings and H2H player samples from legacy `listRunPlayers/listRunNations` onto these Product Run-scoped projections, then retire the remaining Viewer SimulationRun player compatibility reads.
 
+### Viewer people compatibility cleanup
+
+Canonical Players/Countries now drive Viewer hubs, search, H2H samples and run-scoped list pages. Remaining people-related legacy compatibility is limited to detailed player career/history/performance/tournament-result reads and detailed country profile reads. Replace those only with explicit canonical history/profile authorities rather than reconstructing from current summaries.
+

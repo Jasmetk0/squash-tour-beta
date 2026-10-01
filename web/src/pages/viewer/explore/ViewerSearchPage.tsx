@@ -1,18 +1,23 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
-import { getRun, listEvents, listRunNations, listRunPlayers } from '../../../api/client'
+import {
+  getViewerCountries,
+  getViewerPlayers,
+  getViewerRunCalendar,
+  getViewerTournamentHistory,
+} from '../../../api/client'
 import { ViewerActiveRunLinks, ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
+import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { viewerRunsPath } from '../../../viewer/viewerRoutes'
-import { useActiveViewerRunId } from '../../../viewer/useActiveViewerRunId'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
-import { buildSearchTournamentResults, normalizeViewerSearchQuery, searchTextMatches } from './viewerComparisonDisplay'
+import { normalizeViewerSearchQuery, searchTextMatches, type ViewerSearchTournamentResult } from './viewerComparisonDisplay'
 import { renderSearchTournamentMetadata } from './viewerComparisonRender'
 
 export function ViewerSearchPage(): JSX.Element {
-  const activeRunId = useActiveViewerRunId()
+  const productRunId = useActiveViewerProductRunId()
   const [searchParams] = useSearchParams()
   const urlQuery = normalizeViewerSearchQuery(searchParams)
   const [query, setQuery] = useState(urlQuery)
@@ -23,33 +28,63 @@ export function ViewerSearchPage(): JSX.Element {
   }, [urlQuery])
 
   const playersQuery = useQuery({
-    queryKey: ['viewer-search-run-players', activeRunId],
-    queryFn: () => listRunPlayers(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId && hasSearchQuery),
+    queryKey: ['viewer-search-canonical-players', productRunId],
+    queryFn: () => getViewerPlayers(productRunId ?? ''),
+    enabled: Boolean(productRunId && hasSearchQuery),
     retry: false
   })
-  const nationsQuery = useQuery({
-    queryKey: ['viewer-search-run-nations', activeRunId],
-    queryFn: () => listRunNations(activeRunId ?? '', { limit: 50, offset: 0 }),
-    enabled: Boolean(activeRunId && hasSearchQuery),
+  const countriesQuery = useQuery({
+    queryKey: ['viewer-search-canonical-countries', productRunId],
+    queryFn: () => getViewerCountries(productRunId ?? ''),
+    enabled: Boolean(productRunId && hasSearchQuery),
     retry: false
   })
-  const runQuery = useQuery({
-    queryKey: ['viewer-search-run-calendar', activeRunId],
-    queryFn: () => getRun(activeRunId ?? ''),
-    enabled: Boolean(activeRunId && hasSearchQuery),
+  const calendarQuery = useQuery({
+    queryKey: ['viewer-search-canonical-calendar', productRunId],
+    queryFn: () => getViewerRunCalendar(productRunId ?? ''),
+    enabled: Boolean(productRunId && hasSearchQuery),
     retry: false
   })
-  const eventsQuery = useQuery({
-    queryKey: ['viewer-search-run-events', activeRunId],
-    queryFn: () => listEvents(activeRunId ?? ''),
-    enabled: Boolean(activeRunId && hasSearchQuery),
+  const historyQuery = useQuery({
+    queryKey: ['viewer-search-canonical-tournament-history', productRunId],
+    queryFn: () => getViewerTournamentHistory(productRunId ?? ''),
+    enabled: Boolean(productRunId && hasSearchQuery),
     retry: false
   })
 
-  if (!activeRunId || !hasSearchQuery) {
+  const tournaments = useMemo<ViewerSearchTournamentResult[]>(() => {
+    const resultIds = new Set(
+      (historyQuery.data?.tournaments ?? [])
+        .filter((event) => event.result_published)
+        .map((event) => event.event_id)
+    )
+    return (calendarQuery.data?.seasons ?? [])
+      .flatMap((season) => season.events)
+      .filter((event) =>
+        searchTextMatches(urlQuery, [
+          event.event_id,
+          event.event_name,
+          event.tour_level,
+          event.category,
+          event.template_id,
+          event.season_week,
+        ])
+      )
+      .map((event) => ({
+        eventId: event.event_id,
+        season: Number.parseInt(String(event.season).split('/')[0] ?? '', 10) || null,
+        week: event.season_week,
+        tour: event.tour_level,
+        category: event.category,
+        templateId: event.template_id,
+        hasPlannedEvent: true,
+        hasPersistedEvent: resultIds.has(event.event_id),
+      }))
+  }, [calendarQuery.data?.seasons, historyQuery.data?.tournaments, urlQuery])
+
+  if (!productRunId || !hasSearchQuery) {
     return (
-      <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run data only.">
+      <ViewerShellPage title="Search" description="Read-only Viewer Search using canonical Product Run data only.">
         <article className="viewer-active-run-card" aria-label="Search">
           <span className="eyebrow">Viewer search</span>
           <h3>Search{urlQuery ? `: ${urlQuery}` : ''}</h3>
@@ -61,28 +96,49 @@ export function ViewerSearchPage(): JSX.Element {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
           />
-          <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+          <ViewerEmptyState>No Product Run search context is available yet.</ViewerEmptyState>
         </article>
       </ViewerShellPage>
     )
   }
 
-  const players = (playersQuery.data?.players ?? []).filter((player) => searchTextMatches(urlQuery, [player.player_id, player.name, player.country_code, player.quality_band]))
-  const nations = (nationsQuery.data?.nations ?? []).filter((nation) => searchTextMatches(urlQuery, [nation.country_code, nation.country_name, nation.top_player_name, nation.top_player_id]))
-  const tournaments = buildSearchTournamentResults(runQuery.data?.season_state.ordered_events ?? [], eventsQuery.data?.events ?? [], urlQuery)
-  const isLoading = playersQuery.isLoading || nationsQuery.isLoading || runQuery.isLoading || eventsQuery.isLoading
-  const hasError = playersQuery.isError || nationsQuery.isError || runQuery.isError || eventsQuery.isError
-  const hasResults = players.length > 0 || nations.length > 0 || tournaments.length > 0
+  const players = (playersQuery.data?.players ?? []).filter((player) =>
+    searchTextMatches(urlQuery, [
+      player.player_id,
+      player.name,
+      player.country_code,
+      player.status,
+      player.identity_source,
+    ])
+  )
+  const countries = (countriesQuery.data?.countries ?? []).filter((country) =>
+    searchTextMatches(urlQuery, [
+      country.country_code,
+      country.top_player_name,
+      country.top_player_id,
+    ])
+  )
+  const isLoading =
+    playersQuery.isLoading ||
+    countriesQuery.isLoading ||
+    calendarQuery.isLoading ||
+    historyQuery.isLoading
+  const hasError =
+    playersQuery.isError ||
+    countriesQuery.isError ||
+    calendarQuery.isError ||
+    historyQuery.isError
+  const hasResults = players.length > 0 || countries.length > 0 || tournaments.length > 0
 
   return (
-    <ViewerShellPage title="Search" description="Read-only Viewer Search using active-run player, country, and tournament data only.">
+    <ViewerShellPage title="Search" description="Read-only Viewer Search using canonical Saved-Revision player, country, and tournament data.">
       <article className="viewer-active-run-card" aria-label="Search">
-        <span className="eyebrow">Active Viewer run</span>
+        <span className="eyebrow">Selected Product Run</span>
         <h3>Search: {urlQuery}</h3>
-        {isLoading ? <p className="status">Loading active run search results…</p> : null}
-        {hasError ? <ViewerEmptyState>Some active run searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
+        {isLoading ? <p className="status">Loading canonical search results…</p> : null}
+        {hasError ? <ViewerEmptyState>Some canonical searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
         <dl className="metadata-list">
-          <div><dt>Active run ID</dt><dd>{activeRunId}</dd></div>
+          <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
           <div><dt>Query</dt><dd>{urlQuery}</dd></div>
         </dl>
         <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
@@ -100,7 +156,7 @@ export function ViewerSearchPage(): JSX.Element {
           {players.length ? (
             <ul className="viewer-home-list">
               {players.map((player) => (
-                <li key={player.player_id}>{renderPlayerSampleMetadata(player, activeRunId)}</li>
+                <li key={player.player_id}>{renderPlayerSampleMetadata(player, productRunId)}</li>
               ))}
             </ul>
           ) : <p className="status">No matching players.</p>}
@@ -108,10 +164,10 @@ export function ViewerSearchPage(): JSX.Element {
 
         <section aria-label="Countries">
           <h4>Countries</h4>
-          {nations.length ? (
+          {countries.length ? (
             <ul className="viewer-home-list">
-              {nations.map((nation) => (
-                <li key={nation.country_code}>{renderCountrySampleMetadata(nation, activeRunId)}</li>
+              {countries.map((country) => (
+                <li key={country.country_code}>{renderCountrySampleMetadata(country, productRunId)}</li>
               ))}
             </ul>
           ) : <p className="status">No matching countries.</p>}
@@ -122,7 +178,7 @@ export function ViewerSearchPage(): JSX.Element {
           {tournaments.length ? (
             <ul className="viewer-home-list">
               {tournaments.map((event) => (
-                <li key={event.eventId}>{renderSearchTournamentMetadata(activeRunId, event)}</li>
+                <li key={event.eventId}>{renderSearchTournamentMetadata(productRunId, event)}</li>
               ))}
             </ul>
           ) : <p className="status">No matching tournaments.</p>}
@@ -131,7 +187,7 @@ export function ViewerSearchPage(): JSX.Element {
         <section aria-label="Links">
           <h4>Links</h4>
           <ViewerActiveRunLinks links={[{ label: 'Open run browser', to: viewerRunsPath() }]} />
-          <p className="status">Result links are shown only when player, country, event, or week IDs are available.</p>
+          <p className="status">Result links use canonical Product Run routes.</p>
         </section>
       </article>
     </ViewerShellPage>

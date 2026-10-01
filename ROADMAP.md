@@ -1737,3 +1737,7 @@ Season Hub, All Tournaments and Current Week are now Product Run-scoped and cano
 
 Dead generic/list snapshot surfaces are retired. Remaining legacy Race snapshot compatibility is now isolated to the routed snapshot-sequence detail page. Do not map legacy `snapshot_sequence` to canonical Finals Race `target_season_index`; retire or replace that detail only when an explicit canonical historical identity/read model exists.
 
+### Race snapshot compatibility boundary
+
+Legacy Race compatibility is now narrowed to snapshot lookup/navigation only. Source-event context is canonical. Remaining retirement requires an explicit canonical historical identity/read model for legacy snapshot-sequence detail; do not map snapshot sequence to Finals Race season identity.
+

@@ -372,7 +372,7 @@ export function ViewerRunWeekPage(): JSX.Element {
               { label: 'Saved Calendar events', value: weekEvents.length },
               { label: 'Published tournament results', value: completedResults.length },
               { label: 'Official Ranking publications', value: rankingPublications.length },
-              { label: 'Legacy Finals Race publications', value: finalsRacePublications.length }
+              { label: 'Finals Race publications', value: finalsRacePublications.length }
             ]}
           />
         ) : null}
@@ -443,7 +443,7 @@ export function ViewerRunWeekPage(): JSX.Element {
       <SectionCard title="Publications this week">
         {historyQuery.error ? <p className="error">Failed to load Tournament History: {formatApiError(historyQuery.error)}</p> : null}
         {rankingHistoryQuery.error ? <p className="error">Failed to load Official Ranking history: {formatApiError(rankingHistoryQuery.error)}</p> : null}
-        {raceQuery.error ? <p className="error">Failed to load Finals Race publications: {formatApiError(raceQuery.error)}</p> : null}
+        {finalsRaceQuery.error ? <p className="error">Failed to load Finals Race publications: {formatApiError(raceQuery.error)}</p> : null}
         {!historyQuery.error && !rankingHistoryQuery.error && !raceQuery.error && hasValidWeek ? (
           <MetadataList
             items={[

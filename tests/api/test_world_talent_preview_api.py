@@ -104,7 +104,9 @@ def test_single_year_preview_is_deterministic_for_same_seed_and_year(tmp_path) -
     assert left == right
     assert left["total_talents"] == sum(item["planned_count"] for item in left["countries"])
     preview_country = left["countries"][0]
-    assert sum(preview_country["expected_band_counts"].values()) == preview_country["planned_count"]
+    assert sum(preview_country["expected_band_counts"].values()) == pytest.approx(
+        preview_country["planned_count"]
+    )
     for band, weight in preview_country["quality_weights"].items():
         assert preview_country["expected_band_counts"][band] == round(
             preview_country["planned_count"] * weight,

@@ -21,9 +21,9 @@ describe('ViewerCurrentWeekPage canonical authority', () => {
       season_count: 1,
       event_count: 1,
       seasons: [{
-        season: '2000',
+        season: '2004/05',
         event_count: 1,
-        events: [{ event_id: 'EVT-5', season: '2000', season_week: 1, calendar_year: 2000, year_week: 1, template_id: 'tmpl', event_name: 'Week One Open', category: 'Gold', tour_level: 'WORLD_TOUR', host_country: 'CZE', host_city: 'Prague', region: 'Europe', duration_in_season_weeks: 1, start_season_week: 1, end_season_week: 1, status: 'planned', main_draw_size: 32, qualification_draw_size: 16, seeds_count: 8, qualifier_spots: 4, wild_cards: 2, byes: 0, prestige: 80 }]
+        events: [{ event_id: 'EVT-5', season: '2004/05', season_week: 10, calendar_year: 2000, year_week: 1, template_id: 'tmpl', event_name: 'Week Ten Open', category: 'Gold', tour_level: 'WORLD_TOUR', host_country: 'CZE', host_city: 'Prague', region: 'Europe', duration_in_season_weeks: 1, start_season_week: 10, end_season_week: 10, status: 'planned', main_draw_size: 32, qualification_draw_size: 16, seeds_count: 8, qualifier_spots: 4, wild_cards: 2, byes: 0, prestige: 80 }]
       }]
     })
   })
@@ -32,9 +32,9 @@ describe('ViewerCurrentWeekPage canonical authority', () => {
     setViewerActiveProductRunId('run alpha')
     renderWithViewerProviders(<ViewerCurrentWeekPage />)
 
-    expect(await screen.findByText('Week One Open')).toBeInTheDocument()
+    expect(await screen.findByText('Week Ten Open')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('run alpha')
-    expect(screen.getByRole('link', { name: 'Week One Open' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT-5')
+    expect(screen.getByRole('link', { name: 'Week Ten Open' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVT-5')
     expectNoForbiddenViewerActions()
   })
 })

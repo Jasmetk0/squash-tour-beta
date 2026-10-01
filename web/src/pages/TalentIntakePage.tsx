@@ -1,8 +1,8 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ApiError, getRunWeeklyIntakeCohortSeasonPreview } from '../api/client'
+import { ApiError, getRunWeeklyIntakeCohortSeasonPreview, materializeRunProspects } from '../api/client'
 
 export function TalentIntakePage(): JSX.Element {
   const params = useParams()
@@ -10,6 +10,7 @@ export function TalentIntakePage(): JSX.Element {
   const [baseAnnualTarget, setBaseAnnualTarget] = useState(200)
   const [seasonGrowthRate, setSeasonGrowthRate] = useState(0.015)
   const [countryFilter, setCountryFilter] = useState('')
+  const [reviewConfirmed, setReviewConfirmed] = useState(false)
 
   const runId = (params.runId ?? runIdInput).trim()
   const previewQuery = useQuery({
@@ -21,6 +22,15 @@ export function TalentIntakePage(): JSX.Element {
       }),
     enabled: runId.length > 0,
     retry: false
+  })
+
+  const materializeMutation = useMutation({
+    mutationFn: () =>
+      materializeRunProspects(runId, {
+        base_annual_intake_target: baseAnnualTarget,
+        season_growth_rate: seasonGrowthRate,
+        overwrite: false
+      })
   })
 
   const filteredCountries = useMemo(() => {
@@ -65,7 +75,11 @@ export function TalentIntakePage(): JSX.Element {
               type="number"
               min={0}
               value={baseAnnualTarget}
-              onChange={(event) => setBaseAnnualTarget(Math.max(0, Number(event.target.value)))}
+              onChange={(event) => {
+                setBaseAnnualTarget(Math.max(0, Number(event.target.value)))
+                setReviewConfirmed(false)
+                materializeMutation.reset()
+              }}
             />
           </label>
           <label>
@@ -76,7 +90,11 @@ export function TalentIntakePage(): JSX.Element {
               max={0.1}
               step={0.001}
               value={seasonGrowthRate}
-              onChange={(event) => setSeasonGrowthRate(Math.min(0.1, Math.max(0, Number(event.target.value))))}
+              onChange={(event) => {
+                setSeasonGrowthRate(Math.min(0.1, Math.max(0, Number(event.target.value))))
+                setReviewConfirmed(false)
+                materializeMutation.reset()
+              }}
             />
           </label>
         </div>
@@ -149,9 +167,52 @@ export function TalentIntakePage(): JSX.Element {
             </table>
 
             <p className="status">
-              Generated player quality and potential remain a separate step. This preview only defines how many 15-year-olds enter the cohort, when,
-              and from which countries.
+              Generated player quality and potential are materialized only after confirmation. This preview defines the exact cohort scope that will be used.
             </p>
+
+            <section className="panel nested-panel">
+              <h4>Review → Confirm materialization</h4>
+              <p>
+                Review Run <strong>{previewQuery.data.run_id}</strong>, season <strong>{previewQuery.data.season}</strong>,
+                annual target <strong>{previewQuery.data.annual_target}</strong> and total cohort <strong>{previewQuery.data.total_weekly_target}</strong>.
+              </p>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={reviewConfirmed}
+                  onChange={(event) => setReviewConfirmed(event.target.checked)}
+                />{' '}
+                I reviewed this cohort preview and want to materialize these 15-year-old prospects.
+              </label>
+              <div>
+                <button
+                  type="button"
+                  disabled={!reviewConfirmed || materializeMutation.isPending}
+                  onClick={() => materializeMutation.mutate()}
+                >
+                  {materializeMutation.isPending ? 'Materializing…' : 'Confirm materialization'}
+                </button>
+              </div>
+              <p className="status">
+                Safety: confirmation uses <code>overwrite: false</code>. Existing conflicting cohort records are not silently replaced.
+              </p>
+              {materializeMutation.isError ? (
+                <p className="error">Materialization failed: {formatApiError(materializeMutation.error)}</p>
+              ) : null}
+              {materializeMutation.data ? (
+                <div aria-label="Talent intake materialization result">
+                  <p><strong>{materializeMutation.data.message}</strong></p>
+                  <p>
+                    Created {materializeMutation.data.created_count}; existing {materializeMutation.data.existing_count};
+                    persisted in scope {materializeMutation.data.total_persisted_for_scope}.
+                  </p>
+                  <p>
+                    Requested {materializeMutation.data.requested_prospect_count}; conflicts {materializeMutation.data.conflict_count};
+                    already materialized: {materializeMutation.data.already_materialized ? 'yes' : 'no'}.
+                  </p>
+                </div>
+              ) : null}
+            </section>
           </>
         ) : null}
       </section>

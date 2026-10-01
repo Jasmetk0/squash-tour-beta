@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -17,6 +17,7 @@ const api = vi.hoisted(() => {
   return {
     ApiError,
     getRunWeeklyIntakeCohortSeasonPreview: vi.fn(),
+    listRunProspects: vi.fn(),
     materializeRunProspects: vi.fn()
   }
 })
@@ -69,6 +70,47 @@ describe('TalentIntakePage', () => {
   beforeEach(() => {
     api.getRunWeeklyIntakeCohortSeasonPreview.mockReset()
     api.getRunWeeklyIntakeCohortSeasonPreview.mockResolvedValue(preview)
+    api.listRunProspects.mockReset()
+    api.listRunProspects.mockResolvedValue({
+      run_id: 'run-1',
+      total: 1,
+      limit: 500,
+      offset: 0,
+      prospects: [
+        {
+          prospect_id: 'prospect-1',
+          run_id: 'run-1',
+          world_id: 'official_fax_world',
+          season_start_year: 2000,
+          season_label: '2000/2001',
+          season_week: 1,
+          calendar_year: 2000,
+          year_week: 1,
+          birth_year: 1985,
+          birth_year_week: 1,
+          age: 15,
+          country_code: 'CZE',
+          country_name: 'Czechia',
+          status: 'prospect',
+          source_type: 'weekly_15yo_cohort',
+          cohort_policy_version: 'weekly_15yo_cohort_v1',
+          profile_version: 'prospect_profile_v1',
+          first_name: null,
+          last_name: null,
+          display_name: 'CZE Prospect 0001',
+          short_name: 'CZE Prospect 0001',
+          identity_seed: 'a',
+          profile_seed: 'b',
+          development_seed: 'c',
+          potential_seed: 'd',
+          trait_seed: 'e',
+          profile_json: {},
+          development_json: { development_timing: 'Late Bloomer' },
+          potential_json: { potential_ovr: 177 },
+          trait_json: {}
+        }
+      ]
+    })
     api.materializeRunProspects.mockReset()
     api.materializeRunProspects.mockResolvedValue({
       run_id: 'run-1',
@@ -100,8 +142,9 @@ describe('TalentIntakePage', () => {
       })
     })
     expect(await screen.findByText('FAX World')).toBeInTheDocument()
-    expect(screen.getByRole('table', { name: 'Talent intake country totals' })).toBeInTheDocument()
-    expect(screen.getByText('Czechia (CZE)')).toBeInTheDocument()
+    const countryTotalsTable = screen.getByRole('table', { name: 'Talent intake country totals' })
+    expect(countryTotalsTable).toBeInTheDocument()
+    expect(within(countryTotalsTable).getByText('Czechia (CZE)')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Talent intake weekly schedule' })).toBeInTheDocument()
     expect(screen.getByText(/materialized only after confirmation/i)).toBeInTheDocument()
   })
@@ -117,6 +160,21 @@ describe('TalentIntakePage', () => {
         base_annual_intake_target: 200,
         season_growth_rate: 0.015
       })
+    })
+  })
+
+  it('shows concrete materialized prospect output separately from forecast data', async () => {
+    renderWithRoute(<TalentIntakePage />, '/admin/runs/run-1/players/intake')
+
+    expect(await screen.findByRole('table', { name: 'Materialized talent intake prospects' })).toBeInTheDocument()
+    expect(screen.getByText('CZE Prospect 0001')).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: '177' })).toBeInTheDocument()
+    expect(screen.getByRole('cell', { name: 'Late Bloomer' })).toBeInTheDocument()
+    expect(screen.getByText(/not yet mapped to Talent Preview quality bands/i)).toBeInTheDocument()
+    expect(api.listRunProspects).toHaveBeenCalledWith('run-1', {
+      season_start_year: 2000,
+      limit: 500,
+      offset: 0
     })
   })
 
@@ -142,6 +200,7 @@ describe('TalentIntakePage', () => {
       })
     })
     expect(await screen.findByText('Prospect cohort materialized.')).toBeInTheDocument()
+    await waitFor(() => expect(api.listRunProspects.mock.calls.length).toBeGreaterThanOrEqual(2))
     expect(screen.getByText(/Created 204; existing 0; persisted in scope 204/i)).toBeInTheDocument()
   })
 

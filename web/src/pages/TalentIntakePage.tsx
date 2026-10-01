@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { ApiError, getRunWeeklyIntakeCohortSeasonPreview, materializeRunProspects } from '../api/client'
+import { ApiError, getRunWeeklyIntakeCohortSeasonPreview, listRunProspects, materializeRunProspects } from '../api/client'
 
 export function TalentIntakePage(): JSX.Element {
   const params = useParams()
@@ -24,13 +24,28 @@ export function TalentIntakePage(): JSX.Element {
     retry: false
   })
 
+  const prospectsQuery = useQuery({
+    queryKey: ['run-prospects', runId, previewQuery.data?.season_start_year],
+    queryFn: () =>
+      listRunProspects(runId, {
+        season_start_year: previewQuery.data?.season_start_year,
+        limit: 500,
+        offset: 0
+      }),
+    enabled: runId.length > 0 && previewQuery.data !== undefined,
+    retry: false
+  })
+
   const materializeMutation = useMutation({
     mutationFn: () =>
       materializeRunProspects(runId, {
         base_annual_intake_target: baseAnnualTarget,
         season_growth_rate: seasonGrowthRate,
         overwrite: false
-      })
+      }),
+    onSuccess: () => {
+      void prospectsQuery.refetch()
+    }
   })
 
   const filteredCountries = useMemo(() => {
@@ -218,6 +233,55 @@ export function TalentIntakePage(): JSX.Element {
       </section>
 
       <section className="panel nested-panel">
+        <h3>Materialized cohort inspection</h3>
+        <p>
+          These are the prospect records currently persisted for the selected Run season. This is concrete generated output, not a forecast.
+        </p>
+        {prospectsQuery.isLoading ? <p className="status">Loading materialized prospects…</p> : null}
+        {prospectsQuery.isError ? <p className="error">Prospects unavailable: {formatApiError(prospectsQuery.error)}</p> : null}
+        {prospectsQuery.data ? (
+          <>
+            <p>
+              Persisted prospects: <strong>{prospectsQuery.data.total}</strong>.
+              {prospectsQuery.data.total > prospectsQuery.data.prospects.length
+                ? ` Showing first ${prospectsQuery.data.prospects.length}.`
+                : ''}
+            </p>
+            {prospectsQuery.data.prospects.length > 0 ? (
+              <table aria-label="Materialized talent intake prospects">
+                <thead>
+                  <tr>
+                    <th>Prospect</th>
+                    <th>Country</th>
+                    <th>Season week</th>
+                    <th>Potential OVR</th>
+                    <th>Development</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prospectsQuery.data.prospects.map((prospect) => (
+                    <tr key={prospect.prospect_id}>
+                      <td>{prospect.display_name}</td>
+                      <td>{prospect.country_name ?? prospect.country_code} ({prospect.country_code})</td>
+                      <td>{prospect.season_week}</td>
+                      <td>{readPotentialOvr(prospect.potential_json) ?? '—'}</td>
+                      <td>{readDevelopmentTiming(prospect.development_json) ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <p className="status">No 15-year-old prospects have been materialized for this season yet.</p>
+            )}
+            <p className="status">
+              Potential OVR currently comes from the provisional prospect sporting-profile policy. It is not yet mapped to Talent Preview quality bands,
+              so this page intentionally does not invent an Expected vs Generated band comparison.
+            </p>
+          </>
+        ) : null}
+      </section>
+
+      <section className="panel nested-panel">
         <h3>Next workflow boundary</h3>
         <p>
           Concrete generation can later compare this frozen cohort allocation with the Expected vs Generated talent output already shown in{' '}
@@ -238,4 +302,15 @@ function formatPercent(value: number): string {
 function formatApiError(error: unknown): string {
   if (error instanceof ApiError) return `${error.status} ${error.message}`
   return String(error)
+}
+
+
+function readPotentialOvr(value: Record<string, unknown>): number | null {
+  const potential = value.potential_ovr
+  return typeof potential === 'number' && Number.isFinite(potential) ? potential : null
+}
+
+function readDevelopmentTiming(value: Record<string, unknown>): string | null {
+  const timing = value.development_timing
+  return typeof timing === 'string' && timing.length > 0 ? timing : null
 }

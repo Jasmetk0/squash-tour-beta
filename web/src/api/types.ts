@@ -2551,6 +2551,7 @@ export type RunProspect = {
   development_seed: string
   potential_seed: string
   trait_seed: string
+  quality_band: string
   profile_json: Record<string, unknown>
   development_json: Record<string, unknown>
   potential_json: Record<string, unknown>
@@ -2595,6 +2596,27 @@ export type VisiblePreTourProspects = {
   limit: number
   offset: number
   prospects: VisiblePreTourProspect[]
+}
+
+
+export type MaterializedRunProspectTalentCountrySummary = {
+  country_code: string
+  country_name: string | null
+  materialized_count: number
+  expected_band_counts: Record<string, number>
+  generated_band_counts: Record<string, number>
+}
+
+export type MaterializedRunProspectTalentSummaryResponse = {
+  run_id: string
+  season_start_year: number
+  total_materialized: number
+  quality_policy_id: string
+  quality_policy_fingerprint: string
+  quality_weights: Record<string, number>
+  expected_band_counts: Record<string, number>
+  generated_band_counts: Record<string, number>
+  countries: MaterializedRunProspectTalentCountrySummary[]
 }
 
 

@@ -17,6 +17,7 @@ from beta_engine.domain.players.talent_models import (
     TalentQualityBand,
     TalentSeed,
 )
+from beta_engine.domain.players.talent_quality_policy import normalized_talent_quality_weights
 
 
 class AnnualTalentClassPlanner:
@@ -28,15 +29,6 @@ class AnnualTalentClassPlanner:
     affect how much of that potential is realised, but does not make a person more
     likely to be born with generational potential.
     """
-
-    # Calibration baseline only; these are not product-canon probabilities.
-    BASE_QUALITY_WEIGHTS = {
-        TalentQualityBand.GENERATIONAL: 0.001,
-        TalentQualityBand.SPECIAL: 0.016,
-        TalentQualityBand.ELITE: 0.080,
-        TalentQualityBand.STRONG: 0.270,
-        TalentQualityBand.SOLID: 0.633,
-    }
 
     def __init__(self, dampener: RecentGreatnessDampener | None = None) -> None:
         # The injected dampener is retained only to read/audit historical signals
@@ -117,8 +109,7 @@ class AnnualTalentClassPlanner:
         # but also country-scoped historical balancing must stay out of the birth
         # distribution. Otherwise a nationality could become intrinsically less
         # likely to produce the next rare talent because of previous players.
-        total = sum(self.BASE_QUALITY_WEIGHTS.values())
-        normalized = {band: value / total for band, value in self.BASE_QUALITY_WEIGHTS.items()}
+        normalized = normalized_talent_quality_weights()
 
         # Preserve pre-V1 recent-greatness signals as inspectable historical
         # diagnostics. `active` means an applicable historical signal exists;

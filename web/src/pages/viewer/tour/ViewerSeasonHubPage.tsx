@@ -51,7 +51,8 @@ export function ViewerSeasonHubPage(): JSX.Element {
   const latestPublished = [...history]
     .filter((event) => event.result_published)
     .sort((a, b) => String(b.season).localeCompare(String(a.season)) || b.season_week - a.season_week)[0] ?? null
-  const latestFinals = finalsQuery.data?.publications.at(-1) ?? null
+  const finalsPublications = finalsQuery.data?.publications ?? []
+  const latestFinals = finalsPublications.length ? finalsPublications[finalsPublications.length - 1] : null
   const isLoading = calendarQuery.isLoading || historyQuery.isLoading || finalsQuery.isLoading
   const hasError = calendarQuery.isError || historyQuery.isError || finalsQuery.isError
 

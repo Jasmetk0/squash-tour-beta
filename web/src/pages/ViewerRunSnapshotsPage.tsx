@@ -37,7 +37,7 @@ type CanonicalCalendarContext = {
   category: string
   tour: string | null
   templateId: string
-  season: string
+  season: string | number
 }
 
 function buildCanonicalCalendarContext(events: ViewerCalendarEvent[]): Map<string, CanonicalCalendarContext> {

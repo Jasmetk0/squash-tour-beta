@@ -9,7 +9,7 @@ import {
   getViewerTournamentHistory,
   listRaceSnapshots
 } from '../api/client'
-import type { RaceSnapshot, ViewerRunCalendarEvent, ViewerTournamentHistoryItem } from '../api/types'
+import type { RaceSnapshot, ViewerCalendarEvent, ViewerTournamentHistoryItem } from '../api/types'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -42,7 +42,7 @@ type CanonicalCalendarContext = {
   season: string
 }
 
-function buildCanonicalCalendarContext(events: ViewerRunCalendarEvent[]): Map<string, CanonicalCalendarContext> {
+function buildCanonicalCalendarContext(events: ViewerCalendarEvent[]): Map<string, CanonicalCalendarContext> {
   return new Map(events.map((event) => [
     event.event_id,
     {

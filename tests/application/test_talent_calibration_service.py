@@ -63,3 +63,55 @@ def test_small_sample_keeps_zero_count_bands() -> None:
     result = TalentCalibrationService().calibrate(seed=9, sample_count=1)
     assert len(result.bands) == 5
     assert any(row.generated_count == 0 and row.potential_ovr.minimum is None for row in result.bands)
+
+
+def _candidate_ranges(minimum: int = 110, maximum: int = 190):
+    return {band: (minimum, maximum) for band in BAND_ORDER}
+
+
+@pytest.mark.pr_critical
+def test_candidate_comparison_is_deterministic_aggregated_and_baseline_neutral() -> None:
+    service = TalentCalibrationService()
+    left = service.compare(seed=41, sample_count=500, candidate_ranges=_candidate_ranges())
+    assert left == service.compare(seed=41, sample_count=500, candidate_ranges=_candidate_ranges())
+    assert left != service.compare(seed=42, sample_count=500, candidate_ranges=_candidate_ranges())
+    assert sum(row.generated_count for row in left.bands) == 500
+    assert left.global_comparison.delta.unchanged == 500
+    assert left.global_comparison.delta.increased == left.global_comparison.delta.decreased == 0
+    assert left.global_comparison.baseline_potential_ovr == left.global_comparison.candidate_potential_ovr
+    for row in left.bands:
+        assert sum(item.count for item in row.baseline_histogram) == row.generated_count
+        assert sum(item.count for item in row.candidate_histogram) == row.generated_count
+        assert row.delta.increased + row.delta.unchanged + row.delta.decreased == row.generated_count
+        if row.generated_count:
+            assert row.delta.minimum <= row.delta.p10 <= row.delta.p50 <= row.delta.p90 <= row.delta.maximum
+    for overlap in left.adjacent_overlaps:
+        assert overlap.baseline == overlap.candidate
+        assert overlap.baseline is None or 0 <= overlap.baseline <= 1
+
+
+def test_candidate_changes_only_potential_range_and_preserves_policy_identity() -> None:
+    policy = DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY
+    candidate_policy = policy.model_copy(update={"potential_min": 170, "potential_max": 175})
+    assert candidate_policy.policy_id == policy.policy_id
+    unchanged = set(type(policy).model_fields) - {"potential_min", "potential_max"}
+    for field in unchanged:
+        assert getattr(candidate_policy, field) == getattr(policy, field)
+    kwargs = dict(player_id="same-player", profile_seed="profile", development_seed="development", potential_seed="potential")
+    baseline = materialize_prospect_sporting_profile(**kwargs, policy=policy)
+    candidate = materialize_prospect_sporting_profile(**kwargs, policy=candidate_policy)
+    assert baseline.attributes == candidate.attributes
+    assert baseline.ovr == candidate.ovr
+    assert baseline.development_timing == candidate.development_timing
+    assert baseline.source_profile_seed_digest == candidate.source_profile_seed_digest
+    assert baseline.source_development_seed_digest == candidate.source_development_seed_digest
+    assert baseline.source_potential_seed_digest == candidate.source_potential_seed_digest
+    assert candidate.potential_ovr != baseline.potential_ovr
+
+
+def test_candidate_comparison_retains_empty_bands_and_null_overlap() -> None:
+    result = TalentCalibrationService().compare(seed=9, sample_count=1, candidate_ranges=_candidate_ranges(100, 200))
+    assert len(result.bands) == 5
+    empty = [row for row in result.bands if row.generated_count == 0]
+    assert empty and all(row.candidate_potential_ovr.minimum is None for row in empty)
+    assert any(row.baseline is None and row.candidate is None for row in result.adjacent_overlaps)

@@ -13,6 +13,8 @@ import type {
   TalentClassSummaryResponse,
   TalentClassYearPreviewResponse,
   TalentCalibrationResponse,
+  TalentCalibrationCompareRequest,
+  TalentCalibrationCompareResponse,
   CountryRecord,
   CountryUpsertPayload,
   CreateRunPayload,
@@ -766,6 +768,10 @@ export function getTalentClassSummary(params: {
 export function getTalentCalibration(params: { seed: number; sample_count: number }): Promise<TalentCalibrationResponse> {
   const query = new URLSearchParams({ seed: String(params.seed), sample_count: String(params.sample_count) })
   return request(`/world/talent-class/calibration?${query.toString()}`)
+}
+
+export function compareTalentCalibration(body: TalentCalibrationCompareRequest): Promise<TalentCalibrationCompareResponse> {
+  return request('/world/talent-class/calibration/compare', { method: 'POST', body: JSON.stringify(body) })
 }
 
 export function listManualPlayerOverrides(params?: {

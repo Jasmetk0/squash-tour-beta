@@ -221,3 +221,32 @@ def test_talent_calibration_endpoint_is_typed_deterministic_and_read_only(tmp_pa
     assert sum(row["generated_count"] for row in first["bands"]) == 75
     assert first["quality_policy_fingerprint"]
     assert first["sporting_profile_policy_fingerprint"]
+
+
+def _comparison_payload(minimum: object = 110, maximum: object = 190) -> dict[str, object]:
+    return {"seed": 77, "sample_count": 75, "candidate_ranges": {
+        band: {"potential_min": minimum, "potential_max": maximum}
+        for band in ("solid_prospect", "strong_prospect", "elite_prospect", "special_prospect", "generational_talent")
+    }}
+
+
+@pytest.mark.pr_critical
+def test_candidate_comparison_endpoint_is_typed_deterministic_and_read_only(tmp_path) -> None:
+    countries_path = tmp_path / "countries.json"
+    _write_fixture(countries_path)
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'compare.db'}", countries_config_path=str(countries_path)) as server:
+        _, before = _request("GET", f"{server.base_url}/runs")
+        status, first = _request("POST", f"{server.base_url}/world/talent-class/calibration/compare", _comparison_payload())
+        retry_status, retry = _request("POST", f"{server.base_url}/world/talent-class/calibration/compare", _comparison_payload())
+        invalid = []
+        missing = _comparison_payload()
+        del missing["candidate_ranges"]["generational_talent"]
+        invalid.append(_request("POST", f"{server.base_url}/world/talent-class/calibration/compare", missing)[0])
+        for low, high in ((191, 190), (-1, 10), (10, 201), (110.5, 190)):
+            invalid.append(_request("POST", f"{server.base_url}/world/talent-class/calibration/compare", _comparison_payload(low, high))[0])
+        _, after = _request("GET", f"{server.base_url}/runs")
+    assert status == retry_status == 200 and first == retry
+    assert before == after
+    assert invalid == [422] * 5
+    assert first["global_comparison"]["delta"]["unchanged"] == 75
+    assert first["candidate_sandbox_configuration_fingerprint"]

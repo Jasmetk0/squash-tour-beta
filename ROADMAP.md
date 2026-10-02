@@ -1,5 +1,16 @@
 # Squash Engine roadmap
 
+## Implemented — Talent Calibration Lab V2 Candidate Policy Sandbox
+
+- The Calibration Lab supports deterministic, read-only baseline/candidate Potential OVR
+  comparisons with independent ephemeral ranges for Solid, Strong, Elite, Special and
+  Generational bands.
+- Diagnostics include per-band/global potential statistics and changes, shared-bin histograms and
+  adjacent-band overlap. The sandbox cannot save, apply, publish or make a candidate canonical.
+- Production policy, quality rarity, Talent Intake and Run state remain unchanged. Next is
+  product-owner evaluation of the measured results and, only if explicitly decided later, a
+  separate canonical calibration change.
+
 ## Implemented — Talent Calibration Lab V1
 
 - The Admin-only, read-only Calibration Lab streams namespaced synthetic prospects through the shared canonical quality-rarity selector and current 0–200 prospect sporting-profile kernel. It reports deterministic overall/per-band OVR percentiles, expected/generated rarity counts, development timing and fixed-bin potential histograms without persistence or Run mutation.
@@ -1762,4 +1773,3 @@ Legacy Race compatibility is now narrowed to snapshot lookup/navigation only. So
 ### Tournament/Week Viewer compatibility cleanup
 
 Tournament Detail and Week Detail are now canonical Product Run surfaces. Remaining legacy Race snapshot compatibility is isolated to the dedicated snapshot-sequence detail route; future removal requires an explicit canonical historical identity/read model rather than mapping snapshot sequence onto Finals Race season identity.
-

@@ -7583,7 +7583,40 @@ export type TalentCalibrationResponse = {
   quality_policy_fingerprint: string
   sporting_profile_policy_id: string
   sporting_profile_policy_fingerprint: string
+  baseline_potential_min: number
+  baseline_potential_max: number
   current_ovr: CalibrationDistribution
   potential_ovr: CalibrationDistribution
   bands: TalentCalibrationBand[]
+}
+
+export type TalentBandKey = 'solid_prospect' | 'strong_prospect' | 'elite_prospect' | 'special_prospect' | 'generational_talent'
+export type CandidatePotentialRange = { potential_min: number; potential_max: number }
+export type TalentCalibrationCompareRequest = {
+  seed: number
+  sample_count: number
+  candidate_ranges: Record<TalentBandKey, CandidatePotentialRange>
+}
+export type CalibrationDelta = {
+  minimum: number | null; maximum: number | null; mean: number | null
+  p10: number | null; p50: number | null; p90: number | null
+  increased: number; unchanged: number; decreased: number
+}
+export type TalentCalibrationBandComparison = {
+  band: TalentBandKey; generated_count: number; configured_rarity_weight: number
+  candidate_range: CandidatePotentialRange
+  baseline_potential_ovr: CalibrationDistribution
+  candidate_potential_ovr: CalibrationDistribution
+  delta: CalibrationDelta
+  baseline_histogram: Array<{ lower: number; upper: number; count: number }>
+  candidate_histogram: Array<{ lower: number; upper: number; count: number }>
+}
+export type TalentCalibrationCompareResponse = {
+  seed: number; sample_count: number
+  baseline_policy_id: string; baseline_policy_fingerprint: string
+  candidate_sandbox_configuration_fingerprint: string
+  quality_policy_id: string; quality_policy_fingerprint: string
+  bands: TalentCalibrationBandComparison[]
+  global_comparison: { baseline_potential_ovr: CalibrationDistribution; candidate_potential_ovr: CalibrationDistribution; delta: CalibrationDelta }
+  adjacent_overlaps: Array<{ lower_band: TalentBandKey; upper_band: TalentBandKey; baseline: number | null; candidate: number | null }>
 }

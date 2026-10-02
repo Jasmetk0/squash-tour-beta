@@ -5,8 +5,10 @@ from dataclasses import asdict
 from fastapi import APIRouter, Depends, Query
 
 from beta_engine.api.deps import get_talent_calibration_service, get_world_talent_preview_service
-from beta_engine.api.schemas import TalentCalibrationResponse, TalentClassSummaryResponse, TalentClassYearPreviewResponse
-from beta_engine.application.talent_calibration_service import TalentCalibrationService
+from beta_engine.api.schemas import (TalentCalibrationCompareRequest,
+    TalentCalibrationCompareResponse, TalentCalibrationResponse,
+    TalentClassSummaryResponse, TalentClassYearPreviewResponse)
+from beta_engine.application.talent_calibration_service import BAND_ORDER, TalentCalibrationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 
 router = APIRouter(prefix="/world/talent-class", tags=["world"])
@@ -19,6 +21,23 @@ def calibrate_talent_class(
     service: TalentCalibrationService = Depends(get_talent_calibration_service),
 ) -> TalentCalibrationResponse:
     return TalentCalibrationResponse.model_validate(asdict(service.calibrate(seed=seed, sample_count=sample_count)))
+
+
+@router.post("/calibration/compare", response_model=TalentCalibrationCompareResponse)
+def compare_talent_calibration(
+    request: TalentCalibrationCompareRequest,
+    service: TalentCalibrationService = Depends(get_talent_calibration_service),
+) -> TalentCalibrationCompareResponse:
+    ranges = {
+        band: (
+            getattr(request.candidate_ranges, band.value).potential_min,
+            getattr(request.candidate_ranges, band.value).potential_max,
+        )
+        for band in BAND_ORDER
+    }
+    return TalentCalibrationCompareResponse.model_validate(asdict(service.compare(
+        seed=request.seed, sample_count=request.sample_count, candidate_ranges=ranges,
+    )))
 
 
 @router.get("/preview", response_model=TalentClassYearPreviewResponse)

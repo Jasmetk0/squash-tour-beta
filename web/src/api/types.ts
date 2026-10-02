@@ -7715,6 +7715,7 @@ export type MatchLabSession = {
   display_name: string
   version: number
   scenario: MatchLabScenario
+  session_fingerprint: string
 }
 
 export type MatchLabSessionCreateRequest = {

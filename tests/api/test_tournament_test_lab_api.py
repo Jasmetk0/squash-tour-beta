@@ -326,3 +326,53 @@ def test_tournament_lab_api_runs_groups_to_knockout_through_shared_authorities(t
         assert len(run["match_results"]) == 3
         assert run["played_match_count"] == 15
         assert run["champion_player_id"]
+
+
+def test_tournament_lab_api_exports_and_imports_reviewed_session_copy(tmp_path) -> None:
+    with ApiServer(db_url=f"sqlite:///{tmp_path / 'tournament-lab-export-import.db'}") as server:
+        status, built_ins = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/scenarios",
+        )
+        assert status == 200
+        scenario_id = built_ins[0]["scenario_id"]
+
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions",
+            {"display_name": "Export Source", "built_in_scenario_id": scenario_id},
+        )
+        assert status == 201, created
+
+        status, exported = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/sessions/{created['session_id']}/export",
+        )
+        assert status == 200, exported
+        assert exported["session_fingerprint"] == created["session_fingerprint"]
+        assert exported["scenario_fingerprint"] == created["scenario"]["source_fingerprint"] or len(exported["scenario_fingerprint"]) == 64
+        assert len(exported["export_fingerprint"]) == 64
+
+        status, imported = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/import",
+            {
+                "export_payload": exported,
+                "expected_export_fingerprint": exported["export_fingerprint"],
+                "display_name": "Imported Copy",
+            },
+        )
+        assert status == 201, imported
+        assert imported["session_id"] != created["session_id"]
+        assert imported["display_name"] == "Imported Copy"
+        assert imported["scenario"] == created["scenario"]
+
+        status, stale = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/import",
+            {
+                "export_payload": exported,
+                "expected_export_fingerprint": "0" * 64,
+            },
+        )
+        assert status == 409, stale

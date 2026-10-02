@@ -15,6 +15,25 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V5C Lab → Run draft compatibility preview
+
+- Reviewed Tournament Lab Sessions can now be projected into a read-only candidate for one specific
+  Product Run/Branch/event target.
+- Preview binds the exact Lab Session fingerprint plus the target Branch Saved Head revision,
+  Working Draft version and Working Draft status.
+- Candidate content is deterministic and fingerprinted; it carries only Lab-owned tournament
+  configuration already present in the scenario.
+- Existing Tournament Lab shared-authority compatibility remains authoritative for whether the
+  candidate is normal-Run compatible.
+- Dirty target Working Drafts fail closed with an explicit blocker.
+- This slice performs no Run mutation, no Working Draft mutation and no authority adoption.
+
+See [Tournament Test Lab V5C Run draft preview](docs/TOURNAMENT_TEST_LAB_V5C_RUN_DRAFT_PREVIEW.md).
+
+**Next:** add the explicit reviewed draft mutation/application boundary from this frozen preview,
+or first broaden Tournament Lab withdrawal/WC/LL/replacement and ranking-consequence support where
+those authorities are required for a representable candidate.
+
 ## Implemented — Global Tournament Test Lab V5B verified Saved Revision Tournament copy
 
 - Tournament Lab can copy one historical Tournament Edition from an immutable Product Run/Branch

@@ -7996,6 +7996,55 @@ export type TournamentLabSavedRevisionCopyRequest = {
   event_id: string
 }
 
+export type TournamentLabRunDraftPreviewRequest = {
+  expected_session_fingerprint: string
+  product_run_id: string
+  branch_id: string
+  event_id: string
+}
+
+export type TournamentLabRunDraftCandidate = {
+  event_id: string
+  format_kind: 'knockout' | 'groups' | 'groups_knockout'
+  participant_player_ids: string[]
+  main_draw_size: number
+  qualification_draw_size: number
+  qualifier_spots: number
+  qualification_player_ids: string[]
+  seed_order_player_ids: string[]
+  group_count: number
+  group_size: number
+  seeded_slots_per_group: number
+  group_seed_placements: Array<{ seed_number: number; group_index: number; slot_index: number }>
+  group_match_best_of?: 3 | 5 | null
+  advancing_per_group: number
+  knockout_crossings: Array<{
+    match_index: number
+    top: { group_index: number; finishing_position: number }
+    bottom: { group_index: number; finishing_position: number }
+  }>
+  topology_seed?: number | null
+  draw_seed: number
+}
+
+export type TournamentLabRunDraftPreview = {
+  schema_version: 'tournament_test_lab_run_draft_preview.v1'
+  product_run_id: string
+  branch_id: string
+  event_id: string
+  session_id: string
+  session_fingerprint: string
+  scenario_fingerprint: string
+  target_saved_revision_id: string
+  target_working_draft_version: number
+  target_working_draft_status: 'clean' | 'dirty'
+  ready_for_draft: boolean
+  mutation_performed: false
+  candidate: TournamentLabRunDraftCandidate
+  candidate_fingerprint: string
+  issues: TournamentLabIssue[]
+}
+
 export type TournamentLabSessionUpdateRequest = {
   expected_session_fingerprint: string
   display_name?: string

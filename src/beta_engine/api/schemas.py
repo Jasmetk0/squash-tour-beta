@@ -604,6 +604,7 @@ class RunProspectListResponse(BaseModel):
 class MaterializedRunProspectTalentCountrySummaryResponse(BaseModel):
     country_code: str
     country_name: str | None = None
+    forecast_count: int
     materialized_count: int
     expected_band_counts: dict[str, float] = Field(default_factory=dict)
     generated_band_counts: dict[str, int] = Field(default_factory=dict)
@@ -612,6 +613,10 @@ class MaterializedRunProspectTalentCountrySummaryResponse(BaseModel):
 class MaterializedRunProspectTalentSummaryResponse(BaseModel):
     run_id: str
     season_start_year: int
+    forecast_source: str
+    forecast_fingerprint: str | None = None
+    cohort_state: str
+    forecast_total: int
     total_materialized: int
     quality_policy_id: str
     quality_policy_fingerprint: str

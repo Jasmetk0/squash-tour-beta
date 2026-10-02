@@ -8,12 +8,37 @@ Audited baseline `buuk`: `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` after #1094.
 Fast CI is green. See [the full audit](docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md) for evidence
 and limitations. No full local release acceptance was run at this checkpoint.
 
-Remaining diagnostics: true pre-generation expected output including zero-output countries,
-explicit effective potential floor, and safe future-cohort visibility. Viewer hidden-field
-projection also needs a visibility audit; additional Viewer expansion is not the pre-alpha priority.
+Talent Intake's remaining audited diagnostic gaps are closed by the current diagnostics slice:
+stored pre-generation forecast including zero-output countries, explicit effective potential floor,
+lifecycle-owned future visibility, and conservative Viewer hidden-field gating.
 Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
+
+## Implemented — Talent Intake diagnostics + Viewer hidden-field gate
+
+- The Run-scoped cohort preview now retains the complete filtered country scope, including
+  countries forecast to produce zero prospects. New materializations persist the exact
+  pre-generation cohort forecast (review fingerprint, total, country counts, frozen quality policy,
+  expected band counts and forecast fingerprint) inside existing prospect snapshot evidence.
+- Expected-vs-Generated now distinguishes stored pre-generation forecast from realized/materialized
+  output, reports complete/partial/empty cohort state, and keeps zero-output countries visible.
+  Legacy cohorts without stored forecast evidence remain explicitly labelled as conditional
+  materialized-count diagnostics rather than being rewritten.
+- Prospect sporting generation still uses the existing rule
+  `effective potential = max(current OVR, rolled potential)`. New prospect evidence now exposes
+  the raw roll, effective current-OVR floor and whether that floor applied. No range or numeric
+  calibration changed.
+- Future prospect visibility remains lifecycle-owned: pregenerated `run_prospects` do not become
+  Viewer/Admin-visible before the exact lifecycle birth-week boundary. Existing PR-critical API
+  coverage already proves a future persisted row does not affect visible totals or pagination.
+- Viewer canonical people projection now conservatively publishes current Power Rating only.
+  Potential OVR, current form, match sharpness and long-term fatigue remain Admin/simulation truth
+  and are returned as unavailable at the Viewer DTO boundary; the Viewer UI no longer renders
+  those internal metrics.
+
+**Next:** begin the global Match/Tournament Lab vertical slice using shared engine kernels and
+isolated Run-copy/draft boundaries; do not start the FAX season acceptance run in parallel.
 
 ## Implemented — Talent Intake historical policy + reviewed-scope safety
 

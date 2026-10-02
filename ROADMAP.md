@@ -7,8 +7,8 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
 
 1. ✅ Complete [Talent Intake historical policy and reviewed-scope safety](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md)
    without changing rarity weights or potential mappings.
-2. Close the remaining forecast/realized diagnostic gap, explain the effective potential floor
-   and preserve future-cohort visibility boundaries. Gate hidden Viewer data where accessible.
+2. ✅ Close the remaining forecast/realized diagnostic gap, explain the effective potential floor,
+   preserve future-cohort visibility boundaries and gate hidden Viewer sporting data.
 3. Complete global Match/Tournament Labs with shared engine kernels, replayable scenarios,
    batch diagnostics and safe Run-copy/draft boundaries.
 4. Validate a full season and next-season opening in a copy of the FAX template: at least

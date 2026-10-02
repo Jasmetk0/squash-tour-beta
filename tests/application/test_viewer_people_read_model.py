@@ -216,6 +216,10 @@ def test_viewer_players_projects_current_saved_roster_without_internal_provenanc
     assert by_id["P1"].name == "Initial One"
     assert by_id["P1"].country_code == "CZE"
     assert by_id["P1"].current_ovr == 130
+    assert by_id["P1"].potential_ovr is None
+    assert by_id["P1"].current_form is None
+    assert by_id["P1"].match_sharpness is None
+    assert by_id["P1"].long_term_fatigue is None
     assert by_id["P1"].identity_source == "initial_world"
 
     assert by_id["P2"].status == "retired"

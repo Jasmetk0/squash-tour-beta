@@ -42,6 +42,7 @@ class MaterializedRunProspectWeekTotal:
 class MaterializedRunProspectTalentCountrySummary:
     country_code: str
     country_name: str | None
+    forecast_count: int
     materialized_count: int
     expected_band_counts: dict[str, float]
     generated_band_counts: dict[str, int]
@@ -51,6 +52,10 @@ class MaterializedRunProspectTalentCountrySummary:
 class MaterializedRunProspectTalentSummary:
     run_id: str
     season_start_year: int
+    forecast_source: str
+    forecast_fingerprint: str | None
+    cohort_state: str
+    forecast_total: int
     total_materialized: int
     quality_policy_id: str
     quality_policy_fingerprint: str
@@ -225,35 +230,84 @@ class RunProspectMaterializationService:
 
         snapshot = resolved_policy or current_talent_quality_policy_snapshot()
         weight_payload = dict(snapshot.normalized_weights)
+        forecast = None
+        if records:
+            raw_forecasts = [record.profile_json.get("cohort_forecast") for record in records]
+            stored = [item for item in raw_forecasts if isinstance(item, dict)]
+            if stored:
+                first = stored[0]
+                if any(item != first for item in stored[1:]) or len(stored) != len(records):
+                    raise ValueError("Materialized Talent Intake cohort has inconsistent stored forecast evidence")
+                forecast = first
+
+        forecast_source = "stored_pre_generation_v1" if forecast is not None else "legacy_conditional_materialized_count"
+        forecast_fingerprint = str(forecast.get("forecast_fingerprint")) if forecast is not None else None
+        forecast_total = int(forecast.get("total_weekly_target", len(records))) if forecast is not None else len(records)
+        cohort_state = "complete" if len(records) == forecast_total else ("empty" if len(records) == 0 else "partial")
+
+        forecast_countries: dict[str, dict[str, object]] = {}
+        if forecast is not None:
+            raw_countries = forecast.get("countries")
+            if not isinstance(raw_countries, list):
+                raise ValueError("Stored Talent Intake forecast countries are malformed")
+            for row in raw_countries:
+                if not isinstance(row, dict) or not isinstance(row.get("country_code"), str):
+                    raise ValueError("Stored Talent Intake forecast country is malformed")
+                forecast_countries[str(row["country_code"])] = row
+
+        all_country_codes = sorted(
+            set(forecast_countries) | {country_code for country_code, _ in country_rows}
+        )
         countries: list[MaterializedRunProspectTalentCountrySummary] = []
-        for (country_code, country_name), country_records in sorted(country_rows.items()):
+        for country_code in all_country_codes:
+            forecast_row = forecast_countries.get(country_code)
+            country_name = (
+                forecast_row.get("country_name") if forecast_row is not None
+                else next((name for code, name in country_rows if code == country_code), None)
+            )
+            country_records = next(
+                (rows for (code, _), rows in country_rows.items() if code == country_code),
+                [],
+            )
             country_generated = {band.value: 0 for band in TalentQualityBand}
             for _, band in country_records:
                 country_generated[band.value] += 1
+            forecast_count = int(forecast_row.get("forecast_count", len(country_records))) if forecast_row is not None else len(country_records)
+            expected = (
+                {str(k): float(v) for k, v in dict(forecast_row.get("expected_band_counts", {})).items()}
+                if forecast_row is not None
+                else {
+                    band.value: round(forecast_count * weight_payload[band.value], 4)
+                    for band in TalentQualityBand
+                }
+            )
             countries.append(
                 MaterializedRunProspectTalentCountrySummary(
                     country_code=country_code,
-                    country_name=country_name,
+                    country_name=country_name if isinstance(country_name, str) else None,
+                    forecast_count=forecast_count,
                     materialized_count=len(country_records),
-                    expected_band_counts={
-                        band.value: round(len(country_records) * weight_payload[band.value], 4)
-                        for band in TalentQualityBand
-                    },
+                    expected_band_counts=expected,
                     generated_band_counts=country_generated,
                 )
             )
 
+        expected_global = {
+            band.value: round(forecast_total * weight_payload[band.value], 4)
+            for band in TalentQualityBand
+        }
         return MaterializedRunProspectTalentSummary(
             run_id=run_id,
             season_start_year=target_season,
+            forecast_source=forecast_source,
+            forecast_fingerprint=forecast_fingerprint,
+            cohort_state=cohort_state,
+            forecast_total=forecast_total,
             total_materialized=len(records),
             quality_policy_id=snapshot.policy_id,
             quality_policy_fingerprint=snapshot.fingerprint,
             quality_weights=weight_payload,
-            expected_band_counts={
-                band.value: round(len(records) * weight_payload[band.value], 4)
-                for band in TalentQualityBand
-            },
+            expected_band_counts=expected_global,
             generated_band_counts=generated,
             countries=countries,
         )
@@ -272,6 +326,7 @@ class RunProspectMaterializationService:
             region=region,
         )
         quality_policy = current_talent_quality_policy_snapshot()
+        cohort_forecast = self._cohort_forecast(preview, quality_policy)
         for week in preview.weeks:
             for allocation in week.allocations:
                 for local_sequence in range(1, allocation.allocated_count + 1):
@@ -305,6 +360,7 @@ class RunProspectMaterializationService:
                             "canonical_sporting_profile": sporting_profile_payload,
                             "canonical_sporting_profile_fingerprint": sporting_profile_fingerprint,
                             "materialization_policy": policy,
+                            "cohort_forecast": cohort_forecast,
                         },
                         development_json={
                             "schema_version": PROFILE_VERSION,
@@ -318,6 +374,9 @@ class RunProspectMaterializationService:
                             "profile_version": PROFILE_VERSION,
                             "talent_quality": talent_quality_result_evidence(seeds["potential"], quality_policy),
                             "potential_ovr": sporting_profile.potential_ovr,
+                            "rolled_potential_ovr": sporting_profile.rolled_potential_ovr,
+                            "effective_potential_floor_ovr": sporting_profile.effective_potential_floor_ovr,
+                            "potential_floor_applied": sporting_profile.potential_floor_applied,
                             "potential_identity": sporting_profile.potential_identity,
                             "potential_provenance": sporting_profile.potential_provenance,
                             "source_potential_seed_digest": sporting_profile.source_potential_seed_digest,
@@ -330,6 +389,39 @@ class RunProspectMaterializationService:
                         },
                     ))
         return records
+
+    def _cohort_forecast(self, preview, quality_policy) -> dict[str, object]:
+        weights = dict(quality_policy.normalized_weights)
+        countries = [
+            {
+                "country_code": row.country_code,
+                "country_name": row.country_name,
+                "forecast_count": row.allocated_count,
+                "expected_band_counts": {
+                    band.value: round(row.allocated_count * weights[band.value], 4)
+                    for band in TalentQualityBand
+                },
+            }
+            for row in preview.country_totals
+        ]
+        payload = {
+            "schema_version": "talent_intake_cohort_forecast.v1",
+            "review_fingerprint": preview.review_fingerprint,
+            "run_id": preview.run_id,
+            "world_id": preview.world_id,
+            "season": preview.season,
+            "season_start_year": preview.season_start_year,
+            "annual_target": preview.annual_target,
+            "total_weekly_target": preview.total_weekly_target,
+            "quality_policy_id": quality_policy.policy_id,
+            "quality_policy_fingerprint": quality_policy.fingerprint,
+            "quality_weights": weights,
+            "countries": countries,
+        }
+        payload["forecast_fingerprint"] = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+        ).hexdigest()
+        return payload
 
     @staticmethod
     def _scope_country_codes(preview) -> set[str]:

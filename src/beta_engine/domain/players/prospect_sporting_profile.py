@@ -52,7 +52,7 @@ class ProspectSportingProfilePolicy(BaseModel):
 
     @property
     def fingerprint(self) -> str:
-        return _fingerprint(self.model_dump(mode="json"))
+        return _fingerprint(self.model_dump(mode="json", exclude_none=True))
 
 
 class ProspectSportingProfile(BaseModel):
@@ -66,6 +66,9 @@ class ProspectSportingProfile(BaseModel):
     player_id: str = Field(min_length=1)
     attributes: tuple[tuple[str, int], ...]
     potential_ovr: int = Field(ge=0, le=200)
+    rolled_potential_ovr: int | None = Field(default=None, ge=0, le=200)
+    effective_potential_floor_ovr: int | None = Field(default=None, ge=0, le=200)
+    potential_floor_applied: bool | None = None
     potential_identity: str = Field(min_length=1)
     potential_provenance: str = Field(min_length=1)
     development_timing: DevelopmentTiming
@@ -168,6 +171,7 @@ def materialize_prospect_sporting_profile(
         upper=policy.potential_max,
     )
     potential_ovr = max(current_ovr, rolled_potential)
+    potential_floor_applied = rolled_potential < current_ovr
 
     timings: tuple[DevelopmentTiming, ...] = (
         "Early Bloomer",
@@ -206,6 +210,9 @@ def materialize_prospect_sporting_profile(
         player_id=player_id,
         attributes=tuple(attributes),
         potential_ovr=potential_ovr,
+        rolled_potential_ovr=rolled_potential,
+        effective_potential_floor_ovr=current_ovr,
+        potential_floor_applied=potential_floor_applied,
         potential_identity=hashlib.sha256(
             potential_provenance.encode("utf-8")
         ).hexdigest(),

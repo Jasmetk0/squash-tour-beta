@@ -2811,44 +2811,6 @@ class SimulationPersistenceRepository:
 
                 if materialize_fork_root:
                     assert materialized_fork_revision_id is not None
-                    if RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY in source_content:
-                        try:
-                            remapped_lab_drafts = remap_saved_run_tournament_lab_drafts(
-                                source_revision.payload,
-                                run_id=run_id,
-                                source_branch_id=source_branch_id,
-                                target_branch_id=branch_id,
-                            )
-                            if remapped_lab_drafts is not None:
-                                for draft_item in remapped_lab_drafts.drafts:
-                                    put_run_tournament_lab_draft(session, draft_item)
-                                target_payload["content"][RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY] = {
-                                    "schema_version": remapped_lab_drafts.schema_version,
-                                    "run_id": remapped_lab_drafts.run_id,
-                                    "branch_id": remapped_lab_drafts.branch_id,
-                                    "drafts": [
-                                        {
-                                            "schema_version": item.schema_version,
-                                            "run_id": item.run_id,
-                                            "branch_id": item.branch_id,
-                                            "event_id": item.event_id,
-                                            "version": item.version,
-                                            "source_session_id": item.source_session_id,
-                                            "source_session_fingerprint": item.source_session_fingerprint,
-                                            "source_scenario_fingerprint": item.source_scenario_fingerprint,
-                                            "source_preview_fingerprint": item.source_preview_fingerprint,
-                                            "candidate": item.candidate,
-                                            "candidate_fingerprint": item.candidate_fingerprint,
-                                            "fingerprint": item.fingerprint,
-                                        }
-                                        for item in remapped_lab_drafts.drafts
-                                    ],
-                                    "fingerprint": remapped_lab_drafts.fingerprint,
-                                }
-                        except ValueError as exc:
-                            raise SavedRevisionBranchForkConflictError(
-                                f"Tournament Lab Run draft fork cannot be materialized safely: {exc}"
-                            ) from exc
                     if remapped_initial_world is not None:
                         try:
                             installed_world = put_initial_world(
@@ -2911,6 +2873,44 @@ class SimulationPersistenceRepository:
                         except ValueError as exc:
                             raise SavedRevisionBranchForkConflictError(
                                 f"Run Package fork cannot be materialized safely: {exc}"
+                            ) from exc
+                    if RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY in source_content:
+                        try:
+                            remapped_lab_drafts = remap_saved_run_tournament_lab_drafts(
+                                source_revision.payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                            )
+                            if remapped_lab_drafts is not None:
+                                for draft_item in remapped_lab_drafts.drafts:
+                                    put_run_tournament_lab_draft(session, draft_item)
+                                target_payload["content"][RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY] = {
+                                    "schema_version": remapped_lab_drafts.schema_version,
+                                    "run_id": remapped_lab_drafts.run_id,
+                                    "branch_id": remapped_lab_drafts.branch_id,
+                                    "drafts": [
+                                        {
+                                            "schema_version": item.schema_version,
+                                            "run_id": item.run_id,
+                                            "branch_id": item.branch_id,
+                                            "event_id": item.event_id,
+                                            "version": item.version,
+                                            "source_session_id": item.source_session_id,
+                                            "source_session_fingerprint": item.source_session_fingerprint,
+                                            "source_scenario_fingerprint": item.source_scenario_fingerprint,
+                                            "source_preview_fingerprint": item.source_preview_fingerprint,
+                                            "candidate": item.candidate,
+                                            "candidate_fingerprint": item.candidate_fingerprint,
+                                            "fingerprint": item.fingerprint,
+                                        }
+                                        for item in remapped_lab_drafts.drafts
+                                    ],
+                                    "fingerprint": remapped_lab_drafts.fingerprint,
+                                }
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"Tournament Lab Run draft fork cannot be materialized safely: {exc}"
                             ) from exc
                     if remapped_initial_world is not None:
                         target_payload["content"][INITIAL_WORLD_COMPONENT_KEY] = {

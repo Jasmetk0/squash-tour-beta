@@ -3492,6 +3492,16 @@ export async function previewTournamentLabRunDraft(
   )
 }
 
+export async function applyTournamentLabRunDraft(
+  sessionId: string,
+  payload: import('./types').TournamentLabRunDraftApplyRequest
+): Promise<import('./types').TournamentLabRunDraftApplyResult> {
+  return request<import('./types').TournamentLabRunDraftApplyResult>(
+    `/admin/labs/tournament/sessions/${encodeURIComponent(sessionId)}/run-draft-apply`,
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}
+
 export async function updateTournamentLabSession(
   sessionId: string,
   payload: import('./types').TournamentLabSessionUpdateRequest

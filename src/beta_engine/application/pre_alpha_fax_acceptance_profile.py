@@ -10,7 +10,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.infrastructure.db.initial_world_state import get_initial_world
@@ -79,6 +79,7 @@ class PreAlphaFaxAcceptanceProfile(BaseModel):
             json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
         ).hexdigest()
 
+    @computed_field
     @property
     def profile_fingerprint(self) -> str:
         return self.fingerprint

@@ -24,8 +24,10 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    exposed an initial-position gap. Follow-up review showed sporting Week 1 already existed; the
    materializer now additionally derives, Saves and publishes the initial Official Ranking/world head.
    A reviewed current-week bulk Ranking Snapshot bootstrap advances the materialized Week-1 Editions
-   to the real `entry_field_required` Tournament Preparation blocker. The mandatory automated 50-season
-   2000/01–2049/50 execution remains outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
+   to the real `entry_field_required` Tournament Preparation blocker. The copied-FAX path can now also
+   freeze the exact current shared-snapshot Entry decision slot through production Entry AI, exposing
+   the remaining concrete blocker as the still-unresolved automatic application eligibility/deadline
+   validator. The mandatory automated 50-season 2000/01–2049/50 execution remains outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
    recovery and the rest of Master pre-alpha scope.
 5. Calibrate fairness/numeric policies from measured cases once the relevant systems work;
    do not treat implementation constants as newly approved product rules.

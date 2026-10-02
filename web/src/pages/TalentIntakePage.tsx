@@ -280,7 +280,8 @@ export function TalentIntakePage(): JSX.Element {
         {talentSummaryQuery.data ? (
           <>
             <p>
-              Materialized cohort: <strong>{talentSummaryQuery.data.total_materialized}</strong> prospects. Policy:{' '}
+              Forecast: <strong>{talentSummaryQuery.data.forecast_total}</strong>; realized/materialized:{' '}
+              <strong>{talentSummaryQuery.data.total_materialized}</strong>; state: <strong>{talentSummaryQuery.data.cohort_state}</strong>. Policy:{' '}
               <code>{talentSummaryQuery.data.quality_policy_id}</code>.
             </p>
             <table aria-label="Talent intake expected generated global quality">
@@ -317,7 +318,7 @@ export function TalentIntakePage(): JSX.Element {
                   <thead>
                     <tr>
                       <th>Country</th>
-                      <th>Cohort</th>
+                      <th>Forecast → Realized</th>
                       <th>Solid E → G</th>
                       <th>Strong E → G</th>
                       <th>Elite E → G</th>
@@ -329,7 +330,7 @@ export function TalentIntakePage(): JSX.Element {
                     {talentSummaryQuery.data.countries.map((country) => (
                       <tr key={country.country_code}>
                         <td>{country.country_name ?? country.country_code} ({country.country_code})</td>
-                        <td>{country.materialized_count}</td>
+                        <td>{country.forecast_count} → {country.materialized_count}</td>
                         {QUALITY_BANDS.map((band) => (
                           <td key={band}>
                             {formatExpectedGenerated(
@@ -376,7 +377,9 @@ export function TalentIntakePage(): JSX.Element {
                     <th>Country</th>
                     <th>Season week</th>
                     <th>Quality band</th>
-                    <th>Potential OVR</th>
+                    <th>Rolled potential</th>
+                    <th>Effective potential</th>
+                    <th>Floor applied</th>
                     <th>Development</th>
                   </tr>
                 </thead>
@@ -387,7 +390,9 @@ export function TalentIntakePage(): JSX.Element {
                       <td>{prospect.country_name ?? prospect.country_code} ({prospect.country_code})</td>
                       <td>{prospect.season_week}</td>
                       <td>{formatQualityBand(prospect.quality_band)}</td>
+                      <td>{readNumber(prospect.potential_json, 'rolled_potential_ovr') ?? '—'}</td>
                       <td>{readPotentialOvr(prospect.potential_json) ?? '—'}</td>
+                      <td>{prospect.potential_json.potential_floor_applied === true ? 'yes' : prospect.potential_json.potential_floor_applied === false ? 'no' : 'legacy'}</td>
                       <td>{readDevelopmentTiming(prospect.development_json) ?? '—'}</td>
                     </tr>
                   ))}
@@ -397,8 +402,8 @@ export function TalentIntakePage(): JSX.Element {
               <p className="status">No 15-year-old prospects have been materialized for this season yet.</p>
             )}
             <p className="status">
-              Potential OVR currently comes from the provisional prospect sporting-profile policy. Quality band comes independently from the shared
-              rarity policy and persisted prospect seed.
+              Effective Potential OVR is <code>max(current OVR, rolled potential)</code>. The table exposes when the current-OVR floor changed the
+              raw roll; this is a diagnostic explanation of the existing rule, not a new calibration decision. Quality band remains independent.
             </p>
           </>
         ) : null}
@@ -428,9 +433,13 @@ function formatApiError(error: unknown): string {
 }
 
 
+function readNumber(value: Record<string, unknown>, key: string): number | null {
+  const raw = value[key]
+  return typeof raw === 'number' && Number.isFinite(raw) ? raw : null
+}
+
 function readPotentialOvr(value: Record<string, unknown>): number | null {
-  const potential = value.potential_ovr
-  return typeof potential === 'number' && Number.isFinite(potential) ? potential : null
+  return readNumber(value, 'potential_ovr')
 }
 
 function readDevelopmentTiming(value: Record<string, unknown>): string | null {

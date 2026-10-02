@@ -7652,7 +7652,6 @@ export type MatchLabScenario = {
   source_kind: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
   source_reference?: string | null
   source_fingerprint?: string | null
-  source_snapshot?: TournamentLabRunSnapshotEvidence | null
 }
 
 export type MatchLabRequest = {
@@ -7828,6 +7827,7 @@ export type TournamentLabScenario = {
   source_kind: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
   source_reference?: string | null
   source_fingerprint?: string | null
+  source_snapshot?: TournamentLabRunSnapshotEvidence | null
 }
 
 export type TournamentLabRequest = {

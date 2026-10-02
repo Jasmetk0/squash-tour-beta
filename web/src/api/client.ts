@@ -12,6 +12,7 @@ import type {
   ManualPlayerOverridesImportResponse,
   TalentClassSummaryResponse,
   TalentClassYearPreviewResponse,
+  TalentCalibrationResponse,
   CountryRecord,
   CountryUpsertPayload,
   CreateRunPayload,
@@ -760,6 +761,11 @@ export function getTalentClassSummary(params: {
     seed: String(params.seed)
   })
   return request(`/world/talent-class/summary?${query.toString()}`)
+}
+
+export function getTalentCalibration(params: { seed: number; sample_count: number }): Promise<TalentCalibrationResponse> {
+  const query = new URLSearchParams({ seed: String(params.seed), sample_count: String(params.sample_count) })
+  return request(`/world/talent-class/calibration?${query.toString()}`)
 }
 
 export function listManualPlayerOverrides(params?: {

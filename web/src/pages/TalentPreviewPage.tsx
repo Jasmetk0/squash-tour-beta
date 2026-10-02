@@ -60,6 +60,7 @@ export function TalentPreviewPage(): JSX.Element {
         title="Talent Preview"
         subtitle="Expected country-level talent output forecast for balancing the FAX squash world before concrete player intakes are generated."
       />
+      <p><Link to="/admin/world/talent-calibration">Open Talent Calibration Lab</Link></p>
 
       <SectionCard title="Expected Mode overview">
         <p className="status">Talent Preview does not create players. Concrete 15-year-old player generation belongs to future Talent Intake.</p>

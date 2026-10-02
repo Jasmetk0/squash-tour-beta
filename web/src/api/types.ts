@@ -7551,3 +7551,39 @@ export type ViewerOfficialRunContext = {
   current_event_sequence: number | null
   resolution_version: string
 }
+
+export type CalibrationDistribution = {
+  minimum: number | null
+  maximum: number | null
+  mean: number | null
+  p10: number | null
+  p25: number | null
+  p50: number | null
+  p75: number | null
+  p90: number | null
+}
+
+export type TalentCalibrationBand = {
+  band: string
+  configured_rarity_weight: number
+  generated_count: number
+  generated_share: number
+  expected_count: number
+  generated_minus_expected: number
+  current_ovr: CalibrationDistribution
+  potential_ovr: CalibrationDistribution
+  development_timing_counts: Record<string, number>
+  potential_histogram: Array<{ lower: number; upper: number; count: number }>
+}
+
+export type TalentCalibrationResponse = {
+  seed: number
+  sample_count: number
+  quality_policy_id: string
+  quality_policy_fingerprint: string
+  sporting_profile_policy_id: string
+  sporting_profile_policy_fingerprint: string
+  current_ovr: CalibrationDistribution
+  potential_ovr: CalibrationDistribution
+  bands: TalentCalibrationBand[]
+}

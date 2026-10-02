@@ -1,5 +1,12 @@
 # Current implementation and next action
 
+## Implemented — Talent Calibration Lab V1
+
+- The Admin-only, read-only Calibration Lab streams namespaced synthetic prospects through the shared canonical quality-rarity selector and current 0–200 prospect sporting-profile kernel. It reports deterministic overall/per-band OVR percentiles, expected/generated rarity counts, development timing and fixed-bin potential histograms without persistence or Run mutation.
+- Shared quality-band rarity remains the current implementation authority. Quality Band and Potential OVR remain separate: band-to-potential influence is still an unresolved product/calibration decision, and the Lab supplies evidence without defining thresholds or changing Run generation.
+- The legacy PlayerGenerator's band-conditioned older-scale potential remains historical implementation evidence, not calibration authority for the current 0–200 prospect model.
+
+
 ## Active implementation — World Tour Finals frozen-Race replacement vertical slice
 
 ROADMAP item 46 is now implemented for the decided pure-knockout production path.

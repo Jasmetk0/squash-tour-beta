@@ -1996,6 +1996,48 @@ class InitialPoolRegenerateRequest(BaseModel):
     def normalize_country_code(cls, value: str | None) -> str | None:
         return value.upper() if value else value
 
+
+class CalibrationDistributionResponse(BaseModel):
+    minimum: int | None
+    maximum: int | None
+    mean: float | None
+    p10: float | None
+    p25: float | None
+    p50: float | None
+    p75: float | None
+    p90: float | None
+
+
+class CalibrationHistogramBinResponse(BaseModel):
+    lower: int
+    upper: int
+    count: int
+
+
+class TalentCalibrationBandResponse(BaseModel):
+    band: str
+    configured_rarity_weight: float
+    generated_count: int
+    generated_share: float
+    expected_count: float
+    generated_minus_expected: float
+    current_ovr: CalibrationDistributionResponse
+    potential_ovr: CalibrationDistributionResponse
+    development_timing_counts: dict[str, int]
+    potential_histogram: list[CalibrationHistogramBinResponse]
+
+
+class TalentCalibrationResponse(BaseModel):
+    seed: int
+    sample_count: int
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    sporting_profile_policy_id: str
+    sporting_profile_policy_fingerprint: str
+    current_ovr: CalibrationDistributionResponse
+    potential_ovr: CalibrationDistributionResponse
+    bands: list[TalentCalibrationBandResponse]
+
 class ViewerOfficialRunContextResponse(BaseModel):
     product_run_id: str
     product_run_display_name: str

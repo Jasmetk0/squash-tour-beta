@@ -125,6 +125,7 @@ describe('TalentPreviewPage', () => {
     renderWithRoute(<TalentPreviewPage />, '/world/talent-preview')
 
     expect(await screen.findByRole('heading', { name: 'Talent Preview' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Open Talent Calibration Lab' })).toHaveAttribute('href', '/admin/world/talent-calibration')
     expect((await screen.findAllByRole('cell', { name: 'AAA' })).length).toBeGreaterThan(0)
     const forecastTable = await screen.findByRole('table', { name: 'Country forecast table' })
     expect(forecastTable).toBeInTheDocument()

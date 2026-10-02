@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MatchTestLabPage } from './MatchTestLabPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => ({ runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn() }))
+const api = vi.hoisted(() => ({ runMatchTestLab: vi.fn(), getMatchLabBuiltInScenarios: vi.fn(), getMatchLabSessions: vi.fn(), createMatchLabSession: vi.fn(), updateMatchLabSession: vi.fn(), runMatchLabSession: vi.fn(), importMatchLabSavedRevisionPlayer: vi.fn() }))
 vi.mock('../api/client', () => api)
 
 const result = {
@@ -64,6 +64,7 @@ describe('MatchTestLabPage', () => {
     api.runMatchLabSession.mockResolvedValue(result)
     api.getMatchLabBuiltInScenarios.mockResolvedValue([])
     api.getMatchLabSessions.mockResolvedValue([])
+    api.importMatchLabSavedRevisionPlayer.mockResolvedValue(undefined)
   })
 
   it('runs a portable multi-seed scenario and renders isolation diagnostics', async () => {
@@ -132,6 +133,7 @@ describe('MatchTestLabPage', () => {
       display_name: 'Standard even match — Test Session',
       version: 1,
       session_fingerprint: 'f'.repeat(64),
+      participant_imports: [],
       scenario: {
         ...builtIn.scenario,
         scenario_id: 'session-copy:standard-even-match',
@@ -170,6 +172,71 @@ describe('MatchTestLabPage', () => {
         scenario: expect.objectContaining({ seed: 999 })
       })
     )
+  })
+
+
+  it('imports a reviewed historical Saved Revision player into an isolated Test Session', async () => {
+    const user = userEvent.setup()
+    const session = {
+      schema_version: 'match_test_lab_session.v1',
+      session_id: 'session-history',
+      display_name: 'Historical session',
+      version: 1,
+      session_fingerprint: '1'.repeat(64),
+      participant_imports: [],
+      scenario: {
+        schema_version: 'match_test_lab_scenario.v1',
+        scenario_id: 'history',
+        seed: 7,
+        source_kind: 'portable',
+        context: {}
+      }
+    }
+    const imported = {
+      ...session,
+      version: 2,
+      session_fingerprint: '2'.repeat(64),
+      participant_imports: [{
+        side: 'player_a',
+        product_run_id: 'run-1',
+        branch_id: 'branch-1',
+        saved_revision_id: 'revision-1',
+        saved_revision_content_hash: 'a'.repeat(64),
+        sporting_state_fingerprint: 'b'.repeat(64),
+        sporting_week_ordinal: 61,
+        player_id: 'P1',
+        source_profile_fingerprint: 'profile:P1',
+        canonical_projection_fingerprint: 'c'.repeat(64)
+      }],
+      scenario: {
+        ...session.scenario,
+        context: { player_a: { player: { player_id: 'P1' } } }
+      }
+    }
+    api.getMatchLabSessions.mockResolvedValueOnce([session]).mockResolvedValue([imported])
+    api.importMatchLabSavedRevisionPlayer.mockResolvedValue(imported)
+
+    renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
+    await user.selectOptions(await screen.findByLabelText('Open Match Test Session'), 'session-history')
+    await user.type(screen.getByLabelText('Match Lab import Run ID'), 'run-1')
+    await user.type(screen.getByLabelText('Match Lab import Branch ID'), 'branch-1')
+    await user.type(screen.getByLabelText('Match Lab import Saved Revision ID'), 'revision-1')
+    await user.type(screen.getByLabelText('Match Lab import Player ID'), 'P1')
+    await user.click(screen.getByRole('button', { name: 'Import historical player' }))
+
+    expect(api.importMatchLabSavedRevisionPlayer).toHaveBeenCalledWith(
+      'session-history',
+      {
+        expected_session_fingerprint: '1'.repeat(64),
+        product_run_id: 'run-1',
+        branch_id: 'branch-1',
+        saved_revision_id: 'revision-1',
+        player_id: 'P1',
+        side: 'player_a'
+      }
+    )
+    expect(await screen.findByRole('table', { name: 'Match Lab historical imports' })).toBeInTheDocument()
+    expect(screen.getByText('run-1 / branch-1 / revision-1')).toBeInTheDocument()
   })
 
 })

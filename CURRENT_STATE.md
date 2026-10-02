@@ -15,6 +15,23 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V5A explicit Session import/export
+
+- Persisted Tournament Lab Test Sessions now have an explicit portable export envelope with exact
+  Session, Scenario and envelope fingerprints.
+- Import requires the exact reviewed export fingerprint and validates all embedded integrity evidence
+  before persistence.
+- Every import creates a new isolated Session identity at version 1; it never overwrites or live-links
+  the source Session.
+- Scenario payload and existing source provenance are preserved exactly across transport.
+- Export/import remain outside Product Run, Branch and Saved Revision mutation.
+
+See [Tournament Test Lab V5A import/export](docs/TOURNAMENT_TEST_LAB_V5A_IMPORT_EXPORT.md).
+
+**Next:** implement verified Run → Lab historical Tournament copy, then a separate Lab → Run
+compatibility-preview draft bridge. Withdrawals/WC/LL/replacements and ranking consequences remain
+later shared-authority slices.
+
 ## Implemented — Global Tournament Test Lab V4 groups and groups→knockout
 
 - Tournament Lab now executes pure `groups` and `groups_knockout` scenarios through the existing shared group authorities.
@@ -35,8 +52,8 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Tournament Test Lab V4 groups](docs/TOURNAMENT_TEST_LAB_V4_GROUPS.md).
 
-**Next:** close the remaining Lab workflow boundaries: explicit import/export, Run → Lab historical
-Tournament copy and Lab → Run compatibility-preview draft bridge, then add withdrawal/WC/LL/
+**Next:** explicit Session import/export is now implemented. Continue with verified Run → Lab historical
+Tournament copy and the separate Lab → Run compatibility-preview draft bridge, then add withdrawal/WC/LL/
 replacement and ranking-consequence slices without inventing undecided sporting policy.
 
 ## Implemented — Global Tournament Test Lab V3 canonical Qualification progression

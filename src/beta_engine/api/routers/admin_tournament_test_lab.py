@@ -11,6 +11,8 @@ from beta_engine.application.tournament_test_lab_service import (
     TournamentLabScenario,
     TournamentLabSession,
     TournamentLabSessionCreateRequest,
+    TournamentLabSessionExport,
+    TournamentLabSessionImportRequest,
     TournamentLabSessionRunRequest,
     TournamentLabSessionUpdateRequest,
     TournamentTestLabService,
@@ -84,6 +86,30 @@ def update_tournament_lab_session(
         return service.update_session(session_id, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.get("/sessions/{session_id}/export", response_model=TournamentLabSessionExport)
+def export_tournament_lab_session(
+    session_id: str,
+    service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
+) -> TournamentLabSessionExport:
+    try:
+        return service.export_session(session_id)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post("/sessions/import", response_model=TournamentLabSession, status_code=201)
+def import_tournament_lab_session(
+    request: TournamentLabSessionImportRequest,
+    service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
+) -> TournamentLabSession:
+    try:
+        return service.import_session(request)
     except ValueError as exc:
         raise HTTPException(status_code=409, detail=str(exc)) from exc
 

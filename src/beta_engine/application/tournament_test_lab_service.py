@@ -353,6 +353,71 @@ class TournamentLabSessionUpdateRequest(BaseModel):
     scenario: TournamentLabScenario
 
 
+class TournamentLabSessionExport(BaseModel):
+    """Portable reviewed export envelope for one isolated Tournament Lab session."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_api_serialized_session(cls, value):
+        if isinstance(value, dict):
+            session = value.get("session")
+            if isinstance(session, dict) and "session_fingerprint" in session:
+                value = dict(value)
+                session = dict(session)
+                session.pop("session_fingerprint", None)
+                value["session"] = session
+        return value
+
+    schema_version: Literal["tournament_test_lab_session_export.v1"] = (
+        "tournament_test_lab_session_export.v1"
+    )
+    session: TournamentLabSession
+    session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    scenario_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    export_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+    @staticmethod
+    def fingerprint_payload(
+        session: TournamentLabSession,
+        *,
+        session_fingerprint: str,
+        scenario_fingerprint: str,
+    ) -> dict[str, object]:
+        return {
+            "schema_version": "tournament_test_lab_session_export.v1",
+            "session": session.model_dump(mode="json"),
+            "session_fingerprint": session_fingerprint,
+            "scenario_fingerprint": scenario_fingerprint,
+        }
+
+    @model_validator(mode="after")
+    def validate_integrity(self):
+        if self.session.fingerprint != self.session_fingerprint:
+            raise ValueError("Tournament Lab export session fingerprint mismatch")
+        if self.session.scenario.fingerprint != self.scenario_fingerprint:
+            raise ValueError("Tournament Lab export scenario fingerprint mismatch")
+        expected = _fingerprint(
+            self.fingerprint_payload(
+                self.session,
+                session_fingerprint=self.session_fingerprint,
+                scenario_fingerprint=self.scenario_fingerprint,
+            )
+        )
+        if expected != self.export_fingerprint:
+            raise ValueError("Tournament Lab export envelope fingerprint mismatch")
+        return self
+
+
+class TournamentLabSessionImportRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    export_payload: TournamentLabSessionExport
+    expected_export_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    display_name: str | None = Field(default=None, min_length=1, max_length=160)
+
+
 class TournamentLabSessionRunRequest(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -504,6 +569,41 @@ class TournamentTestLabService:
             )
             self._persist_session(session, updated)
             return updated
+
+    def export_session(self, session_id: str) -> TournamentLabSessionExport:
+        current = self.get_session(session_id)
+        payload = TournamentLabSessionExport.fingerprint_payload(
+            current,
+            session_fingerprint=current.fingerprint,
+            scenario_fingerprint=current.scenario.fingerprint,
+        )
+        return TournamentLabSessionExport(
+            session=current,
+            session_fingerprint=current.fingerprint,
+            scenario_fingerprint=current.scenario.fingerprint,
+            export_fingerprint=_fingerprint(payload),
+        )
+
+    def import_session(
+        self,
+        request: TournamentLabSessionImportRequest,
+    ) -> TournamentLabSession:
+        exported = request.export_payload
+        if request.expected_export_fingerprint != exported.export_fingerprint:
+            raise ValueError("Tournament Lab export changed since it was reviewed")
+
+        source = exported.session
+        if source.fingerprint != exported.session_fingerprint:
+            raise ValueError("Tournament Lab export session fingerprint mismatch")
+        if source.scenario.fingerprint != exported.scenario_fingerprint:
+            raise ValueError("Tournament Lab export scenario fingerprint mismatch")
+
+        return self.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name=request.display_name or source.display_name,
+                scenario=source.scenario,
+            )
+        )
 
     def run_session(
         self,

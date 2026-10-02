@@ -7,6 +7,7 @@ from beta_engine.application.tournament_test_lab_service import (
     TournamentLabRequest,
     TournamentLabScenario,
     TournamentLabSessionCreateRequest,
+    TournamentLabSessionImportRequest,
     TournamentLabSessionRunRequest,
     TournamentLabSessionUpdateRequest,
     TournamentTestLabService,
@@ -329,6 +330,89 @@ def test_tournament_lab_session_update_and_run_use_reviewed_fingerprint(tmp_path
     finally:
         engine.dispose()
 
+
+
+def test_tournament_lab_export_model_accepts_its_api_serialized_session_shape(tmp_path) -> None:
+    engine, _, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(display_name="Round trip", scenario=_scenario())
+        )
+        exported = service.export_session(created.session_id)
+        api_payload = exported.model_dump(mode="json")
+
+        reparsed = type(exported).model_validate(api_payload)
+
+        assert reparsed == exported
+        assert reparsed.export_fingerprint == exported.export_fingerprint
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_session_export_import_is_reviewed_copy_without_live_link(tmp_path) -> None:
+    engine, _, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Export Source",
+                scenario=_scenario(),
+            )
+        )
+        exported = service.export_session(created.session_id)
+
+        assert exported.session == created
+        assert exported.session_fingerprint == created.fingerprint
+        assert exported.scenario_fingerprint == created.scenario.fingerprint
+        assert len(exported.export_fingerprint) == 64
+
+        imported = service.import_session(
+            TournamentLabSessionImportRequest(
+                export_payload=exported,
+                expected_export_fingerprint=exported.export_fingerprint,
+                display_name="Imported Copy",
+            )
+        )
+
+        assert imported.session_id != created.session_id
+        assert imported.display_name == "Imported Copy"
+        assert imported.version == 1
+        assert imported.scenario == created.scenario
+        assert imported.fingerprint != created.fingerprint
+        assert service.get_session(created.session_id) == created
+        assert service.get_session(imported.session_id) == imported
+
+        changed = imported.scenario.model_copy(update={"draw_seed": imported.scenario.draw_seed + 99})
+        updated = service.update_session(
+            imported.session_id,
+            TournamentLabSessionUpdateRequest(
+                expected_session_fingerprint=imported.fingerprint,
+                scenario=changed,
+            ),
+        )
+        assert updated.scenario.draw_seed != created.scenario.draw_seed
+        assert service.get_session(created.session_id).scenario == created.scenario
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_session_import_rejects_stale_reviewed_export(tmp_path) -> None:
+    engine, _, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(display_name="Export Source", scenario=_scenario())
+        )
+        exported = service.export_session(created.session_id)
+
+        with pytest.raises(ValueError, match="changed since it was reviewed"):
+            service.import_session(
+                TournamentLabSessionImportRequest(
+                    export_payload=exported,
+                    expected_export_fingerprint="0" * 64,
+                )
+            )
+        assert service.list_sessions() == (created,)
+    finally:
+        engine.dispose()
 
 def test_tournament_lab_session_persistence_fails_closed_on_tampered_row(tmp_path) -> None:
     engine, factory, service = _persistent_service(tmp_path)

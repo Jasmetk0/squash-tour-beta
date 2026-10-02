@@ -1,5 +1,24 @@
 # Squash Engine roadmap
 
+## Active next work — 2 October 2026 / Master v70
+
+This order supersedes older next-step notices below while preserving completed-work history.
+Baseline: `buuk` at `aceb144d79924a985ada34b9eefaec53f548cf1c` (#1093).
+
+1. Complete [Talent Intake historical policy and reviewed-scope safety](docs/CODEX_NEXT_TALENT_INTAKE_HISTORY_V1.md)
+   as one coherent PR. No new rarity weights or potential mappings.
+2. Close the forecast/realized diagnostic gap, explain the effective potential floor and
+   preserve future-cohort visibility boundaries. Gate hidden Viewer data where accessible.
+3. Complete global Match/Tournament Labs with shared engine kernels, replayable scenarios,
+   batch diagnostics and safe Run-copy/draft boundaries.
+4. Validate a full season and next-season opening in a copy of the FAX template: at least
+   1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
+   Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.
+5. Calibrate fairness/numeric policies from measured cases once the relevant systems work;
+   do not treat implementation constants as newly approved product rules.
+
+[Checkpoint audit and remaining risks](docs/PRE_ALPHA_CHECKPOINT_2026_10_02.md).
+
 ## Implemented — Talent Calibration Lab V3 Multi-seed Robustness
 
 - The Calibration Lab aggregates the same candidate sandbox across stable deterministic seed

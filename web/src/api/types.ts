@@ -2602,6 +2602,7 @@ export type VisiblePreTourProspects = {
 export type MaterializedRunProspectTalentCountrySummary = {
   country_code: string
   country_name: string | null
+  forecast_count: number
   materialized_count: number
   expected_band_counts: Record<string, number>
   generated_band_counts: Record<string, number>
@@ -2610,6 +2611,10 @@ export type MaterializedRunProspectTalentCountrySummary = {
 export type MaterializedRunProspectTalentSummaryResponse = {
   run_id: string
   season_start_year: number
+  forecast_source: string
+  forecast_fingerprint: string | null
+  cohort_state: string
+  forecast_total: number
   total_materialized: number
   quality_policy_id: string
   quality_policy_fingerprint: string

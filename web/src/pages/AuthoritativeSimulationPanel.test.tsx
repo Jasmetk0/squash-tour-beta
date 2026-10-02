@@ -8,6 +8,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
+  getPreAlphaFaxAcceptanceProfile: vi.fn(),
   inspectAuthoritativeEntryDecisionSlot: vi.fn(),
   reviewAuthoritativeEntryDecisionSlot: vi.fn(),
   inspectWeekTournamentLock: vi.fn(),
@@ -653,6 +654,41 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getPreAlphaFaxAcceptanceProfile.mockResolvedValue({
+    schema_version: 'pre_alpha_fax_acceptance_profile.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    ready_for_long_acceptance: true,
+    editable_run: true,
+    active_branch: true,
+    timeline_start_season: 2000,
+    timeline_end_season: 2049,
+    timeline_season_count: 50,
+    required_timeline_start_season: 2000,
+    required_timeline_end_season: 2049,
+    required_timeline_season_count: 50,
+    initial_world_ready: true,
+    initial_world_fingerprint: 'a'.repeat(64),
+    initial_player_count: 1000,
+    required_min_initial_players: 1000,
+    initial_world_package_id: 'official_fax_world',
+    calendar_ready: true,
+    calendar_package_id: 'calendar-2000-2001',
+    calendar_state_fingerprint: 'b'.repeat(64),
+    calendar_fingerprint: 'c'.repeat(64),
+    calendar_event_count: 92,
+    world_tour_edition_count: 80,
+    required_world_tour_edition_count: 80,
+    lower_tour_edition_count: 12,
+    issues: [
+      {
+        severity: 'info',
+        code: 'FAX_ACCEPTANCE_LOWER_TOURS_ABSTRACT',
+        message: '12 lower-Tour Editions remain abstract.'
+      }
+    ],
+    profile_fingerprint: 'd'.repeat(64)
+  })
   api.inspectAuthoritativeLiveMatch.mockResolvedValue({
     schema_version: 'authoritative_live_match_inspection.v1',
     run_id: 'run-a',
@@ -1378,6 +1414,18 @@ beforeEach(() => {
 })
 
 describe('AuthoritativeSimulationPanel', () => {
+
+  it('shows the Master v72 FAX long-acceptance input gate', async () => {
+    renderPanel()
+
+    expect(await screen.findByText('Pre-alpha FAX release gate')).toBeInTheDocument()
+    expect(await screen.findByText('1000 / 1000')).toBeInTheDocument()
+    expect(screen.getByText('80 / 80')).toBeInTheDocument()
+    expect(screen.getByText('50 / 50')).toBeInTheDocument()
+    expect(screen.getByText('ready')).toBeInTheDocument()
+    expect(screen.getByText(/does not mean the 50-season release test has already completed/i)).toBeInTheDocument()
+  })
+
   it('reviews and commits an explicit Week Tournament Lock before schedule adoption', async () => {
     api.inspectWeekTournamentLock
       .mockResolvedValueOnce({

@@ -1317,6 +1317,23 @@ export async function finalizeAuthoritativeFinalSeason(
   return data
 }
 
+export async function getPreAlphaFaxAcceptanceProfile(
+  runId: string,
+  branchId: string
+): Promise<import('./types').PreAlphaFaxAcceptanceProfile> {
+  const data = await request<import('./types').PreAlphaFaxAcceptanceProfile>(
+    authoritativeSimulationRoot(runId, branchId) + '/pre-alpha/fax-acceptance-profile'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  if (
+    data.schema_version !== 'pre_alpha_fax_acceptance_profile.v1' ||
+    !/^[0-9a-f]{64}$/.test(data.profile_fingerprint)
+  ) {
+    throw new Error('Pre-alpha FAX acceptance profile response is invalid.')
+  }
+  return data
+}
+
 export async function getAuthoritativeSimulationPosition(
   runId: string,
   branchId: string

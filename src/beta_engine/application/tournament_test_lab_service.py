@@ -1542,11 +1542,12 @@ class TournamentTestLabService:
         champion: str | None,
         played_match_count: int,
         tournament_complete: bool,
+        champion_applicable: bool = True,
     ) -> tuple[TournamentLabAssertionResult, ...]:
         rows: list[TournamentLabAssertionResult] = []
         expected_champion = scenario.assertions.expected_champion_player_id
         if expected_champion is not None:
-            if not tournament_complete:
+            if not tournament_complete or not champion_applicable:
                 status: Literal["passed", "failed", "not_evaluated"] = "not_evaluated"
             else:
                 status = "passed" if champion == expected_champion else "failed"

@@ -198,7 +198,7 @@ describe('TournamentTestLabPage', () => {
       expect.anything()
     )
     expect(await screen.findByText('idealized_seed_tiers.v2')).toBeInTheDocument()
-    expect(screen.getByText('P1: 2')).toBeInTheDocument()
+    expect(screen.getByText(/Champions: P1: 2/)).toBeInTheDocument()
     const drawTable = screen.getByRole('table', { name: 'Tournament Lab draw slots' })
     expect(within(drawTable).getByRole('cell', { name: 'P1' })).toBeInTheDocument()
     const matchTable = screen.getByRole('table', { name: 'Tournament Lab match results' })

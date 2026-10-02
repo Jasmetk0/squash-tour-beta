@@ -58,6 +58,12 @@ from beta_engine.application.prospect_bridge_inspection import inspect_prospect_
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfileService,
 )
+from beta_engine.application.pre_alpha_fax_current_entry_decisions import (
+    PreAlphaFaxCurrentEntryDecisionApplyRequest,
+    PreAlphaFaxCurrentEntryDecisionApplyResult,
+    PreAlphaFaxCurrentEntryDecisionPreview,
+    PreAlphaFaxCurrentEntryDecisionService,
+)
 from beta_engine.application.pre_alpha_fax_current_week_ranking_snapshots import (
     PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest,
     PreAlphaFaxCurrentWeekRankingSnapshotApplyResult,
@@ -1671,6 +1677,66 @@ def abandon_full_simulation(
             status_code=409,
             detail={
                 "code": "authoritative_full_simulation_abandon_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/pre-alpha/fax-current-entry/preview",
+    response_model=PreAlphaFaxCurrentEntryDecisionPreview,
+)
+def preview_pre_alpha_fax_current_entry(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+) -> PreAlphaFaxCurrentEntryDecisionPreview:
+    try:
+        return PreAlphaFaxCurrentEntryDecisionService(
+            _driver(runtime, matches, awards)
+        ).preview(run_id=run_id, branch_id=branch_id)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_current_entry_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/pre-alpha/fax-current-entry/apply",
+    response_model=PreAlphaFaxCurrentEntryDecisionApplyResult,
+    status_code=201,
+)
+def apply_pre_alpha_fax_current_entry(
+    run_id: str,
+    branch_id: str,
+    payload: PreAlphaFaxCurrentEntryDecisionApplyRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+) -> PreAlphaFaxCurrentEntryDecisionApplyResult:
+    try:
+        return PreAlphaFaxCurrentEntryDecisionService(
+            _driver(runtime, matches, awards)
+        ).apply(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_current_entry_apply_conflict",
                 "message": str(exc),
             },
         ) from exc

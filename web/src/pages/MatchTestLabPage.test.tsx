@@ -149,10 +149,13 @@ describe('MatchTestLabPage', () => {
     expect(await screen.findByText('Standard even match')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /New Test Session from Standard even match/ }))
 
-    expect(api.createMatchLabSession).toHaveBeenCalledWith({
-      display_name: 'Standard even match — Test Session',
-      built_in_scenario_id: 'standard-even-match'
-    })
+    expect(api.createMatchLabSession).toHaveBeenCalledWith(
+      {
+        display_name: 'Standard even match — Test Session',
+        built_in_scenario_id: 'standard-even-match'
+      },
+      expect.anything()
+    )
     expect(await screen.findByDisplayValue('Standard even match — Test Session')).toBeInTheDocument()
 
     fireEvent.change(screen.getByLabelText('Match Lab scenario JSON'), {

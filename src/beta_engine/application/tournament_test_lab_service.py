@@ -8,7 +8,7 @@ import json
 from statistics import mean
 from typing import Callable, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
@@ -236,6 +236,7 @@ class TournamentLabSession(BaseModel):
             }
         )
 
+    @computed_field
     @property
     def session_fingerprint(self) -> str:
         return self.fingerprint

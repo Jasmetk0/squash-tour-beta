@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from beta_engine.application.tournament_test_lab_service import (
     TournamentLabRunSnapshotEvidence,
     TournamentLabAssertions,
     TournamentLabRequest,
+    TournamentLabRunDraftPreviewRequest,
     TournamentLabSavedRevisionCopyRequest,
     TournamentLabScenario,
     TournamentLabSessionCreateRequest,
@@ -933,3 +936,125 @@ def test_tournament_lab_run_snapshot_source_fingerprint_must_bind_evidence() -> 
             source_fingerprint="0" * 64,
             source_snapshot=evidence,
         )
+
+
+class _RunDraftPreviewRepository:
+    def __init__(self, *, status: str = "clean", run_id: str = "target-run") -> None:
+        self.status = status
+        self.run_id = run_id
+
+    def get_branch_revision_state(self, *, branch_id: str):
+        if branch_id != "target-branch":
+            raise KeyError("branch missing")
+        return SimpleNamespace(
+            run_id=self.run_id,
+            branch_id=branch_id,
+            saved_head_revision_id="target-revision-7",
+            working_draft=SimpleNamespace(
+                draft_version=12,
+                status=self.status,
+            ),
+        )
+
+
+def test_tournament_lab_run_draft_preview_binds_reviewed_session_and_target_head(
+    tmp_path,
+) -> None:
+    engine, factory, base_service = _persistent_service(tmp_path)
+    try:
+        service = TournamentTestLabService(
+            factory,
+            base_service._id_factory,
+            repository=_RunDraftPreviewRepository(),
+        )
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Draft preview source",
+                scenario=_scenario(),
+            )
+        )
+
+        preview = service.preview_run_draft(
+            created.session_id,
+            TournamentLabRunDraftPreviewRequest(
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="target-run",
+                branch_id="target-branch",
+                event_id="target-event",
+            ),
+        )
+
+        assert preview.schema_version == "tournament_test_lab_run_draft_preview.v1"
+        assert preview.session_fingerprint == created.fingerprint
+        assert preview.scenario_fingerprint == created.scenario.fingerprint
+        assert preview.target_saved_revision_id == "target-revision-7"
+        assert preview.target_working_draft_version == 12
+        assert preview.target_working_draft_status == "clean"
+        assert preview.ready_for_draft is True
+        assert preview.mutation_performed is False
+        assert preview.candidate.event_id == "target-event"
+        assert preview.candidate.format_kind == created.scenario.format_kind
+        assert preview.candidate_fingerprint == preview.candidate.fingerprint
+        assert preview.issues == ()
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_run_draft_preview_fails_closed_on_dirty_or_stale_target(
+    tmp_path,
+) -> None:
+    engine, factory, base_service = _persistent_service(tmp_path)
+    try:
+        service = TournamentTestLabService(
+            factory,
+            base_service._id_factory,
+            repository=_RunDraftPreviewRepository(status="dirty"),
+        )
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Blocked draft preview",
+                scenario=_scenario(),
+            )
+        )
+
+        with pytest.raises(ValueError, match="changed since it was reviewed"):
+            service.preview_run_draft(
+                created.session_id,
+                TournamentLabRunDraftPreviewRequest(
+                    expected_session_fingerprint="0" * 64,
+                    product_run_id="target-run",
+                    branch_id="target-branch",
+                    event_id="target-event",
+                ),
+            )
+
+        preview = service.preview_run_draft(
+            created.session_id,
+            TournamentLabRunDraftPreviewRequest(
+                expected_session_fingerprint=created.fingerprint,
+                product_run_id="target-run",
+                branch_id="target-branch",
+                event_id="target-event",
+            ),
+        )
+        assert preview.ready_for_draft is False
+        assert any(issue.code == "TARGET_WORKING_DRAFT_DIRTY" for issue in preview.issues)
+        assert preview.mutation_performed is False
+
+        wrong_run_service = TournamentTestLabService(
+            factory,
+            base_service._id_factory,
+            repository=_RunDraftPreviewRepository(run_id="other-run"),
+        )
+        with pytest.raises(ValueError, match="does not belong"):
+            wrong_run_service.preview_run_draft(
+                created.session_id,
+                TournamentLabRunDraftPreviewRequest(
+                    expected_session_fingerprint=created.fingerprint,
+                    product_run_id="target-run",
+                    branch_id="target-branch",
+                    event_id="target-event",
+                ),
+            )
+    finally:
+        engine.dispose()

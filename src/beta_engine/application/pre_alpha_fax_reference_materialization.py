@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from beta_engine.application.calendar_package_run_adapter import CalendarPackageRunAdapter
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     FAX_ACCEPTANCE_FIRST_SEASON,
     FAX_ACCEPTANCE_MIN_INITIAL_PLAYERS,
@@ -28,6 +27,12 @@ from beta_engine.application.run_world_initial_world_service import (
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash
+
+
+class CalendarDocumentSource(Protocol):
+    def build_document(
+        self, season: str, *, source_version: int = 1
+    ) -> CanonicalPackageDocument: ...
 
 
 class PreAlphaFaxReferenceRequest(BaseModel):
@@ -109,7 +114,7 @@ class PreAlphaFaxReferenceMaterializationService:
     repository: object
     id_factory: object
     world_adapter: WorldPackageRunAdapter
-    calendar_adapter: CalendarPackageRunAdapter
+    calendar_adapter: CalendarDocumentSource
     initial_world_service: RunWorldInitialWorldService
 
     def _documents(

@@ -80,6 +80,9 @@ from beta_engine.application.tournament_test_lab_service import TournamentTestLa
 from beta_engine.application.pre_alpha_fax_reference_materialization import (
     PreAlphaFaxReferenceMaterializationService,
 )
+from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
+    PreAlphaFaxAcceptanceCalendarSource,
+)
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -137,7 +140,10 @@ def get_pre_alpha_fax_reference_materialization_service(
         repository=runtime.repository,
         id_factory=_new_product_entity_id,
         world_adapter=get_world_package_run_adapter(request),
-        calendar_adapter=get_calendar_package_run_adapter(request),
+        calendar_adapter=PreAlphaFaxAcceptanceCalendarSource(
+            template_service=get_tournament_templates_config_service(request),
+            calendar_validation_service=get_season_calendar_service(request),
+        ),
         initial_world_service=get_run_world_initial_world_service(request),
     )
 

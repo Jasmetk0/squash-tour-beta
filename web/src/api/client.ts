@@ -1317,6 +1317,17 @@ export async function finalizeAuthoritativeFinalSeason(
   return data
 }
 
+export async function getPreAlphaFaxEntryValidationPolicyGate(
+  runId: string,
+  branchId: string
+): Promise<import('./types').PreAlphaFaxEntryValidationPolicyGate> {
+  const data = await request<import('./types').PreAlphaFaxEntryValidationPolicyGate>(
+    authoritativeSimulationRoot(runId, branchId) + '/pre-alpha/fax-entry-validation-policy-gate'
+  )
+  verifyAuthoritativeSimulationScope(runId, branchId, data)
+  return data
+}
+
 export async function getPreAlphaFaxAcceptanceProfile(
   runId: string,
   branchId: string

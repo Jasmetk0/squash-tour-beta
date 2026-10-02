@@ -2034,9 +2034,88 @@ class TalentCalibrationResponse(BaseModel):
     quality_policy_fingerprint: str
     sporting_profile_policy_id: str
     sporting_profile_policy_fingerprint: str
+    baseline_potential_min: int
+    baseline_potential_max: int
     current_ovr: CalibrationDistributionResponse
     potential_ovr: CalibrationDistributionResponse
     bands: list[TalentCalibrationBandResponse]
+
+
+class CandidatePotentialRangeRequest(BaseModel):
+    potential_min: StrictInt = Field(ge=0, le=200)
+    potential_max: StrictInt = Field(ge=0, le=200)
+
+    @field_validator("potential_max")
+    @classmethod
+    def range_is_not_inverted(cls, value: int, info):
+        minimum = info.data.get("potential_min")
+        if minimum is not None and minimum > value:
+            raise ValueError("potential_min must be less than or equal to potential_max")
+        return value
+
+
+class CandidateRangesRequest(BaseModel):
+    solid_prospect: CandidatePotentialRangeRequest
+    strong_prospect: CandidatePotentialRangeRequest
+    elite_prospect: CandidatePotentialRangeRequest
+    special_prospect: CandidatePotentialRangeRequest
+    generational_talent: CandidatePotentialRangeRequest
+
+
+class TalentCalibrationCompareRequest(BaseModel):
+    seed: StrictInt
+    sample_count: StrictInt = Field(ge=1, le=50_000)
+    candidate_ranges: CandidateRangesRequest
+
+
+class CalibrationDeltaResponse(BaseModel):
+    minimum: int | None
+    maximum: int | None
+    mean: float | None
+    p10: float | None
+    p50: float | None
+    p90: float | None
+    increased: int
+    unchanged: int
+    decreased: int
+
+
+class TalentCalibrationBandComparisonResponse(BaseModel):
+    band: str
+    generated_count: int
+    configured_rarity_weight: float
+    candidate_range: CandidatePotentialRangeRequest
+    baseline_potential_ovr: CalibrationDistributionResponse
+    candidate_potential_ovr: CalibrationDistributionResponse
+    delta: CalibrationDeltaResponse
+    baseline_histogram: list[CalibrationHistogramBinResponse]
+    candidate_histogram: list[CalibrationHistogramBinResponse]
+
+
+class TalentCalibrationGlobalComparisonResponse(BaseModel):
+    baseline_potential_ovr: CalibrationDistributionResponse
+    candidate_potential_ovr: CalibrationDistributionResponse
+    delta: CalibrationDeltaResponse
+
+
+class TalentCalibrationOverlapResponse(BaseModel):
+    lower_band: str
+    upper_band: str
+    baseline: float | None
+    candidate: float | None
+
+
+class TalentCalibrationCompareResponse(BaseModel):
+    seed: int
+    sample_count: int
+    baseline_policy_id: str
+    baseline_policy_fingerprint: str
+    candidate_sandbox_configuration_fingerprint: str
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    bands: list[TalentCalibrationBandComparisonResponse]
+    global_comparison: TalentCalibrationGlobalComparisonResponse
+    adjacent_overlaps: list[TalentCalibrationOverlapResponse]
 
 class ViewerOfficialRunContextResponse(BaseModel):
     product_run_id: str

@@ -1,5 +1,20 @@
 # Current implementation and next action
 
+## Implemented — Talent Calibration Lab V2 Candidate Policy Sandbox
+
+- The existing Admin Calibration Lab now accepts one ephemeral Potential OVR range for each of
+  the five quality bands and compares it against the unchanged production sporting-profile
+  baseline over the same deterministic synthetic prospects.
+- The comparison preserves the production policy ID, seeds, current attributes/OVR and development
+  timing. It aggregates baseline/candidate distributions, deltas, shared 10-point histograms and
+  adjacent-band histogram overlap without persisting profiles, changing a Run, or altering Talent
+  Intake, rarity weights or canonical policy constants.
+- Candidate configurations are experimental only: none is saved, applied, ranked, recommended or
+  canonical. Empty rare-band samples remain explicit null evidence rather than fabricated zeros.
+
+**Next:** the product owner can evaluate measured candidate results and make a separate later
+product decision. Until then, the `110–190` provisional production baseline remains unchanged.
+
 ## Implemented — Talent Calibration Lab V1
 
 - The Admin-only, read-only Calibration Lab streams namespaced synthetic prospects through the shared canonical quality-rarity selector and current 0–200 prospect sporting-profile kernel. It reports deterministic overall/per-band OVR percentiles, expected/generated rarity counts, development timing and fixed-bin potential histograms without persistence or Run mutation.

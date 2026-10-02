@@ -41,6 +41,12 @@ export function TalentCalibrationPage(): JSX.Element {
           <tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><td>{pct(row.configured_rarity_weight)}</td><td>{row.expected_count.toFixed(1)}</td><td>{row.generated_count}</td><td>{pct(row.generated_share)}</td><td>{row.generated_minus_expected.toFixed(1)}</td><Cells stats={row.potential_ovr} /></tr>)}</tbody>
         </table>
       </SectionCard>
+      <SectionCard title="Current OVR by quality band">
+        <table aria-label="Current OVR by quality band">
+          <thead><tr><th>Band</th><th>Min</th><th>P10</th><th>P25</th><th>Median</th><th>P75</th><th>P90</th><th>Max</th><th>Mean</th></tr></thead>
+          <tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><Cells stats={row.current_ovr} /></tr>)}</tbody>
+        </table>
+      </SectionCard>
       <SectionCard title="Development timing">
         <table aria-label="Development timing"><thead><tr><th>Band</th><th>Early Bloomer</th><th>Standard</th><th>Late Bloomer</th></tr></thead><tbody>{query.data.bands.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band] ?? row.band}</th><td>{row.development_timing_counts['Early Bloomer']}</td><td>{row.development_timing_counts.Standard}</td><td>{row.development_timing_counts['Late Bloomer']}</td></tr>)}</tbody></table>
       </SectionCard>

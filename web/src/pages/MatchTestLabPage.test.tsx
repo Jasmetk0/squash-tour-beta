@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -69,7 +69,7 @@ describe('MatchTestLabPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Match Test Lab' })).toBeInTheDocument()
     expect(screen.getByText(/never mutate a Run or Branch/i)).toBeInTheDocument()
-    expect(screen.getByLabelText('Match Lab scenario JSON')).toHaveValue(expect.stringContaining('portable-match-example'))
+    expect((screen.getByLabelText('Match Lab scenario JSON') as HTMLTextAreaElement).value).toContain('portable-match-example')
 
     await user.type(screen.getByLabelText('Match Lab batch seeds'), '100, 101')
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
@@ -100,8 +100,7 @@ describe('MatchTestLabPage', () => {
     renderWithRoute(<MatchTestLabPage />, '/admin/labs/match')
 
     const editor = screen.getByLabelText('Match Lab scenario JSON')
-    await user.clear(editor)
-    await user.type(editor, '{bad json')
+    fireEvent.change(editor, { target: { value: '{bad json' } })
     await user.click(screen.getByRole('button', { name: 'Run scenario' }))
 
     expect(api.runMatchTestLab).not.toHaveBeenCalled()

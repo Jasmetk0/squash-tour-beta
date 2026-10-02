@@ -169,6 +169,16 @@ class TournamentLabScenario(BaseModel):
     )
 
     @model_validator(mode="after")
+    def validate_source_snapshot_binding(self):
+        if self.source_snapshot is None:
+            return self
+        if self.source_kind != "run_snapshot_copy":
+            raise ValueError("Tournament Lab source snapshot requires run_snapshot_copy source kind")
+        if self.source_fingerprint != self.source_snapshot.fingerprint:
+            raise ValueError("Tournament Lab source snapshot fingerprint does not match source_fingerprint")
+        return self
+
+    @model_validator(mode="after")
     def participant_ids_are_unique(self):
         ids = [item.player.player_id for item in self.participants]
         if len(ids) != len(set(ids)):

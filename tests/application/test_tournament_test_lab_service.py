@@ -1280,7 +1280,11 @@ def test_saved_tournament_lab_run_draft_materializes_safely_on_branch_fork(
 
         forked = RunBranchCreationService(
             repository=repository,
-            id_factory=(lambda values=iter(("branch-lab-copy", "draft-lab-copy")): (lambda _kind: next(values)))(),
+            id_factory=(
+                lambda values=iter(
+                    ("branch-lab-copy", "draft-lab-copy", "revision-lab-copy")
+                ): (lambda _kind: next(values))
+            )(),
         ).create_from_saved_revision(
             run_id="run-lab",
             source_branch_id="branch-lab",

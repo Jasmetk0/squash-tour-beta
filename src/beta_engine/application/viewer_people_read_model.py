@@ -171,26 +171,12 @@ def resolve_viewer_players(
                 current_ovr=(
                     sporting_player.ovr if sporting_player is not None else None
                 ),
-                potential_ovr=(
-                    sporting_player.potential_ovr
-                    if sporting_player is not None
-                    else None
-                ),
-                current_form=(
-                    sporting_player.current_form
-                    if sporting_player is not None
-                    else None
-                ),
-                match_sharpness=(
-                    sporting_player.match_sharpness
-                    if sporting_player is not None
-                    else None
-                ),
-                long_term_fatigue=(
-                    sporting_player.long_term_fatigue
-                    if sporting_player is not None
-                    else None
-                ),
+                # Viewer public projection is conservative by default. Hidden/internal
+                # sporting state remains available to Admin/simulation authorities only.
+                potential_ovr=None,
+                current_form=None,
+                match_sharpness=None,
+                long_term_fatigue=None,
                 identity_source=identity_source,
             )
         )

@@ -15,6 +15,24 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — deterministic 80-Edition copied-FAX acceptance Calendar source
+
+- Added a dedicated non-canonical release-test Calendar source for season 2000/01.
+- It instantiates exactly 80 `WORLD_TOUR` Editions from the existing active World Tour Tournament
+  Template authorities instead of inventing 80 new rule definitions.
+- Editions are distributed deterministically across SW1–SW61 with at most two reference events in
+  one season week and preserve their source template geometry/snapshot fingerprints.
+- The generated Calendar is validated through the existing SeasonCalendar validation boundary and
+  emitted as the ordinary `calendar-2000-2001` Run Package document.
+- Copied-FAX Preview → Materialize API now consumes this source directly; it no longer depends on
+  a separately hand-built legacy season calendar for the 80-Edition release fixture.
+- The source is explicitly marked `non_canonical_release_fixture`; it is acceptance scale, not final
+  FAX names/locations/category scheduling canon.
+
+See [Pre-alpha FAX 80-Edition acceptance Calendar](docs/PRE_ALPHA_FAX_80_EDITION_CALENDAR.md).
+
+**Next:** materialize the first persisted 1,000-player / 80-Edition release fixture and start the
+long-run harness against canonical Ranking → Entry → Draw → Match → Result authorities.
 ## Implemented — reviewed persisted copied-FAX reference materialization
 
 - New Preview → Materialize application/API boundary creates a disposable editable Product Run

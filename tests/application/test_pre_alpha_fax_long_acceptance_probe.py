@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
+import pytest
+
+pytestmark = pytest.mark.pr_critical
+
 from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
     PreAlphaFaxLongAcceptanceProbeRequest,
     PreAlphaFaxLongAcceptanceProbeService,

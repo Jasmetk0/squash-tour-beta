@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-from pydantic import StrictInt, field_validator
+from pydantic import StrictInt, field_validator, model_validator
 
 from beta_engine.application.finals_models import FinalsSimulationResult
 from beta_engine.application.run_bootstrap_models import (
@@ -2083,6 +2083,8 @@ class CalibrationDeltaResponse(BaseModel):
 class TalentCalibrationBandComparisonResponse(BaseModel):
     band: str
     generated_count: int
+    expected_count: float
+    generated_share: float
     configured_rarity_weight: float
     candidate_range: CandidatePotentialRangeRequest
     baseline_potential_ovr: CalibrationDistributionResponse
@@ -2116,6 +2118,74 @@ class TalentCalibrationCompareResponse(BaseModel):
     bands: list[TalentCalibrationBandComparisonResponse]
     global_comparison: TalentCalibrationGlobalComparisonResponse
     adjacent_overlaps: list[TalentCalibrationOverlapResponse]
+
+
+class TalentCalibrationMultiSeedRequest(BaseModel):
+    seed_start: StrictInt
+    seed_count: StrictInt = Field(ge=1)
+    sample_count_per_seed: StrictInt = Field(ge=1, le=50_000)
+    candidate_ranges: CandidateRangesRequest
+
+    @model_validator(mode="after")
+    def within_total_sample_budget(self):
+        if self.seed_count * self.sample_count_per_seed > 250_000:
+            raise ValueError("total generated samples must not exceed 250000")
+        return self
+
+
+class CalibrationVariabilityResponse(BaseModel):
+    minimum: float | None
+    maximum: float | None
+    mean: float | None
+    standard_deviation: float | None
+
+
+class TalentCalibrationBandRobustnessResponse(BaseModel):
+    band: str
+    total_generated_samples: int
+    seeds_with_samples: int
+    seeds_without_samples: int
+    candidate_median: CalibrationVariabilityResponse
+    candidate_mean: CalibrationVariabilityResponse
+    generated_count: CalibrationVariabilityResponse
+
+
+class TalentCalibrationOverlapRobustnessResponse(BaseModel):
+    lower_band: str
+    upper_band: str
+    baseline_pooled: float | None
+    candidate_pooled: float | None
+    baseline_per_seed: CalibrationVariabilityResponse
+    candidate_per_seed: CalibrationVariabilityResponse
+    missing_seed_count: int
+
+
+class TalentCalibrationSeedResponse(BaseModel):
+    seed: int
+    total_samples: int
+    generated_counts: dict[str, int]
+    baseline_potential_median: float | None
+    candidate_potential_median: float | None
+    median_delta: float | None
+    adjacent_candidate_overlaps: dict[str, float | None]
+
+
+class TalentCalibrationMultiSeedResponse(BaseModel):
+    seed_start: int
+    seed_count: int
+    sample_count_per_seed: int
+    total_sample_count: int
+    seeds: list[int]
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    baseline_policy_id: str
+    baseline_policy_fingerprint: str
+    candidate_sandbox_configuration_fingerprint: str
+    pooled_global_comparison: TalentCalibrationGlobalComparisonResponse
+    pooled_bands: list[TalentCalibrationBandComparisonResponse]
+    band_robustness: list[TalentCalibrationBandRobustnessResponse]
+    overlap_robustness: list[TalentCalibrationOverlapRobustnessResponse]
+    per_seed: list[TalentCalibrationSeedResponse]
 
 class ViewerOfficialRunContextResponse(BaseModel):
     product_run_id: str

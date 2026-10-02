@@ -6,7 +6,8 @@ from fastapi import APIRouter, Depends, Query
 
 from beta_engine.api.deps import get_talent_calibration_service, get_world_talent_preview_service
 from beta_engine.api.schemas import (TalentCalibrationCompareRequest,
-    TalentCalibrationCompareResponse, TalentCalibrationResponse,
+    TalentCalibrationCompareResponse, TalentCalibrationMultiSeedRequest,
+    TalentCalibrationMultiSeedResponse, TalentCalibrationResponse,
     TalentClassSummaryResponse, TalentClassYearPreviewResponse)
 from beta_engine.application.talent_calibration_service import BAND_ORDER, TalentCalibrationService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
@@ -38,6 +39,22 @@ def compare_talent_calibration(
     return TalentCalibrationCompareResponse.model_validate(asdict(service.compare(
         seed=request.seed, sample_count=request.sample_count, candidate_ranges=ranges,
     )))
+
+
+@router.post("/calibration/compare-multi-seed", response_model=TalentCalibrationMultiSeedResponse)
+def compare_talent_calibration_multi_seed(
+    request: TalentCalibrationMultiSeedRequest,
+    service: TalentCalibrationService = Depends(get_talent_calibration_service),
+) -> TalentCalibrationMultiSeedResponse:
+    ranges = {
+        band: (getattr(request.candidate_ranges, band.value).potential_min,
+               getattr(request.candidate_ranges, band.value).potential_max)
+        for band in BAND_ORDER
+    }
+    result = service.compare_multi_seed(seed_start=request.seed_start,
+        seed_count=request.seed_count, sample_count_per_seed=request.sample_count_per_seed,
+        candidate_ranges=ranges)
+    return TalentCalibrationMultiSeedResponse.model_validate(asdict(result))
 
 
 @router.get("/preview", response_model=TalentClassYearPreviewResponse)

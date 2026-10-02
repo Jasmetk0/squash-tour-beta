@@ -7,6 +7,7 @@ from beta_engine.application.tournament_test_lab_service import (
     BuiltInTournamentLabScenario,
     TournamentLabCompatibility,
     TournamentLabRequest,
+    TournamentLabSavedRevisionCopyRequest,
     TournamentLabResult,
     TournamentLabScenario,
     TournamentLabSession,
@@ -50,6 +51,19 @@ def list_tournament_lab_sessions(
     service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
 ) -> list[TournamentLabSession]:
     return list(service.list_sessions())
+
+
+@router.post("/sessions/copy-saved-revision", response_model=TournamentLabSession, status_code=201)
+def copy_saved_revision_tournament_to_lab(
+    request: TournamentLabSavedRevisionCopyRequest,
+    service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
+) -> TournamentLabSession:
+    try:
+        return service.copy_saved_revision_tournament(request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.get("/sessions/{session_id}", response_model=TournamentLabSession)

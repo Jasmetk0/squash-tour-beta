@@ -15,6 +15,28 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V5B verified Saved Revision Tournament copy
+
+- Tournament Lab can copy one historical Tournament Edition from an immutable Product Run/Branch
+  Saved Revision into a new isolated Test Session.
+- The copy resolves the revision through canonical Saved Revision history and validates the saved
+  simulation-slot tournament component with the restore-grade loader before projection.
+- Entry Field + Format plus Draw Input (knockout) or Topology (groups/hybrid) are required and
+  fingerprint-bound; no current mutable defaults are substituted.
+- Every copied participant is reconstructed from the saved Initial World + sporting head through
+  the canonical Match input projection policy, with per-player projection fingerprints frozen in
+  source provenance.
+- The scenario freezes Run/Branch/revision/event identity, revision content hash, tournament
+  authority fingerprints and sporting evidence under `run_snapshot_copy`; the source is never
+  live-linked or mutated.
+- Historical WC/LL/replacement repair and prospect profiles not reconstructable from Initial World
+  fail closed until their dedicated Lab slices exist.
+
+See [Tournament Test Lab V5B Run copy](docs/TOURNAMENT_TEST_LAB_V5B_RUN_COPY.md).
+
+**Next:** implement the separate Lab → Run compatibility-preview draft bridge, then add
+withdrawal/WC/LL/replacement and ranking-consequence slices through shared authorities.
+
 ## Implemented — Global Tournament Test Lab V5A explicit Session import/export
 
 - Persisted Tournament Lab Test Sessions now have an explicit portable export envelope with exact
@@ -28,9 +50,9 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Tournament Test Lab V5A import/export](docs/TOURNAMENT_TEST_LAB_V5A_IMPORT_EXPORT.md).
 
-**Next:** implement verified Run → Lab historical Tournament copy, then a separate Lab → Run
-compatibility-preview draft bridge. Withdrawals/WC/LL/replacements and ranking consequences remain
-later shared-authority slices.
+**Next:** verified Run → Lab historical Tournament copy is now implemented. Continue with the separate
+Lab → Run compatibility-preview draft bridge. Withdrawals/WC/LL/replacements and ranking consequences
+remain later shared-authority slices.
 
 ## Implemented — Global Tournament Test Lab V4 groups and groups→knockout
 

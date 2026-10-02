@@ -7781,6 +7781,21 @@ export type TournamentLabParticipantContext = {
   travel_modifier?: number
 }
 
+export type TournamentLabRunSnapshotEvidence = {
+  product_run_id: string
+  branch_id: string
+  saved_revision_id: string
+  saved_revision_content_hash: string
+  event_id: string
+  entry_field_fingerprint: string
+  format_authority_fingerprint: string
+  draw_input_fingerprint?: string | null
+  topology_authority_fingerprint?: string | null
+  sporting_state_fingerprint: string
+  sporting_week_ordinal: number
+  participant_projection_fingerprints: string[]
+}
+
 export type TournamentLabScenario = {
   schema_version: 'tournament_test_lab_scenario.v1'
   scenario_id: string
@@ -7812,6 +7827,7 @@ export type TournamentLabScenario = {
   source_kind: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
   source_reference?: string | null
   source_fingerprint?: string | null
+  source_snapshot?: TournamentLabRunSnapshotEvidence | null
 }
 
 export type TournamentLabRequest = {
@@ -7970,6 +7986,14 @@ export type TournamentLabSessionCreateRequest = {
   display_name: string
   scenario?: TournamentLabScenario
   built_in_scenario_id?: string
+}
+
+export type TournamentLabSavedRevisionCopyRequest = {
+  display_name: string
+  product_run_id: string
+  branch_id: string
+  saved_revision_id: string
+  event_id: string
 }
 
 export type TournamentLabSessionUpdateRequest = {

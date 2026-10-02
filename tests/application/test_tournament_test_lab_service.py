@@ -3,8 +3,10 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.tournament_test_lab_service import (
+    TournamentLabRunSnapshotEvidence,
     TournamentLabAssertions,
     TournamentLabRequest,
+    TournamentLabSavedRevisionCopyRequest,
     TournamentLabScenario,
     TournamentLabSessionCreateRequest,
     TournamentLabSessionImportRequest,
@@ -14,6 +16,13 @@ from beta_engine.application.tournament_test_lab_service import (
 )
 from beta_engine.domain.matches import MatchParticipantContext
 from beta_engine.domain.players import HiddenCareerTraits, Player
+from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
+from beta_engine.domain.players.sporting import PlayerSportingRecord, PlayerSportingWeekState
+from beta_engine.domain.rankings.official import RankingWeek
+from beta_engine.domain.tournaments.entry_field import TournamentEntryField, TournamentEntryFieldCapacity
+from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
+from beta_engine.domain.tournaments.draw_input_authority import TournamentDrawInputAuthority
+from beta_engine.infrastructure.db.repositories import BranchSavedRevisionHistoryRecord, BranchSavedRevisionRecord
 from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
 from beta_engine.infrastructure.db.models import Base, TournamentLabSessionModel
 
@@ -640,3 +649,287 @@ def test_tournament_lab_groups_fail_closed_on_bad_crossing_contract() -> None:
         issue.code == "HYBRID_CROSSINGS_INCOMPLETE"
         for issue in result.compatibility.issues
     )
+
+
+class _TournamentHistoricalRepository:
+    def __init__(self):
+        revision = BranchSavedRevisionRecord(
+            revision_id="revision-tournament",
+            run_id="run-tournament",
+            branch_id="branch-tournament",
+            sequence=1,
+            parent_revision_id=None,
+            kind="test",
+            payload_schema_version="test.v1",
+            content_hash_algorithm="sha256",
+            content_hash="a" * 64,
+            payload={"content": {}},
+            change_summary={},
+        )
+        self.history = BranchSavedRevisionHistoryRecord(
+            run_id="run-tournament",
+            branch_id="branch-tournament",
+            saved_head_revision_id=revision.revision_id,
+            saved_revisions=(revision,),
+        )
+
+    def get_branch_saved_revision_history(self, *, run_id: str, branch_id: str):
+        if (run_id, branch_id) != (self.history.run_id, self.history.branch_id):
+            raise KeyError("history missing")
+        return self.history
+
+
+def _historical_tournament_sources():
+    player_ids = ("HIST-T1", "HIST-T2", "HIST-T3", "HIST-T4")
+    capacity = TournamentEntryFieldCapacity(main_draw_size=4)
+    field = TournamentEntryField(
+        run_id="run-tournament",
+        branch_id="branch-tournament",
+        event_id="event-tournament",
+        mode="initial",
+        capacity=capacity,
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        applications_fingerprint="3" * 64,
+        direct_main_player_ids=player_ids,
+    )
+    format_authority = TournamentFormatAuthority(
+        run_id="run-tournament",
+        branch_id="branch-tournament",
+        event_id="event-tournament",
+        target_season_index=0,
+        configured_by_command_id="format-command",
+        entry_field_fingerprint=field.fingerprint,
+        format_kind="knockout",
+    )
+    draw_input = TournamentDrawInputAuthority(
+        run_id="run-tournament",
+        branch_id="branch-tournament",
+        event_id="event-tournament",
+        committed_by_command_id="draw-input-command",
+        draw_seed=9876,
+        main_seed_count=1,
+        qualification_seed_count=0,
+        field_sequence=1,
+        capacity=capacity,
+        tournament_ranking_authority_fingerprint="1" * 64,
+        ranking_snapshot_fingerprint="2" * 64,
+        entry_field_fingerprint=field.fingerprint,
+        direct_main_player_ids=player_ids,
+        qualification_player_ids=(),
+        qualifier_placeholder_ids=(),
+        withdrawn_player_ids=(),
+        main_seed_player_ids=(player_ids[0],),
+        qualification_seed_player_ids=(),
+    )
+    component = {
+        "entry_fields": (
+            {
+                "event_id": field.event_id,
+                "sequence": 1,
+                "payload_json": field.model_dump_json(),
+            },
+        ),
+        "format_authorities": (
+            {
+                "event_id": format_authority.event_id,
+                "payload_json": format_authority.model_dump_json(),
+            },
+        ),
+        "draw_inputs": (
+            {
+                "event_id": draw_input.event_id,
+                "payload_json": draw_input.model_dump_json(),
+            },
+        ),
+        "topology_authorities": (),
+    }
+
+    class Profile:
+        def __init__(self, player_id: str, index: int):
+            self.player_id = player_id
+            self.name = player_id
+            self.nationality = "CZE"
+            self.birth_year = 1974 + index
+            self.birth_year_week = 1
+            self.play_style = "attacking"
+            self.archetype = "Power Attacker"
+            self.source_generation_fingerprint = f"profile:{player_id}"
+            self.hidden_career_traits = HiddenCareerTraits(
+                potential_ceiling=99,
+                growth_curve="Standard",
+                professionalism=0.7,
+                ambition=0.7,
+                travel_tolerance=0.7,
+                schedule_aggression=0.6,
+                injury_proneness=0.2,
+                resilience=0.8,
+            )
+
+    profiles = tuple(Profile(player_id, index) for index, player_id in enumerate(player_ids))
+    records = tuple(
+        PlayerSportingRecord(
+            player_id=player_id,
+            attributes=tuple((name, 160 - index * 5) for name in CANONICAL_PLAYER_ATTRIBUTES),
+            potential_ovr=180,
+            potential_identity=f"potential:{player_id}",
+            potential_provenance="test",
+            development_timing="Standard",
+            current_form=110,
+            long_term_form_norm=100,
+            match_sharpness=75,
+            long_term_fatigue=10,
+        )
+        for index, player_id in enumerate(player_ids)
+    )
+    sporting = PlayerSportingWeekState(
+        run_id="run-tournament",
+        branch_id="branch-tournament",
+        week=RankingWeek(season_index=0, week=1),
+        players=records,
+        completed_context_fingerprint="bootstrap:not-a-completed-week",
+        source_initial_world_fingerprint="4" * 64,
+        stage_provenance="test",
+    )
+
+    class World:
+        players = profiles
+
+    return component, World(), sporting, player_ids
+
+
+def test_tournament_lab_copies_verified_saved_revision_knockout_without_live_link(
+    tmp_path, monkeypatch
+) -> None:
+    engine, factory, base_service = _persistent_service(tmp_path)
+    try:
+        component, world, sporting, player_ids = _historical_tournament_sources()
+        import beta_engine.application.tournament_test_lab_service as module
+
+        monkeypatch.setattr(
+            module,
+            "load_saved_simulation_slot_component",
+            lambda payload, *, run_id, branch_id: component,
+        )
+        monkeypatch.setattr(
+            module,
+            "load_saved_initial_world",
+            lambda payload, *, run_id, branch_id: world,
+        )
+        monkeypatch.setattr(
+            module,
+            "load_saved_sporting_bundle",
+            lambda payload, *, run_id, branch_id: ((sporting,), None),
+        )
+        service = TournamentTestLabService(
+            factory,
+            base_service._id_factory,
+            repository=_TournamentHistoricalRepository(),
+        )
+
+        copied = service.copy_saved_revision_tournament(
+            TournamentLabSavedRevisionCopyRequest(
+                display_name="Historical Tournament Copy",
+                product_run_id="run-tournament",
+                branch_id="branch-tournament",
+                saved_revision_id="revision-tournament",
+                event_id="event-tournament",
+            )
+        )
+
+        assert copied.version == 1
+        assert copied.scenario.source_kind == "run_snapshot_copy"
+        assert copied.scenario.source_snapshot is not None
+        assert copied.scenario.source_fingerprint == copied.scenario.source_snapshot.fingerprint
+        assert copied.scenario.source_snapshot.saved_revision_content_hash == "a" * 64
+        assert copied.scenario.source_snapshot.event_id == "event-tournament"
+        assert copied.scenario.draw_seed == 9876
+        assert copied.scenario.main_draw_size == 4
+        assert copied.scenario.seed_order_player_ids[0] == player_ids[0]
+        assert {item.player.player_id for item in copied.scenario.participants} == set(player_ids)
+        assert len(copied.scenario.source_snapshot.participant_projection_fingerprints) == 4
+
+        result = service.run_session(
+            copied.session_id,
+            TournamentLabSessionRunRequest(
+                expected_session_fingerprint=copied.fingerprint,
+                batch_match_seeds=(9001,),
+            ),
+        )
+        assert result.compatibility.runnable_in_lab is True
+        assert result.compatibility.run_mutation_performed is False
+        assert result.compatibility.run_live_link is False
+        assert result.runs[0].tournament_complete is True
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_historical_copy_fails_closed_for_wc_until_replacement_slice(
+    tmp_path, monkeypatch
+) -> None:
+    engine, factory, base_service = _persistent_service(tmp_path)
+    try:
+        component, world, sporting, _ = _historical_tournament_sources()
+        draw = TournamentDrawInputAuthority.model_validate_json(
+            component["draw_inputs"][0]["payload_json"]
+        )
+        changed = draw.model_copy(
+            update={"replacement_source_authority_fingerprints": ("5" * 64,)}
+        )
+        component = dict(component)
+        component["draw_inputs"] = (
+            {
+                "event_id": changed.event_id,
+                "payload_json": changed.model_dump_json(),
+            },
+        )
+        import beta_engine.application.tournament_test_lab_service as module
+        monkeypatch.setattr(module, "load_saved_simulation_slot_component", lambda *args, **kwargs: component)
+        monkeypatch.setattr(module, "load_saved_initial_world", lambda *args, **kwargs: world)
+        monkeypatch.setattr(module, "load_saved_sporting_bundle", lambda *args, **kwargs: ((sporting,), None))
+        service = TournamentTestLabService(
+            factory,
+            base_service._id_factory,
+            repository=_TournamentHistoricalRepository(),
+        )
+
+        with pytest.raises(ValueError, match="replacement-source fallback lineage|WC/LL/replacement"):
+            service.copy_saved_revision_tournament(
+                TournamentLabSavedRevisionCopyRequest(
+                    display_name="Unsupported historical copy",
+                    product_run_id="run-tournament",
+                    branch_id="branch-tournament",
+                    saved_revision_id="revision-tournament",
+                    event_id="event-tournament",
+                )
+            )
+        assert service.list_sessions() == ()
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_run_snapshot_source_fingerprint_must_bind_evidence() -> None:
+    evidence = TournamentLabRunSnapshotEvidence(
+        product_run_id="run-a",
+        branch_id="branch-a",
+        saved_revision_id="revision-a",
+        saved_revision_content_hash="a" * 64,
+        event_id="event-a",
+        entry_field_fingerprint="b" * 64,
+        format_authority_fingerprint="c" * 64,
+        sporting_state_fingerprint="d" * 64,
+        sporting_week_ordinal=0,
+        participant_projection_fingerprints=("e" * 64,),
+    )
+    scenario = _scenario()
+    with pytest.raises(ValueError, match="source snapshot fingerprint"):
+        TournamentLabScenario(
+            **scenario.model_dump(
+                mode="python",
+                exclude={"source_kind", "source_reference", "source_fingerprint", "source_snapshot"},
+            ),
+            source_kind="run_snapshot_copy",
+            source_reference="run-a/branch-a/revision-a/event-a",
+            source_fingerprint="0" * 64,
+            source_snapshot=evidence,
+        )

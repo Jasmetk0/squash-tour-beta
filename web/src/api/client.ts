@@ -3473,6 +3473,15 @@ export async function createTournamentLabSession(
   })
 }
 
+export async function copySavedRevisionTournamentToLab(
+  payload: import('./types').TournamentLabSavedRevisionCopyRequest
+): Promise<import('./types').TournamentLabSession> {
+  return request<import('./types').TournamentLabSession>(
+    '/admin/labs/tournament/sessions/copy-saved-revision',
+    { method: 'POST', body: JSON.stringify(payload) }
+  )
+}
+
 export async function updateTournamentLabSession(
   sessionId: string,
   payload: import('./types').TournamentLabSessionUpdateRequest

@@ -188,6 +188,40 @@ class RunWorkingDraftService:
             ),
         )
 
+    def save_tournament_lab_drafts(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_tournament_lab_draft_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_tournament_lab_draft_fingerprint, str)
+            or len(expected_tournament_lab_draft_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_tournament_lab_draft_fingerprint
+            )
+        ):
+            raise ValueError(
+                "Expected Tournament Lab Run draft fingerprint must be SHA-256"
+            )
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_tournament_lab_draft_fingerprint=(
+                expected_tournament_lab_draft_fingerprint
+            ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
     def save_simulation(
         self,
         *,

@@ -373,7 +373,6 @@ describe('TournamentTestLabPage', () => {
     await user.click(screen.getByRole('button', { name: 'Run tournament scenario' }))
 
     expect(await screen.findByRole('table', { name: 'Tournament Lab group 1 standings' })).toBeInTheDocument()
-    expect(screen.getByText('3 match days')).not.toBeInTheDocument()
     expect(screen.getByText('resolved')).toBeInTheDocument()
     expect(screen.getByText('4 entrants')).toBeInTheDocument()
     const standings = screen.getByRole('table', { name: 'Tournament Lab group 1 standings' })

@@ -2541,7 +2541,13 @@ class SimulationPersistenceRepository:
                     "the source Saved Revision content is invalid"
                 )
             return bool(
-                {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, RUN_PACKAGE_COMPONENT_KEY} & set(content)
+                {
+                    RANKING_COMPONENT_KEY,
+                    INITIAL_WORLD_COMPONENT_KEY,
+                    RUN_PACKAGE_COMPONENT_KEY,
+                    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                }
+                & set(content)
             )
 
     def create_branch_from_saved_revision_atomically(
@@ -2624,7 +2630,12 @@ class SimulationPersistenceRepository:
                 remapped_initial_world = None
                 source_initial_world = None
                 materialize_fork_root = bool(
-                    {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, RUN_PACKAGE_COMPONENT_KEY}
+                    {
+                        RANKING_COMPONENT_KEY,
+                        INITIAL_WORLD_COMPONENT_KEY,
+                        RUN_PACKAGE_COMPONENT_KEY,
+                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                    }
                     & set(source_content)
                 )
                 if materialize_fork_root:
@@ -2679,6 +2690,7 @@ class SimulationPersistenceRepository:
                         DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         RUN_PACKAGE_COMPONENT_KEY,
+                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:

@@ -247,6 +247,7 @@ def get_tournament_test_lab_service(request: Request) -> TournamentTestLabServic
     return TournamentTestLabService(
         session_factory=runtime.repository._session_factory,
         id_factory=_new_product_entity_id,
+        repository=runtime.repository,
     )
 
 

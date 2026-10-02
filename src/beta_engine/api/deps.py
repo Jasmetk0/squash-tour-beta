@@ -75,6 +75,7 @@ from beta_engine.application.run_world_initial_pool_preview_service import RunWo
 from beta_engine.application.run_world_initial_world_service import RunWorldInitialWorldService
 from beta_engine.application.world_talent_preview_service import WorldTalentPreviewService
 from beta_engine.application.talent_calibration_service import TalentCalibrationService
+from beta_engine.application.match_test_lab_service import MatchTestLabService
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -229,6 +230,10 @@ def get_world_talent_preview_service(request: Request) -> WorldTalentPreviewServ
 
 def get_talent_calibration_service() -> TalentCalibrationService:
     return TalentCalibrationService()
+
+
+def get_match_test_lab_service() -> MatchTestLabService:
+    return MatchTestLabService()
 
 
 def get_manual_player_overrides_service(request: Request) -> ManualPlayerOverridesService:

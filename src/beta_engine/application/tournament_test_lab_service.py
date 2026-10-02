@@ -358,6 +358,18 @@ class TournamentLabSessionExport(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
+    @model_validator(mode="before")
+    @classmethod
+    def accept_api_serialized_session(cls, value):
+        if isinstance(value, dict):
+            session = value.get("session")
+            if isinstance(session, dict) and "session_fingerprint" in session:
+                value = dict(value)
+                session = dict(session)
+                session.pop("session_fingerprint", None)
+                value["session"] = session
+        return value
+
     schema_version: Literal["tournament_test_lab_session_export.v1"] = (
         "tournament_test_lab_session_export.v1"
     )

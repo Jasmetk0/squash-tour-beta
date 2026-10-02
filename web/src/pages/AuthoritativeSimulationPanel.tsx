@@ -5,6 +5,7 @@ import {
   adoptAuthoritativeWeekScheduleProposal,
   adoptAuthoritativeWeekSchedule,
   getAuthoritativeSimulationPosition,
+  getPreAlphaFaxAcceptanceProfile,
   inspectAuthoritativeEntryDecisionSlot,
   reviewAuthoritativeEntryDecisionSlot,
   inspectWeekTournamentLock,
@@ -463,6 +464,13 @@ export function AuthoritativeSimulationPanel({
       (!schedulePreflightQuery.data.schedule_required ||
         schedulePreflightQuery.data.schedule_already_adopted)
   )
+  const faxAcceptanceProfileQuery = useQuery({
+    queryKey: ['pre-alpha-fax-acceptance-profile', runId, branchId],
+    queryFn: () => getPreAlphaFaxAcceptanceProfile(runId, branchId),
+    enabled,
+    retry: false
+  })
+
   const positionQuery = useQuery({
     queryKey: ['authoritative-simulation-position', runId, branchId],
     queryFn: () => getAuthoritativeSimulationPosition(runId, branchId),
@@ -2213,6 +2221,67 @@ export function AuthoritativeSimulationPanel({
         Run/Branch-owned sporting path: Week Schedule → Position → Next Match / Next Slot / Next Match Day / Next Round / Next Tournament / Next Week / Next Season / Full Simulation → Save / reviewed boundaries.
         It does not use the legacy simulation-run binding.
       </p>
+
+      <h4>Pre-alpha FAX release gate</h4>
+      <p className="status">
+        Read-only input readiness for the mandatory Master v72 long acceptance. Ready here means the
+        copied Run has the required starting shape; it does not mean the 50-season release test has
+        already completed.
+      </p>
+      {faxAcceptanceProfileQuery.isLoading && enabled ? (
+        <p className="status">Checking FAX long-acceptance inputs…</p>
+      ) : null}
+      {faxAcceptanceProfileQuery.error ? (
+        <p className="error">
+          FAX release gate unavailable: {formatApiError(faxAcceptanceProfileQuery.error)}
+        </p>
+      ) : null}
+      {faxAcceptanceProfileQuery.data ? (
+        <>
+          <SummaryPills
+            items={[
+              {
+                label: 'Long acceptance inputs',
+                value: faxAcceptanceProfileQuery.data.ready_for_long_acceptance ? 'ready' : 'blocked'
+              },
+              {
+                label: 'Timeline',
+                value: `${faxAcceptanceProfileQuery.data.timeline_season_count} / ${faxAcceptanceProfileQuery.data.required_timeline_season_count}`
+              },
+              {
+                label: 'Initial players',
+                value: `${faxAcceptanceProfileQuery.data.initial_player_count} / ${faxAcceptanceProfileQuery.data.required_min_initial_players}`
+              },
+              {
+                label: 'World Tour Editions',
+                value: `${faxAcceptanceProfileQuery.data.world_tour_edition_count} / ${faxAcceptanceProfileQuery.data.required_world_tour_edition_count}`
+              },
+              {
+                label: 'Lower-Tour abstract Editions',
+                value: faxAcceptanceProfileQuery.data.lower_tour_edition_count
+              },
+              {
+                label: 'Profile',
+                value: faxAcceptanceProfileQuery.data.profile_fingerprint.slice(0, 12)
+              }
+            ]}
+          />
+          {faxAcceptanceProfileQuery.data.issues.length ? (
+            <ul aria-label="Pre-alpha FAX release gate issues">
+              {faxAcceptanceProfileQuery.data.issues.map((issue) => (
+                <li key={issue.code}>
+                  <strong>{issue.severity === 'error' ? 'Blocker' : 'Info'}:</strong>{' '}
+                  <code>{issue.code}</code> — {issue.message}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="status">
+              Required copied-FAX input scale is present. The long 50-season acceptance still has to run.
+            </p>
+          )}
+        </>
+      ) : null}
 
       {blockedReason ? <p role="alert" className="error">Canonical simulation blocked: {blockedReason}</p> : null}
       {!blockedReason && !savedRevisionId ? (

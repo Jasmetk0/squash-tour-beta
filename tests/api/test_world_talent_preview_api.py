@@ -207,9 +207,13 @@ def test_talent_calibration_endpoint_is_typed_deterministic_and_read_only(tmp_pa
     _write_fixture(countries_path)
     database_path = tmp_path / "calibration.db"
     with ApiServer(database_url=f"sqlite:///{database_path}", countries_config_path=str(countries_path)) as server:
+        before_status, before_runs = _request("GET", f"{server.base_url}/runs")
         status, first = _request("GET", f"{server.base_url}/world/talent-class/calibration?seed=77&sample_count=75")
         retry_status, retry = _request("GET", f"{server.base_url}/world/talent-class/calibration?seed=77&sample_count=75")
         invalid_status, _ = _request("GET", f"{server.base_url}/world/talent-class/calibration?sample_count=0")
+        after_status, after_runs = _request("GET", f"{server.base_url}/runs")
+    assert before_status == after_status == 200
+    assert before_runs == after_runs
     assert status == retry_status == 200
     assert first == retry
     assert invalid_status == 422

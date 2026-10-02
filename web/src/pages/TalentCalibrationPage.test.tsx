@@ -65,10 +65,17 @@ describe('TalentCalibrationPage', () => {
     await user.click(screen.getByRole('button', { name: 'Compare candidate' }))
     expect(api.compareTalentCalibration.mock.calls[0][0]).toEqual({ seed: 0, sample_count: 5000, candidate_ranges: { solid_prospect: { potential_min: 120, potential_max: 190 }, strong_prospect: { potential_min: 110, potential_max: 190 }, elite_prospect: { potential_min: 110, potential_max: 190 }, special_prospect: { potential_min: 110, potential_max: 190 }, generational_talent: { potential_min: 110, potential_max: 190 } } })
     expect(await screen.findByRole('table', { name: 'Candidate comparison' })).toBeInTheDocument()
+    const globalTable = screen.getByRole('table', { name: 'Global candidate comparison' })
+    expect(within(globalTable).getByText('100')).toBeInTheDocument()
     expect(screen.getByText('No generated samples for this seed/sample size')).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Adjacent-band overlap' })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Reset to baseline' }))
     expect(solidMin).toHaveValue(110)
+
+    await user.clear(screen.getByLabelText('Seed'))
+    await user.type(screen.getByLabelText('Seed'), '12')
+    await user.click(screen.getByRole('button', { name: 'Run calibration' }))
+    expect(screen.queryByRole('table', { name: 'Global candidate comparison' })).not.toBeInTheDocument()
     for (const forbidden of ['Save', 'Apply', 'Publish']) expect(screen.queryByRole('button', { name: forbidden })).not.toBeInTheDocument()
   })
 

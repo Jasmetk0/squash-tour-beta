@@ -16,7 +16,7 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    diagnostics/assertions and persistent isolated Test Sessions with stale-state protection.
    Canonical Qualification plus pure groups and groups→knockout progression are now executable
    through shared topology/schedule/standings/hybrid authorities. Explicit Session import/export and verified Run → Lab historical Tournament copy are now implemented.
-   Replacements/ranking consequences and the Lab → Run compatibility-preview bridge remain.
+   The Lab → Run compatibility-preview bridge is now implemented. Replacements/ranking consequences and the explicit reviewed draft-application boundary remain.
 4. Validate a full season and next-season opening in a copy of the FAX template: at least
    1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
    Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.

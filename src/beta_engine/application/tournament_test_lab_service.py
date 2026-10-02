@@ -65,6 +65,8 @@ from beta_engine.domain.tournaments.topology_authority import (
 from beta_engine.infrastructure.db.models import TournamentLabSessionModel
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
 from beta_engine.infrastructure.db import (
+    BranchRevisionStateConflictError,
+    BranchRevisionStateNotFoundError,
     SavedRevisionHistoryConflictError,
     SavedRevisionHistoryNotFoundError,
 )
@@ -401,6 +403,63 @@ class TournamentLabSavedRevisionCopyRequest(BaseModel):
     branch_id: str = Field(min_length=1, max_length=128)
     saved_revision_id: str = Field(min_length=1, max_length=128)
     event_id: str = Field(min_length=1, max_length=160)
+
+
+class TournamentLabRunDraftPreviewRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    product_run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    event_id: str = Field(min_length=1, max_length=160)
+
+
+class TournamentLabRunDraftCandidate(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    event_id: str
+    format_kind: Literal["knockout", "groups", "groups_knockout"]
+    participant_player_ids: tuple[str, ...]
+    main_draw_size: int
+    qualification_draw_size: int
+    qualifier_spots: int
+    qualification_player_ids: tuple[str, ...]
+    seed_order_player_ids: tuple[str, ...]
+    group_count: int
+    group_size: int
+    seeded_slots_per_group: int
+    group_seed_placements: tuple[TournamentGroupSeedPlacement, ...]
+    group_match_best_of: Literal[3, 5] | None
+    advancing_per_group: int
+    knockout_crossings: tuple[TournamentGroupCrossingMatch, ...]
+    topology_seed: int | None
+    draw_seed: int
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(self.model_dump(mode="json"))
+
+
+class TournamentLabRunDraftPreview(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["tournament_test_lab_run_draft_preview.v1"] = (
+        "tournament_test_lab_run_draft_preview.v1"
+    )
+    product_run_id: str
+    branch_id: str
+    event_id: str
+    session_id: str
+    session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    scenario_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    target_saved_revision_id: str
+    target_working_draft_version: int = Field(ge=0)
+    target_working_draft_status: Literal["clean", "dirty"]
+    ready_for_draft: bool
+    mutation_performed: Literal[False] = False
+    candidate: TournamentLabRunDraftCandidate
+    candidate_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    issues: tuple[TournamentLabIssue, ...]
 
 
 class TournamentLabSessionUpdateRequest(BaseModel):
@@ -831,6 +890,76 @@ class TournamentTestLabService:
                 display_name=request.display_name,
                 scenario=scenario,
             )
+        )
+
+    def preview_run_draft(
+        self,
+        session_id: str,
+        request: TournamentLabRunDraftPreviewRequest,
+    ) -> TournamentLabRunDraftPreview:
+        if self._repository is None:
+            raise RuntimeError("Tournament Lab Run draft preview is not configured")
+        current = self.get_session(session_id)
+        if current.fingerprint != request.expected_session_fingerprint:
+            raise ValueError("Tournament Lab session changed since it was reviewed")
+
+        try:
+            state = self._repository.get_branch_revision_state(branch_id=request.branch_id)
+        except BranchRevisionStateNotFoundError as exc:
+            raise KeyError(str(exc)) from exc
+        except BranchRevisionStateConflictError as exc:
+            raise ValueError(str(exc)) from exc
+        if state.run_id != request.product_run_id:
+            raise ValueError("Target Branch does not belong to requested Product Run")
+
+        compatibility = self.inspect(current.scenario)
+        issues = list(compatibility.issues)
+        if state.working_draft.status != "clean":
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="TARGET_WORKING_DRAFT_DIRTY",
+                    message="Target Run Branch Working Draft must be clean before a Lab draft can be reviewed.",
+                )
+            )
+
+        scenario = current.scenario
+        candidate = TournamentLabRunDraftCandidate(
+            event_id=request.event_id,
+            format_kind=scenario.format_kind,
+            participant_player_ids=tuple(item.player.player_id for item in scenario.participants),
+            main_draw_size=scenario.main_draw_size,
+            qualification_draw_size=scenario.qualification_draw_size,
+            qualifier_spots=scenario.qualifier_spots,
+            qualification_player_ids=tuple(scenario.qualification_player_ids),
+            seed_order_player_ids=tuple(scenario.seed_order_player_ids),
+            group_count=scenario.group_count,
+            group_size=scenario.group_size,
+            seeded_slots_per_group=scenario.seeded_slots_per_group,
+            group_seed_placements=tuple(scenario.group_seed_placements),
+            group_match_best_of=scenario.group_match_best_of,
+            advancing_per_group=scenario.advancing_per_group,
+            knockout_crossings=tuple(scenario.knockout_crossings),
+            topology_seed=scenario.topology_seed,
+            draw_seed=scenario.draw_seed,
+        )
+        ready = compatibility.normal_run_compatible and not any(
+            issue.severity == "error" for issue in issues
+        )
+        return TournamentLabRunDraftPreview(
+            product_run_id=request.product_run_id,
+            branch_id=request.branch_id,
+            event_id=request.event_id,
+            session_id=current.session_id,
+            session_fingerprint=current.fingerprint,
+            scenario_fingerprint=current.scenario.fingerprint,
+            target_saved_revision_id=state.saved_head_revision_id,
+            target_working_draft_version=state.working_draft.draft_version,
+            target_working_draft_status=state.working_draft.status,
+            ready_for_draft=ready,
+            candidate=candidate,
+            candidate_fingerprint=candidate.fingerprint,
+            issues=tuple(issues),
         )
 
     def update_session(

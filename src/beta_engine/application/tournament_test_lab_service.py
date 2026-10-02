@@ -164,9 +164,6 @@ class TournamentLabQualificationSectionResult(BaseModel):
     winner_player_id: str | None
     played_match_count: int = Field(ge=0)
     bye_advance_count: int = Field(ge=0)
-    qualification_results: tuple[TournamentLabQualificationSectionResult, ...] = Field(
-        default=(), exclude_if=lambda value: not value
-    )
     match_results: tuple[TournamentLabMatchResult, ...]
 
 
@@ -188,6 +185,9 @@ class TournamentLabSingleRun(BaseModel):
     champion_player_id: str | None
     played_match_count: int = Field(ge=0)
     bye_advance_count: int = Field(ge=0)
+    qualification_results: tuple[TournamentLabQualificationSectionResult, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     match_results: tuple[TournamentLabMatchResult, ...]
     assertions: tuple[TournamentLabAssertionResult, ...]
     run_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")

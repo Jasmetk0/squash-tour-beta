@@ -107,7 +107,7 @@ class RunWeeklyIntakeCohortPreviewService:
             raise LookupError("no matching countries found for run weekly intake cohort season preview")
 
         country_names = {country.code: country.name for country in filtered_countries}
-        country_totals: dict[str, int] = {}
+        country_totals: dict[str, int] = {country.code: 0 for country in filtered_countries}
         weeks: list[RunWeeklyIntakeCohortSeasonWeek] = []
         for volume_week in plan.weeks:
             weekly_plan = self.planner.plan_weekly_intake(

@@ -15,6 +15,20 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — copied-FAX initial Official Ranking + authoritative world head
+
+- Copied-FAX materialization now derives the Week-1 Official Ranking strictly from the newly saved
+  Run-owned InitialWorld using the existing `derive_initial_ranking_inputs` authority.
+- It previews/commits through `prepare_official_ranking`, Saves the ranking through the normal
+  Working Draft boundary, then publishes it through `InitialOfficialRankingPublicationService`.
+- Publication creates the canonical `AuthoritativeWorldState(current_ordinal=0)` and the Week-1
+  `PublishedOfficialRanking` used by tournament ranking-snapshot authority.
+- InitialWorld adoption already bootstraps lifecycle and sporting Week-1 state; no duplicate sporting
+  bootstrap or parallel world-clock implementation was added.
+- The persisted copied-FAX fixture test now verifies the ranking fingerprint, publication and world head.
+
+**Next:** rerun the copied-FAX Full Simulation acceptance probe against the materialized 1,000-player
+/ 80-Edition Run and implement only the next checkpoint that the production driver actually reports.
 ## Implemented — copied-FAX Full Simulation acceptance probe
 
 - Added a release-test probe that reuses the production Authoritative Full Simulation parent.
@@ -23,9 +37,9 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 - The report preserves checkpoint, blockers, current week, completed-season count and fingerprints
   of the reviewed/executed production operation.
 - Preview-level failures are also surfaced as structured blockers instead of opaque 409s.
-- Current architecture review identifies the first real blocker after materialization: InitialWorld
-  exists, but the first authoritative sporting-week/world Position has not yet been bootstrapped,
-  so Full Simulation cannot establish Week 1 (`authoritative sporting week state is missing`).
+- Follow-up review corrected the original blocker diagnosis: InitialWorld adoption already bootstraps
+  lifecycle + sporting Week 1 state. The missing materializer step was the reviewed initial Official
+  Ranking publication that establishes the authoritative world clock/ranking head.
 
 See [copied-FAX long-acceptance probe](docs/PRE_ALPHA_FAX_LONG_ACCEPTANCE_PROBE.md).
 

@@ -20,6 +20,10 @@ from beta_engine.domain.run_packages import (
     PackageType,
 )
 from beta_engine.domain.tournaments.models import SeasonCalendarEvent
+from beta_engine.infrastructure.db.models import (
+    AuthoritativeWorldStateModel,
+    PublishedOfficialRankingModel,
+)
 from beta_engine.infrastructure.db import (
     DatabaseSettings,
     SimulationPersistenceRepository,
@@ -244,6 +248,23 @@ def test_materializes_persisted_copied_fax_reference_that_passes_release_input_g
     assert result.acceptance_profile.initial_player_count == 1000
     assert result.acceptance_profile.world_tour_edition_count == 80
     assert result.acceptance_profile.calendar_package_id == "calendar-2000-2001"
+    assert len(result.initial_ranking_fingerprint) == 64
+    assert result.authoritative_world_initialized is True
+
+    with repository._session_factory() as session:
+        world = session.get(
+            AuthoritativeWorldStateModel,
+            (result.run_id, result.branch_id),
+        )
+        publication = session.get(
+            PublishedOfficialRankingModel,
+            (result.run_id, result.branch_id, 0),
+        )
+        assert world is not None
+        assert world.current_ordinal == 0
+        assert world.ranking_fingerprint == result.initial_ranking_fingerprint
+        assert publication is not None
+        assert publication.snapshot_fingerprint == result.initial_ranking_fingerprint
 
     revision_state = repository.get_branch_revision_state(branch_id=result.branch_id)
     assert revision_state.saved_head_revision_id == result.saved_revision_id

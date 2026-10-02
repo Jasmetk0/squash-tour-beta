@@ -21,9 +21,9 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    reviewed persisted reference materializer and deterministic 80-Edition non-canonical acceptance
    Calendar source are implemented: Preview → editable 50-season Run → Run-owned World/Calendar →
    ≥1,000 InitialWorld players → Saved Revision → gate. A Full Simulation acceptance probe now
-   exposes the first real blocker: the materialized Run lacks the initial authoritative Week 1
-   sporting/world Position. The mandatory automated 50-season 2000/01–2049/50 execution remains
-   outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
+   exposed an initial-position gap. Follow-up review showed sporting Week 1 already existed; the
+   materializer now additionally derives, Saves and publishes the initial Official Ranking/world head.
+   The mandatory automated 50-season 2000/01–2049/50 execution remains outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
    recovery and the rest of Master pre-alpha scope.
 5. Calibrate fairness/numeric policies from measured cases once the relevant systems work;
    do not treat implementation constants as newly approved product rules.

@@ -930,6 +930,42 @@ export type FinalSeasonTransitionResult = {
   run_status: 'completed'
 }
 
+export type PreAlphaFaxAcceptanceIssue = {
+  severity: 'error' | 'info'
+  code: string
+  message: string
+}
+
+export type PreAlphaFaxAcceptanceProfile = {
+  schema_version: 'pre_alpha_fax_acceptance_profile.v1'
+  run_id: string
+  branch_id: string
+  ready_for_long_acceptance: boolean
+  editable_run: boolean
+  active_branch: boolean
+  timeline_start_season: number
+  timeline_end_season: number
+  timeline_season_count: number
+  required_timeline_start_season: number
+  required_timeline_end_season: number
+  required_timeline_season_count: number
+  initial_world_ready: boolean
+  initial_world_fingerprint?: string | null
+  initial_player_count: number
+  required_min_initial_players: number
+  initial_world_package_id?: string | null
+  calendar_ready: boolean
+  calendar_package_id: string
+  calendar_state_fingerprint?: string | null
+  calendar_fingerprint?: string | null
+  calendar_event_count: number
+  world_tour_edition_count: number
+  required_world_tour_edition_count: number
+  lower_tour_edition_count: number
+  issues: PreAlphaFaxAcceptanceIssue[]
+  profile_fingerprint: string
+}
+
 export type AuthoritativeSimulationPosition = {
   run_id: string
   branch_id: string

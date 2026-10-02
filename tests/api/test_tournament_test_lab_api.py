@@ -73,6 +73,7 @@ def test_tournament_lab_api_lists_built_ins_and_inspects_without_run_scope(tmp_p
         assert [row["scenario_id"] for row in built_ins] == [
             "standard-eight-player-knockout",
             "oversized-eight-player-lab-bracket",
+            "qualification-two-sections-to-eight-main",
         ]
 
         scenario = _scenario().model_dump(mode="json")
@@ -245,3 +246,46 @@ def test_tournament_lab_api_rejects_unknown_built_in_session_source(tmp_path) ->
             },
         )
         assert status == 404, body
+
+
+
+def test_tournament_lab_api_runs_qualification_into_main_draw(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-q.db'}") as server:
+        status, built_ins = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/scenarios",
+        )
+        assert status == 200
+        scenario = next(
+            row["scenario"]
+            for row in built_ins
+            if row["scenario_id"] == "qualification-two-sections-to-eight-main"
+        )
+
+        status, body = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/run",
+            {
+                "scenario": scenario,
+                "batch_match_seeds": [610],
+            },
+        )
+
+        assert status == 200, body
+        assert body["compatibility"]["runnable_in_lab"] is True
+        assert body["draw"]["schema_version"] == "tournament_draw_authority.v2"
+        assert len(body["draw"]["qualification_sections"]) == 2
+        run = body["runs"][0]
+        assert len(run["qualification_results"]) == 2
+        assert [row["section_id"] for row in run["qualification_results"]] == ["Q1", "Q2"]
+        assert all(row["winner_player_id"] for row in run["qualification_results"])
+        assert run["played_match_count"] == 13
+        q_winners = {row["winner_player_id"] for row in run["qualification_results"]}
+        first_round = {
+            player
+            for row in run["match_results"]
+            if row["round_number"] == 1
+            for player in (row["player_a_id"], row["player_b_id"])
+            if player is not None
+        }
+        assert q_winners.issubset(first_round)

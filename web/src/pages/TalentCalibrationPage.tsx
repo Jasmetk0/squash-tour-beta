@@ -15,6 +15,7 @@ export function TalentCalibrationPage(): JSX.Element {
   const [inputs, setInputs] = useState({ seed: 0, sample_count: 5000 })
   const [params, setParams] = useState(inputs)
   const query = useQuery({ queryKey: ['talent-calibration', params], queryFn: () => getTalentCalibration(params), retry: false })
+  const comparison = useMutation({ mutationFn: compareTalentCalibration })
   const submit = (event: FormEvent) => {
     event.preventDefault()
     comparison.reset()
@@ -24,7 +25,6 @@ export function TalentCalibrationPage(): JSX.Element {
   useEffect(() => {
     if (query.data && ranges === null) setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max))
   }, [query.data, ranges])
-  const comparison = useMutation({ mutationFn: compareTalentCalibration })
   const reset = () => {
     if (query.data) setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max))
   }

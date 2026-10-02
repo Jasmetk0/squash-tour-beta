@@ -129,6 +129,7 @@ def materialize_run_prospect_15yo_cohort(
             country_code=payload.country_code,
             region=payload.region,
             overwrite=payload.overwrite,
+            expected_review_fingerprint=payload.expected_review_fingerprint,
         )
     except RunProspectMaterializationConflictError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail={"message": str(exc), "conflicts": exc.conflicts}) from exc

@@ -13,6 +13,7 @@ from beta_engine.api.deps import (
     get_run_saved_revision_restore_service,
     get_run_working_draft_service,
     get_simulation_api_service,
+    get_pre_alpha_fax_reference_materialization_service,
 )
 from beta_engine.api.schemas import (
     CreateRunBranchRequest,
@@ -62,6 +63,13 @@ from beta_engine.application.run_saved_revision_restore_service import (
 from beta_engine.application.run_working_draft_service import (
     RunWorkingDraftService,
 )
+from beta_engine.application.pre_alpha_fax_reference_materialization import (
+    PreAlphaFaxReferenceMaterializationService,
+    PreAlphaFaxReferenceMaterializeCommand,
+    PreAlphaFaxReferencePreview,
+    PreAlphaFaxReferenceRequest,
+    PreAlphaFaxReferenceMaterializationResult,
+)
 from beta_engine.domain.run_branches import BranchDisplayNameValidationError
 from beta_engine.domain.run_containers import RunDisplayNameValidationError
 from beta_engine.infrastructure.db import (
@@ -92,6 +100,51 @@ from beta_engine.infrastructure.db import (
 )
 
 router = APIRouter(prefix="/run-containers", tags=["run-containers"])
+
+
+@router.post(
+    "/pre-alpha/fax-reference/preview",
+    response_model=PreAlphaFaxReferencePreview,
+)
+def preview_pre_alpha_fax_reference(
+    payload: PreAlphaFaxReferenceRequest,
+    service: PreAlphaFaxReferenceMaterializationService = Depends(
+        get_pre_alpha_fax_reference_materialization_service
+    ),
+):
+    try:
+        return service.preview(payload)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_reference_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/pre-alpha/fax-reference/materialize",
+    response_model=PreAlphaFaxReferenceMaterializationResult,
+    status_code=201,
+)
+def materialize_pre_alpha_fax_reference(
+    payload: PreAlphaFaxReferenceMaterializeCommand,
+    service: PreAlphaFaxReferenceMaterializationService = Depends(
+        get_pre_alpha_fax_reference_materialization_service
+    ),
+):
+    try:
+        return service.materialize(payload)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_reference_materialization_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 def _response(record: RunContainerRecord) -> RunContainerResponse:

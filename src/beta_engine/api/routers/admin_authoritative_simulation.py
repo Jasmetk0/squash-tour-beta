@@ -70,6 +70,10 @@ from beta_engine.application.pre_alpha_fax_current_week_ranking_snapshots import
     PreAlphaFaxCurrentWeekRankingSnapshotPreview,
     PreAlphaFaxCurrentWeekRankingSnapshotService,
 )
+from beta_engine.application.pre_alpha_fax_entry_validation_policy_gate import (
+    PreAlphaFaxEntryValidationPolicyGate,
+    PreAlphaFaxEntryValidationPolicyGateService,
+)
 from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
     PreAlphaFaxLongAcceptanceProbeReport,
     PreAlphaFaxLongAcceptanceProbeRequest,
@@ -1789,6 +1793,33 @@ def apply_pre_alpha_fax_current_week_ranking_snapshots(
             status_code=409,
             detail={
                 "code": "pre_alpha_fax_current_week_ranking_snapshot_apply_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/pre-alpha/fax-entry-validation-policy-gate",
+    response_model=PreAlphaFaxEntryValidationPolicyGate,
+)
+def inspect_pre_alpha_fax_entry_validation_policy_gate(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    matches: Annotated[SeasonMatchService, Depends(get_season_match_service)],
+    awards: Annotated[
+        SeasonPointAwardsService, Depends(get_season_point_awards_service)
+    ],
+) -> PreAlphaFaxEntryValidationPolicyGate:
+    try:
+        return PreAlphaFaxEntryValidationPolicyGateService(
+            _driver(runtime, matches, awards)
+        ).inspect(run_id=run_id, branch_id=branch_id)
+    except (KeyError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_entry_validation_policy_gate_conflict",
                 "message": str(exc),
             },
         ) from exc

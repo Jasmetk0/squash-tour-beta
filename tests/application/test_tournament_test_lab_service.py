@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from beta_engine.application.tournament_test_lab_service import (
+    TournamentLabRunSnapshotEvidence,
     TournamentLabAssertions,
     TournamentLabRequest,
     TournamentLabSavedRevisionCopyRequest,
@@ -905,3 +906,30 @@ def test_tournament_lab_historical_copy_fails_closed_for_wc_until_replacement_sl
         assert service.list_sessions() == ()
     finally:
         engine.dispose()
+
+
+def test_tournament_lab_run_snapshot_source_fingerprint_must_bind_evidence() -> None:
+    evidence = TournamentLabRunSnapshotEvidence(
+        product_run_id="run-a",
+        branch_id="branch-a",
+        saved_revision_id="revision-a",
+        saved_revision_content_hash="a" * 64,
+        event_id="event-a",
+        entry_field_fingerprint="b" * 64,
+        format_authority_fingerprint="c" * 64,
+        sporting_state_fingerprint="d" * 64,
+        sporting_week_ordinal=0,
+        participant_projection_fingerprints=("e" * 64,),
+    )
+    scenario = _scenario()
+    with pytest.raises(ValueError, match="source snapshot fingerprint"):
+        TournamentLabScenario(
+            **scenario.model_dump(
+                mode="python",
+                exclude={"source_kind", "source_reference", "source_fingerprint", "source_snapshot"},
+            ),
+            source_kind="run_snapshot_copy",
+            source_reference="run-a/branch-a/revision-a/event-a",
+            source_fingerprint="0" * 64,
+            source_snapshot=evidence,
+        )

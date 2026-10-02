@@ -209,6 +209,7 @@ def test_tournament_lab_built_ins_are_deterministic_and_read_only() -> None:
     assert [item.scenario_id for item in rows] == [
         "standard-eight-player-knockout",
         "oversized-eight-player-lab-bracket",
+        "qualification-two-sections-to-eight-main",
     ]
     assert all(item.read_only is True for item in rows)
     assert all(item.scenario_fingerprint == item.scenario.fingerprint for item in rows)
@@ -355,3 +356,83 @@ def test_tournament_lab_session_create_contract_requires_exactly_one_source() ->
             scenario=_scenario(),
             built_in_scenario_id="standard-eight-player-knockout",
         )
+
+
+
+def test_tournament_lab_qualification_resolves_q_sections_into_main_placeholders() -> None:
+    service = TournamentTestLabService()
+    built_in = next(
+        item for item in service.list_built_in_scenarios()
+        if item.scenario_id == "qualification-two-sections-to-eight-main"
+    )
+
+    result = service.run(
+        TournamentLabRequest(
+            scenario=built_in.scenario,
+            batch_match_seeds=(501,),
+        )
+    )
+
+    assert result.compatibility.runnable_in_lab is True
+    assert result.compatibility.normal_run_compatible is True
+    assert result.draw is not None
+    assert len(result.draw.qualification_brackets) == 2
+    assert [section.section_id for section in result.draw.qualification_brackets] == ["Q1", "Q2"]
+    assert result.draw.main.qualifier_placeholder_slots
+    assert {item[0] for item in result.draw.main.qualifier_placeholder_slots} == {"Q1", "Q2"}
+
+    run = result.runs[0]
+    assert run.tournament_complete is True
+    assert len(run.qualification_results) == 2
+    assert [row.section_id for row in run.qualification_results] == ["Q1", "Q2"]
+    assert all(row.winner_player_id is not None for row in run.qualification_results)
+    assert sum(row.played_match_count for row in run.qualification_results) == 6
+    assert run.played_match_count == 13
+    assert run.assertions[0].status == "passed"
+    q_winners = {row.winner_player_id for row in run.qualification_results}
+    assert q_winners.issubset(
+        {item.player.player_id for item in built_in.scenario.participants}
+    )
+    main_first_round_players = {
+        player_id
+        for row in run.match_results
+        if row.round_number == 1
+        for player_id in (row.player_a_id, row.player_b_id)
+        if player_id is not None
+    }
+    assert q_winners.issubset(main_first_round_players)
+
+
+def test_tournament_lab_qualification_diagnostics_fail_closed_for_invalid_geometry() -> None:
+    participants = tuple(_participant(f"QBAD-{index}", 90 - index) for index in range(1, 9))
+    scenario = TournamentLabScenario(
+        scenario_id="bad-q",
+        display_name="Bad Q",
+        format_kind="knockout",
+        participants=participants,
+        main_draw_size=4,
+        qualification_draw_size=6,
+        qualifier_spots=2,
+        qualification_player_ids=tuple(item.player.player_id for item in participants[4:]),
+        seed_order_player_ids=tuple(item.player.player_id for item in participants),
+        draw_seed=42,
+        match_seed=43,
+    )
+
+    result = TournamentTestLabService().run(TournamentLabRequest(scenario=scenario))
+
+    assert result.compatibility.runnable_in_lab is False
+    assert result.draw is None
+    assert result.runs == ()
+    assert any(
+        issue.code == "QUALIFICATION_SECTION_NOT_POWER_OF_TWO"
+        for issue in result.compatibility.issues
+    )
+
+
+def test_tournament_lab_no_qualification_scenario_fingerprint_compatibility() -> None:
+    scenario = _scenario()
+    payload = scenario.model_dump(mode="json")
+    assert "qualification_draw_size" not in payload
+    assert "qualifier_spots" not in payload
+    assert "qualification_player_ids" not in payload

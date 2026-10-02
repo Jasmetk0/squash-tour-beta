@@ -2,10 +2,12 @@ import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import {
+  applyTournamentLabRunDraft,
   createTournamentLabSession,
   getTournamentLabBuiltInScenarios,
   getTournamentLabSessions,
   inspectTournamentLabScenario,
+  previewTournamentLabRunDraft,
   runTournamentLabSession,
   runTournamentTestLab,
   updateTournamentLabSession
@@ -13,11 +15,13 @@ import {
 import type {
   TournamentLabCompatibility,
   TournamentLabRequest,
+  TournamentLabRunDraftPreview,
   TournamentLabResult,
   TournamentLabScenario,
   TournamentLabSession
 } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
+import { newCommandId } from '../admin/branchSimulation'
 
 function parseSeeds(value: string): number[] {
   const trimmed = value.trim()
@@ -183,6 +187,10 @@ export function TournamentTestLabPage(): JSX.Element {
   const [sessionName, setSessionName] = useState('New Tournament Test Session')
   const [batchText, setBatchText] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
+  const [targetRunId, setTargetRunId] = useState('')
+  const [targetBranchId, setTargetBranchId] = useState('')
+  const [targetEventId, setTargetEventId] = useState('')
+  const [runDraftCommandId, setRunDraftCommandId] = useState(() => newCommandId())
 
   useEffect(() => {
     if (selectedSession) {
@@ -213,6 +221,36 @@ export function TournamentTestLabPage(): JSX.Element {
       return runTournamentTestLab(payload)
     }
   })
+  const runDraftPreviewMutation = useMutation({
+    mutationFn: async (target: { runId: string; branchId: string; eventId: string }) => {
+      if (!selectedSession) throw new Error('Open a persistent Tournament Test Session first.')
+      return previewTournamentLabRunDraft(selectedSession.session_id, {
+        expected_session_fingerprint: selectedSession.session_fingerprint,
+        product_run_id: target.runId,
+        branch_id: target.branchId,
+        event_id: target.eventId
+      })
+    },
+    onSuccess: () => {
+      setRunDraftCommandId(newCommandId())
+    }
+  })
+  const runDraftApplyMutation = useMutation({
+    mutationFn: async (preview: TournamentLabRunDraftPreview) => {
+      if (!selectedSession) throw new Error('Open a persistent Tournament Test Session first.')
+      return applyTournamentLabRunDraft(selectedSession.session_id, {
+        command_id: runDraftCommandId,
+        expected_session_fingerprint: selectedSession.session_fingerprint,
+        product_run_id: preview.product_run_id,
+        branch_id: preview.branch_id,
+        event_id: preview.event_id,
+        expected_saved_revision_id: preview.target_saved_revision_id,
+        expected_working_draft_version: preview.target_working_draft_version,
+        expected_preview_fingerprint: preview.preview_fingerprint,
+        expected_candidate_fingerprint: preview.candidate_fingerprint
+      })
+    }
+  })
   const createMutation = useMutation({
     mutationFn: createTournamentLabSession,
     onSuccess: async (created) => {
@@ -241,6 +279,8 @@ export function TournamentTestLabPage(): JSX.Element {
     setScenarioText(JSON.stringify(scenario, null, 2))
     inspectMutation.reset()
     runMutation.reset()
+    runDraftPreviewMutation.reset()
+    runDraftApplyMutation.reset()
     setLocalError(null)
   }
 
@@ -336,6 +376,101 @@ export function TournamentTestLabPage(): JSX.Element {
         { label: 'Source', value: selectedSession.scenario.source_kind },
         { label: 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
       ]} /> : <p className="status">Scratch mode is non-persistent. Create a Test Session to keep an editable isolated tournament draft.</p>}
+    </SectionCard>
+
+    <SectionCard title="Reviewed Lab → Run Working Draft proposal">
+      <p>
+        Copy the currently saved Test Session into one Run-owned event proposal. Preview is read-only;
+        Apply only stages a reviewed proposal in the target Working Draft. It does not create Entry,
+        Draw, Result or ranking authority and does not bypass their provenance rules.
+      </p>
+      <label>Target Product Run ID
+        <input
+          aria-label="Tournament Lab target Run ID"
+          value={targetRunId}
+          onChange={(event) => {
+            setTargetRunId(event.target.value)
+            runDraftPreviewMutation.reset()
+            runDraftApplyMutation.reset()
+          }}
+        />
+      </label>
+      <label>Target Branch ID
+        <input
+          aria-label="Tournament Lab target Branch ID"
+          value={targetBranchId}
+          onChange={(event) => {
+            setTargetBranchId(event.target.value)
+            runDraftPreviewMutation.reset()
+            runDraftApplyMutation.reset()
+          }}
+        />
+      </label>
+      <label>Target event ID
+        <input
+          aria-label="Tournament Lab target event ID"
+          value={targetEventId}
+          onChange={(event) => {
+            setTargetEventId(event.target.value)
+            runDraftPreviewMutation.reset()
+            runDraftApplyMutation.reset()
+          }}
+        />
+      </label>
+      <button
+        type="button"
+        disabled={
+          !selectedSession ||
+          !targetRunId.trim() ||
+          !targetBranchId.trim() ||
+          !targetEventId.trim() ||
+          runDraftPreviewMutation.isPending
+        }
+        onClick={() => runDraftPreviewMutation.mutate({
+          runId: targetRunId.trim(),
+          branchId: targetBranchId.trim(),
+          eventId: targetEventId.trim()
+        })}
+      >
+        {runDraftPreviewMutation.isPending ? 'Reviewing Run draft…' : 'Preview Run draft'}
+      </button>
+      {runDraftPreviewMutation.data ? <>
+        <SummaryPills items={[
+          { label: 'Ready', value: runDraftPreviewMutation.data.ready_for_draft ? 'yes' : 'no' },
+          { label: 'Saved Head', value: runDraftPreviewMutation.data.target_saved_revision_id },
+          { label: 'Draft version', value: runDraftPreviewMutation.data.target_working_draft_version },
+          { label: 'Preview', value: runDraftPreviewMutation.data.preview_fingerprint.slice(0, 12) },
+          { label: 'Candidate', value: runDraftPreviewMutation.data.candidate_fingerprint.slice(0, 12) }
+        ]} />
+        {runDraftPreviewMutation.data.issues.length ? <ul>
+          {runDraftPreviewMutation.data.issues.map((issue) => <li key={issue.code}>
+            <code>{issue.code}</code>: {issue.message}
+          </li>)}
+        </ul> : null}
+        <button
+          type="button"
+          disabled={!runDraftPreviewMutation.data.ready_for_draft || runDraftApplyMutation.isPending}
+          onClick={() => runDraftApplyMutation.mutate(runDraftPreviewMutation.data)}
+        >
+          {runDraftApplyMutation.isPending ? 'Applying reviewed proposal…' : 'Apply to Run Working Draft'}
+        </button>
+      </> : null}
+      {runDraftPreviewMutation.isError ? <p className="error">
+        Run draft preview failed: {String(runDraftPreviewMutation.error)}
+      </p> : null}
+      {runDraftApplyMutation.isError ? <p className="error">
+        Run draft apply failed: {String(runDraftApplyMutation.error)}
+      </p> : null}
+      {runDraftApplyMutation.data ? <SummaryPills items={[
+        { label: 'Proposal version', value: runDraftApplyMutation.data.proposal_version },
+        { label: 'Proposal', value: runDraftApplyMutation.data.proposal_fingerprint.slice(0, 12) },
+        { label: 'Working Draft version', value: runDraftApplyMutation.data.working_draft_version },
+        { label: 'Replay', value: runDraftApplyMutation.data.already_applied ? 'idempotent' : 'new mutation' }
+      ]} /> : null}
+      {runDraftApplyMutation.data ? <p className="status">
+        Proposal is staged in the target Run Working Draft. Use the normal Run Save workflow to create
+        its immutable Saved Revision before authoritative adoption.
+      </p> : null}
     </SectionCard>
 
     <form onSubmit={submit}>

@@ -23,8 +23,39 @@ from beta_engine.domain.tournaments.draw_input_authority import (
     canonical_classic_seed_count,
     canonical_qualification_seed_count,
 )
-from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
-from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
+from beta_engine.domain.tournaments.entry_field import (
+    TournamentEntryField,
+    TournamentEntryFieldCapacity,
+)
+from beta_engine.domain.tournaments.format_authority import (
+    TournamentFormatAuthority,
+    TournamentGroupCrossingMatch,
+    TournamentGroupFormatConfiguration,
+    TournamentGroupRulesPolicy,
+    TournamentGroupSeedPlacement,
+)
+from beta_engine.domain.tournaments.group_match_schedule_authority import (
+    TournamentGroupMatchScheduleAuthority,
+    TournamentGroupMatchScheduleBuilder,
+)
+from beta_engine.domain.tournaments.group_standings_authority import (
+    TournamentGroupStandingsAuthority,
+    TournamentGroupStandingsBuilder,
+    TournamentGroupStandingsUnresolvedTie,
+    TournamentGroupStandingsUnsupportedResult,
+)
+from beta_engine.domain.tournaments.hybrid_knockout_bracket_authority import (
+    TournamentHybridKnockoutBracketAuthority,
+    TournamentHybridKnockoutBracketBuilder,
+)
+from beta_engine.domain.tournaments.hybrid_knockout_entrants_authority import (
+    TournamentHybridKnockoutEntrantsAuthority,
+    TournamentHybridKnockoutEntrantsBuilder,
+)
+from beta_engine.domain.tournaments.topology_authority import (
+    TournamentTopologyAuthority,
+    TournamentTopologyAuthorityBuilder,
+)
 from beta_engine.infrastructure.db.models import TournamentLabSessionModel
 
 
@@ -72,6 +103,20 @@ class TournamentLabScenario(BaseModel):
     format_kind: str = Field(min_length=1, max_length=80)
     participants: tuple[MatchParticipantContext, ...] = Field(min_length=2, max_length=128)
     main_draw_size: int = Field(ge=2, le=128)
+    group_count: int = Field(default=0, ge=0, le=64, exclude_if=lambda value: value == 0)
+    group_size: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    seeded_slots_per_group: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    group_seed_placements: tuple[TournamentGroupSeedPlacement, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
+    group_match_best_of: Literal[3, 5] | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    advancing_per_group: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    knockout_crossings: tuple[TournamentGroupCrossingMatch, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
+    topology_seed: int | None = Field(default=None, exclude_if=lambda value: value is None)
     qualification_draw_size: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
     qualifier_spots: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
     qualification_player_ids: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
@@ -167,6 +212,17 @@ class TournamentLabQualificationSectionResult(BaseModel):
     match_results: tuple[TournamentLabMatchResult, ...]
 
 
+class TournamentLabGroupStageResult(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    topology_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    schedule_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    match_day_count: int = Field(ge=1)
+    match_results: tuple[TournamentLabMatchResult, ...]
+    standings: TournamentGroupStandingsAuthority | None = None
+    blocking_issue: TournamentLabIssue | None = None
+
+
 class TournamentLabAssertionResult(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -187,6 +243,12 @@ class TournamentLabSingleRun(BaseModel):
     bye_advance_count: int = Field(ge=0)
     qualification_results: tuple[TournamentLabQualificationSectionResult, ...] = Field(
         default=(), exclude_if=lambda value: not value
+    )
+    group_stage: TournamentLabGroupStageResult | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
+    hybrid_knockout_bracket: TournamentHybridKnockoutBracketAuthority | None = Field(
+        default=None, exclude_if=lambda value: value is None
     )
     match_results: tuple[TournamentLabMatchResult, ...]
     assertions: tuple[TournamentLabAssertionResult, ...]
@@ -216,6 +278,12 @@ class TournamentLabResult(BaseModel):
     )
     draw_input_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     draw_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    topology_authority_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    group_schedule_fingerprint: str | None = Field(
         default=None, pattern=r"^[0-9a-f]{64}$"
     )
     draw: TournamentDrawAuthority | None = None

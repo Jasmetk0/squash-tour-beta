@@ -329,7 +329,7 @@ def test_tournament_lab_api_runs_groups_to_knockout_through_shared_authorities(t
 
 
 def test_tournament_lab_api_exports_and_imports_reviewed_session_copy(tmp_path) -> None:
-    with ApiServer(db_url=f"sqlite:///{tmp_path / 'tournament-lab-export-import.db'}") as server:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-export-import.db'}") as server:
         status, built_ins = _request(
             "GET",
             f"{server.base_url}/admin/labs/tournament/scenarios",
@@ -350,7 +350,7 @@ def test_tournament_lab_api_exports_and_imports_reviewed_session_copy(tmp_path) 
         )
         assert status == 200, exported
         assert exported["session_fingerprint"] == created["session_fingerprint"]
-        assert exported["scenario_fingerprint"] == created["scenario"]["source_fingerprint"] or len(exported["scenario_fingerprint"]) == 64
+        assert len(exported["scenario_fingerprint"]) == 64
         assert len(exported["export_fingerprint"]) == 64
 
         status, imported = _request(

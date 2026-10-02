@@ -1,16 +1,21 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 
 import {
+  createTournamentLabSession,
   getTournamentLabBuiltInScenarios,
+  getTournamentLabSessions,
   inspectTournamentLabScenario,
-  runTournamentTestLab
+  runTournamentLabSession,
+  runTournamentTestLab,
+  updateTournamentLabSession
 } from '../api/client'
 import type {
   TournamentLabCompatibility,
   TournamentLabRequest,
   TournamentLabResult,
-  TournamentLabScenario
+  TournamentLabScenario,
+  TournamentLabSession
 } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 
@@ -125,9 +130,24 @@ export function TournamentTestLabPage(): JSX.Element {
     queryFn: getTournamentLabBuiltInScenarios,
     retry: false
   })
+  const sessions = useQuery({
+    queryKey: ['tournament-lab-sessions'],
+    queryFn: getTournamentLabSessions,
+    retry: false
+  })
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const selectedSession = sessions.data?.find((item) => item.session_id === selectedSessionId) ?? null
   const [scenarioText, setScenarioText] = useState('')
+  const [sessionName, setSessionName] = useState('New Tournament Test Session')
   const [batchText, setBatchText] = useState('')
   const [localError, setLocalError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (selectedSession) {
+      setScenarioText(JSON.stringify(selectedSession.scenario, null, 2))
+      setSessionName(selectedSession.display_name)
+    }
+  }, [selectedSession?.session_id, selectedSession?.version])
 
   const parsedScenario = useMemo(() => {
     try {
@@ -141,10 +161,41 @@ export function TournamentTestLabPage(): JSX.Element {
     mutationFn: inspectTournamentLabScenario
   })
   const runMutation = useMutation({
-    mutationFn: runTournamentTestLab
+    mutationFn: async (payload: TournamentLabRequest) => {
+      if (selectedSession) {
+        return runTournamentLabSession(selectedSession.session_id, {
+          expected_session_fingerprint: selectedSession.session_fingerprint,
+          batch_match_seeds: payload.batch_match_seeds
+        })
+      }
+      return runTournamentTestLab(payload)
+    }
+  })
+  const createMutation = useMutation({
+    mutationFn: createTournamentLabSession,
+    onSuccess: async (created) => {
+      await sessions.refetch()
+      setSelectedSessionId(created.session_id)
+      setScenarioText(JSON.stringify(created.scenario, null, 2))
+      setSessionName(created.display_name)
+    }
+  })
+  const saveMutation = useMutation({
+    mutationFn: async ({ session, scenario }: { session: TournamentLabSession; scenario: TournamentLabScenario }) =>
+      updateTournamentLabSession(session.session_id, {
+        expected_session_fingerprint: session.session_fingerprint,
+        display_name: sessionName,
+        scenario
+      }),
+    onSuccess: async (updated) => {
+      await sessions.refetch()
+      setSelectedSessionId(updated.session_id)
+      setScenarioText(JSON.stringify(updated.scenario, null, 2))
+    }
   })
 
   const useBuiltIn = (scenario: TournamentLabScenario) => {
+    setSelectedSessionId(null)
     setScenarioText(JSON.stringify(scenario, null, 2))
     inspectMutation.reset()
     runMutation.reset()
@@ -156,6 +207,17 @@ export function TournamentTestLabPage(): JSX.Element {
     try {
       const scenario = JSON.parse(scenarioText) as TournamentLabScenario
       inspectMutation.mutate(scenario)
+    } catch (error) {
+      setLocalError(error instanceof Error ? error.message : String(error))
+    }
+  }
+
+  const save = () => {
+    if (!selectedSession) return
+    setLocalError(null)
+    try {
+      const scenario = JSON.parse(scenarioText) as TournamentLabScenario
+      saveMutation.mutate({ session: selectedSession, scenario })
     } catch (error) {
       setLocalError(error instanceof Error ? error.message : String(error))
     }
@@ -179,7 +241,7 @@ export function TournamentTestLabPage(): JSX.Element {
   return <section className="panel">
     <PageIntro
       title="Tournament Test Lab"
-      subtitle="Global isolated tournament sandbox using the shared Tournament Format, canonical Draw authority and production Match Engine kernels."
+      subtitle="Global isolated tournament sandbox with persistent editable Test Sessions over shared Tournament Format, canonical Draw authority and production Match Engine kernels."
     />
 
     <SectionCard title="Isolation boundary">
@@ -190,10 +252,11 @@ export function TournamentTestLabPage(): JSX.Element {
       <SummaryPills items={[
         { label: 'Run mutation', value: 'never' },
         { label: 'Live Run link', value: 'never' },
-        { label: 'Current executable slice', value: 'classic knockout' }
+        { label: 'Current executable slice', value: 'classic knockout' },
+        { label: 'Selected mode', value: selectedSession ? 'isolated Test Session' : 'portable scratch scenario' }
       ]} />
       <p className="status">
-        Groups, qualification, replacements, ranking consequences, persistent Tournament Test Sessions and Run→Lab/Lab→Run bridges remain later Tournament Lab slices.
+        Groups, qualification, replacements, ranking consequences and Run→Lab/Lab→Run bridges remain later Tournament Lab slices. Test Sessions are isolated persistence only.
       </p>
     </SectionCard>
 
@@ -203,13 +266,41 @@ export function TournamentTestLabPage(): JSX.Element {
         <strong>{item.display_name}</strong>
         <p>{item.description}</p>
         <p className="status"><code>{item.scenario_fingerprint.slice(0, 12)}</code> · read-only baseline</p>
-        <button type="button" onClick={() => useBuiltIn(item.scenario)}>Load editable copy</button>
+        <button type="button" onClick={() => useBuiltIn(item.scenario)}>Load scratch copy</button>
+        <button type="button" onClick={() => createMutation.mutate({
+          display_name: `${item.display_name} — Test Session`,
+          built_in_scenario_id: item.scenario_id
+        })}>New Test Session from {item.display_name}</button>
       </article>)}
       {builtIns.isError ? <p className="error">Tournament Lab built-ins unavailable.</p> : null}
     </SectionCard>
 
+    <SectionCard title="Tournament Test Sessions">
+      <label>Open Test Session
+        <select
+          aria-label="Open Tournament Test Session"
+          value={selectedSessionId ?? ''}
+          onChange={(event) => setSelectedSessionId(event.target.value || null)}
+        >
+          <option value="">Portable scratch scenario</option>
+          {sessions.data?.map((item) => <option key={item.session_id} value={item.session_id}>
+            {item.display_name} · v{item.version}
+          </option>)}
+        </select>
+      </label>
+      {selectedSession ? <SummaryPills items={[
+        { label: 'Session', value: selectedSession.display_name },
+        { label: 'Version', value: selectedSession.version },
+        { label: 'Source', value: selectedSession.scenario.source_kind },
+        { label: 'Session fingerprint', value: selectedSession.session_fingerprint.slice(0, 12) }
+      ]} /> : <p className="status">Scratch mode is non-persistent. Create a Test Session to keep an editable isolated tournament draft.</p>}
+    </SectionCard>
+
     <form onSubmit={submit}>
-      <SectionCard title="Portable Tournament Lab scenario JSON">
+      <SectionCard title={selectedSession ? 'Editable Tournament Test Session' : 'Portable Tournament Lab scenario JSON'}>
+        {selectedSession ? <label>Session name
+          <input aria-label="Tournament Lab session name" value={sessionName} onChange={(event) => setSessionName(event.target.value)} />
+        </label> : null}
         <textarea
           aria-label="Tournament Lab scenario JSON"
           value={scenarioText}
@@ -226,14 +317,19 @@ export function TournamentTestLabPage(): JSX.Element {
             placeholder="100, 101, 102"
           />
         </label>
+        {selectedSession ? <button type="button" onClick={save} disabled={saveMutation.isPending || !scenarioText}>
+          {saveMutation.isPending ? 'Saving…' : 'Save Test Session'}
+        </button> : null}
         <button type="button" onClick={inspect} disabled={!scenarioText || inspectMutation.isPending}>
           {inspectMutation.isPending ? 'Inspecting…' : 'Inspect compatibility'}
         </button>
         <button type="submit" disabled={!scenarioText || runMutation.isPending}>
-          {runMutation.isPending ? 'Running…' : 'Run tournament scenario'}
+          {runMutation.isPending ? 'Running…' : selectedSession ? 'Run Test Session' : 'Run tournament scenario'}
         </button>
         {localError ? <p className="error">{localError}</p> : null}
         {inspectMutation.isError ? <p className="error">Inspection failed: {String(inspectMutation.error)}</p> : null}
+        {createMutation.isError ? <p className="error">Session creation failed: {String(createMutation.error)}</p> : null}
+        {saveMutation.isError ? <p className="error">Session save failed: {String(saveMutation.error)}</p> : null}
         {runMutation.isError ? <p className="error">Tournament Lab failed: {String(runMutation.error)}</p> : null}
         <p className="status">Scenario: {parsedScenario?.scenario_id ?? (scenarioText ? 'invalid JSON' : 'none loaded')}</p>
       </SectionCard>

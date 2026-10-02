@@ -15,6 +15,23 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — machine-readable copied-FAX long-acceptance input gate
+
+- Canonical Authoritative Simulation now exposes a read-only pre-alpha FAX acceptance profile.
+- The profile verifies the decided Master v72 starting scale from Run-owned state only:
+  editable Run, active Branch, exact 2000/01–2049/50 timeline, at least 1,000 InitialWorld
+  players and exactly 80 first-season World Tour Editions in the applied Calendar Package.
+- Lower-Tour Editions are counted as informational evidence because the release test may keep
+  lower Tours abstract.
+- The profile has a deterministic fingerprint and is shown in the Admin Simulation panel.
+- This is input readiness only: the mandatory automated 50-season copied-FAX release run has
+  **not** been executed or declared passing by this slice.
+
+See [Pre-alpha FAX acceptance profile](docs/PRE_ALPHA_FAX_ACCEPTANCE_PROFILE.md).
+
+**Next:** materialize the copied-FAX release fixture at Master v72 scale and build/run the long
+50-season acceptance harness, fixing each canonical preparation blocker encountered without
+introducing a parallel simulation path.
 ## Implemented — Global Tournament Test Lab V5D reviewed Lab → Run Working Draft application
 
 - A reviewed Tournament Lab compatibility preview can now be explicitly applied into one target

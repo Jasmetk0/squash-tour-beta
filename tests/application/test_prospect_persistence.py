@@ -212,6 +212,9 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert first.development_json["development_timing"] == canonical.development_timing
     assert first.development_json["sporting_profile_fingerprint"] == canonical.fingerprint
     assert first.potential_json["potential_ovr"] == canonical.potential_ovr
+    assert first.potential_json["rolled_potential_ovr"] == canonical.rolled_potential_ovr
+    assert first.potential_json["effective_potential_floor_ovr"] == canonical.effective_potential_floor_ovr
+    assert first.potential_json["potential_floor_applied"] == canonical.potential_floor_applied
     assert first.potential_json["potential_identity"] == canonical.potential_identity
     assert first.potential_json["sporting_profile_fingerprint"] == canonical.fingerprint
     assert first.trait_json["reserved_for_future_traits"] is True
@@ -221,6 +224,9 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert first.profile_seed not in json.dumps(first.profile_json, sort_keys=True)
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_id"]
     assert first.profile_json["materialization_policy"]["sporting_profile_policy_fingerprint"]
+    assert first.profile_json["cohort_forecast"]["schema_version"] == "talent_intake_cohort_forecast.v1"
+    assert first.profile_json["cohort_forecast"]["forecast_fingerprint"]
+    assert first.profile_json["cohort_forecast"]["total_weekly_target"] == result.requested_prospect_count
     assert first.potential_json["talent_quality"]["policy_fingerprint"]
     assert first.potential_json["talent_quality"]["result_fingerprint"]
 
@@ -241,6 +247,12 @@ def test_materialize_15yo_cohort_generates_deterministic_records_and_canonical_p
     assert ger_summary.materialized_count == result.annual_target
     assert sum(ger_summary.generated_band_counts.values()) == result.annual_target
     assert sum(ger_summary.expected_band_counts.values()) == pytest.approx(result.annual_target)
+
+    assert summary.forecast_source == "stored_pre_generation_v1"
+    assert summary.forecast_fingerprint == first.profile_json["cohort_forecast"]["forecast_fingerprint"]
+    assert summary.forecast_total == result.requested_prospect_count
+    assert summary.cohort_state == "complete"
+    assert ger_summary.forecast_count == result.requested_prospect_count
 
 
 def test_materialize_15yo_cohort_is_idempotent_and_detects_conflicts(tmp_path):
@@ -470,3 +482,28 @@ def test_materialization_rejects_stale_review_before_any_write(tmp_path):
         )
 
     assert repository.count_run_prospects(run_id="run-stale") == 0
+
+
+@pytest.mark.pr_critical
+def test_intake_summary_retains_zero_output_countries_and_pre_generation_expectation(tmp_path):
+    repository, _ = _repository(tmp_path)
+    repository.upsert_simulation_run(SimulationRunInfo(run_id="run-zero-country", season=2027, seed=1))
+    service = _materialization_service(repository)
+
+    preview = service.preview_service.preview_season(
+        run_id="run-zero-country",
+        base_annual_intake_target=1,
+    )
+    assert any(row.allocated_count == 0 for row in preview.country_totals)
+
+    _materialize(service, run_id="run-zero-country", base_annual_intake_target=1)
+    summary = service.summarize_materialized_talent(
+        run_id="run-zero-country",
+        season_start_year=2027,
+    )
+
+    zero_rows = [row for row in summary.countries if row.forecast_count == 0]
+    assert zero_rows
+    assert all(row.materialized_count == 0 for row in zero_rows)
+    assert all(sum(row.expected_band_counts.values()) == pytest.approx(0.0) for row in zero_rows)
+    assert all(sum(row.generated_band_counts.values()) == 0 for row in zero_rows)

@@ -47,7 +47,7 @@ from beta_engine.domain.careers import CareerProgressionEngine, NextSeasonPlayer
 from beta_engine.domain.countries import Country, CountryTalentModel
 from beta_engine.domain.entries import AcceptanceList, AcceptanceStatus, TournamentEntry
 from beta_engine.domain.players.lifecycle import derive_birth_year_from_age, synthesize_birth_year_week
-from beta_engine.domain.players.talent_quality_policy import talent_quality_band_from_seed
+from beta_engine.domain.players.talent_quality_policy import resolve_persisted_talent_quality
 from beta_engine.domain.players import (
     AnnualTalentClassPlanner,
     ManualPlayerOverride,
@@ -932,7 +932,12 @@ class SimulationApiService:
         return RunProspectListResponse(run_id=run_id, total=total, limit=limit, offset=offset, prospects=[
             RunProspect(
                 **record.__dict__,
-                quality_band=talent_quality_band_from_seed(record.potential_seed).value,
+                quality_band=resolve_persisted_talent_quality(
+                    potential_seed=record.potential_seed,
+                    potential_json=record.potential_json,
+                    cohort_policy_version=record.cohort_policy_version,
+                    profile_version=record.profile_version,
+                )[0].value,
             )
             for record in prospects
         ])

@@ -109,8 +109,6 @@ describe('MatchTestLabPage', () => {
     expect(api.runMatchTestLab).not.toHaveBeenCalled()
     expect(screen.getByText("Expected property name or '}' in JSON at position 1")).toBeInTheDocument()
   })
-})
-
 
   it('creates an isolated editable Test Session from a read-only built-in', async () => {
     const user = userEvent.setup()
@@ -170,3 +168,5 @@ describe('MatchTestLabPage', () => {
       })
     )
   })
+
+})

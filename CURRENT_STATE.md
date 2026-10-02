@@ -1,6 +1,6 @@
 # Current implementation and next action
 
-## Current checkpoint — 2 October 2026 / Master v70
+## Current checkpoint — 2 October 2026 / Master v71
 
 This checkpoint supersedes older next-task notices below; their implementation evidence is retained.
 Audited baseline `buuk`: `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` after #1094. All 19 new PRs
@@ -14,6 +14,25 @@ lifecycle-owned future visibility, and conservative Viewer hidden-field gating.
 Master v70 preserves calibration as open test work and sets the FAX acceptance reference to a
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
+
+## Implemented — Global Tournament Test Lab V2 persistent Test Sessions
+
+- Added durable global `tournament_test_lab_session.v1` objects outside all Product Run/Branch ownership.
+- Sessions have generated identity, display name, monotonically increasing version and reviewed session fingerprint.
+- Read-only built-in Tournament Lab scenarios can be cloned through `New Test Session`; copies freeze
+  `built_in_copy` provenance with the exact source scenario fingerprint and never live-link the source.
+- Save and Run require the exact current session fingerprint, so stale reviewed UI/agent state fails closed.
+- Persistence cross-checks serialized session identity, metadata, source provenance and fingerprint against
+  dedicated DB columns; tampered rows fail closed.
+- The Admin Tournament Lab now lists/reopens sessions, edits session name + scenario JSON, saves versioned
+  copies and runs the selected session through the same V1 shared draw/match kernels and batch diagnostics.
+- Scratch V1 inspect/run endpoints remain available.
+
+See [Tournament Test Lab V2](docs/TOURNAMENT_TEST_LAB_V2.md).
+
+**Next:** broaden Tournament Lab composition over shared Qualification/groups/progression/replacement
+and ranking-consequence authorities, then implement Run → Lab historical tournament copy and
+Lab → Run compatibility-preview draft bridge. Keep copied-FAX season acceptance separate.
 
 ## Implemented — Global Tournament Test Lab V1 classic-knockout foundation
 
@@ -38,9 +57,9 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
 
 See [Tournament Test Lab V1](docs/TOURNAMENT_TEST_LAB_V1.md).
 
-**Next:** continue Tournament Lab with persistent Test Sessions and broader tournament composition
-(Qualification/groups/progression/replacements/ranking consequences), then Run↔Lab copy/draft
-bridges. Keep copied-FAX season acceptance separate.
+**Next:** broaden Tournament Lab composition over shared Qualification/groups/progression/replacement
+and ranking-consequence authorities, then implement Run↔Lab copy/draft bridges. Keep copied-FAX
+season acceptance separate.
 
 ## Implemented — Match Lab verified Saved Revision player import V1
 

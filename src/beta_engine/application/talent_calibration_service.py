@@ -85,12 +85,13 @@ class TalentCalibrationService:
 
         for index in range(sample_count):
             identity = f"{CALIBRATION_NAMESPACE}:{seed}:{index}"
-            band = talent_quality_band_from_seed(f"{identity}:quality")
+            potential_seed = f"{identity}:potential"
+            band = talent_quality_band_from_seed(potential_seed)
             profile = materialize_prospect_sporting_profile(
                 player_id=f"calibration://sample/{seed}/{index}",
                 profile_seed=f"{identity}:profile",
                 development_seed=f"{identity}:development",
-                potential_seed=f"{identity}:potential",
+                potential_seed=potential_seed,
             )
             current[band].append(profile.ovr)
             potential[band].append(profile.potential_ovr)

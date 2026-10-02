@@ -15,6 +15,23 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — copied-FAX current-week Tournament Ranking Snapshot bootstrap
+
+- Added a reviewed bulk preparation boundary for the current authoritative week.
+- Preview freezes the Run-owned current week, sorted World Tour event IDs and the latest eligible
+  already-published Official Ranking fingerprint.
+- Apply revalidates the exact preview under one write transaction and adopts the existing
+  `TournamentRankingSnapshotAuthority` for each current-week Edition.
+- Existing identical authorities are idempotent retries; conflicting frozen ranking snapshots fail closed.
+- No Entry/Application/WC/Draw policy is introduced by this helper.
+- The persisted 1,000-player copied-FAX Week-1 integration path now proves both SW1 World Tour
+  Editions advance from `ranking_snapshot_required` to `entry_field_required`.
+
+See [copied-FAX current-week ranking snapshots](docs/PRE_ALPHA_FAX_CURRENT_WEEK_RANKING_SNAPSHOTS.md).
+
+**Next:** address only the now-observed canonical `entry_field_required` blocker for copied-FAX
+World Tour Editions, preserving the existing Ranking/Application Entry authority rather than
+fabricating participants directly in simulation.
 ## Implemented — copied-FAX initial Official Ranking + authoritative world head
 
 - Copied-FAX materialization now derives the Week-1 Official Ranking strictly from the newly saved

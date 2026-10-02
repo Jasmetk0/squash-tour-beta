@@ -1,5 +1,16 @@
 # Current implementation and next action
 
+## Implemented — Talent Calibration Lab V3 Multi-seed Robustness
+
+- The existing diagnostic Lab can run one ephemeral five-band candidate over an explicit sequence
+  of deterministic seeds, up to 250,000 total prospects, and report pooled V2 evidence alongside
+  per-band variability, overlap robustness, rare-band evidence counts and compact per-seed rows.
+- V3 is read-only and non-persistent. It does not change production prospect generation or Run
+  state, and no candidate is saved, recommended, ranked or canonical.
+
+**Next:** the product owner can evaluate real candidate results, especially sparse Special and
+Generational evidence, before making any separate canonical calibration decision.
+
 ## Implemented — Talent Calibration Lab V2 Candidate Policy Sandbox
 
 - The existing Admin Calibration Lab now accepts one ephemeral Potential OVR range for each of

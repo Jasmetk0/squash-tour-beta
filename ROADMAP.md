@@ -1,5 +1,13 @@
 # Squash Engine roadmap
 
+## Implemented — Talent Calibration Lab V3 Multi-seed Robustness
+
+- The Calibration Lab aggregates the same candidate sandbox across stable deterministic seed
+  sequences, with a 250,000-sample budget, pooled V2 diagnostics, seed-to-seed variability,
+  overlap ranges, explicit rare-band evidence counts and compact per-seed results.
+- The analysis remains non-persistent and cannot save, apply, publish, recommend or make a
+  candidate canonical. Next is product-owner evaluation of real candidate results.
+
 ## Implemented — Talent Calibration Lab V2 Candidate Policy Sandbox
 
 - The Calibration Lab supports deterministic, read-only baseline/candidate Potential OVR

@@ -115,3 +115,47 @@ def test_candidate_comparison_retains_empty_bands_and_null_overlap() -> None:
     empty = [row for row in result.bands if row.generated_count == 0]
     assert empty and all(row.candidate_potential_ovr.minimum is None for row in empty)
     assert any(row.baseline is None and row.candidate is None for row in result.adjacent_overlaps)
+
+
+@pytest.mark.pr_critical
+def test_multi_seed_comparison_is_deterministic_complete_and_baseline_neutral() -> None:
+    service = TalentCalibrationService()
+    result = service.compare_multi_seed(seed_start=100, seed_count=4, sample_count_per_seed=100,
+                                        candidate_ranges=_candidate_ranges())
+    assert result == service.compare_multi_seed(seed_start=100, seed_count=4, sample_count_per_seed=100,
+                                                candidate_ranges=_candidate_ranges())
+    assert result != service.compare_multi_seed(seed_start=101, seed_count=4, sample_count_per_seed=100,
+                                                candidate_ranges=_candidate_ranges())
+    assert result.seeds == (100, 101, 102, 103)
+    assert result.total_sample_count == 400
+    assert len(result.pooled_bands) == len(result.band_robustness) == 5
+    assert sum(row.generated_count for row in result.pooled_bands) == 400
+    assert result.pooled_global_comparison.delta.unchanged == 400
+    for row in result.pooled_bands:
+        assert sum(item.count for item in row.baseline_histogram) == row.generated_count
+        assert sum(item.count for item in row.candidate_histogram) == row.generated_count
+    for row in result.band_robustness:
+        assert row.seeds_with_samples + row.seeds_without_samples == 4
+        assert row.generated_count.standard_deviation is not None
+    for row in result.per_seed:
+        assert sum(row.generated_counts.values()) == 100
+    for row in result.overlap_robustness:
+        for value in (row.baseline_pooled, row.candidate_pooled, row.candidate_per_seed.minimum,
+                      row.candidate_per_seed.maximum):
+            assert value is None or 0 <= value <= 1
+
+
+def test_multi_seed_zero_band_nulls_and_budget_validation() -> None:
+    service = TalentCalibrationService()
+    result = service.compare_multi_seed(seed_start=9, seed_count=1, sample_count_per_seed=1,
+                                        candidate_ranges=_candidate_ranges())
+    empty = [row for row in result.band_robustness if row.seeds_without_samples == 1]
+    assert empty and all(row.candidate_median.mean is None for row in empty)
+    assert any(row.missing_seed_count == 1 and row.candidate_per_seed.mean is None
+               for row in result.overlap_robustness)
+    with pytest.raises(ValueError, match="250000"):
+        service.compare_multi_seed(seed_start=0, seed_count=6, sample_count_per_seed=50_000,
+                                   candidate_ranges=_candidate_ranges())
+    with pytest.raises(ValueError, match="seed_count"):
+        service.compare_multi_seed(seed_start=0, seed_count=101, sample_count_per_seed=1,
+                                   candidate_ranges=_candidate_ranges())

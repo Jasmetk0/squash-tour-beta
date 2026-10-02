@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TalentCalibrationPage } from './TalentCalibrationPage'
 import { renderWithRoute } from '../test/testUtils'
 
-const api = vi.hoisted(() => ({ getTalentCalibration: vi.fn(), compareTalentCalibration: vi.fn() }))
+const api = vi.hoisted(() => ({ getTalentCalibration: vi.fn(), compareTalentCalibration: vi.fn(), compareTalentCalibrationMultiSeed: vi.fn() }))
 vi.mock('../api/client', () => api)
 
 const stats = { minimum: 110, maximum: 190, mean: 150, p10: 120, p25: 135, p50: 150, p75: 170, p90: 185 }
@@ -31,9 +31,18 @@ const comparison = {
     baseline_histogram: [{ lower: 110, upper: 119, count: index === 4 ? 0 : 25 }], candidate_histogram: [{ lower: 110, upper: 119, count: index === 4 ? 0 : 25 }] })),
   adjacent_overlaps: names.slice(0, 4).map((band, index) => ({ lower_band: band, upper_band: names[index + 1], baseline: index === 3 ? null : 1, candidate: index === 3 ? null : 1 }))
 }
+const variability = { minimum: 1, maximum: 2, mean: 1.5, standard_deviation: .5 }
+const multi = {
+  seed_start: 100, seed_count: 2, sample_count_per_seed: 50, total_sample_count: 100, seeds: [100, 101],
+  quality_policy_id: 'quality-v1', quality_policy_fingerprint: 'qfp', baseline_policy_id: 'profile-v1', baseline_policy_fingerprint: 'pfp', candidate_sandbox_configuration_fingerprint: 'multi-cfp',
+  pooled_global_comparison: comparison.global_comparison, pooled_bands: comparison.bands,
+  band_robustness: names.map((band, index) => ({ band, total_generated_samples: index === 4 ? 1 : 25, seeds_with_samples: index === 4 ? 1 : 2, seeds_without_samples: index === 4 ? 1 : 0, candidate_median: index === 4 ? { minimum: null, maximum: null, mean: null, standard_deviation: null } : variability, candidate_mean: variability, generated_count: variability })),
+  overlap_robustness: names.slice(0, 4).map((band, index) => ({ lower_band: band, upper_band: names[index + 1], baseline_pooled: 1, candidate_pooled: index === 3 ? null : 1, baseline_per_seed: variability, candidate_per_seed: index === 3 ? { minimum: null, maximum: null, mean: null, standard_deviation: null } : variability, missing_seed_count: index === 3 ? 2 : 0 })),
+  per_seed: [100, 101].map((seed) => ({ seed, total_samples: 50, generated_counts: { solid_prospect: 20, strong_prospect: 15, elite_prospect: 10, special_prospect: 5, generational_talent: 0 }, baseline_potential_median: 150, candidate_potential_median: 151, median_delta: 1, adjacent_candidate_overlaps: {} }))
+}
 
 describe('TalentCalibrationPage', () => {
-  beforeEach(() => { api.getTalentCalibration.mockReset(); api.compareTalentCalibration.mockReset(); api.getTalentCalibration.mockResolvedValue(response); api.compareTalentCalibration.mockResolvedValue(comparison) })
+  beforeEach(() => { api.getTalentCalibration.mockReset(); api.compareTalentCalibration.mockReset(); api.compareTalentCalibrationMultiSeed.mockReset(); api.getTalentCalibration.mockResolvedValue(response); api.compareTalentCalibration.mockResolvedValue(comparison); api.compareTalentCalibrationMultiSeed.mockResolvedValue(multi) })
   it('renders diagnostic evidence and recalculates with controls', async () => {
     const user = userEvent.setup()
     renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
@@ -84,5 +93,26 @@ describe('TalentCalibrationPage', () => {
     renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
     expect(screen.getByText(/loading calibration/i)).toBeInTheDocument()
     expect(await screen.findByText(/calibration unavailable/i)).toBeInTheDocument()
+  })
+
+  it('runs multi-seed robustness with shared candidate controls and clears stale results', async () => {
+    const user = userEvent.setup()
+    renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
+    await screen.findByRole('table', { name: 'Candidate potential ranges' })
+    expect(screen.getByLabelText('Number of seeds')).toHaveAttribute('max', '100')
+    await user.clear(screen.getByLabelText('Number of seeds')); await user.type(screen.getByLabelText('Number of seeds'), '2')
+    await user.clear(screen.getByLabelText('Samples per seed')); await user.type(screen.getByLabelText('Samples per seed'), '50')
+    await user.click(screen.getByRole('button', { name: 'Run multi-seed analysis' }))
+    expect(api.compareTalentCalibrationMultiSeed.mock.calls[0][0]).toEqual(expect.objectContaining({ seed_start: 100, seed_count: 2, sample_count_per_seed: 50 }))
+    expect(api.compareTalentCalibrationMultiSeed.mock.calls[0][0].candidate_ranges).toEqual(expect.objectContaining({ solid_prospect: { potential_min: 110, potential_max: 190 } }))
+    const bands = await screen.findByRole('table', { name: 'Band robustness' })
+    expect(within(bands).getAllByRole('rowheader')).toHaveLength(5)
+    expect(within(bands).getByRole('rowheader', { name: 'Generational Talent' })).toBeInTheDocument()
+    expect(screen.getByText('Seeds with Generational evidence')).toBeInTheDocument()
+    expect(screen.getByRole('table', { name: 'Overlap robustness' })).toBeInTheDocument()
+    expect(within(screen.getByRole('table', { name: 'Per-seed results' })).getAllByRole('rowheader')).toHaveLength(2)
+    expect(screen.getAllByText('—').length).toBeGreaterThan(0)
+    await user.clear(screen.getByLabelText('Starting seed')); await user.type(screen.getByLabelText('Starting seed'), '200')
+    expect(screen.queryByRole('table', { name: 'Band robustness' })).not.toBeInTheDocument()
   })
 })

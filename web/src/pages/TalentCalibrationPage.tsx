@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { FormEvent, useEffect, useState } from 'react'
 
-import { compareTalentCalibration, getTalentCalibration } from '../api/client'
+import { compareTalentCalibration, compareTalentCalibrationMultiSeed, getTalentCalibration } from '../api/client'
 import type { CalibrationDistribution, CandidatePotentialRange, TalentBandKey } from '../api/types'
 import { PageIntro, SectionCard, SummaryPills } from '../components/RunScopedUi'
 
@@ -16,9 +16,12 @@ export function TalentCalibrationPage(): JSX.Element {
   const [params, setParams] = useState(inputs)
   const query = useQuery({ queryKey: ['talent-calibration', params], queryFn: () => getTalentCalibration(params), retry: false })
   const comparison = useMutation({ mutationFn: compareTalentCalibration })
+  const multiComparison = useMutation({ mutationFn: compareTalentCalibrationMultiSeed })
+  const [multiInputs, setMultiInputs] = useState({ seed_start: 100, seed_count: 10, sample_count_per_seed: 1000 })
   const submit = (event: FormEvent) => {
     event.preventDefault()
     comparison.reset()
+    multiComparison.reset()
     setParams(inputs)
   }
   const [ranges, setRanges] = useState<Record<TalentBandKey, CandidatePotentialRange> | null>(null)
@@ -26,9 +29,12 @@ export function TalentCalibrationPage(): JSX.Element {
     if (query.data && ranges === null) setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max))
   }, [query.data, ranges])
   const reset = () => {
-    if (query.data) setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max))
+    if (query.data) { setRanges(baselineRanges(query.data.baseline_potential_min, query.data.baseline_potential_max)); comparison.reset(); multiComparison.reset() }
   }
+  const updateRanges = (next: Record<TalentBandKey, CandidatePotentialRange>) => { setRanges(next); comparison.reset(); multiComparison.reset() }
   const compare = () => { if (ranges) comparison.mutate({ seed: params.seed, sample_count: params.sample_count, candidate_ranges: ranges }) }
+  const compareMulti = () => { if (ranges) { multiComparison.reset(); multiComparison.mutate({ ...multiInputs, candidate_ranges: ranges }) } }
+  const updateMulti = (field: keyof typeof multiInputs, value: number) => { setMultiInputs({ ...multiInputs, [field]: value }); multiComparison.reset() }
 
   return <section className="panel">
     <PageIntro title="Talent Calibration Lab" subtitle="Inspect the current deterministic prospect distributions before making future calibration decisions." />
@@ -51,7 +57,7 @@ export function TalentCalibrationPage(): JSX.Element {
         <p className="status">It is not persisted or applied to Run generation. No candidate is canonical; current production rules remain unchanged.</p>
         {ranges ? <>
           <table aria-label="Candidate potential ranges"><thead><tr><th>Band</th><th>Potential Min</th><th>Potential Max</th></tr></thead>
-            <tbody>{BAND_KEYS.map((band) => <tr key={band}><th scope="row">{LABELS[band]}</th><td><input aria-label={`${LABELS[band]} Potential Min`} type="number" min={0} max={200} value={ranges[band].potential_min} onChange={(event) => setRanges({ ...ranges, [band]: { ...ranges[band], potential_min: Number(event.target.value) } })} /></td><td><input aria-label={`${LABELS[band]} Potential Max`} type="number" min={0} max={200} value={ranges[band].potential_max} onChange={(event) => setRanges({ ...ranges, [band]: { ...ranges[band], potential_max: Number(event.target.value) } })} /></td></tr>)}</tbody>
+            <tbody>{BAND_KEYS.map((band) => <tr key={band}><th scope="row">{LABELS[band]}</th><td><input aria-label={`${LABELS[band]} Potential Min`} type="number" min={0} max={200} value={ranges[band].potential_min} onChange={(event) => updateRanges({ ...ranges, [band]: { ...ranges[band], potential_min: Number(event.target.value) } })} /></td><td><input aria-label={`${LABELS[band]} Potential Max`} type="number" min={0} max={200} value={ranges[band].potential_max} onChange={(event) => updateRanges({ ...ranges, [band]: { ...ranges[band], potential_max: Number(event.target.value) } })} /></td></tr>)}</tbody>
           </table>
           <div className="button-row"><button type="button" onClick={compare} disabled={comparison.isPending}>Compare candidate</button><button type="button" onClick={reset}>Reset to baseline</button></div>
         </> : null}
@@ -59,6 +65,18 @@ export function TalentCalibrationPage(): JSX.Element {
         {comparison.isError ? <p className="error">Candidate comparison unavailable. Check every range and retry.</p> : null}
       </SectionCard>
       {comparison.data ? <ComparisonResults result={comparison.data} /> : null}
+      <SectionCard title="Multi-seed robustness">
+        <p className="status">Diagnostic only. Runs the current Candidate Policy Sandbox configuration across an explicit deterministic seed sequence.</p>
+        <div className="grid">
+          <label>Starting seed<input aria-label="Starting seed" type="number" value={multiInputs.seed_start} onChange={(e) => updateMulti('seed_start', Number(e.target.value))} /></label>
+          <label>Number of seeds<input aria-label="Number of seeds" type="number" min={1} max={100} value={multiInputs.seed_count} onChange={(e) => updateMulti('seed_count', Number(e.target.value))} /></label>
+          <label>Samples per seed<input aria-label="Samples per seed" type="number" min={1} max={50000} value={multiInputs.sample_count_per_seed} onChange={(e) => updateMulti('sample_count_per_seed', Number(e.target.value))} /></label>
+          <button type="button" disabled={!ranges || multiComparison.isPending} onClick={compareMulti}>Run multi-seed analysis</button>
+        </div>
+        {multiComparison.isPending ? <p className="status">Running multi-seed analysis…</p> : null}
+        {multiComparison.isError ? <p className="error">Multi-seed analysis unavailable. Check the controls and total-sample budget.</p> : null}
+      </SectionCard>
+      {multiComparison.data ? <MultiSeedResults result={multiComparison.data} /> : null}
       <SectionCard title="Overview">
         <SummaryPills items={[{ label: 'Samples', value: query.data.sample_count }, { label: 'Seed', value: query.data.seed }, { label: 'Quality policy', value: query.data.quality_policy_id }, { label: 'Sporting-profile policy', value: query.data.sporting_profile_policy_id }]} />
         <p>Current OVR: {formatStats(query.data.current_ovr)}</p><p>Potential OVR: {formatStats(query.data.potential_ovr)}</p>
@@ -127,3 +145,23 @@ function ComparisonResults({ result }: { result: import('../api/types').TalentCa
   </>
 }
 function shortLabel(band: TalentBandKey): string { return LABELS[band].replace(' Prospect', '').replace(' Talent', '') }
+
+function MultiSeedResults({ result }: { result: import('../api/types').TalentCalibrationMultiSeedResponse }): JSX.Element {
+  const generational = result.band_robustness.find((row) => row.band === 'generational_talent')
+  return <>
+    <SectionCard title="Multi-seed pooled summary">
+      <SummaryPills items={[{ label: 'Seeds evaluated', value: result.seeds.join(', ') }, { label: 'Total prospects', value: result.total_sample_count }, { label: 'Generational prospects', value: generational?.total_generated_samples ?? 0 }, { label: 'Seeds with Generational evidence', value: generational?.seeds_with_samples ?? 0 }]} />
+      <p className="status">Candidate configuration fingerprint: <code>{result.candidate_sandbox_configuration_fingerprint}</code></p>
+    </SectionCard>
+    <SectionCard title="Band robustness">
+      <table aria-label="Band robustness"><thead><tr><th>Band</th><th>Total samples</th><th>Seeds with samples</th><th>Seeds without samples</th><th>Candidate median mean</th><th>Candidate median min</th><th>Candidate median max</th><th>Candidate median SD</th><th>Candidate mean Potential mean</th><th>Generated count per-seed mean</th></tr></thead><tbody>{result.band_robustness.map((row) => <tr key={row.band}><th scope="row">{LABELS[row.band]}</th><td>{row.total_generated_samples}</td><td>{row.seeds_with_samples}</td><td>{row.seeds_without_samples}</td><td>{show(row.candidate_median.mean)}</td><td>{show(row.candidate_median.minimum)}</td><td>{show(row.candidate_median.maximum)}</td><td>{show(row.candidate_median.standard_deviation)}</td><td>{show(row.candidate_mean.mean)}</td><td>{show(row.generated_count.mean)}</td></tr>)}</tbody></table>
+    </SectionCard>
+    <SectionCard title="Overlap robustness">
+      <p className="status">Overlap is diagnostic only; missing evidence is shown as —, never zero.</p>
+      <table aria-label="Overlap robustness"><thead><tr><th>Pair</th><th>Baseline pooled</th><th>Candidate pooled</th><th>Candidate per-seed mean</th><th>Candidate minimum</th><th>Candidate maximum</th><th>Missing-seed count</th></tr></thead><tbody>{result.overlap_robustness.map((row) => <tr key={row.lower_band}><th scope="row">{shortLabel(row.lower_band)} ↔ {shortLabel(row.upper_band)}</th><td>{show(row.baseline_pooled)}</td><td>{show(row.candidate_pooled)}</td><td>{show(row.candidate_per_seed.mean)}</td><td>{show(row.candidate_per_seed.minimum)}</td><td>{show(row.candidate_per_seed.maximum)}</td><td>{row.missing_seed_count}</td></tr>)}</tbody></table>
+    </SectionCard>
+    <SectionCard title="Per-seed results">
+      <table aria-label="Per-seed results"><thead><tr><th>Seed</th>{BAND_KEYS.map((band) => <th key={band}>{shortLabel(band)} count</th>)}<th>Baseline median</th><th>Candidate median</th><th>Median Δ</th></tr></thead><tbody>{result.per_seed.map((row) => <tr key={row.seed}><th scope="row">{row.seed}</th>{BAND_KEYS.map((band) => <td key={band}>{row.generated_counts[band]}</td>)}<td>{show(row.baseline_potential_median)}</td><td>{show(row.candidate_potential_median)}</td><td>{show(row.median_delta)}</td></tr>)}</tbody></table>
+    </SectionCard>
+  </>
+}

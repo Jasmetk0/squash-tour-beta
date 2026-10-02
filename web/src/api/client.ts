@@ -15,6 +15,8 @@ import type {
   TalentCalibrationResponse,
   TalentCalibrationCompareRequest,
   TalentCalibrationCompareResponse,
+  TalentCalibrationMultiSeedRequest,
+  TalentCalibrationMultiSeedResponse,
   CountryRecord,
   CountryUpsertPayload,
   CreateRunPayload,
@@ -772,6 +774,10 @@ export function getTalentCalibration(params: { seed: number; sample_count: numbe
 
 export function compareTalentCalibration(body: TalentCalibrationCompareRequest): Promise<TalentCalibrationCompareResponse> {
   return request('/world/talent-class/calibration/compare', { method: 'POST', body: JSON.stringify(body) })
+}
+
+export function compareTalentCalibrationMultiSeed(body: TalentCalibrationMultiSeedRequest): Promise<TalentCalibrationMultiSeedResponse> {
+  return request('/world/talent-class/calibration/compare-multi-seed', { method: 'POST', body: JSON.stringify(body) })
 }
 
 export function listManualPlayerOverrides(params?: {

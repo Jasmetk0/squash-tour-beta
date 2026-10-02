@@ -7620,3 +7620,18 @@ export type TalentCalibrationCompareResponse = {
   global_comparison: { baseline_potential_ovr: CalibrationDistribution; candidate_potential_ovr: CalibrationDistribution; delta: CalibrationDelta }
   adjacent_overlaps: Array<{ lower_band: TalentBandKey; upper_band: TalentBandKey; baseline: number | null; candidate: number | null }>
 }
+export type CalibrationVariability = { minimum: number | null; maximum: number | null; mean: number | null; standard_deviation: number | null }
+export type TalentCalibrationMultiSeedRequest = {
+  seed_start: number; seed_count: number; sample_count_per_seed: number
+  candidate_ranges: Record<TalentBandKey, CandidatePotentialRange>
+}
+export type TalentCalibrationMultiSeedResponse = {
+  seed_start: number; seed_count: number; sample_count_per_seed: number; total_sample_count: number; seeds: number[]
+  quality_policy_id: string; quality_policy_fingerprint: string; baseline_policy_id: string; baseline_policy_fingerprint: string
+  candidate_sandbox_configuration_fingerprint: string
+  pooled_global_comparison: TalentCalibrationCompareResponse['global_comparison']
+  pooled_bands: Array<TalentCalibrationBandComparison & { expected_count: number; generated_share: number }>
+  band_robustness: Array<{ band: TalentBandKey; total_generated_samples: number; seeds_with_samples: number; seeds_without_samples: number; candidate_median: CalibrationVariability; candidate_mean: CalibrationVariability; generated_count: CalibrationVariability }>
+  overlap_robustness: Array<{ lower_band: TalentBandKey; upper_band: TalentBandKey; baseline_pooled: number | null; candidate_pooled: number | null; baseline_per_seed: CalibrationVariability; candidate_per_seed: CalibrationVariability; missing_seed_count: number }>
+  per_seed: Array<{ seed: number; total_samples: number; generated_counts: Record<TalentBandKey, number>; baseline_potential_median: number | null; candidate_potential_median: number | null; median_delta: number | null; adjacent_candidate_overlaps: Record<string, number | null> }>
+}

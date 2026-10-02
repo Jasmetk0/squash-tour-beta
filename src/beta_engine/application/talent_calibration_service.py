@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import hashlib
 import json
+from statistics import mean, pstdev
 
 from beta_engine.domain.players.prospect_sporting_profile import (
     DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY,
@@ -27,6 +28,8 @@ BAND_ORDER = (
     TalentQualityBand.GENERATIONAL,
 )
 TIMINGS = ("Early Bloomer", "Standard", "Late Bloomer")
+MAX_MULTI_SEED_SAMPLES = 250_000
+MAX_MULTI_SEED_COUNT = 100
 
 
 @dataclass(frozen=True)
@@ -152,12 +155,20 @@ class TalentCalibrationService:
             for minimum, maximum in candidate_ranges.values()
         ):
             raise ValueError("candidate ranges must be integer, ordered, and within 0 through 200")
-        baseline = {band: [] for band in BAND_ORDER}
-        candidate = {band: [] for band in BAND_ORDER}
-        deltas = {band: [] for band in BAND_ORDER}
+        baseline, candidate, deltas = self._comparison_values(
+            seed=seed, sample_count=sample_count, candidate_ranges=candidate_ranges,
+        )
         weights = normalized_talent_quality_weights()
         policy = DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY
 
+        return _build_comparison(seed, sample_count, candidate_ranges, baseline, candidate, deltas)
+
+    def _comparison_values(self, *, seed: int, sample_count: int,
+                           candidate_ranges: dict[TalentQualityBand, tuple[int, int]]):
+        baseline = {band: [] for band in BAND_ORDER}
+        candidate = {band: [] for band in BAND_ORDER}
+        deltas = {band: [] for band in BAND_ORDER}
+        policy = DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY
         for index in range(sample_count):
             identity = f"{CALIBRATION_NAMESPACE}:{seed}:{index}"
             player_id = f"calibration://sample/{seed}/{index}"
@@ -191,11 +202,75 @@ class TalentCalibrationService:
             baseline[band].append(base_profile.potential_ovr)
             candidate[band].append(candidate_profile.potential_ovr)
             deltas[band].append(candidate_profile.potential_ovr - base_profile.potential_ovr)
+        return baseline, candidate, deltas
 
+    def compare_multi_seed(self, *, seed_start: int, seed_count: int,
+                           sample_count_per_seed: int,
+                           candidate_ranges: dict[TalentQualityBand, tuple[int, int]]) -> "MultiSeedComparison":
+        if seed_count < 1 or sample_count_per_seed < 1:
+            raise ValueError("seed_count and sample_count_per_seed must be at least 1")
+        if seed_count > MAX_MULTI_SEED_COUNT:
+            raise ValueError(f"seed_count must not exceed {MAX_MULTI_SEED_COUNT}")
+        total = seed_count * sample_count_per_seed
+        if total > MAX_MULTI_SEED_SAMPLES:
+            raise ValueError(f"total samples must not exceed {MAX_MULTI_SEED_SAMPLES}")
+        if sample_count_per_seed > 50_000:
+            raise ValueError("sample_count_per_seed must not exceed 50000")
+        if set(candidate_ranges) != set(BAND_ORDER) or any(
+            type(low) is not int or type(high) is not int or not 0 <= low <= high <= 200
+            for low, high in candidate_ranges.values()
+        ):
+            raise ValueError("candidate_ranges must contain valid ranges for every quality band")
+        pooled_b = {band: [] for band in BAND_ORDER}; pooled_c = {band: [] for band in BAND_ORDER}; pooled_d = {band: [] for band in BAND_ORDER}
+        seed_rows = []; per_band = {band: {"medians": [], "means": [], "counts": []} for band in BAND_ORDER}
+        overlap_values = {(a, b): {"baseline": [], "candidate": [], "missing": 0} for a, b in zip(BAND_ORDER, BAND_ORDER[1:])}
+        seeds = tuple(range(seed_start, seed_start + seed_count))
+        for seed in seeds:
+            baseline, candidate, deltas = self._comparison_values(seed=seed, sample_count=sample_count_per_seed, candidate_ranges=candidate_ranges)
+            comparison = _build_comparison(seed, sample_count_per_seed, candidate_ranges, baseline, candidate, deltas)
+            for band in BAND_ORDER:
+                pooled_b[band].extend(baseline[band]); pooled_c[band].extend(candidate[band]); pooled_d[band].extend(deltas[band])
+                per_band[band]["counts"].append(len(candidate[band]))
+                if candidate[band]:
+                    per_band[band]["medians"].append(_stats(candidate[band]).p50)
+                    per_band[band]["means"].append(_stats(candidate[band]).mean)
+            overlap_map = {}
+            for overlap in comparison.adjacent_overlaps:
+                pair = (TalentQualityBand(overlap.lower_band), TalentQualityBand(overlap.upper_band))
+                overlap_map[f"{overlap.lower_band}|{overlap.upper_band}"] = overlap.candidate
+                if overlap.candidate is None:
+                    overlap_values[pair]["missing"] += 1
+                else:
+                    overlap_values[pair]["candidate"].append(overlap.candidate)
+                    overlap_values[pair]["baseline"].append(overlap.baseline)
+            seed_rows.append(SeedComparison(seed, sample_count_per_seed,
+                {band.value: len(candidate[band]) for band in BAND_ORDER},
+                comparison.global_comparison.baseline_potential_ovr.p50,
+                comparison.global_comparison.candidate_potential_ovr.p50,
+                comparison.global_comparison.delta.p50, overlap_map))
+        pooled = _build_comparison(seed_start, total, candidate_ranges, pooled_b, pooled_c, pooled_d)
+        robustness = tuple(BandRobustness(band.value, len(pooled_c[band]),
+            sum(count > 0 for count in per_band[band]["counts"]), sum(count == 0 for count in per_band[band]["counts"]),
+            _variability(per_band[band]["medians"]), _variability(per_band[band]["means"]),
+            _variability(per_band[band]["counts"])) for band in BAND_ORDER)
+        overlaps = tuple(OverlapRobustness(a.value, b.value, _overlap(pooled_b[a], pooled_b[b]), _overlap(pooled_c[a], pooled_c[b]),
+            _variability(overlap_values[(a,b)]["baseline"]), _variability(overlap_values[(a,b)]["candidate"]),
+            overlap_values[(a,b)]["missing"]) for a,b in zip(BAND_ORDER, BAND_ORDER[1:]))
+        return MultiSeedComparison(seed_start, seed_count, sample_count_per_seed, total, seeds,
+            pooled.quality_policy_id, pooled.quality_policy_fingerprint, pooled.baseline_policy_id,
+            pooled.baseline_policy_fingerprint, pooled.candidate_sandbox_configuration_fingerprint,
+            pooled.global_comparison, pooled.bands, robustness, overlaps, tuple(seed_rows))
+
+
+def _build_comparison(seed, sample_count, candidate_ranges, baseline, candidate, deltas):
+        weights = normalized_talent_quality_weights()
+        policy = DEFAULT_PROSPECT_SPORTING_PROFILE_POLICY
         bands = tuple(
             BandComparison(
                 band=band.value,
                 generated_count=len(baseline[band]),
+                expected_count=sample_count * weights[band],
+                generated_share=len(baseline[band]) / sample_count,
                 configured_rarity_weight=weights[band],
                 candidate_range=PotentialRange(*candidate_ranges[band]),
                 baseline_potential_ovr=_stats(baseline[band]),
@@ -258,6 +333,8 @@ class DeltaStats:
 class BandComparison:
     band: str
     generated_count: int
+    expected_count: float
+    generated_share: float
     configured_rarity_weight: float
     candidate_range: PotentialRange
     baseline_potential_ovr: DistributionStats
@@ -296,6 +373,66 @@ class TalentCalibrationComparison:
     adjacent_overlaps: tuple[AdjacentOverlap, ...]
 
 
+@dataclass(frozen=True)
+class VariabilityStats:
+    minimum: float | None
+    maximum: float | None
+    mean: float | None
+    standard_deviation: float | None
+
+
+@dataclass(frozen=True)
+class BandRobustness:
+    band: str
+    total_generated_samples: int
+    seeds_with_samples: int
+    seeds_without_samples: int
+    candidate_median: VariabilityStats
+    candidate_mean: VariabilityStats
+    generated_count: VariabilityStats
+
+
+@dataclass(frozen=True)
+class OverlapRobustness:
+    lower_band: str
+    upper_band: str
+    baseline_pooled: float | None
+    candidate_pooled: float | None
+    baseline_per_seed: VariabilityStats
+    candidate_per_seed: VariabilityStats
+    missing_seed_count: int
+
+
+@dataclass(frozen=True)
+class SeedComparison:
+    seed: int
+    total_samples: int
+    generated_counts: dict[str, int]
+    baseline_potential_median: float | None
+    candidate_potential_median: float | None
+    median_delta: float | None
+    adjacent_candidate_overlaps: dict[str, float | None]
+
+
+@dataclass(frozen=True)
+class MultiSeedComparison:
+    seed_start: int
+    seed_count: int
+    sample_count_per_seed: int
+    total_sample_count: int
+    seeds: tuple[int, ...]
+    quality_policy_id: str
+    quality_policy_fingerprint: str
+    baseline_policy_id: str
+    baseline_policy_fingerprint: str
+    candidate_sandbox_configuration_fingerprint: str
+    pooled_global_comparison: GlobalComparison
+    pooled_bands: tuple[BandComparison, ...]
+    band_robustness: tuple[BandRobustness, ...]
+    overlap_robustness: tuple[OverlapRobustness, ...]
+    per_seed: tuple[SeedComparison, ...]
+
+
 def _stats(values: list[int]) -> DistributionStats:
     if not values:
         return DistributionStats(None, None, None, None, None, None, None, None)
@@ -304,6 +441,13 @@ def _stats(values: list[int]) -> DistributionStats:
         min(ordered), max(ordered), sum(ordered) / len(ordered),
         *(_percentile(ordered, q) for q in (0.10, 0.25, 0.50, 0.75, 0.90)),
     )
+
+
+def _variability(values: list[float | int | None]) -> VariabilityStats:
+    present = [float(value) for value in values if value is not None]
+    if not present:
+        return VariabilityStats(None, None, None, None)
+    return VariabilityStats(min(present), max(present), mean(present), pstdev(present))
 
 
 def _percentile(ordered: list[int], quantile: float) -> float:

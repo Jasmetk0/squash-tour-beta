@@ -7788,6 +7788,9 @@ export type TournamentLabScenario = {
   format_kind: string
   participants: TournamentLabParticipantContext[]
   main_draw_size: number
+  qualification_draw_size?: number
+  qualifier_spots?: number
+  qualification_player_ids?: string[]
   seed_order_player_ids: string[]
   draw_seed: number
   match_seed: number
@@ -7843,6 +7846,15 @@ export type TournamentLabAssertionResult = {
   actual?: string | null
 }
 
+export type TournamentLabQualificationSectionResult = {
+  section_id: string
+  bracket_size: number
+  winner_player_id?: string | null
+  played_match_count: number
+  bye_advance_count: number
+  match_results: TournamentLabMatchResult[]
+}
+
 export type TournamentLabSingleRun = {
   match_seed: number
   completed_rounds: number
@@ -7850,6 +7862,7 @@ export type TournamentLabSingleRun = {
   champion_player_id?: string | null
   played_match_count: number
   bye_advance_count: number
+  qualification_results?: TournamentLabQualificationSectionResult[]
   match_results: TournamentLabMatchResult[]
   assertions: TournamentLabAssertionResult[]
   run_fingerprint: string

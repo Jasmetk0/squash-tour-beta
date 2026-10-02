@@ -81,6 +81,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Bracket size', value: data.draw.main.bracket_size },
         { label: 'Algorithm', value: data.draw.algorithm_version },
         { label: 'BYEs', value: data.draw.main.bye_slot_indexes.length },
+        { label: 'Q sections', value: data.draw.qualification_sections?.length ?? (data.draw.qualification ? 1 : 0) },
         { label: 'Nodes', value: data.draw.main.nodes.length }
       ]} />
       <table aria-label="Tournament Lab draw slots">
@@ -93,6 +94,17 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         </tr>)}</tbody>
       </table>
     </SectionCard> : null}
+    {firstRun && (firstRun.qualification_results?.length ?? 0) > 0 ? <SectionCard title="Qualification progression">
+      <table aria-label="Tournament Lab qualification results">
+        <thead><tr><th>Section</th><th>Winner</th><th>Played</th><th>BYE advances</th></tr></thead>
+        <tbody>{firstRun.qualification_results?.map((row) => <tr key={row.section_id}>
+          <td>{row.section_id}</td>
+          <td>{row.winner_player_id ?? '—'}</td>
+          <td>{row.played_match_count}</td>
+          <td>{row.bye_advance_count}</td>
+        </tr>)}</tbody>
+      </table>
+    </SectionCard> : null}
     {firstRun ? <SectionCard title="First batch run">
       <SummaryPills items={[
         { label: 'Match seed', value: firstRun.match_seed },
@@ -100,6 +112,7 @@ function TournamentResultPanels({ data }: { data: TournamentLabResult }): JSX.El
         { label: 'Tournament complete', value: firstRun.tournament_complete ? 'yes' : 'no' },
         { label: 'Champion', value: firstRun.champion_player_id ?? 'not resolved' },
         { label: 'Played matches', value: firstRun.played_match_count },
+        { label: 'Q sections resolved', value: firstRun.qualification_results?.length ?? 0 },
         { label: 'BYE advances', value: firstRun.bye_advance_count }
       ]} />
       <table aria-label="Tournament Lab match results">

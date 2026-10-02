@@ -16,10 +16,12 @@ from beta_engine.domain.matches.models import MatchContext, MatchParticipantCont
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawAuthority,
     TournamentDrawAuthorityBuilder,
+    TournamentDrawBracket,
 )
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
     canonical_classic_seed_count,
+    canonical_qualification_seed_count,
 )
 from beta_engine.domain.tournaments.entry_field import TournamentEntryFieldCapacity
 from beta_engine.domain.tournaments.format_authority import TournamentFormatAuthority
@@ -70,6 +72,9 @@ class TournamentLabScenario(BaseModel):
     format_kind: str = Field(min_length=1, max_length=80)
     participants: tuple[MatchParticipantContext, ...] = Field(min_length=2, max_length=128)
     main_draw_size: int = Field(ge=2, le=128)
+    qualification_draw_size: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    qualifier_spots: int = Field(default=0, ge=0, le=128, exclude_if=lambda value: value == 0)
+    qualification_player_ids: tuple[str, ...] = Field(default=(), exclude_if=lambda value: not value)
     seed_order_player_ids: tuple[str, ...] = ()
     draw_seed: int
     match_seed: int
@@ -151,6 +156,17 @@ class TournamentLabMatchResult(BaseModel):
     elapsed_seconds: float = Field(default=0.0, ge=0)
 
 
+class TournamentLabQualificationSectionResult(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    section_id: str
+    bracket_size: int = Field(ge=2)
+    winner_player_id: str | None
+    played_match_count: int = Field(ge=0)
+    bye_advance_count: int = Field(ge=0)
+    match_results: tuple[TournamentLabMatchResult, ...]
+
+
 class TournamentLabAssertionResult(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -169,6 +185,9 @@ class TournamentLabSingleRun(BaseModel):
     champion_player_id: str | None
     played_match_count: int = Field(ge=0)
     bye_advance_count: int = Field(ge=0)
+    qualification_results: tuple[TournamentLabQualificationSectionResult, ...] = Field(
+        default=(), exclude_if=lambda value: not value
+    )
     match_results: tuple[TournamentLabMatchResult, ...]
     assertions: tuple[TournamentLabAssertionResult, ...]
     run_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
@@ -435,6 +454,9 @@ class TournamentTestLabService:
         issues: list[TournamentLabIssue] = []
         ids = tuple(item.player.player_id for item in scenario.participants)
         expected_order = set(ids)
+        qualification_ids = tuple(scenario.qualification_player_ids)
+        qualification_set = set(qualification_ids)
+        direct_main_ids = tuple(player_id for player_id in ids if player_id not in qualification_set)
 
         if scenario.format_kind != "knockout":
             issues.append(
@@ -442,7 +464,7 @@ class TournamentTestLabService:
                     severity="error",
                     code="FORMAT_NOT_EXECUTABLE_V1",
                     message=(
-                        f"Tournament Lab V1 does not yet execute {scenario.format_kind!r}; "
+                        f"Tournament Lab does not yet execute {scenario.format_kind!r}; "
                         "the draft remains inspectable and no authoritative-looking result is fabricated."
                     ),
                 )
@@ -456,14 +478,6 @@ class TournamentTestLabService:
                     message="Classic knockout Main Draw capacity must be a power of two.",
                 )
             )
-        if len(ids) > scenario.main_draw_size:
-            issues.append(
-                TournamentLabIssue(
-                    severity="error",
-                    code="FIELD_EXCEEDS_MAIN_DRAW",
-                    message="Participant field exceeds configured Main Draw capacity.",
-                )
-            )
 
         seed_order = scenario.seed_order_player_ids or ids
         if len(seed_order) != len(ids) or set(seed_order) != expected_order:
@@ -475,18 +489,111 @@ class TournamentTestLabService:
                 )
             )
 
-        canonical_capacity = 1 << (len(ids) - 1).bit_length()
-        if scenario.main_draw_size != canonical_capacity:
+        if len(qualification_ids) != len(qualification_set):
             issues.append(
                 TournamentLabIssue(
-                    severity="warning",
-                    code="NONCANONICAL_CLASSIC_CAPACITY",
-                    message=(
-                        f"Normal Run classic geometry would derive capacity {canonical_capacity} "
-                        f"for {len(ids)} entrants, not {scenario.main_draw_size}."
-                    ),
+                    severity="error",
+                    code="QUALIFICATION_PLAYER_DUPLICATE",
+                    message="Qualification player IDs must be unique.",
                 )
             )
+        if not qualification_set.issubset(expected_order):
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="QUALIFICATION_PLAYER_OUTSIDE_FIELD",
+                    message="Qualification contains a player outside the Tournament Lab participant field.",
+                )
+            )
+
+        has_qualification = bool(
+            scenario.qualification_draw_size
+            or scenario.qualifier_spots
+            or qualification_ids
+        )
+        if has_qualification:
+            if scenario.qualification_draw_size <= 0 or scenario.qualifier_spots <= 0:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_GEOMETRY_INCOMPLETE",
+                        message="Qualification requires both a positive draw size and qualifier spot count.",
+                    )
+                )
+            elif scenario.qualification_draw_size % scenario.qualifier_spots:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_NOT_EQUAL_SECTIONS",
+                        message="Qualification draw size must divide evenly across equal Q sections.",
+                    )
+                )
+            else:
+                section_size = scenario.qualification_draw_size // scenario.qualifier_spots
+                if section_size < 2 or section_size & (section_size - 1):
+                    issues.append(
+                        TournamentLabIssue(
+                            severity="error",
+                            code="QUALIFICATION_SECTION_NOT_POWER_OF_TWO",
+                            message="Each Qualification section must have power-of-two capacity of at least two.",
+                        )
+                    )
+            if len(qualification_ids) < scenario.qualifier_spots:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_TOO_FEW_PLAYERS",
+                        message="Qualification requires at least one real player per Q section.",
+                    )
+                )
+            if len(qualification_ids) > scenario.qualification_draw_size:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="error",
+                        code="QUALIFICATION_FIELD_EXCEEDS_CAPACITY",
+                        message="Qualification player field exceeds configured Qualification draw size.",
+                    )
+                )
+        elif scenario.qualification_draw_size or scenario.qualifier_spots:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="QUALIFICATION_GEOMETRY_INCOMPLETE",
+                    message="Qualification geometry is incomplete.",
+                )
+            )
+
+        main_entrant_count = len(direct_main_ids) + scenario.qualifier_spots
+        if main_entrant_count > scenario.main_draw_size:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="FIELD_EXCEEDS_MAIN_DRAW",
+                    message="Direct Main players plus qualifier places exceed Main Draw capacity.",
+                )
+            )
+        if main_entrant_count < 2:
+            issues.append(
+                TournamentLabIssue(
+                    severity="error",
+                    code="MAIN_FIELD_TOO_SMALL",
+                    message="Executable Main Draw requires at least two eventual entrants.",
+                )
+            )
+
+        if 2 <= main_entrant_count <= 128:
+            canonical_capacity = 1 << (main_entrant_count - 1).bit_length()
+            if scenario.main_draw_size != canonical_capacity:
+                issues.append(
+                    TournamentLabIssue(
+                        severity="warning",
+                        code="NONCANONICAL_CLASSIC_CAPACITY",
+                        message=(
+                            f"Normal Run classic geometry would derive capacity {canonical_capacity} "
+                            f"for {main_entrant_count} eventual Main entrants, not {scenario.main_draw_size}."
+                        ),
+                    )
+                )
 
         if (
             scenario.match_format.best_of,
@@ -521,6 +628,7 @@ class TournamentTestLabService:
             normal_run_compatible=normal_run_compatible,
             shared_authorities=(
                 "beta_engine.domain.tournaments.format_authority.TournamentFormatAuthority",
+                "beta_engine.domain.tournaments.draw_input_authority.canonical_qualification_seed_count",
                 "beta_engine.domain.tournaments.draw_authority.TournamentDrawAuthorityBuilder",
                 "beta_engine.domain.matches.match_engine.MatchEngine.simulate",
             ),
@@ -588,9 +696,23 @@ class TournamentTestLabService:
     ) -> tuple[TournamentFormatAuthority, TournamentDrawInputAuthority, TournamentDrawAuthority]:
         player_ids = tuple(item.player.player_id for item in scenario.participants)
         seed_order = scenario.seed_order_player_ids or player_ids
+        qualification_set = set(scenario.qualification_player_ids)
+        direct_main = tuple(
+            player_id for player_id in seed_order if player_id not in qualification_set
+        )
+        qualification = tuple(
+            player_id for player_id in seed_order if player_id in qualification_set
+        )
+        bye_slots = (
+            scenario.main_draw_size
+            - len(direct_main)
+            - scenario.qualifier_spots
+        )
         capacity = TournamentEntryFieldCapacity(
             main_draw_size=scenario.main_draw_size,
-            bye_slots=scenario.main_draw_size - len(player_ids),
+            qualification_draw_size=scenario.qualification_draw_size,
+            qualifier_spots=scenario.qualifier_spots,
+            bye_slots=bye_slots,
         )
         source_fp = _fingerprint(
             {"scenario_fingerprint": scenario.fingerprint, "scope": "tournament-lab-source"}
@@ -603,38 +725,45 @@ class TournamentTestLabService:
             branch_id="isolated",
             event_id=f"lab-event:{scenario.scenario_id}",
             target_season_index=0,
-            configured_by_command_id="tournament-lab-format-v1",
+            configured_by_command_id="tournament-lab-format-v3",
             entry_field_fingerprint=entry_fp,
             format_kind="knockout",
         )
-        seed_count = canonical_classic_seed_count(
+        main_seed_count = canonical_classic_seed_count(
             bracket_capacity=capacity.main_draw_size,
-            actual_player_count=len(player_ids),
+            actual_player_count=len(direct_main),
+        )
+        qualification_seed_count = canonical_qualification_seed_count(
+            capacity=capacity,
+            actual_player_count=len(qualification),
+        )
+        qualifier_placeholder_ids = tuple(
+            f"Q{index}" for index in range(1, scenario.qualifier_spots + 1)
         )
         draw_input = TournamentDrawInputAuthority(
             schema_version="tournament_draw_input_authority.v2",
             run_id=f"lab:{scenario.scenario_id}",
             branch_id="isolated",
             event_id=f"lab-event:{scenario.scenario_id}",
-            committed_by_command_id="tournament-lab-draw-input-v1",
+            committed_by_command_id="tournament-lab-draw-input-v3",
             draw_seed=scenario.draw_seed,
-            main_seed_count=seed_count,
-            qualification_seed_count=0,
+            main_seed_count=main_seed_count,
+            qualification_seed_count=qualification_seed_count,
             field_sequence=1,
             capacity=capacity,
             tournament_ranking_authority_fingerprint=source_fp,
             ranking_snapshot_fingerprint=source_fp,
             entry_field_fingerprint=entry_fp,
-            direct_main_player_ids=seed_order,
-            qualification_player_ids=(),
-            qualifier_placeholder_ids=(),
+            direct_main_player_ids=direct_main,
+            qualification_player_ids=qualification,
+            qualifier_placeholder_ids=qualifier_placeholder_ids,
             withdrawn_player_ids=(),
-            main_seed_player_ids=seed_order[:seed_count],
-            qualification_seed_player_ids=(),
+            main_seed_player_ids=direct_main[:main_seed_count],
+            qualification_seed_player_ids=qualification[:qualification_seed_count],
         )
         draw = TournamentDrawAuthorityBuilder.build(
             draw_input=draw_input,
-            command_id="tournament-lab-draw-v1",
+            command_id="tournament-lab-draw-v3",
             algorithm_version="idealized_seed_tiers.v2",
         )
         return format_authority, draw_input, draw
@@ -654,16 +783,113 @@ class TournamentTestLabService:
         participants = {
             item.player.player_id: item for item in scenario.participants
         }
-        slots = {
-            slot.slot_index: (
-                slot.player_id if slot.entrant_kind == "player" else None
+
+        qualification_results: list[TournamentLabQualificationSectionResult] = []
+        qualifier_winners: dict[str, str] = {}
+        for bracket in draw.qualification_brackets:
+            section_id = bracket.section_id or "Q1"
+            q_results, q_winner = self._execute_bracket(
+                scenario,
+                bracket,
+                participants=participants,
+                match_seed=match_seed,
+                qualifier_winners={},
+                stop_after_round=None,
             )
-            for slot in draw.main.slots
-        }
-        winners: dict[str, str | None] = {}
-        results: list[TournamentLabMatchResult] = []
+            if q_winner is None:
+                raise ValueError(
+                    f"Tournament Lab Qualification section {section_id} did not resolve a winner"
+                )
+            qualifier_winners[section_id] = q_winner
+            qualification_results.append(
+                TournamentLabQualificationSectionResult(
+                    section_id=section_id,
+                    bracket_size=bracket.bracket_size,
+                    winner_player_id=q_winner,
+                    played_match_count=sum(item.status == "played" for item in q_results),
+                    bye_advance_count=sum(item.status == "bye_advance" for item in q_results),
+                    match_results=tuple(q_results),
+                )
+            )
+
         max_round = max(node.round_number for node in draw.main.nodes)
         stop_round = min(scenario.stop_after_round or max_round, max_round)
+        main_results, champion = self._execute_bracket(
+            scenario,
+            draw.main,
+            participants=participants,
+            match_seed=match_seed,
+            qualifier_winners=qualifier_winners,
+            stop_after_round=stop_round,
+        )
+
+        tournament_complete = stop_round == max_round
+        if not tournament_complete:
+            champion = None
+        qualification_played = sum(item.played_match_count for item in qualification_results)
+        main_played = sum(item.status == "played" for item in main_results)
+        played = qualification_played + main_played
+        bye_advances = (
+            sum(item.bye_advance_count for item in qualification_results)
+            + sum(item.status == "bye_advance" for item in main_results)
+        )
+        assertions = self._assertions(
+            scenario,
+            champion=champion,
+            played_match_count=played,
+            tournament_complete=tournament_complete,
+        )
+        payload = {
+            "scenario_fingerprint": scenario.fingerprint,
+            "draw_fingerprint": draw.fingerprint,
+            "match_seed": match_seed,
+            "completed_rounds": stop_round,
+            "champion": champion,
+            "results": [item.model_dump(mode="json") for item in main_results],
+            "assertions": [item.model_dump(mode="json") for item in assertions],
+        }
+        if qualification_results:
+            payload["qualification_results"] = [
+                item.model_dump(mode="json") for item in qualification_results
+            ]
+        return TournamentLabSingleRun(
+            match_seed=match_seed,
+            completed_rounds=stop_round,
+            tournament_complete=tournament_complete,
+            champion_player_id=champion,
+            played_match_count=played,
+            bye_advance_count=bye_advances,
+            qualification_results=tuple(qualification_results),
+            match_results=tuple(main_results),
+            assertions=assertions,
+            run_fingerprint=_fingerprint(payload),
+        )
+
+    def _execute_bracket(
+        self,
+        scenario: TournamentLabScenario,
+        bracket: TournamentDrawBracket,
+        *,
+        participants: dict[str, MatchParticipantContext],
+        match_seed: int,
+        qualifier_winners: dict[str, str],
+        stop_after_round: int | None,
+    ) -> tuple[list[TournamentLabMatchResult], str | None]:
+        slots: dict[int, str | None] = {}
+        for slot in bracket.slots:
+            if slot.entrant_kind == "player":
+                slots[slot.slot_index] = slot.player_id
+            elif slot.entrant_kind == "qualifier_placeholder":
+                slots[slot.slot_index] = (
+                    qualifier_winners.get(slot.placeholder_id or "")
+                )
+            else:
+                slots[slot.slot_index] = None
+
+        winners: dict[str, str | None] = {}
+        results: list[TournamentLabMatchResult] = []
+        max_round = max(node.round_number for node in bracket.nodes)
+        effective_stop = min(stop_after_round or max_round, max_round)
 
         def resolve(source: str) -> str | None:
             if source.startswith("slot:"):
@@ -673,9 +899,9 @@ class TournamentTestLabService:
             raise ValueError("Tournament Lab draw contains unsupported participant source")
 
         for node in sorted(
-            draw.main.nodes, key=lambda value: (value.round_number, value.round_sequence)
+            bracket.nodes, key=lambda value: (value.round_number, value.round_sequence)
         ):
-            if node.round_number > stop_round:
+            if node.round_number > effective_stop:
                 break
             player_a_id = resolve(node.source_top)
             player_b_id = resolve(node.source_bottom)
@@ -727,38 +953,12 @@ class TournamentTestLabService:
             winners[node.node_id] = raw.winner_player_id
             results.append(self._match_result(node, raw, seed=seed))
 
-        tournament_complete = stop_round == max_round
         final_node = max(
-            draw.main.nodes, key=lambda value: (value.round_number, value.round_sequence)
+            bracket.nodes, key=lambda value: (value.round_number, value.round_sequence)
         )
-        champion = winners.get(final_node.node_id) if tournament_complete else None
-        played = sum(item.status == "played" for item in results)
-        assertions = self._assertions(
-            scenario,
-            champion=champion,
-            played_match_count=played,
-            tournament_complete=tournament_complete,
-        )
-        payload = {
-            "scenario_fingerprint": scenario.fingerprint,
-            "draw_fingerprint": draw.fingerprint,
-            "match_seed": match_seed,
-            "completed_rounds": stop_round,
-            "champion": champion,
-            "results": [item.model_dump(mode="json") for item in results],
-            "assertions": [item.model_dump(mode="json") for item in assertions],
-        }
-        return TournamentLabSingleRun(
-            match_seed=match_seed,
-            completed_rounds=stop_round,
-            tournament_complete=tournament_complete,
-            champion_player_id=champion,
-            played_match_count=played,
-            bye_advance_count=sum(item.status == "bye_advance" for item in results),
-            match_results=tuple(results),
-            assertions=assertions,
-            run_fingerprint=_fingerprint(payload),
-        )
+        bracket_complete = effective_stop == max_round
+        winner = winners.get(final_node.node_id) if bracket_complete else None
+        return results, winner
 
     @staticmethod
     def _match_result(node, raw: MatchResult, *, seed: int) -> TournamentLabMatchResult:
@@ -881,6 +1081,28 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
             "match_seed": 7002,
         }
     )
+    qualification_participants = tuple(
+        _lab_participant(f"TLQ-P{index}", 96 - index * 2)
+        for index in range(1, 15)
+    )
+    qualification = TournamentLabScenario(
+        scenario_id="qualification-two-sections-to-eight-main",
+        display_name="2× Qualification sections → 8-player Main",
+        format_kind="knockout",
+        participants=qualification_participants,
+        main_draw_size=8,
+        qualification_draw_size=8,
+        qualifier_spots=2,
+        qualification_player_ids=tuple(
+            item.player.player_id for item in qualification_participants[6:]
+        ),
+        seed_order_player_ids=tuple(
+            item.player.player_id for item in qualification_participants
+        ),
+        draw_seed=20261004,
+        match_seed=7003,
+        assertions=TournamentLabAssertions(expected_played_match_count=13),
+    )
     definitions = (
         (
             scenario,
@@ -889,6 +1111,10 @@ def _built_ins() -> tuple[BuiltInTournamentLabScenario, ...]:
         (
             unusual,
             "Runnable Lab-only geometry that deliberately differs from normal Run capacity derivation.",
+        ),
+        (
+            qualification,
+            "Two equal canonical Q sections resolve Q1/Q2 before the shared 8-player Main Draw.",
         ),
     )
     return tuple(

@@ -15,6 +15,20 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V3 canonical Qualification progression
+
+- Tournament Lab scenarios can now partition portable participants into direct Main and Qualification fields with explicit Qualification draw capacity and qualifier-place count.
+- No-Qualification scenarios omit the new fields from serialization, preserving the historical V1/V2 scenario and persisted Test Session fingerprint shape.
+- Qualification validation returns explicit fail-closed diagnostics for incomplete geometry, unequal/non-power-of-two sections, duplicate/out-of-field players, too-small/oversized Qualification fields and Main capacity overflow.
+- Qualification uses the production `canonical_qualification_seed_count`, `TournamentDrawInputAuthority` and `TournamentDrawAuthorityBuilder(idealized_seed_tiers.v2)`; no Lab-only Q draw algorithm exists.
+- Each batch run plays canonical Q1…Qn sections first, freezes their winners for that run and resolves those winners into the exact canonical Main Draw qualifier placeholders before Main execution.
+- Per-section reports include winner, played matches, BYE advances and full Match Engine result evidence. Tournament totals include Qualification + Main.
+- Added a deterministic 8-player Main / two 4-player Q-section built-in baseline with six direct Main entrants and two qualifiers.
+
+See [Tournament Test Lab V3 Qualification](docs/TOURNAMENT_TEST_LAB_V3_QUALIFICATION.md).
+
+**Next:** continue Tournament Lab with groups/groups+knockout or the Run↔Lab copy/draft bridge, while keeping withdrawals/replacements/ranking consequences on their existing authority boundaries and copied-FAX acceptance separate.
+
 ## Implemented — Global Tournament Test Lab V2 persistent Test Sessions
 
 - Added durable global `tournament_test_lab_session.v1` objects outside all Product Run/Branch ownership.

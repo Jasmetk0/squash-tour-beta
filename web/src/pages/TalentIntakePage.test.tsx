@@ -230,7 +230,8 @@ describe('TalentIntakePage', () => {
     expect(within(prospectsTable).getByRole('cell', { name: 'Elite Prospect' })).toBeInTheDocument()
     expect(within(prospectsTable).getByRole('cell', { name: '177' })).toBeInTheDocument()
     expect(within(prospectsTable).getByRole('cell', { name: 'Late Bloomer' })).toBeInTheDocument()
-    expect(screen.getByText(/Quality band comes independently from the shared rarity policy/i)).toBeInTheDocument()
+    expect(screen.getByText(/Effective Potential OVR is/i)).toBeInTheDocument()
+    expect(screen.getByText(/Quality band remains independent/i)).toBeInTheDocument()
     expect(api.listRunProspects).toHaveBeenCalledWith('run-1', {
       season_start_year: 2000,
       limit: 500,

@@ -52,7 +52,7 @@ class ProspectSportingProfilePolicy(BaseModel):
 
     @property
     def fingerprint(self) -> str:
-        return _fingerprint(self.model_dump(mode="json"))
+        return _fingerprint(self.model_dump(mode="json", exclude_none=True))
 
 
 class ProspectSportingProfile(BaseModel):

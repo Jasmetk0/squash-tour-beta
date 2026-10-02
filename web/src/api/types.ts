@@ -7772,12 +7772,21 @@ export type TournamentLabAssertions = {
   expected_played_match_count?: number | null
 }
 
+export type TournamentLabParticipantContext = {
+  player: Record<string, unknown>
+  form_modifier?: number
+  sharpness_modifier?: number
+  fatigue_modifier?: number
+  health_modifier?: number
+  travel_modifier?: number
+}
+
 export type TournamentLabScenario = {
   schema_version: 'tournament_test_lab_scenario.v1'
   scenario_id: string
   display_name: string
   format_kind: string
-  participants: MatchParticipantContext[]
+  participants: TournamentLabParticipantContext[]
   main_draw_size: number
   seed_order_player_ids: string[]
   draw_seed: number

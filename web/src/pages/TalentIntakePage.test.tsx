@@ -37,6 +37,7 @@ const preview = {
   season_variation_multiplier: 1.02,
   annual_target: 204,
   total_weekly_target: 204,
+  review_fingerprint: 'a'.repeat(64),
   weeks: [
     {
       season_week: 1,
@@ -265,13 +266,56 @@ describe('TalentIntakePage', () => {
       expect(api.materializeRunProspects).toHaveBeenCalledWith('run-1', {
         base_annual_intake_target: 200,
         season_growth_rate: 0.015,
-        overwrite: false
+        overwrite: false,
+        expected_review_fingerprint: 'a'.repeat(64)
       })
     })
     expect(await screen.findByText('Prospect cohort materialized.')).toBeInTheDocument()
     await waitFor(() => expect(api.listRunProspects.mock.calls.length).toBeGreaterThanOrEqual(2))
     await waitFor(() => expect(api.getRunProspectTalentSummary.mock.calls.length).toBeGreaterThanOrEqual(2))
     expect(screen.getByText(/Created 204; existing 0; persisted in scope 204/i)).toBeInTheDocument()
+  })
+
+  it('invalidates confirmation when Run changes and ignores a late response from the previous Run', async () => {
+    let resolveRunA: ((value: typeof preview) => void) | undefined
+    const runAPromise = new Promise<typeof preview>((resolve) => {
+      resolveRunA = resolve
+    })
+    api.getRunWeeklyIntakeCohortSeasonPreview.mockImplementation((runId: string) => {
+      if (runId === 'run-a') return runAPromise
+      if (runId === 'run-b') {
+        return Promise.resolve({
+          ...preview,
+          run_id: 'run-b',
+          world_name: 'Run B World',
+          review_fingerprint: 'b'.repeat(64)
+        })
+      }
+      return Promise.resolve(preview)
+    })
+
+    renderWithRoute(<TalentIntakePage />, '/admin/players/intake')
+    const runInput = screen.getByLabelText('Run ID')
+    await userEvent.type(runInput, 'run-a')
+    await waitFor(() => expect(api.getRunWeeklyIntakeCohortSeasonPreview).toHaveBeenCalledWith('run-a', expect.anything()))
+
+    await userEvent.clear(runInput)
+    await userEvent.type(runInput, 'run-b')
+    expect(await screen.findByText('Run B World')).toBeInTheDocument()
+
+    const checkbox = screen.getByLabelText(/I reviewed this cohort preview/i)
+    await userEvent.click(checkbox)
+    const confirmButton = screen.getByRole('button', { name: 'Confirm materialization' })
+    expect(confirmButton).toBeEnabled()
+
+    resolveRunA?.({ ...preview, run_id: 'run-a', world_name: 'Run A World', review_fingerprint: 'a'.repeat(64) })
+    await Promise.resolve()
+    expect(screen.queryByText('Run A World')).not.toBeInTheDocument()
+
+    await userEvent.clear(runInput)
+    await userEvent.type(runInput, 'run-c')
+    expect(confirmButton).toBeDisabled()
+    expect(api.materializeRunProspects).not.toHaveBeenCalled()
   })
 
   it('updates the preview when annual volume controls change', async () => {

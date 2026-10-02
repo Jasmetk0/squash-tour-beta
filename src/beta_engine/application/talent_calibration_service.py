@@ -29,6 +29,7 @@ BAND_ORDER = (
 )
 TIMINGS = ("Early Bloomer", "Standard", "Late Bloomer")
 MAX_MULTI_SEED_SAMPLES = 250_000
+MAX_MULTI_SEED_COUNT = 100
 
 
 @dataclass(frozen=True)
@@ -208,6 +209,8 @@ class TalentCalibrationService:
                            candidate_ranges: dict[TalentQualityBand, tuple[int, int]]) -> "MultiSeedComparison":
         if seed_count < 1 or sample_count_per_seed < 1:
             raise ValueError("seed_count and sample_count_per_seed must be at least 1")
+        if seed_count > MAX_MULTI_SEED_COUNT:
+            raise ValueError(f"seed_count must not exceed {MAX_MULTI_SEED_COUNT}")
         total = seed_count * sample_count_per_seed
         if total > MAX_MULTI_SEED_SAMPLES:
             raise ValueError(f"total samples must not exceed {MAX_MULTI_SEED_SAMPLES}")

@@ -4959,6 +4959,18 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         "pending Viewer Branch is inconsistent"
                     )
+                if expected_run_tournament_lab_draft_fingerprint is not None:
+                    lab_changes = state.working_draft.changes
+                    if (
+                        len(lab_changes) != 1
+                        or not isinstance(lab_changes[0], dict)
+                        or lab_changes[0].get("kind") != "run_tournament_lab_drafts"
+                        or lab_changes[0].get("fingerprint")
+                        != expected_run_tournament_lab_draft_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Tournament Lab Run draft Working Draft evidence is inconsistent"
+                        )
                 if not component_only and saved_viewer_id == target_viewer_id:
                     raise WorkingDraftConflictError(
                         "Working Draft contains no effective Viewer Branch change"

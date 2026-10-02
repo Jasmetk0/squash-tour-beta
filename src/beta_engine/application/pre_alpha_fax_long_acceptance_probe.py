@@ -42,7 +42,9 @@ class PreAlphaFaxLongAcceptanceProbeReport(BaseModel):
     branch_id: str
     acceptance_profile_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     input_ready: bool
-    full_simulation_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    full_simulation_preview_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
     full_simulation_command_id: str
     execution_schema_version: str
     execution_status: Literal["blocked", "complete"]
@@ -51,7 +53,9 @@ class PreAlphaFaxLongAcceptanceProbeReport(BaseModel):
     completed_season_count: int = Field(ge=0)
     current_week: dict | None = None
     detail: str | None = None
-    execution_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    execution_fingerprint: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
 
     @property
     def fingerprint(self) -> str:
@@ -90,7 +94,25 @@ class PreAlphaFaxLongAcceptanceProbeService:
             operator_label=request.operator_label,
             audit_reason=request.audit_reason,
         )
-        preview = self.driver.preview_full_simulation(preview_request)
+        try:
+            preview = self.driver.preview_full_simulation(preview_request)
+        except ValueError as exc:
+            return PreAlphaFaxLongAcceptanceProbeReport(
+                run_id=run_id,
+                branch_id=branch_id,
+                acceptance_profile_fingerprint=profile.profile_fingerprint,
+                input_ready=True,
+                full_simulation_preview_fingerprint=None,
+                full_simulation_command_id=request.command_id,
+                execution_schema_version="pre_alpha_fax_probe_preflight.v1",
+                execution_status="blocked",
+                checkpoint="full_simulation_preview_unavailable",
+                blockers=("full_simulation_preview_unavailable",),
+                completed_season_count=0,
+                current_week=None,
+                detail=str(exc),
+                execution_fingerprint=None,
+            )
         command = AuthoritativeFullSimulationCommand(
             **preview_request.model_dump(mode="json"),
             expected_start_week=preview["start_week"],

@@ -15,6 +15,29 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Match Test Lab V1
+
+- Added a global Admin Match Test Lab at `/admin/labs/match` using the real production
+  `MatchEngine.simulate` kernel rather than a Lab-only simulator.
+- Portable `match_test_lab_scenario.v1` payloads freeze the complete MatchContext plus
+  seed/source provenance and receive canonical scenario/request fingerprints.
+- Exact replay is deterministic. One frozen scenario can also run up to 100 explicit
+  unique seeds, returning per-seed result fingerprints plus pooled winner, retirement,
+  rally-count and elapsed-time diagnostics.
+- The compatibility report makes the safety boundary explicit: portable/isolated,
+  no Run mutation, no live Run link, current `match_engine_v10` compatibility label,
+  standard-format detection and warnings for unsupported equivalence claims.
+- `run_snapshot_copy` is provenance only; a missing source fingerprint warns rather
+  than pretending a mutable Run is linked or that historical equivalence was proven.
+- The Admin UI is JSON-first on purpose so unusual kernel-supported scenarios can be
+  tested without inventing restrictions from normal Tournament formatting.
+
+See [Global Match Test Lab V1](docs/MATCH_TEST_LAB_V1.md).
+
+**Next:** add verified scenario-library / New Test Session isolation and then the
+Tournament Test Lab over shared tournament/draw/match authorities. The global
+Match/Tournament Lab roadmap item is not complete yet.
+
 ## Implemented — Talent Intake diagnostics + Viewer hidden-field gate
 
 - The Run-scoped cohort preview now retains the complete filtered country scope, including
@@ -37,8 +60,8 @@ lower Tours remain abstract. The Official Run is not the acceptance focus.
   and are returned as unavailable at the Viewer DTO boundary; the Viewer UI no longer renders
   those internal metrics.
 
-**Next:** begin the global Match/Tournament Lab vertical slice using shared engine kernels and
-isolated Run-copy/draft boundaries; do not start the FAX season acceptance run in parallel.
+**Next:** continue the global Match/Tournament Lab after Match Lab V1 with verified scenario-copy/session
+boundaries and Tournament Lab composition; do not start the FAX season acceptance run in parallel.
 
 ## Implemented — Talent Intake historical policy + reviewed-scope safety
 

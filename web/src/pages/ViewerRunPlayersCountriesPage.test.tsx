@@ -505,7 +505,11 @@ describe('ViewerRunPlayerCareerPage canonical current profile', () => {
     expect(screen.getByText('S2 W7')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Current sporting state' })).toBeInTheDocument()
     expect(screen.getByText('167')).toBeInTheDocument()
-    expect(screen.getByText('185')).toBeInTheDocument()
+    expect(screen.queryByText('185')).not.toBeInTheDocument()
+    expect(screen.queryByText('Potential Power Rating')).not.toBeInTheDocument()
+    expect(screen.queryByText('Current form')).not.toBeInTheDocument()
+    expect(screen.queryByText('Match sharpness')).not.toBeInTheDocument()
+    expect(screen.queryByText('Long-term fatigue')).not.toBeInTheDocument()
     expect(screen.getByText('run prospect')).toBeInTheDocument()
     expect(screen.getByText('S1 W3')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'EGY' })).toHaveAttribute(

@@ -17,6 +17,8 @@ import type {
   TalentCalibrationCompareResponse,
   TalentCalibrationMultiSeedRequest,
   TalentCalibrationMultiSeedResponse,
+  MatchLabRequest,
+  MatchLabResult,
   CountryRecord,
   CountryUpsertPayload,
   CreateRunPayload,
@@ -3375,4 +3377,12 @@ export async function confirmRankingCommand(runId: string, branchId: string, com
   verifyPreparationCandidate(runId, branchId, command, data)
   if (data.fingerprint !== preview.candidate.fingerprint) throw new Error('Prepared ranking differs from the reviewed preview.')
   return data
+}
+
+
+export async function runMatchTestLab(payload: MatchLabRequest): Promise<MatchLabResult> {
+  return request<MatchLabResult>('/admin/labs/match/run', {
+    method: 'POST',
+    body: JSON.stringify(payload)
+  })
 }

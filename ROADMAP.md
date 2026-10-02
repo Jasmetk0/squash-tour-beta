@@ -9,8 +9,10 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    without changing rarity weights or potential mappings.
 2. ✅ Close the remaining forecast/realized diagnostic gap, explain the effective potential floor,
    preserve future-cohort visibility boundaries and gate hidden Viewer sporting data.
-3. Complete global Match/Tournament Labs with shared engine kernels, replayable scenarios,
-   batch diagnostics and safe Run-copy/draft boundaries.
+3. 🟡 Complete global Match/Tournament Labs with shared engine kernels, replayable scenarios,
+   batch diagnostics and safe Run-copy/draft boundaries. Match Test Lab V1 now provides the
+   global portable/read-only shared-kernel foundation; built-in/New Test Session copies and
+   Tournament Lab composition remain.
 4. Validate a full season and next-season opening in a copy of the FAX template: at least
    1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
    Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.

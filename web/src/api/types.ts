@@ -7642,3 +7642,59 @@ export type TalentCalibrationMultiSeedResponse = {
   overlap_robustness: Array<{ lower_band: TalentBandKey; upper_band: TalentBandKey; baseline_pooled: number | null; candidate_pooled: number | null; baseline_per_seed: CalibrationVariability; candidate_per_seed: CalibrationVariability; missing_seed_count: number }>
   per_seed: Array<{ seed: number; total_samples: number; generated_counts: Record<TalentBandKey, number>; baseline_potential_median: number | null; candidate_potential_median: number | null; median_delta: number | null; adjacent_candidate_overlaps: Record<string, number | null> }>
 }
+
+
+export type MatchLabScenario = {
+  schema_version: 'match_test_lab_scenario.v1'
+  scenario_id: string
+  context: Record<string, unknown>
+  seed: number
+  source_kind: 'portable' | 'built_in_copy' | 'run_snapshot_copy'
+  source_reference?: string | null
+  source_fingerprint?: string | null
+}
+
+export type MatchLabRequest = {
+  scenario: MatchLabScenario
+  batch_seeds?: number[]
+}
+
+export type MatchLabCompatibility = {
+  production_kernel: string
+  match_engine_version: string
+  portable: boolean
+  isolated: boolean
+  run_mutation_performed: boolean
+  run_live_link: boolean
+  normal_format: boolean
+  warnings: string[]
+}
+
+export type MatchLabSeedResult = {
+  seed: number
+  result_fingerprint: string
+  winner_player_id: string
+  loser_player_id: string
+  sets_won: Record<string, number>
+  set_scores: string[]
+  termination_reason: string
+  rally_count: number
+  elapsed_seconds: number
+}
+
+export type MatchLabResult = {
+  schema_version: 'match_test_lab_result.v1'
+  scenario_id: string
+  scenario_fingerprint: string
+  request_fingerprint: string
+  compatibility: MatchLabCompatibility
+  results: MatchLabSeedResult[]
+  diagnostics: {
+    seed_count: number
+    wins_by_player: Record<string, number>
+    retirement_count: number
+    average_rally_count: number
+    average_elapsed_seconds: number
+    distinct_result_count: number
+  }
+}

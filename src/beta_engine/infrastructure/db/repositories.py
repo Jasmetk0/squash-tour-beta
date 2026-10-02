@@ -3526,19 +3526,22 @@ class SimulationPersistenceRepository:
                     != RUN_WORKING_DRAFT_SCHEMA_VERSION
                 ):
                     raise ValueError("dirty Working Draft uses an unsupported schema")
-                if all(isinstance(change, dict) and change.get("kind") == "run_package_state" for change in state.working_draft.changes):
+                component_change_kinds = {
+                    "run_package_state",
+                    "run_tournament_lab_drafts",
+                }
+                viewer_changes = [
+                    change
+                    for change in state.working_draft.changes
+                    if not (
+                        isinstance(change, dict)
+                        and change.get("kind") in component_change_kinds
+                    )
+                ]
+                if not viewer_changes:
                     proposed_viewer_id = saved_viewer_id
                 else:
-                    proposed_viewer_id = viewer_branch_id_from_changes(
-                        [
-                            change
-                            for change in state.working_draft.changes
-                            if not (
-                                isinstance(change, dict)
-                                and change.get("kind") == "run_package_state"
-                            )
-                        ]
-                    )
+                    proposed_viewer_id = viewer_branch_id_from_changes(viewer_changes)
         except (BranchRevisionStateConflictError, ValueError) as exc:
             raise WorkingDraftConflictError(str(exc)) from exc
 
@@ -3610,17 +3613,18 @@ class SimulationPersistenceRepository:
 
             draft_model = session.get(BranchWorkingDraftModel, draft.draft_id)
             existing_changes = _from_json(draft_model.changes_json)
-            package_changes = [
+            component_changes = [
                 change
                 for change in existing_changes
                 if isinstance(change, dict)
-                and change.get("kind") == "run_package_state"
+                and change.get("kind")
+                in {"run_package_state", "run_tournament_lab_drafts"}
             ]
 
             if viewer_branch_id == draft.saved_viewer_branch_id:
-                changes: list[object] = package_changes
+                changes: list[object] = component_changes
             else:
-                changes = package_changes + [
+                changes = component_changes + [
                     viewer_branch_selection_change(viewer_branch_id=viewer_branch_id)
                 ]
             status_value = (
@@ -4960,7 +4964,8 @@ class SimulationPersistenceRepository:
                                 for change in state.working_draft.changes
                                 if not (
                                     isinstance(change, dict)
-                                    and change.get("kind") == "run_package_state"
+                                    and change.get("kind")
+                                    in {"run_package_state", "run_tournament_lab_drafts"}
                                 )
                             ]
                         )

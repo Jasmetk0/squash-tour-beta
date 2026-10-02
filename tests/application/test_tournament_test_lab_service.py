@@ -6,10 +6,15 @@ from beta_engine.application.tournament_test_lab_service import (
     TournamentLabAssertions,
     TournamentLabRequest,
     TournamentLabScenario,
+    TournamentLabSessionCreateRequest,
+    TournamentLabSessionRunRequest,
+    TournamentLabSessionUpdateRequest,
     TournamentTestLabService,
 )
 from beta_engine.domain.matches import MatchParticipantContext
 from beta_engine.domain.players import HiddenCareerTraits, Player
+from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
+from beta_engine.infrastructure.db.models import Base, TournamentLabSessionModel
 
 
 pytestmark = pytest.mark.pr_critical
@@ -208,3 +213,145 @@ def test_tournament_lab_built_ins_are_deterministic_and_read_only() -> None:
     assert all(item.read_only is True for item in rows)
     assert all(item.scenario_fingerprint == item.scenario.fingerprint for item in rows)
     assert rows == TournamentTestLabService().list_built_in_scenarios()
+
+
+
+def _persistent_service(tmp_path):
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{tmp_path / 'tournament-lab-sessions.db'}"))
+    Base.metadata.create_all(engine)
+    factory = create_session_factory(engine)
+    counter = {"value": 0}
+
+    def id_factory(kind: str) -> str:
+        counter["value"] += 1
+        return f"{kind}-{counter['value']}"
+
+    return engine, factory, TournamentTestLabService(factory, id_factory)
+
+
+def test_tournament_lab_new_test_session_clones_built_in_without_live_link(tmp_path) -> None:
+    engine, factory, service = _persistent_service(tmp_path)
+    try:
+        built_in = service.list_built_in_scenarios()[0]
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="My Tournament Session",
+                built_in_scenario_id=built_in.scenario_id,
+            )
+        )
+
+        assert created.session_id == "tournament-lab-session-1"
+        assert created.version == 1
+        assert created.scenario.source_kind == "built_in_copy"
+        assert created.scenario.source_reference == built_in.scenario_id
+        assert created.scenario.source_fingerprint == built_in.scenario_fingerprint
+        assert created.scenario.scenario_id == f"session-copy:{built_in.scenario_id}"
+        assert created.scenario.display_name == "My Tournament Session"
+        assert created.scenario.fingerprint != built_in.scenario_fingerprint
+        assert service.get_session(created.session_id) == created
+        assert service.list_sessions() == (created,)
+
+        with factory() as session:
+            row = session.get(TournamentLabSessionModel, created.session_id)
+            assert row is not None
+            assert row.version == 1
+            assert row.source_kind == "built_in_copy"
+            assert row.source_reference == built_in.scenario_id
+            assert row.source_fingerprint == built_in.scenario_fingerprint
+            assert row.fingerprint == created.fingerprint
+
+        assert service.list_built_in_scenarios()[0] == built_in
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_session_update_and_run_use_reviewed_fingerprint(tmp_path) -> None:
+    engine, _, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Editable Tournament",
+                scenario=_scenario(),
+            )
+        )
+        changed = created.scenario.model_copy(
+            update={
+                "draw_seed": created.scenario.draw_seed + 1,
+                "display_name": "Edited Tournament",
+            }
+        )
+
+        with pytest.raises(ValueError, match="changed since it was reviewed"):
+            service.update_session(
+                created.session_id,
+                TournamentLabSessionUpdateRequest(
+                    expected_session_fingerprint="0" * 64,
+                    display_name="stale",
+                    scenario=changed,
+                ),
+            )
+
+        updated = service.update_session(
+            created.session_id,
+            TournamentLabSessionUpdateRequest(
+                expected_session_fingerprint=created.fingerprint,
+                display_name="Edited Tournament",
+                scenario=changed,
+            ),
+        )
+        assert updated.version == 2
+        assert updated.display_name == "Edited Tournament"
+        assert updated.scenario.draw_seed == created.scenario.draw_seed + 1
+
+        with pytest.raises(ValueError, match="changed since it was reviewed"):
+            service.run_session(
+                updated.session_id,
+                TournamentLabSessionRunRequest(
+                    expected_session_fingerprint=created.fingerprint,
+                    batch_match_seeds=(81, 82),
+                ),
+            )
+
+        result = service.run_session(
+            updated.session_id,
+            TournamentLabSessionRunRequest(
+                expected_session_fingerprint=updated.fingerprint,
+                batch_match_seeds=(81, 82),
+            ),
+        )
+        assert result.diagnostics.run_count == 2
+        assert result.compatibility.run_mutation_performed is False
+        assert result.compatibility.run_live_link is False
+        assert result.scenario_fingerprint == updated.scenario.fingerprint
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_session_persistence_fails_closed_on_tampered_row(tmp_path) -> None:
+    engine, factory, service = _persistent_service(tmp_path)
+    try:
+        created = service.create_session(
+            TournamentLabSessionCreateRequest(
+                display_name="Tamper Tournament",
+                scenario=_scenario(),
+            )
+        )
+        with factory.begin() as session:
+            session.get(TournamentLabSessionModel, created.session_id).fingerprint = "0" * 64
+
+        with pytest.raises(ValueError, match="persistence fingerprint mismatch"):
+            service.get_session(created.session_id)
+    finally:
+        engine.dispose()
+
+
+def test_tournament_lab_session_create_contract_requires_exactly_one_source() -> None:
+    with pytest.raises(ValueError, match="exactly one"):
+        TournamentLabSessionCreateRequest(display_name="missing")
+
+    with pytest.raises(ValueError, match="exactly one"):
+        TournamentLabSessionCreateRequest(
+            display_name="ambiguous",
+            scenario=_scenario(),
+            built_in_scenario_id="standard-eight-player-knockout",
+        )

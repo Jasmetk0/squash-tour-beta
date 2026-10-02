@@ -314,7 +314,9 @@ describe('TalentIntakePage', () => {
 
     await userEvent.clear(runInput)
     await userEvent.type(runInput, 'run-c')
-    expect(confirmButton).toBeDisabled()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Confirm materialization' })).toBeDisabled()
+    })
     expect(api.materializeRunProspects).not.toHaveBeenCalled()
   })
 

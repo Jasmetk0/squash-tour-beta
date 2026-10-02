@@ -8043,6 +8043,34 @@ export type TournamentLabRunDraftPreview = {
   candidate: TournamentLabRunDraftCandidate
   candidate_fingerprint: string
   issues: TournamentLabIssue[]
+  preview_fingerprint: string
+}
+
+export type TournamentLabRunDraftApplyRequest = {
+  command_id: string
+  expected_session_fingerprint: string
+  product_run_id: string
+  branch_id: string
+  event_id: string
+  expected_saved_revision_id: string
+  expected_working_draft_version: number
+  expected_preview_fingerprint: string
+  expected_candidate_fingerprint: string
+}
+
+export type TournamentLabRunDraftApplyResult = {
+  schema_version: 'tournament_test_lab_run_draft_apply_result.v1'
+  product_run_id: string
+  branch_id: string
+  event_id: string
+  command_id: string
+  proposal_version: number
+  proposal_fingerprint: string
+  candidate_fingerprint: string
+  draft_state_fingerprint: string
+  working_draft_version: number
+  already_applied: boolean
+  mutation_performed: true
 }
 
 export type TournamentLabSessionUpdateRequest = {

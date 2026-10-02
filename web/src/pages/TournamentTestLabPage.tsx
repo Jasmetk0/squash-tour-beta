@@ -328,17 +328,20 @@ export function TournamentTestLabPage(): JSX.Element {
 
     <SectionCard title="Isolation boundary">
       <p>
-        Tournament Lab drafts exist outside Runs. A scenario may be intentionally unusual or incompatible;
-        diagnostics explain the boundary and an invalid draft never becomes a fabricated authoritative result.
+        Tournament Lab Sessions exist outside Runs. Inspect/Run remain isolated; only the separate reviewed
+        Apply workflow may stage a proposal into a target Run Working Draft. An invalid draft never becomes
+        a fabricated authoritative result.
       </p>
       <SummaryPills items={[
-        { label: 'Run mutation', value: 'never' },
-        { label: 'Live Run link', value: 'never' },
+        { label: 'Lab execution mutation', value: 'never' },
+        { label: 'Reviewed draft apply', value: 'explicit only' },
         { label: 'Executable formats', value: 'knockout · groups · groups→knockout' },
         { label: 'Selected mode', value: selectedSession ? 'isolated Test Session' : 'portable scratch scenario' }
       ]} />
       <p className="status">
-        Knockout, Qualification, pure groups and groups→knockout are executable. Withdrawals/replacements, ranking consequences and Run→Lab/Lab→Run bridges remain later slices.
+        Knockout, Qualification, pure groups and groups→knockout are executable. Run→Lab copy and reviewed
+        Lab→Run Working Draft proposal are available; withdrawals/replacements and ranking consequences remain
+        separate shared-authority slices.
       </p>
     </SectionCard>
 

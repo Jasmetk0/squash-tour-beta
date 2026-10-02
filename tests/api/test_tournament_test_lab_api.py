@@ -376,3 +376,124 @@ def test_tournament_lab_api_exports_and_imports_reviewed_session_copy(tmp_path) 
             },
         )
         assert status == 409, stale
+
+
+def test_tournament_lab_api_review_apply_and_normal_save_roundtrip(tmp_path) -> None:
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tournament-lab-run-draft-api.db'}") as server:
+        status, run = _request(
+            "POST",
+            f"{server.base_url}/run-containers",
+            {"display_name": "Tournament Lab API target"},
+        )
+        assert status == 201, run
+        run_id = run["run_id"]
+        branch_id = run["viewer_branch_id"]
+
+        status, branches = _request(
+            "GET",
+            f"{server.base_url}/run-branches?run_id={run_id}",
+        )
+        assert status == 200, branches
+        saved_head = branches["run_branches"][0]["saved_head_revision_id"]
+
+        status, built_ins = _request(
+            "GET",
+            f"{server.base_url}/admin/labs/tournament/scenarios",
+        )
+        assert status == 200, built_ins
+        status, created = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions",
+            {
+                "display_name": "Run Draft API Session",
+                "built_in_scenario_id": "standard-eight-player-knockout",
+            },
+        )
+        assert status == 201, created
+        session_id = created["session_id"]
+
+        status, preview = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run-draft-preview",
+            {
+                "expected_session_fingerprint": created["session_fingerprint"],
+                "product_run_id": run_id,
+                "branch_id": branch_id,
+                "event_id": "event-from-lab",
+            },
+        )
+        assert status == 200, preview
+        assert preview["ready_for_draft"] is True
+        assert preview["target_saved_revision_id"] == saved_head
+        assert preview["target_working_draft_version"] == 0
+        assert len(preview["preview_fingerprint"]) == 64
+        assert len(preview["candidate_fingerprint"]) == 64
+
+        apply_payload = {
+            "command_id": "api-lab-draft-apply-1",
+            "expected_session_fingerprint": created["session_fingerprint"],
+            "product_run_id": run_id,
+            "branch_id": branch_id,
+            "event_id": "event-from-lab",
+            "expected_saved_revision_id": saved_head,
+            "expected_working_draft_version": 0,
+            "expected_preview_fingerprint": preview["preview_fingerprint"],
+            "expected_candidate_fingerprint": preview["candidate_fingerprint"],
+        }
+        stale_payload = dict(apply_payload)
+        stale_payload["command_id"] = "api-lab-draft-stale"
+        stale_payload["expected_preview_fingerprint"] = "0" * 64
+        status, stale = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run-draft-apply",
+            stale_payload,
+        )
+        assert status == 409, stale
+
+        status, draft_before = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/working-draft",
+        )
+        assert status == 200, draft_before
+        assert draft_before["status"] == "clean"
+        assert draft_before["draft_version"] == 0
+
+        status, applied = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run-draft-apply",
+            apply_payload,
+        )
+        assert status == 201, applied
+        assert applied["already_applied"] is False
+        assert applied["working_draft_version"] == 1
+        assert applied["candidate_fingerprint"] == preview["candidate_fingerprint"]
+
+        status, replay = _request(
+            "POST",
+            f"{server.base_url}/admin/labs/tournament/sessions/{session_id}/run-draft-apply",
+            apply_payload,
+        )
+        assert status == 201, replay
+        assert replay["already_applied"] is True
+        assert replay["proposal_fingerprint"] == applied["proposal_fingerprint"]
+
+        status, dirty = _request(
+            "GET",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/working-draft",
+        )
+        assert status == 200, dirty
+        assert dirty["status"] == "dirty"
+        assert dirty["draft_version"] == 1
+        assert dirty["change_count"] == 1
+
+        status, saved = _request(
+            "POST",
+            f"{server.base_url}/run-containers/{run_id}/branches/{branch_id}/working-draft/save",
+            {"expected_draft_version": 1},
+        )
+        assert status == 201, saved
+        assert saved["saved_revision"]["kind"] == "tournament_lab_run_draft"
+        component = saved["saved_revision"]["payload"]["content"]["run_tournament_lab_drafts"]
+        assert component["fingerprint"] == applied["draft_state_fingerprint"]
+        assert component["drafts"][0]["fingerprint"] == applied["proposal_fingerprint"]
+        assert saved["working_draft"]["status"] == "clean"

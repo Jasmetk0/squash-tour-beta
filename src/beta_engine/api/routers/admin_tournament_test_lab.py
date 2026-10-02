@@ -7,6 +7,8 @@ from beta_engine.application.tournament_test_lab_service import (
     BuiltInTournamentLabScenario,
     TournamentLabCompatibility,
     TournamentLabRequest,
+    TournamentLabRunDraftApplyRequest,
+    TournamentLabRunDraftApplyResult,
     TournamentLabRunDraftPreview,
     TournamentLabRunDraftPreviewRequest,
     TournamentLabSavedRevisionCopyRequest,
@@ -79,6 +81,24 @@ def preview_tournament_lab_run_draft(
 ) -> TournamentLabRunDraftPreview:
     try:
         return service.preview_run_draft(session_id, request)
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
+@router.post(
+    "/sessions/{session_id}/run-draft-apply",
+    response_model=TournamentLabRunDraftApplyResult,
+    status_code=201,
+)
+def apply_tournament_lab_run_draft(
+    session_id: str,
+    request: TournamentLabRunDraftApplyRequest,
+    service: TournamentTestLabService = Depends(get_tournament_test_lab_service),
+) -> TournamentLabRunDraftApplyResult:
+    try:
+        return service.apply_run_draft(session_id, request)
     except KeyError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except ValueError as exc:

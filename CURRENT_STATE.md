@@ -15,6 +15,27 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — Global Tournament Test Lab V5D reviewed Lab → Run Working Draft application
+
+- A reviewed Tournament Lab compatibility preview can now be explicitly applied into one target
+  Product Run/Branch/event as a Run-owned tournament draft proposal.
+- Apply revalidates the exact Lab Session, target Saved Head, Working Draft version, preview
+  fingerprint and candidate fingerprint under one write lock before any mutation.
+- Command receipts make exact retries idempotent and reject command-ID reuse with changed input.
+- Proposal persistence and the single Working Draft change are atomic; stale review leaves no
+  partial Run proposal behind.
+- The proposal is intentionally not Tournament Ranking/Entry/WC/Draw/Result authority and cannot
+  bypass those production provenance chains.
+- Normal Working Draft Save captures the proposal component into an immutable Saved Revision;
+  restore and materialized Branch fork preserve/remap the component with target-owned fingerprints.
+- Ordinary/final Season Transition revision writers preserve the component as well.
+- Tournament Lab Inspect/Run remains isolated; only the explicit Apply action stages Run state.
+
+See [Tournament Test Lab V5D Run draft application](docs/TOURNAMENT_TEST_LAB_V5D_RUN_DRAFT_APPLICATION.md).
+
+**Next:** return to the mandatory copied-FAX full-season → Save/reopen → next-season Week 1
+acceptance and close only Tournament Lab replacement/ranking-consequence gaps that actually block
+that acceptance flow.
 ## Implemented — Global Tournament Test Lab V5C Lab → Run draft compatibility preview
 
 - Reviewed Tournament Lab Sessions can now be projected into a read-only candidate for one specific

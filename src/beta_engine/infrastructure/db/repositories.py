@@ -153,6 +153,15 @@ from beta_engine.infrastructure.db.run_package_state import (
     remap_saved_run_package_state,
     restore_saved_run_package_state,
 )
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+    capture_saved_run_tournament_lab_drafts,
+    load_saved_run_tournament_lab_drafts,
+    put_run_tournament_lab_draft,
+    remap_saved_run_tournament_lab_drafts,
+    restore_saved_run_tournament_lab_drafts,
+    saved_run_tournament_lab_draft_component,
+)
 from beta_engine.infrastructure.db.player_lifecycle_state import (
     PLAYER_LIFECYCLE_COMPONENT_KEY,
     bootstrap_lifecycle,
@@ -2532,7 +2541,13 @@ class SimulationPersistenceRepository:
                     "the source Saved Revision content is invalid"
                 )
             return bool(
-                {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, RUN_PACKAGE_COMPONENT_KEY} & set(content)
+                {
+                    RANKING_COMPONENT_KEY,
+                    INITIAL_WORLD_COMPONENT_KEY,
+                    RUN_PACKAGE_COMPONENT_KEY,
+                    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                }
+                & set(content)
             )
 
     def create_branch_from_saved_revision_atomically(
@@ -2615,7 +2630,12 @@ class SimulationPersistenceRepository:
                 remapped_initial_world = None
                 source_initial_world = None
                 materialize_fork_root = bool(
-                    {RANKING_COMPONENT_KEY, INITIAL_WORLD_COMPONENT_KEY, RUN_PACKAGE_COMPONENT_KEY}
+                    {
+                        RANKING_COMPONENT_KEY,
+                        INITIAL_WORLD_COMPONENT_KEY,
+                        RUN_PACKAGE_COMPONENT_KEY,
+                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
+                    }
                     & set(source_content)
                 )
                 if materialize_fork_root:
@@ -2670,6 +2690,7 @@ class SimulationPersistenceRepository:
                         DEFINITIVE_WILD_CARD_ASSIGNMENT_COMPONENT_KEY,
                         PLAYER_TOUR_ENTRY_COMPONENT_KEY,
                         RUN_PACKAGE_COMPONENT_KEY,
+                        RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY,
                         *fork_safe_empty_components,
                     }
                     if unsupported_content:
@@ -2865,6 +2886,26 @@ class SimulationPersistenceRepository:
                         except ValueError as exc:
                             raise SavedRevisionBranchForkConflictError(
                                 f"Run Package fork cannot be materialized safely: {exc}"
+                            ) from exc
+                    if RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY in source_content:
+                        try:
+                            remapped_lab_drafts = remap_saved_run_tournament_lab_drafts(
+                                source_revision.payload,
+                                run_id=run_id,
+                                source_branch_id=source_branch_id,
+                                target_branch_id=branch_id,
+                            )
+                            if remapped_lab_drafts is not None:
+                                for draft_item in remapped_lab_drafts.drafts:
+                                    put_run_tournament_lab_draft(session, draft_item)
+                                target_payload["content"][
+                                    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY
+                                ] = saved_run_tournament_lab_draft_component(
+                                    remapped_lab_drafts
+                                )
+                        except ValueError as exc:
+                            raise SavedRevisionBranchForkConflictError(
+                                f"Tournament Lab Run draft fork cannot be materialized safely: {exc}"
                             ) from exc
                     if remapped_initial_world is not None:
                         target_payload["content"][INITIAL_WORLD_COMPONENT_KEY] = {
@@ -3485,19 +3526,22 @@ class SimulationPersistenceRepository:
                     != RUN_WORKING_DRAFT_SCHEMA_VERSION
                 ):
                     raise ValueError("dirty Working Draft uses an unsupported schema")
-                if all(isinstance(change, dict) and change.get("kind") == "run_package_state" for change in state.working_draft.changes):
+                component_change_kinds = {
+                    "run_package_state",
+                    "run_tournament_lab_drafts",
+                }
+                viewer_changes = [
+                    change
+                    for change in state.working_draft.changes
+                    if not (
+                        isinstance(change, dict)
+                        and change.get("kind") in component_change_kinds
+                    )
+                ]
+                if not viewer_changes:
                     proposed_viewer_id = saved_viewer_id
                 else:
-                    proposed_viewer_id = viewer_branch_id_from_changes(
-                        [
-                            change
-                            for change in state.working_draft.changes
-                            if not (
-                                isinstance(change, dict)
-                                and change.get("kind") == "run_package_state"
-                            )
-                        ]
-                    )
+                    proposed_viewer_id = viewer_branch_id_from_changes(viewer_changes)
         except (BranchRevisionStateConflictError, ValueError) as exc:
             raise WorkingDraftConflictError(str(exc)) from exc
 
@@ -3569,17 +3613,18 @@ class SimulationPersistenceRepository:
 
             draft_model = session.get(BranchWorkingDraftModel, draft.draft_id)
             existing_changes = _from_json(draft_model.changes_json)
-            package_changes = [
+            component_changes = [
                 change
                 for change in existing_changes
                 if isinstance(change, dict)
-                and change.get("kind") == "run_package_state"
+                and change.get("kind")
+                in {"run_package_state", "run_tournament_lab_drafts"}
             ]
 
             if viewer_branch_id == draft.saved_viewer_branch_id:
-                changes: list[object] = package_changes
+                changes: list[object] = component_changes
             else:
-                changes = package_changes + [
+                changes = component_changes + [
                     viewer_branch_selection_change(viewer_branch_id=viewer_branch_id)
                 ]
             status_value = (
@@ -4231,6 +4276,22 @@ class SimulationPersistenceRepository:
                             f"Cannot restore Run Package state: {exc}"
                         ) from exc
                 if (
+                    RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY in current_content
+                    or RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY in target_content
+                ):
+                    try:
+                        restore_saved_run_tournament_lab_drafts(
+                            session,
+                            current_payload=state.saved_revision.payload,
+                            target_payload=target_revision.payload,
+                            run_id=run_id,
+                            branch_id=branch_id,
+                        )
+                    except ValueError as exc:
+                        raise SavedRevisionRestoreUnsupportedError(
+                            f"Cannot restore Tournament Lab Run draft state: {exc}"
+                        ) from exc
+                if (
                     PLAYER_LIFECYCLE_COMPONENT_KEY in current_content
                     or PLAYER_LIFECYCLE_COMPONENT_KEY in target_content
                 ):
@@ -4785,6 +4846,7 @@ class SimulationPersistenceRepository:
         expected_simulation_fingerprint: str | None = None,
         expected_run_prospect_source_fingerprint: str | None = None,
         expected_run_package_fingerprint: str | None = None,
+        expected_run_tournament_lab_draft_fingerprint: str | None = None,
     ) -> ViewerBranchSaveResult:
         """Commit one dirty draft as revision, audit, Viewer pointer, and clean draft."""
 
@@ -4794,6 +4856,7 @@ class SimulationPersistenceRepository:
             or expected_simulation_fingerprint is not None
             or expected_run_prospect_source_fingerprint is not None
             or expected_run_package_fingerprint is not None
+            or expected_run_tournament_lab_draft_fingerprint is not None
         )
         ranking_only = expected_ranking_fingerprint is not None
         revision_kind = (
@@ -4808,7 +4871,15 @@ class SimulationPersistenceRepository:
                     else (
                         "run_prospect_source"
                         if expected_run_prospect_source_fingerprint
-                        else ("run_package_state" if expected_run_package_fingerprint else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND)
+                        else (
+                            "run_package_state"
+                            if expected_run_package_fingerprint
+                            else (
+                                "tournament_lab_run_draft"
+                                if expected_run_tournament_lab_draft_fingerprint
+                                else VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND
+                            )
+                        )
                     )
                 )
             )
@@ -4836,11 +4907,14 @@ class SimulationPersistenceRepository:
                         f"expected draft version {expected_draft_version}, "
                         f"found {draft.draft_version}"
                     )
-                package_only_dirty = (
-                    expected_run_package_fingerprint is not None
+                staged_component_dirty = (
+                    (
+                        expected_run_package_fingerprint is not None
+                        or expected_run_tournament_lab_draft_fingerprint is not None
+                    )
                     and draft.status == DIRTY_WORKING_DRAFT_STATUS
                 )
-                if component_only and draft.status != CLEAN_WORKING_DRAFT_STATUS and not package_only_dirty:
+                if component_only and draft.status != CLEAN_WORKING_DRAFT_STATUS and not staged_component_dirty:
                     raise WorkingDraftConflictError(
                         "Resolve the pending Working Draft before saving a component separately"
                     )
@@ -4890,7 +4964,8 @@ class SimulationPersistenceRepository:
                                 for change in state.working_draft.changes
                                 if not (
                                     isinstance(change, dict)
-                                    and change.get("kind") == "run_package_state"
+                                    and change.get("kind")
+                                    in {"run_package_state", "run_tournament_lab_drafts"}
                                 )
                             ]
                         )
@@ -4901,6 +4976,18 @@ class SimulationPersistenceRepository:
                     raise WorkingDraftConflictError(
                         "pending Viewer Branch is inconsistent"
                     )
+                if expected_run_tournament_lab_draft_fingerprint is not None:
+                    lab_changes = state.working_draft.changes
+                    if (
+                        len(lab_changes) != 1
+                        or not isinstance(lab_changes[0], dict)
+                        or lab_changes[0].get("kind") != "run_tournament_lab_drafts"
+                        or lab_changes[0].get("fingerprint")
+                        != expected_run_tournament_lab_draft_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Tournament Lab Run draft Working Draft evidence is inconsistent"
+                        )
                 if not component_only and saved_viewer_id == target_viewer_id:
                     raise WorkingDraftConflictError(
                         "Working Draft contains no effective Viewer Branch change"
@@ -4934,6 +5021,9 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_run_package_state(
+                    session, payload, run_id=run_id, branch_id=branch_id
+                )
+                capture_saved_run_tournament_lab_drafts(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 capture_saved_lifecycle(
@@ -5068,6 +5158,29 @@ class SimulationPersistenceRepository:
                         raise WorkingDraftConflictError("Run Package state is already saved")
                     summary = {"kind": "run_package_state", "summary": "Saved Run Package state",
                                "run_package_fingerprint": component["fingerprint"]}
+                elif expected_run_tournament_lab_draft_fingerprint is not None:
+                    component = payload["content"].get(RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY)
+                    if (
+                        component is None
+                        or component["fingerprint"] != expected_run_tournament_lab_draft_fingerprint
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Tournament Lab Run draft state changed since preview"
+                        )
+                    if (
+                        state.saved_revision.payload["content"].get(
+                            RUN_TOURNAMENT_LAB_DRAFT_COMPONENT_KEY
+                        )
+                        == component
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Tournament Lab Run draft state is already saved"
+                        )
+                    summary = {
+                        "kind": "tournament_lab_run_draft",
+                        "summary": "Saved reviewed Tournament Lab Run draft",
+                        "tournament_lab_run_draft_fingerprint": component["fingerprint"],
+                    }
                 sequence = state.saved_revision.sequence + 1
                 content_hash = saved_revision_content_hash(
                     revision_id=revision_id,

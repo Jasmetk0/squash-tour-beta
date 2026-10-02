@@ -749,6 +749,35 @@ class TournamentLabSessionModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class RunTournamentLabDraftModel(Base):
+    """Run-owned reviewed Tournament Lab draft proposal for one event."""
+
+    __tablename__ = "run_tournament_lab_drafts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    event_id: Mapped[str] = mapped_column(String(160), primary_key=True)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_session_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    source_session_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_scenario_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    source_preview_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    candidate_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class RunTournamentLabDraftApplicationReceiptModel(Base):
+    """Idempotent reviewed Lab-to-Run draft application receipt."""
+
+    __tablename__ = "run_tournament_lab_draft_application_receipts"
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    command_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    request_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    result_fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
 class StandaloneMatchWorkspaceModel(Base):
     """Mutable Run/Branch authoring state for the no-calendar pre-alpha match flow."""
 

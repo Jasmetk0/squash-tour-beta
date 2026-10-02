@@ -9,6 +9,7 @@ from statistics import mean
 from typing import Callable, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
+from sqlalchemy import select, text, update
 
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.matches.match_engine import MatchEngine
@@ -62,7 +63,13 @@ from beta_engine.domain.tournaments.topology_authority import (
     TournamentTopologyAuthority,
     TournamentTopologyAuthorityBuilder,
 )
-from beta_engine.infrastructure.db.models import TournamentLabSessionModel
+from beta_engine.infrastructure.db.models import (
+    BranchWorkingDraftModel,
+    RunBranchModel,
+    RunContainerModel,
+    RunTournamentLabDraftApplicationReceiptModel,
+    TournamentLabSessionModel,
+)
 from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
 from beta_engine.infrastructure.db import (
     BranchRevisionStateConflictError,
@@ -73,6 +80,16 @@ from beta_engine.infrastructure.db import (
 from beta_engine.infrastructure.db.initial_world_state import load_saved_initial_world
 from beta_engine.infrastructure.db.player_sporting_state import load_saved_sporting_bundle
 from beta_engine.infrastructure.db.simulation_slot_state import load_saved_simulation_slot_component
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    build_run_tournament_lab_draft,
+    capture_run_tournament_lab_draft_state,
+    get_run_tournament_lab_draft,
+    put_run_tournament_lab_draft,
+)
+from beta_engine.domain.run_revisions import (
+    DIRTY_WORKING_DRAFT_STATUS,
+    RUN_WORKING_DRAFT_SCHEMA_VERSION,
+)
 
 
 TOURNAMENT_LAB_SCENARIO_VERSION = "tournament_test_lab_scenario.v1"
@@ -460,6 +477,50 @@ class TournamentLabRunDraftPreview(BaseModel):
     candidate: TournamentLabRunDraftCandidate
     candidate_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     issues: tuple[TournamentLabIssue, ...]
+
+    @property
+    def fingerprint(self) -> str:
+        return _fingerprint(
+            self.model_dump(mode="json", exclude={"preview_fingerprint"})
+        )
+
+    @computed_field
+    @property
+    def preview_fingerprint(self) -> str:
+        return self.fingerprint
+
+
+class TournamentLabRunDraftApplyRequest(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    command_id: str = Field(min_length=1, max_length=128)
+    expected_session_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    product_run_id: str = Field(min_length=1, max_length=128)
+    branch_id: str = Field(min_length=1, max_length=128)
+    event_id: str = Field(min_length=1, max_length=160)
+    expected_saved_revision_id: str = Field(min_length=1, max_length=128)
+    expected_working_draft_version: int = Field(ge=0)
+    expected_preview_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_candidate_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class TournamentLabRunDraftApplyResult(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    schema_version: Literal["tournament_test_lab_run_draft_apply_result.v1"] = (
+        "tournament_test_lab_run_draft_apply_result.v1"
+    )
+    product_run_id: str
+    branch_id: str
+    event_id: str
+    command_id: str
+    proposal_version: int = Field(ge=1)
+    proposal_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    candidate_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    draft_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    working_draft_version: int = Field(ge=0)
+    already_applied: bool
+    mutation_performed: Literal[True] = True
 
 
 class TournamentLabSessionUpdateRequest(BaseModel):
@@ -961,6 +1022,191 @@ class TournamentTestLabService:
             candidate_fingerprint=candidate.fingerprint,
             issues=tuple(issues),
         )
+
+    def apply_run_draft(
+        self,
+        session_id: str,
+        request: TournamentLabRunDraftApplyRequest,
+    ) -> TournamentLabRunDraftApplyResult:
+        self._require_persistence()
+        if self._repository is None:
+            raise RuntimeError("Tournament Lab Run draft application is not configured")
+
+        request_fingerprint = _fingerprint(request.model_dump(mode="json"))
+        with self._session_factory.begin() as db:
+            db.execute(text("BEGIN IMMEDIATE"))
+
+            receipt = db.get(
+                RunTournamentLabDraftApplicationReceiptModel,
+                (request.product_run_id, request.branch_id, request.command_id),
+            )
+            if receipt is not None:
+                if receipt.request_fingerprint != request_fingerprint:
+                    raise ValueError("Tournament Lab Run draft command id was reused with a different request")
+                try:
+                    payload = json.loads(receipt.payload_json)
+                    result = TournamentLabRunDraftApplyResult.model_validate(payload)
+                except (json.JSONDecodeError, ValueError) as exc:
+                    raise ValueError("Tournament Lab Run draft application receipt is corrupt") from exc
+                if result.proposal_fingerprint != receipt.result_fingerprint:
+                    raise ValueError("Tournament Lab Run draft application receipt fingerprint mismatch")
+                return result.model_copy(update={"already_applied": True})
+
+            session_row = db.get(TournamentLabSessionModel, session_id)
+            if session_row is None:
+                raise KeyError("Tournament Lab session was not found")
+            current = self._load_session_row(session_row)
+            if current.fingerprint != request.expected_session_fingerprint:
+                raise ValueError("Tournament Lab session changed since it was reviewed")
+
+            run = db.get(RunContainerModel, request.product_run_id)
+            branch = db.get(RunBranchModel, request.branch_id)
+            draft_row = db.scalar(
+                select(BranchWorkingDraftModel).where(
+                    BranchWorkingDraftModel.run_id == request.product_run_id,
+                    BranchWorkingDraftModel.branch_id == request.branch_id,
+                )
+            )
+            if run is None or branch is None or draft_row is None or branch.run_id != request.product_run_id:
+                raise KeyError("Target Run/Branch Working Draft was not found")
+            if run.read_only or branch.read_only or branch.status != "active":
+                raise ValueError("Target Run/Branch is not writable")
+            if branch.saved_head_revision_id != request.expected_saved_revision_id:
+                raise ValueError("Target Saved Revision changed since preview")
+            if draft_row.draft_version != request.expected_working_draft_version:
+                raise ValueError("Target Working Draft changed since preview")
+            if draft_row.status != "clean":
+                raise ValueError("Target Working Draft must be clean before applying a Lab draft")
+
+            compatibility = self.inspect(current.scenario)
+            scenario = current.scenario
+            candidate = TournamentLabRunDraftCandidate(
+                event_id=request.event_id,
+                format_kind=scenario.format_kind,
+                participant_player_ids=tuple(item.player.player_id for item in scenario.participants),
+                main_draw_size=scenario.main_draw_size,
+                qualification_draw_size=scenario.qualification_draw_size,
+                qualifier_spots=scenario.qualifier_spots,
+                qualification_player_ids=tuple(scenario.qualification_player_ids),
+                seed_order_player_ids=tuple(scenario.seed_order_player_ids),
+                group_count=scenario.group_count,
+                group_size=scenario.group_size,
+                seeded_slots_per_group=scenario.seeded_slots_per_group,
+                group_seed_placements=tuple(scenario.group_seed_placements),
+                group_match_best_of=scenario.group_match_best_of,
+                advancing_per_group=scenario.advancing_per_group,
+                knockout_crossings=tuple(scenario.knockout_crossings),
+                topology_seed=scenario.topology_seed,
+                draw_seed=scenario.draw_seed,
+            )
+            preview = TournamentLabRunDraftPreview(
+                product_run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                event_id=request.event_id,
+                session_id=current.session_id,
+                session_fingerprint=current.fingerprint,
+                scenario_fingerprint=current.scenario.fingerprint,
+                target_saved_revision_id=branch.saved_head_revision_id,
+                target_working_draft_version=draft_row.draft_version,
+                target_working_draft_status=draft_row.status,
+                ready_for_draft=compatibility.normal_run_compatible,
+                candidate=candidate,
+                candidate_fingerprint=candidate.fingerprint,
+                issues=compatibility.issues,
+            )
+            if not preview.ready_for_draft:
+                raise ValueError("Tournament Lab scenario is not compatible with a normal Run draft")
+            if preview.fingerprint != request.expected_preview_fingerprint:
+                raise ValueError("Tournament Lab Run draft preview changed since review")
+            if candidate.fingerprint != request.expected_candidate_fingerprint:
+                raise ValueError("Tournament Lab Run draft candidate changed since review")
+
+            prior = get_run_tournament_lab_draft(
+                db,
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                event_id=request.event_id,
+            )
+            proposal = build_run_tournament_lab_draft(
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                event_id=request.event_id,
+                version=(prior.version + 1 if prior is not None else 1),
+                source_session_id=current.session_id,
+                source_session_fingerprint=current.fingerprint,
+                source_scenario_fingerprint=current.scenario.fingerprint,
+                source_preview_fingerprint=preview.fingerprint,
+                candidate=candidate.model_dump(mode="json"),
+                candidate_fingerprint=candidate.fingerprint,
+            )
+            put_run_tournament_lab_draft(db, proposal)
+            state = capture_run_tournament_lab_draft_state(
+                db,
+                run_id=request.product_run_id,
+                branch_id=request.branch_id,
+            )
+            assert state is not None
+
+            try:
+                changes = json.loads(draft_row.changes_json)
+            except json.JSONDecodeError as exc:
+                raise ValueError("Target Working Draft change bundle is corrupt") from exc
+            if not isinstance(changes, list):
+                raise ValueError("Target Working Draft change bundle must be a list")
+            claimed = db.execute(
+                update(BranchWorkingDraftModel)
+                .where(
+                    BranchWorkingDraftModel.draft_id == draft_row.draft_id,
+                    BranchWorkingDraftModel.draft_version
+                    == request.expected_working_draft_version,
+                    BranchWorkingDraftModel.status == "clean",
+                )
+                .values(
+                    status=DIRTY_WORKING_DRAFT_STATUS,
+                    change_count=draft_row.change_count + 1,
+                    draft_version=request.expected_working_draft_version + 1,
+                    draft_schema_version=RUN_WORKING_DRAFT_SCHEMA_VERSION,
+                    changes_json=json.dumps(
+                        changes
+                        + [
+                            {
+                                "kind": "run_tournament_lab_drafts",
+                                "fingerprint": state.fingerprint,
+                                "event_id": request.event_id,
+                                "proposal_fingerprint": proposal.fingerprint,
+                            }
+                        ],
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ),
+                )
+            ).rowcount
+            if claimed != 1:
+                raise ValueError("Target Working Draft changed concurrently")
+
+            result = TournamentLabRunDraftApplyResult(
+                product_run_id=request.product_run_id,
+                branch_id=request.branch_id,
+                event_id=request.event_id,
+                command_id=request.command_id,
+                proposal_version=proposal.version,
+                proposal_fingerprint=proposal.fingerprint,
+                candidate_fingerprint=proposal.candidate_fingerprint,
+                draft_state_fingerprint=state.fingerprint,
+                working_draft_version=request.expected_working_draft_version + 1,
+                already_applied=False,
+            )
+            db.add(
+                RunTournamentLabDraftApplicationReceiptModel(
+                    run_id=request.product_run_id,
+                    branch_id=request.branch_id,
+                    command_id=request.command_id,
+                    request_fingerprint=request_fingerprint,
+                    result_fingerprint=proposal.fingerprint,
+                    payload_json=result.model_dump_json(),
+                )
+            )
+            return result
 
     def update_session(
         self,

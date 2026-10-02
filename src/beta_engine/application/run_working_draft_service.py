@@ -14,6 +14,10 @@ from beta_engine.infrastructure.db.run_package_state import (
     get_run_package_state,
     load_saved_run_package_state,
 )
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    capture_run_tournament_lab_draft_state,
+    load_saved_run_tournament_lab_drafts,
+)
 
 EntityIdFactory = Callable[[str], str]
 
@@ -77,9 +81,13 @@ class RunWorkingDraftService:
         )
         draft = self.get_viewer_branch_draft(run_id=run_id, branch_id=branch_id)
         expected_package_fingerprint = None
+        expected_lab_draft_fingerprint = None
         if draft.proposed_viewer_branch_id == draft.saved_viewer_branch_id:
             with self.repository._session_factory() as session:
                 package_state = get_run_package_state(
+                    session, run_id=run_id, branch_id=branch_id
+                )
+                lab_draft_state = capture_run_tournament_lab_draft_state(
                     session, run_id=run_id, branch_id=branch_id
                 )
                 saved_revision = self.repository.get_branch_saved_revision(
@@ -88,17 +96,37 @@ class RunWorkingDraftService:
                 saved_package_state = load_saved_run_package_state(
                     saved_revision.payload, run_id=run_id, branch_id=branch_id
                 )
-                if (package_state.fingerprint if package_state else None) != (
+                saved_lab_draft_state = load_saved_run_tournament_lab_drafts(
+                    saved_revision.payload, run_id=run_id, branch_id=branch_id
+                )
+                package_changed = (
+                    package_state.fingerprint if package_state else None
+                ) != (
                     saved_package_state.fingerprint if saved_package_state else None
-                ):
+                )
+                lab_draft_changed = (
+                    lab_draft_state.fingerprint if lab_draft_state else None
+                ) != (
+                    saved_lab_draft_state.fingerprint if saved_lab_draft_state else None
+                )
+                if package_changed and lab_draft_changed:
+                    raise ValueError(
+                        "Working Draft contains multiple independently saved component changes"
+                    )
+                if package_changed:
                     expected_package_fingerprint = (
                         package_state.fingerprint if package_state else None
+                    )
+                elif lab_draft_changed:
+                    expected_lab_draft_fingerprint = (
+                        lab_draft_state.fingerprint if lab_draft_state else None
                     )
         return self.repository.save_viewer_branch_selection_atomically(
             run_id=run_id,
             branch_id=branch_id,
             expected_draft_version=expected_draft_version,
             expected_run_package_fingerprint=expected_package_fingerprint,
+            expected_run_tournament_lab_draft_fingerprint=expected_lab_draft_fingerprint,
             revision_id=revision_id,
             audit_event_id=audit_event_id,
         )
@@ -179,6 +207,40 @@ class RunWorkingDraftService:
             expected_draft_version=expected_draft_version,
             expected_run_prospect_source_fingerprint=(
                 expected_run_prospect_source_fingerprint
+            ),
+            revision_id=_validated_entity_id(
+                self.id_factory("saved-revision"), kind="saved revision"
+            ),
+            audit_event_id=_validated_entity_id(
+                self.id_factory("revision-audit-event"), kind="revision audit event"
+            ),
+        )
+
+    def save_tournament_lab_drafts(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        expected_draft_version: int,
+        expected_tournament_lab_draft_fingerprint: str,
+    ) -> ViewerBranchSaveResult:
+        if (
+            not isinstance(expected_tournament_lab_draft_fingerprint, str)
+            or len(expected_tournament_lab_draft_fingerprint) != 64
+            or any(
+                c not in "0123456789abcdef"
+                for c in expected_tournament_lab_draft_fingerprint
+            )
+        ):
+            raise ValueError(
+                "Expected Tournament Lab Run draft fingerprint must be SHA-256"
+            )
+        return self.repository.save_viewer_branch_selection_atomically(
+            run_id=run_id,
+            branch_id=branch_id,
+            expected_draft_version=expected_draft_version,
+            expected_run_tournament_lab_draft_fingerprint=(
+                expected_tournament_lab_draft_fingerprint
             ),
             revision_id=_validated_entity_id(
                 self.id_factory("saved-revision"), kind="saved revision"

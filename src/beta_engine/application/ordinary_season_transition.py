@@ -50,6 +50,9 @@ from beta_engine.domain.season_closure import bind_season_closure_marker
 from beta_engine.domain.season_transition_configuration import SeasonTransitionConfiguration
 from beta_engine.infrastructure.db.initial_world_state import capture_saved_initial_world
 from beta_engine.infrastructure.db.run_package_state import capture_saved_run_package_state
+from beta_engine.infrastructure.db.run_tournament_lab_draft_state import (
+    capture_saved_run_tournament_lab_drafts,
+)
 from beta_engine.infrastructure.db.models import (
     AuthoritativeWorldEventModel,
     AuthoritativeWorldStateModel,
@@ -513,6 +516,9 @@ def commit_ordinary_season_transition(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_run_package_state(
+        session, payload, run_id=command.run_id, branch_id=command.branch_id
+    )
+    capture_saved_run_tournament_lab_drafts(
         session, payload, run_id=command.run_id, branch_id=command.branch_id
     )
     capture_saved_lifecycle(

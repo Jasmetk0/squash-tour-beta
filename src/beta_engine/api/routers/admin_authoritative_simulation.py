@@ -58,6 +58,12 @@ from beta_engine.application.prospect_bridge_inspection import inspect_prospect_
 from beta_engine.application.pre_alpha_fax_acceptance_profile import (
     PreAlphaFaxAcceptanceProfileService,
 )
+from beta_engine.application.pre_alpha_fax_current_week_ranking_snapshots import (
+    PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest,
+    PreAlphaFaxCurrentWeekRankingSnapshotApplyResult,
+    PreAlphaFaxCurrentWeekRankingSnapshotPreview,
+    PreAlphaFaxCurrentWeekRankingSnapshotService,
+)
 from beta_engine.application.pre_alpha_fax_long_acceptance_probe import (
     PreAlphaFaxLongAcceptanceProbeReport,
     PreAlphaFaxLongAcceptanceProbeRequest,
@@ -1665,6 +1671,58 @@ def abandon_full_simulation(
             status_code=409,
             detail={
                 "code": "authoritative_full_simulation_abandon_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.get(
+    "/pre-alpha/fax-current-week/ranking-snapshots/preview",
+    response_model=PreAlphaFaxCurrentWeekRankingSnapshotPreview,
+)
+def preview_pre_alpha_fax_current_week_ranking_snapshots(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> PreAlphaFaxCurrentWeekRankingSnapshotPreview:
+    try:
+        return PreAlphaFaxCurrentWeekRankingSnapshotService(
+            runtime.repository._session_factory
+        ).preview(run_id=run_id, branch_id=branch_id)
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_current_week_ranking_snapshot_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+@router.post(
+    "/pre-alpha/fax-current-week/ranking-snapshots/apply",
+    response_model=PreAlphaFaxCurrentWeekRankingSnapshotApplyResult,
+    status_code=201,
+)
+def apply_pre_alpha_fax_current_week_ranking_snapshots(
+    run_id: str,
+    branch_id: str,
+    payload: PreAlphaFaxCurrentWeekRankingSnapshotApplyRequest,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+) -> PreAlphaFaxCurrentWeekRankingSnapshotApplyResult:
+    try:
+        return PreAlphaFaxCurrentWeekRankingSnapshotService(
+            runtime.repository._session_factory
+        ).apply(
+            run_id=run_id,
+            branch_id=branch_id,
+            request=payload,
+        )
+    except (KeyError, ValueError) as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "code": "pre_alpha_fax_current_week_ranking_snapshot_apply_conflict",
                 "message": str(exc),
             },
         ) from exc

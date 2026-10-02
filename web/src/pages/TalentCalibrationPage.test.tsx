@@ -99,6 +99,7 @@ describe('TalentCalibrationPage', () => {
     const user = userEvent.setup()
     renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
     await screen.findByRole('table', { name: 'Candidate potential ranges' })
+    expect(screen.getByLabelText('Number of seeds')).toHaveAttribute('max', '100')
     await user.clear(screen.getByLabelText('Number of seeds')); await user.type(screen.getByLabelText('Number of seeds'), '2')
     await user.clear(screen.getByLabelText('Samples per seed')); await user.type(screen.getByLabelText('Samples per seed'), '50')
     await user.click(screen.getByRole('button', { name: 'Run multi-seed analysis' }))

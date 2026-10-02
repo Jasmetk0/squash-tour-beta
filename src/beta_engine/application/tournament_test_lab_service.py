@@ -1242,8 +1242,11 @@ class TournamentTestLabService:
         return TournamentLabSingleRun(
             match_seed=match_seed,
             completed_rounds=(
-                hybrid_bracket.round_count
-                if hybrid_bracket is not None and champion is not None
+                min(
+                    scenario.stop_after_round or hybrid_bracket.round_count,
+                    hybrid_bracket.round_count,
+                )
+                if hybrid_bracket is not None
                 else 0
             ),
             tournament_complete=complete,
@@ -1275,9 +1278,15 @@ class TournamentTestLabService:
                 return winners[source.removeprefix("winner:")]
             raise ValueError("Unsupported hybrid knockout source")
 
+        effective_stop = min(
+            scenario.stop_after_round or bracket.round_count,
+            bracket.round_count,
+        )
         for node in sorted(
             bracket.matches, key=lambda value: (value.round_number, value.match_index)
         ):
+            if node.round_number > effective_stop:
+                break
             player_a_id = resolve(node.participant_sources[0])
             player_b_id = resolve(node.participant_sources[1])
             player_a = participants[player_a_id]
@@ -1315,7 +1324,12 @@ class TournamentTestLabService:
                     ),
                 )
             )
-        return results, winners.get(bracket.terminal_match_id)
+        champion = (
+            winners.get(bracket.terminal_match_id)
+            if effective_stop == bracket.round_count
+            else None
+        )
+        return results, champion
 
     @staticmethod
     def _node_seed(match_seed: int, node_id: str) -> int:

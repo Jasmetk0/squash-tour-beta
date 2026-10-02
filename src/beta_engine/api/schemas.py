@@ -2122,7 +2122,7 @@ class TalentCalibrationCompareResponse(BaseModel):
 
 class TalentCalibrationMultiSeedRequest(BaseModel):
     seed_start: StrictInt
-    seed_count: StrictInt = Field(ge=1)
+    seed_count: StrictInt = Field(ge=1, le=100)
     sample_count_per_seed: StrictInt = Field(ge=1, le=50_000)
     candidate_ranges: CandidateRangesRequest
 

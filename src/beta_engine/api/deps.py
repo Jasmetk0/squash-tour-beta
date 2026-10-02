@@ -77,6 +77,9 @@ from beta_engine.application.world_talent_preview_service import WorldTalentPrev
 from beta_engine.application.talent_calibration_service import TalentCalibrationService
 from beta_engine.application.match_test_lab_service import MatchTestLabService
 from beta_engine.application.tournament_test_lab_service import TournamentTestLabService
+from beta_engine.application.pre_alpha_fax_reference_materialization import (
+    PreAlphaFaxReferenceMaterializationService,
+)
 from beta_engine.infrastructure.config import load_settings
 from beta_engine.infrastructure.db import DatabaseSettings, SimulationPersistenceRepository, create_session_factory, create_sqlite_engine
 
@@ -123,6 +126,19 @@ def get_run_world_initial_pool_preview_service(
 def get_run_world_initial_world_service(request: Request) -> RunWorldInitialWorldService:
     return RunWorldInitialWorldService(
         preview_service=get_run_world_initial_pool_preview_service(request)
+    )
+
+
+def get_pre_alpha_fax_reference_materialization_service(
+    request: Request,
+) -> PreAlphaFaxReferenceMaterializationService:
+    runtime = get_runtime(request)
+    return PreAlphaFaxReferenceMaterializationService(
+        repository=runtime.repository,
+        id_factory=_new_product_entity_id,
+        world_adapter=get_world_package_run_adapter(request),
+        calendar_adapter=get_calendar_package_run_adapter(request),
+        initial_world_service=get_run_world_initial_world_service(request),
     )
 
 

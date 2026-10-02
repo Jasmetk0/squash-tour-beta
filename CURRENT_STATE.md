@@ -15,6 +15,22 @@ Master v70 preserves calibration as open test work and sets the FAX acceptance r
 copied template, at least 1,000 initial players and 80 fully simulated World Tour Editions;
 lower Tours remain abstract. The Official Run is not the acceptance focus.
 
+## Implemented — reviewed persisted copied-FAX reference materialization
+
+- New Preview → Materialize application/API boundary creates a disposable editable Product Run
+  from reviewed World + Calendar source documents.
+- Preview is mutation-free and freezes source fingerprints plus the required 80 World Tour Edition count.
+- Materialize composes existing production boundaries only: Empty Run → World Package → Save →
+  Calendar Package → Save → ≥1,000-player InitialWorld → Save → FAX acceptance input gate.
+- The bootstrap fails closed on a stale preview or on a resulting Run that does not satisfy the
+  machine-readable Master v72 acceptance input gate.
+- The integration test uses an explicit provisional 80-Edition Calendar solely to prove persistence
+  and scale; it is not FAX sporting canon.
+
+See [copied-FAX reference materialization](docs/PRE_ALPHA_FAX_REFERENCE_MATERIALIZATION.md).
+
+**Next:** author the reviewed 80-Edition test Calendar source and start the long 50-season release
+acceptance harness from a materialized 1,000-player copied-FAX Run.
 ## Implemented — machine-readable copied-FAX long-acceptance input gate
 
 - Canonical Authoritative Simulation now exposes a read-only pre-alpha FAX acceptance profile.

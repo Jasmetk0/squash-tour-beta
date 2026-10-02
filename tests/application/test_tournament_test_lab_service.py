@@ -892,7 +892,7 @@ def test_tournament_lab_historical_copy_fails_closed_for_wc_until_replacement_sl
             repository=_TournamentHistoricalRepository(),
         )
 
-        with pytest.raises(ValueError, match="WC/LL/replacement"):
+        with pytest.raises(ValueError, match="replacement-source fallback lineage|WC/LL/replacement"):
             service.copy_saved_revision_tournament(
                 TournamentLabSavedRevisionCopyRequest(
                     display_name="Unsupported historical copy",

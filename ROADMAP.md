@@ -17,9 +17,11 @@ Baseline: `buuk` at `c42dc06ba73c86ffd4c64b2ce1d38e9944beab09` (#1094).
    Canonical Qualification plus pure groups and groups→knockout progression are now executable
    through shared topology/schedule/standings/hybrid authorities. Explicit Session import/export and verified Run → Lab historical Tournament copy are now implemented.
    The Lab → Run compatibility-preview and explicit reviewed Working Draft application boundaries are now implemented. Remaining replacement/ranking-consequence Lab work should be pulled only when it blocks copied-FAX acceptance.
-4. Validate a full season and next-season opening in a copy of the FAX template: at least
-   1,000 initial players, reference 80 World Tour Editions fully simulated, lower Tours abstract.
-   Retain empty-Run acceptance, CZ/EN Admin, recovery and the rest of Master pre-alpha scope.
+4. 🟡 Validate the copied-FAX release path at Master v72 scale. The machine-readable input gate now
+   verifies an editable 50-season Run, at least 1,000 InitialWorld players and exactly 80 first-season
+   World Tour Editions from Run-owned state. The mandatory automated 50-season 2000/01–2049/50 run
+   is still outstanding; lower Tours remain abstract. Retain empty-Run acceptance, CZ/EN Admin,
+   recovery and the rest of Master pre-alpha scope.
 5. Calibrate fairness/numeric policies from measured cases once the relevant systems work;
    do not treat implementation constants as newly approved product rules.
 

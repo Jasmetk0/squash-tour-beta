@@ -26,8 +26,14 @@ describe('TalentCalibrationPage', () => {
     renderWithRoute(<TalentCalibrationPage />, '/admin/world/talent-calibration')
     expect(screen.getByText(/diagnostic only/i)).toBeInTheDocument()
     const table = await screen.findByRole('table', { name: 'Quality band comparison' })
-    expect(within(table).getByRole('rowheader', { name: 'Elite Prospect' })).toBeInTheDocument()
+    for (const label of ['Solid Prospect', 'Strong Prospect', 'Elite Prospect', 'Special Prospect', 'Generational Talent']) {
+      expect(within(table).getByRole('rowheader', { name: label })).toBeInTheDocument()
+    }
     expect(within(table).getAllByText('150.0').length).toBeGreaterThan(0)
+
+    const currentOvrTable = screen.getByRole('table', { name: 'Current OVR by quality band' })
+    expect(within(currentOvrTable).getByRole('rowheader', { name: 'Elite Prospect' })).toBeInTheDocument()
+    expect(within(currentOvrTable).getAllByText('150.0').length).toBeGreaterThan(0)
     await user.clear(screen.getByLabelText('Seed')); await user.type(screen.getByLabelText('Seed'), '99')
     await user.clear(screen.getByLabelText('Sample count')); await user.type(screen.getByLabelText('Sample count'), '321')
     await user.click(screen.getByRole('button', { name: 'Run calibration' }))

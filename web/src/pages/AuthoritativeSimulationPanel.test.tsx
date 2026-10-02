@@ -9,6 +9,7 @@ import { AuthoritativeSimulationPanel } from './AuthoritativeSimulationPanel'
 const api = vi.hoisted(() => ({
   getAuthoritativeSimulationPosition: vi.fn(),
   getPreAlphaFaxAcceptanceProfile: vi.fn(),
+  getPreAlphaFaxEntryValidationPolicyGate: vi.fn(),
   inspectAuthoritativeEntryDecisionSlot: vi.fn(),
   reviewAuthoritativeEntryDecisionSlot: vi.fn(),
   inspectWeekTournamentLock: vi.fn(),
@@ -654,6 +655,27 @@ function renderPanel(props: Partial<ComponentProps<typeof AuthoritativeSimulatio
 beforeEach(() => {
   vi.clearAllMocks()
   api.getAuthoritativeSimulationPosition.mockResolvedValue(position)
+  api.getPreAlphaFaxEntryValidationPolicyGate.mockResolvedValue({
+    schema_version: 'pre_alpha_fax_entry_validation_policy_gate.v1',
+    run_id: 'run-a',
+    branch_id: 'branch-a',
+    policy_id: 'automatic_application_eligibility_deadline.v1',
+    policy_status: 'unresolved',
+    master_status: 'open',
+    blocks_unattended_release: true,
+    current_week: week,
+    current_slot_kind: 'entry',
+    current_slot_ordinal: 1,
+    current_position_fingerprint: 'e'.repeat(64),
+    current_entry_slot_frozen: true,
+    current_entry_slot_fingerprint: 'f'.repeat(64),
+    current_entry_decision_count: 12,
+    current_entry_validation_resolved: false,
+    current_validation_fingerprint: null,
+    current_blocker_code: 'application_validation_policy_unresolved',
+    detail: 'Current Entry decisions are frozen, but automatic eligibility/deadline policy is unresolved.',
+    gate_fingerprint: '9'.repeat(64)
+  })
   api.getPreAlphaFaxAcceptanceProfile.mockResolvedValue({
     schema_version: 'pre_alpha_fax_acceptance_profile.v1',
     run_id: 'run-a',
@@ -1414,6 +1436,16 @@ beforeEach(() => {
 })
 
 describe('AuthoritativeSimulationPanel', () => {
+
+
+  it('shows the copied-FAX Entry validation release-policy blocker', async () => {
+    renderPanel()
+
+    expect(await screen.findByText('Pre-alpha Entry validation policy gate')).toBeInTheDocument()
+    expect(screen.getByText('automatic_application_eligibility_deadline.v1')).toBeInTheDocument()
+    expect(screen.getByText('application_validation_policy_unresolved')).toBeInTheDocument()
+    expect(screen.getByText('12')).toBeInTheDocument()
+  })
 
   it('shows the Master v72 FAX long-acceptance input gate', async () => {
     renderPanel()
